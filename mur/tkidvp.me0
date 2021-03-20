@@ -1,0 +1,684 @@
+PROCEDURE GEN.TIME.PLOT
+ENTIRE.PROCEDURE:
+BEGIN
+
+  FIELDS
+
+    ALL.CRASH.TIME                             AS '5N',
+    ALL.CRASH.TIME.TEMP                        AS '5N',
+
+    CLASS.ABBREV                               AS '3C',
+    CLASS.INPUT                                AS '4C',
+    CLASS.MATCH                                AS '3C' DEFAULT 'NO',
+    CLASS.TITLE                                AS '15C',
+    CODE.TITLE                                 AS '28C',
+    COL.COUNT                                  AS '2N',
+    COL.COUNT.TEMP                             AS '2N',
+
+    DATE.PERIOD                                AS 'C',
+
+    OUTPUT.FILE.1                              AS '30C',
+    OUTPUT.FILE.2                              AS '30C',
+
+    PERCENT.TOTAL                              AS '2ZN.2N',
+    PREVIOUS.CLASS                             AS 'N',
+    PRIME.CRASH.TIME                           AS '5N',
+    PRIME.CRASH.TIME.TEMP                      AS '5N',
+
+    REPORT.COUNT                               AS '2N',
+    REPORT.COUNT.TEMP                          AS '2N',
+    REPORT.END.DATE                            AS DATE 'MM-DD-YY',
+    REPORT.NO                                  AS '2N',
+    REPORT.START.DATE                          AS DATE 'MM-DD-YY',
+
+    SCHED.CRASH.TIME                           AS '5N',
+    SCHED.CRASH.TIME.TEMP                      AS '5N',
+    SET.NO                                     AS '2N',
+    SITE.IDENT                                 AS 'C',
+    SITE.INPUT                                 AS '3C' DEFAULT '   ',
+    SITES                                      AS '10C',
+    SITE.SYSNO                                 AS '5C',
+    SUB.REPORT.COUNT                           AS 'N',
+    SYS.OR.CLS                                 AS 'C',
+    SYSTEM.INPUT                               AS '4C',
+
+    TEMP.DATE                                  AS DATE 'MM-YY',
+    T.FR.INPUT                                 AS '3C',
+    TIME.COUNT                                 AS '4ZN.4N',
+    TOTAL.TIME                                 AS '4ZN.4N',
+
+    VALID.END.DATE                             AS DATE 'MM-DD-YY',
+    VALID.INPUT                                AS DATE 'MM-DD-YY',
+    VALID.START.DATE                           AS DATE 'MM-DD-YY'
+
+  CONTROLS FOR RELATIONS CONCURRENT UPDATE
+
+  RELATION CLASS.TEMP IS
+    KEY CLASS.ABBREV
+    DATA CLASS.TITLE,
+         SET.NO
+
+  RELATION SYSTEM.TEMP IS
+    KEY SET.NO,
+        SYSNO,
+        SYSTEM.ID
+    DATA CLASS.ABBREV
+
+  RELATION CRASH.TIME IS
+    KEY SET.NO,
+        CLASS.ABBREV,
+        CODE.ID
+    DATA CODE.TITLE,
+         ALL.CRASH.TIME,
+         SCHED.CRASH.TIME,
+         PRIME.CRASH.TIME
+
+  REPORT RPT.1 TO OUTPUT.FILE.1
+    PAGE.SIZE 0
+
+  REPORT RPT.2 TO OUTPUT.FILE.2
+    PAGE.SIZE 66
+
+REPORT.SUBJECT:
+BEGIN
+  TYPE @CR, 'DO YOU WANT THIS REPORT GENERATED FOR A SYSTEM(S) OR FOR A',
+       @CR, 'CLASS OF SYSTEMS(C)? '
+  ACCEPT SYS.OR.CLS
+
+  IF SYS.OR.CLS = 'S' OR 'C'
+    THEN NOTHING
+    ELSE BEGIN
+           TYPE @CR, 'THIS IS NOT A VALID OPTION........'
+           REPEAT REPORT.SUBJECT
+         END
+END  % report.subject %
+
+  IF SYS.OR.CLS = 'S'
+    THEN BEGIN
+SYSTEM.INFO:
+BEGIN
+           TYPE @CR, 'PLEASE ENTER THE NUMBER OF THE SYSTEM TO BE REPORTED: '
+           ACCEPT SYSTEM.INPUT
+
+           TYPE @CR, 'PLEASE ENTER A DATE AS "MM-DD-YY" FOR WHICH THE SYSTEM IS VALID: '
+           ACCEPT VALID.INPUT
+
+           DELETE FROM SYSTEM.TEMP ALL
+           DELETE FROM CLASS.TEMP ALL
+
+           FOR EACH SYSTEM. WHERE (SYSNO = SYSTEM.INPUT AS '3ZN' AND VALID.INPUT GE START.DATE AND
+                                   VALID.INPUT LE END.DATE)
+             BEGIN
+               TYPE @CR, 'THIS SYSTEM IS VALID FROM ', START.DATE, ' TO ', END.DATE, ' .', @CR
+               LET VALID.START.DATE = START.DATE
+               LET VALID.END.DATE = END.DATE
+               INSERT INTO SYSTEM.TEMP USING (1 FOR SET.NO,
+                                              ID FOR SYSTEM.ID,
+                                              ABBREV(CLASS. VIA ID = CLASS.ID) FOR CLASS.ABBREV)
+               INSERT INTO CLASS.TEMP USING (ABBREV(CLASS. VIA ID = CLASS.ID) FOR CLASS.ABBREV,
+                                             TITLE(CLASS. VIA ID = CLASS.ID) FOR CLASS.TITLE,
+                                             1 FOR SET.NO)
+               CONDITIONAL ON SITE.ID
+                 BEGIN
+                   1: LET SITE.IDENT = 'C'
+                   2: LET SITE.IDENT = 'V'
+                   3: LET SITE.IDENT = 'H'
+                   5: LET SITE.IDENT = 'D'
+                   6: LET SITE.IDENT = 'D'
+                   7: LET SITE.IDENT = 'D'
+                   8: LET SITE.IDENT = 'F'
+                   9: LET SITE.IDENT = 'A'
+                  10: LET SITE.IDENT = 'C'
+                 END
+               LET SITE.SYSNO = SITE.IDENT + TRIM(SYSTEM.INPUT)
+               LET REPORT.COUNT = 1
+             END
+           IF COUNT(SYSTEM.TEMP) = 0
+             THEN BEGIN
+                    TYPE @CR, 'THIS SYSTEM DOES NOT EXIST........'
+                    REPEAT SYSTEM.INFO
+                  END
+END  % system.info %
+
+GET.DATES.1:
+BEGIN
+           TYPE @CR, 'PLEASE ENTER THE DATE PERIOD OF THIS(ESE) REPORT(S).',
+                @CR, 'THIS MONTH(T), LAST MONTH(L), OR A DATE RANGE(R): '
+           ACCEPT DATE.PERIOD
+
+           CONDITIONAL ON DATE.PERIOD
+             BEGIN
+               'T': BEGIN
+                      LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+                      LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+                      LET REPORT.END.DATE = TODAY AS DATE 'MM-DD-YY'
+                      FINISH GET.DATES.1
+                    END  % conditional on 't' %
+               'L': BEGIN
+                      LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+                      SUBTRACT 1 FROM MONTH(TEMP.DATE)
+                      LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+                      LET REPORT.END.DATE = LAST.DAY(TEMP.DATE)
+                      FINISH GET.DATES.1
+                    END  % conditional on 'l' %
+               'R': BEGIN
+GET.RANGE.1:
+BEGIN
+                      TYPE @CR, 'PLEASE ENTER THE START AND END DATES AS "MM-DD-YY"',
+                           @CR, '(SEPARATE THE ENTRIES WITH COMMAS): '
+                      ACCEPT REPORT.START.DATE, REPORT.END.DATE
+
+                      IF REPORT.START.DATE GE REPORT.END.DATE
+                        THEN BEGIN
+                               TYPE @CR, 'THE START DATE IS GREATER THAN THE END DATE.'
+                               REPEAT GET.RANGE.1
+                             END
+                      IF REPORT.END.DATE GE TODAY AS DATE 'MM-DD-YY'
+                        THEN BEGIN
+                               TYPE @CR, 'THE END DATE CANNOT BE GREATER THAN THE CURRENT DATE.'
+                               REPEAT GET.RANGE.1
+                             END
+END  % get.range.1 %
+                    END  % conditional on 'r' %
+             END  % conditional on date.period %
+           IF REPORT.START.DATE LT VALID.START.DATE OR REPORT.END.DATE GT VALID.END.DATE
+             THEN BEGIN
+                    TYPE @CR, 'THIS SYSTEM IS NOT VALID FOR THIS DATE RANGE.'
+                    REPEAT GET.DATES.1
+                  END
+END  % get.dates.1 %
+         END  % if sys.or.class ... then %
+    ELSE BEGIN
+GET.DATES.2:
+BEGIN
+           TYPE @CR, 'PLEASE ENTER THE DATE PERIOD OF THIS(ESE) REPORT(S).',
+                @CR, 'THIS MONTH(T), LAST MONTH(L), OR A DATE RANGE(R): '
+           ACCEPT DATE.PERIOD
+
+           CONDITIONAL ON DATE.PERIOD
+             BEGIN
+               'T': BEGIN
+                      LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+                      LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+                      LET REPORT.END.DATE = TODAY AS DATE 'MM-DD-YY'
+                      FINISH GET.DATES.2
+                    END  % conditional on 't' %
+               'L': BEGIN
+                      LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+                      SUBTRACT 1 FROM MONTH(TEMP.DATE)
+                      LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+                      LET REPORT.END.DATE = LAST.DAY(TEMP.DATE)
+                      FINISH GET.DATES.2
+                    END  % conditional on 'l' %
+               'R': BEGIN
+GET.RANGE.2:
+BEGIN
+                      TYPE @CR, 'PLEASE ENTER THE START AND END DATES AS "MM-DD-YY"',
+                           @CR, '(SEPARATE THE ENTRIES WITH COMMAS): '
+                      ACCEPT REPORT.START.DATE, REPORT.END.DATE
+
+                      IF REPORT.START.DATE GT REPORT.END.DATE
+                        THEN BEGIN
+                               TYPE @CR, 'THE START DATE IS GREATER THAN THE END DATE.'
+                               REPEAT GET.RANGE.2
+                             END
+                      IF REPORT.END.DATE GT TODAY AS DATE 'MM-DD-YY'
+                        THEN BEGIN
+                               TYPE @CR, 'THE END DATE CANNOT BE GREATER THAN THE CURRENT DATE.'
+                               REPEAT GET.RANGE.2
+                             END
+END  % get.range.2 %
+                    END  % conditional on 'r' %
+             END  % conditional on date.period %
+END  % get.dates.2 %
+
+           TYPE @CR, 'PLEASE ENTER THE SYSTEM CLASS TO BE REPORTED (FOR A LIST',
+                @CR, 'OF THE CLASS CHOICES, TYPE "HELP"): '
+REP.GET.CLASS:
+BEGIN
+           ACCEPT CLASS.INPUT
+
+           IF CLASS.INPUT = 'H' OR 'HE' OR 'HEL' OR 'HELP'
+             THEN BEGIN
+                    TYPE @CR, 'THE CLASS CHOICES ARE:'
+                    FOR EACH CLASS.
+                      TYPE @CR, @TAB 5, TRIM(ABBREV)
+                    TYPE @CR, @TAB 5, 'ALL',
+                         @CR, @CR, 'PLEASE ENTER THE CLASS TO BE REPORTED: '
+                    REPEAT REP.GET.CLASS
+                  END
+           IF CLASS.INPUT = 'ALL'
+             THEN NOTHING
+             ELSE BEGIN
+                    FOR EACH CLASS. WHERE (ABBREV = CLASS.INPUT)
+                      LET CLASS.MATCH = 'YES'
+                    IF CLASS.MATCH = 'NO'
+                      THEN BEGIN
+                             TYPE @CR, 'THERE IS NO SUCH CLASS........',
+                                  @CR, 'PLEASE ENTER THE CLASS TO BE REPORTED: '
+                             REPEAT REP.GET.CLASS
+                           END
+                  END
+END  % rep.get.class %
+
+           TYPE @CR, 'PLEASE ENTER THE SITE TO BE REPORTED.  CUPA(CPA),',
+                @CR, 'CUPC(CPC), DALLAS(DAL), HOUSTON(HOU), FREMONT(FRE), ',
+                @CR, 'OR ALL OF THESE SITES(ALL): '
+REP.GET.SITE:
+BEGIN
+           ACCEPT SITE.INPUT
+
+           CONDITIONAL ON SITE.INPUT
+             BEGIN
+               'CPA': LET SITES = '9'
+               'CPC': LET SITES = '0'
+               'DAL': LET SITES = '567'
+               'HOU': LET SITES = '3'
+               'FRE': LET SITES = '8'
+               'ALL': LET SITES = '0356789'
+             END
+           ELSE BEGIN
+                  TYPE @CR, 'THIS CHOICE FOR THE SITE DOES NOT EXIST........',
+                       @CR, 'PLEASE ENTER THE SITE TO BE REPORTED: '
+                  REPEAT REP.GET.SITE
+                END
+END  % rep.get.site %
+
+           DELETE FROM CLASS.TEMP ALL
+           DELETE FROM SYSTEM.TEMP ALL
+
+           IF CLASS.INPUT = 'ALL'
+             THEN BEGIN
+                    LET PREVIOUS.CLASS = 0
+                    LET REPORT.COUNT = 0
+                    FOR EACH SYSTEM. WHERE (START.DATE LE REPORT.END.DATE AND END.DATE GE REPORT.START.DATE
+                                            AND APPLICABLE = 'Y') SORTED ON CLASS.ID
+                      BEGIN
+                        SELECT CLASS. VIA (ID = CLASS.ID)
+                          THEN BEGIN
+                                 CONDITIONAL ON SITE.ID
+                                   BEGIN
+                                     1: LET SITE.IDENT = '1'
+                                     2: LET SITE.IDENT = '2'
+                                     3: LET SITE.IDENT = '3'
+                                     5: LET SITE.IDENT = '5'
+                                     6: LET SITE.IDENT = '6'
+                                     7: LET SITE.IDENT = '7'
+                                     8: LET SITE.IDENT = '8'
+                                     9: LET SITE.IDENT = '9'
+                                    10: LET SITE.IDENT = '0'
+                                   END
+                                   ELSE LET SITE.IDENT = ''
+                                 IF POSITION(TRIM(SITES),SITE.IDENT) > 0
+                                   THEN BEGIN
+                                          IF CLASS.ID NE PREVIOUS.CLASS
+                                            THEN BEGIN
+                                                   LET PREVIOUS.CLASS = CLASS.ID
+                                                   ADD 1 TO REPORT.COUNT
+                                                   INSERT INTO CLASS.TEMP USING (ABBREV FOR CLASS.ABBREV,
+                                                                                 TITLE FOR CLASS.TITLE,
+                                                                                 REPORT.COUNT FOR SET.NO)
+                                                 END
+                                          INSERT INTO SYSTEM.TEMP USING (REPORT.COUNT FOR SET.NO,
+                                                                         ID OF SYSTEM. FOR SYSTEM.ID,
+                                                                         ABBREV FOR CLASS.ABBREV)
+                                        END  % if position %
+                               END  % select class. %
+                      END  % for each system. %
+                    IF COUNT(CLASS.) NE COUNT(CLASS.TEMP)
+                      THEN BEGIN
+                             TYPE @CR, 'THERE ARE CURRENTLY NO SYSTEMS OF THE FOLLOWING CLASS(ES):'
+                             FOR EACH CLASS.
+                               SELECT CLASS.TEMP VIA (CLASS.ABBREV = ABBREV)
+                                 THEN NOTHING
+                                 ELSE TYPE @CR, @TAB 5, TRIM(ABBREV)
+                           END
+                    IF REPORT.COUNT = 0
+                      THEN FINISH ENTIRE.PROCEDURE
+                  END  % if class.input = 'all' then %
+             ELSE BEGIN
+                    FOR EACH CLASS. WHERE (ABBREV = CLASS.INPUT)
+                      BEGIN
+                        FOR EACH SYSTEM. WHERE (CLASS.ID = ID OF CLASS. AND START.DATE LE REPORT.END.DATE
+                                                AND END.DATE GE REPORT.START.DATE AND APPLICABLE = 'Y')
+                          BEGIN
+                            CONDITIONAL ON SITE.ID
+                              BEGIN
+                                1: LET SITE.IDENT = '1'
+                                2: LET SITE.IDENT = '2'
+                                3: LET SITE.IDENT = '3'
+                                5: LET SITE.IDENT = '5'
+                                6: LET SITE.IDENT = '6'
+                                7: LET SITE.IDENT = '7'
+                                8: LET SITE.IDENT = '8'
+                                9: LET SITE.IDENT = '9'
+                               10: LET SITE.IDENT = '0'
+                              END
+                              ELSE LET SITE.IDENT = ''
+                            IF POSITION(TRIM(SITES),SITE.IDENT) > 0
+                              THEN INSERT INTO SYSTEM.TEMP USING (1 FOR SET.NO,
+                                                                  ID OF SYSTEM. FOR SYSTEM.ID,
+                                                                  ABBREV FOR CLASS.ABBREV)
+                          END
+                     IF COUNT(SYSTEM.TEMP) = 0
+                       THEN BEGIN
+                              TYPE @CR, 'THERE ARE CURRENTLY NO SYSTEMS OF THIS CLASS AT THIS(ESE) SITE(S).'
+                              FINISH ENTIRE.PROCEDURE
+                            END
+                       ELSE BEGIN
+                              LET REPORT.COUNT = 1
+                              INSERT INTO CLASS.TEMP USING (CLASS.INPUT FOR CLASS.ABBREV,
+                                                            TITLE FOR CLASS.TITLE,
+                                                            1 FOR SET.NO)
+                            END
+                        END  % for each class. %
+                    END  % if class.input = 'all' else %
+         END  % if sys.or.cls ... else %
+
+GET.TIME.FRAME:
+BEGIN
+  TYPE @CR, 'PLEASE ENTER THE TIME FRAME BEING EVALUATED.  24 HOURS(24),',
+       @CR, 'SCHEDULED TIME(S), OR PRIME TIME(P): '
+REP.GET.T.FR:
+BEGIN
+  ACCEPT T.FR.INPUT
+
+  IF T.FR.INPUT = '24' OR 'S' OR 'P'
+    THEN NOTHING
+    ELSE BEGIN
+           TYPE @CR, 'THIS TIME FRAME OPTION DOES NOT EXIST........',
+                @CR, 'PLEASE ENTER THE TIME FRAME TO BE REPORTED: '
+           REPEAT REP.GET.T.FR
+         END
+END  % rep.get.t.fr %
+END  % get.time.frame %
+
+  TYPE @CR, @CR, 'PLEASE WAIT........', @CR
+
+  DELETE FROM CRASH.TIME ALL
+
+  CONDITIONAL ON T.FR.INPUT
+    BEGIN
+      '24': BEGIN
+              FOR EACH SYSTEM.TEMP
+                FOR EACH TIME. VIA (SYSTEM.ID = SYSTEM.ID OF SYSTEM.TEMP), WHERE
+                                   (DATE. GE REPORT.START.DATE AND DATE. LE REPORT.END.DATE)
+                  BEGIN
+                    LET ALL.CRASH.TIME.TEMP = 0
+                    IF TYPE.ABBREV(CODE. VIA ID = CODE.ID) = 'LST'
+                      THEN LET ALL.CRASH.TIME.TEMP = STOP.TIME - START.TIME
+                    IF TYPE.ABBREV(CODE. VIA ID = CODE.ID) = 'LST'
+                      THEN SELECT CRASH.TIME VIA (SET.NO = SET.NO OF SYSTEM.TEMP,
+                                                  CLASS.ABBREV = CLASS.ABBREV OF SYSTEM.TEMP,
+                                                  CODE.ID = CODE.ID OF TIME.)
+                             THEN ALTER CRASH.TIME USING (ALL.CRASH.TIME.TEMP + ALL.CRAME FOR ALL.CRASH.TIME)
+                             ELSE INSERT INTO CRASH.TIME USING (TITLE(CODE. VIA ID = CODE.ID) FOR CODE.TITLE,
+                                                                ALL.CRASH.TIME.TEMP FOR ALL.CRASH.TIME,
+                                                                0 FOR SCHED.CRASH.TIME,
+                                                                0 FOR PRIME.CRASH.TIME)
+                  END  % for each time. %
+            END
+      'S': BEGIN
+             FOR EACH SYSTEM.TEMP
+               FOR EACH TIME. VIA (SYSTEM.ID = SYSTEM.ID OF SYSTEM.TEMP), WHERE
+                                  (DATE. GE REPORT.START.DATE AND DATE. LE REPORT.END.DATE)
+                 BEGIN
+                   LET SCHED.CRASH.TIME.TEMP = 0
+                   CONDITIONAL ON SCHED.FLAG
+                     BEGIN
+                       1: CONDITIONAL ON TYPE.ABBREV(CODE. VIA ID = CODE.ID)
+                            BEGIN
+                              'LST': LET SCHED.CRASH.TIME.TEMP = STOP.TIME - START.TIME
+                            END
+                            ELSE NOTHING
+                     END
+                     ELSE NOTHING
+                   IF TYPE.ABBREV(CODE. VIA ID = CODE.ID) = 'LST'
+                     THEN SELECT CRASH.TIME VIA (SET.NO = SET.NO OF SYSTEM.TEMP,
+                                                 CLASS.ABBREV = CLASS.ABBREV OF SYSTEM.TEMP,
+                                                 CODE.ID = CODE.ID OF TIME.)
+                            THEN ALTER CRASH.TIME USING (SCHED.CRASH.TIME.TEMP + SCHED.CRASH.TIME FOR SCHED.CRASH.TIME)
+                            ELSE INSERT INTO CRASH.TIME USING (TITLE(CODE. VIA ID = CODE.ID) FOR CODE.TITLE,
+                                                               0 FOR ALL.CRASH.TIME,
+                                                               SCHED.CRASH.TIME.TEMP FOR SCHED.CRASH.TIME,
+                                                               0 FOR PRIME.CRASH.TIME)
+                 END  % for each time. %
+           END
+      'P': BEGIN
+             FOR EACH SYSTEM.TEMP
+               FOR EACH TIME. VIA (SYSTEM.ID = SYSTEM.ID OF SYSTEM.TEMP), WHERE
+                                  (DATE. GE REPORT.START.DATE AND DATE. LE REPORT.END.DATE)
+                 BEGIN
+                   LET PRIME.CRASH.TIME.TEMP = 0
+                   CONDITIONAL ON PRIME.FLAG
+                     BEGIN
+                       1: CONDITIONAL ON TYPE.ABBREV(CODE. VIA ID = CODE.ID)
+                            BEGIN
+                              'LST': LET PRIME.CRASH.TIME.TEMP = STOP.TIME - START.TIME
+                            END
+                            ELSE NOTHING
+                     END
+                     ELSE NOTHING
+                   IF TYPE.ABBREV(CODE. VIA ID = CODE.ID) = 'LST'
+                     THEN SELECT CRASH.TIME VIA (SET.NO = SET.NO OF SYSTEM.TEMP,
+                                                 CLASS.ABBREV = CLASS.ABBREV OF SYSTEM.TEMP,
+                                                 CODE.ID = CODE.ID OF TIME.)
+                            THEN ALTER CRASH.TIME USING (PRIME.CRASH.TIME.TEMP + PRIME.CRASH.TIME FOR PRIME.CRASH.TIME)
+                            ELSE INSERT INTO CRASH.TIME USING (TITLE(CODE. VIA ID = CODE.ID) FOR CODE.TITLE,
+                                                               0 FOR ALL.CRASH.TIME,
+                                                               0 FOR SCHED.CRASH.TIME,
+                                                               PRIME.CRASH.TIME.TEMP FOR PRIME.CRASH.TIME)
+                 END  % for each time. %
+           END
+    END  % conditional on t.fr.time %
+
+  TYPE @CR, 'THE NUMBER OF REPORTS TO BE GENERATED BY THIS PROCEDURE = ', REPORT.COUNT, '.',
+       @CR, 'THE REPORT(S) MAY ONLY BE PRINTED TO A FILE(S).', @CR
+
+  LET REPORT.NO = 1
+  WHILE REPORT.NO LE REPORT.COUNT
+    DO FOR EACH CLASS.TEMP WHERE (SET.NO = REPORT.NO)
+         BEGIN
+           TYPE @CR, 'THIS REPORT IS FOR TIME FRAME = '
+           CONDITIONAL ON T.FR.INPUT
+             BEGIN
+               '24': TYPE '24 HOURS, '
+               'S': TYPE 'SCHEDULED TIME, '
+               'P': TYPE 'PRIME TIME, '
+             END
+           IF SYS.OR.CLS = 'S'
+             THEN TYPE 'SYSTEM = ', TRIM(SITE.SYSNO)
+             ELSE TYPE 'SITE = ', TRIM(SITE.INPUT)
+           TYPE ' AND CLASS = ', TRIM(CLASS.ABBREV), '.'
+REP.GET.DEST:
+BEGIN
+           TYPE @CR, 'PLEASE ENTER THE FILE NAME OF THE GRAPHICS AND STATISTICS',
+                @CR, 'FILE FOR THIS REPORT: '
+           ACCEPT OUTPUT.FILE
+
+           IF OUTPUT.FILE = 'T' OR 'TE' OR 'TER' OR 'TERM' OR 'TERMI' OR 'TERMIN' OR 'TERMINA' OR
+                            'TERMINAL' OR DEFAULT
+             THEN BEGIN
+                    TYPE @CR, 'THIS REPORT CAN ONLY BE PRINTED TO FILES.'
+                    REPEAT REP.GET.DEST
+                  END
+           IF SUBSTR(OUTPUT.FILE,1,1) NE '('
+             THEN IF SUBSTR(OUTPUT.FILE,1,1) GE 'A'
+                    THEN IF POSITION(OUTPUT.FILE,'.') = 0
+                           THEN BEGIN
+                                  IF LENGTH(OUTPUT.FILE) LE 6
+                                    THEN FINISH REP.GET.DEST
+                                END
+           TYPE @CR, 'ENTER ONLY THE FILE NAME; DO NOT INCLUDE A USER NAME, A',
+                @CR, 'SEPARATING PERIOD OR AN EXTENSION.  THE FILE NAME SHOULD',
+                @CR, 'NOT TOTAL MORE THAN 6 CHARACTERS AND THE FIRST CHARACTER',
+                @CR, 'MUST BE AN ALPHA CHARACTER FROM A-Z.'
+           REPEAT REP.GET.DEST
+END  % rep.get.dest %
+           LET OUTPUT.FILE.1 = '(MURADMIN)' + TRIM(OUTPUT.FILE) + '.DAT'
+           TYPE @CR, 'THIS GRAPHICS FILE WILL BE PRINTED TO THE FILE ', TRIM(OUTPUT.FILE.1), '.', @CR
+           LET OUTPUT.FILE.2 = '(MURADMIN)' + TRIM(OUTPUT.FILE) + '.RPT'
+           TYPE @CR, 'THE STATISTICS FILE WILL BE PRINTED TO THE FILE ', TRIM(OUTPUT.FILE.2), '.', @CR
+
+           WRITE REPORT RPT.1, RPT.2
+             BEGIN
+               PRINT TO RPT.1 'GENERATE A PIE CHART.', @CR, 'TITLE IS "McDONNELL DOUGLAS '
+               PRINT TO RPT.2 'McDONNELL DOUGLAS '
+               IF SYS.OR.CLS = 'S'
+                 THEN BEGIN
+                        PRINT TO RPT.1 TRIM(CLASS.TITLE), '"', @CR, '"SYSTEM ', TRIM(SITE.SYSNO),
+                              '"', @CR
+                        PRINT TO RPT.2 TRIM(CLASS.TITLE), @TAB TO 60, 'Report date: ',
+                              TODAY AS DATE 'MM-DD-YY', @CR, 'SYSTEM ', TRIM(SITE.SYSNO), @CR
+                      END
+                 ELSE BEGIN
+                        PRINT TO RPT.1 TRIM(CLASS.TITLE), '"', @CR
+                        PRINT TO RPT.2 TRIM(CLASS.TITLE), @TAB TO 60, 'Report date: ', TODAY
+                              AS DATE 'MM-DD-YY', @CR
+                        CONDITIONAL ON SITE.INPUT
+                          BEGIN
+                            'CPA': BEGIN
+                                     PRINT TO RPT.1 '"CUPERTINO-CUPA"', @CR
+                                     PRINT TO RPT.2 'CUPERTINO-CUPA', @CR
+                                   END
+                            'CPC': BEGIN
+                                     PRINT TO RPT.1 '"CUPERTINO-CUPC"', @CR
+                                     PRINT TO RPT.2 'CUPERTINO-CUPC', @CR
+                                   END
+                            'VF': BEGIN
+                                    PRINT TO RPT.1 '"VALLEY FORGE"', @CR
+                                    PRINT TO RPT.2 'VALLEY FORGE', @CR
+                                  END
+                            'DAL': BEGIN
+                                     PRINT TO RPT.1 '"DALLAS"', @CR
+                                     PRINT TO RPT.2 'DALLAS', @CR
+                                   END
+                            'HOU': BEGIN
+                                     PRINT TO RPT.1 '"HOUSTON"', @CR
+                                     PRINT TO RPT.2 'HOUSTON', @CR
+                                   END
+                            'FRE': BEGIN
+                                     PRINT TO RPT.1 '"FREMONT"', @CR
+                                     PRINT TO RPT.2 'FREMONT', @CR
+                                   END
+                            'ALL': NOTHING
+                          END
+                      END
+               CONDITIONAL ON T.FR.INPUT
+                 BEGIN
+                   '24': BEGIN
+                           PRINT TO RPT.1 '"LOST TIME DURING 24 HOURS",', @CR
+                           PRINT TO RPT.2 'LOST TIME DURING 24 HOURS', @CR
+                         END
+                   'S': BEGIN
+                          PRINT TO RPT.1 '"LOST TIME DURING SCHEDULED TIME",', @CR
+                          PRINT TO RPT.2 'LOST TIME DURING SCHEDULED TIME', @CR
+                        END
+                   'P': BEGIN
+                          PRINT TO RPT.1 '"LOST TIME DURING PRIME TIME",', @CR
+                          PRINT TO RPT.2 'LOST TIME DURING PRIME TIME', @CR
+                        END
+                 END
+               PRINT TO RPT.2 'FROM: ', REPORT.START.DATE, '  TO: ', REPORT.END.DATE, @SKIP 2,
+                     @TAB TO 39, 'DURATION OF', @TAB 8, 'PERCENTAGE', @CR, @TAB TO 16, 'LOST TIME CODE',
+                     @TAB 8, 'LOST TIME(HRS)', @TAB 7, 'OF TOTAL', @CR, @TAB TO 14, 18 * '-',
+                     @TAB 6, 14 * '-', @TAB 6, 10 * '-'
+	       PRINT TO RPT.1 'STYLE IS COMPLEX.',@CR
+               PRINT TO RPT.1 'TITLE HEIGHT .25.', @CR, 'BORDER OFF.', @CR, 'SEQUENCE DATA.',
+                     @CR, '"', REPORT.START.DATE AS DATE 'MM-DD-YY', ' TO ', REPORT.END.DATE
+                     AS DATE 'MM-DD-YY', '"', @CR
+               LET TOTAL.TIME = 0
+               LET COL.COUNT = 0
+               FOR EACH CRASH.TIME VIA (SET.NO = REPORT.NO)
+                 BEGIN
+                   CONDITIONAL ON T.FR.INPUT
+                     BEGIN
+                       '24': LET TIME.COUNT = ALL.CRASH.TIME
+                       'S': LET TIME.COUNT = SCHED.CRASH.TIME
+                       'P': LET TIME.COUNT = PRIME.CRASH.TIME
+                     END
+                   LET TIME.COUNT = TIME.COUNT / 60
+                   LET COL.COUNT.TEMP = COL.COUNT + 9
+                   IF COL.COUNT.TEMP GE 80
+                     THEN BEGIN
+                            PRINT TO RPT.1 @CR, TIME.COUNT AS '4ZN.2N', ' '
+                            LET COL.COUNT = 9
+                          END
+                     ELSE BEGIN
+                            PRINT TO RPT.1 TIME.COUNT AS '4ZN.2N', ' '
+                            LET COL.COUNT = COL.COUNT + 9
+                          END
+                   ADD TIME.COUNT AS '4ZN.2N' TO TOTAL.TIME
+                 END
+               PRINT TO RPT.1 @CR, 'END OF DATA.', @CR,
+                     'SLICE 1 SHADE PATTERN 45150.', @CR,
+                     'SLICE 2 SHADE PATTERN 145350.', @CR,
+                     'SLICE 3 SHADE PATTERN 135150.', @CR,
+                     'SLICE 4 SHADE PATTERN 45250.', @CR,
+                     'SLICE 5 SHADE PATTERN 45141.', @CR,
+                     'SLICE 6 SHADE PATTERN 135250.', @CR,
+                     'SLICE 7 SHADE PATTERN 45431.', @CR,
+                     'SLICE 8 SHADE PATTERN 30140.', @CR,
+                     'SLICE 9 SHADE PATTERN 45241.', @CR,
+                     'SLICE 10 SHADE PATTERN 151.', @CR,
+                     'SLICE 11 SHADE PATTERN 45350.', @CR,
+                     'SLICE 12 SHADE PATTERN 70450.', @CR,
+                     'SLICE 13 SHADE PATTERN 45351.', @CR,
+                     'SLICE 14 SHADE PATTERN 431.', @CR,
+                     'SLICE 15 SHADE PATTERN 135240.', @CR,
+                     'SLICE 16 SHADE PATTERN 140.', @CR,
+                     'SLICE 17 SHADE PATTERN 135141.', @CR,
+                     'DIVISION LABELS', @CR
+               TYPE @CR, 'THE FOLLOWING TYPE(S) OF LOST TIME IS LESS THAN .1 % OF',
+                    @CR, 'THE TOTAL LOST TIME (', TOTAL.TIME AS '5ZN.2N', '):', @CR
+               LET COL.COUNT = 0
+               FOR EACH CRASH.TIME VIA (SET.NO = REPORT.NO)
+                 BEGIN
+                   CONDITIONAL ON T.FR.INPUT
+                     BEGIN
+                       '24': LET TIME.COUNT = ALL.CRASH.TIME
+                       'S': LET TIME.COUNT = SCHED.CRASH.TIME
+                       'P': LET TIME.COUNT = PRIME.CRASH.TIME
+                     END
+                   LET TIME.COUNT = (TIME.COUNT / 60) AS '4ZN.2N'
+                   LET PERCENT.TOTAL = (TIME.COUNT / TOTAL.TIME) * 100
+                   CONDITIONAL ON CODE.TITLE
+                     BEGIN
+                       'COMM BOX 3705': LET CODE.TITLE = 'COMM. BOX 3705'
+                       'CUST INFO CONTR': LET CODE.TITLE = 'CUST. INFO. CONTR.'
+                       'DISC CLEAN': LET CODE.TITLE = 'DISK CLEAN'
+                       'NETWRK H/W': LET CODE.TITLE = 'NETWORK H/W'
+                       'NETWRK S/W': LET CODE.TITLE = 'NETWORK S/W'
+                       'NETWRK F.T. S/W': LET CODE.TITLE = 'NETWORK F.T. S/W'
+                       'NETWRK HARDWARE': LET CODE.TITLE = 'NETWORK H/W'
+                       'NETWRK SOFTWARE': LET CODE.TITLE = 'NETWORK S/W'
+                       'SELECTOR CHAN': LET CODE.TITLE = 'SELECTOR CHANNEL'
+                       'SYSTEM SOFTWARE': LET CODE.TITLE = 'SYSTEM S/W'
+                     END
+                   PRINT TO RPT.2 @SKIP 1, @TAB TO 14, TRIM(CODE.TITLE), @TAB TO 41, TIME.COUNT AS '4ZN.2N'
+                   IF PERCENT.TOTAL LT .1
+                     THEN BEGIN
+                            TYPE @CR, @TAB 5, CODE.TITLE, @TAB 2, TIME.COUNT AS '4ZN.2N', @TAB 2, PERCENT.TOTAL, ' %'
+                            PRINT TO RPT.2 @TAB TO 61, '<0.1'
+                          END
+                     ELSE PRINT TO RPT.2 @TAB TO 60, PERCENT.TOTAL AS '2ZN.N'
+                   LET COL.COUNT.TEMP = COL.COUNT + LENGTH(CODE.TITLE) + 3
+                   IF COL.COUNT.TEMP GE 80
+                     THEN BEGIN
+                            PRINT TO RPT.1 @CR, '"', TRIM(CODE.TITLE), '" '
+                            LET COL.COUNT = LENGTH(CODE.TITLE) + 3
+                          END
+                     ELSE BEGIN
+                            PRINT TO RPT.1 '"', TRIM(CODE.TITLE), '" '
+                            LET COL.COUNT = COL.COUNT + LENGTH(CODE.TITLE) + 3
+                          END
+                 END  % for each crash.time %
+               PRINT TO RPT.1 '.', @CR, 'MESSAGE 1 BOX 9.7 10.7 0.3 0.6.', @CR, 'MESSAGE 1 UNITS INCHES.', @CR,
+                     'MESSAGE 1 TEXT "', TODAY AS DATE 'MM-DD-YY', '".', @CR, 'MESSAGE 1 CONNECT TC.', @CR, 'GO.'
+               PRINT TO RPT.2 @CR, @TAB TO 38, 14 * '-', @CR, @TAB TO 40, TOTAL.TIME AS '5ZN.2N'
+               ADD 1 TO REPORT.NO
+             END  % write report %
+         END  % for each class.temp %
+
+END  % entire.procedure %
+    8@j<
