@@ -1,0 +1,31 @@
+:********************************************************************
+: Patch name: DDTIME.603             Product and Version: ISCS 6.03
+:     Author: JCR                           Organization: STS
+:   Customer: TRW				 Written: 7/21/88
+: Description of Problem:  
+:
+:	This patch correctly resets the 'TIME' portion of the
+:	DDT 'PORT' command for AID ports.
+
+	IF	NAPORT
+	IF	PVC
+	LO	CONSAT
+	LO	DATA
+
+PATCH(880721,1530,JREILLY,QHA4-8,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,18)
+	JAL	R9,A.VID,,		: set up port (from source)
+	L	R4,SLOWC,,		: get time
+	ST	R4,.TIME,RPI,		: and store it
+	J	QHA2			: return (from source)
+
+ENDPATCH(Patch to correctly display X-DDT 'PORT' time for AID ports)
+
+	FO	DATA
+	FO	CONSAT
+	EI	:PVC
+	EI	:NAPORT
+
+:********************************************************************
