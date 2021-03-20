@@ -1,0 +1,1297 @@
+!
+(************************************************************************)
+(*          FILE:  NETVAL/NVDM CONFIGURATION FILE                       *)
+(*  COMPANY NAME:  TRW                     Location:  Anaheim, CA       *)
+(*   NODE NUMBER:  2131                                                 *)
+(*   KERNAL HOST:  2131                        Host:  731               *)
+(*   SLOT NUMBER:  01                                                   *)
+(*       VERSION:  03.11                                                *)
+(*    UPDATED BY:  Robert Nowell               Date:  01/23/91          *)
+(************************************************************************)
+(* >>>>>>>>>>>>>>>>>>>>>>  REVISION HISTORY  <<<<<<<<<<<<<<<<<<<<<<<<<< *)
+(* SET CONSISTENCY_RESTARTABLE AND RUN_AUTO_CONSISTENCY_ON_SUP_INIT     *)
+(* TO TRUE AND ENABLE UUNSASSIGNABLE.                     03/02/88  AMZ *)
+(* DISABLE UUNSASSIGNABLE PARAMETER.                      03/09/88  AMZ *)
+(* SHRUNK LU 1 TO 133560 SECTORS TO MAKE ROOM FOR ELF,                  *)
+(*    AND CHANGED CLASSES & GROUPS TO 64 & 30 EACH W/6                  *)
+(*    SECTORS EACH, AND DECREASED USERS TO 6 TOTAL.       01/09/89  RRN *)
+(* INSTALLED VERSION 03.11 OF NETVAL CODE.                03/29/89  RRN *)
+(* INCLUDE_DISTRICT=TRUE, TAPE_BLOCKING_FACTOR=1, AND                   *)
+(*    DISABLED CONVERT_0_TO_1.                            05/03/89  RRN *)
+(* Cosmetics.                                             05/03/90  RRN *)
+(* * Enable allow_hosts_on_no_password.                   01/23/91  RRN *)
+(************************************************************************)
+(************************************************************************)
+(*									*)
+(*	NVAL03.A10	Sample Netval Configuration File		*)
+(*									*)
+(*	This file contains all user-defined options for Netval.		*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*	NOTE:								*)
+(*		- if any entry marked:					*)
+				(***)
+(*		  is changed, the Netval Disk Maintanance program	*)
+(*		  must be run to reset the parameter on the disk	*)
+(*		  configuration file					*)
+(*		- All numeric values in this file are DECIMAL,		*)
+(*		  unless otherwise specified.				*)
+(*		- Supervisor referencs are for Version 41 and later,	*)
+(*		  and refer to macros in the Tym file.  For versions	*)
+(*		  prior to Version 41, the appropriate Supervisor	*)
+(*		  value must correspond to the Netval value.		*)
+(*									*)
+(************************************************************************)
+
+
+
+(********************************************************)
+(*							*)
+(*	Define the size of disk Unit zero.		*)
+(*							*)
+(********************************************************)
+
+const
+(***) DISK_UNIT_ZERO_SIZE = 19080 (* in sectors *);
+
+
+
+(********************************************************)
+(*							*)
+(*	Define the size of disk Unit one, so that the	*)
+(*	maximum size MUD change file may be used.	*)
+(*							*)
+(********************************************************)
+
+(***) DISK_UNIT_ONE_SIZE = 133560 (* in sectors *);
+
+
+
+(************************************************************************)
+(*									*)
+(*	Define the size of the OPER log file.				*)
+(*									*)
+(*	Disk unit one requires room for the following files:		*)
+(*									*)
+(*	     FILE			REQUIRED SIZE IN SECTORS	*)
+(*	Configuration				1			*)
+(*	Node host lists			installation dependant		*)
+(*	Class group			installation dependant		*)
+(*			(see below, total of MAXIMUM_CLASS_TABLE_SIZE	*)
+(*			 and MAXIMUM_GROUP_TABLE_SIZE)			*)
+(*	CUD buffer			installation dependant		*)
+(*			(see below, MAXIMUM_CUD_BLOCK_SIZE_IN_SECTORS)	*)
+(*	MUD buffer			installation dependant		*)
+(*			(see below, MAXIMUM_CUD_BLOCK_SIZE_IN_SECTORS)	*)
+(*	OPER log			   variable			*)
+(*	MUD change			   variable			*)
+(*									*)
+(*									*)
+(*				OPER LOG File				*)
+(*									*)
+(*	The minimum size recommended for the OPER log file is 3		*)
+(*	sectors; however, since there is only one message written	*)
+(*	per sector, this is not very useful; reports of logins,		*)
+(*	logouts, consistency differences and error conditions are	*)
+(*	reported to the OPER log; if the parameter CHANGES_TO_OPER_LOG	*)
+(*	is ENabled, information about ALL CUD changes will be recorded	*)
+(*	in the file, so it will be very useful to have a fairly large	*)
+(*	OPER log file.							*)
+(*									*)
+(*									*)
+(*				MUD CHANGE File				*)
+(*									*)
+(*	There must be enough room left on disk unit one for the MUD	*)
+(*	change file; all CUD changes are recorded in the MUD change	*)
+(*	file and a process notifies all Supervisors to make the		*)
+(*	change to its MUD.  When all changes have been sent to all	*)
+(*	Supervisors, the file is deleted.				*)
+(*									*)
+(*	If there is a Supervisor defined by Netval, but not available	*)
+(*	for updates, and many changes are accumulating in the file,	*)
+(*	the Supervisor may be turned "off" as far as Netval is		*)
+(*	concerned with the SET SUPERVISOR command.  As the file		*)
+(*	becomes full, messages are written to the OPER log (at		*)
+(*	approximately 50% full, 75% full, etc.).			*)
+(*									*)
+(*	IF THERE IS NOT ROOM IN THE MUD CHANGE FILE TO RECORD THE	*)
+(*	INFORMATION ABOUT A CUD CHANGE, THE CHANGE TO THE CUD MAY	*)
+(*	NOT BE MADE.  Many changes (change control, change district,	*)
+(*	change password, change gan) require only about 24 bytes.	*)
+(*	Other changes (change access, delete access, delete user,	*)
+(*	new access, new user) are larger, and the size of the change	*)
+(*	depends both on the change itself and possible other		*)
+(*	information in the CUD block.  A CHANGE NAME command, since it	*)
+(*	involves changes to 2 different CUD blocks, requires room for	*)
+(*	2 entire CUD blocks (2 * MAXIMUM_CUD_BLOCK_SIZE_IN_SECTORS).	*)
+(*									*)
+(*	With a CUD of 10223 blocks and 8 sectors per block, the maximum	*)
+(*	size operator log can be about 71,000 sectors; this is so that	*)
+(*	all the Netval data fits on a single backup tape with		*)
+(*	TAPE_BLOCKING_FACTOR as 8.					*)
+(*									*)
+(************************************************************************)
+
+(***) OPERLOG_FILE_LENGTH = 40000 (* sectors *);
+
+
+
+
+(*************     CUD FILE PARAMETERS     **************)
+
+
+(********************************************************)
+(*							*)
+(*	The maximum number of expected Supervisors:	*)
+(* Must be greater than or equal to 1, less than or	*)
+(* equal to 7.						*)
+(* This is the number of Pascal processes and auxilliary*)
+(* circuits that will be allocated for the Supervisors.	*)
+(* The ACTUAL Supervisors used by Netval are defined	*)
+(* with the SET command; only those Supervisors defined	*)
+(* with the SET command will be updated or accessed by	*)
+(* Netval.						*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	THIS NUMBER MUST AGREE WITH "NSUP" DEFINED	*)
+(*	IN THE Netval SLOT TYM FILE.			*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_EXPECTED_SUPERVISORS = 4;
+
+
+(********************************************************)
+(*							*)
+(*	  The number of blocks in the CUD file:		*)
+(* The size described by MAXIMUM_NORMAL_CUD_BLOCK is    *)
+(* the number of blocks in the CUD file; the divisor is *)
+(* used in the hashing algorithm.			*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The fourth argument of DEFMUD; the default	*)
+(*	 value is 2039.)				*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_NORMAL_CUD_BLOCK = 2039;
+
+
+
+(********************************************************)
+(*							*)
+(*	The number of sectors in a CUD block:		*)
+(* Current possible values are 2, 4 or 8.		*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The decimal value of the second argument	*)
+(*	 of DEFMUD.)					*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_CUD_BLOCK_SIZE_IN_SECTORS = 8;
+
+
+
+(****************************************************************)
+(*								*)
+(* If Netval CUD is also a Supervisor MUD, Netval will not	*)
+(* perform a consistency check on its own Supervisor.		*)
+(* However, the Class/group table will be transmitted to all	*)
+(* Supervisors.  Also, CUD changes currently MUST BE SENT TO	*)
+(* THE UN2 slave in order to update the Supervisor's cache.     *)
+(*								*)
+(****************************************************************)
+
+(***) NETVAL_CUD_IS_A_MUD = FALSE (* TRUE or FALSE *);
+
+
+
+(****************************************************************)
+(*								*)
+(* THE FOLLOWING SHOULD ONLY BE TRUE IF ALL SUPERVISORS IN THE	*)
+(* NETWORK ARE V41 OR LATER AND ALL HAVE UN2, VERSION 5.0	*)
+(* OR LATER.							*)
+(*								*)
+(****************************************************************)
+(*								*)
+(* If CONSISTENCY_RESTARTABLE is TRUE, automatic consistencies	*)
+(* attempt to restart at the block last processed if the circuit*)
+(* is lost during the scheduled time period, and validators	*)
+(* running a consistency may specify a start block.		*)
+(*								*)
+(****************************************************************)
+
+  CONSISTENCY_RESTARTABLE = TRUE  (* TRUE or FALSE *);
+
+
+
+(****************************************************************)
+(*								*)
+(* If the following is TRUE, when a supervisor is set to "ON"	*)
+(* with the SET SUPERVISOR command, an automatic consistency	*)
+(* will be run EVEN IF IT IS NOT DURING THE SCHEDULED		*)
+(* CONSISTENCY PERIOD.  This initializing consistency will do	*)
+(* its best to run to completion, i.e., the STOP command may	*)
+(* halt it momentarily, but it will be persistent in trying	*)
+(* to run again until complete.					*)
+(*								*)
+(****************************************************************)
+
+  RUN_AUTO_CONSISTENCY_ON_SUP_INIT = TRUE  (* TRUE or FALSE *);
+
+
+
+
+(*************     CUD ENTRY PARAMETERS     *************)
+
+
+
+(********************************************************)
+(*							*)
+(* If INCLUDE_GAN is TRUE, the Global Account Number,	*)
+(* and Account Supervisor control option is included	*)
+(* in all CUD entries:					*)
+(*							*)
+(********************************************************)
+
+(***) INCLUDE_GAN = TRUE (* TRUE or FALSE *);
+
+
+
+(********************************************************)
+(*							*)
+(* If INCLUDE_DISTRICT is TRUE, the DISTRICT is		*)
+(* included in all CUD entries:				*)
+(*							*)
+(********************************************************)
+
+(***) INCLUDE_DISTRICT = TRUE  (* TRUE or FALSE *);
+
+
+
+(********************************************************)
+(*							*)
+(*		Password parameters			*)
+(*							*)
+(********************************************************)
+
+(***) MINIMUM_PASSWORD_SIZE = 0 (* if zero, no minimum size *);
+
+(***) REQUIRE_NONALPHANUMERIC = FALSE (* TRUE or FALSE *);
+
+
+(************************************************************************)
+(*									*)
+(*	If NAME_LEGAL_PASSWORD is ENABLED, users are allowed to have	*)
+(*	a password that is their username.				*)
+(*									*)
+(************************************************************************)
+
+$ENable name_legal_password
+
+
+(********************************************************)
+(*							*)
+(*	Restrict Account Supervisors from assigning	*)
+(* Class 0, Group 0 to a user's access profile:		*)
+(* If CLASS_0_GROUP_0_ASSIGNABLE is TRUE, Account	*)
+(* Supervisor's MAY assign Class 0 and Group 0.		*)
+(*							*)
+(********************************************************)
+
+(***) CLASS_0_GROUP_0_ASSIGNABLE = TRUE;
+
+
+
+(************************************************************************)
+(*									*)
+(*	allow_hosts_on_no_password allows validators to set		*)
+(*	up a user with the no password option and also have the ignore	*)
+(*	host option off, i.e., if enabled, the no password option does	*)
+(*	not force the ignore host option.  It is NOT RECOMMENDED, for	*)
+(*	security purposes, that this flag be enabled.			*)
+(*									*)
+(************************************************************************)
+
+$enable allow_hosts_on_no_password
+
+
+
+(************************************************************************)
+(*									*)
+(*	If VALIDATE_x25_NAMES is ENABLED, Netval handles the validation	*)
+(*	of X.25 interface generated usernames with null passwords.	*)
+(*									*)
+(************************************************************************)
+
+$disable validate_x25_names
+
+
+
+(********************************************************)
+(*							*)
+(*		Define PROGRAMMER name:			*)
+(* programmer name must be a legal name in the CUD.	*)
+(*							*)
+(********************************************************)
+
+(***) PROGRAMMER_NAME_SIZE = 7 (* acTUal no. of characters in name *);
+
+
+(* The username must be in UPPER case, and filled	*)
+(* out to 20 characters.  (USERNAME_TEXT_MAX)		*)
+
+(***) PROGRAMMER_NAME = 'NETPRIV             ';
+
+
+
+(********************************************************)
+(*							*)
+(* If PROGRAMMER_ENTRY_CHANGEABLE is TRUE, the CUD	*)
+(* entry for the name defined above may be changed	*)
+(* as any other Netval name (by the user himself, by	*)
+(* any Account Supervisor in his GAN, and by any	*)
+(* Network Administrator).				*)
+(*							*)
+(* If PROGRAMMER_ENTRY_CHANGEABLE is FALSE, the CUD	*)
+(* entry for the PROGRAMMER_NAME may ONLY be changed	*)
+(* by a user logged in as the programmer.  Setting	*)
+(* PROGRAMMER_ENTRY_CHANGEABLE to FALSE insures that	*)
+(* the programmer's password, name and/or access	*)
+(* profile will not be changed inadvertently by another	*)
+(* validator.						*)
+(* This implies that if the programmer password is	*)
+(* "lost" (i.e., forgotten), in order to change the	*)
+(* programmer's password, PROGRAMMER_ENTRY_CHANGEABLE	*)
+(* must be set to TRUE, and Netval re-compiled and	*)
+(* re-loaded.						*)
+(*							*)
+(********************************************************)
+
+  PROGRAMMER_ENTRY_CHANGEABLE = TRUE;
+
+
+
+(********************************************************)
+(*							*)
+(*	Define OPERATOR name:				*)
+(* The name must be a legal name in the CUD; only the	*)
+(* programmer and the operator may log into the	NVDM	*)
+(* program to reconfigure or initialize the Netval	*)
+(* disk, or to restore files from an Netval ARCHIVE	*)
+(* backup tape.  In addition, if logical volumes are	*)
+(* configured, at start-up time, if logical volumes may	*)
+(* not be initialized automatically, only the PROGRAMMER*)
+(* or the operator may login to initialize the system.	*)
+(*							*)
+(********************************************************)
+
+  NVDM_OPERATOR_NAME_SIZE = 8 (* acutal no. of characters in name *);
+
+(* The username must be in UPPER case, and filled	*)
+(* out to 20 characters.  (USERNAME_TEXT_MAX)		*)
+
+  NVDM_OPERATOR_NAME = 'NVDMOPER            ';
+
+
+
+
+(************************************************************************)
+(*									*)
+(*	If LOGICAL_VOLUMES is ENABLED, Netval attempts to maintain	*)
+(*	duplicate copies of each Netval file.  All disk writes go to	*)
+(*	both copies; all disk reads come from the most efficient copy.	*)
+(*	The disk units are defined in the Netval TYM file.		*)
+(*									*)
+(************************************************************************)
+
+$disable LOGICAL_VOLUMES
+
+
+
+(************************************************************************)
+(*									*)
+(*	If NO_PASSWORD_ONLY_VALIDATORS is ENABLED, no users of password *)
+(*	only level are allowed to login to Netval.			*)
+(*									*)
+(************************************************************************)
+
+$disable NO_PASSWORD_ONLY_VALIDATORS
+
+
+(************************************************************************)
+(*									*)
+(*	If CHANGES_TO_OPER_LOG is ENABLED, information about all CUD    *)
+(*	changes is recorded in the OPER log file.			*)
+(*									*)
+(************************************************************************)
+
+$enable CHANGES_TO_OPER_LOG
+
+
+
+(************************************************************************)
+(*									*)
+(*	UUNSassignable allows users to input the UUN on a NEW USER	*)
+(*	command, rather than assigning the next sequential number	*)
+(*	from the file.  This is not recommended except in special	*)
+(*	circumstances (using UUN for purposes other than accounting).	*)
+(*	Netval MAKES NO CHECKS FOR DUPLICATE UUN ASSIGNMENTS.  In	*)
+(*	addition to assigning UUNS in the NEW USER command, the		*)
+(*	command CHANGE UUN is made available.				*)
+(*									*)
+(************************************************************************)
+
+
+(********************************************************)
+(*							*)
+(*	If UUNSassignable is ENabled, ASSIGN_UUN_RADIX, *)
+(*	ASSIGN_MINIMUM_UUN, ASSIGN_MAXIMUM_UUN and	*)
+(*	ASSIGN_UUN_ON_NEW_USER_AS must be defined	*)
+(*	appropriately.					*)
+(*							*)
+(*	If UUNSassignable is DISabled, ASSIGN_UUN_RADIX,*)
+(*	ASSIGN_MINIMUM_UUN, ASSIGN_MAXIMUM_UUN and	*)
+(*	ASSIGN_UUN_ON_NEW_USER_AS are meaningless.	*)
+(*							*)
+(********************************************************)
+
+$disable UUNSassignable
+
+
+
+(********************************************************)
+(*							*)
+(*	ASSIGN_UUN_RADIX is the radix of the UUN that	*)
+(*	is to be entered by the validator and displayed	*)
+(*	by Netval.  The default is 8 (octal); other	*)
+(*	possible values are 10 (decimal) and 16		*)
+(*	(hexidecimal).					*)
+(*							*)
+(********************************************************)
+
+  ASSIGN_UUN_RADIX = 8;
+
+
+
+(********************************************************)
+(*							*)
+(*	ASSIGN_MINIMUM_UUN is the lowest numeric value	*)
+(*	that Netval will accept when the validator	*)
+(*	enters the UUN.  Theult is 1.		*)
+(*							*)
+(********************************************************)
+
+  ASSIGN_MINIMUM_UUN = 1;
+
+
+
+(********************************************************)
+(*							*)
+(*	ASSIGN_MAXIMUM_UUN is the greatest numeric	*)
+(*	value that Netval will accept when the		*)
+(*	validator enters the UUN.  The default is	*)
+(*	18 bits (maximum value of 262143).  Note that	*)
+(*	the network accounting will handle UUNs of up	*)
+(*	to only 24 bits (maximum value of 16777215).	*)
+(*							*)
+(********************************************************)
+
+  ASSIGN_MAXIMUM_UUN = 262143;
+
+
+
+(********************************************************)
+(*							*)
+(*	If ASSIGN_UUN_ON_NEW_USER_AS is TRUE, the	*)
+(*	validator will be able to input the UUN on a	*)
+(*	NEW USER AS "old-user" command, rather than	*)
+(*	having the UUN be the same as the "old- user";	*)
+(*	if ASSIGN_UUN_ON_NEW_USER is FALSE, the UUN of	*)
+(*	the "old-user" will be used for the new user.	*)
+(*							*)
+(********************************************************)
+
+  ASSIGN_UUN_ON_NEW_USER_AS = FALSE;
+
+
+
+
+(************     Class/Group PARAMETERS     ************)
+
+
+
+(************************************************************************)
+(*									*)
+(*	First the values that must agree with Supervisor values:	*)
+(*									*)
+(************************************************************************)
+
+
+
+(********************************************************)
+(*							*)
+(*	The maximum host number in the network, i.e.,	*)
+(*	the largest value that Netval will accept for	*)
+(*	a host value:					*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The DEFHST argument.)				*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_HOST = 2277;
+
+
+
+(********************************************************)
+(*							*)
+(* MAXIMUM_ORIGIN_HOST is the maximum value that may	*)
+(* be input for a host in a user's access profile	*)
+(* origin.						*)
+(*							*)
+(********************************************************)
+(*							*)
+(* For networks that use a separate range of origin	*)
+(* hosts for accounting purposes (16384. = 4000x):	*)
+(*	MAXIMUM_ORIGIN_HOST = maximum_host + 16384;	*)
+(*							*)
+(* For networks that DO NOT require a separate range	*)
+(* of origin hosts for accounting purposes:		*)
+(*	MAXIMUM_ORIGIN_HOST = maximum_host;		*)
+(*							*)
+(********************************************************)
+
+  MAXIMUM_ORIGIN_HOST = maximum_host + 16384;
+
+
+
+(********************************************************)
+(*							*)
+(*	The maximum node number in the network, i.e.,	*)
+(*	the largest numerical value that Netval will	*)
+(*	accept for a node number.			*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*  (The decimal value of the maximum node number for	*)
+(*   Tymnet-II nodes, specified in the DEFNOD macro.)	*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_NODE = 2277;
+
+
+
+(********************************************************)
+(*							*)
+(*	The number of classes.				*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The first argument of FENCE.)			*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_CLASS MUST BE the same value as	*)
+(*	for Netval version 2.xx (ENable CONVERT_0_TO_1).*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_CLASS = 64;
+
+
+
+(********************************************************)
+(*							*)
+(*	The total class table size IN BYTES:		*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The second argument of FENCE * 256; the	*)
+(*	 default value is 6 * 256. bytes)		*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_CLASS_TABLE_SIZE = 6 * 256;
+
+
+
+(********************************************************)
+(*							*)
+(*	The number of groups.				*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The third argument of FENCE.)			*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_GROUP MUST BE the same value as	*)
+(*	for Netval version 2.xx (ENable CONVERT_0_TO_1).*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_GROUP = 30;
+
+
+
+(********************************************************)
+(*							*)
+(*	The total group table size IN BYTES:		*)
+(*							*)
+(********************************************************)
+(*							*)
+(* THIS VALUE MUST AGREE WITH THE SUPERVISOR VALUE.	*)
+(*	(The fourth argument of FENCE * 256; the	*)
+(*	 default value is 6 * 256. bytes)		*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_GROUP_TABLE_SIZE = 6 * 256;
+
+
+
+(************************************************************************)
+(*									*)
+(*	If PACK_CLASS_AND_GROUP_TABLE is ENABLED, Netval will include	*)
+(*	extra code to attempt to store the Supervisor class and group	*)
+(*	Table in a more compact form than usual.			*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*	If PACK_CLASS_AND_GROUP_TABLE is ENABLED, Netval will build	*)
+(*	a conversion table to attempt to determine classes and groups	*)
+(*	that are sub-sets of other classes and groups.			*)
+(*									*)
+(*	MAXIMUM_GLOBAL_ACCESS must be defined as MAXIMUM_CLASS or	*)
+(*	MAXIMUM_GROUP, whichever is GREATER.				*)
+(*									*)
+(*	MAXIMUM_LIST_INSTANCES_IN_GLOBAL_ACCESS must be defined as the	*)
+(*	greatest number of lists in the definition of all classes OR	*)
+(*	all groups.  The maximum value is:				*)
+(*	    MAXIMUM_GLOBAL_ACCESS * MAXIMUM_LISTS_IN_GLOBAL_ACCESS	*)
+(*	Netval displays a warning message on the SEND command when the	*)
+(*	actual number of instances of lists is approaching this defined	*)
+(*	value.								*)
+(*	This value adds:						*)
+(*		(MAXIMUM_LIST_INSTANCES_IN_GLOBAL_ACCESS * 6) +		*)
+(*		 (MAXIMUM_GLOBAL_ACCESS * 10)				*)
+(*	to Netval memory requirements.					*)
+(*									*)
+(*	If PACK_CLASS_AND_GROUP_TABLE is DISABLED, then			*)
+(*	MAXIMUM_GLOBAL_ACCESS and					*)
+(*	MAXIMUM_LIST_INSTANCES_IN_GLOBAL_ACCESS are meaningless.	*)
+(*									*)
+(************************************************************************)
+
+$disable PACK_CLASS_AND_GROUP_TABLE
+
+  MAXIMUM_GLOBAL_ACCESS = MAXIMUM_CLASS;
+
+  MAXIMUM_LIST_INSTANCES_IN_GLOBAL_ACCESS = 4096;
+
+
+
+(************************************************************************)
+(*									*)
+(*	The following definitions affect the amouNt of disk to be	*)
+(*	allocated for class, group, nodelist and hostlist information.	*)
+(*	Changes to the values require a re-configruation of the disk	*)
+(*	via the NVDM program.						*)
+(*									*)
+(************************************************************************)
+
+
+
+(********************************************************)
+(*							*)
+(*	MAXIMUM_LIST is the total number EACH of	*)
+(*	nodelists and hostlists allocated, i.e., there	*)
+(*	are MAXIMUM_LIST nodelists available for	*)
+(*	definition and MAXIMUM_LIST hostlists available	*)
+(*	for definition.					*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	The size of a single named list, in sectors, on	*)
+(*	the disk, is determined by the following (refer	*)
+(*	to definitions below):				*)
+(*							*)
+(* (MAXIMUM_NAMED_LIST_NAME_SIZE + 4 +			*)
+(*  MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE + 4 + 4 +	*)
+(*  (MAXIMUM_NAMED_LIST_ENTRY * 4) + 4 + 255) div 256	*)
+(*							*)
+(* Note: if INCLUDE_LIST_DESCRIPTIONS is not enabled,	*)
+(*	MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE is zero,	*)
+(*	and decrease the above by 4			*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_LIST MUST BE 66 (ENable		*)
+(*	CONVERT_0_TO_1).				*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_LIST = 66;
+
+
+
+(********************************************************)
+(*							*)
+(*	MAXIMUM_NAMED_LIST_NAME_SIZE is the maximum	*)
+(*	number of characters allocated for the NAME of	*)
+(*	a nodelist or hostlist.  Lists are identified	*)
+(*	by their unique NAME, i.e., the entire name	*)
+(*	must be entered and matched when identifying a	*)
+(*	list; a longer list description (see next def-	*)
+(*	inition) may be stored with the list and output	*)
+(*	when information about the list is displayed.	*)
+(*	The name may be shorter than in previous	*)
+(*	versions (abbreviations, perhaps), for		*)
+(*	ease of input.					*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	This value must be EVEN and greater than zero;	*)
+(*	the recommended range is 4 through 28.		*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_NAMED_LIST_NAME_SIZE MUST BE 28	*)
+(*	(ENable CONVERT_0_TO_1).			*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_NAMED_LIST_NAME_SIZE = 28;
+
+
+(************************************************************************)
+(*									*)
+(*	If INCLUDE_LIST_DESCRIPTIONS is ENABLED, Netval handles node	*)
+(*	and host list DESCRIPTIONS as well as node and host list NAMES.	*)
+(*									*)
+(*	INCLUDE_LIST_DESCRIPTIONS may not be enabled when converting	*)
+(*	from incarnation 0 to incarnation 1 of the Netval disk; unless	*)
+(*	all list and Class/Group information is re-entered.		*)
+(*									*)
+(************************************************************************)
+
+$disable INCLUDE_LIST_DESCRIPTIONS
+
+
+
+(********************************************************)
+(*							*)
+(*	MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE is the	*)
+(*	maximum number of characters allocated for	*)
+(*	the DESCRIPTION of a nodelist or hostlist if	*)
+(*	INCLUDE_LIST_DESCRIPTIONS is enabled.  A list	*)
+(*	description is used to provide additional infor-*)
+(*	mation about a list; it is displayed with the	*)
+(*	list definition and may be changed independantly*)
+(*	of the other list information.			*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	If INCLUDE_LIST_DESCRIPTIONS is ENABLED, this	*)
+(*	value must be EVEN and greater than zero; the	*)
+(*	total of MAXIMUM_NAMED_LIST_NAME_SIZE and	*)
+(*	MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE must not be	*)
+(*	greater than 72.				*)
+(*							*)
+(*	If INCLUDE_LIST_DESCRIPTIONS is DISABLED,	*)
+(*	MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE		*)
+(*	is meaningless.					*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE = 0;
+
+
+
+(********************************************************)
+(*							*)
+(*	MAXIMUM_NAMED_LIST_ENTRY is the maximum number	*)
+(*	of entries possible in a nodelist or hostlist,	*)
+(*	i.e., it is the maximum number of nodes used to	*)
+(*	define a nodelist and the maximum number of	*)
+(*	hosts unsed to define a hostlist.		*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	The recommended MINIMUM value (to fill out	*)
+(*	a single disk sector) is:			*)
+(*	(256 -						*)
+(*	 (MAXIMUM_NAMED_LIST_NAME_SIZE + 16 +		*)
+(*	  MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE))/4	*)
+(*							*)
+(* Note: if INCLUDE_LIST_DESCRIPTIONS is not enabled,	*)
+(*	MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE is zero,	*)
+(*	and change the "16" to a 12			*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_NAMED_LIST_ENTRY MUST BE 114	*)
+(*	(ENable CONVERT_0_TO_1).			*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_NAMED_LIST_ENTRY = 114;
+
+
+
+(********************************************************)
+(*							*)
+(*	MAXIMUM_LISTS_IN_GLOBAL_ACCESS is the maximum	*)
+(*	number of nodelists and/or hostlists used to	*)
+(*	define a "global_access"; a global_access is a	*)
+(*	collection of named lists; also referred to as:	*)
+(*							*)
+(*	    CLASS - a collection of nodelists and/or	*)
+(*		     hostlists				*)
+(*	    GROUP - a collection of hostlists		*)
+(*							*)
+(********************************************************)
+(*							*)
+(*	When converting from incarnation 0 (Netval	*)
+(*	version 2.xx) to incarnation 1 (Netval version	*)
+(*	3.xx) MAXIMUM_LISTS_IN_GLOBAL_ACCESS MUST BE 8	*)
+(*	(ENable CONVERT_0_TO_1).			*)
+(*							*)
+(********************************************************)
+
+(***) MAXIMUM_LISTS_IN_GLOBAL_ACCESS = 8;
+
+
+(************************************************************************)
+(*									*)
+(*	The total size of the NODE HOST LIST FILE is the size of all	*)
+(*	lists plus the size of all global accesses.			*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*		the size of all lists:					*)
+(*									*)
+(* - the size of a single list, to an integral number of disk sectors	*)
+(*   (256 bytes), computed by the sum of (values are given in BYTES):	*)
+(*	name:			MAXIMUM_NAMED_LIST_NAME_SIZE + 4	*)
+	(* The following is included if		*)
+	(* INCLUDE_LIST_DESCRIPTIONS is ENABLED:	*)
+(*	description:		MAXIMUM_NAMED_LIST_DESCRIPTION_SIZE + 4	*)
+(*	count of values:	4					*)
+(*	list of values:		MAXIMUM_NAMED_LIST_ENTRY * 4		*)
+(*	checksum:		4					*)
+(*									*)
+(* - multiplied by the total number of lists (nodelists and hostlists):	*)
+(*	MAXIMUM_LIST * 2						*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*		the size of all global accesses:			*)
+(*									*)
+(* - the size of a single global access, computed by the sum of:	*)
+(*	exception flag:		2					*)
+(*	count of lists:		4					*)
+(*	list representations:	MAXIMUM_LISTS_IN_GLOBAL_ACCESS * 6	*)
+(*									*)
+(* - multiplied by the number of global accesses:			*)
+(*	MAXIMUM_CLASS + MAXIMUM_GROUP					*)
+(*									*)
+(* - plus:								*)
+(*	checksum:		4					*)
+(*									*)
+(* - to an integral number of disk sectors				*)
+(*									*)
+(************************************************************************)
+
+
+
+
+(*************     VALIDATOR DEFINITIONS     ************)
+
+
+(****************************************************************)
+(*								*)
+(*	Validators who may only change their own password:	*)
+(* This is the number of processes that will be set aside for	*)
+(* password only validators, i.e., this number of validators	*)
+(* who may only change their own password may log in at a time.	*)
+(* If NO_PASSWORD_ONLY_VALIDATORS is ENABLED, this is forced	*)
+(* to zero.							*)
+(*								*)
+(****************************************************************)
+
+  NUMBER_OF_PASSWORD_ONLY_VALIDATORS = 1;
+
+
+
+(****************************************************************)
+(*								*)
+(*	This is the maximum number of all other types of	*)
+(* validators, logged in at a time, i.e.:			*)
+(*		ACCOUNT SUPERVISORS				*)
+(*		NETWORK ADMINISTRATORS				*)
+(*		PROGRAMMERS					*)
+(* Netval will always guarantee that there is at least ONE	*)
+(* privileged validator (NETWORK ADMINISTRATOR or PROGRAMMER)	*)
+(* either currently logged in or able to be logged in.  In	*)
+(* other words, if there is no privileged validator logged in,	*)
+(* Netval will save the last available login for a privileged	*)
+(* validator.  This implies that if MAXIMUM_LICENSED_VALIDATORS	*)
+(* is equal to 1, no ACCOUNT SUPERVISORS may ever log in.	*)
+(*								*)
+(* Note also that only one programmer may log in at a time.	*)
+(*								*)
+(****************************************************************)
+
+  MAXIMUM_LICENSED_VALIDATORS = 3;
+
+
+(********************************************************)
+(*							*)
+(* NOTE: the total number of possible validators	*)
+(* defines the total number of terminal circuits	*)
+(* required by the Pascal NUCLEUS, and MUST AGREE	*)
+(* WITH THE Netval SLOT TYM FILE VALUE NUSERS:		*)
+(*							*)
+(* MAXIMUM_VALIDATOR = maximum_licensed_validators +	*)
+(*	number_of_password_only_validators		*)
+(*							*)
+(********************************************************)
+
+
+
+
+(* Re-try, Timeout and Reporting Interval Definitions *)
+
+
+
+(********************************************************)
+(*							*)
+(* For processes that build automatic circuits		*)
+(* (automatic consistency, MUD updates, and class/group	*)
+(* updates), if the circuit build fails, re-try the	*)
+(* build in FIRST_CIRCUIT_RETRY_DELAY seconds.		*)
+(*							*)
+(********************************************************)
+
+  FIRST_CIRCUIT_RETRY_DELAY = 60 (* in seconds *);
+
+
+(********************************************************)
+(*							*)
+(* For the automatic consistency and MUD updates	*)
+(* automatic processes, when circuit building is not	*)
+(* successful, double the retry time (starting with	*)
+(* FIRST_CIRCUIT_RETRY_DELAY) on each failure, up to a	*)
+(* maximum of MAXIMUM_CIRCUIT_RETRY_DELAY.		*)
+(*							*)
+(********************************************************)
+
+  MAXIMUM_CIRCUIT_RETRY_DELAY = (32 * 60) (* in seconds *);
+
+
+
+(********************************************************)
+(*							*)
+(* The maximum number of times to retry to send a block	*)
+(* of data if the Supervisor reports that the checksum	*)
+(* received did not match the one it computed (on a	*)
+(* consistency or a MUD block update).			*)
+(*							*)
+(********************************************************)
+
+  MAXIMUM_UN2_RETRIES = 4;
+
+
+
+(********************************************************)
+(*							*)
+(* Interval to report consistency data (update and	*)
+(* retry totals) in blocks.				*)
+(*							*)
+(********************************************************)
+
+  CONSISTENCY_REPORT_INTERVAL = 32 (* report every 32 blocks *);
+
+
+
+(********************************************************)
+(*							*)
+(* Interval to delay before checking to see if		*)
+(* Class/group Table should be sent to any Supervisors.	*)
+(*							*)
+(* This is also the maximum time of delay if a circuit	*)
+(* fails when trying to send a Class/group Table to a	*)
+(* Supervisor.						*)
+(* Also, for the automatic Class/group Table update	*)
+(* process, when circuit building is not successful	*)
+(* double the retry time (starting with			*)
+(* FIRST_CIRCUIT_RETRY_DELAY) on each failure, up to a	*)
+(* maximum of SEND_TABLE_DELAY.				*)
+(*							*)
+(********************************************************)
+
+  SEND_TABLE_DELAY = 60 (* seconds *);
+
+
+(********************************************************)
+(*							*)
+(* Number of times to retry on TAPE errors.		*)
+(*							*)
+(********************************************************)
+
+  MAXIMUM_TAPE_RETRIES = 16;
+
+
+(************************************************************************)
+(*									*)
+(*	The size of the TAPE_BLOCKING_FACTOR determines the size of the *)
+(*	tape blocks written to tape for the CUD file, the OPER_LOG	*)
+(*	file.								*)
+(*									*)
+(************************************************************************)
+
+  TAPE_BLOCKING_FACTOR = 1 (* in CUD blocks *);
+
+
+
+(************************************************************************)
+(*									*)
+(*	The following flag should be enabled if the DUMP command	*)
+(*	is to be included in the ARCHIVE sub-system commands, otherwise *)
+(*	it should be disabled.						*)
+(*									*)
+(************************************************************************)
+
+$ENable INCLUDE_DUMP
+
+
+
+(************************************************************************)
+(*									*)
+(*	If the INCLUDE_DUMP flag is enabled, the size of 		*)
+(*	ASCII_DUMP_BLOCKING_FACTOR will determine the number of 80	*)
+(*	byte records written per block by the DUMP tape command. 	*)
+(*	There are a minimum of 16 of the 80 byte records per		*)
+(*	block. The blocking factor selected is the multiple of 16	*)
+(*	records per block. 						*)
+(*									*)
+(************************************************************************)
+
+  ASCII_DUMP_BLOCKING_FACTOR = 12;
+
+
+
+(********************************************************)
+(*							*)
+(* The number of minutes that is allowed to pass	*)
+(* with no activity on a user's terminal.  After	*)
+(* TERMINAL_TIMEOUT minutes, the circuit is zapped.	*)
+(* A zero value signifies no time out.			*)
+(*							*)
+(* (Timeout does not apply to programmer validators.)	*)
+(*							*)
+(********************************************************)
+
+  TERMINAL_TIMEOUT = 10 (* in minutes *);
+
+
+
+
+(************************************************************************)
+(*									*)
+(*	The following flag should be enabled if code is being generated	*)
+(*	to convert from a version 2.## Netval disk to a 3.## Netval	*)
+(*	disk.  OTHERWISE, IT SHOULD BE DISABLED.			*)
+(*									*)
+(************************************************************************)
+
+$DISable CONVERT_0_TO_1 (* incarnation 0 --> incarnation 1 *)
+
+
+(************************************************************************)
+(*									*)
+(*	The following is a discussion of disk conversion for Network	*)
+(*	validation programs.						*)
+(*									*)
+(*	The CONVERT command is used to convert a Netval disk from one	*)
+(*	"incarnation," or version, to another.  The incarnation number	*)
+(*	is recorded on the disk in the configuration file starting with	*)
+(*	version 2; Netval will not run if its in-core incarnation	*)
+(*	number differs from the one recorded on the disk.		*)
+(*									*)
+(************************************************************************)
+
+
+(************************************************************************)
+(*									*)
+(*	The following explains the various network validation program	*)
+(*	versions, disk and file information and conversions required:	*)
+(*									*)
+(************************************************************************)
+
+(************************************************************************)
+(*									*)
+(*		Network Validation Programs and disk descriptions:	*)
+(*									*)
+(*	VAL:								*)
+(*		- disk consists of:					*)
+(*		  CUD, CUD parameter and MUD change files		*)
+(*									*)
+(*	Netval Version 1.xx:						*)
+(*		- disk consists of:					*)
+(*		  CUD, CUD parameter, (node/host list) Class/group	*)
+(*		  definition, Class/group table and MUD change file	*)
+(*									*)
+(*	Netval Version 2.xx:						*)
+(*		- disk "incarnation 0"					*)
+(*		- disk consists of:					*)
+(*		  CUD, CUD parameter, (node/host list) Class/group	*)
+(*		  definition, Class/group table, MUD change,		*)
+(*		  configuration, and operator log files			*)
+(*									*)
+(*	Netval Version 3.xx:						*)
+(*		- disk "incarnation 1"					*)
+(*		- disk consists of:					*)
+(*		  CUD, CUD parameter, (node/host list) Class/group	*)
+(*		  definition, Class/group table, MUD change,		*)
+(*		  configuration, and operator log files			*)
+(*		- differences from version 2 disk format:		*)
+(*		  - the configuration file:				*)
+(*		      additional fields are defined			*)
+(*		  - MUD change file:					*)
+(*		      additional fields are defined			*)
+(*		  - (node/host list) Class/group definition file:	*)
+(*		      fields are expanded, so file is larger; if the	*)
+(*		      INCLUDE_LIST_DESCRIPTIONS parameter is enabled,	*)
+(*		      list descriptions are stored			*)
+(*									*)
+(************************************************************************)
+
+
+(************************************************************************)
+(*									*)
+(*	In order to use version 3.xx of Netval, successive conversions	*)
+(*	must be made, i.e., to convert from Netval, version 1.xx, first	*)
+(*	NVDM version 1.xx must be used to convert the Netval disk to	*)
+(*	incarnation 0, then NVDM version 2.xx must be used to convert	*)
+(*	the disk from incarnation 0 to incarnation 1.			*)
+(*									*)
+(************************************************************************)
+
+(************************************************************************)
+(*									*)
+(*	To convert from VAL to version 3.xx...				*)
+(*									*)
+(*	The disk must first be converted to incarnation 0, then to	*)
+(*	incarnation 1 as follows:					*)
+(*									*)
+(*	1. The CONVERT command in NVDM, version 1.xx, is used to	*)
+(*	   convert a VAL disk to a Netval disk, incarnation 0; when	*)
+(*	   the user is asked:						*)
+(*									*)
+(*				CONVERT FROM VAL?			*)
+(*									*)
+(*	   The answer should be "Yes".  In this case, the command does	*)
+(*	   the following:						*)
+(*		- the entire CUD is scanned, and dates are converted to	*)
+(*		  Netval format dates					*)
+(*		- the checksum is recomputed for the CUD parameter file	*)
+(*		- new configuration, operator log, node_host files	*)
+(*		  are written						*)
+(*		- the MUD change file is cleared			*)
+(*									*)
+(*	2. The CONVERT command in NVDM, version 2.xx, is used to	*)
+(*	   convert an incarnation 0 disk to an incarnation 1 disk; it	*)
+(*	   does the following:						*)
+(*		- the entire CUD is scanned, checksums are recomputed	*)
+(*		  to use the faster, more efficient engine checksum	*)
+(*		- new configuration file is written			*)
+(*		- new operator log file is written at its re-computed	*)
+(*		  location, with checksums added to each record		*)
+(*		- the node_host file is converted to include a header	*)
+(*		  list descriptions (if INCLUDE_LIST_DESCRIPTIONS is	*)
+(*		  enabled), counts of pertinent information, full word	*)
+(*		  values, and checksums					*)
+(*									*)
+(************************************************************************)
+
+(************************************************************************)
+(*									*)
+(*	To convert from Netval version 1.xx to version 3.xx...		*)
+(*									*)
+(*	The disk must first be converted to incarnation 0, then to	*)
+(*	incarnation 1 as follows:					*)
+(*									*)
+(*	1. The CONVERT command in NVDM, version 1.xx, is used to	*)
+(*	   convert a VAL disk to a Netval disk, incarnation 0; when	*)
+(*	   the user is asked:						*)
+(*									*)
+(*				CONVERT FROM VAL?			*)
+(*									*)
+(*	   The answer should be "No".  In this case, the command does	*)
+(*	   the following:						*)
+(*		- the checksum is recomputed for the CUD parameter file	*)
+(*		- new configuration, operator log files are written	*)
+(*		- the node_host file is checked and names are converted	*)
+(*		- the MUD change file is cleared			*)
+(*									*)
+(*	2. The CONVERT command in NVDM, version 2.xx, is used to	*)
+(*	   convert an incarnation 0 disk to an incarnation 1 disk;	*)
+(*	   refer to step 2. in previous section for details.		*)
+(*									*)
+(************************************************************************)
+
+(************************************************************************)
+(*									*)
+(*	To convert from Netval version 2.xx to version 3.xx...		*)
+(*									*)
+(*	1. The CONVERT command in NVDM, version 2.xx, is used to	*)
+(*	   convert an incarnation 0 disk to an incarnation 1 disk;	*)
+(*	   refer to step 2. in previous section for details.		*)
+(*									*)
+(************************************************************************)
+
+
+(************************************************************************)
+(*									*)
+(*			      NOTES					*)
+(*									*)
+(*    - after a CONVERT command, the Netval SEND command should be used	*)
+(*	to regenerate a new Class/group table				*)
+(*									*)
+(*    - the clearing of the MUD change file consists of clearing the	*)
+(*	"MUD update EOF," "Class and Group table last created," and	*)
+(*	"Scheduled consistency period;" in addition, for each		*)
+(*	previously defined Supervisor, the "pointer" is set to zero,	*)
+(*	the "MUD updated", "Class and Group update" and historical	*)
+(*	consistency information are cleared.				*)
+(*									*)
+(************************************************************************)
+
+    4(C$š
