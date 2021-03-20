@@ -1,0 +1,419 @@
+Received: from tymix.Tymnet.COM by F74.Tymnet.COM; Fri, 28 Apr 89 23:19:06 PDT
+Received: from antares-bb.Tymnet.COM by tymix.Tymnet.COM (5.61/1.34) id
+	AA10717; Fri, 28 Apr 89 23:14:35 -0700
+Received: by antares.Tymnet.com (3.2/SMI-3.2) id AA01119; Fri, 28 Apr 89
+	23:12:17 PDT
+Return-path: <jms@antares.Tymnet.COM> 
+From: jms@antares.Tymnet.COM (Joe Smith) 
+Date: Fri, 28 Apr 89 23:12:17 PDT 
+To: jms@f74.Tymnet.com 
+Message-id: <8904290612.AA01119@antares.Tymnet.com> 
+Subject: comp.sys.isis 
+
+Path: antares!tymix!oliveb!apple!bloom-beacon!tut.cis.ohio-state.edu!purdue!mailrus!cornell!ken
+From: ken@gvax.cs.cornell.edu (Ken Birman)
+Newsgroups: comp.sys.isis
+Subject: An ISIS blurb (and a comment on the name of the system)
+Message-ID: <27301@cornell.UUCP>
+Date: 27 Apr 89 16:12:56 GMT
+Sender: nobody@cornell.UUCP
+Reply-To: ken@cs.cornell.edu (Ken Birman)
+Distribution: comp
+Organization: Cornell Univ. CS Dept, Ithaca NY
+Lines: 394
+
+This is in response to a request that I received immediately
+after creation of the group and a posting regarding the name
+of the system.
+
+The request was that I repost the basic "isis release" blurb
+for anyone who might be interested in subscribing to this newsgroup
+but unaware of just what the ISIS toolkit does.  The blurb follows.
+
+With regard to the name ISIS, our group has existed as an academic
+project funded by DARPA for about 6 years now, during which we have
+published extensively on a system called the "ISIS Toolkit".
+We named the project (which is concerned with fault-tolerance)
+after the Egyptian Goddess Isis, who brought Osiris back to
+life after he was torn apart by Seth in an epic battle.  The ISIS
+Toolkit doesn't go quite as far, but it can be a pretty powerful
+facility nonetheless.
+
+This newgroup was established because we now have quite a few
+users, 200 at last count, and this has created pressure for a forum
+within which suggestions, bug fixes, user-developed software, etc.
+could be exchanged.  The group was created after the usual discussion
+period and vote in news.groups.
+
+It is true that INTEL has an operating system by the same name,
+and presumably a trademark on the ISIS name.  However, we know
+of no trademark on the "ISIS Toolkit", and in any case ISIS is
+not a commercial product -- the source is in the public domain.
+INTEL has never asked us to cease using the name, and we think
+it is fairly clear that our system has nothing to do with the
+INTEL ISIS OS.  Hopefully, INTEL won't decide to take action now!
+At any rate, we make a real effort not to use the name ISIS in a
+way that might confuse people.
+
+Ken Birman
+
+--- standard isis blurb ---
+
+This is to announce the availability of a public distribution  of
+the  ISIS  System,  a  toolkit for distributed and fault-tolerant
+programming.  The initial version of ISIS runs on  UNIX  on  SUN,
+DEC,  GOULD,  and  HP  systems, although ports to other UNIX-like
+systems are planned for the future.  No kernel changes are needed
+to support ISIS; you just roll it in and should be able to use it
+immediately.  The current implementation of ISIS performs well in
+networks of up to about 100-200 sites.
+
+
+--- Who might find ISIS useful? ---
+
+You will find ISIS useful if you  are  interested  in  developing
+relatively sophisticated distributed programs under UNIX (eventu-
+ally, other systems too).  These include programs that distribute
+computations over multiple processes, need fault-tolerance, coor-
+dinate activities  underway  at  several  places  in  a  network,
+recover  automatically from software and hardware crashes, and/or
+dynamically reconfigure while maintaining some  sort  of  distri-
+buted  correctness  constraint at all times.  ISIS is also useful
+in building certain types of distributed real time systems.
+
+Here are examples of problems to which ISIS has been applied:
+
+   o On the factory floor, we  are  working  with  an  industrial
+     research  group  that is using ISIS to program decentralized
+     cell controllers.  They need to arrive at a modular, expand-
+     able, fault-tolerant distributed system.  ISIS makes it pos-
+     sible for them to build such a system without a huge invest-
+     ment  of  effort.  (The ISIS group also working closely with
+     an automation standards consortium called  ANSA,  headed  by
+     Andrew Herbert in Cambridge).
+
+   o As part of a network file system, we built an  interface  to
+     the  UNIX  NFS (we call ours the "RNFS") that supports tran-
+     sparent file  replication  and  fault-tolerance.   The  RNFS
+     speaks NFS protocols but employs ISIS internally to maintain
+     a consistent distributed state.  For  most  operations,  the
+     RNFS  performance is at worst 50-75% of that of a normal NFS
+     -- despite supporting file replication and fault-tolerance.
+
+   o A parallel "make" program.  Here, ISIS  was  used  within  a
+     control  program that splits up large software recompilation
+     tasks  and  runs  them  on  idle  workstations,   tolerating
+     failures  and  dynamically  adapting  if  a  workstation  is
+     reclaimed by its owner.
+
+   o In a hospital, we have looked at using ISIS to manage repli-
+     cated data and to coordinate activities that may span multi-
+     ple machines.  The problem here is  the  need  for  absolute
+     correctness:  if a doctor is to trust a network to carry out
+     orders that might impact on patient health, there is no room
+     for  errors due to race conditions or failures.  At the same
+     time, cost considerations argue for distributed systems that
+     can  be  expanded  slowly  in  a fully decentralized manner.
+     ISIS addresses both of these issues: it makes it far  easier
+     to  build  a reliable, correct, distributed system that will
+     manage  replicated  data  and  provide  complex  distributed
+     behaviors.  And, ISIS is designed to scale well.
+
+   o For programming numerical algorithms.  One group at  Cornell
+     used  ISIS  to  distribute  matrix  computations  over large
+     numbers of workstations.  They did this because the worksta-
+     tions were available, mostly idle, and added up to a tremen-
+     dous computational engine.
+
+   o In a particle physics experiment.  We  are  talking  to  one
+     group that hopes to use ISIS to implement a distributed con-
+     trol program.  It will operate data collection devices, farm
+     out  the  particle  track  calculations  onto lightly loaded
+     workstations, collect the results,  and  adapt  to  failures
+     automatically  by reconfiguring and shifting any interrupted
+     computation to an operational machine.
+
+The problems above are characterized by several features.  First,
+they  would all be very difficult to solve using remote procedure
+calls or transactions against some shared  database.   They  have
+complex,  distributed  correctness constraints on them: what hap-
+pens at site "a" often requires a coordinated action at site  "b"
+to  be  correct.   And,  they do a lot of work in the application
+program itself, so that the ISIS communication mechanism  is  not
+the bottleneck.
+
+If you have an application like this, or are interested in taking
+on  this  kind  of  application,  ISIS  may be a big win for you.
+Instead of investing resources in building an environment  within
+which  to  solve  your application, using ISIS means that you can
+tackle the application immediately,  and  get  something  working
+much faster than if you start with RPC (remote procedure calls).
+
+
+--- What ISIS does ---
+
+The ISIS system has been under development for several  years  at
+Cornell  University.   After  an  initial  focus on transactional
+"resilient objects", the emphasis shifted in 1986  to  a  toolkit
+style  of  programming.   This approach stresses distributed con-
+sistency in applications that  manage  replicated  data  or  that
+require  distributed  actions  to  be taken in response to events
+occurring in the system.  An "event" could be a user request on a
+distributed service, a change to the system configuration result-
+ing from a process or site failure or recovery, a timeout, etc.
+
+The ISIS toolkit uses a subroutine call style  interface  similar
+to  the interface to any conventional operating system.  The pri-
+mary difference, however, is  that  ISIS  functions  as  a  meta-
+operating  system.   ISIS system calls result in actions that may
+span multiple processes and machines in the  network.   Moreover,
+ISIS  provides  a  novel  "virtual  consistency"  property to its
+users.  This property makes it easy to build  software  in  which
+currently  executing processes behave in a coordinated way, main-
+tain replicated data, or otherwise satisfy a system-wide correct-
+ness  property.   Moreover,  virtual synchrony makes even complex
+operations look atomic,  which  generally  implies  that  toolkit
+functions  will  not  interfere  with  one another.  One can take
+advantage of this to develop distributed ISIS software in a  sim-
+ple  step-by-step style, starting with a non-distributed program,
+then adding  replicated  data  or  backup  processes  for  fault-
+tolerance  or higher availability, then extending the distributed
+solution to support dynamic reconfiguration, etc.  ISIS  provides
+a  really  unique style of distributed programming -- at least if
+your distributed computing problems run up against the issues  we
+address.   For  such  applications, the ISIS programming style is
+both easy and intuitive.
+
+ISIS is really intended for, and is good at, problems  that  draw
+heavily  on  replication of data and coordination of actions by a
+set of processes that know about one  another's  existence.   For
+example,  in  a factory, one might need to coordinate the actions
+of a set of machine-controlled drills at  a  manufacturing  cell.
+Each  drill  would  do  its  part of the overall work to be done,
+using a coordinated  scheduling  policy  that  avoids  collisions
+between  the  drill heads, and with fault-tolerance mechanisms to
+deal with bits breaking.  ISIS is ideally suited to solving prob-
+lems  like  this  one.  Similar problems arise in any distributed
+setting, be it local-area network software for the  office  or  a
+CAD  problem,  or  the  automation of a critical care system in a
+hospital.
+
+ISIS is not intended for transactional database applications.  If
+this  is  what  you  need, you should obtain one of the many such
+systems that are now available.  On the other hand, ISIS would be
+useful  if  your  goal  is to build a front-end in a setting that
+needs databases.  The point is that  most  database  systems  are
+designed  to  avoid interference between simultaneously executing
+processes.  If your application also  needs  cooperation  between
+processes  doing  things  concurrently at several places, you may
+find this aspect hard to solve  using  just  a  database  because
+databases  force  the  interactions to be done indirectly through
+the shared data.  ISIS is good for solving this kind of  problem,
+because  it  provides  a direct way to replicate control informa-
+tion, coordinate the actions of the front-end processes,  and  to
+detect and react to failures.
+
+ISIS itself runs as a user-domain program on  UNIX  systems  sup-
+porting  the  TCP/IP protocol suite.  It currently is operational
+on SUN, DEC, GOULD and HP versions of UNIX.  A  MACH  version  is
+now running at Cornell and will be released later this spring, as
+will a FORTRAN-ISIS interface and a port to the APOLLO UNIX.  And,
+a LISP-ISIS interface (from Allegro) is now being tested and will
+be included into ISIS release V1.2 (planned for May 1989).
+
+The actual set of tools includes the following:
+
+   o High performance mechanisms supporting lightweight tasks  in
+     UNIX,  a  simple message-passing facility, and a very simple
+     and  uniform  addressing  mechanism.   Users  do  not   work
+     directly  with things like ports, sockets, binding, connect-
+     ing, etc.  ISIS handles all of this.
+
+   o A process "grouping" facility, which  permits  processes  to
+     dynamically  form and leave symbolically-named associations.
+     The system serializes changes  to  the  membership  of  each
+     group: all members see the same sequence of changes.  Groups
+     names can be used as a location-transparent address.
+
+   o A suite of  broadcast  protocols  integrated  with  a  group
+     addressing  mechanism.   This  suite  operates in a way that
+     makes it look as if all broadcasts are received  "simultane-
+     ously"  by  all  the members of a group, and are received in
+     the same "view" of group membership.
+
+   o Ways of obtaining distributed executions.   When  a  request
+     arrives in a group, or a distributed event takes place, ISIS
+     supports any of a variety of execution styles, ranging  from
+     a  redundant computation to a coordinator-cohort computation
+     in which one process takes the requested actions while  oth-
+     ers back it up, taking over if the coordinator fails.
+
+   o Replicated data with 1-copy consistency guarantees.
+
+   o  Synchronization  facilities,  based  on  token  passing  or
+     read/write locks.
+
+   o Facilities for watching a for a process or  site  (computer)
+     to fail or recover, triggering execution of subroutines pro-
+     vided by the user when the  watched-for  event  occurs.   If
+     several  members  of  a  group watch for the same event, all
+     will see it at the same "time" with respect to arriving mes-
+     sages  to  the group and other events, such as group member-
+     ship changes.
+
+   o A facility for joining  a  group  and  atomically  obtaining
+     copies of any variables or data structures that comprise its
+     "state" at the instant before the  join  takes  place.   The
+     programmer who designs a group can specify state information
+     in addition to the state automatically maintained by ISIS.
+
+   o Automatic restart of applications when a  computer  recovers
+     from  a crash, including log-based recovery (if desired) for
+     cases when all representatives of a service fail  simultane-
+     ously.
+
+   o Ways to build transactions or  to  deal  with  transactional
+     files  and  database  systems external to ISIS.  ISIS itself
+     doesn't know about files or transactions.
+
+Everything in ISIS is fault-tolerant.  Our programming manual has
+been  written  in  a tutorial style, and gives details on each of
+these mechanisms.  It includes examples  of  typical  small  ISIS
+applications and how they can be solved.  The distribution of the
+system includes demos, such as the parallel  make  facility  men-
+tioned  above;  this  large  ISIS application program illustrates
+many system features.
+
+To summarize, ISIS provides a broad  range  of  tools,  including
+some  that  require algorithms that would be very hard to support
+in other systems or to implement by hand.  Performance  is  quite
+good:  most  tools require between 1/20 and 1/5 second to execute
+on a SUN 3/60, although the actual  numbers  depend  on  how  big
+processes  groups get, the speed of the network, the locations of
+processes involved, etc.  Overall, however, the system is  really
+quite fast when compared with, say, file access over the network.
+For certain common operations  a  five  to  ten-fold  performance
+improvement  is expected within two years, as we implement a col-
+lection of optimizations.  The system scales well with  the  size
+of  the  network,  and  system overhead is largely independent of
+network size.  On a machine that is not participating in any ISIS
+application, the overhead of having ISIS running is negligible.
+
+
+--- You can get a copy of ISIS in the near future ---
+
+A prototype of ISIS is now fully operational and  is  being  made
+available  to the public.  The version we plan to distribute con-
+sists of a C implementation for UNIX, and has been ported to  the
+SUN  UNIX  system, ULTRIX, the Gould UNIX implementation, and HP-
+UX.  Performance is uniformly good.  A 225 page tutorial and sys-
+tem  manual  containing  numerous  programming  examples  is also
+available.
+
+The remainder of this posting focuses on how to get ISIS, and how
+to get the manual.  Everything is free except bound copies of the
+manual.  Source is included, but the  system  is  in  the  public
+domain, and is released on condition that any ports to other sys-
+tems or minor modifications remain in  the  public  domain.   The
+manual  is  copyrighted  by the project and is available in hard-
+copy form or as a DVI file, with figures available  for  free  on
+request.
+
+
+--- Release schedule ---
+
+ June 1: a BETA release of the system  for  reasonably  sophisti-
+     cated  sites  that can deal with software that will probably
+     still have some bugs.  The system, as of June  1,  will  not
+     scale beyond about 150 sites at one time.
+
+ August 1: a final release of  the  June  1  system  and  a  BETA
+     release  of  a  version containing some performance enhance-
+     ments and some tools that are missing from the  June-1  Beta
+     release  (notably,  an  interface from ISIS to transactional
+     systems like CAMELOT).
+
+
+--- Release strategy ---
+
+We will place a compressed TAR image in a public directory on one
+of our machines and permit people to copy it off using FTP.  Also
+available will be DVI  format  versions  of  our  manual.   Bound
+copies  will  be  available at $10 each.  A package of figures to
+glue into the DVI version will be provided free of charge.
+
+A tape containing ISIS will be provided to a  limited  number  of
+sites  upon  payment of a charge to cover our costs in making the
+tape.  Our resources are limited and we do not wish to do much of
+this.
+
+
+--- Commercial support ---
+
+We are working with a local  company,  ISIS  Distributed  Systems
+Inc.,  to  provide  support services for ISIS.  This company will
+prepare distributions and work to fix  bugs.   Support  contracts
+are  available  for an annual fee; without a contract, we will do
+our best to be helpful but make no promises.  Other services that
+IDS  plans  tovide will include consulting on fault-tolerant
+distributed systems design, instruction on how to work with ISIS,
+bug  identification  and  fixes,  and  contractual joint software
+development projects.  The company is also prepared to port  ISIS
+to   other  systems  or  other  programming  languages.   Contact
+"birman@gvax.cs.cornell.edu" for more information.
+
+
+--- If you want ISIS, let us know ---
+
+Send mail to schiz@gvax.cs.cornell.edu, subject  "I  want  ISIS",
+with electronic and physical mailing details.  We will send you a
+form for acknowledging agreement with the conditions for  release
+of the software and will later contact you with details on how to
+actually copy the system off our machine to yours.
+
+
+--- You can read more about ISIS if you like ---
+
+The following papers and documents are  available  from  Cornell.
+We don't distribute papers by e-mail.  Requests for papers should
+be transmitted to "schiz@gvax.cs.cornell.edu".
+
+  1. Exploiting replication.  K. Birman and T. Joseph.  This is a
+     preprint  of  a  chapter  that will appear in: Arctic 88, An
+     advanced course on operating systems, Tromso,  Norway  (July
+     1988).  50pp.
+
+  2. Reliable broadcast protocols.   T.  Joseph  and  K.  Birman.
+     This  is a preprint of a chapter that will appear in: Arctic
+     88, An advanced course on operating systems, Tromso,  Norway
+     (July 1988).  30pp.
+
+  3. ISIS: A distributed programming  environment.  User's  guide
+     and  reference  manual.   K.  Birman, T. Joseph, F. Schmuck.
+     Cornell University, March 1988.  275pp.
+
+  4. Exploiting virtual synchrony  in  distributed  systems.   K.
+     Birman and T. Joseph.  Proc. 11th ACM Symposium on Operating
+     Systems Principles (SOSP),  Nov.  1987.  12pp.
+
+  5. Reliable communication in  an  unreliable  environment.   K.
+     Birman and T. Joseph.  ACM Transactions on Computer Systems,
+     Feb. 1987.  29pp.
+
+  6. Low cost management of  replicated  data  in  fault-tolerant
+     distributed systems.  T. Joseph and K. Birman.  ACM Transac-
+     tions on Computer Systems, Feb. 1986.  15pp.
+
+We will be happy to provide reprints of these papers.  Unless  we
+get  an  overwhelming  number of requests, we plan no fees except
+for the manual.  We also maintain a mailing list for  individuals
+who  would  like to receive publications generated by the project
+on an ongoing basis.
+
+If you want to learn about the virtual synchrony as  an  approach
+to  distributed computing, the best place to start is with refer-
+ence [1].  If you want to learn more about the ISIS system,  how-
+ever,  start  with the manual.  It has been written in a tutorial
+style and should be easily accessible to anyone familiar with the
+C programming language.
+   :YE”
