@@ -1,0 +1,440 @@
+ 
+ 
+ 
+CHANGE command program logic:
+ 
+0. Find out symbolic slave code for the command from SLVCOD.MAC. For the
+   input items and format of sending bytes can be found from 1POINT for 
+   updating 370 lud, UPDLUD.PLM for updating pdp-10 lud or accounting 
+   data base and NARP codes (VALUPD etc.) for updating 940 lud or cud.
+ 
+1. Create a macro with one entry for each item that the command must input.
+   The last entry is always the comment of a request or non-immediate mode.
+ 
+2. Execute macro EXMMAC to accept, display and write for each item (into
+   request file) that the command must input.
+ 
+3. Send bytes to lud, accounting or cud to update data base.
+ 
+4. If successful, write to TATTLE file then ask is there another change.
+ 
+5. If error, prompt error message. If immediate mode, ask for further change.
+ 
+ 
+The following is a list of points which programmer should pay attention to for
+each CHANGE command:
+ 
+* CHANGE USER PASSW - This command causes immediate update. Password input
+                      only from terminal and is not echoed. The password
+                      must be at least 7 characters long, imbedded with non-
+                      alpha character, not the same as username, no control
+                      character allowed and must be identical with second 
+                      input.
+ 
+* CHANGE USER HOME  - This command causes immediate update, but only for
+                      class 2 group 1 user.
+ 
+* CHANGE USER NETCL - This command causes immediate update. Only CS license
+                      user or Tymnet username HQTECH can run this command. 
+ 
+* CHANGE USER CORE  - When accepting default or maximum core, use macro INSTR
+                      since user may enter 1024k or 2m etc. If only enter a
+                      number then treat as 'k'. Therefore need a conversion
+                      routine to convert characters to decimal.
+ 
+* CHANGE USER IPL   - Note this command is only available for 370 lud.
+ 
+* CHANGE USER VMOPT - Prompt for VM options, accept yes or no from terminal.
+ 
+* CHANGE USER NAME  - This command has to update cud, accounting and lud. If
+                      it fails in updating accounting then put old name back
+                      to cud. Similarly, if is fails in updating lud then put
+                      old name back to cud and accounting. Also note the format
+                      of sending old name and new name in cud, accounting and
+                      lud. Be sure old name is valid on entered host and new
+                      name not exists on cud.
+ 
+* CHANGE USER LANGU - This command used to update accounting data base.
+                      Therefore no need for asking host number. But you have
+                      to check username is valid both in cud and accounting.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+* CHANGE USER CLASS - This command only available for privilege users to
+                      update 370 lud. Note class C cannot be set in this
+                      command.
+ 
+* CHANGE USER CURRE - This command has similar logic as CHANGE USER LANGUAGE.
+ 
+* CHANGE USER SALES - This command used to update accounting data base. Since
+                      salesman code is different by system type, you have to
+                      check username is valid on accounting by system type.
+ 
+* CHANGE USER PRIOR - This command only available for privilege users for
+                      updating 370 lud.
+ 
+* CHANGE USER DISKQ - This command only apply for pdp-10 lud.
+ 
+* CHANGE USER TIMEZ - This command changes timezone on all valid lud's and
+                      all valid ast's. This is done by get all valid hosts
+                      for the user. Then update timezone on the lud one at
+                      a time. If ast changes, also update acctg. record.
+                      Note the format of updating different type of
+                      lud and accounting. Also set daylight saving bit if the
+                      answer is affirmative.
+ 
+* CHANGE USER FOCUS - This command used only by privilege users for updating
+                      370 lud.
+ 
+* CHANGE USER LICEN - This command allow users changing license on lud and mud
+                      (privilege users). Find out the definitions of privilege
+                      bits from 1POINT and SLVCOD.MAC. Note the right shift of
+                      privilege word before sending to mud and pdp10 lud. The
+                      accounting system type has to be obtained so that it
+                      will be tested to indicate the updating is mud, 940, 370
+                      or pdp10 lud. Note colon options are contained in
+                      different word and also need right shift before sending
+                      to the mud. 
+ 
+* CHANGE USER BUDGE - This command is available only for privilege users for
+                      changing users' tru budget on pdp10 lud. To verify the
+                      command actually works, log on host entered in the
+                      command with a username who has wf and ac license, then
+                      run NONAME with LIST USER command.
+ 
+* CHANGE USER CUSTO - This command is available only for privilege users for
+                      changing users' customer number. The change can be made
+                      only if both user and customer belonging to the  same
+                      district. Also note that using different slave programs
+                      for updating Tymshare or Tymnet user's customer number.
+ 
+* CHANGE USER SPOOL - This command has same logic as CHANGE MDISK ADDRESS.
+ 
+* CHANGE MDISK CYCLI - All change mdisk commands are dealing with 370 lud.
+                       Any change command which uses EXMMAC has same logic
+                       structure as this command. The detail specification of
+                       this command will be discussed at the end.
+ 
+* CHANGE MDISK ADDRE - Note the mdisk address will be treated as character
+                       string instead of number.
+ 
+* CHANGE MDISK MODE  - This command has same logic as CHANGE MDISK ADDRESS.
+ 
+* CHANGE MDISK FORMA - This command has same logic as change mdisk address.
+                       To verify this command actually works, log on the
+                       host and username (entered in the command) and type
+                       QUERY SEARCH.
+ 
+ 
+* CHANGE MDISK PASSW - This command has same logic as CHANGE MDISK ADDRESS.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+* CHANGE CUSTO SALES - This command changes salesman number of a customer and
+                       all users under same customer number in accounting.
+                       You have check customer number against accounting by
+                       system type. Compare this command with CHANGE USER
+                       SALES, the major difference is getting ACTSY2 (acct.
+                       system type) from routine FINAST which is used in
+                       routine CHKCUS. But CHKUUN does not need ACTSY2!
+                       All CHANGE CUSTO commands except CHANGE CUSTO INVOICE
+                       must be tested by district and privileged type users.
+                       The test username for district type users is DIST0 which
+                       can only change customers salesman code, etc. in the
+                       same district. All change customer commands for
+                       accounting users will allow entering special ast.
+ 
+* CHANGE CUSTO NAME  - This command has similar logic as CHANGE CUSTO SALESMAN.
+ 
+* CHANGE CUSTO INDUS - This command actually update industry code in the mud!
+                       But you have to verify customer number valid on acctg.
+                       data base of default system type. Also note the format
+                       of sending and getting bytes to mud.
+ 
+* CHANGE CUSTO ADDRE - This command changes customer address only, although the
+                       slave code trying to update both address and attention.
+                       Therefore you have to get attention line before sending
+                       bytes to change address.
+ 
+* CHANGE CUSTO DETAI - This command has similar logic as CHANGE CUSTO SALESMAN,
+                       except prompting for detail options.
+ 
+* CHANGE CUSTO PO    - This command has similar logic as CHANGE CUSTO SALESMAN,
+                       except sending different salve codes for updating P.O.
+                       number, start date, stop date and limit.
+ 
+* CHANGE CUSTO INVOI - This command is used only by  accounting type users to
+                       submit the request and is processed by validation. Note
+                       there is no check of access for CHANGE commands used by
+                       accounting. The program logic is similar as CHANGE CUSTO
+                       SALESMAN.
+ 
+* CHANGE CUSTO ATTEN - This command is used only by  accounting type users to
+                       submit the request and is processed by validation. This
+                       command uses same slave code as change customer address,
+                       therefore you must get address before sending bytes.
+ 
+* CHANGE CUSTO DISTR - This command is used by accounting or district user
+                       or validation with non-immediate mode to create a change
+                       (TYMSHARE or TYMNET) customer district request. This
+                       request then can be examined, approved or typed by
+                       validation. Only CHGDI command can call this command to
+                       perform actual execution. Note that we include Tymnet
+                       (9) in getting accounting system type. The detail speci-
+                       fication of this command will be explained at the end.
+ 
+* CHANGE CUSTO FOCUS - This command is used to change FOCUS bit for a customer
+                       in accounting. Since FOCUS is a 370 software, we assume
+                       the accounting system type is 3, therefore we don't
+                       don't prompt for the system type.
+ 
+* CHANGE TYMUS DAYS  - This command is used to change hold days for a Tymuse
+                       customer. You must verify the input number is a valid
+                       customer number in Tymuse DB. For a district type of
+                       user, he can only change number of hold days for the
+                       customer within the same district, therefore you have
+                       to call FINAST to get default system type then call
+                       CHKCUS to make sure they are belonging to same district.
+ 
+* CHANGE TYMUS CUSTO - This command is used to change Tymuse customer info.
+                       The receiving customer must be a Tymuse customer too.
+                       The destination user's cid must be the same as input cid.
+                       Note the use of two flags: MFLAG and TCFLG of indicating
+                       the data goes to the receiving customer and own user.
+                       (I suspect that UPDLUD does not set TCFLG properly in
+                       the 'List Tymuse Customre' code. Since TCFLG is always
+                       1, even sending TCFLG = 2 in this command!)
+ 
+* CHANGE FOCUS       - This command changes FOCUS bits of all users within same
+                       customer and same host. Since there is no salve program
+                       to make direct update, therefore you have to : 1. list
+                       all users and their hosts for the customer, 2. match
+                       these hosts with the input host and 3. if match, change
+                       FOCUS bit in the lud for that user. Note that you should
+                       check the customer number is valid under input host.
+ 
+* SET TYMUSE - This command is used to set a customer to be a Tymuse customer.
+               The logic is the same as CHANGE TYMUSE CUSTO command except it
+               provides the start date. Also, it does not check to see if the
+               customer is already a Tymuse customer.
+ 
+* SET RESTR  - This command is the same as CHANGE USER PRIORITY except the 
+               range of priority can be any number between 0 and 200.
+ 
+* SET GFD    - This commsnd is used to give user a GFD-only license on both
+               cud and 940 hosts. The only input is user name.
+ 
+* UNSET TYMUSE - This command is used to stop a Tymuse customer. The logic
+                 is similar to CHANGE TYMUSE DAYS command.
+ 
+REMOVE USER  - This command is used to remove a user from the lud. The user
+               entered must be either valid on more than one Tymshare hosts
+               or valid on one Tymshare host and with system 88 as its home
+               host. The cancellation is done by deleting a host for the user 
+               accounting then removing user from lud. If it fails on updating 
+               lud; the last entry in accounting should be reversed. Note
+               that removing user from a pdp10 host will get gan and uun
+               from the circuit (output).
+ 
+CANCEL USER  - This command is used to delete a user from all tymshare systems.
+               You have to cancel user from accounting, lud and mud. If it
+               fails on updating lud or mud, the last entry should be reversed.
+               Note there is no salve program for reversing last entry in 940
+               lud. Note that removing user from a pdp10 lud will get gan and
+               uun from the circuit (output). Also note that if this user is
+               valid in tuserdb, he should be removed from tuserdb too.
+ 
+REMOVE GAN   - This command is used to remove all the users of a gan from the
+               lud. Input are username of desired gan and host on which user 
+               is valid. Both lud and accounting should be updated. However,
+               There is no reverse last lud entry for this command.
+ 
+CANCEL GAN   - This command will remove the entire gan out of Tymshare. There-
+               fore lud, accounting and mud all have to be updated. The logic
+               is similar to  REMOVE GAN.
+ 
+REMOVE DEVIC - This command will remove a device from 370 users. The logic is
+               similar to CHANGE MDISK command.
+ 
+ADD MDISK    - This command is used to add an mdisk to an existing user on 370
+               host. If mdisk address is 191, USRVAL also will prompt for
+               mailing address (5 lines, 40 characters per line). When sending
+               the mailing address, you have to 320 characters, including the
+               control-d at 201st position as the terminate byte.
+ 
+ADD TFSMDISK - This command is used to add an mdisk in Tymshare format to an
+               existing user on 370 host. The program logic is identical to
+               ADD MDISK command, only difference is calling different slave
+               programs. To check this command wroking correctly, logon VAL370
+               then execute the CHKMDISK exec which will tell you mdisk is in
+               TFS (Tymshar File System), IBM or free format.
+ 
+ADD LINK     - This command is used to establish a link between two usernames.
+               Both names must be valid on the input host and belonging to the
+               same district.
+ 
+ADD TIMER    - This command is used to add a special device called Timer for
+               existing 370 user. The program logic is trivial.
+ 
+ADD FREEMDISK- This command is used to add an mdisk with specific pack and 
+               specific cylinder location but do not format this disk. This
+               command has not been tested yet. Program logic is trivial.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Now for an explanation of how 'CHANGE MDISK CYL' works. There are six items
+to input, display and use for execution. There are Host, Username, Mdisk
+address, Number of cyclinders, Packgroup and one line comment (for request
+and non immediate mode).
+ 
+This command first creates a table of input, display and write routines
+for each of above items, the control flags will be set to check privileged
+users for displaying pack group and to check non-immediate mode or request
+for getting/displaying the comment.
+ 
+Next, call EXMMAC to execute these routines:
+ 
+   GETH37 - get 370 host number, check it is a valid 370 host number. If
+            username already input, make sure name is valid on this host.
+   HST1OT - use TYPNUM to display host number.
+   RWH37  - use REQNOT to write host number to a request.
+   GETUSR - use GETUNM to get username, check it is a valid name in cud and
+            host, also make sure the person who running this command having the
+            privilege to access this user.
+   NAMOUT - type out username.
+   RWUSR  - use REQOUT to write username to the request.
+   GETMDI - use INSTR to get mdisk address.
+   MDIOUT - type out mdisk address.
+   RWMDI  - use REQOUT to write mdisk adress to the request.
+   GETCYL - use INNUM to get number of cylinders which must be greater than
+            0 and less than or equal to 884 (the maximum number of cylinders).
+   CYLOUT - type out number of cylinders entered.
+   RWCYL  - write number of cylinders to the request.
+   GETGRP - if regular user assign 0 otherwise get pack group by using INSTR.
+   GRPOUT - type out pack group.
+   RWGRP  - write pack group to the request.
+   GETSCM - get one line comment if is either a request or non-immediate mode.
+   SCMOUT - type out comment.
+   RWSCM  - write comment to the request.
+ 
+After calling above routines, EXMMAC will prompt for changes until get a
+carriage return, whcih will generate a request if it is not an immediate 
+process or a request command.
+ 
+If this is a process command or immediate process then:
+   
+   1. send bytes to lud to change pack group.
+   2. send bytes to lud to change mdisk cyclinders (username, padding byte,
+      mdisk address and number of cyclinders)
+   3. if successful then write to tattle file and prompt for another change.
+   4. if not, type error message, and if is immediate process, prompt for
+      the change of currnput.
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CHANGE CUSTOMER DISTRICT detail specifications:
+ 
+ 1. call EXMMAC to get, display and write system type, customer number and
+    new district. System type will allow inputting 9 for TYMNET customer.
+ 
+ 2. proceed only if input from request file, in other words, the program
+    proceeds if it is called by CHGDI command which isseued by accounting.
+ 
+ 3. prompt for restart; if answer is no then set NUM2 = 0 and go to step 5.
+    Note that you can restart from the middle of a group users under a host
+    or restart from a new host.
+ 
+ 4. ask for number of records last updated and save into NUM2; if this is 
+    a TYMNET customer then go to step 16. If this is TYMSHRE customer then
+    go to step 7.
+ 
+ 5. change customer district in accounting.
+ 
+ 6. if TYMNET customer then go to step 16.
+ 
+ 7. get all hosts number for this customer and save to a table UAHST.
+ 
+ 8. prompt for host number if answer is carriage return the done, otherwise
+    verify the host number against UAHST.
+ 
+ 9. get accounting system type for the host.
+ 
+10. change district for all users under this customer in accounting.
+ 
+11. get username, if get 377 in accumlator 1 then return to step 8.
+ 
+12. assign the sequence number for this user and compare it with NUM2, if
+    less, then back to step 11.
+ 
+13. type sequence number and username.
+ 
+14. change user's district in the lud, skip if system type is 940. Since change
+    user's district on 940 is carried out by pj after user's district in the 
+    mud changed.
+ 
+15. change user's district in the mud, note sending 2 bytes for new district.
+    Return to step 11.
+ 
+16. change district for all users of a TYMNET customer in accounting.
+ 
+17. get username, if get 377 in accumlator 1 then done.
+ 
+18. assign the sequence number to this user and compare it with NUM2, if
+    less, then back to step 17.
+ 
+19. type sequence number and username.
+ 
+20. change user's district in the mud; return to step 17.
+ 
+ 
+CHGDI command: this command only avaliable for user with accounging license.
+The logic of this command is almost identical to PROCESS command except two
+differences:
+ 
+    1. check R.DCH (ready for change customer district) instead of R.RDY.
+    
+    2. turn immediate mode on in the beginning and off at the end. This is
+       setup for using EXMMAC.
+   Cea«
