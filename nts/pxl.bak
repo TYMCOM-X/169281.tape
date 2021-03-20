@@ -1,0 +1,4251 @@
+
+PXL-I FIELD SERVICE DOCUMENT                                     26-MAR-1992
+
+1.  INTRODUCTION.
+
+1.1  OVERVIEW.
+
+The purpose of this document  is to  outline  all  of the areas necessary to
+install,  configure and support  the  PXL hardware.   This  document  is not
+intended  to replace the  PXL Maintenance Manual, but to act as a supplement
+to  the  formal publications.   This document  can  be  found  under the NTS
+on the public network UNIX and PDP systems as follows:
+
+    SUN server:   GEMINI   path:  /home/nts/nts/docs    file:  pxl.doc
+    PDP systems:  (NTS)PXL.DOC
+
+
+    Other On-Line PXL documentation:
+
+       GEMINI path: /home/nts/nts/docs
+
+         file: pxl.cfb              -  CFB 193 Revision 4
+         file: pxl.tech.alert       -  Initial PXL Tech Alert
+         file: pxl.tech.alert.2     -  Second  PXL Tech Alert
+	 file: pxl.v35.tech.alert   -  V35 Board Strapping Tech Alert
+         file: pxl.power.reset.fco  -  FCO on PXL Power Reset  hardware
+         file: pxl.power.backup.fco -  FCO on PXL Power Backup hardware
+
+       PDP username NTS:
+
+         file: pxl.cfb              -  CFB 193 Revision 4
+         file: talert.pxl           -  Initial PXL Tech Alert
+         file: talrt2.pxl           -  Second  PXL Tech Alert
+	 file: v35.pxl		    -  V35 Board Strapping Tech Alert
+         file: reset.pxl            -  FCO on PXL Power Reset hardware
+         file: backup.pxl           -  FCO on PXL Power Backup hardware
+        
+
+This document has thirteen (13) different sections  which are broken down as
+follows:
+
+Section 1, INTRODUCTION, describes the basic PXL architecture,  outlines the
+remaining sections of this document and related documentation.
+
+Section 2, CODE GENERATION, describes  the code  versions required  for  the
+PXL, and a brief description of the TYMFILE changes necessary.
+
+Section 3, CONFIGURATION GUIDELINES, describes the overall PXL configuration
+guidelines (including SIO, SYNC and ASYNC).
+
+Section 4, HARDWARE DESCRIPTIONS, describes each of the  main communications
+option boards and the basic system components.
+
+Section 5, INSTALLATION,  describes the basic PXL installation procedures.
+
+Section 6, PART NUMBERS,  describes all necessary PXL part numbers.
+
+Section 7, CABLE SPECIFICATIONS, describes the PXL cables required for  each
+communication option.
+
+Section 8, LOOPBACK SPECIFICATIONS, describes the loopback options (loopback
+plugs and breakouts).
+
+Section 9, SAMPLE FILES, contains a sample ISIS TYMFILE, the commands  files
+for generating the ISIS kernel and node code nib files, and BITS loading.
+
+Section 10, CRASH CODES, contains the  ISIS  crash codes  and selected  node
+code crash codes.    In addition this section shows the  method for  reading
+the crash table information in the ISIS kernel and application slots.
+
+Section 11, SIO STATUS, contains  an outline for interpreting the SIO status
+areas.
+
+Section 12, TTY LOADABLE FILES, contains  the steps  necessary to create TTY
+loadable files.
+
+Section 13, ECO/FCO QUICK CHECK LIST, contains the current ECO/FCO's as they
+relate to the PXL.
+
+
+
+1.2  RELATED DOCUMENTATION.
+
+   o  PXL Maintenance Manual (NPD DEMM0066.01A)
+   o  PXL Installation Guide CFB (CFB# 193)
+
+   o  PXL Hardware Function Specification, dated 20 November 1990.
+   o  Installation Guide, PXL Systems, by Bob Chen, dated 31 May 1990.
+   o  ISIS Version 13 General External Design Specification
+   o  BITS Version 5.0 External Reference Specification
+   o  XRAY User's Guide
+
+
+
+1.3  PXL ARCHITECTURE.
+
+The  PXL is  designed to  be a phased in replacement for the PICO engine and
+offers  the  same compatibility  as other members of the XL hardware family.
+Because  the  MAC  V  employs  a  different  virtual  to  physical   address
+translation format,  it is  NOT  compatible  with  any  previously  released
+software.  MAC V addressing is a  24-bit address  compared  with  the 20-bit
+address from previous MAC version.
+
+Essentially  the PXL is a repackaging of the Compact XL into a significantly
+smaller  package.  PXL-I has 1 megabyte of memory and communications options
+equivalent  to a  single SIO motherboard, 8 standard sync ports and up to 32
+standard  low speed  async ports depending upon the selected  configuration.
+The PXL utilizes  logic cell  arrays and  surface mount technology to reduce
+real  estate  and  power  consumption.  There  is  NO parity error detection
+circuitry on the PXL-I.
+
+
+2.  CODE GENERATION.
+
+The  MAC  V  structure of  the  PXL  requires  that modified versions of ALL
+supporting code be used to accomodate the expanded MAC V addressing.  In the
+initial offering of the PXL the following versions of code MUST be used:
+
+    o  NAD        version  3.01  serial number 41 or higher
+    o  BITS       version  5.01  serial number 46 or higher
+    o  ISIS       version 13.02
+    o  NODE CODE  version  5.61 or 5.62
+
+    o  ACOM       version  4.05  (use ACOM 4.05 patches)
+
+    o  BBXS       version  7.02  (use BBXS 7.01 patches)
+    o  BDLC       version  2.00
+    o  BPSH       version  3.00
+    o  BPST       version  3.00
+
+    o  CMTI       version  7.05  (use CMTI 7.04 patches)
+    o  CMTI       version 12.03
+
+    o  ISCS       version  6.05  (use ISCS 6.03 or ISCS 6.04 patches)
+    o  ISCS       version  6.40  (PUBLIC network use only)
+
+    o  PBT        version 17.02  (use PBT  17.01 patches)
+    o  PTI        version  7.01  (use PBT   7.00 patches)
+
+    o  PBH        version 17.02  (use PBH  17.01 patches)
+    o  PHI        version  1.01  (use PHI   1.00 patches)
+
+    o  SDLC       version  2.05  (use SDLC  2.05 patches)
+    o  SNA        version  3.04  (use SNA   3.03 patches)
+
+    o  XCOM       version  4.05  (use XCOM   4.03 patches)
+
+
+    o  Standalone Diagnostics (which will run on non-MAC V hardware also):
+
+       o  DCPU    version  4.60
+       o  DMAC    version  7.60
+       o  DMEM    version  4.60
+       o  DSIO    version  4.60
+       o  DSYA    version  6.00
+       o  DSYN    version  4.00
+
+
+    o  ISIS Slot Exercisers (which are MAC V specific only):
+
+       o  SLSIO   version 5.00   (single   LU Slot SIO)
+       o  MLUSIO  version 1.00   (multiple LU Slot SIO)
+       o  SLSYNC  version 2.00
+       o  SLASYN  version 2.00
+       o  SLCOPY  version 1.00
+
+
+  ISIS TYMFILE ADDITIONS:
+
+     o  MACHNS Macro   -  Machine level  definition macro.   The only option
+        currently  implemented is  MAC type.   The  structure  of the MACHNS
+	macro is as follows:
+
+             MACHNS(type,cpu,mac)
+
+	     where
+               type = hardware type  [DEFAULT is ENGINE]
+	              (ENGINE, MINI, MICRO, TSI, PICO,HDLC,HSLCTMI)
+               cpu  = CPU type (CPU2,CPU3 or CPU4)  [DEFAULT is CPU3]
+	       mac  = Relocation hardware (valid only on ENGINE and MINI)
+	              (MAC2, MAC3 or MAC5)   [DEFAULT is MAC2]
+
+        All three options can be included in the macro statement for clarity
+	even  though the  only  one  currently impacting the code is the MAC
+	type.
+
+     o  ZITEL Equate     -  Indicates whether MAC I or greater  is installed
+        on machine.   For MAC V hardware ZITEL  MUST be  set  to  0 or bogus
+	bad MAC set  crashes are possible.   Conditional  assembly  switches
+	within ISIS 13.0x insure that the expanded  MAC register  usage (256
+	registers) is available  but other  areas of  code relating to ZITEL
+	semiconductor  memory is not  included.   The ZITEL equate structure
+	is:
+
+	    ZITEL	EQ	0	: Not required for MAC 5
+
+
+     o  NEWARN Equate  -  Indicates whether the  new  Async  ring  structure
+        and Async connect  I/O  SVC  is  to  be  used.   Default  value is 0
+	(not using the  new async driver/SVC).  A value of 1 enables the new
+	Async code.  The NEWARN equate construct is:
+
+	    NEWARN	EQ	1	: Enable NEW ASYNC structure
+
+        Any async application slot needs to have a corresponding flag set to
+	match the NEWARN equate.  For CONSAT 11.x  this is done by  the flag
+	NEWASY being  set to 0 or 1  according to the  NEWARN value.  CONSAT
+	6.40 REQUIRES  that  NEWARN  be  set  to 1 only.  The current TYMCOM
+	implementation REQUIRES that NEWARN be  set to 0, so the TYMCOM will
+	only work with CONSAT 6.05 and is incompatible with CONSAT 6.40.
+
+     o  SPAM Equate -  Indicates whether the System  Performance and Monitor
+        tool is enabled.  It is not recommended that SPAM be  always enabled
+        as  the  CPU  performance  loses  approximately  3-5% when  SPAM  is
+	enabled.  The SPAM equate construct is:
+
+	    SPAM	EQ	0	: Disable SPAM monitoring tool
+
+     o  EE.BP Equate - Indicates that end-to-end bit array backpressuring is
+        enabled in ISIS.   Most application  slots do not use the TOISIS and
+	FRISIS bits  arrays for  backpressure,  but  some still  so (such as
+	PBT, PBH, and CMT).   It  is recommended  that this equate be set to
+	1  regardless of  the applications  running in the node.  The  EE.BP
+	equate construct is:
+
+            EE.BP	EQ	1	: Enable end-to-end backpressuring
+
+     o  LOG.II Equate - Indicates  that the node is or is not a LOG II node.
+        The ISIS 13.02 default  is 1 indicating a LOG II node,  and  any PXL
+	in a LOG I network  may  have circuit  rebuild problems  unless this
+	equate is set to 0.  The LOG.II equate construct is:
+
+            LOG.II      EQ      0       : Not a LOG II node
+
+     o  SLOT Macro     -  A slot level macro  to  specify  the  SLOT number.
+        The SLOT macro construct is:
+
+	    SLOT(number)
+
+	    where number = is the the slot number
+
+     o  DMAMAP Macro   -  A slot level  macro to  specify  the slot  DMA are
+        which is relocated to low core memory.   This macro is REQUIRED only
+	for slots with DMA (SIO) devices.  The DMAMAP macro construct is:
+
+            DMAMAP(mem)
+
+	    where mem = is the decimal value of Kmemory reserved for DMA.
+
+        This value should  be set  to the  specified amount as determined by
+	the  application  slot generation.   Any  memory  above  the  ACTUAL
+	amount required by  the application  code is  unusable and therefore
+	wasted.   A  basic  rule  of size  estimation is  9Kb per DMA  (SIO)
+	line.
+
+	If  NO DMA is configured  for  an individual  slot the  DMAMAP macro
+	must NOT be included in the slot definition -  a DMAMAP(0) statement
+	will reserve 64Kb of memory for DMA relocation.
+
+        Determining this value can be tricky, but a general rule of thumb is
+	to set this value  as 8*number-of-SIO-lines.  Most applications will
+	specify in the  slot  gen how  much DMA  memory is required, but not
+	all  of them.  Those that specify  the DMA required will print a gen
+	summary outlining the  conventional and DMA memory requirements, but
+	those that  do not  print this  summary (CONSAT 6.40), the amount of
+	memory required  does not  include the DMA estimate.  In general the
+	setting of the slot core size is as follows:
+
+              slot-core-size = conventional-memory  +  dma-memory
+
+        For  node code , the optimal DMA  memory  is  included in the output
+	for the  optimal  memory total,  so the  optimal memory value is the
+	value used for slot-core-size.
+
+
+  ISIS GOODGUY LIST MODIFICATION:
+
+     o  A new license has been added to the goodguy list for ISIS that  will
+        allow a DDT user to issue newly  restricted DDT  commands (ie: Halt,
+	Freeze, Thaw, Boot,  Enter Debug, Leave Debug).  This license is L.L
+	and is  required for  any user to issue the "H" command.   Those DDT
+	users without the L.L license can still issue the ?HALT command.
+
+
+  CODE GENERATION:
+
+  In  addition to  the  above version of code the command line for generating
+  code for the PXL is the following:
+
+      gemini%nad -v -c cmd -m cmd.log
+
+      where
+        -v          = the MAC V switch
+	-c cmd      = the name of the commands file to assemble
+	-m cmd.log  = the name of the file to generate the assembly log into.
+
+  Or the standard "GEN" command may be used with a MAC V flag:
+
+	delta%gen -v
+
+  Application specific parameters required:
+
+    ISIS and Node Code use the MACHNS macro in the tymfile.
+
+    CONSAT 6.40 - uses a MACV equate statement.  If set  to  1  then MAC  V
+      conditional assembly is performed.  Only the NEW async ring structure
+      is supported in CONSAT 6.40,  so NEWARN must be  set to 1 in the ISIS
+      tymfile.  The MACV equate structure is as follows:
+
+		MACV	EQ	1	: MAC V flag
+
+    XCOM 4.05 - only requires the "-v" option during assembly.
+
+    PBT  17.02 - uses a MACV equate statement.  If set  to  1  then  MAC  V
+      conditional assembly is performed.
+
+
+    Check the latest releases of applications code as numerous products are
+    being released or will soon be released with MAC V support.
+
+
+  There is  NO plan  to have  MAC V  code management  be available on the PDP
+  systems.  This is due to  the amount  of work  required to make NAD, MERLIN
+  LOADII and ELF  compatible  with  the  MAC V addressing.  As  a result  all
+  MAC V code management is required to be done under the UNIX umbrella.
+  
+
+  
+CONSOLE LOCKING:
+
+  The  front  console  locking mechanism  is built  into the  console  keypad
+  and is invoked via a 3 key sequence:
+
+       CONSOLE LOCKING:
+
+          BLANK-D-1
+
+       CONSOLE UNLOCKING:
+
+          BLANK-E-1
+
+  Currently  the console  will  initially  comes  up  LOCKED.  Once UNLOCKED
+  any system  reset  (boot or  power recycle)  will cause  the console to be
+  once again LOCKED.
+
+3.  CONFIGURATION GUIDELINES.
+
+The bus slots on the PXL look as follows:
+
+      +---+---+---+---+---+---+---+---+---+---+
+      | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+      +---+---+---+---+---+---+---+---+---+---+
+      
+        |   |  |______________||______________|
+	|   |         |                |
+	|   |         |                |
+	|   |         |                 ----------  NON-DMA expansion
+	|   |          ---------------------------  DMA expansion
+	|    -------------------------------------  Reserved for TTY/V.24
+	 -----------------------------------------  Reserved for SIO MB
+
+
+
+    Slot 0:  PXL-1  requires  that  slot  0  be  reserved  for  the   SIO 
+             Motherboard  card.   PXL-2  will  have the  functionality of
+	     the SIO motherboard  rolled down  to  the  main  motherboard
+	     of the PXL.
+
+    Slot 1:  Reserved for the SCV24 card which contains the multifunction
+             logic and two (2) V.24 ports.  These  V.24 ports can be used
+	     for any application (node code, X.25,  SDLC, etc).   This is
+	     considered one of the 5 DMA capable slots.
+
+    Slot 2 - Slot 5:
+             Are the ONLY  DMA capable  expansion  slots.   These can run
+	     any combination of OCL, V.24, V.35 or SIO ASYNC  cards.  The
+	     restriction is the current SIO motherboard  guidelines.   In
+	     addition, the non-SIO async cards can run in these slots.
+
+    Slot 6 - Slot 9: 
+             Are NON-DMA capable  expansion slots.   These  slots can  be
+	     configured for ASYNC or a MAXIMUM of 8 sync ports.  The sync
+	     ports can ONLY be configured to run in these four slots.
+
+    NOTE:    Bus allocations are configured in PAIRS (for the primary and
+             secondary  option cards - AP/AE and SP/SE).  The PAIR groups
+	     are defined as follows:
+
+		   0 and 1  RESERVED
+	           2 and 3
+		   4 and 5
+		   6 and 7
+		   8 and 9
+
+             When a PRIMARY  card (AP/SP) is installed in EITHER bus slot
+	     of a pair, it will control  the EXPANSION card in the  other
+	     bus  slot of the SAME pair.   An example of this would  be a
+	     configuration were primary and extender card options look as
+	     follows:
+
+                 +---+---+---+---+---+---+---+---+---+---+
+                 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+                 +---+---+---+---+---+---+---+---+---+---+
+		          ------- ------- ------- -------
+                             |       |       |       |
+                             |       |       |        ---  fourth pair
+                             |       |        -----------  third  pair
+                             |        -------------------  second pair
+                              ---------------------------  first  pair
+
+
+                 where
+
+		    OCL in slot 2  
+		    AP  in slot 3     controlls itself only (no AE card)
+
+		    AE  in slot 4     controlled by AP in slot 5
+		    AP  in slot 5
+
+		    AP  in slot 6
+		    AE  in slot 7     controlled by AP in slot 6
+
+		    AE  in slot 8     controlled by AP in slot 9
+                    AP  in slot 9
+
+		 
+	     
+
+
+
+The rule of thumb for hardware configurations (at this time) are as follows:
+
+
+   SYNC:  Maximum of 8 ports (4 on sync primary card, 4 on sync expansion
+          card).  Must be installed in  slots 6-9.   This is the standard
+	  sync available on the engine.  Available at speeds up to 19.2K.
+	  Maximum  sustainable SYNC  speed (aggregate CPS)  is  19200 CPS
+	  (each 19.2K  line has a  value of  2400 CPS  for a  total  of 8
+	  lines  at 19.2K).   The sync  ports for the PXL are designed to
+	  be referenced as the  NON-PRIMITIVE ports  (ports which provide
+	  the full range of signals).  This is the reason for restricting
+	  the  number  of  sync  ports  to 8 as  the  8  configurable are
+	  defined as follows:
+
+
+	      Physical port	Logical Port
+	      -------- ----     ------- ----
+
+	            0		      2
+		    1                 3
+		    2                 6
+		    3                 7
+		    4                10
+		    5                11
+		    6                14
+		    7                15
+
+          Therefore, the NSYNC value in the TYMFILE must be set to 16 if
+	  all 8 sync ports are active.
+
+
+
+   ASYNC: Maximum of 28 ports  (configurable as 4 per primary  card [AP],
+          4 per expansion  card [AE]), or 48 ports [configurable as 8 per
+	  AL8 card).    Can be  installed  in  ANY  slots  (2-9).    This
+	  is the  standard async  available on the engine.   Available at
+	  50-1200  with BAUDR  set to  0 (low  speed)  and  50-4800  with
+	DR set to 2 (high speed).  Maximum sustainable ASYNC thruput
+	  (aggregate CPS)  is  4200-4500 CPS,  with  no more  than  10 PC
+	  file transfers simultaneously.
+
+
+
+   SIO:   Follows CFB 168 (published SIO Configuration Guidelines):
+
+          V.24  lines can be  any  speed up to  19200 BPS (some examples:
+	  4800, 9600, 14400, 19200).   However, the configurations  below
+	  treat all speeds the same!   (Example: You can NOT trade 1 19.2
+	  for 2 9.6 lines.)
+
+          SIO ASYNC lines can be run at any selectable speed (50-9600).
+
+
+          Valid  configurations  are listed in order of priorities.  Pick
+	  one  configuration.
+
+	  THESE GUIDELINES ENCOMPASS  ALL SIO PORTS  (SVC24 PORTS ARE SIO
+	  AND THEREFORE FALL UNDER THESE GUIDELINES).
+
+	  NO OTHER CONFIGURATIONS WILL BE SUPPORTED!
+
+
+	     #1   2x72KB (V.35)
+
+	     #2   3x64KB (V.35)
+
+             #3   4x56KB (V.35)
+
+	     #4   2x72KB (V.35) + 2xV.24
+
+	     #5   2x64KB (V.35) + 4xV.24
+
+             #6   2x56KB (V.35) + 4xV.24
+
+             #7   2x56KB (V.35) + 2xV.24 + 2 MS (OCL),  or
+                  2x56KB (V.35) + 2xV.24
+
+             #8   2x56KB (V.35) + 4 MS (OCL),  or
+                  2x56KB (V.35) + 2 MS (OCL)
+
+             #9   12xV.24,  or
+                  10xV.24,  or
+                   8xV.24
+
+             #10  10xV.24 +  2xASYNC,  or
+                   8xV.24 +  4xASYNC,  or
+                   6xV.24 +  6xASYNC,  or
+                   4xV.24 +  8xASYNC,  or
+                   2xV.24 + 10xASYNC
+
+             #11   6xV.24,  or
+                   4xV.24,  or
+                   2xV.24
+
+             #12   6xV.24 + 2 MS (OCL)
+
+             #13   4xV.24 + 4 MS (OCL)
+
+             #14   2xV.24 + 6 MS (OCL)
+
+             #15   4xV.24 + 2 MS (OCL) + 2xASYNC,  or
+                   2xV.24 + 4 MS (OCL) + 2xASYNC,  or
+                   2xV.24 + 2 MS (OCL) + 4xASYNC
+
+
+
+             #16   8 MS (OCL),  or
+                   6 MS (OCL),  or
+                   4 MS (OCL),  or
+                   2 MS (OCL)
+
+
+             #17   6 MS (OCL) + 2xASYNC,  or
+                   4 MS (OCL) + 4xASYNC,  or
+                   2 MS (OCL) + 6xASYNC
+
+
+             #18  16xASYNC,  or
+                  14xASYNC,  or
+                  12xASYNC,  or
+                  10xASYNC,  or
+                   8xASYNC,  or
+                   6xASYNC,  or
+                   4xASYNC,  or
+                   2xASYNC,  or
+
+
+The rule of thumb for software configurations (at this time) are as follows:
+
+1.  Async rotory node design:
+
+    Maximum Node CPS Rate = 3800 Bytes Per Second (1900 IN + 1900 OUT)
+
+    Standard LOW  speed Async:  28 ports (with AP/AE combinations)
+                                48 ports (with AL8 daughtercards)
+				
+    Standard HIGH speed Async:  28 ports (with AP/AE combinations)
+                                48 ports (with AL8 daughtercards)
+
+    SIO Async:  16 ports
+
+
+    Combination of SIO and STANDARD Async:
+        4 SIO Async ports
+       16 Standard Async ports (high low speed)
+
+
+    All of the above are general numbers, the actual configuration will
+    depend ENTIRELY upon the network connectivity.  NO other interfaces
+    should be configured on the PXL besides the CONSAT.
+
+
+
+
+2.  ISIS Switcher node design:
+
+    Follows  the SIO  configuration guidelines, coupled with  the SYNC
+    configuration maximums.
+
+
+
+
+3.  ISIS Interface node design:
+
+    A reasonable high speed port configuration would seem to be:
+
+	Maximum Number of Async Ports             = 16
+	Maximum Number of SIO-Async Ports         = 4
+	Maximum Number of X.25 Dial-Up Interfaces = 2
+
+
+    A caution here is to insure  that the  CPU  and I/O capacities are
+    not overloaded.  It is possible  to maximize  the I/O and overload
+    the CPU simultaneously.
+
+
+4.  CPS/Packets Per Second:
+
+    The CPS and packets per  second rate  for the  PXL is based on the
+    following ESTIMATES:
+
+       SWITCHER  CPS Rate:  12,000 to 16,000 
+       INTERFACE CPS Rate:   6,000 to  8,000
+
+       Packet Size:         128 bytes
+
+
+       SWITCHER  packets per second =  93-125
+       INTERFACE packets per second =  46- 62
+
+
+    NOTE: These are ESTIMATES as there is no hard and fast performance
+          statistics on the PXL.
+       
+
+
+4.  HARDWARE DESCRIPTION.
+
+4.1  BASIC SYSTEM
+
+PXL characteristics:
+
+  Processor:   32 bit
+  Memory:      1Mb RAM
+  Addressing:  24 bit range
+
+  MTBF:        21,000 hours
+
+  Power Backup:  Up to 48 hours with Power Backup option installed.
+
+  FCC Requirements:  Meets Part 15 of FCC rules for Class A computing
+                     devices.
+
+  Communications Boards:
+
+    o  Asynchronous to 4.8Kb
+    o  Synchronous  to 19.2Kb
+
+    o  SIO V.24 Asynchronous to   9.6Kb
+    o  SIO V.24 Synchronous  to  19.2Kb
+    o  SIO V.35 synchronous  to    72Kb
+    o  SIO OCL               to 162.5Kb (dynamically allocated)
+
+
+  Physical Dimensions:
+
+    Height:    5.5 inches (14.0 cm)
+    Width:    14.5 inches (36.8 cm)
+    Depth:    13.5 inches (34.3 cm)
+    Weight:   25.0 pounds (11.3 kg)
+
+  Model Numbers:
+
+    Domestic:
+
+      PX-1000-01  without Power Backup Module
+      PX-1001-01  with    Power Backup Module
+
+    International:
+
+      PX-1000-02  without Power Backup Module
+      PX-1001-02  with    Power Backup Module
+
+
+  External power:
+
+    Model PX-1000-01 and PX-1001-01
+
+       Voltage:      120 VAC  (90 - 132 VAC)
+       Frequency:    50/60 Hz (47 - 63 Hz)
+       Current:      1.0 Amp
+
+    Model PX-1000-02 and PX-1001-02
+
+       Voltage:      220 VAC  (175 - 264 VAC)
+       Frequency:    50/60 Hz (47 - 63 Hz)
+       Current:      0.5 Amp
+
+    Plug Type:
+
+       Model PX-1000-01 and PX-1001-01:  NEMA 5-15P  6 foot length
+       Model PX-1000-02 and PX-1001-02:  NEMA 6-15P  6 foot length
+       
+
+    The  PXL  should  not  be  connected  to  AC  feeds that contain  heavy
+    inductive motors, heaters, etc. or any device that generates electrical
+    disturbance  that  could  feed  back  into the PXL  (causing  component
+    failures or memory corruption).
+
+
+
+  Environmental:
+
+    Operating temperature:  50 deg F to  90 deg F  ( 10 deg C to 32 deg C)
+    Storage   temperature:  14 deg F to 122 def F  (-10 deg C to 50 deg C)
+
+    Relative humidity:  10-90% non-condensing (maximum change 5% per hour)
+
+    Altitude:  0 to 10000 feet (0 to 3000 meters)
+
+    Heat dissipation:  275 BTU per hour
+
+
+  Compliance Issues:
+
+    FCC Verification "A" Complete
+    UL  Verification Complete
+    ETL Verification Complete
+
+    VDE Verification Complete (Germany)
+    TUV Verification Complete (Germany)
+
+    BS6301  Submitted  (United Kingdom)
+
+    IEC950 Pending
+    CSA Verification Pending
+    
+
+The  power supply  chosen to  operate the  PXL is  an international DC power
+that meets the following compliance requirements:
+
+    o  Safety compliant to EN60950:1988 and VDE 0805/05.90
+    o  EMI compliant VDE 0871-Class B
+    o  UL recognized
+    o  CSR certified
+   
+
+The primary power supply vendor  is POWER  ONE  and  the  PXL supply has the
+following characteristics:
+
+    o  MAP 80-4000 model
+    o  DC power supply 80 watts
+    o  80/110 watts peak power
+    o  Four outputs
+    o  Automatic 110-/220 input selection
+    o  Output good/power fail signal
+    o  Fully regulated, all outputs
+    o  Universal input and output terminations
+
+    o  50 degree ambient convention cooled
+    o  Output:   80/100 Watts
+    o  Input:    90-135 VAC
+                175-264 VAC
+
+    o  Input frequency:  47-63 Hz
+    o  Input current: 90VAC at 80 watts = 2.5 ARMS
+    o  Input power fail trip point:  88.5 V
+
+
+The  PXL has an  optional Power Backup Module  that  is used  in place  of a
+Battery Backup module.  The Power Backup Kit consists of a PCB  with a  bank
+of  18  5.5V,  1F capacitors capable of retaining memory for up to 48 hours.
+The charge time for the Power Backup Module is less than 2 minutes.
+
+
+4.1.1  SIO Port addressing.
+
+All  daughtercards follow  the same  port address method using a 16 position
+dial to set the motherboard port addressing:
+
+    As viewed from the top down:
+
+    +-------------------------------------------------------------------+
+    |       C                                                           |
+    |     +---+                                                         |
+    |   8 |   | 0							|
+    |     +---+								|
+    |       4                                                           |
+    +-------------------------------------------------------------------+
+
+    where:
+
+       0   =  SIO ports addressed as 0,1
+       1   =  SIO ports addressed as 2,3
+       2   =  SIO ports addressed as 4,5
+       3   =  SIO ports addressed as 6,7
+       4   =  SIO ports addressed as 8,9
+       5   =  SIO ports addressed as A,B
+       6   =  SIO ports addressed as C,D
+       7   =  SIO ports addressed as E,F
+       8-F =  SIO ports DISABLED
+
+
+    NOTE:  Any SIO port pair not in use should have the address switch
+           set to one of the DISABLED positions (8-F).
+
+
+
+
+STAKE JUMPER PIN ORIENTATION.
+
+The  orientation  of pin 1 on ALL  stake jumpers can  be confusing,  but a
+quick check on the  soldered side of  the PCB will  reveal the location of
+pin 1 by the SQUARE solder connection.
+
+
+
+
+TERMINOLOGY
+
+For  the following  sections the  enabling or disabling of options can be
+referenced as follows:
+
+
+     DISABLED  =  OPEN    =  OFF  =  0
+     ENABLED   =  CLOSED  =  ON   =  1
+
+
+
+
+
+
+
+4.1.2  PXL Basic System.
+
+The  PXL basic  system consists of three main components: PXL motherboard,
+SIO motherboard and SCV24 card.
+
+The  PXL  motherboard  is  the  equivalent  of  the  standard  engine CPU,
+ROM & I/O,  MAC and  MEMORY boards combined.   The PXL is functionally the
+same as a CPU II and MAC III at 10 Mhz.
+
+The SIO motherboard which resides in  dedicated slot 0 of the PXL bus is a
+full size  card (3.5 inches high by 10.00 inches  long) and  contains  the
+equivalent of a standard engine SIO motherboard.
+
+The  SCV24 is also a full size card (3.5 inches high by 10.00 inches long)
+and is the equivalent of the standard engine Multifunction card and an old
+style SIO V.24 daughtercard (2 V.24 ports).
+
+All other options cards, except the SP (Sync Primary) are half size  cards
+(3.5 inches high by 5.5 inches long).   The  SP card is a  full size  card
+measuring 3.5 inches high by 10.00 inches long.
+
+
+4.1.3  SCV24  [470359-001]
+
+The SCV24 combines the standard engine Multifunction card with a Old Style
+SIO  V.24 two (2) port  daughtercard.   
+
+Pin 1 on ALL stake jumpers can be determined by looking on the solder side
+of the SCV24 and finding the SQUARE solder joint which is pin 1.
+
+A simplified diagram of the SCV24 daughtercard is as follows:
+
+   	           SCV24 CARD   [470359-001]          
+
+     +---------------------------------------------------+  
+    |                                                 BT -|-
+    |                         SW2   E  E  E  S  E  E     -| 
+    |                               1  4  4  3  7  1  TTY | 
+    |                               2  4  3              -| 
+    |                                                     | 
+    |                                                    -| 
+    |                                                 x1  | 
+    |                                                    -| 
+    |                                                     | 
+    |                                                    -| 
+    |                                                 x0  |   
+    |                                                    -| 
+    |                                                     |
+     ---------------------------                       ---  
+                                |_____________________|    
+
+     where:
+
+       SW2 =  Multifunction configuration 8 position DIP switch:
+
+                Switch 1:  BRG Interrupter Enabled
+                           OPEN   =  Disabled 
+		           CLOSED =  Enabled  [DEFAULT]
+                Switch 2:  Terminal break key status enabled  
+                           OPEN   =  Disabled  [DEFAULT]
+		           CLOSED =  Enabled
+                Switch 3:  Multifunction logic enabled 
+                           OPEN   =  Disabled
+		           CLOSED =  Enabled  [DEFAULT]
+                Switch 4:  Watchdog Timer
+                           OPEN   =  Disabled [DEFAULT]
+		           CLOSED =  Enabled  
+                Switch 5:  BRG Interrupter Priority Level [3600/14400]
+                           OPEN   =  ATN00  [DEFAULT]
+		           CLOSED =  ATN20
+                Switch 6:  BRG Interrupter Frequency (Hz) [N/T Jumper]
+                           OPEN   =   3600  [BAUDR = 0]   [DEFAULT]
+		           CLOSED =  14400  [BAUDR = 2]
+                Switch 7:  Reserved for future use
+                           OPEN   =  
+		           CLOSED =  [DEFAULT]
+                Switch 8:  Reserved for future use
+                           OPEN   =
+			   CLOSED =  [DEFAULT]
+
+
+       E12 =  TTY port terminal baud rate (4 stake jumper) where
+
+               1-2 OPEN   3-4 OPEN   5-6 OPEN   7-8 OPEN   Baud rate = 9600
+               1-2 CLOSED 3-4 OPEN   5-6 OPEN   7-8 OPEN   Baud rate = 4800
+               1-2 OPEN   3-4 CLOSED 5-6 OPEN   7-8 OPEN   Baud rate = 2400
+               1-2 OPEN   3-4 OPEN   5-6 CLOSED 7-8 OPEN   Baud rate = 1200
+               1-2 OPEN   3-4 OPEN   5-6 OPEN   7-8 CLOSED Baud rate =  300
+
+                 CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E44 =  Port 1 clock speed selector:
+
+                1-2 OPEN   3-4 OPEN   Clock speed =  2400
+		1-2 CLOSED 3-4 OPEN   Clock speed =  4800
+		1-2 OPEN   3-4 CLOSED Clock speed =  9600
+		1-2 CLOSED 3-4 CLOSED Clock speed = 19200
+
+                 CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E43 =  Port 0 clock speed selector (same options as E44).
+
+       S3  =  Port addressing dial switch (see Section 4.1.1 above).
+
+       E7  =  Clock selection (port 0 and port 1) selector:
+
+               1-2  Port 0 Transmit clock direction
+	       3-4  Port 0 Receive  clock direction
+	       5-6  Port 1 Transmit clock direction
+	       7-8  Port 1 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       E1  =  Watchdog timer status jumper (2 stake jumper) where
+
+               1-2 OPEN   Watchdog timer DISABLED
+	       1-2 CLOSED Watchdog timer ENABLED
+
+      	       CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       BT  =  Snap action boot switch.
+       TTY =  Console TTY port
+
+       x0  =  Port  0  RJ45 connector
+       x1  =  Port  1  RJ45 connector           
+
+
+
+NOTE:  There are  two items  concerning the WATCHDOG timer (SW2-switch 4 and
+       E1 jumper).   Switch SW2-4  should  ALWAYS be disabled (OFF or OPEN).
+       The  E1  jumper   really  determines  the  watchdog  timer  function.
+       If SW2-switch 4 is CLOSED (or ON) pushing the INI button on the front
+       console will  cause  the PXL to go into BOOT, regardless of  what the
+       E1 jumper is set to.  SW2-switch 4 should ALWAYS be OPEN or (OFF).
+
+4.2  OPTION CARDS.
+
+4.2.1  SV24  [470364-001]
+
+The  SV24 PXL daughtercard is  the equivalent of two (2) SIO V.24  OLD-STYLE
+daughtercards on the  standard engine.  The SV24 provides 4 ports capable of
+running speeds up to 19.2Kb.
+
+Pin  1 on ALL  stake jumpers can be determined by looking on the solder side
+of the SC24 and finding the SQUARE solder joint which is pin 1.
+
+A simplified diagram of the SV24 daughtercard is as follows:
+
+	      SV24  REVISION B   [470364-001]
+
+	       +---------------------------+  
+              |                             | 
+              |   S S  E E E E     E E     -|
+              |   1 2  5 6 7 8     2 1   x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+
+    where:
+
+       S1  = Port addressing dial switch for port 0 and 1 (see Section 4.1.1)
+       S2  = Port addressing dial switch for port 2 and 3 (see Section 4.1.1)
+
+       E5 =  Port 0 clock speed selector:
+
+                1-2 OPEN   3-4 OPEN   Clock speed =  2400
+		1-2 CLOSED 3-4 OPEN   Clock speed =  4800
+		1-2 OPEN   3-4 CLOSED Clock speed =  9600
+		1-2 CLOSED 3-4 CLOSED Clock speed = 19200
+
+                CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E6 =  Port 1 clock speed selector (same options as E5).
+       E7 =  Port 2 clock speed selector (same options as E5).
+       E8 =  Port 3 clock speed selector (same options as E5).
+
+       E2  =  Clock selection (port 2 and port 3) selector:
+
+               1-2  Port 2 Transmit clock direction
+	       3-4  Port 2 Receive  clock direction
+	       5-6  Port 3 Transmit clock direction
+	       7-8  Port 3 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       E1  =  Clock selection (port 0 and port 1) selector:
+
+               1-2  Port 0 Transmit clock direction
+	       3-4  Port 0 Receive  clock direction
+	       5-6  Port 1 Transmit clock direction
+	       7-8  Port 1 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       x0  =  Port 0 RJ45 connector
+       x1  =  Port 1 RJ45 connector
+       x2  =  Port 2 RJ45 connector
+       x3  =  Port 3 RJ45 connector
+
+
+4.2.2.B  SV35 CARD  [470370-001]     REV B  ONLY
+
+***  NOTE:  VERIFY THE REV LEVEL ON THE SV35 BOARD IS A REV B  AND NOT A
+            REV D  -  THE THE SCV35 IS A REV D BOARD USE THE   STRAPPING
+	    OUTLINED IN SECTION 4.2.2.D FOR THAT BOARD (NEXT SECTION).
+
+The  SV35 PXL  daughtercard is  the  equivalent  of  the  SIO V.35 OLD-STYLE
+daughtercard on the  standard engine.  The SV35 provides 2 ports capable  of
+running up to 72Kb  per port.
+
+The  SV35 is capable  of providing  both primary and  secondary transmit and
+receive clocks at 56Kb.  These are  on-board [INTERNAL] clocks  and  require
+one  of the following  options if a hardwire connection is desired:
+
+    o  The PXL and the neighbor to provide TRANSMIT  clocks (primary  and
+       secondary) and a crossover cable in between.
+
+    o  Use  of  a  V.35 crossover  cable which does not bridge any clocks,
+       but the PXL provides both primary and secondary clocking.
+
+NOTE:  The PXL V.35 cable (part number 160602-TAB DB-15 to Winchester) has
+       a shroud that is too large to connect to some modems and requires a
+       pigtail  cable  to connect cleanly.   This  shroud is necessary for
+       FCC compliance  and is  not a  design oversight.  The pigtail cable
+       necessary is part number 160615-TAB.
+
+Pin 1  on ALL  stake jumpers can be determined by looking on the solder side
+of the SV35 and finding the SQUARE solder joint which is pin 1.
+				       
+
+A simplified diagram of the SV35 daughtercard is as follows:
+
+              SV35  REVISION  B  [470370-001]
+
+               +---------------------------+  
+              | S   E E S S   E E S S       | 
+              | 5   2 1 2 3   4 3 1 4      -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+    where:
+   
+       S5  =    Port addressing dial switch.
+
+       E2  =    4 stake jumper for  determining whether  Port 0  is
+	        configured  for  TRANSMIT  clock  to  be   INTERNAL
+	        or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        E1  =    4 stake jumper for  determining whether  Port 0  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        S2  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+
+	S3  =    Two  position  switch  (up/down)  to  determine the
+	         function of the on-board TRANSMIT clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+     
+        E4  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for  TRANSMIT  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E2).
+
+        E3  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E1).
+
+        S1  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for  Port 1
+		 (same options as S2).
+
+        S4  =    Two  position  switch  (up/down)  to  determine the
+                 function of the on-board TRANSMIT clock for  Port 1
+		 (same options as S3).
+
+        x0  =    Port 0 DB15 connector (FEMALE)
+        x1  =    Port 1 DB15 connector (FEMALE)
+
+
+NOTE:  BOTH THE INTERNAL/EXTERNAL CLOCK  DIRECTION JUMPER (E1, E2, E4 OR E5)
+       AND THE CLOCK  ENABLING/DISABLING SWITCH (S2, S3, S1 OR S4) MUST BOTH
+       BE  SET  TO THE  SAME  CONFIGURATION  (EITHER  EXTERNAL  OR  INTERNAL
+       CLOCKING).
+
+
+4.2.2.D  SV35 CARD  [470370-001]     REV D  ONLY
+
+
+***  NOTE:  VERIFY THE REV LEVEL ON THE SV35 BOARD IS A REV D  AND NOT A
+            REV B  -  THE THE SCV35 IS A REV B BOARD USE THE   STRAPPING
+	    OUTLINED IN SECTION 4.2.2.B FOR THAT BOARD (PREVIOUS SECTION)
+
+
+The  SV35 PXL  daughtercard is  the  equivalent  of  the  SIO V.35 OLD-STYLE
+daughtercard on the  standard engine.  The SV35 provides 2 ports capable  of
+running up to 72Kb  per port.
+
+The  SV35 is capable  of providing  both primary and  secondary transmit and
+receive clocks at 56Kb.  These are  on-board [INTERNAL] clocks  and  require
+one  of the following  options if a hardwire connection is desired:
+
+    o  The PXL and the neighbor to provide TRANSMIT  clocks (primary  and
+       secondary) and a crossover cable in between.
+
+    o  Use  of  a  V.35 crossover  cable which does not bridge any clocks,
+       but the PXL provides both primary and secondary clocking.
+
+NOTE:  The PXL V.35 cable (part number 160602-TAB DB-15 to Winchester) has
+       a shroud that is too large to connect to some modems and requires a
+       pigtail  cable  to connect cleanly.   This  shroud is necessary for
+       FCC compliance  and is  not a  design oversight.  The pigtail cable
+       necessary is part number 160615-TAB.
+
+Pin 1  on  ALL stake jumpers can be determined by looking on the solder side
+of the SV35 and finding the SQUARE solder joint which is pin 1.
+				       
+
+A simplified diagram of the SV35 daughtercard is as follows:
+
+              SV35  REVISION  D  [470370-001]
+
+               +---------------------------+  
+              | S   E E S S   E E S S       | 
+              | 5   2 1 1 2   4 3 3 4      -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+    where:
+   
+       S5  =    Port addressing dial switch.
+
+       E2  =    4 stake jumper for  determining whether  Port 0  is
+	        configured  for  TRANSMIT  clock  to  be   INTERNAL
+	        or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        E1  =    4 stake jumper for  determining whether  Port 0  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        S1  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+
+	S2  =    Two  position  switch  (up/down)  to  determine the
+	         function of the on-board TRANSMIT clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+     
+        E4  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for  TRANSMIT  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E2).
+
+        E3  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E1).
+
+        S3  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for  Port 1
+		 (same options as S1).
+
+        S4  =    Two  position  switch  (up/down)  to  determine the
+                 function of the on-board TRANSMIT clock for  Port 1
+		 (same options as S2).
+
+        x0  =    Port 0 DB15 connector (FEMALE)
+        x1  =    Port 1 DB15 connector (FEMALE)
+
+
+NOTE:  BOTH THE INTERNAL/EXTERNAL CLOCK  DIRECTION JUMPER (E1, E2, E4 OR E5)
+       AND THE CLOCK  ENABLING/DISABLING SWITCH (S2, S3, S1 OR S4) MUST BOTH
+       BE  SET  TO THE  SAME  CONFIGURATION  (EITHER  EXTERNAL  OR  INTERNAL
+       CLOCKING).
+
+4.2.3  AV24  [470363-001]
+
+The  AV24 PXL daughtercard is  the equivalent of two (2) SIO ASYNC OLD-STYLE
+daughtercards on the  standard engine.  The AV24 provides 4 ports capable of
+running speeds up to 9.6Kb.
+
+A simplified diagram of the AV24 daughtercard is as follows:
+
+	      AV24  REVISION B   [470363-001]
+
+	       +---------------------------+  
+              |                             | 
+              |    S S S S S S             -|
+              |    1 2 3 4 5 6           x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+    where:
+
+       S1 = Port addressing dial switch for port 0 and 1 (see Section 4.1.1)
+       S2 = Port addressing dial switch for port 2 and 3 (see Section 4.1.1)
+       
+       S3 =  Ports 0 and 1 TRANSMIT speed selector dial:
+       
+                0   =    300 baud
+		1   =    600 baud
+		2   =   1200 baud
+		3   =   2400 baud
+		4   =   4800 baud
+		5   =   9600 baud
+		6   =  19200 baud  (NOT supported)
+		7   =  38400 baud  (NOT supported)
+		8-F =  Clocks OFF
+                
+       S4 =  Ports 0 and 1 RECEIVE  speed selector dial (same options as S3).
+       S5 =  Ports 2 and 3 TRANSMIT speed selector dial (same options as S3).
+       S6 =  Ports 2 and 3 RECEIVE  speed selector dial (same options as S3).
+
+       x0 =  Port 0 RJ45 connector
+       x1 =  Port 1 RJ45 connector
+       x2 =  Port 2 RJ45 connector
+       x3 =  Port 3 RJ45 connector
+
+4.2.4  POCL  [470377-001]
+
+The  POCL PXL  daughtercard is  the  equivalent  of  the  SIO OCL  OLD-STYLE
+daughtercard  on the  standard engine.  The POCL provides 2 ports capable of
+running up to 162Kb per port.
+
+A simplified diagram of the POCL daughtercard is as follows:
+
+              POCL  REVISION B   [470377-001]
+
+	       +---------------------------+  
+              |                             | 
+              |         S1                 -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+
+    where:
+ 
+       S1  =  Port addressing dial switch (see Section 4.1.1 above).
+
+       x0  =  Port 0 DB9 connector (FEMALE)
+       x1  =  Port 1 DB9 connector (FEMALE)
+  
+
+4.2.5  SP/SE  [SP 470360-001  -  SE  470362-001]
+
+The SP/SE PXL daughtercards are the equivalent of the standard  Engine  sync
+motherboard.   The SP/SE  daughtercards provide  a  combined 8 ports of sync
+access (speeds to 19.2K bps).  A MAXIMUM of  1 SP and 1 SE can be configured
+and supported in a single PXL.   The SP/SE  provide  a full  set  of  RS-232
+signals  (non-primitive  ports)  and  therefore  the  8 ports  available are
+viewed  from ISIS  as a  full 16  port sync  board (primitive ports are  not
+available).   The SP board is a full size  daughtercard  with  the logic  to
+maintain  8  ports,  while  the  SE  daughtercard  is a half-size  card with
+only the drivers for 4 ports.
+
+See the Configuration Guidelines for PXL bus slot allocations.
+
+A simplified diagram of the SP and SE  daughtercards is as follows:
+
+    	              SP CARD   [470360-001]          
+
+     +---------------------------------------------------+  
+    |                                                     |
+    |                          E1   E2        E3  E4     -| 
+    |                                                  x3 | 
+    |                                                    -| 
+    |                                                    -| 
+    |                                                  x2 | 
+    |                                                    -| 
+    |                                                    -| 
+    |                                                  x1 | 
+    |                                                    -| 
+    |                                                    -|
+    |                                                  x0 | 
+    |                                                    -|
+    |                                                     |
+     ---------------------------                       ---  
+                                |_____________________|    
+
+
+ 		   SE CARD   [470362-001]
+	       +---------------------------+  
+              |                             | 
+              |                E2  E1      -|
+              |                          x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+
+     where:
+
+       E1 =  Clock speeds available
+
+               1-2 OPEN    Speeds available are 19.2Kb and 9.6Kb
+	       1-2 CLOSED  Speeds available are  9.6Kb and 4.8Kb
+
+       E2 =  Port Addressing jumper
+
+               1-2 OPEN    Second sync board address range (40-5F, FF)
+	       1-2 CLOSED  First  sync board address range (20-3F, 8F)
+
+             NOTE:  There is NO logic to support a second sync board
+	            on  either  the  SP or  PXL motherboard.  The E2
+		    jumper  MUST be  INSTALLED or  an unexpected I/O
+		    interrupt will occur.
+
+
+       x0 =  Port 0 RJ45 connector
+       x1 =  Port 1 RJ45 connector
+       x2 =  Port 2 RJ45 connector
+       x3 =  Port 3 RJ45 connector
+                
+
+
+       [ SP BOARD CLOCK SETTING ]
+
+
+             The TRANSMIT and RECEIVE clocks speed stake jumpers look
+	     as follows:
+
+
+              +--------------------------------------------+  Top edge
+	     |                       c  . . . .   . . . .   |
+	     |                       b  . . . .   . . . .   |
+	     |                       a  . . . .   . . . .   |
+	     |                          1 4 7 10  1 4 7 10  |  Component
+	     |                                              |  Side
+	     |                             E3        E4     |
+	     |                            (TC)      (RC)    |
+	     |                                              |
+	     |                                              |
+	     |                                              |
+              +--------------------------------------------+  Bottom edge
+
+
+       E3 =  TRANSMIT clock speed selector (SP board ONLY):
+
+               1-2-3      Transmit clock port 0
+	       4-5-6      Transmit clock port 1
+	       7-8-9      Transmit clock port 2
+	       10-11-12   Transmit clock port 3
+
+	       where  [Depending upon E3 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 4800 or  9600
+		         Jumper between b-c  speeds are 9600 or 19200
+
+       E4 =  RECEIVE clock speed selector (SP board ONLY):
+
+               1-2-3      Receive  clock port 0
+	       4-5-6      Receive  clock port 1
+	       7-8-9      Receive  clock port 2
+	       10-11-12   Receive  clock port 3
+
+	       where [Depending upon E4 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 4800 or  9600
+		         Jumper between b-c  speeds are 9600 or 19200
+
+     
+
+
+       [ SE BOARD CLOCK SETTING ]
+
+
+             The TRANSMIT and RECEIVE clocks speed stake jumpers look
+	     as follows:
+
+
+              +--------------------------------------------+  Top edge
+	     |                       c  . . . .   . . . .   |
+	     |                       b  . . . .   . . . .   |
+	     |                       a  . . . .   . . . .   |
+	     |                          1 4 7 10  1 4 7 10  |  Component
+	     |                                              |  Side
+	     |                             E2        E1     |
+	     |                            (RC)      (TC)    |
+	     |                                              |
+	     |                                              |
+	     |                                              |
+              +--------------------------------------------+  Bottom edge
+
+
+
+       E2 =  TRANSMIT clock speed selector (SE board ONLY):
+
+               1-2-3      Transmit clock port 0
+	       4-5-6      Transmit clock port 1
+	       7-8-9      Transmit clock port 2
+	       10-11-12   Transmit clock port 3
+
+	       where  [Depending upon E2 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 9600 or 19200
+		         Jumper between b-c  speeds are 4800 or  9600
+
+       E1 =  RECEIVE clock speed selector (SE board ONLY):
+
+               1-2-3      Receive  clock port 0
+	       4-5-6      Receive  clock port 1
+	       7-8-9      Receive  clock port 2
+	       10-11-12   Receive  clock port 3
+
+	       where [Depending upon E1 speed selection setting]
+	         a-b-c = Jumper between a-b  speed are 9600 or 19200
+		         Jumper between b-c  speed are 4800 or  9600
+
+
+        NOTE:  The orientation of the clocks speeds and jumper set is
+	       OPPOSITE of the SP board.
+
+
+4.2.6  AP/AE   [AP  470361-001  -  AE  470365-001]
+
+The AP/AE PXL daughtercards are the equivalent of the standard  Engine async
+motherboard.   The AP/AE  daughtercards provide  a  combined 8 ports of  low
+access  (50-4800  baud).    A  MAXIMUM  of  32 async ports (4 AP/AE)  can be
+configured   on  the  PXL  when  using  the  AP  and  AE  cards.    See  the
+Configuration Guidelines  section at the  beginning of this document for PXL
+bus slot allocations.
+
+Each  card  is a half-size  card,  with the AP daughtercard  containing  the
+logic  to  maintain  8  ports,  while  the AE  daughtercard  card with  only
+the drivers for 4 ports.
+
+If the AP card is installed the ports are active, there is no way to have an
+AP card installed but the ports disabled (as with the SIO option cards).
+
+A simplified diagram of the async cards is as follows:
+
+
+
+	  AP  (ASYNC  PRIMARY)             AE (ASYNC  EXTENDER)
+    	       [470361-001]                     [470365-001]
+
+     +----------------------------+    +----------------------------+
+    |  ||                          |  |                              |
+    |  E1                         -|  |                             -| 
+    |                          x3 _|  |                          x3 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x2 _|  |                          x2 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x1 _|  |                          x1 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x0 _|  |                          x0 _| 
+    |                              |  |                              |
+     ---                        ---    ---                        ---
+        |______________________|          |______________________|
+
+     where:
+
+       E1 =     4 stake jumper used to determine the Async port addressing
+
+       x0 =     Port  0                           Port  4
+       x1 =     Port  1                           Port  5
+       x2 =     Port  2                           Port  6
+       x3 =     Port  3                           Port  7
+                
+
+
+The  E1 jumper on the  AP daughtercard  [470361-001] is  used to specify the
+async board  addressing used by ISIS and to designate the port range for the
+AP/AE boards (s).   Each AP board controls the addressing for itself and one
+(1) AE (if necessary).  As viewed from the top down the  E1 jumper is set as
+follows:
+
+    +-------------------------------------------------------------------+
+    |     3 1                                                      PORT |
+    |     4 2                                                CONNECTORS |
+    +-------------------------------------------------------------------+
+
+	 where:
+
+	   1-2 OPEN   and 3-4   OPEN:  Async MB address 0C1 ports 8-15
+	   1-2 CLOSED and 3-4   OPEN:  Async MB address 0C1 ports 0- 7
+	   1-2 OPEN   and 3-4 CLOSED:  Async MB address 0C5 ports 8-15
+	   1-2 CLOSED and 3-4 CLOSED:  Async MB address 0C5 ports 0- 7
+
+	   OPEN - No jumper  installed      CLOSED - Jumper installed
+
+
+Essentially the two sets of pin (1-2 and 3-4) can be viewed as follows:
+
+   1-2  Refers to the group of 8 ports:
+
+        1-2 OPEN   refers to the HIGHER group of 8 (ports 8-15)
+	1-2 CLOSED refers to the LOWER  group of 8 (ports 0- 7)
+
+   3-4  Refers to the board base address:
+
+        3-4 OPEN   refers to address C1  [ISIS A.REF(0)]
+	3-4 CLOSED refers to address C5  [ISIS A.REF(1)]
+
+
+
+The RECOMMENDED configuration for a  28 port ASYNC  CONSAT or  TYMCOM  is as
+follows:
+
+           +---+---+---+---+---+---+---+---+---+---+
+           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+	   +---+---+---+---+---+---+---+---+---+---+
+	            OCL AP  AP  AE  AP  AE  AP  AE
+	                |   |       |       |
+			|   |       |        --- Jumper 1-2 CLOSED
+			|   |       |                   3-4 OPEN
+			|   |       |
+			|   |        ----------- Jumper 1-2 OPEN
+			|   |                           3-4 OPEN
+			|   |
+			|    ------------------- Jumper 1-2 CLOSED
+			|                               3-4 CLOSED
+			|
+			 ----------------------- Jumper 1-2 OPEN
+			                                3-4 CLOSED
+
+
+
+
+From  the ISIS  perspective there  are 32  ports or  2 ISIS A.REF (0 AND 1),
+but there  are actually on 28 PHYSICAL ports.   ISIS makes no destinction of
+ports in anything other than groups of 16.
+
+
+In the above recommended configuration the physical ports look as follows:
+
+           +---+---+---+---+---+---+---+---+---+---+
+           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+           +---+---+---+---+---+---+---+---+---+---+
+	            OCL AP  AP  AE  AP  AE  AP  AE
+		        |   |   |   |   |   |   |
+			|   |   |   |   |    ------  Ports  0-7
+			|   |   |   |   |
+			|   |   |    --------------  Ports  8-15
+			|   |   |
+			|    ----------------------  Ports 16-24
+			|
+			 --------------------------  Ports 25-28
+
+It should be noted that no matter what sequence the AP boards are installed
+there  will be  a gap  of four (4) non-existent  ports, these  ports can be
+configured at the end of the rotary or in the first group of 16.
+
+See  the Configuration Guidelines  section at the beginning of this document
+for further PXL bus slot allocations.
+
+
+4.2.8  AL8 CARD  [470422-001]
+
+The  AL8  PXL daughtercard is  the equivalent  of  single PSM standard async
+daughtercard  on the  standard engine.  The AL8  provides 8 ports capable of
+running speeds  up to  4800 baud  depending upon BAUDR setting.  The AL8 has
+all of the logic to  drive 8  ports and  uses the standard PSM  ASYNC 50-pin
+8-by breakout cable.  The 8-by  breakout (octopus) cable  used with  the AL8
+card is part number 160158-TAB Rev M.
+
+No  more  than  48  ports  should  be  configured  on  the   PXL  under  any
+circumstances.
+
+A simplified diagram of the AL8 daughtercard is as follows:
+
+
+	           AL8   [470422-001]
+
+	       +---------------------------+  
+              |  SW1                        | 
+              |                           --|
+              |                           | | 
+              |                           |J| 
+              |                           |1| 
+              |                           | | 
+              |                           | | 
+              |                           | |
+              |                           | | 
+              |                           | | 
+              |                           | | 
+              |                           --| 
+              |                             |
+               ---      -                ---  
+                  |____| |______________|    
+
+
+    where:
+
+      SW1 =  Async addressing dial switch (see below)
+      J1  =  50 pin Amphenol connector (male)
+
+
+
+The async port address dial (SW1) is configurable as follows:
+
+    +-------------------------------------------------------------------+
+    |       C                                                           |
+    |     +---+                                                         |
+    |   8 |   | 0							|
+    |     +---+								|
+    |       4                                                           |
+    +-------------------------------------------------------------------+
+
+    where:
+
+       0   =  Async address C1-C3 (ports 8-15)   [ ISIS A.REF(0) ]
+       1   =  Async address C1-C3 (ports 0- 7)
+       2   =  Async address C5-C7 (ports 8-15)   [ ISIS A.REF(1) ]
+       3   =  Async address C5-C7 (ports 0- 7)
+       4   =  Async address C9-CB (ports 8-15)   [ ISIS A.REF(2) ]
+       5   =  Async address C9-CB (ports 0- 7)
+       6   =  Async address CD-CF (ports 8-15)   [ ISIS A.REF(3) ]
+       7   =  Async address CD-CF (ports 0- 7)
+       8-F =  SIO ports DISABLED
+
+
+
+The recommended 48 ports AL daughtercard configuration looks as follows:
+
+           +---+---+---+---+---+---+---+---+---+---+
+           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+           +---+---+---+---+---+---+---+---+---+---+
+                    OCL     AL  AL  AL  AL  AL  AL
+		            |   |   |   |   |   |
+			    |   |   |   |   |    --- Ports  0 - 7
+			    |   |   |   |   |        SW1 set to 1
+			    |   |   |   |   |
+			    |   |   |   |    ------- Ports  8 -15
+			    |   |   |   |            SW1 set to 0
+			    |   |   |   |
+			    |   |   |    ----------- Ports 16-23
+			    |   |   |                SW1 set to 3
+			    |   |   |  
+			    |   |    --------------- Ports 24-31
+			    |   |                    SW1 set to 2
+			    |   |
+			    |    ------------------- Ports 32-39
+			    |                        SW1 set to 5
+			    |
+			     ----------------------- Ports 41-47
+
+5.  INSTALLATION AND TROUBLESHOOTING.
+
+The following section  will describe  the installation process and note some
+on-site troubleshooting that can be performed.
+
+5.1  INSTALLATION.
+
+1.  Visually inspect the shipping container, noting any damage to it.
+
+2.  Remove the PXL from the shipping container.   Remove the  top cover  and
+inspect the components for any possible damage during shipping.
+
+3.  Power Backup option installation.  This section is only required  if the
+power backup option is separate  from the PXL,  or  to be  retrofitted to an
+existing PXL.
+
+    o  Verify that all components of the power backup kit are present:
+
+       o  Power Backup PCB - part number 470392-001
+       o  Cable assembly   - part number 160641-001
+       o  Installation hardware:
+          o  4 spacers - part number 210001-411
+	  o  8 screws  - part number 210205-004
+
+       If all  components are  not present,  do not continue with the Power
+       Backup installation.  
+
+    o  If this is a retrofit insure that the PXL  is powered  off  and  the
+       AC power cord is disconnected.
+
+    o  Disconnect  the  3  cables  connecting   the  filtered  power  entry
+       module (where ON/OFF switch is located) to the power supply AC input
+       terminator block TB1.   Note the  location and  color  of each  wire
+       BEFORE disconnecting them.
+
+    o  Disconnect the cable to the DC fan.
+
+    o  Remove the main power harness (molex type connector)  from the power
+       supply  unit  DC  terminator  block  TB2  and   the  PXL motherboard
+       (location  P1).   Note the  color of  end wires  on the  molex  type
+       connectors on both TB2 and P1 BEFORE disconnecting them.
+
+    o  Remove the 6 screws holding the power supply tray to the chassis.
+
+    o  Install the 4 spacers to the  BOTTOM of the power supply tray.  Once
+       the power  supply tray  is re-installed  these  will be pointing  to
+       the bottom of PXL chassis.
+
+    o  Install the Power Backup PCB to the spacers  with the capacitor bank
+       facing the BOTTOM  of the power  supply tray.  Insure that the Power
+       Backup PCB connector  edge is  on the  same end  as the power supply
+       cable harness.
+
+    o  Connect the lead from the  main  power harness  to the  Power Backup
+       Module PCB.
+
+    o  Install   the  power  supply   tray  by  replacing   the  six screws
+       removed earlier.
+
+    o  Re-connect the cable to the DC fan.
+
+    o  Re-connect  the  3  cables   connecting   to  filtered  power  entry
+       module  (where ON/OFF  switch is located) to the AC terminator block
+       TB1 on the power supply.  Connect the 3 leads in  the same  order as
+       was noted previously when they were disconnected.    The orientation
+       of  the   cable should look as follows (from TOP down as viewed from
+       the front console end):
+
+                             +--------------+
+                            |                |
+	BROWN wire  <====== |== ||      || = | =======>   BLUE wire
+                            |       || ===== | =====>  GREEN wire
+                            |                |
+                             +--------------+
+
+
+    o  Re-connect the main power  harness  from  the DC terminator block TB2
+       on  the power  supply  unit  to  the PXL motherboard  (location  P1).
+       The molex type connectors must be replaced with the wire-color scheme
+       identical to that noted previously when they were disconnected.   The
+       orientation  of  the  cables to the power supply and mother board are
+       as follows (TOP down as viewed from the front console end):
+
+                              POWER SUPPLY  TB2
+                            +-------------------+ pin 1
+
+	    RED   wire <----  =================  ---->  YELLOW wire
+			        CABLE  HARNESS
+                                (TWISTED ONCE) 
+	    GREEN wire <----  =================  ---->  RED wire
+
+                            +-------------------+
+ 			      PXL   MOTHERBOARD
+			         LOCATION P1
+
+       The main power harness cable has a friction key  lock  at  the molex
+       connector  ends and requires a  single twist to insure  that the key
+       (or L shaped) end is inserted correctly at both ends.
+
+       NOTE:  Initial production units contain a 15-pin molex connector for
+              connecting to the AC terminator block TB2 on the power supply
+	      unit.  The TB2  terminator  block is a  7 output points  with
+	      each point being  a 2-pin connection, for a total of 14-pins.
+	      It is important to insure that  the 15th pin is not connected
+	      to  any  point on the power supply  terminator block  as this
+	      will  insure proper  connection.   If  installed  with  pin-1
+	      shifted off the block,  there will be  an open  condition and
+	      a clicking type noise  will be heard.  Simply shift the molex
+	      connector over one pin after powering off the unit.
+
+    o  Re-connect the AC power  cord and  power  PXL on.   The Power Backup
+       capacitor bank will be  completely charged  by the  time any code is
+       loaded into the PXL.
+
+    o  Load any code (standalone diagnostic or ISIS code) into the PXL  and
+       verify the Power Backup module is operational.
+
+
+4.  Power check out:
+
+    o  The POWER ONE power supply automatically adjusts to the  power input
+       and no jumpers or fuse changes are required.
+
+    o  Connect the AC power cord to the receptacle on the back panel.
+
+    o  Power the unit ON.
+
+    o  Verify the DC fan is operational.
+    
+    o  Verify  the voltages on the  PSU.  The  test  points  and adjustment
+       pots on the PXL PSU are as follows:
+
+
+		   POWER ONE POWER SUPPLY  [390060-001]
+
+             +-----------------------------------------------------+
+	     |                                                     |
+             | TB1-1                                         TB2-1 |
+	     | TB1-2                                         TB2-2 |
+	     | TB1-3             P S U                       TB2-3 |
+	     |                                               TB2-4 |
+	     |                                           V2  TB2-5 |
+	     |                                               TB2-6 |
+	     |                                           V1  TB2-7 |
+	     |                                                     |
+	     +-----------------------------------------------------+
+
+	     ** NOTE:   Measure the voltage on TB2 at the screw lugs
+	                and NOT from the molex connector.
+
+             where
+
+	       TB1-1 =  GROUND
+	       TB1-2 =  N
+	       TB1-3 =  L
+	       
+               TB2-1 =  -12 volt
+               TB2-2 =   -5 volt
+               TB2-3 =  +12 volt
+               TB2-4 =  GROUND
+               TB2-5 =  GROUND
+               TB2-6 =   +5 volt
+               TB2-7 =   +5 volt
+
+               V1    =   +5 VDC adjustment pot
+               V2    =  +12 VDC adjustment pot
+
+    o  Using  a DVM,  measure the +5 volt level across TB2-7 and TB2-4.  The
+       voltage should  be set to 5.00 (+/- 0.2 V).    If the voltage is off,
+       adjust it via the pot designated as V1 in the above diagram.
+
+    o  Measure  the  +12 volt level across  TB2-3  and  TB2-4.   The voltage
+       should  be set to 12.00 (+/- 0.2 V).    If the voltage is off, adjust
+       it via the pot designated as V2 in the above diagram.
+
+
+5.  Diagnostic check out:
+
+If  a PC is available with the MAC V diagnostic NIB files and TERMITE on it,
+use  the  PC to load  the  diagnostics  via the TTY port.   The file  naming 
+convention  for the  PC diagnostic files  is at  the  discretion of the file
+creator  and may be  named something  like .NIB or .TTY.  It is important to
+note that the PXL requires the use of the MAC V diagnostics and will NOT run
+with the non-MAC V diagnostics.
+
+Set  the  TTY  port on  the  SCV24 card  (see above) to  9600 baud  and  the
+Console TTY cable (part  number 160608-TAB).  If no PC is available, connect
+the  network line  to the  appropriate  communication protocol  daughtercard
+(insuring  that  the  SIO address  and  clocking strategy are set correctly)
+and have NETCON  or NSSC  load the standalone diagnostics for the MAC V from
+the SUN server.
+
+See  the files TERMIT.DOC and PROLIT.DOC in the username NTS on the PDP's or
+the PUBLIC network SUN systems for reference in doing the TTY loads.
+
+The  following diagnostics can be found in the BETADIAG directory on the SUN
+systems and should be executed in the following order:
+
+    o  DCPU.NIB version 4.60  -  25 passes
+    o  DMAC.NIB version 7.60  -  25 passes
+    o  DMEM.NIB version 4.60  -  24 hours of ALL tests except 10 and 11.
+    o  DSIO.NIB version 4.60  -  25 passes
+    o  DSYA.NIB version 6.00  -  Minimum of 1 hour
+    o  DSYN.NIB version 4.00  -  Minimum of 1 hour
+
+NOTE:  The above  diagnostics  will  work with MAC V and non-MAC V  hardware
+       and should be used for all hardware diagnostic testing.
+
+All  diagnostics  should  pass with NO errors.  It is important to note that
+the  DMEM diagnostic  requires that  ALL tests except 10 (BBU) and 11 (Scope
+Loop) be executed, not just the default tests.
+
+
+6.  Network Installation.
+
+Power the PXL off.
+
+Using  the target code  TYMFILE or project report, configure the address and
+clocking  strategies for  all I/O boards.   If there  is  no  TYMFILE or the
+project report is  unclear, do NOT proceed until the responsible CS provides
+this information.
+
+Connect the necessary network and application slot cables to the appropriate
+I/O cards.
+
+Power  the  PXL back on.   Ensure that the PXL is running boot by looking at
+the front console.  The right  most digit  should  display  a "C", while the
+left most two digits should be scrolling between 00 and FF.
+
+Have NETCON or NSSC load the appropriate code in the PXL.
+
+From the Console TTY port, log into DDT in slot FF (ISIS kernel) and  verify
+the node is operational  by  entering the  following DDT commands to look at
+the state of the node:	
+
+    [ Note:  Terminate EACH command with a carriage return ]
+
+    o  ?DIAG
+    o  ?HIST
+
+The  ?DIAG  and  ?HIST commands will display any  activity relating to  ISIS
+that may have occurred on the node since it was loaded.  
+
+Now move to the  node code  and check the crypto log for any problem  areas.
+This is done by the following DDT and XRAY commands:
+
+    o  ^0
+    o  ?STAT
+
+    o  ND
+    o  NS
+    o  CL
+    o  HS
+
+The  ND, NS, CL, and HS commands are XRAY commands to print the crypto  log,
+the  node state  and host status  of all  hosts on  the node.   Look for any
+abnormal message reports  in  the crypto  log such  as HDLC checksum errors,
+bad BORI's,  line outages,  etc.  The  ND  display will  show  if  the nodes
+link(s)  have come up and if any crashes have occurred.  The HS command will
+display  the state  of  all hosts  on the  node and these  states should  be
+verified by  the NSSC or NETCON.
+
+
+7.  Exit from  the console port by typing a  CONTROL-C in XRAY.
+
+8.  Remove the console cable.
+
+9.  Replace the cover.  DO NOT stack PXL engines.
+
+10.  Leave TYMFILE copy with PXL engine.
+
+
+5.2  TROUBLESHOOTING.
+
+
+
+1.  FAILS TO BOOT.
+
+NOTE:  For each failure it is necessary to  UNLOCK the  front console keypad
+       before any keypad action  is allowed.  The unlocking can be performed
+       by entering the three-key sequence: [BLANK] [E] [1].
+
+
+Check  that the WAIT LED is not illuminated and the front console display is
+not halted.  Depress the boot switch on the back of the SCV24 card to verify
+whether  the boot  function is  operational  or  not.  If the PXL boots, the
+watchdog timer is probably not configured correctly.  If the boot fails, the
+SCV24 may not have the  multifunction logic enabled, see section 4.1.3 above
+for SW2, dip switch 3.  
+
+If  the console display hangs with the "0FF000 BA5E" display verify that the
+BRG  interrupter switch  on the  SCV24 card is enabled.  The BRG interrupter
+is located on switch bank SW2, switch 1 and should be CLOSED or OFF.
+
+Verify  that the  watchdog timer  is enabled  on the SCV24 card.   There are
+two parts to the watchdog timer on the SCV24 card:
+
+    o  Switch bank SW2, dip switch 4.
+    o  Jumper E1.
+
+The watchdog timer  switch on switch bank SW2 is switch 4 and must be in the
+OPEN or OFF position.   If this switch is enabled (CLOSED or ON) and the INI
+button on the front console is entered, the PXL will go into BOOT.
+
+The  watchdog timer  jumper  at location E1 is the real determinator for the
+watchdog timer function.   If the watchdog timer is is to be  ENABLED then a
+jumper should be installed at E1.
+
+
+2.  CONTINUOUS RE-BOOT.
+
+Generally  this will most  likely occur if the boot is having  trouble being
+relocated into memory.   This would indicate a MAC or Memory  problem,  both
+of  which  reside  on  the  PXL  Motherboard  and are NOT field replaceable.
+Before declaring  the unit  dead,  power  the  PXL off,  remove  all  option
+cards, remove  and reseat the PXL SIO motherboard and SCV24 card and attempt
+to boot the unit.
+
+
+3.  FAILS TO DOWNLINE LOAD.
+
+Verify  the port addressing  and  clocking scheme  desired  for  the network
+connection line.  Power off the unit and reseat the PXL SIO motherboard.
+
+4.  LOADS FINE, BUT HALTS AT ADDRESS 70 ON START-UP.
+
+If the right most digits of the front console display is 70 and the wait bar
+LED  is illuminated following the load,  the ISIS code has halted.  Hit  the 
+PSW button to display the actual ISIS crash code.  Some of the most frequent
+ISIS crash codes are as follows:
+
+    BADxx 8720  -  Indicates a parity error during  initialization.  This
+                   generally is a hard failure as the code can NOT create
+		   a parity error.  Before declaring  the PXL DOA,  clear
+		   the memory via the front console and attempt a reload.
+		   If the reload also fails the  parity error is real and
+		   should have been caught by the MEMORY diagnostic.
+    
+    BAD00 8730  -  Indicates an unexpected I/O  interrupt occurred.  This
+                   is  generally  attributed to  clocks  on a  SYNC  port
+		   that is not assigned (not defined in the TYMFILE).
+
+    BAD00 8763  -  Indicates  ISIS was  unable to  connect  a slot during
+                   startup.  Check that  the assembly  was clean,  no gen
+		   errors.  Additionally  check that the hardware (SCV24)
+		   and software  (ISIS) match on the BAUDR setting.  This
+		   may also be a  result of  a  BITS load with  ALL slots
+		   simultaneously,  or  with a slot that is NOT assembled
+		   for MAC V.
+
+    BAD04 8753  -  Indicates a memory range error.   Most common cause of
+                   this is a software  configuration error in an assembly
+		   attempting to load more than 1Mb of memory.
+
+    BAD04 8770  -  Indicates an  ISIS memory inconsistency.   Check  that
+                   the assembly totals out to be less than 1Mb of memory.
+
+    BAD04 8775  -  Indicates an  ISIS memory inconsistency.   Check  that
+                   the assembly totals out to be less than 1Mb of memory.
+
+For further ISIS and node code crash information see Section 10.
+
+5.  LOADS FINE, BUT LINE WILL NOT COME UP.
+
+Verify that  the port addressing scheme on the hardware matches the software
+intentions.  Additionally, use the Console TTY port to verify that  there is
+a TII link defined or and XLINK available in the node code on the PXL  (also
+have NETCON or NSSC verify availability of this on the neighbor).
+
+6.  NO RESPONSE ON CONSOLE PORT AFTER CODE LOADED.
+
+Verify  that the terminal and  the console port speed set on SCV24  card are
+set the same (see section 4.1.3 above).  Verify  that the connection between
+the Console port and the terminal is the  160608-TAB cable with NO crossover
+cable in between.
+
+7.  INI ON FRONT CONSOLE CAUSES PXL TO GO INTO BOOT.
+
+This  problem is  most  likely  caused  because switch bank SW2 on the SCV24
+card has the watchdog timer  switch (S4) ENABLED or ON.  This switch MUST be
+turned  OFF or DISABLED  or an INI from the front console will cause the PXL
+to enter BOOT.
+
+8.  BITS LOAD FAILS WITH A SEGMENT SIZE ERROR.
+
+This  error usually  indicates  that  the wrong version of BITS was envoked.
+Make sure the BITS you are using is version 5.01 C/N 46 or greater.  
+
+9.  BITS LOAD FAILS WITH NO SPACE AVAILABLE ERROR.
+
+This  error usually  indicates that  the DMAMAP macro has an incorrect value
+defined for a slot.   If NO  DMA is  allocated to the  slot insure  that the
+DMAMAP macro is not  included in  the slot definition.   If DMA is allocated
+to the slot, check  the interface  code gen  to insure the value assigned in
+the DMAMAP  macro  is  equal to  the specified  amount  and  the  TOTAL core
+allocation is adequate (DMAMAP plus CONVENTIONAL memory).
+
+10.  BITS LOAD FAILS WITH AN ISIS BAD00 8763 CRASH.
+
+This error  is a  result of  some corruption  of the code during  either the 
+loading process or ISIS initialization.  The BAD00 8763 indicates  that ISIS
+was unable   to  connect  slot 0  at initialization  and therefore  crashed.  
+Verify  the code  generation and  configuration  was accurate and reload the
+PXL with ONLY the ISIS  kernel  and Node Code (slots FF and 00).  Also check
+that the baud  rate  generator (BAUDR in ISIS tymfile and N/T  jumper on the
+SCV24) match.
+
+11.  V35 PORTS WILL NOT TALK OR EXPERIENCE HDLC CRC/ABORT ERRORS.
+
+The  most common  cause of this error is that the SV35 ports are not set for
+either EXTERNAL or  INTERAL clocking  properly.  The  clocking  involves not
+only clock  enable/disable switches  (S2 and S3 for  port 0 or S1 and S4 for
+port 1) but  also the internal/external  clock jumpers (E1 and E2 for port 0
+or  E4 and E5  for  port  1).   Double  check  the  internal/external  clock
+direction switches for the appropriate port(s).
+
+Verify  the strapping  of the SV35 card based on the REV level of the board,
+either REV B (see section 4.2.2.B) or REV D (see section 4.2.2.D).
+
+
+6.  PART NUMBERS.
+
+The  following section  lists  the  part  numbers  associated with the PXL-I
+hardware:
+
+   BASIC SYSTEM:
+
+      PX-100x-0x  PSN PXL     PXL Basic System, consisting of:
+                  470367-001  PXL motherboard
+                  470374-001  SIO Motherboard
+                  470359-001  SCV24 board  [SIO V.24 2 ports, TTY port]
+
+		  390060-001  Power Supply (POWER ONE MAP 80-4000)
+
+        where
+
+          PX-1000-01 = 110v without Power Backup Module
+          PX-1001-01 = 110v with    Power Backup Module
+
+          PX-1000-02 = 220v without Power Backup Module
+          PX-1001-02 = 220v with    Power Backup Module
+
+
+   OPTION CARDS:
+
+      470370-001  PSN 2SV35  SV35  board  [SIO V.35       2 ports]
+      470363-001  PSN 4AV24  AV24  board  [SIO Async      4 ports]
+      470364-001  PSN 4SV24  SV24  board  [SIO V.24       4 ports]
+      470377-001  PSN 2POCL  POCL  board  [SIO OCL        2 ports]
+
+      470361-001  PSN 4AP    AP    board  [Standard Async 4 ports each]
+      470365-001  PSN 4AE    AE    board  [Standard Async 4 ports each]
+      470422-001  PSN AL8    AL    board  [Standard Async 8 ports each]
+
+      470360-001  PSN 4SP    SP    board  [Standard Sync  4 ports each]
+      470362-001  PSN 4SE    SE    board  [Standard Sync  4 ports each]
+
+
+
+   ADDITIONAL OPTIONS:
+
+      590023-001  PSN PXL-CAB  PXL Stacker Cabinet
+
+      360084-001  PXL Power Backup Option Kit (for POWER ONE Power Supply)
+
+      220058-001  Power cord for Canada, Mexico, Japan (10a/125v)
+      220100-001  Power cord for France, Germany, Spain, Benelux (10a/220v)
+      220101-001  Power cord for Australia (10a/240v)
+      220102-001  Power cord for United Kingdom, Ireland (10a/250v)
+      220103-001  Power cord for Italy (10a/220v)
+      220104-001  Power cord for Switzerland (10a/220v)
+      220105-001  Power cord for Denmark (10a/240v)
+      220106-001  Power cord for India (10a/220v)
+
+   CABLES:
+
+      160537-TAB  RJ-45 to DB-25 Async        Straight-Thru [AV24 and AP/AE]
+      160547-TAB  RJ-45 t0 DB-25 Sync         Straight-Thru [SV24, SCV24, SP/SE]
+      160608-TAB  RJ-45 to DB-25 Console TTY  Straight-Thru [SCV24]
+
+      160158-TAB  50-pin Amphenol Async 8-by  Straight-Thru [AL8]
+
+      160683-TAB  RJ-45 to RJ-45 Sync Crossover     [SP/SE, SCV24 and SV24]
+      160703-TAB  RJ-45 to DB-15 Sync Crossover     [SP/SE, SCV24 and SV24]
+      160549-TAB  RJ-45 to DB-25 Sync Crossover     [SP/SE, SCV24 and SV24]
+
+      160491-TAB  Winchester to Winchester Crossover             [SV35]
+      160602-TAB  DB-15 to Winchester Straight-Thru              [SV35]
+      160615-001  Winchester to Winchester Pigtail Straight-Thru [SV35]
+
+      160526-TAB  DB-9  to DB-25 (FEMALE) OCL Straight-Thru      [POCL]
+      160629-TAB  DB-9  to DB-9  (FEMALE) OCL Crossover          [POCL]
+
+
+
+   LOOPBACK PLUGS:
+
+      630038-001  DB-9   SIO OCL        [POCL]
+      630042-001  RJ-45  Async          [AE/AP]
+      630032-003  50-Pin Async          [AL8]
+      630080-001  RJ-45  SIO Async      [AV24]
+      630081-001  RJ-45  Sync Loopback  [SCV24 and SV24]
+      630082-001  DB-15  SIO V.35       [SV35]
+
+7.  CABLE SPECIFICATIONS.
+
+The  following  section outlines the cable specifications for the individual
+PXL communication types.
+
+
+7.1  V.35 Cables.
+
+     V.35 Cable: 160491-TAB  (Winchester to Winchester)
+
+     WINCHESTER (FEMALE)  to  WINCHESTER (FEMALE)  Crossover
+
+       WINCHESTER       WINCHESTER
+       ----------       ----------
+
+	    P  TD(a)        R  RD(a)
+	    S  TD(b)        T  RD(b)
+	    R  RD(a)        P  TD(a)
+	    T  RD(b)        S  TD(b)
+	    V  RC(a)        Y  TC(a)
+	    X  RC(b)        a  Ty(b)
+	    Y  TC(a)        V  RC(a)
+	    a  TC(b)        X  RC(b)
+	    C  RTS          F  DCD
+	    H  DTR          E  DSR
+            D  CTS          D  CTS
+	    E  DSR          H  DTR
+	    B  SG           B  SG
+	    F  DCD          C  RTS
+
+
+       TAB DESIGNATIONS:
+
+         001  -    72 Inches ( 6 feet)
+	 002  -   120 Inches (10 feet)
+	 003  -   300 Inches (25 feet)
+	 004  -   420 Inches (35 feet)
+	 005  -   600 Inches (50 feet)
+
+
+
+
+     V.35 Cable: 160602-TAB  (DB15 to Winchester)
+
+     DB15 (MALE)  to  WINCHESTER (MALE)  Straight Thru
+
+	  DB15             WINCHESTER
+	  ----             ----------
+
+	    9      TD(a)        P
+	    2      TD(b)        S
+	   11      RD(a)        R
+	    4      RD(b)        T
+	   14      RC(a)        V
+	    7      RC(b)        X
+	   13      TC(a)        Y
+	    6      TC(b)        a
+	    3      RTS          C
+	   10      DTR          H
+           12      CTS          D
+	    5      DSR          E
+	    8      SG           B
+	   15      DCD          F
+
+
+       TAB DESIGNATIONS:
+
+         001  -   120 Inches (10 feet)
+	 002  -   300 Inches (25 feet)
+	 003  -   420 Inches (35 feet)
+	 004  -   600 Inches (50 feet)
+
+
+
+
+     V.35 Cable: 160615-TAB  (Winchester to Winchester Pigtail)
+
+     WINCHESTER (FEMALE)  to  WINCHESTER (MALE)  Straight-Thru
+       (HOODED SHROUD)       (NON-HOODED SHROUD)
+
+       WINCHESTER       WINCHESTER
+       ----------       ----------
+
+         P  TD(a)        P  TD(a)        
+	 S  TD(b)        S  TD(b)        
+	 R  RD(a)        R  RD(a)        
+	 T  RD(b)        T  RD(b)        
+	 V  RC(a)        V  RC(a)        
+	 X  RC(b)        X  RC(b)        
+	 Y  TC(a)        Y  TC(a)        
+	 a  TC(b)        a  TC(b)        
+	 C  RTS          C  RTS          
+	 H  DTR          H  DTR          
+         D  CTS          D  CTS          
+	 E  DSR          E  DSR          
+	 B  SG           B  SG           
+	 F  DCD          F  DCD          
+
+       TAB DESIGNATIONS:
+
+         001  -   6 Inches (.5 feet)
+
+
+7.2  CONSOLE TTY Cable: 160608-TAB  (RJ45 to DB-25)
+
+     RJ-45 to  DB-25 (MALE)  Straight Thru
+
+	   RJ45          DB25
+           ----          ----
+
+	     1    RI      22
+	     2    DSR      6
+	     3    RD       3
+	     4    DCD      8
+	     5    TD       2
+	     6    DTR     20
+	     7    SG       7
+	     8    CTS      5
+
+
+       TAB DESIGNATIONS:
+
+         001  -  120 Inches (10 feet)
+ 	 002  -  300 Inches (25 feet)
+	 003  -  420 Inches (35 feet)
+	 004  -  600 inches (50 feet)
+
+
+
+
+
+7.3  ASYNC Cable: 160537-TAB  (RJ45 to DB-25)
+
+     RJ-45 to  DB-25 (MALE)  Straight Thru
+
+	   RJ45          DB25
+           ----          ----
+
+	     1    RI      22
+	     2    DSR      6
+	     3    RD       3
+	     4    DCD      8
+	     5    TD       2
+	     6    DTR     20
+	     7    S.GND    7
+	     8    BUSY    25
+
+
+
+      TAB DESIGNATIONS:
+
+         001  -    120 Inches ( 10 feet)
+         002  -    300 Inches ( 25 feet)
+         003  -    420 Inches ( 35 feet)
+         004  -    600 Inches ( 50 feet)
+
+
+7.4  ASYNC 50-PIN BREAKOUT Cable:  160158-TAB (50-PIN to  EIGHT DB-25's)
+
+     50-PIN AMPHENOL (FEMALE) to EIGHT (8) DB-25 (MALE) Straight Thru
+
+          50-PIN	 DB25
+	  ------         ----
+
+             1     TD      2      CHANNEL A (PORT 0)  [CONNECTOR X2]
+	    19     RD      3
+	    34     DSR     6
+	     *     SG      7
+	    35     DCD     8
+	     2     DTR    20
+	    18     BUSY   25
+
+             3     TD      2      CHANNEL B (PORT 1)  [CONNECTOR X3]
+	    21     RD      3
+	    36     DSR     6
+	     *     SG      7
+	    37     DCD     8
+	     4     DTR    20
+	    20     BUSY   25
+
+             5     TD      2      CHANNEL C (PORT 2)  [CONNECTOR X4]
+	    23     RD      3
+	    38     DSR     6
+	     *     SG      7
+	    39     DCD     8
+	     6     DTR    20
+	    22     BUSY   25
+
+             7     TD      2      CHANNEL D (PORT 3)  [CONNECTOR X4]
+	    25     RD      3
+	    40     DSR     6
+	     *     SG      7
+	    41     DCD     8
+	     8     DTR    20
+	    24     BUSY   25
+	    
+             9     TD      2      CHANNEL E (PORT 4)  [CONNECTOR X5]
+	    27     RD      3
+	    42     DSR     6
+	     *     SG      7
+	    43     DCD     8
+	    10     DTR    20
+	    26     BUSY   25
+
+            11     TD      2      CHANNEL F (PORT 5)  [CONNECTOR X6]
+	    29     RD      3
+	    44     DSR     6
+	     *     SG      7
+	    45     DCD     8
+	    12     DTR    20
+	    28     BUSY   25
+
+            13     TD      2      CHANNEL G (PORT 6)  [CONNECTOR X7]
+	    31     RD      3
+	    46     DSR     6
+	     *     SG      7
+	    47     DCD     8
+	    14     DTR    20
+	    30     BUSY   25
+
+            15     TD      2      CHANNEL H (PORT 7)  [CONNECTOR X8]
+	    33     RD      3
+	    48     DSR     6
+	     *     SG      7
+	    49     DCD     8
+	    16     DTR    20
+	    32     BUSY   25
+
+
+	    * = Conductors from X2 thru X8 are each folded over insert
+	        to make contact with braided shell and insert for SG.
+
+          
+
+      TAB DESIGNATIONS:
+
+         001  -     48 Inches (  4 feet)
+         002  -    300 Inches ( 25 feet)
+         003  -    420 Inches ( 35 feet)
+         004  -    120 Inches ( 10 feet)
+
+7.5  SYNC cables.
+
+     SYNC (V.24)  Cable: 160547-TAB  (RJ45 to DB-25)
+
+     RJ-45 to  DB-25 (MALE)  Straight Thru
+
+
+	   RJ45          DB25
+           ----          ----
+
+	     1    TD       2
+	     2    RD       3
+	     3    RTS      4
+	     4    CTS      5
+	     5    DSR      6
+	          DCD      8
+	     6    TC      15
+	     7    DTR     20
+	     8    RC      17
+	  SHIELD  GND      7
+
+
+       TAB DESIGNATIONS:
+
+         001  -   60 Inches ( 5 feet)
+	 002  -  120 Inches (10 feet)
+	 003  -  180 Inches (15 feet)
+	
+
+
+     SYNC (V.24)  Cable: 160683-TAB  (RJ45 to RJ45)
+
+     RJ-45 to  RJ-45  Crossover
+
+
+	   RJ45            RJ45
+           ----            ----
+
+	     1    TD        2    RD
+	     2    RD        1    TD
+	     3    RTS       4    CTS
+	     4    CTS       3    RTS
+	     5    DSR       7    DTR
+	     6    TC        8    RC
+	     7    DTR       5    DSR
+	     8    RC        6    TC
+	  SHIELD  GND    SHIELD  GND
+
+
+       TAB DESIGNATIONS:
+
+         001  -   60 Inches ( 5 feet)
+ 	 002  -  120 Inches (10 feet)
+	 003  -  180 Inches (15 feet)
+
+
+
+     SYNC (V.24)  Cable: 160703-TAB  (RJ45 to DB15)
+
+     RJ-45 to  DB-15 (FEMALE)  Crossover
+
+
+	   RJ45            DB15
+           ----            ----
+
+	     1    TD         4    RD
+	     2    RD         2    TD
+	     3    RTS       12    CTS
+	     4    CTS        3    RTS
+	     5    DSR       10    DTR
+	     6    TC         7    RC
+	     7    DTR        5    DSR
+	                    15    DCD
+	     8    RC         6    TC
+	  SHIELD  GND        8    GND
+
+
+       TAB DESIGNATIONS:
+
+         001  -   60 Inches ( 5 feet)
+ 	 002  -  120 Inches (10 feet)
+	 003  -  180 Inches (15 feet)
+	 004  -  300 Inches (25 feet)
+	 005  -  600 Inches (50 feet)
+
+
+
+     SYNC (V.24)  Cable: 160549-TAB  (RJ45 to DB25)
+
+     RJ-45 to  DB-25 (FEMALE)  Crossover
+
+
+	   RJ45            DB25
+           ----            ----
+
+	     1    TD         3    RD
+	     2    RD         2    TD
+	     3    RTS        5    CTS
+	     4    CTS        4    RTS
+	     5    DSR       20    DTR
+	     6    TC        17    RC
+	     7    DTR        6    DSR
+	                     8    DCD
+	     8    RC        15    TC
+	  SHIELD  GND        7    GND
+
+
+       TAB DESIGNATIONS:
+
+         001  -   60 Inches ( 5 feet)
+ 	 002  -  120 Inches (10 feet)
+	 003  -  180 Inches (15 feet)
+	 004  -  300 Inches (25 feet)
+	 005  -  600 Inches (50 feet)
+
+
+
+7.6  OCL Cables.
+
+     OCL Cable: 160526-TAB  (DB9 to DB-25)
+
+     DB-9 to  DB-25 (FEMALE)  Straight Thru
+
+
+       DB9 (MALE)  to  DB25 (MALE)
+
+	   DB9           DB25
+           ---           ----
+
+	    2    TD(a)    11
+	    3    TD(b)    12
+	    6    RD(a)     4
+	    7    RD(b)     5
+
+
+
+       TAB DESIGNATIONS:
+
+         001  -    300 Inches ( 10 feet)
+
+
+
+
+     OCL Cable: 160629-TAB  (DB9 to DB9)
+
+     DB-9 (FEMALE) to (DB-9 (FEMALE)  CROSSOVER
+
+	   DB9             DB9
+           ---             ---
+
+	    2    TD(a)      6   RD(a)
+	    3    TD(b)      7   RD(b)
+	    6    RD(a)      2   TD(a)
+	    7    RD(b)      3   TD(b)
+
+
+       TAB DESIGNATIONS:
+
+         001  -    60 Inches (  5 feet)
+	 002  -   300 Inches ( 25 feet)
+	 003  -   600 Inches ( 50 feet)
+	 004  -  1200 Inches (100 feet)
+	 005  -  1800 Inches (150 feet)
+	 006  -  2400 Inches (200 feet)
+	 007  -  3000 Inches (250 feet)
+
+8.  LOOPBACK SPECIFICATIONS.
+
+The  following  section  outlines the  loopback options  for the  individual
+PXL communication cards:
+
+8.1  AP/AE ASYNC Loopback Plug:  630042-001  RJ45
+
+      Pin  5 (TD)   to  Pin  3 (RD)
+      Pin  6 (DTR)  to  Pin  2 (DSR)
+      Pin  8 (BUSY  to  Pin  4 (DCD)
+
+
+
+8.3  AL8 (50-PIN) ASYNC Loopback Plug:  630032-003  (50-PIN AMPHENOL)
+
+     Pin   1 (TD)   to  Pin 19 (RD)    [CHANNEL A]
+     Pin   2 (DTR)  to  Pin 34 (DSR)
+     Pin  35 (DCD)  to  Pin 18 (BUSY)
+
+     Pin   3 (TD)   to  Pin 21 (RD)    [CHANNEL B]
+     Pin   4 (DTR)  to  Pin 36 (DSR)
+     Pin  37 (DCD)  to  Pin 20 (BUSY)
+
+     Pin   5 (TD)   to  Pin 23 (RD)    [CHANNEL C]
+     Pin   6 (DTR)  to  Pin 38 (DSR)
+     Pin  39 (DCD)  to  Pin 22 (BUSY)
+
+     Pin   7 (TD)   to  Pin 25 (RD)    [CHANNEL D]
+     Pin   8 (DTR)  to  Pin 40 (DSR)
+     Pin  41 (DCD)  to  Pin 24 (BUSY)
+
+     Pin   9 (TD)   to  Pin 27 (RD)    [CHANNEL E]
+     Pin  10 (DTR)  to  Pin 42 (DSR)
+     Pin  43 (DCD)  to  Pin 26 (BUSY)
+
+     Pin  11 (TD)   to  Pin 29 (RD)    [CHANNEL F]
+     Pin  12 (DTR)  to  Pin 44 (DSR)
+     Pin  45 (DCD)  to  Pin 28 (BUSY)
+
+     Pin  13 (TD)   to  Pin 31 (RD)    [CHANNEL G]
+     Pin  14 (DTR)  to  Pin 46 (DSR)
+     Pin  47 (DCD)  to  Pin 30 (BUSY)
+
+     Pin  15 (TD)   to  Pin 33 (RD)    [CHANNEL H]
+     Pin  16 (DTR)  to  Pin 48 (DSR)
+     Pin  49 (DCD)  to  Pin 32 (BUSY)
+
+
+
+8.3  SIO ASYNC Loopback Plug:  630080-001  (RJ-45)
+
+      Pin  5 (TD)   to  Pin  3 (RD)
+      Pin  6 (DTR)  to  Pin  4 (DCD)
+      Pin  8 (RTS)  to  Pin  2 (DSR)
+
+
+
+8.4  OCL Loopback Plug:  630038-001  (DB-9 FEMALE)
+
+      Pin 2 TD(a)  to   Pin 6 RD(b)
+      Pin 3 RD(b)  to   Pin 7 RD(b)
+
+
+
+8.5  SYNC  Loopback Plug:  630081-001  (RJ-45)
+
+      Pin  1 (TD)   to  Pin  2 (RD)
+      Pin  7 (DTR)  to  Pin  5 (DSR)
+      Pin  3 (RTS)  to  Pin  4 (CTS)
+      Pin  6 (TC)   to  Pin  8 (RC)
+
+
+
+8.6  SV35 Loopback Plug:  630082-001  (DB-15 MALE)
+
+       Pin  3 [RTS]   to  Pin 12 [CTS]
+       Pin 10 [DTR]   to  Pin  5 [DSR]
+       Pin  6 [TC(b)] to  Pin  7 [RC(b)]
+       Pin 13 [TC(a)] to  Pin 14 [RC(a)]
+       Pin  2 [TD(b)] to  Pin  4 [RD(b)]
+       Pin  9 [TD(a)] to  Pin 11 [RD(a)]
+
+
+
+9.  SAMPLE FILES.
+
+9.1  ISIS TYMFILE and GOODGUY List.
+
+9.1.1  ISIS TYMFILE.
+
+The following is a sample ISIS version 13.02 TYMFILE:
+
+
+: ***********************************************************************
+: *									*
+: *  NTSNET LAB    PXL   HUB						*
+: *									*
+: *  NODE: 4011    KERNEL:    1553					*
+: *  ISIS: 13.02   NODE CODE: 5.61					*
+: *									*
+: ***********************************************************************
+
+:               Hardware Configuration
+
+	:  ISIS version 13.0x hardware declaration
+
+	MACHNS(ENGINE,CPU3,MAC5)
+
+MACHIN  EQ      1       :  TYMNET engine
+MICRO	EQ	2	:  Enhanced sync/async micro code
+ZITEL	EQ	0	:  Must be set to 0 for MAC 5 hardware
+
+NSYNC   EQ      $A 16   :  No. of SYNC  lines
+NASYNG	EQ	1	:  No. of ASYNC groups (1 group = 16d ports)
+ASYNEW	EQ	2	:  Uses new ASYNC driver
+N.ADA	EQ	1	:  Uses new async addressing (0C1)
+M.NCARD EQ      1       :  Number of SIO mother-boards
+M.DA0   EQ      80      :  Device address for mother-board 0
+M.NP0   EQ      $A  14  :  Number of ports for mother-board 0
+
+:               ISIS Configuration Constraints
+NSLOT   EQ      4       :  Number of application/interface slots
+NLU     EQ      $A 14   :  Max. number of logical units per slot
+EE.BP   EQ      1       :  Enable end-to-end backpressuring
+SPAM	EQ	0	:  Turn on the SPAM monitor
+BAUDR	EQ	2	:  Async LOW speed  (300-4800 bps)
+NEWARN	EQ	1	:  Use new async ring structure/connect SVC's
+
+:               Node Configuration
+MACHNM  EQ      $8 4011 :  Node number
+HST0    EQ      $A 1553 :  ISIS Kernel host number
+NETID   EQ      $A   56 :  Network Identifier (NTSNet)       
+TII     EQ      1       :  1 if using TYMNET-II on this node
+TIINEW	EQ	1	:  Enable XRAY statistics collection
+LBOOT   EQ      0       :  Do NOT reserve 4K of memory for bootstrap
+NOSEG   EQ      0       :  No segmentation optimization
+PTHRU   EQ      0       :  1 if passthroughs inhibitted
+NPTHR   EQ      $A 256  :  Number of passthroughs (default 256)
+IKNRNG  EQ      1       :  Uses negative kernel ring ptrs (ISIS 6.00 or above)
+CKSM	EQ	1	:  So this will talk to #$%&*@ ATC!!
+REBTST  EQ      1       :  Enable circuit rebuild
+
+CHRMRK	EQ	1
+
+        :  Node Code options:
+        :
+        :    REBLD  -  Enable rebuild
+
+	OPTION(REBLD)
+
+:       Network Configuration - Neighbor, groups, window size, type, speed
+
+	TIILNK(2401)
+	TIILNK(4120,,,,MS)
+	TIILNK(2033,,,,MS)
+	TIILNK(2030,,,,MS)
+
+XLINKS  EQ      $A 11   :  Number of wild card neighbors (must be WS8)
+
+
+:       Miscellaneous
+
+MEMRMK  EQ      1       :  Display memory usages during assembly
+
+
+:       SLOT 0 --- NODE CODE
+	SLOT(0)				: Slot number 
+	DMAMAP(64)			: Reserve 64dK low core memory for DMA
+S0CORE  EQ      $A 380			: Slot core allocation
+NLUS0   EQ      $A 14			: Number of LU's assigned to slot 
+S0L0	S.REF(2)			: SYNC   SP     Port 0
+S0L1	S.REF(3)			: SYNC   SP     Port 1
+S0L2	S.REF(10)			: SYNC   SE     Port 0
+S0L3	S.REF(11)			: SYNC   SE     Port 1
+S0L4	M.REF(0,0)			: V.24   SCV24  Port 0
+S0L5	M.REF(0,1)			: V.24   SCV24  Port 1
+S0L6	M.REF(0,2)			: V.24   SV24   Port 0
+S0L7	M.REF(0,3)			: V.24   SV24   Port 1
+S0L8	M.REF(0,4)			: V.24   SV24   Port 2
+S0L9	M.REF(0,5)			: V.24   SV24   Port 3
+S0L10	M.REF(0,6)			: OCL    POCL   Port 0  Card 1
+S0L11	M.REF(0,7)			: OCL    POCL   Port 1
+S0L12	M.REF(0,8)			: OCL    POCL   Port 0  Card 2
+S0L13	M.REF(0,9)			: OCL    POCL   Port 1
+
+
+:       SLOT 1 ---  CONSAT  --  Standard ASYNC    LOW SPEED
+	SLOT(1)				: Slot number 
+S1CORE  EQ      $A 110			: Slot core allocation
+NLUS1   EQ      1			: Number of LU's assigned to slot 
+S1LIC	EQ	TL.AUX			: Assigned aux circuit license
+S1L0	A.REF(0)
+
+:       SLOT 2 ---  CONSAT  --  SIO ASYNC
+	SLOT(2)				: Slot number 
+	DMAMAP(32)			: Reserve 32dK low core memory for DMA
+S2CORE  EQ      $A 90			: Slot core allocation
+NLUS2   EQ      4			: Number of LU's assigned to slot 
+S2LIC	EQ	TL.AUX			: Assigned aux circuit license
+S2L0    M.REF(0,0A)			: SIO Async    AV24 Port 0
+S2L1    M.REF(0,0B)			: SIO Async    AV24 Port 1
+S2L2    M.REF(0,0C)			: SIO Async    AV24 Port 2
+S2L3    M.REF(0,0D)			: SIO Async    AV24 Port 3
+
+:       SLOT 3 ---  SPARE  --  SYNC
+	SLOT(3)				: Slot number 
+S3CORE  EQ      $A 155			: Slot core allocation
+NLUS3   EQ      2			: Number of LU's assigned to slot 
+S3LIC	EQ	TL.AUX			: Assigned aux circuit license
+S3L0	S.REF(6)			: SYNC   SP    Port 2
+S3L1	S.REF(7)			: SYNC   SP    Port 3
+
+
+:       SLOT 4 ---  SPARE  --  SYNC
+	SLOT(4)				: Slot number 
+S4CORE  EQ      $A 155			: Slot core allocation
+NLUS4   EQ      2			: Number of LU's assigned to slot
+S4LIC	EQ	TL.AUX			: Assigned aux circuit license
+S4L0	S.REF(14)			: SYNC   SE    Port 4
+S4L1	S.REF(15)			: SYNC   SE    Port 3
+
+
+	END
+
+9.1.2  ISIS GOODGUY LIST.
+
+The  following  is  a sample  goodguy list  for ISIS version 13.02.  Note the
+new license L.L which allows  the username to  execute the  single character
+commands such as H, E, I, etc.
+
+: ***********************************************************************
+: *									*
+: *   GOODGY.PXL							*
+: *									*
+: *   Goodguy list for   ISIS 13.02					*
+: *									*
+: ***********************************************************************
+
+XGG     MACRO[
+
+:
+:	DEFINE DDT USERS
+:
+	GG(L.S0A!L.S0R!L.H!L.L!L.P,-1,GATEWAY)	:REQUIRED FOR LOADING
+        GG(0,0,DLOAD,0,T.DLOAD)                 :REQUIRED FOR DLOAD
+	GG(1,0,SLOAD,1F,T.SCLP)			:REQUIRED FOR LOADING
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,NSSC)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,INTLTECH)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,ISISTECH)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,TECHSERV)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,DNSONLY)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.DISC,-1,MAINTDIAG)
+        GG(L.S0A!L.SYA!L.SUA!L.S0P!L.SYP!L.P!L.H!L.L!L.DISC,-1,NTS)
+
+:
+:	CHECK FOR SPECIAL (EXTRA) GOOD GUY ENTRIES
+:
+	IF	\SGGUSE
+	SGG
+	EI
+:
+:	DEFINE XRAY USERS
+:
+	GG(2,0,TIIDEV,0EF)
+	GG(2,0,ODDJOB,60)
+	GG(2,0,TS.INTLXRAY,50)
+	GG(2,0,INTLXRAY,40)
+	GG(1,0,XRTECH,20)
+	GG(0,0,XRAY,0)
+        ]
+
+
+
+
+9.2  ISIS COMMAND FILE.
+
+The following is a sample ISIS version 13.02 commands file:
+
+;;
+;;  NTSNET   PXL NODE 4011   KERNEL  1553               19-DEC-90
+;;  ISIS 13.02     NODE CODE  5.61
+;;
+;@ (source)i2is13.i02
+;@ tym
+;@ goodgy.pxl
+;@ (source)i2is13.r02
+;@ (source)i2is13.p02
+1;F nib
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%Q
+
+
+
+9.2.1  SAMPLE ISIS CODE GEN.
+
+bruces@antares% nad -v -c cmd -m cmd.log
+
+NAD-3.01 (S/N 44)  (SunOS 4.x)
+Fri Oct 11 07:45:53 1991
+
+;;
+;;  NTSNET   PXL NODE 4011   KERNEL  1553               24-OCT-90
+;;  
+;;  ISIS 13.00     NODE CODE  5.61
+;;
+;@ (source)i2is13.i02
+
+End of Assembly
+
+;@ tym
+
+End of Assembly
+
+;@ goodgy.pxl
+
+End of Assembly
+
+;@ (source)i2is13.r02
+
+DISPAT 0 0
+
+
+SYNC 12d2 1b3e
+
+
+CLOCKS 1b3e 2470
+
+
+MBOARD 2470 2792
+
+
+FLASH 2792 33f1
+
+
+KCAREA 33f1 3604
+
+
+TTY 3604 3900
+
+
+KERNEL 3900 a2b8
+
+
+DDT a2b8 eb00
+
+
+   1655d (16d-byte) bufferlets allocated to dispatcher
+DISPAT eb00 1e400
+
+
+.............................................
+
+
+
+    ***  ISIS-II System Configuration  ***
+      		Version 13.02d
+
+Total ISIS system memory used - 226dK Byte(s) 
+Memory used by ISIS operating system itself - 121dK Byte(s)
+Misc. data area used by ISIS operating system - 9dK Byte(s)
+ISIS has reserved 96dK bytes low core memory for slots' DMA area relocation
+There are 807dK bytes low core memory available for slot DMA area allocation
+
+System Performance Analysis Monitor (SPAM) Enabled
+
+TYMNET-II Node 4011, Kernel Host 1553
+
+Maximum slot number is 4
+
+
+       >>> HARDWARE CONFIGURATION <<<
+
+Expects enhanced sync microcode
+Expects enhanced async microcode
+Expects MAC V
+Expects maximum baud rate of 4800
+Expects 1 sync board(s)
+Expects 1 async board(s), device address is 0C1
+Supports new async driver only
+Expects 1 SIO mother-board processor(s)
+   Board 0 has 14 channel(s), device address 80
+
+       >>> SLOT CONFIGURATIONS <<<
+
+SLOT 0, NODE CODE, has 316 K-bytes of conventional core memory
+
+There are 64 K-bytes of system core memory reserved by ISIS for DMA usage
+
+Slot DMA Segment(s) are allocated from 1E400 to 2E400
+
+Slot conventional memory is allocated from 38800 to 877FF (Physical address)
+
+   14 logical unit(s)
+   L.U. 0 is sync line 2
+   L.U. 1 is sync line 3
+   L.U. 2 is sync line 10
+   L.U. 3 is sync line 11
+   L.U. 4 is M.Board channel 0
+   L.U. 5 is M.Board channel 1
+   L.U. 6 is M.Board channel 2
+   L.U. 7 is M.Board channel 3
+   L.U. 8 is M.Board channel 4
+   L.U. 9 is M.Board channel 5
+   L.U. 10 is M.Board channel 6
+   L.U. 11 is M.Board channel 7
+   L.U. 12 is M.Board channel 8
+   L.U. 13 is M.Board channel 9
+
+SLOT 1 has 110 K-bytes of conventional core memory
+
+Slot conventional memory is allocated from 87800 to 0A2FFF (Physical address)
+
+   1 logical unit(s)
+   L.U. 0 is async group 0
+
+SLOT 2 has 58 K-bytes of conventional core memory
+
+There are 32 K-bytes of system core memory reserved by ISIS for DMA usage
+
+Slot DMA Segment(s) are allocated from 2E400 to 36400
+
+Slot conventional memory is allocated from 0A3000 to 0B17FF (Physical address)
+
+   4 logical unit(s)
+   L.U. 0 is M.Board channel 10
+   L.U. 1 is M.Board channel 11
+   L.U. 2 is M.Board channel 12
+   L.U. 3 is M.Board channel 13
+
+SLOT 3 has 155 K-bytes of conventional core memory
+
+Slot conventional memory is allocated from 0B1800 to 0D83FF (Physical address)
+
+   2 logical unit(s)
+   L.U. 0 is sync line 6
+   L.U. 1 is sync line 7
+
+SLOT 4 has 155 K-bytes of conventional core memory
+
+Slot conventional memory is allocated from 0D8400 to 0FEFFF (Physical address)
+
+   2 logical unit(s)
+   L.U. 0 is sync line 14
+   L.U. 1 is sync line 15
+
+***Highest location used in this configuration is 0FF000
+
+Requires 1024d k-bytes of core memory
+
+
+.............................................
+
+
+Code Generated:  10/11/91  14:45:56 GMT
+
+.............................................
+
+
+End of Assembly
+
+;@ (source)i2is13.p02
+
+ ISIS 13.02 PATCH 1
+ Set temperature and voltage storage labels to zero
+ to prevent erroneous reporting to SUP by node code
+  ---  MAC 5 hardware ONLY!  ---
+
+ ISIS 13.02 PATCH 2
+ Fixes the problem in ISIS MAC interrupt handling where
+ returned the incorrect PC for DDT job.
+
+End of Assembly
+
+1;F nib
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%Q
+EXIT
+
+
+
+9.3  NODE CODE COMMAND FILE.
+
+The following is a sample Node Code version 5.61 commands file:
+
+;;
+;;  NTSNET   NODE 4011   KERNEL  1553                   19-DEC-90
+;;  T-II NODE CODE - VERSION 05.61
+;;
+;@ (betatest)tii05.i61
+;@ tym
+;@ goodgy.pxl
+;@ (betatest)tii05.r61
+;@ (tiipat)tii05.p61
+1;F n00
+SEG0,RSEG0;PSEG1,S1SIZE;PSEGD,SDSIZE;PSEGF,SFSIZE;PCTA,CTASIZ;P%P%Q
+
+
+
+
+9.3.1  SAMPLE NODE CODE GEN.
+
+bruces@antares% nad -v -c c00 -m c00.log
+
+NAD-3.01 (S/N 41)  (SunOS 4.x)
+Tue Mar 12 11:44:07 1991
+
+;;
+;;  NTSNET   NODE 4011   KERNEL  1553               09-SEP-90
+;;  T-II NODE CODE - VERSION 05.61
+;;
+;@ (betatest)tii05.i61
+
+End of Assembly
+
+;@ tym
+
+
+End of Assembly
+
+;@ (betatest)goodgy.pxl
+
+End of Assembly
+
+;@ (betatest)tii05.r61
+
+
+
+
+TYMNET-II Node Code, Version 5.61, ISIS Node
+
+Node: 4011  Kernel Host: 1553
+
+Ports:		Lines:		Links:
+   256d Pthru	     4d Sync	     4d TIILNK, One for SCLP
+     3d Xray	    10d SIO	    11d XLNK
+		    14d Total	    15d Total
+   256d Disp
+     6d Krnl
+
+Maximum number of circuits =  588d 
+
+
+Bufferlet storage space:
+
+  80A0x bytes (  33d KB) for  588d circuit buffers ( 56d bytes per circuit)
+ 0EA1Ex bytes ( 59d KB) for  300d history buffers (199d bytes per termination)
+ 16ABEx bytes ( 91d KB) for  588d total circuits  (157d bytes per circuit)
+
+
+Memory used by this configuration = 5DC00x, 375d KB.
+
+Optimal amount of Memory for this configuration =   346d  KB.
+
+Optimal amount of DMA memory required for this configuration =   53d  KB.
+
+End of Assembly
+
+;@ (tiipat)tii05.q61
+
+
+PATCH added on 919228 at 1730 by DLG.
+     Starts at SIOR17+0A and is 6x bytes long
+Continues at PATCH 1+0 and is 12x bytes long
+<<< Correct SIO Line speed calculation >>>
+
+
+PATCH added on 910311 at 1730 by DLG.
+     Starts at XRYIN2 and is 6x bytes long
+Continues at PATCH 1+12 and is 10x bytes long
+<<< Return echoing to space parity for XRAY access TTY port >>>
+
+
+PATCH added on 910313 at 1230 by bss.SSmsg1.
+     Starts at XSS.F1 and is 68x bytes long
+<<< Correct XRAY SS Line 1 heading alignment >>>
+
+
+PATCH added on 910313 at 1230 by bss.SSmsg2.
+     Starts at XSS.F2 and is 56x bytes long
+<<< Correct XRAY SS Line 2 heading alignment >>>
+
+
+PATCH added on 910624 at 1030 by AVU.ZAPHRD1.
+     Starts at PATCH 0+0 and is 4x bytes long
+<<< add variable to save a register for NSR 4302 >>>
+
+
+PATCH added on 910624 at 1230 by AVU.ZAPHRD2.
+     Starts at ZAPX3+14 and is 6x bytes long
+Continues at PATCH 1+22 and is 18x bytes long
+<<< prevent R4 from being smashed from ZAPHRD call >>>
+
+End of Assembly
+
+1;F n00
+SEG0,RSEG0;PSEG1,S1SIZE;PSEGD,SDSIZE;PSEGF,SFSIZE;PCTA,CTASIZ;P%P%Q
+EXIT
+
+
+
+
+9.4  LOADING VIA BITS.
+
+Loading  of the PXL and all MAC V hardware requires BITS for loading.  There
+is no mechanism in  ELF for MAC V addressing, nor is there any plan for this
+option to be incorporated into ELF.
+
+For engine dumps or loads  the second BITS prompt (for hardware type) is NOT
+required and a simple carriage return is adequate.
+
+9.4.1  FULL ENGINE LOAD.
+
+The following is a sample of a downline load via BITS:
+
+
+bruces@antares% bits
+BITS-05.01 (S/N 46)
+This version is for SUN OS4 machine
+
+bits command: el
+  Engine merge or standalone. [(?),s,e,k,i=return] : 
+  Enter hardware type. [(?),u,v,e=return] : 
+  Enter ISIS object file name : nib
+  Enter NODE CODE (slot 0) object file name : n00
+  Enter slot number (1-f, none=return) : 1
+  Enter slot 1's object file name [none=return] : n01
+  Enter slot number (1-f, none=return) : 
+  Enter merge map file name. [none=return] : 
+  Enter login for target's neighbor, [nuname]:nkhost!line : :1553!5
+
+Using DLOAD as login username.
+  Enter password for neighbor: 
+  Send startup after load? [n, y=return] : 
+
+        Loading MACV code
+
+        SLOT MAP
+
+   SLOT     BEGINS            ENDS
+    0        2ac00       6cfff
+    1        6d000       a6fff
+    2        a7000       bcbff
+    3        bcc00       cebff
+    4        cec00       e2c7f
+
+
+        MAP OF SLOT  0
+
+   SEG      BEGINS     ENDS
+    0        2b000         34fff
+    1        35000         4dbff
+    2        4dc00         6cfff
+    6        1d800         227ff
+   14        2ac00         2afff
+
+
+
+
+        MAP OF SLOT  1
+
+   SEG      BEGINS     ENDS
+    0        6d400         6f3ff
+    1        22800         23fff
+    5        6f400         977ff
+    7        97800         997ff
+    8        99800         a4fff
+   14        6d000         6d3ff
+
+
+Circuit built
+The load/dump request has been acknowledged
+logical channel number is 60
+XMT=   40    RCV=   32   LOST=   8
+XMT=   80    RCV=   66   LOST=  14
+XMT=  120    RCV=  110   LOST=  10
+XMT=  160    RCV=  151   LOST=   9
+XMT=  200    RCV=  183   LOST=  17
+XMT=  240    RCV=  200   LOST=  40
+XMT=  280    RCV=  237   LOST=  43
+
+..................................
+..................................
+..................................
+
+XMT= 4920    RCV= 4910   LOST=  10
+XMT= 4960    RCV= 4954   LOST=   6
+XMT= 4998    RCV= 4998   LOST=   0
+XMT= 5000    RCV= 4998   LOST=   2
+XMT= 5040    RCV= 5036   LOST=   4
+XMT= 5071    RCV= 5071   LOST=   0
+sending startup.
+Startup acknowledged.
+bits095> zapping after load.
+Transfer completed .
+
+bits command: q
+bruces@antares% 
+
+
+9.4.1  SLOT LOAD.
+
+The following is a sample of a slot load via BITS:
+
+bruces@antares% bits
+BITS-5.01 (C/N 46) (SunOS 4.x) (Hardware: SUN3)
+Mon Mar 11 15:55:17 1991
+
+
+bits command: nc
+  Enter the login type [t=target(default),n=neighbor,b=both] : 
+  Enter login for target, uname[:khost] : gateway:4011
+  Enter password  for target: 
+Connecting to network...
+
+node: 4011
+host: 1553
+
+
+bits command: sl
+  Enter slot number [00-ff, none=return] : 1
+  Enter slot 01's object file name : n01
+  Enter file type. [(?),p,c,s=return] : 
+  Load another slot? [y,n=return] : 
+  Start slot(s) after loading? [n,y=return] : 
+
+initializing mac
+transmitting segment 14
+sending data to address e00000  bytes =    276
+sending data to address      0  bytes =   6736
+sending data to address 100000  bytes =  23192
+sending data to address 900000  bytes =   1411
+sending data to address d00000  bytes =  14016
+slot 01 loaded and started.
+
+bits command: q
+bits091> Circuit zapped..
+bruces@antares% 
+
+9.5  DUMPING VIA BITS.
+
+9.5.1  FULL ENGINE DUMP.
+
+The  following  is  a  sample  of  a  BITS  full  engine dump.
+
+bruces@antares%bits
+BITS-5.01 (C/N 46) (SunOS 4.x) (Hardware: SUN3)
+Wed Mar 13 09:34:54 1991
+
+
+bits command: ed
+  Enter hardware type. [(?),u,v,e=return] : 
+  Enter login for target's neighbor, [nuname]:nkhost!line : :4011!8
+
+Using DLOAD as login username.
+  Enter password for neighbor: 
+  Enter dump file name : eng.dump
+  Enter low address (hex digits). [return=0] : 
+  Enter high address (hex digits). [return=0af000] : 0FEFFF
+Circuit built
+The load/dump request has been acknowledged
+logical channel number is:  41
+received address:  0
+received address:  56
+received address:  112
+received address:  168
+received address:  224
+received address:  280
+
+  ..............
+  ..............
+
+received address:  132272
+received address:  131040
+received address:  131040
+Time used to dump (in second):  222
+Number of bytes dumped:  132328
+Starting address:  0
+Ending address:  132327
+
+bits command: q
+bits095> Circuit zapped..
+
+
+
+9.5.1  SLOT DUMP.
+
+The following is a sample of a slot dump via BITS:
+
+bruces@antares% bits
+BITS-5.01 (C/N 46) (SunOS 4.x) (Hardware: SUN3)
+Mon Mar 11 15:51:19 1991
+
+
+bits command: nc
+  Enter the login type [t=target(default),n=neighbor,b=both] : 
+  Enter login for target, uname[:khost] : isistech:4333
+  Enter password  for target: 
+Connecting to network...
+
+
+node: 4333
+host: 1763
+
+
+bits command: sd
+  Enter slot number [00-ff, none=return] : 1
+  Enter slot 01's dump file name : slot1.dump
+  reading from address   e00000 number of bytes      256
+  reading from address        0 number of bytes     6736
+segment   0    number of bytes      6736 
+  reading from address   100000 number of bytes    23192
+segment   1    number of bytes     23192 
+  reading from address   200000 number of bytes     5056
+segment   2    number of bytes      5056 
+  reading from address   300000 number of bytes    32000
+  reading from address   307d00 number of bytes      768
+segment   3    number of bytes     32768 
+  reading from address   400000 number of bytes     8562
+segment   4    number of bytes      8562 
+  reading from address   900000 number of bytes     1411
+segment   9    number of bytes      1411 
+  reading from address   d00000 number of bytes    14016
+segment  13    number of bytes     14016 
+  reading from address   e00000 number of bytes      276
+segment  14    number of bytes       276 
+
+bits command: q
+bruces@antares% 
+
+10.  CRASH CODES
+
+The  following section  lists the current ISIS crash codes and selected Node
+Code crash codes.  For further details on the numerous Node Code crash codes
+and specifications, see the XRAY users guide.
+
+In  addition  section 10.3 shows  the method  of looking  at the ISIS kernel
+or application slot crash table areas with the MAC V addressing.
+
+10.1  ISIS CRASH CODES.
+
+The following sections will  outline  the  main  ISIS  crashes codes, give a
+description  of the  crash  code  and  a possible cause.  The format of each
+section detailing the crash code is in the following format:
+
+  CONSOLE DISPLAY   SYMPTOM and POSSIBLE CAUSE
+
+    BADxx 87xx       Description [possible cause]
+
+
+The  possible cause (enclosed in brackets [..]) is not hard and fast, but is
+included  as a guide for potential hardware related items.  These causes are
+not specific to the  PXL architecture  but in  general apply  to  the engine
+hardware architecture.
+
+Not all of the following crash codes  will apply  to the PXL, but are listed
+for reference.
+
+
+The  first section  will outline the main hard failures where an engine will
+not even boot and is in the following format:
+
+  CONSOLE DISPLAY   SYMPTOM and POSSIBLE CAUSE
+
+    xxxxx DEAD      Description [possible cause]
+
+    0001A DEAD      Illegal second decode of an instruction
+
+    00020 DEAD      Unused interrupt (0) became active
+
+    00060 DEAD      Power-down interrupt
+
+    00100 DEAD      No response to device address during boot
+
+    00160 DEAD      ATN00 interrupt (only without enhanced async or sync)
+
+    001A0 DEAD      ATN10 interrupt (only without enhanced sync)
+
+    001A8 DEAD      Sync signal active when it should be inactive
+
+    001E9 DEAD      No sync response to RACK20 for ATN20
+
+    002xx DEAD      Bad device status during boot (xx = status)
+
+    00608 DEAD      No sync  response  to  RACK10  for  ATN10  (only  with
+                    enhanced sync)
+
+    00610 DEAD      Level 1 device number out of range (only with enhanced
+                    sync)
+
+    0DEAD 0BAD      Console operator error
+
+
+
+The following section will describe the most common ISIS crashes and will be
+in the following format:
+
+
+  CONSOLE DISPLAY   SYMPTOM and POSSIBLE CAUSE
+
+    BAD00 8720	    Parity error detected during initialization.
+                    [MAC or MEMORY]
+
+    BAD00 8730      Unexpected I/O interrupt.
+                    [Any I/O controller - clocks on undefined ports]
+
+    BAD00 8740      Illegal instruction during initialization.
+                    [CPU, MAC or MEMORY]
+
+    BAD00 8750      MAC interrupt during initialization.
+                    [MAC or MEMORY]
+
+    BAD00 8760      SVC trap during initialization.
+                    [Software and Hardware configuration mismatch]
+
+    BAD00 8763      Unable to connect slot 0 on startup.
+                    [Hardware and software configuration  mismatch,   code
+		    generation error or BITS loading problem]
+
+    BAD00 8790      Daughterboard timeout during disconnect.
+                    [SIO Motherboard or daughtercard]
+
+
+
+    BAD02 8750      Unexpected MAC interrupt during initialization
+                    of semiconductor memory above 1 Mb.
+                    [MAC or backplane wiring]
+
+    BAD02 8720      Parity error within kernel.
+                    [MAC or MEMORY]
+
+    BAD02 8740      Illegal instruction within kernel.
+                    [Single bit parity error, CPU, MAC, MEMORY]
+
+    BAD02 8750      Unexpected MAC interrupt during initialization.
+                    [MAC]
+
+    BAD02 8763      Bad REPOP operation.
+                    [ROM I/O]
+
+    BAD02 8765      "GCI" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+
+
+    BAD04 8721      Mac register set 0 bad (Bad MAC set).
+                    [MAC]
+
+    BAD04 8730      Unexpected enhanced SYNC interrupt.
+                    [Configuration mismatch, SYNC]
+
+    BAD04 8741      Bad MAC.
+                    [MAC, CPU, ROM I/O, MEMORY]
+
+    BAD04 8751      Bad MAC register set 0.
+                    [MAC]
+
+    BAD04 8752      DMA device timeout.
+                    [MAC or any DMA controller]
+
+    BAD04 8753      Memory range error in kernel.
+                    [MAC, MEMORY, Code generation error]
+
+    BAD04 8762      Unexpected SYNC interrupt.
+                    [ROM I/O, SYNC card, Backplane wiring, code generation
+		    error]
+
+    BAD04 8763      Wild transfer to low core.
+                    [MAC, MEMORY or CPU]
+
+    BAD04 8765      "WCI" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+    BAD04 8770      Memory range inconsistency in ISIS kernel
+		    [Code generation error]
+
+    BAD04 8775      Memory range inconsistency between actual memory size
+                    and ISIS system configuration memory size.
+		    [Code generation error]
+
+    BAD06 8720      Parity error within dispatcher.
+                    [MEMORY or MAC]
+
+    BAD06 8740      Illegal instruction within dispatcher.
+                    [ROM I/O, CPU, MAC]
+
+    BAD06 8750      Protection violation.
+                    [MAC, MEMORY]
+
+    BAD06 8760      Illegal SVC within dispatcher.
+                    [Code]
+
+    BAD06 8762      Disc interrupt queue overrun.
+                    [Code]
+
+    BAD06 8763      System crash (parity error within kernel)
+                    [MEMORY, MAC]
+
+    BAD06 8765      "WRECI" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+
+
+    BAD08 8763      Invalid routine address (from queue address)
+                    [Kernel bug]
+
+    BAD08 8765      "EMPTY" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+
+    BAD0A 8763      Invalid queue address.
+                    [Kernel bug]
+
+    BAD0A 8765      "TOPUT" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+
+
+    BAD0C 8762      MSC controller locked during recalibrate.
+                    [MSC controller]
+
+    BAD0C 8765      Accounting crash within dispatcher.
+                    [Slot code bug]
+
+
+
+    BAD0E 8720      Parity error within dispatcher.
+                    [MEMORY, MAC]
+
+    BAD0E 8740      Illegal instruction within dispatcher.
+                    [MAC, MEMORY]
+
+    BAD0E 8750      Protection violation withing dispatcher.
+                    [MAC, MEMORY]
+
+    BAD0E 8760      Illegal instruction in dispatcher.
+                    [MAC, MEMORY, CPU]
+
+    BAD0E 8761      Kernel crash.
+                    [Anything]
+
+    BAD0E 8763      System crash.
+                    [Anything]
+
+    BAD0E 8765      "GCI" crash within dispatcher.
+                    [ROM I/O, MAC]
+
+
+    BAD10 8763      "TOPUT" crash with dispatcher.
+                    [ROM I/O, MAC]
+
+    BAD12 8763      Accounting crash within dispatcher.
+                    [Slot code bug]
+
+    BAD14 8763      Invalid channel I/O buffer address.
+                    [MAC, MEMORY, CPU, ROM I/O]
+
+    BAD16 8763      No dispatcher present.
+                    [Software generation error]
+
+
+    BAD18 8760      XPI timeout.
+    BAD18 8761      XPI halted.
+    BAD18 8762      Bad interrupt message from XPI.
+    BAD18 8763      XPI start-up check failure.
+    BAD18 8764      XPI motherboard crash.
+    BAD18 8765      XPI too slow with KDIO.
+    BAD18 8766      Bad KDIO message from XPI.
+    BAD18 8767      MXP machine number mismatch.
+    BAD18 8768      XPI memory image not loaded.
+                    [XPI motherboard]
+
+    BAD20 8710      SIO ring software inconsistency
+    BAD20 8720      No room in SIO control ring
+    BAD20 8730      KIO port out of range
+    BAD20 8740      KIO port inconsistency
+    BAD20 8750      Invalid KIO control message
+    BAD20 8760      SIO Ring motherboard unavailable
+    BAD20 8770      Unexpected SIO ring device interrupt
+    BAD20 8780      Unexpected SIO ring error code
+                    [SUP node - SIO motherboard]
+
+10.2  NODE CODE CRASH CODES.
+
+The  following is a VERY limited selection of common node code crashes.  For
+details on  these and  other node  code  crashes  refer  to  the XRAY User's
+Guide for details.
+
+The following list is the generic classifications of node code crashes:
+
+   CRASH CODE      SYMPTOM
+
+   [HARDWARE crash codes]
+
+      0000         Manual restart
+      0001         Power fail
+      0002         Parity error
+      0003         Dispatcher crash
+      0004         Illegal instruction
+      0005         Illegal SVC
+      0006         System crash (parity error)
+      0007         Protection violation
+      0008         Non-recoverable device check
+
+
+   [SOFTWARE crash codes]
+
+      xx42         Software detected instruction malfunction
+
+      xx62         Software detected hardware consistency error
+
+      xx63         Software consistency error
+
+                   0E63  =  After  attempting  to  chain  a  new   output
+		            command  on an  SIO line,  an invalid  status
+			    code  (not  1 or 2)  was  reported.   This is
+			    probably an SIO hardware problem.
+
+                   1463  =  RMAKE was  tring  to  make a  logical  record
+		            which would have only one byte of data in it,
+			    but the byte of data was a "00", "01" or "02"
+			    none  of  which can  travel  by  itself  in a
+			    logical record.   The byte is presumably  the
+			    first or second  byte  of  a  character  pair
+			    which go separated from its mate.
+		            
+
+                   2E63  =  RMAKE, while  copying  a  logical record into
+		            history buffer, found  an  isolated "02" byte
+			    in the data.
+
+                   3E63  =  DISPI, while moving data into the dispatcher,
+		            detected data on a channel that had  no entry
+			    in the dispatcher permuter table.
+
+                   4A63  =  Illegal call to WCI for buffer = 0 or 1.
+
+                   5063  =  Illegal call to GCI for buffer = 0 or 1.
+
+		   5463  =  Illegal call to CBCLR for buffer not assigned
+		            to a channel.
+
+                   5663  =  The BCT of a history buffer went  negative as
+		            a result of history buffer pruning.
+
+		   6863  =  ZAPV  while  zapping second half of a circuit
+		            detects  that the  complimentary buffer  flag
+			    was  not zero (first  half of the circuit had
+			    not been zapped). 
+
+                   7263  =  FNDKNC  while  attempting  to  locate a  free
+		            channel for a link detects a  channel with  a
+			    zero entry in the  permuter table (IOTAB) but
+			    no bit set  in  the  active port array (a bit
+			    set means the port is available).
+
+                   9263  =  The count of bufferlet bytes  in use has gone
+		            less than 0 during it's update.
+
+                   9463  =  The count of history  bufferlet bytes  in use
+		            has gone less than 0 during it's update.
+
+      xx64         Empty buffer or illegal buffer index GCI crash
+
+                   0264  =  GCI was  called  to  get a  character from  a
+		            buffer however  the buffer was empty or a bad
+			    buffer index was used (not a multiple of 4)
+
+      xx66         Illegal bufferlet free list pointer
+
+      xx67         SVC errors
+
+                   6067  =  ISIS connect SYNC SVC error.
+		   6467  =  ISIS force SYNC output SVC error.
+
+		   7267  =  ISIS connect SIO SVC error.
+		   7467  =  ISIS start SIO input SVC error.
+		   7667  =  ISIS start SIO output SVC error.
+
+10.3  CRASH INFORMATION GATHERING.
+
+Due  to the  addressing change  required  for  MAC V  hardware  some of  the
+methods  for gathering  on-line crash  information has changed.  In addition
+appending  the symbol  tables to  the nib  files  requires  that the "-v" be 
+included in the command line for invoking NAD.
+
+The following is an example of reading the ISIS kernel crash area:
+
+network: please log in: bruces:%4011;
+node: 4011
+host: 1553
+
+slot #: !
+Slot FF
+*r 6c 10
+00006C  0000  0954  4300  0F0E  5000  0DAC  4100  0DEC
+*r 954 100
+000954  0809  0007  0001  0516  2086  07BB  0001  0001
+000964  0000  0000  0000  0000  0F18  8000  0000  0000
+000974  0000  0000  0000  0000  0000  0000  0000  0000
+000984  0000  0000  0000  0000  0000  0000  0000  0000
+000994  0000  0000  0000  0000  0000  0000  0000  0000
+0009A4  0000  0000  0000  0000  0000  0000  0000  0000
+0009B4  0000  0000  0000  0000  0000  0000  0000  0000
+0009C4  0000  0000  0000  0000  0000  0000  0000  0000
+0009D4  0000  0000  0000  0000  0000  0000  0000  0000
+0009E4  0000  0000  0000  0000  0000  0000  0000  0000
+0009F4  0000  0000  0000  0000  0000  0000  0000  0000
+000A04  0000  0000  0000  0000  0000  0000  0000  0000
+000A14  0000  0000  0000  0000  0000  0000  0000  0000
+000A24  0000  0000  0000  0000  0000  0000  0000  0000
+000A34  0000  0000  0000  0000  0000  0000  0000  0000
+000A44  0000  0000  0000  0000  0000  0000  0000  0000
+*z Logging off (Y/N)? z
+
+
+
+The following is an example of reading the CONSAT crash area:
+
+network: please log in: bruces:%4333;
+
+node: 4333
+host: 1763
+
+slot #: 2
+Slot 02 down: halted- SVC
+*r 0e00050 10
+E00050  0010  4320  00D0  0074  0000  05F0  00E0  00D8
+*r 104320 10
+104320  2401  4000  4000  1CCE  2411  6110  4000  1CCC
+*r 1ccc 50
+001CCC  0002  008C  0010  3D72  0010  12E4  0000  0000
+001CDC  0000  0000  0000  000B  0000  0040  0B10  3D6C
+001CEC  0000  0020  0010  326C  0010  2C24  0010  12E4
+001CFC  0000  01E0  0010  3D72  FFFF  FFFE  0000  18A8
+001D0C  0000  0008  0000  0004  FFFF  FC06  0000  0000
+
+
+*?stat
+
+:>crat
+
+Slot started at  29Mar91 21:17   GMT
+Last crash at    29Mar91 21:17   GMT
+Current time is  29Mar91 21:21   GMT
+Assembly time is 28Mar91 23:10   GMT
+
+Count  Code  Location  Called from
+    2    8C    103D72       1012E4
+
+Registers
+0000 0000  0000 0000  0000 000B  0000 0040
+0B10 3D6C  0000 0020  0010 326C  0010 2C24
+0010 12E4  0000 01E0  0010 3D72  FFFF FFFE
+0000 18A8  0000 0008  0000 0004  FFFF FC06
+
+:>symbols
+
+Configuration equates
+NAPORT =       0   NSPORT =       4   PVC    =       1   NMPVC  =       0
+NPAPRT =       0   X3ON   =       0   OUTDIA =       0   NUMPRN =       0
+TELEX  =       0   BTELEX =       0   TTELEX =       0   VTEXT  =       0
+.2HD   =       0   BAUDA  =       0   
+
+Addresses
+RLA    =      9E   .PTP.  =  104214   EXEC   =  102BC4   CRAT   =    1CCC
+PMAPIA =    1300   PMAPAI =    130A   TOISIS =      32   TOPORT =      2E
+ORING  =  200000   IRING  =  200400   BB     =    1818   BE     =    1848
+BCT    =    17EA   BF     =    17E8   REBC1  =    17E0   REBC2  =    17E2
+HANGWT =     1DC   HAFDUX =      D2   PARITY =      EE   SEVBIT =      F2
+XONENA =     14E   YONENA =     156   XONOUT =     152   RXON   =     15A
+VANILA =     1C8   KATAKN =      F6   TOSING =     13A
+
+Port table data structure
+.PORT  =       0   .TERMT =       2   .TTBUF =       4   .FTBUF =       8
+.LGBUF =       C   .VSTAT =      10   .VSAVE =      14   .XSTAT =      18
+.XSAVE =      1C   .LSTAT =      24   
+.PVCX  =      FA   .PVCTO =      FE   .PVCLH =     100   .PVCDO =     104
+.IIXBF =       C   .IIXVL =      30   .IIXID =      34   .IIXSV =      38
+.IXSAV =      3C   .IIXST =      40   .IXLEN =      75   .IXPAR =      74
+.IIXMD =      2E   .IIXSM =      2C   
+
+:>q
+
+Slot 02 down: halted- SVC
+*zz Logging off (Y/N)? 
+
+
+
+
+The  following is  an example  of appending  the symbol  table  to an engine
+dump:
+
+
+@antares% nad -v
+NAD-3.01 (S/N 41)  (SunOS 4.x)
+Wed Apr 17 13:09:29 1991
+
+%f nib
+%g
+1%f dump.file
+Data ranges read 0 - 204e8
+
+%p
+%q
+EXIT
+
+11.  SIO STATUS INTERPRETATION
+
+The  following section  outlines the  general SIO  status display and how to
+interpret the display.
+
+The general format ISIS SIO status area looks as follows:
+
+       6C87  0100  000D  6200  2200  0000  0000  0100
+       __--  __--  ___-  _-    _-     __________
+       |  |  |  |   | |  ||    ||         |
+       |  |  |  |   | |  ||    ||          ------  FASTC
+       |  |  |  |   | |  ||    || 
+       |  |  |  |   | |  ||    | ----------------  Line number
+       |  |  |  |   | |  ||    |  
+       |  |  |  |   | |  ||     -----------------  Condition code
+       |  |  |  |   | |  ||  
+       |  |  |  |   | |  | ----------------------  Last line number
+       |  |  |  |   | |  |
+       |  |  |  |   | |   -----------------------  Last condition code
+       |  |  |  |   | | 
+       |  |  |  |   |  --------------------------  Flags
+       |  |  |  |   | 
+       |  |  |  |    ----------------------------  Abort count
+       |  |  |  | 
+       |  |  |   --------------------------------  CRC count
+       |  |  | 
+       |  |   -----------------------------------  Idle count
+       |  | 
+       |   --------------------------------------  SIO Read Register 1
+       |
+        -----------------------------------------  SIO Read Register 0
+
+
+
+
+The  SIO read registers are outlined as follows:
+
+
+          READ STATUS REGISTER 0
+          
+       0   1   2   3   4   5   6   7
+      ___ ___ ___ ___ ___ ___ ___ ___ 
+     |   |   |   |   |   |   |   |   |
+      --- --- --- --- --- --- --- ---
+       |   |   |   |   |   |   |   |
+       |   |   |   |   |   |   |    --  Receive character available
+       |   |   |   |   |   |    ------  Interrupt pending
+       |   |   |   |   |    ----------  Transmit buffer empty
+       |   |   |   |    --------------  Carrier detected
+       |   |   |    ------------------  Receive disabled
+       |   |    ----------------------  Clear to send
+       |    --------------------------  Transmit underrun
+        ------------------------------  Set if abort received (>6 1's)
+	
+
+
+           READ STATUS REGISTER 1
+      
+       0   1   2   3   4   5   6   7
+      ___ ___ ___ ___ ___ ___ ___ ___ 
+     |   |   |   |   |   |   |   |   |
+      --- --- --- --- --- --- --- ---
+       |   |   |   |   |   |   |   |
+       |   |   |   |   |   |   |    --  Always set for HDLC
+       |   |   |   |   |   |   |
+       |   |   |   |    ---+---+------  011 (residue code is 8 bits)
+       |   |   |   |   
+       |   |   |    ------------------  Set if parity error
+       |   |    ----------------------  Set if receive overrun
+       |    --------------------------  Set if frame error
+        ------------------------------  Set if end of frame detected
+
+
+
+
+
+
+The FLAG field is defined as follows:
+
+              FLAG BITS
+          
+           ___ ___ ___ ___
+          |   |   |   |   |
+	   --- --- --- ---
+            |   |   |   |
+            |   |   |    --  Set if transmit clock present
+            |   |    ------  Set if HDLC line idle (16 consecutive 1's)
+            |    ----------  Set if receive clock present
+             --------------  Set if read status is complete
+
+
+
+The INTERRUPT status field is defined as follows:
+
+
+                  INTERRUPT STATUS
+          
+           0     3 4     7 8    11 12    15
+           _______ _______ _______ _______ 
+          |       |       |       |       |
+	   ------- ------- ------- -------
+	      |       |       |       |   
+              |       |       |        -- Condition code:
+              |       |       |               4 if nonfunctioning or 
+              |       |       |                    nonexistent board
+              |       |       |               8 if busy - not  ready 
+              |       |       |                    for  new  command
+              |       |        ---------- 0
+              |       |   
+              |        ------------------ Address: line number
+              |
+               -------------------------- Status:
+                                              2 CCW (Channel Command 
+                                                Word) error
+                                              6 Overrun of SIO chip
+                                                (lost data)
+                                              8 IO command error
+
+
+In the SIO status display there MAY be two sets of SIO interrupt codes:
+
+   o  LAST non-zero status and line number
+
+   o  CURRENT status and line number
+
+
+
+These BOTH follow the same decoding scheme:
+
+       6C87  0100  000D  6200  2200  0000  0000  0100
+                         --    --
+			 ||    ||
+			 ||    | -------  Current line number
+			 ||    |
+			 ||     --------  Current interrupt code
+			 ||
+			 | -------------  Last non-zero return
+			 |                line number
+			 |
+			  --------------  Last non-zero return
+			                  interrupt code
+   
+
+
+For  quick reference  to the  SIO  status  areas, the  following application
+slot LABELs need to be located in the individual slot code:
+
+   o  NODE CODE  -  Use the XRAY SS (SIO Status) command.
+
+   o  XCOM       -  Label SIOTn for 0E0x bytes, where n is the logical
+                    unit number (line number within the slot).
+
+   o  SDLC       -  Label SIOTn for 0E0x bytes, where n is the logical
+                    unit number (line number within the slot).
+
+   o  CONSAT     -  Label STASIO for 40x bytes, using the label OCMSOF
+                    for offsets  to each  logical unit (generally  the
+		    offsets are 40x bytes).
+
+   o  TYMCOM     -  Label SIOSTA for 40x bytes, using the label OCMSOF
+                    for offsets  to each  logical unit (generally  the
+		    offsets are 40x bytes).
+
+
+12.  TTY LOADABLE FILES
+
+The  following  section will  outline  those  steps  necessary  to create PC
+based files which can be used for TTY loading.
+
+The  regular diagnostics plus the MAC5 compatible diagnostics can be  pulled
+down to a PC from  the UNIX system,  but  it  is a  little more  complicated
+than using TERMITE and the PDP's.
+
+The  mechanism for  pulling the  files down  to the PC depends upon the comm
+package  on the PC.  It is not done  with TERMITE and NAD, as the %8 feature
+in NAD on UNIX has been disabled.
+
+There  are two  basic  parts  to  creating the PC based files:  creating TTY
+loadable files under UNIX; and downloading the files to a PC.
+
+On  the PC,  log into  the  UNIX server and copy  the  diagnostic  nib  file
+to your personal directory (diags can be found on ~engdiag).   Do not log in
+with  any  flow  control set.   Make  sure that  the parity and  bit setting
+match from  the PC   to the modem  (ie, 7E1).   Insure that  flow control is
+disabled on the modem also.
+
+The first part  (creating UNIX based TTY loadable files) involves using BITS
+to create the TTY file, a sample of which is shown below:
+
+
+	bruces% bits
+        BITS-5.00 (C/N 44) (SunOS 4.x) (Hardware: SUN3)
+        Thu Sep 12 14:58:16 1991
+
+
+        bits command: hl
+        Engine merge or standalone. [(?),s,e,k,i=return] : s
+           No merge. Enter standalone file name : dcpu.nib
+        Check the tty filename? [n, y=return] : n
+        Enter filename : dcpu.tty
+         dcpu.tty is not a tty port.
+         Writing to file dcpu.tty. 
+        Loading dcpu.nib as ISIS kernel 
+        ...Segment 0:   Addresses 0-ffff (phys 0-ffff)
+        ...Segment 1:   Addresses 10000-12fd7 (phys 10000-12fd7)
+
+        bits command: q
+
+
+The next step is to fire up  the UNIX  based protocol transfer  program that
+matches the one your PC comm package will use (such as XMODEM, ZMODEM).  For
+XMODEM the UNIX program is  "sx", for ZMODEM it is "sz".  The format for the
+command is "sx <filename>".  This will print an information message  of some
+sort  to the terminal.  The following steps utilize the  XMODEM package  and
+PCPLUS comm  package, but   the  format  is  generally the same for any comm
+package..  These steps are:
+
+  o  On the UNIX  system  enable  the  transfer protocol and set the
+     terminal to echo carriage returns:
+
+       bruces%echo <cntl>]          (CONTROL and "[" key)
+
+       bruces%sx <file>
+
+  o  Fire up the PC comm package.
+
+       o  PAGE-DOWN key to get to the download protocol menu
+
+       o  At the protocol selection menu  enter the option for XMODEM
+
+       o  At the filename prompt  enter  filename on the PC the file
+          is to be received as.
+
+       o  The  PC download begins and will display a message when it
+          completes.
+
+
+Once  the files  are downloaded  to the PC, the TTY files can be loaded into
+the  PXL (or any other hardware)  using  TERMITE or a comm package using RAW
+ASCII  data transfer (such  as  PCPLUS in  ASCII upload protocol mode).  For
+additional information on the TERMITE see the following files:
+
+    TERMIT.DOC  -  TERMITE Users Guide
+    PROLIT.DOC  -  File loading procedures with TERMITE
+
+    SUN server:   GEMINI   path:  /home/nts/nts/docs
+    PDP systems:  (NTS)
+   
+
+
+13.  FCO QUICK CHECK LIST
+
+
+FCO/ECO  QUICK CHECK LIST
+--- ---  ----- ----- ----
+
+FCO/ECO #      REASON
+--- --- -      ------
+
+ 91-174        Power Backup installation.  This FCO details the installation
+               of the Power Backup option (360084-001).
+
+ 91-172        Power  Reset  Installation.   This  FCO details  the retrofit
+               installation  of the Power Reset board (470420-001) which  is
+	       designed  to  prevent  a PXL  lock-up  when a power  surge or
+	       fluxuation is encountered.
+
+ 91-233        Release of AL8 (8 port standard ASYNC) card.
+
+
+ 7X\Ñ
