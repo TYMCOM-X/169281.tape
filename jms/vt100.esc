@@ -1,0 +1,47 @@
+The following is a summary of the VT100 control sequences.
+(taken from the Digital VT100 User Guide, 3rd edition, pages 58-61.)
+
+("Pn" means zero or more digits 0-9.  If the parameter is not present, it
+is the same as "0", which means to do the default.  Ususally same as "1".)
+
+	Cursor Movement Commands
+
+ESC [ Pn A	Cursor up  (ESC 7 A means go up 7 lines)
+ESC [ Pn B	Cursor down
+ESC [ Pn C	Cursor forward (ESC 1 5 C means go right 15 columns)
+ESC [ Pn D	Cursor backward (left)
+ESC [ Pl ; Pc H	  Direct cursor addressing (Pl is line from 1 to 24, Pc is
+ESC [ Pl ; Pc f	  column 1 to 80 or 132).  Both "f" and "H" are equivalent
+		  on the VT100, "H" is preferred.  (ESC H means upper left)
+ESC D		Index, same as linefeed without carriage return.
+ESC E		Newline, same as linefeed with carriage return.  (Control-J
+		can be either Index or Newline depending on ESC [ 2 0 h.)
+ESC M		Reverse index, screen scrolls down if cursor on top line.
+ESC 7		Save cursor position and attributes
+ESC 8		Restore cursor position and attributes
+
+	Line Size (Double-Height and Double-Width) commands
+
+ESC # 3		Set current line to double-height, top half (double wide)
+ESC # 4		Set current line to double-height, bottom half (double wide)
+ESC # 5		Set current line to single-width, single-height (normal)
+ESC # 6		Set current line to double-width, single height
+
+	Character Attributes
+
+ESC [ Ps;Ps;Ps;...;Ps m		Set graphic rendition
+	Ps =	0 or none turns all attributes off (normal)
+		1 bold (brigher)
+		4 underline (lower and wider than underscore character)
+		5 blink
+		7 reverse video (black on gray)
+
+	Erasing
+
+ESC [ K		Erase current position to end of line (ESC [ 0 K is same)
+ESC [ 1 K	Erase beginning of line to current position (inclusive)
+ESC [ 2 K	Erase entire line
+ESC [ J		Erase current position to end of screen (ESC [ 0 J is same)
+ESC [ 1 J	Erase from beginning of screen to current position
+ESC [ 2 J	Erase entire screen
+
