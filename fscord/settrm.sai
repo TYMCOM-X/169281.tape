@@ -1,0 +1,1077 @@
+REQUIRE "{}[]" DELIMITERS;
+REQUIRE 820630 VERSION;
+REQUIRE PNAMES;
+REQUIRE 1024 NEW!ITEMS;
+DEFINE ! = "COMMENT";
+DEFINE CRLF = "(13&10)";
+DEFINE NL = CVMS(CRLF); ! CRLF GETS REDEFINED LATER;
+DEFINE !LH(I) = "((I) LSH -18)";
+DEFINE !RH(I) = "((I) LAND '777777)";
+DEFINE !HL(I) = "((I) LSH 18)";
+DEFINE !HR(I) = "((I) LAND '777777)";
+DEFINE !BIT(BITNUMBER) = "(1 LSH (35-(BITNUMBER)))";
+DEFINE !XWD(L,R) = "(((L) LSH 18) LOR ((R) LAND '777777))";
+EXTERNAL INTEGER !SKIP!;
+DEFINE !UFD!TROUBLE!=-3, !BAD!FILE!NAME!=-2, !ILLEGAL!OPTION!=-1,
+        !NO!MORE!=0, !REQUESTED!STOP!=1, HALT='254200000000;
+SIMPLE INTEGER PROCEDURE POUNDIT( INTEGER SIXNAME );
+BEGIN   INTEGER I, SIXBIT;
+SIXBIT_ SIXNAME;
+FOR I_ -6 STEP -6 WHILE (SIXBIT_ SIXBIT LSH 6)
+   DO IF SIXBIT=CVSIX("*")
+        THEN RETURN( ((CVSIX("*") XOR CVSIX("######")) LSH I)
+                        XOR SIXNAME );
+RETURN(SIXNAME);
+END;
+
+
+INTERNAL INTEGER RECURSIVE PROCEDURE REDUFD(
+                                BOOLEAN PROCEDURE CALLIT;
+                                STRING FILESPEC, FLAGS );
+BEGIN   EXTERNAL INTEGER !SKIP!;
+        DEFINE  !CHUFD='33, !CHLK='4, !RBUNM='27,!RBUN1='30,
+                IO.ERR='17*!BIT(21);
+        DEFINE  GETPPN="CALLI(0,'24)";
+        INTEGER ARRAY CHUFD!TABLE[0:7];
+        INTEGER PPN, CHAN,EOF, ENTRY!SIZE, I,CHAR, LOOKUPFAILURE;
+        STRING DEVICE;
+         SIMPLE PROCEDURE ONEXIT; IF CHAN>-1 THEN RELEASE(CHAN);
+          CLEANUP ONEXIT;
+CHAN_-1;
+ARRCLR(CHUFD!TABLE);
+DEVICE_ FILESPEC;
+WHILE LENGTH(DEVICE)
+   DO IF LOP(DEVICE)=":"
+         THEN BEGIN
+                FILESPEC SWAP DEVICE;
+                DEVICE_ DEVICE[1 TO INF-1-LENGTH(FILESPEC)];
+                DONE;
+              END;
+IF LENGTH(FILESPEC)=0 THEN FILESPEC_"*.*";
+CHUFD!TABLE[1]_ CVFIL( FILESPEC, CHUFD!TABLE[2], PPN );
+IF !SKIP! THEN RETURN( !BAD!FILE!NAME! );
+
+WHILE LENGTH(FLAGS) DO CASE CHAR_LOP(FLAGS)
+ OF BEGIN
+    ["#"] BEGIN ! PAD OUT THE NAMES WHICH END IN "*" WITH "#";
+            CHUFD!TABLE[1]_ POUNDIT(CHUFD!TABLE[1]);
+            CHUFD!TABLE[2]_ POUNDIT(CHUFD!TABLE[2]) LAND (-1 LSH 18);
+          END;
+    ["'"] BEGIN ! OCTAL SPECIFICATION OF (OTHER) CHUFD BITS;
+            CHUFD!TABLE[3]_ CHUFD!TABLE[3] LOR CVO(FLAGS);
+            DONE;
+          END;
+    ["*","+"] BEGIN ! "+": SUBSTITUTE "*" FOR UNSPECIFIED NAME;
+                    ! "*": ALSO "*" FOR UNSPECIFIED EXTENSION;
+          IF 0=CHUFD!TABLE[2] AND LENGTH(FILESPEC)
+          AND (0=CHUFD!TABLE[1] OR CHAR="*")
+           THEN WHILE 0 NEQ LOP(FILESPEC) NEQ "."
+                DO IF LENGTH(FILESPEC)=0 THEN CHUFD!TABLE[2]_CVSIX("*");
+          FILESPEC_ NULL;
+          IF 0=CHUFD!TABLE[1] THEN CHUFD!TABLE[1]_ CVSIX("*");
+          END;
+    [ELSE] BEGIN   PRESET!WITH
+                        "X"+!BIT(0),    ! EXACT MATCH ONLY;
+                        "B"+!BIT(1),    ! SIZE IN BLOCKS;
+                        "L"+!BIT(2),    ! LICENSE WORD;
+                        "C"+!BIT(3),    ! CREATION TIME;
+                        "D"+!BIT(3)+!BIT(10),   ! CREATION: DEC;
+                        "S"+!BIT(4);    ! STATUS BITS;
+                OWN SAFE INTEGER ARRAY FLAGS[0:5];
+           FOR I_0 STEP 1 UNTIL 5
+                DO IF (CHAR XOR FLAGS[I]) LAND '777737 = 0
+                        THEN CHAR_ FLAGS[I];
+           IF I_ CHAR LAND (-1 LSH 18)
+            THEN CHUFD!TABLE[3]_ CHUFD!TABLE[3] LOR I
+            ELSE RETURN( !ILLEGAL!OPTION! );
+           END
+    END;
+
+IF LENGTH(DEVICE)=0 THEN DEVICE_"DSK";
+OPEN( CHAN_GETCHAN, DEVICE,  IO.ERR+'17, 0,0, 0,0,EOF_TRUE);
+IF EOF THEN RETURN( !UFD!TROUBLE! );
+I_BBPP(1, CHUFD!TABLE[3], 1);
+ENTRY!SIZE_ 2 + LDB(I) + ILDB(I) + ILDB(I) + ILDB(I);
+                ! NAME,EXT, BITS 1:4 EACH SPECIFY 1 EXTRA ENTRY;
+    BEGIN       INTEGER ARRAY BUFFER[1:102, 0 : ENTRY!SIZE-1 ];
+                INTEGER ARRAY PASSEDARRAY[ -4 : ENTRY!SIZE-1 ];
+                INTEGER POSITION;
+        I_ BBPP(36,BUFFER[1,0],35);     ! SINCE IT IS RECTANGULAR;
+        BUFFER[1,0]_ !RBUN1;
+        DPB( CVSIX("UFD"), I+3 );       ! EXTENSION;
+        IF PPN=0        ! FIND OUT DEFAULT PPN;
+         THEN BEGIN BUFFER[1,1]_3; CHNIOR(CHAN,BUFFER[1,1],!CHLK); END
+         ELSE DPB(PPN,I+2);             ! FILE NAME;
+        BUFFER[1,1]_ 1 LSH 18 + 1;      ! PPN FIELD (1,,1=MFD);
+        POSITION_ CHNIOR( CHAN, BUFFER[1,0], !CHLK );
+        IF NOT !SKIP! THEN RETURN( !UFD!TROUBLE! );
+        PASSEDARRAY[-4]_ LDB( I + !RBUNM );
+        PASSEDARRAY[-3]_ LDB( I + !RBUN1 );
+        PASSEDARRAY[-2]_ CVSIX(DEVICE);
+        PASSEDARRAY[-1]_ LDB( I + 2 );  ! PPN = FILE NAME OF ###.UFD;
+        CHUFD!TABLE[0]_ -ARRINFO(BUFFER,0) LSH 18
+                        + LOCATION(BUFFER[1,0]);
+        WHILE TRUE
+           DO BEGIN
+                CHNIOR( CHAN, CHUFD!TABLE[0], !CHUFD );
+                IF NOT !SKIP! THEN RETURN( !NO!MORE! );
+                FOR POSITION_1 STEP 1 UNTIL CHUFD!TABLE[7]
+                   DO BEGIN
+                        ARRBLT( PASSEDARRAY[0], BUFFER[POSITION,0],
+                                ENTRY!SIZE );
+                        IF CALLIT(PASSEDARRAY)
+                         THEN RETURN( !REQUESTED!STOP! );
+                      END;
+              END;
+      END;
+END;
+
+SIMPLE INTEGER PROCEDURE GETTAB (INTEGER INDEX,TABLE);
+START!CODE
+        SETOM !SKIP!;
+        HRL 1,INDEX;
+        HRR 1,TABLE;
+        CALLI 1,'41;
+          SETZM !SKIP!;
+END;
+
+!       PARSE ("FILESPEC",@NAME,@EXT,@PPN)
+
+        SCANS THE FILESPEC AND BREAKS IT INTO NAME, EXT AND PPN.
+        IF A USERNAME IS GIVEN, IT IS CONVERTED TO A PPN.;
+
+PROCEDURE PARSE (
+        STRING  FILE;
+        REFERENCE INTEGER
+                NAME,
+                EXT,
+                PPN );
+BEGIN "PARSE"
+    NAME _ CVFIL (FILE, EXT, PPN);
+    IF PPN = 0 THEN PPN _ CALLI(0,'24); ! GETPPN;
+    IF !LH(PPN) = 0 THEN BEGIN "USERNAME"
+        INTEGER ARRAY LKB[0:3];         ! BLOCK FOR EXTENDED LOOKUP;
+        INTEGER CHAN,EOF;
+        LKB[0] _ ARRINFO(LKB,2);        ! SIZE OF LKB;
+        LKB[1] _ CALLI('16,'41);        ! MFD PPN;
+        LKB[2] _ PPN;                   ! ADDR OF SIXBIT USER NAME;
+        LKB[3] _ CVSIX("UFD");          ! EXTENSION;
+        OPEN (CHAN_GETCHAN, "DSK", '17,0,0, 0,0,EOF);
+        IF EOF THEN RETURN;             ! VERY, VERY ILL;
+        CHNIOR (CHAN, LKB[0], 4);       ! LOOKUP UFD TO GET PPN;
+        RELEASE (CHAN);                 ! DON'T NEED THE CHANNEL;
+        PPN _ LKB[2];                   ! SAVE REAL PPN FOR USER;
+    END "USERNAME";
+END "PARSE";
+
+
+!       PPN _ CVPPN("USERNAME")
+
+CONVERT A DIRECTORY NAME TO A PPN;
+
+INTEGER PROCEDURE CVPPN (STRING UNS);
+BEGIN "CVPPN"
+        INTEGER ARRAY LKB[0:3];         ! BLOCK FOR EXTENDED LOOKUP;
+        INTEGER ARRAY UN[0:3];          ! BLOCK FOR USER NAME;
+        INTEGER CHAN,EOF;
+        LKB[0] _ ARRINFO(LKB,2);        ! SIZE OF LKB;
+        LKB[1] _ CALLI('16,'41);        ! MFD PPN;
+        LKB[2] _ LOCATION(UN[0]);       ! ADDR OF SIXBIT USER NAME;
+        LKB[3] _ CVSIX("UFD");          ! EXTENSION;
+        UN[0] _ CVSIX(UNS[1 FOR 6]);    ! SAVE USER NAME IN SIXBIT;
+        UN[1] _ CVSIX(UNS[7 FOR 6]);
+        OPEN (CHAN_GETCHAN, "DSK", '17,0,0, 0,0,EOF);
+        IF EOF THEN RETURN(0);          ! VERY, VERY ILL;
+        CHNIOR (CHAN, LKB[0], 4);       ! LOOKUP UFD TO GET PPN;
+        RELEASE (CHAN);                 ! DON'T NEED THE CHANNEL;
+        RETURN (LKB[2]);                ! RETURN THE PPN;
+END "CVPPN";
+
+!       BOOLEAN _ EXISTS ("FILENAME")
+
+INDICATE THAT A FILE EXISTS;
+
+BOOLEAN PROCEDURE EXISTS (STRING FILE);
+BEGIN "EXISTS"
+        INTEGER C,E;
+        OPEN (C_GETCHAN, "DSK", 0,0,0, 0,0,E);
+        IF E THEN RETURN(FALSE);        ! VERY, VERY ILL;
+        LOOKUP (C,FILE,E);              ! LOOKUP FILE;
+        RELEASE (C);
+        RETURN (E=0);
+END "EXISTS";
+
+!       SETALP SETS ALTERNATE LOGOUT PROGRAM NAME IN MONITOR
+
+        SETALP (FILE)
+                OR
+        SETALP;
+
+SIMPLE BOOLEAN PROCEDURE SETALP (STRING FILE(NULL));
+BEGIN "SETALP"
+    OWN INTEGER ARRAY FOO[0:2];
+    IF LENGTH(FILE)
+        THEN PARSE (FILE, FOO[2], FOO[0], FOO[1])
+        ELSE BEGIN
+            FOO[2] _ CALLI('777777000003,'41);  ! JBTNAM;
+            FOO[1] _ CALLI(-'25,'41);           ! JBTFPN;
+        END;
+    FOO[0] _ CVSIX("DSK");
+    CALLI (LOCATION(FOO[0]),-'127);     ! TELL MONITOR WHAT TO RUN;
+    RETURN (!SKIP!);                    ! FAILS IF ONE ALREADY SET;
+END "SETALP";
+
+!       SETSCM SETS SPECIAL COMMAND PROCESSOR
+
+        SETSCM (FILE);
+
+SIMPLE BOOLEAN PROCEDURE SETSCM (STRING FILE(NULL));
+BEGIN "SETSCM"
+    OWN INTEGER ARRAY FOO[0:2];
+    OWN INTEGER I;
+    CALLI( I := '200000000 LOR GETTAB(-1,6), -'11 );
+    IF I NEQ GETTAB(-1,6) THEN RETURN( FALSE );
+    PARSE (FILE, FOO[0], FOO[2], FOO[1]);
+    CALLI (LOCATION(FOO[0]),-'57);      ! TELL MONITOR WHAT TO RUN;
+    RETURN (TRUE);
+END "SETSCM";
+
+!       KJOBPENDING
+
+        THIS IS TRUE IF A LOGOUT IS IN PROGRESS.  THIS WILL ALLOW
+        THE SAME PROGRAM TO BE BOTH THE INIT AND ALP PROGRAM BY
+        EXAMINING THIS BIT.;
+
+SIMPLE BOOLEAN PROCEDURE KJOBPENDING;
+RETURN (CALLI(!HL(-1),'41)LAND '100);   ! RETURN BIT IN JBTSTS;
+
+
+!       "USERNAME" _ USER
+
+        RETURNS THE USERNAME THE JOB IS LOGGED IN TO AS A STRING
+        WITHOUT THE "()";
+
+SIMPLE STRING PROCEDURE USER;
+RETURN(CV6STR(GETTAB(-1,-'22))&CV6STR(GETTAB(-1,-'21)));
+
+!       STRPPN
+
+        IS THE STRING [GAN,UUN] FOR THE AUN;
+
+STRING PROCEDURE STRPPN;
+BEGIN
+    OWN INTEGER PPN;
+    PPN _ GETTAB(-1,-'23);
+    RETURN("["&CVOS(PPN LSH (-18))&","&CVOS(PPN LAND '777777)&"]");
+END;
+
+!       "LIST OF JOBS" _ DETACHEDJOBLIST
+
+RETURNS A LIST OF ALL JOBS LOGGED IN AND DETACHED.  THE PNAMES OF THE
+ITEMS RETURNED IN THE LIST ARE OF THE FORM #:PROGRAM-NAME.  THE PROPS
+OF THE ITEM IS THE FRAME NUMBER, AND THE DATUM OF THE ITEM IS THE
+PROGRAM NAME.  IF THE PROGRAM IS RUNNING, ITS RUN STATE IS SHOWN IN
+PARENTHESIS AFTER THE PROGRAM NAME.  SOME EXAMPLES ARE:
+        {{1:PJ(TI), 2:CHKPNT(TI), 3:FOOBAR}};
+
+
+SIMPLE STRING PROCEDURE QUEUE(INTEGER J);
+BEGIN "Q"
+    OWN INTEGER STS,ST,I;
+    STS _ GETTAB(J,0);
+    IF STS GEQ 0 THEN RETURN("^C");
+    ST_STS LSH -21 LAND '37;
+    I _ GETTAB(ST/3,'25) LSH (12*(ST MOD 3)) LAND (-1 LSH 24);
+    RETURN(CV6STR(I));
+END "Q";
+
+
+LIST PROCEDURE DETACHEDJOBLIST;
+BEGIN
+    INTEGER JOBN,J,MYAUN;
+    LIST S;
+    S _ PHI;
+    MYAUN _ GETTAB(-1,-'23);
+    JOBN _ GETTAB('15,'11) -1;
+    IF NOT !SKIP! THEN PRINT("?CAN'T GETTAB JOBN, ASSUMING ",JOBN_1024,NL);
+    FOR J _ JOBN STEP -1 UNTIL 1 DO
+        IF GETTAB(J,-'23)=MYAUN                 ! CHECK AUN;
+            AND GETTAB(J,0) LAND !BIT(15)       ! CHECK JLOG;
+            AND GETTAB(J,6) LAND !BIT(1) =0     ! CHECK NOATT;
+!           AND GETTAB(J,-54) LSH -24 =0        ! CHECK FOR PARENT;
+            AND GETTAB(J,-'27) LSH -18 =0       ! CHECK LDB;
+            THEN BEGIN
+                STRING NAME;
+                STRING ITEMVAR I;
+                NAME _ CV6STR(GETTAB(J,3));     ! GET NAM;
+                IF GETTAB(J,0) < 0 THEN         ! GET STS;
+                    NAME _ NAME & "(" & QUEUE(J) & ")";
+                I _ NEW (NAME);
+                PROPS (I) _ J;
+                NEW!PNAME (I,CVS(J)&":"&NAME);
+                PUT I IN S BEFORE 1;
+            END;
+    RETURN(S);
+END;
+
+!       ATTACH (JOB, [BITS])
+
+ATTACH TO SPECIFIED JOB.  IF BITS ARE SPECIFIED, USE THEM FOR
+THE ATTACH UUO.  THE CURRENT JOB IS LOGGED OUT.  IF THIS WORKS, IT
+WON'T RETURN TO THE USER.  IF IT DOESN'T WORK, IT IS BECAUSE THE
+JOB TRYING TO BE ATTACHED TO IS ILLEGAL OR NOT DETACHED OR SUCH.;
+
+! BITS ARE
+        1       DO NOT FORCE ATTACHEE INTO COMMAND MODE.
+        2       DO NOT CAUSE EXIT FOR CURRENT JOB (FORCED ON).;
+
+SIMPLE PROCEDURE ATTACH(INTEGER J,BITS(0));
+IF GETTAB(J,-'23)=GETTAB(-1,-'23)               ! CHECK AUN;
+    AND GETTAB(J,0) LAND !BIT(15)               ! CHECK JLOG;
+    AND GETTAB(J,6) LAND !BIT(1) =0             ! CHECK NOATT;
+!    AND GETTAB(J,-54) LSH -24 =0               ! CHECK FOR PARENT;
+    AND GETTAB(J,-'27) LSH -18 =0               ! CHECK LDB;
+    THEN BEGIN
+        CALLI(!HL(2 LOR BITS) LOR !HR(J),-6);   ! ATTACH;
+        CALLI(!BIT(17),-'130);                  ! LOGOFF;
+    END;
+
+DEFINE  ATTCMD  = 0;            ! FORCE COMMAND MODE ON ATTACH;
+DEFINE  ATTUSER = 1;            ! DO NOT FORCE COMMAND MODE ON ATTACH;
+DEFINE  ATTHALT = 0;            ! LEAVE PROGRAM HALTED (IF IT WAS);
+DEFINE  ATTCONT = 2;            ! CONTINUE RUNNING PROGRAM ON ATTACH;
+
+!       SETLCH (PORT,VALUE,(BITNO))
+        VALUE _ GETLCH (PORT,(BITNO))
+
+        CHANGES THE SPECIFIED BIT IN THE SETLCH WORD.  OTHER
+        BITS REMAIN UNCHANGED.  IF BITNO IS OMITED, WHOLE WORD
+        IS IMPLIED.;
+
+SIMPLE PROCEDURE SETLCH (INTEGER PORT,VALUE,BITNO(-1));
+BEGIN "SETLCH"
+    OWN INTEGER T,PTR;
+    IF BITNO < 0
+        THEN PTR _ POINT(36,T,35)
+        ELSE PTR _ POINT(1,T,BITNO);
+    START!CODE
+        DEFINE GETLCH = '051300000000;
+        DEFINE SETLCH = '051340000000;
+        MOVE 1,PORT;
+        MOVEM 1,T;
+        GETLCH T;
+        MOVE 1,VALUE;
+        DPB 1,PTR;
+        SETLCH T;
+    END;
+END "SETLCH";
+
+SIMPLE INTEGER PROCEDURE GETLCH (INTEGER PORT,BITNO(-1));
+BEGIN "GETLCH"
+    OWN INTEGER T,PTR;
+    IF BITNO < 0
+        THEN PTR _ POINT(36,T,35)
+        ELSE PTR _ POINT(1,T,BITNO);
+    START!CODE
+        DEFINE GETLCH = '051300000000;
+        MOVE 1,PORT;
+        MOVEM 1,T;
+        GETLCH T;
+        LDB 1,PTR;
+    END;
+END "GETLCH";
+
+PROCEDURE CTC;
+COMMENT
+    CLEAR TEMP CORE FILES AND DELETE JJJ###.TMP;
+BEGIN
+    INTEGER CHAN,EOF;
+    BOOLEAN PROCEDURE DELIT( INTEGER ARRAY X );
+    BEGIN
+        LOOKUP( CHAN,"'"&CVOS(X[0])&".'"&CVOS(X[1]),EOF );
+        RENAME( CHAN,NULL,NULL,EOF );
+        RETURN( FALSE );
+    END;
+    OWN SAFE INTEGER ARRAY X[0:1];
+    X[1]_ 0;
+    CALLI( !XWD( 5,LOCATION(X[0]) ),'44 );
+    OPEN( CHAN_GETCHAN,"DSK", 0,0,0, 0,0,EOF );
+    REDUFD( DELIT, CVS(CALLI(0,'30)+1000)[2 TO 4]&"###.TMP", NULL );
+    RELEASE( CHAN );
+END;
+!       FUNCTIONS FOR USER TO GET INFORMATION ABOUT TERMINAL;
+
+SIMPLE INTEGER PROCEDURE NODE;
+BEGIN "NODE"
+    INTEGER I;
+    I _ GETTAB(-1,-'24);
+    RETURN(
+        ((I LSH -10)LAND '7700) LOR
+        ((I LSH -8)LAND '77) );
+END "NODE";
+
+DEFINE  PORT            = {(GETTAB(-1,-'24) LAND '177)},
+        TIC             = {((GETTAB(-1,-'24) LSH -24)LAND '37)},
+        TIC!AUX         = {0},
+        TIC!A           = {1},
+        TIC!C           = {2},
+        TIC!E           = {3},
+        TIC!G           = {4},
+        TIC!B           = {5},
+        TIC!F           = {6},
+        TIC!J           = {7},
+        TIC!CR          = {'11},
+        TIC!D           = {'12},
+        TIC!RJE         = {'13},
+        TIC!2780        = {'13},
+        TIC!1200        = {'14},
+        TIC!2400        = {'20},
+        TIC!3270        = {'21},
+        TIC!4800        = {'23},
+        TIC!9600        = {'24},
+        TIC!MPVC        = {'25},
+        TIC!AUD         = {'26},
+        TIC!VIDIOTEXT   = {'27},
+        STATES          = {GETTAB('17,'11)},
+        STSHUT          = {'400000},
+        SHUT            = {'400000},
+        STSUPR          = {'200000},
+        SUPER           = {'200000},
+        SUPER!SHUT      = {'200000},
+        RESTRICTED      = {'100000},
+        STRLB           = {'100000};
+
+SIMPLE STRING PROCEDURE STATE!NAME;
+CASE STATES LSH -15 LAND 7 OF BEGIN "STATE!NAME"
+    [0] RETURN("ANSWERED");
+    [1] RETURN("RESTRICTED");
+    [2][3][6][7] RETURN("SUPER-SHUT");
+    [4] RETURN("SHUT");
+    [5] RETURN("RESTRICTED + SHUT");
+    ELSE RETURN(CVOS(STATES))
+END "STATE!NAME";
+
+SIMPLE INTEGER PROCEDURE CPUTYP;
+RETURN (GETTAB('41,'11));
+
+SIMPLE INTEGER PROCEDURE SYSNO;
+RETURN (GETTAB('33,'11));
+
+SIMPLE STRING PROCEDURE HARDWARE;
+BEGIN "HARDWARE"
+    RETURN( CASE CPUTYP OF (
+        [1] "KI-10",
+        [2] "KL-10",
+        [3] "KS-10",
+        [4] "F3",
+        [ELSE] "CPUTYP="&CVOS(CPUTYP)
+    ) );
+END "HARDWARE";
+
+SIMPLE STRING PROCEDURE SOFTWARE;
+RETURN (  CVASTR(GETTAB('0,'11))
+        & CVASTR(GETTAB('1,'11))
+        & CVASTR(GETTAB('2,'11))
+        & CVASTR(GETTAB('3,'11))
+        & CVASTR(GETTAB('4,'11)) );
+
+!       RUN (PROGRAM,[START])
+
+        RUN ANOTHER PROGRAM (OVERLAY).  PROGRAM NAME MAY CONTAIN
+        USER NAME AND PROGRAM NAME, NO DEVICE.;
+
+PROCEDURE RUN (
+        STRING  FILE;
+        INTEGER START(0) );
+BEGIN "RUN"
+    INTEGER ARRAY RNB[0:5];
+    PARSE (FILE, RNB[1], RNB[2], RNB[4]);
+    RNB[0] _ CVSIX("DSK");
+    RNB[3] _ RNB[5] _ 0;
+    CALLI ((START LSH 18) + LOCATION(RNB[0]), '35);
+END "RUN";
+
+!       SET LICENSE STUFF (ECH)
+
+        SETLIC (LICENSE)
+        LICENSE _ MYLIC;
+
+SIMPLE PROCEDURE SETLIC (INTEGER LIC);
+IF CALLI(-'25,'41)=CALLI(-'23,'41) THEN CALLI(LIC,-'10);
+
+SIMPLE INTEGER PROCEDURE MYLIC;
+RETURN( (GETTAB(-1,-'20) LAND '777777000000) LOR
+        (GETTAB(-1,-'20) LSH -18) );
+
+!       PARITY HACKING;
+
+DEFINE  EVEN!PARITY     = {AUXCLV(-1,1,'17)},
+        EVEN            = {AUXCLV(-1,1,'17)},
+        PARITY          = {AUXCLV(-1,1,'17)},
+        NO!PARITY       = {AUXCLV(-1,0,'17)};
+
+!       TERMINAL SPEED;
+
+DEFINE
+        SETBAUD (RATE)  = {BEGIN
+                          AUXCLV(-1,RATE,'15);
+                          AUXCLV(-1,RATE,'16);
+                          END},
+        IN!BAUD         = {AUXCLV(-1,-1,'15)},
+        OUT!BAUD        = {AUXCLV(-1,-1,'16)},
+        BAUD!110        = {0},
+        BAUD!150        = {1},
+        BAUD!300        = {2},
+        BAUD!400        = {3},
+        BAUD!600        = {4},
+        BAUD!1200       = {5},
+        BAUD!300!EBCDIC = {6},
+        BAUD!150!EBCDIC = {7},
+        BAUD!2400       = {10},
+        BAUD!4800       = {11},
+
+        CPS!10          = {0},
+        CPS!15          = {1},
+        CPS!30          = {2},
+        CPS!40          = {3},
+        CPS!60          = {4},
+        CPS!120         = {5},
+        CPS!30!EBCDIC   = {6},
+        CPS!15!EBCDIC 7};
+
+!       AUTO LF, DUPLEX AND DEFERRED ECHO MODE;
+
+DEFINE  HALF            = {AUXCLV(-1,1,'20)},
+        FULL            = {AUXCLV(-1,0,'20)},
+        HDX             = {HALF},
+        HALF!DUPLEX     = {HALF},
+        FDX             = {FULL},
+        FULL!DUPLEX     = {FULL},
+        AUTO!LF         = {SETLCH(-1,0,16)},
+        NO!AUTO!LF      = {SETLCH(-1,1,16)},
+        LF              = {AUTO!LF},
+        NO!LF           = {NO!AUTO!LF},
+        PAPER!TAPE      = {NO!AUTO!LF},
+        NO!PAPER!TAPE   = {AUTO!LF},
+        TAPE            = {NO!AUTO!LF},
+        NO!TAPE         = {AUTO!LF},
+        KEY             = {AUTO!LF},
+        BSD             = {AUXCLV(-1,1,'77)},
+        NO!BSD          = {AUXCLV(-1,0,'77)},
+        DEM             = {AUXCLV(-1,1,'63)},
+        DEF             = {DEM},
+        UCO             = {AUXCLV(-1,0,'65)},
+        NO!UCO          = {AUXCLV(-1,1,'65)},
+        NO!DEM          = {AUXCLV(-1,0,'63)},
+        NO!DEF          = {NO!DEM};
+
+!       WIDTH AND FREE CRLF;
+
+REDEFINE WIDTH (X)      = {AUXCLV(-1,X,'27)},
+        LINE!WIDTH (X)  = {AUXCLV(-1,X,'27)},
+        CRLF            = {SETLCH(-1,0,10)},
+        NO!CRLF         = {SETLCH(-1,1,10)};
+
+!       SCOPE CHARACTERISTICS;
+
+DEFINE  REV!XON         = {AUXCLV(-1,1,'55)},
+        NO!REV!XON      = {AUXCLV(-1,0,'55)},
+        STALL           = {REV!XON},
+        NO!STALL        = {NO!REV!XON},
+        BACKSPACE       = {AUXCLV(-1,1,'57)},
+        NO!BACKSPACE    = {AUXCLV(-1,0,'57)},
+        BS              = {BACKSPACE},
+        NO!BS           = {NO!BACKSPACE},
+        ERASE           = {AUXCLV(-1,1,'62)},
+        NO!ERASE        = {AUXCLV(-1,0,'62)},
+        RTCOMP          = {AUXCLV(-1,1,'101)},
+        NO!RTCOMP       = {AUXCLV(-1,0,'101)},
+        TTY!CLASS       = {TTY!TYPE},
+        CLASS           = {TTY!TYPE},
+        TTY!TYPE (CLS)  = {AUXCLV(-1, IFCR CVD("CLS")
+                            THENC CVD("CLS")
+                            ELSEC CVSIX("CLS") ENDC, '100)};
+
+!       VT FF HT PARAMETERS;
+
+DEFINE  TAB             = {SETLCH(-1,1,14)},
+        NO!TAB          = {SETLCH(-1,0,14)},
+        HT              = {TAB},
+        TABS            = {TAB},
+        NO!HT           = {NO!TAB},
+        NO!TABS         = {NO!TAB},
+        FORM            = {SETLCH(-1,1,17)},
+        NO!FORM         = {SETLCH(-1,0,17)},
+        FF              = {FORM},
+        FORMS           = {FORM},
+        NO!FF           = {NO!FORM},
+        NO!FORMS        = {NO!FORM};
+
+!       LOWER CASE;
+
+DEFINE  LC              = {SETLCH(-1,1,13)},
+        NO!LC           = {SETLCH(-1,0,13)},
+        LOWER           = {LC},
+        ASCII           = {LC},
+        UPPER           = {NO!LC},
+        TELETYPE        = {NO!LC};
+
+!       FF-FILL AND HT-FILL;
+
+DEFINE  FF!FILL (X)     = {AUXCLV(-1,X,'30)},
+        HT!FILL (X)     = {AUXCLV(-1,X,'31)},
+        FORM!FEED!FILL (X) = {FF!FILL(X)},
+        FORM!FEED!FILLER (X) = {FF!FILL(X)},
+        FF!FILLER (X)   = {FF!FILL(X)},
+        TAB!FILL (X)    = {HT!FILL(X)},
+        TAB!FILLER (X)  = {HT!FILL(X)},
+        HT!FILLER (X)   = {HT!FILL(X)};
+
+!       CR AND LF DELAY;
+
+DEFINE  SETA (X)        = {AUXCLV(-1,X,'21)},
+        SETB (X)        = {AUXCLV(-1,X,'22)},
+        SETC (X)        = {AUXCLV(-1,X,'23)},
+        CR!DELAY        = {AUXCLV(-1,1,'14)},
+        LF!DELAY        = {AUXCLV(-1,0,'14)},
+        DELAY!CR        = {CR!DELAY},
+        DELAY!LF        = {LF!DELAY},
+        A!1             = {0},
+        A!2             = {1},
+        A!4             = {2},
+        A!8             = {3},
+        A!16            = {4},
+        A!32            = {5},
+        A!64            = {6},
+        A!128           = {7},
+        B!0             = {0},
+        B!1             = {1},
+        B!2             = {2},
+        B!3             = {3},
+        B!4             = {4},
+        B!5             = {5},
+        B!6             = {6},
+        B!7             = {7},
+        C!0             = {0},
+        C!1             = {1},
+        C!2             = {2},
+        C!3             = {3},
+        C!4             = {4},
+        C!5             = {5},
+        C!7             = {6},
+        C!10            = {7},
+        C!14            = {8},
+        C!19            = {9},
+        C!26            = {10},
+        C!36            = {11},
+        C!50            = {12},
+        C!69            = {13},
+        C!95            = {14},
+        C!131           = {15};
+
+!       HOST MODE - PDP/TYMEX;
+
+DEFINE  PDP             = {START!CODE
+                          HRROI 6;
+                          CALLI '41;
+                          JFCL;
+                          TRZ '600;
+                          CALLI -'11;
+                          END},
+        TYMEX           = {START!CODE
+                          HRROI 6;
+                          CALLI '41;
+                            JFCL;
+                          TRZ '600;
+                          TRO '200;
+                          CALLI -'11;
+                            JFCL;
+                          END},
+        PDP10           = {PDP},
+        XEXEC           = {TYMEX},
+        EXEC            = {TYMEX},
+        TIME (X)        = {START!CODE
+                          HRROI 6;
+                          CALLI '41;
+                            JFCL;
+                          TLZ '76000;
+                          TLO X;
+                          CALLI -'11;
+                            JFCL;
+                          END},
+        TIME!ZONE (X)   = {TIME(X)},
+        PST             = {'20000},
+        PDT             = {PST},
+        PACIFIC!TIME    = {PST},
+        MST             = {'22000},
+        MDT             = {MST},
+        MOUNTAIN!TIME   = {MST},
+        CST             = {'24000},
+        CDT             = {CST},
+        CENTRAL!TIME    = {CST},
+        EST             = {'26000},
+        EDT             = {EST},
+        EASTERN!TIME    = {EST};
+
+!       DELAY!IN!MS _ RESPONSE!TIME
+
+        RETURN TIME IN MS FOR ROUND TRIP MESSAGE THROUGH NETWORK;
+
+SIMPLE INTEGER PROCEDURE RESPONSE!TIME;
+BEGIN "RT"
+    INTEGER START;
+    CALLI('40000000,'72);
+    START _ CALL(0,"MSTIME");
+    CALLI('40000000,'72);
+    RETURN(CALL(0,"MSTIME")-START);
+END "RT";
+
+!       PERCENT!CPU!LOAD _ LOAD!AVERAGE
+
+        RETURN THE % OF CPU SATURATION OVER THE LAST MINUTE;
+
+SIMPLE INTEGER PROCEDURE LOAD!AVERAGE;
+RETURN(100-CALLI('35000012,'41)*100/CALLI('27000011,'41));
+
+
+!       MISCELLANEOUS;
+
+DEFINE  EXIT            = {CALL(0,"EXIT")};
+
+!       ROUTINES TO SET UP TMPCOR FILE FOR RPG
+
+        SETPROC ("PROCESSOR!NAME","FILESPEC")
+        ADDPROC ("PROCESSOR!NAME","FILESPEC")
+        SETRPG  ("FILESPEC")
+        SETDDT  ("FILESPEC")
+        SETDEF  ("PROCESSOR!NAME")
+        ADDNON  ("PROCESSOR!NAME","IN!EXT","OUT!EXT","SWITCH","NEXT")
+        SETNON  ("PROCESSOR!NAME","IN!EXT","OUT!EXT","SWITCH","NEXT")
+        SETMAIL ("FILESPEC")
+        SETDO   ("SPEC","SPEC","SPEC"..."SPEC")
+        ADDDO   ("SPEC","SPEC","SPEC"..."SPEC")
+        RPGINI  ("FILE")
+        RPGINI;
+
+RECORD!CLASS RPGREC (
+        RECORD!POINTER(ANY!CLASS) LINK;
+        INTEGER W1,W2,W3,W4,W5,W6,W7,W8,W9 );
+
+INTEGER ARRAY                RPGHDRS[1:8];
+RECORD!POINTER(RPGREC) ARRAY RPGRECS[1:8];
+RECORD!POINTER(RPGREC) RT!;
+
+!       SETDEF  ("PROCESSOR!NAME")
+
+        SETUP DEFAULT PROCESSOR TO BE ONE NAMED;
+
+PROCEDURE SETDEF (STRING NAME);
+BEGIN
+    RPGRECS[5] _ RT! _ NEW!RECORD(RPGREC);
+    RPGHDRS[5] _ !XWD(5,1);
+    RPGREC:W1[RT!] _ CVSIX(NAME);
+END;
+
+!       ADDPROC ("PROC!NAME","FILESPEC")
+        SETPROC ("PROC!NAME","FILESPEC")
+
+        SETUP THE SPECIFIED ALTERNATE PROCESSOR;
+
+PROCEDURE ADDPROC (STRING PROC,SPEC);
+BEGIN "ADDPROC"
+    RT! _ NEW!RECORD(RPGREC);
+    RPGREC:LINK[RT!] _ RPGRECS[2];
+    RPGRECS[2] _ RT!;
+    RPGHDRS[2] _ !XWD(2,7+!RH(RPGHDRS[2]));
+    RPGREC:W1[RT!] _ CVSIX(PROC);
+    RPGREC:W2[RT!] _ CVSIX("DSK");
+    PARSE (SPEC, RPGREC:W3[RT!],RPGREC:W4[RT!],RPGREC:W6[RT!]);
+END "ADDPROC";
+
+DEFINE SETPROC = {
+    RPGRECS[2] _ NULL!RECORD;
+    ADDPROC };
+
+!       SETDO ("SPEC","SPEC","SPEC"..."SPEC")
+        ADDDO ("SPEC","SPEC","SPEC"..."SPEC")
+
+        SETUP THE SPECIFIED SEARCH LIST;
+
+PROCEDURE ADDDO (STRING A1,A2(NULL),A3(NULL),A4(NULL),A5(NULL),A6(NULL),A7(NULL),A8(NULL),A9(NULL),A10(NULL));
+BEGIN "SETDO"
+ PROCEDURE DO (STRING SPEC);
+ IF LENGTH(SPEC) THEN BEGIN
+   INTEGER DOPTR,PPN;
+   SPEC _ SCAN(SPEC,1,!SKIP!);
+   IF EQU(SPEC,"DEFAULT") OR EQU(SPEC,"GFD") THEN PPN_0
+   ELSE IF EQU(SPEC,"LOG") THEN PPN_1
+   ELSE PPN_CVPPN(SPEC);
+   RT! _ NEW!RECORD(RPGREC);
+   RPGREC:LINK[RT!] _ RPGRECS[8];
+   RPGRECS[8] _ RT!;
+   RPGHDRS[8] _ !XWD(8,3+!RH(RPGHDRS[8]));
+   RPGREC:W1[RT!] _ PPN;
+   RPGREC:W2[RT!] _ CVSIX(SPEC[1 FOR 6]);
+   RPGREC:W3[RT!] _ CVSIX(SPEC[7 FOR 6]);
+ END;
+ SETBREAK(1,NULL,NULL,"K");
+ DO(A10);DO(A9);DO(A8);DO(A7);DO(A6);DO(A5);DO(A4);DO(A3);DO(A2);DO(A1);
+END "SETDO";
+
+DEFINE  SETDO = {
+    RPGRECS[8] _ NULL!RECORD;
+    ADDDO };
+
+!       SETNON  ("PROC","SWITCH","LUKEXT","NXTPROC","OUTEXT")
+        SETNON  ("PROC","SWITCH","LUKEXT","NXTPROC","OUTEXT")
+
+DEFINE A NONSTANDARD PROCESSOR;
+
+PROCEDURE ADDNON (
+        STRING  NAME;
+        STRING  INEXT(NULL);
+        STRING  OUTEXT(NULL);
+        STRING  SWITCH(NULL);
+        STRING  NEXT(NULL) );
+BEGIN "ADDNON"
+    RT! _ NEW!RECORD(RPGREC);
+    RPGREC:LINK[RT!] _ RPGRECS[6];
+    RPGRECS[6] _ RT!;
+    RPGHDRS[6] _ !XWD(6,8+!RH(RPGHDRS[6]));
+    PARSE (NAME, RPGREC:W1[RT!],RPGREC:W2[RT!],RPGREC:W3[RT!]);
+    RPGREC:W4[RT!] _ CVSIX("DSK");
+    IF LENGTH(SWITCH)=0 THEN SWITCH_RPGREC:W1[RT!];
+    RPGREC:W5[RT!] _ CVSIX(SWITCH);
+    IF LENGTH(INEXT)=0 THEN INEXT_RPGREC:W1[RT!][1 FOR 3];
+    RPGREC:W6[RT!] _ CVSIX(INEXT);
+    RPGREC:W7[RT!] _ CVSIX(NEXT);
+    RPGREC:W8[RT!] _ CVSIX(OUTEXT);
+END "ADDNON";
+
+DEFINE  SETNON = {
+    RPGRECS[6] _ NULL!RECORD;
+    ADDNON };
+
+!       SETDDT  ("FILESPEC")
+
+        SETUP THE DEFAULT DDT TO BE AS SPECIFIED;
+
+PROCEDURE SETDDT (STRING SPEC);
+BEGIN "SETDDT"
+    RT! _ NEW!RECORD(RPGREC);
+    RPGREC:LINK[RT!] _ RPGRECS[3];
+    RPGRECS[3] _ RT!;
+    RPGHDRS[3] _ !XWD(3,4);
+    RPGREC:W1[RT!] _ CVSIX("DSK");
+    PARSE (SPEC, RPGREC:W2[RT!],RPGREC:W3[RT!],RPGREC:W4[RT!]);
+END "SETDDT";
+
+!       SETRPG  ("FILESPEC")
+
+        SETUP THE DEFAULT RPG TO BE AS SPECIFIED;
+
+PROCEDURE SETRPG (STRING SPEC);
+BEGIN "SETRPG"
+    RT! _ NEW!RECORD(RPGREC);
+    RPGREC:LINK[RT!] _ RPGRECS[1];
+    RPGRECS[1] _ RT!;
+    RPGHDRS[1] _ !XWD(1,4);
+    RPGREC:W1[RT!] _ CVSIX("DSK");
+    PARSE (SPEC, RPGREC:W2[RT!],RPGREC:W3[RT!],RPGREC:W4[RT!]);
+END "SETRPG";
+
+!       SETMAIL ("FILESPEC")
+
+        SET THE MAILBOX TO THE SPECIFIED FILE.  THE DEFAULT IS
+        TO SETUP MAILBOX (LOG-DIR)MAIL.BOX;
+
+PROCEDURE SETMAIL (STRING SPEC("MAIL.BOX"));
+BEGIN "SETMAIL"
+    RT! _ NEW!RECORD(RPGREC);
+    RPGREC:LINK[RT!] _ RPGRECS[7];
+    RPGRECS[7] _ RT!;
+    RPGHDRS[7] _ !XWD(7,6+!RH(RPGHDRS[7]));
+    RPGREC:W1[RT!] _ 5;
+    PARSE (SPEC, RPGREC:W3[RT!],RPGREC:W4[RT!],RPGREC:W2[RT!]);
+END "SETMAIL";
+
+!       RPGINI
+
+        CREATE THE RPG TEMP FILE;
+
+INTERNAL RECORD!POINTER (ANY!CLASS) PROCEDURE RPGINI( STRING FILE(NULL) );
+! THIS IS DELCARED STRANGE DUE TO FORWARD DECL IN EXTEND LIBRARY (SICK);
+BEGIN "CTEST"
+   INTEGER ARRAY DESC[0:1];
+   INTEGER ARRAY TMPBUF[0:511];
+   INTEGER I,BUFPTR,WC;
+   IF LENGTH(FILE)=0 THEN BEGIN "FROMCORE"
+    BUFPTR _ 0;
+    FOR I _ ARRINFO(RPGRECS,1) STEP 1 UNTIL ARRINFO(RPGRECS,2) DO
+      IF RPGHDRS[I] THEN BEGIN
+        RT! _ RPGRECS[I];
+        WC _ CASE I OF (0,4,7,4,0,1,8,6,3);
+        TMPBUF[BUFPTR]_RPGHDRS[I]; BUFPTR_BUFPTR+1;
+        WHILE RT! DO BEGIN
+            ARRBLT ( TMPBUF[BUFPTR], RPGREC:W1[RT!], WC );
+            BUFPTR _ BUFPTR + WC;
+            RT! _ RPGREC:LINK[RT!];
+        END;
+      END;
+    TMPBUF[BUFPTR]_0;           ! 0 WORD TO PREVENT RPG ILL MEM REF;
+    BUFPTR_BUFPTR+1;
+   END "FROMCORE"
+   ELSE BEGIN "FROMDISK"
+        INTEGER CH,EOF;
+        OPEN (CH_GETCHAN,"DSK",'14,2,0, 0,0,EOF);
+        LOOKUP (CH,FILE,EOF);
+        IF EOF THEN USERERR(EOF,2,"?FILE "&FILE&" NOT FOUND","C");
+        ARRYIN (CH,TMPBUF[0],ARRINFO(TMPBUF,0));
+        IF NOT EOF THEN USERERR(0,0,"?FILE "&FILE&" TOO BIG","C");
+        BUFPTR _ !RH(EOF);
+        RELEASE (CH);
+   END "FROMDISK";
+   DESC[0]_CVSIX("RPG");
+   DESC[1]_(-BUFPTR LSH 18)+LOCATION(TMPBUF[0])-1;
+   CALL((3 LSH 18)+LOCATION(DESC[0]),"TMPCOR");
+   IF NOT !SKIP! THEN BEGIN "DSK"
+      INTEGER CH,EOF;
+      STRING  F;
+      CH _ GETCHAN;
+      OPEN(CH,"DSK",'14,0,1, 0,0,EOF);
+      F _ ("000"&CVS(CALL(0,"PJOB")))[INF-2 TO INF]&"RPG.TMP";
+      ENTER(CH,F,EOF);
+      IF EOF THEN USERERR(EOF,2,"CAN'T ENTER "&F,"C");
+      ARRYOUT(CH,TMPBUF[0],BUFPTR);
+      RELEASE(CH);
+   END "DSK";
+END "CTEST";
+
+
+!       SPECIAL ROUTINES FOR "NORMAL" TERMINAL CHARACTERISTICS;
+
+SIMPLE PROCEDURE ISTROU (STRING S);
+WHILE LENGTH(S) DO IONEOU (LOP (S));
+
+SIMPLE PROCEDURE TABSET (
+        STRING  !CLR,!SET;
+        INTEGER !WID(73) );
+BEGIN
+    INTEGER I;
+    TABS;
+    IONEOU ('15);
+    ISTROU (!CLR);
+    FOR I _ 2 STEP 1 UNTIL !WID DO BEGIN
+        IONEOU ('40);
+        IF I MOD 8 = 1 THEN ISTROU (!SET);
+    END;
+    IONEOU ('15);
+END;
+
+DEFINE  SCOPE (L,W) = { BEGIN
+        FORMS;
+        BACKSPACE;
+        ERASE;
+        WIDTH(W);
+        REV!XON;
+END };
+
+DEFINE  TYM!425 = { BEGIN       ! ADM-31;
+        TTY!TYPE (ADM31);
+        SCOPE (24,80);
+        NO!TABS;
+END };
+
+DEFINE  TYM!444 = { BEGIN       ! HP-2621A;
+        TTY!TYPE (HP2621);
+        SCOPE (48,80);
+        TABSET ('33&"3",'33&"1");
+END };
+
+DEFINE  TYM!325 = { BEGIN       ! DIABLO 1620;
+        FORMS;
+        TABSET ('33&"2",'33&"1");
+END };
+
+SIMPLE PROCEDURE STUFIB (STRING S);
+BEGIN "STUFIB"
+OWN INTEGER E;
+E_LOCATION(S);
+   START!CODE
+     HRROI  1, 27;
+     HRRZ   2, E;
+     AUXCAL 1, (2);
+     JFCL;
+    END;
+END "STUFIB";
+
+PROCEDURE DIRIT.INI (STRING SW);
+BEGIN
+    INTEGER C,B,E; STRING S;
+
+    OPEN(C_GETCHAN,"DSK",0,1,0,80,B,E);
+    LOOKUP(C,"DIRIT.INI"&STRPPN,E);
+    WHILE NOT E DO S _ S& INPUT(C,0);
+    RELEASE(C);
+
+    SW _ SW& NL;
+    IF EQU(S,SW) THEN RETURN;
+
+    PRINT("[CREATING DIRIT.INI]"&NL);
+    OPEN(C_GETCHAN,"DSK",0,0,1,0,B,E);
+    ENTER(C,"DIRIT.INI"&STRPPN,E);
+    IF E
+        THEN PRINT("?ERROR WRITING DIRIT.INI",STRPPN,NL)
+        ELSE CPRINT(C, SW);
+    CLOSE(C);
+    RELEASE(C);
+
+END;
+
+PROCEDURE ESC (INTEGER E);
+BEGIN "ESC"
+    OWN INTEGER FRAME!STATUS;
+    FRAME!STATUS_GETTAB(-1,0);  ! FRAME STATUS WORD;
+    IF E=0 THEN CALLI(FRAME!STATUS LOR !BIT(20),-'21)
+    ELSE CALLI(FRAME!STATUS LAND LNOT(!BIT(20)),-'21);       ! RESET JB.JA2;
+END "ESC";
+
+SIMPLE PROCEDURE ECHO!OFF;
+    BEGIN "TURN IT OFF"
+    CALLI(GETTAB(-1,-'31) LOR !BIT(28),-'26);  ! SETMOD;
+    END "TURN IT OFF";
+
+SIMPLE PROCEDURE ECHO!ON;
+    BEGIN "TURN IT ON"
+    IF GETTAB(-1,-'31) LOR !BIT(28) THEN
+    CALLI(GETTAB(-1,-'31) XOR !BIT(28),-'26); ! SETMOD;
+    END "TURN IT ON";
+
+PROCEDURE CRASHCHECK (STRING PREFIX,SYSTEMS);
+BEGIN
+    INTEGER BRK,CHAN,EOF;
+    INTEGER SYS,SYS1,SYS2;
+    INTEGER SCNBRK;
+    STRING FN;
+    SETBREAK(SCNBRK_GETBREAK,",-:"," ","SINK");
+    OPEN(CHAN_GETCHAN,"DSK",1,1,0, 256,BRK,EOF);
+    IF EOF THEN USERERR(EOF,2,"CAN'T INIT DSK: ");
+    WHILE LENGTH(SYSTEMS) DO BEGIN
+        SYS1 _ CVD(SCAN(SYSTEMS,SCNBRK,BRK));
+        CASE BRK OF BEGIN
+          [":"]
+          ["-"] SYS2 _ CVD(SCAN(SYSTEMS,SCNBRK,BRK));
+          ELSE SYS2 _ SYS1
+        END;
+        FOR SYS _ SYS1 STEP 1 UNTIL SYS2 DO BEGIN
+            FN _ PREFIX & "." & CVS(SYS);
+            LOOKUP(CHAN,FN,EOF);
+            IF EOF THEN PRINT ("[", FN, " NOT FOUND]", NL);
+            WHILE NOT EOF DO PRINT(INPUT(CHAN,0));
+            CLOSE(CHAN);
+        END;
+    END;
+    RELEASE(CHAN);
+    RELBREAK(SCNBRK);
+END;
+  9 ¯
