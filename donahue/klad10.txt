@@ -1,0 +1,2135 @@
+
+
+
+
+
+
+
+
+
+                PRODUCT CODE:   AC-F501J-DD
+
+                PRODUCT NAME:   HOW TO BUILD KLAD10-W-7.01A-A
+
+
+
+        COPYRIGHT 1982 DIGITAL EQUIPMENT CORPORATION, MARLBOROUGH, MASS.
+                SUPPORTS KLAD10 VERSION KLAD10-W-7.01A-A
+                        *** WARNING *** WARNING ***
+
+THE CONTENTS OF THIS AND ALL KLAD10 OR KLAD20  MEDIA  ARE  CONFIDENTIAL  IN
+NATURE,  AND  ARE  THE SOLE PROPERTY OF DIGITAL EQUIPMENT CORPORATION.  ITS
+USE IS INTENDED FOR D.E.C.  PERSONNEL ONLY!
+
+IT IS NOT PERMITTED TO DISTRIBUTE, RELEASE, OR OTHERWISE MAKE AVAILABLE ANY
+OF  THE  SOFTWARE,  DOCUMENTATION,  OR  ANY OTHER FILES FROM THESE MEDIA TO
+PERSONS NOT CONSIDERED BONA-FIDE, AUTHORIZED EMPLOYEES OF DIGITAL EQUIPMENT
+CORPORATION.
+
+INDIVIDUALS  WHO  VIOLATE  OR  OTHERWISE  DISREGARD  THIS  WARNING  WITHOUT
+PREVIOUS  WRITTEN  CONSENT  FROM  LCG  PRODUCT  SUPPORT,  AND FIELD SERVICE
+MARKETING, MAY BE SUBJECT TO DISCPLINARY ACTION.
+
+IT IS SUGGESTED THAT THE USER OF THIS DOCUMENT READ THESE  INSTRUCTIONS  AT
+LEAST ONCE, BEFORE ATTEMPTING TO PERFORM ANY OF THE INDICATED PROCEDURES.
+
+******************************** NOTE *************************************
+THERE ARE SOME MAJOR CHANGES TO THIS UPDATE OF THE KLAD10 PROCESS.
+THE TAPES NOW ONLY INCLUDE TWO (2) SAVESETS.  THE FIRST CONTAINS THE
+[1,*],[2,5],[5,11],[6,*](NOT INCLUDING THE [6,11]), AND [35,1414] AREAS.
+THE SECOND CONTAINS THE [10,*] AREAS.  WHEN YOU BUILD THE KLAD10 PACK,
+YOU RESTORE THE FIRST SAVE SET, THEN YOU BUILD THE [6,11] AREA.
+NEXT YOU CONNECT BACK TO THE [6,10] AREA & DELETE ALL OF THE UNUSED
+HARDWARE ISOLATION & SUPPORT FILES (I.E. .A11 & .TIC) FILES FROM THE
+[6,10] AREA IF YOU HAVE A RP04. THEN YOU CONNECT BACK TO THE [1,2]
+AREA & FINISH RESTORING THE [10,*] AREA.
+
+******************************** NOTE *************************************
+
+KLAD-10 (COOK-BOOK)                                                     PAGE 1
+-------------------------------
+
+
+
+
+
+
+        CONTENTS
+        --------
+
+A.      INTRODUCTION                                         PAGE  1-2
+
+B.      USAGE OF KLAD-10                                     PAGE  3-4
+
+APPENDIX A.     (PATCHING) TECHNIQUE FOR .A11 FILES          PAGE  5-9
+
+APPENDIX B.     FORMATTING YOUR PACK STAND-ALONE             PAGE 10-12
+
+APPENDIX C.     SAVING YOUR KLAD PACK                        PAGE 13-15
+
+APPENDIX D.     CREATING A 1090 OR 1091 KLAD PACK            PAGE 16-38
+
+APPENDIX E.     KLAD10 HELP FILE                             PAGE 39-42
+
+                ALTERNATIVES
+                ------------
+
+        #1      CREATING A KLAD PACK FROM FIELD UPDATE TAPES
+
+        #2      CREATING A KLAD PACK USING THE EXISTING MONITOR ON YOUR
+                PRESENT KLAD
+
+        #3      CREATING A KLAD PACK USING A BOOTSTRAP OF THE CUST-
+                OMER'S MONITOR ON A BOOTABLE MAGTAPE
+                (EMERGENCY USE CONDITION ONLY)
+
+        #4      GO TO ANOTHER SITE TO MAKE A KLAD PACK IF YOU CAN'T DO
+                THE PACK ANY OF THE ABOVE WAYS
+
+
+THE PURPOSE FOR PROVIDING SEVERAL ALTERNATE WAYS OF UPDATING YOUR KLAD
+10 PACK, IS TO PROVIDE COMPLETE FLEXIBILITY, TO PREVENT PECULIAR SYS-
+TEM CONFIGURATIONS FROM CAUSING YOU PROBLEMS. YOU SHOULD SELECT THE
+ALTERNATIVE WHICH BEST SUITS YOUR REQUIREMENTS AND FOLLOW THE INSTRUC-
+TIONS IN THE PROCEDURE FOR THAT ALTERNATIVE.
+                                                                        PAGE 2
+A.      WHAT IS KLAD-10?
+        ----------------
+        KLAD-10 (K L ACCEPTANCE & DIAGNOSTICS FOR TOPS-10) IS A SINGLE
+        DISK-PACK, WHICH CONTAINS ALL CURRENTLY AVAILABLE TOPS10 SOFT-
+        WARE TO RUN AND DIAGNOSE A TOPS-10 SYSTEM.
+
+        SPECIFIC CONTENTS:
+        ------------------
+        1. A COMPLETE 701 TOPS 10
+
+        2. THE CONTENTS OF THE CURRENT DIAGNOSTIC-TAPES
+           DFXLK-W AND DDXLA-M
+
+        3. THE CONTENTS OF THE CURRENT DIAG.-TAPE IN THE [6,11] AREA
+
+        4. AN AREA [35,1414], WHICH CONTAINS THE F.A.&T. VERSION OF THE
+           72 HOURS RELIABILITY TEST.
+
+
+        CONVENTIONS THAT MAY BE USED IN THIS DOCUMENT:
+        ----------------------------------------------
+THE EXPRESSION <CR> INDICATES THAT THE USER IS DIRECTED TO INSERT A
+CARRIAGE RETURN AT THAT POINT IN THE INSTRUCTION SEQUENCE. IN THE
+MAJORITY OF CASES, IT IS ASSUMED THAT THE USER WILL TERMINATE ALL
+ENTRIES WITH A CARRIAGE RETURN, UNLESS SPECIFICALLY DIRECTED TO DO
+OTHERWISE.
+
+THE WORDS CTRL "C", CTRL "\", CTRL "Z" INDICATES THAT THE USER IS
+DIRECTED TO DEPRESS THE CTRL<CONTROL> KEY AND THE OTHER INDICATED KEY
+SIMULTANEOUSLY.
+
+
+        HOW KLAD-10 CAN BE USED                                         PAGE 3
+        -----------------------
+
+        BACKUP METHOD OF BOOTING KLDCP IN THE SYSTEM.
+        --------------------------------------------
+
+SECTION B1: STAND-ALONE DIAGNOSTIC USAGE WITH KLDCP (VERSION 17 OR LATER)
+            ---------------------------------------
+
+        USING THE LATEST DECTAPE BASED RELEASE OF KLDCP YOU CAN RUN ALL
+        DIAGNOSTICS IN NORMAL MANNER (PACK MODIFYING DIAGNOSTICS
+        EXCLUDED)
+
+        1. MOUNT KLDCP DECTAPE AND START IT AND MOUNT KLAD-10
+           ON A DUAL-PORTED DRIVE 0 WRITE-PROTECTED.
+
+        2. TYPE 'B' TO START 20 MIN SHORT CHECKOUT.
+
+SECTION B2: BOOTING KLDCP FROM DISK
+            -----------------------
+
+        -------------------------------------------------
+        PREFERRED METHOD FOR BOOTING KLDCP IN THE SYSTEM!
+        -------------------------------------------------
+
+        THE PROCEDURE INVOLVES RSX-20, A SPECIAL RSX-PROGRAM "BOO"
+        AND ANOTHER SPECIAL "DBOOT"
+
+        EXAMPLE:
+        YOU HAVE KLAD-10 ON UNIT 0 IN A/B MODE WRITE-ENABLED.
+        SET SWITCHES ON 11 TO (OCTAL) 203.
+        PRESS "ENABLE" AND "SW REG" AT THE SAME TIME.
+                --  THIS WILL LOAD RSX-20,
+                RSX-20F VA14-45 13:04 13-NOV-81
+
+                [SY0: REDIRECTED TO DB0:]
+                [DB0: MOUNTED]
+
+        PRESS "CONTROL \". THIS SHOULD GET YOU THE PAR%
+
+        IF YOU GET SOMETHING LIKE THIS PRINTED:
+
+        INS -- I/O ERROR ON TASK  FILE TSK=PARSER PAR=GEN
+
+        YOU MAY HAVE THE DRIVE WRITE LOCKED.
+                        NOTE:                                           PAGE 4
+                        -----
+        IF YOU SEE "PAR>", YOU HAVE NOT STOPPED THE KL FROM RUNNING.
+        YOU HAVE TO TYPE  "ABORT" TO THE PARSER. YOU SHOULD THEN
+        GET SOMETHING LIKE THIS:
+
+                PAR%
+
+        TYPE "MCR BOO" TO THE PARSER, WHICH WILL COME BACK WITH
+        BOO>
+
+        TYPE "DBOOT" TO BOO>, WHICH WILL COME BACK WITH KLDCP.
+
+        NOW PLEASE WRITE LOCK THE DRIVE.
+        --------------------------------
+
+        ALL YOU HAVE TO DO NOW IS TO TYPE IN "B" <CR>.
+        THIS WILL RUN THE FRONT-END DIAGNOSTICS FOR YOU.
+
+
+        TO LOAD THE 701 MONITOR
+        ------------------------
+
+        WRITE ENABLE ALL DRIVES
+        PUT 207 IN THE SWITCHES ON THE 11 FRONT-END
+        PRESS ENABLE SWITCH ON THE KL10
+        AND PUSH SW/REG LOAD
+        THE SYSTEM WILL BOOT UP WITH KLI
+        LOAD MICROCODE, CONFIGURE MEMORY
+        ENABLE CACHE, AND LOAD BOOTS.
+        AT THE BOOTS PROMPT TYPE KLAD:<CR>
+        BTS>KLAD: <CR>
+            -----
+        THE 701 MONITOR WILL LOAD AND START.
+
+        TO CRASH THE OPERATING SYSTEM TYPE "CTRL \"
+        SYSTEM WILL COME BACK WITH PAR> THEN YOU TYPE SHUT <CR>
+                                                      ----
+        PAR%ABORT <CR>
+            -----
+APPENDIX A.     UPDATE (PATCHING) TECHNIQUE FOR .A11 FILES              PAGE 5
+                ------------------------------------------
+
+OVERVIEW:
+---------
+        ALL MAJOR DIAGNOSTIC FILES ON KLAD-10 ARE PATCHABLE (ALL *.A10 AND ALL
+        *.A11 FILES, *.BIC AND *.BIN FILES CAN ONLY BE PATCHED VIA UPD2 ON
+        FLOPPIES).
+
+        THE PATCHING FOLLOWS 3 MAJOR STEPS:
+
+        1. GET THE FILE TO BE PATCHED INTO A WORK-AREA AND FIND OUT, WHERE
+           IT IS KEPT ON KLAD-10.
+
+        2. PUT THE FILE BACK INTO THE AREA(S) IT IS KEPT ON KLAD-10.
+
+        3. UPDATE THE FILE <F-S>KLAD.UPD TO KEEP TAB ON CHANGES MADE TO
+           THIS KLAD-10.
+
+        TO MINIMEZE THE WORKING WITH THE DIFFERENT "SAVE"-FORMATS CREATED
+        ON THE 10/20 BY OUR ASSEMBLERS/LOADERS (MACRO/LINK MACY11, PAL10
+        ETC) THE "ASCIIZED" FORMAT WAS INVENTED. CONVRT ALLOWS YOU TO
+        "ASCIIZE" THE OUTPUT FILES OF THE ABOVE MENTIONED ASSEMBLER/LOADERS
+        AND CROSS-ASSEMBLERS.
+
+        BASICALLY AN *.A11 FILE CONSISTS OF LOAD-LINES AND A TRANSFER-
+        LINE.
+
+        CONVRT TRANSLATES 6-BIT OCTAL VALUES INTO 7-BIT ASCII, STARTING WITH
+        THE LEAST SIGNIFICANT BITS. PDP11 WORDS ARE THEREFORE REPRESENTED BY 3
+        ASCII CHARACTERS (6+6+2=16) THIS IS THE BASIC STORAGE UNIT IN ASCIIZED
+        FILES. PDP10 WORDS ARE TRANSLATED INTO THREE UNITS (16+16+4=36)
+
+        6-BIT VALUES BETWEEN 0 AND 74 ARE TRANSLATED INTO 100 TO 174, VALUES
+        75 TO 77 ARE LEFT UNCHANGED.
+
+        THE GENERAL LINE FORMAT IS:
+                M   T  C , A , W1 , W2 ,...S <CARRIAGE RETURN>
+
+        M = E - PDP11 FILE, T - PDP10 FILE, ; - COMMENT LINE (TITLE)
+
+        T = "SPACE" - ASCIIZED LINE, O - OCTAL PATCHING LINE
+
+        C = COUNT OF CONCURRENT WORD-UNITS (TIMES 3 FOR PDP10 WORDS)
+
+        A = ADDRESS OF FIRST OF THE C CONCURRENT WORDS
+
+        WX = CONTENTS OF WORDS
+
+        S = CHECKSUM-WORD (SUM OF A AND ALL W'S PLUS S GIVES 16-BIT ZEROES)
+
+        SPECIAL CONDITIONS:                                             PAGE 6
+        -------------------
+
+        1. IF TYPE-FIELD IS O (OCTAL), THE ADDRESS AND WORD FIELDS ARE TRANS-
+           LATED FROM 6 OCTAL NUMBERS INSTEAD OF FROM 3 ASCIIZED CHARACTERS
+           AND NO CHECKSUM IS EXPECTED.
+        2. IF THE COUNT-FIELD IS LEFT OUT, THE FOLLOWING ADDRESS-FIELD IS
+           TAKEN AS THE "START-ADDRESS" OF THE PROGRAM---TRANSFER-LINE AND
+           END OF FILE IS ASSUMED.
+
+THE BASIC EDITING SEQUENCE THEREFORE BREAKS DOWN TO:
+
+        1. SEARCH FOR TRANSFER-LINE AND INSERT LOAD-LINE IN FRONT OF IT.
+
+EXAMPLE (PDP11-DIAGNOSTIC-A11 FILES; 1 WORD PATCH)
+        17000/107
+
+        LOAD-LINE HAS 1 WORD AND LOOKS LIKE
+
+        EO1,17000,107
+
+EXAMPLE (A11-FILES 2 WORD PATCH)
+        17002/107
+        17004/110
+
+        LOAD-LINE WILL LOOK LIKE
+
+        EO2,17002,107,110
+
+        THIS IS ONLY AN EXAMPLE:
+        ------------------------
+
+        PUT YOUR KLAD PACK ON UNIT 0, PUT ALL THE SWITCHES ON THE 11 FRONT-
+        END TO 0, THEN PUT ENABLE SWITCH ON AND PRESS DISK LOAD SWITCH.
+        THIS WILL GIVE YOU RSX, LOAD MICROCODE, CONFIGURE MEMORY AND LOAD
+        BOOT.
+
+        RSX-20F VA14-45 13:04 18-NOV-81
+
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+        KLI -- VERSION VA12-27 RUNNING
+        KLI -- MICROCODE VERSION 231 LOADED
+        KLI -- ALL CACHES ENABLED
+        LOGICAL MEMORY CONFIGURATION:
+        ADDRESS   SIZE  INT  TYPE CONTROLLER
+        00000000  256K   4   MF20  10
+        KLI -- BOOTSTRAP LOADED AND STARTED
+        BOOTS V1(4)
+
+        BTS>KLAD:
+            -----
+        SYSCHK(N,Y):
+                                                                        PAGE 7
+        ACCEPT  1090 01-30-79
+        WHY RELOAD: OPR
+                    ---
+        DATE: 8-24
+              ----
+        TIME: 0926
+              ----
+        STARTUP OPTION: C
+                        -
+        NOTE****** RPB IS FOR RH10 UNIT#0
+
+        %CONTROLLER RPB IS OFF-LINE
+        DO YOU WANT IT TO BE 1)ON-LINE, OR 2)DOWN? (TYPE #)
+        2
+        -
+        ?NO UNITS IN ACTIVE SWAPPING LIST
+        ?NO STR'S IN SYS SEARCH LIST
+        TYPE STR NAME TO CHANGE ITS PARAMETERS(CR IF NONE, ALL IF ALL)
+        TYPE PHYSICAL UNIT NAME TO CHANGE ITS PARAMETERS(CR IF NONE,ALL IF ALL)
+        DO YOU WANT TO CHANGE THE ACTIVE SWAPPING LIST?
+        Y
+        -
+        FOR EACH CLASS TYPE PHYSICAL UNIT NAMES(EXTRA CR WHEN DONE)
+        CLASS 0
+        RPA0
+        ----
+        CLASS 1
+        DO YOU WANT TO CHANGE THE "SYS" SEARCH LIST?
+        Y                                               
+        -                                                                       
+                        
+        TYPE STR NAMES FOR "SYS" SEARCH LIST(EXTRA CR WHEN DONE)
+        KLAD
+        ----                            
+        HOME BLOCKS TO BE WRITTEN ON WHICH PHYSICAL UNITS (EXTRA CR
+        WHEN THROUGH)(CR IF NONE, ALL IF ALL; "ALL" IS NORMAL CASE)
+        ALL
+        ---
+        HOME BLOCKS WRITTEN
+
+        STARTUP OPTION: Q
+                        -
+        ACCEPT 1090 14:14:05 CTY SYSTEM 1369
+
+        .LOGIN 1,2
+        .R OPSER
+
+        .DET FROM [1,2]
+         ---
+        .LOG [6,10]
+         ----------
+        JOB 1 ACCEPTANCE KLINIK/1090 CTY
+
+        PASSWORD: KL10
+                  ----
+                                                                        PAGE 8
+        0950    24-AUG-77       WED
+
+        .R SETSRC
+         - ------
+        *T
+         -
+        KLAD:,FENCE
+
+        *CTRL "C"
+         --------
+        .TECO DGMMA.A11
+         --------------
+        [2K CORE]
+        *NE ,$0LT$$                     ;SEARCH FOR E ,
+         ----------
+        E ,X@,O'H@                      ;PRINT IT OUT
+        *IEO1,35036,107                 ;INSERT PATCH
+         --------------
+        $$
+        --
+        *-L$2T$$                        ;MOVE POINTER BACK TWO LINES
+         -------
+        EO1,35036,107                   ;CHECK TO MAKE SURE PATCH IS
+        E ,X@,O'H@                      ;IN THE RIGHT PLACE
+        *$EX$$                          ;EXIT TECO
+         -----
+        .DELE DGMMA.BAK                 ;DELETE BAK FILE
+         --------------
+        FILES DELETED:
+        DGMMA.BAK
+        74 BLOCKS FREED
+
+        .AS KLAD DEV                    ;ASSIGN KLAD
+         -----------
+        KLAD ASSIGNED
+
+        .RUN WHEEL
+         ---------
+        SETTING WHEEL CAPABILITY
+
+        JOB # 1 (MAINTENANCE) SETTING WHEEL
+
+        .RUN KLAD10
+         ----------
+
+        DECSYSTEM10 RP04/RP06 KLAD PACK CREATION PROGRAM, VER 0.2
+
+        COMMAND
+        */DEV:DEV                       ;ASSIGN DEVICE
+         --------
+        *DGMMA.A11[6,10]/TO11
+         --------------------
+        *CTRL "C"                       ;TO GET OUT OF KLAD10
+         --------
+        EXIT                                            
+                                                                        PAGE 9
+        .RUN WHEEL                      ;CLEAR WHEEL
+         ---------
+
+        CLEARING WHEEL CAPABILITY
+
+        JOB # 1 (MAINTENANCE) CLEARING WHEEL.
+
+        .K/F
+         ---
+        JOB 1, USER [6,10] LOGGED OFF CTY       1010 24-AUG-77
+        SAVED ALL FILES (25780 BLOCKS)
+        RUNTIME 2,64 SEC
+
+        .AT #[1,2]
+        PUT UP 207 ON THE PDP11 FRONT-END AND PRESS "SW REG"
+        LOAD SWITCH TO GET RSX SO YOU CAN CHECK TO MAKE SURE THE
+        PATCHES ARE ON THE 11 SIDE.
+
+        RSX-20F VA14-45 13:04 18-NOV-81
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+        KLI -- VERSION VA12-27 RUNNING
+        KLI -- ENTER DIALOG [NO,YES,EXIT,BOOT]?
+        KLI>EXIT
+            ----
+        CTRL BACKSLASH
+        --------------                          
+        PAR%ABORT                               
+            -----                               
+        CTRL BACKSLASH
+        --------------
+        PAR%MCR BOO
+            -------                             
+        BOO>DBOOT
+            -----
+        DECSYSTEM DIAGNOSTIC CONSOLE
+        VERSION 0.17
+        SWR = 000207    DTE # 0
+        CMD:
+        >.P DGMMA.A11
+          -----------
+        DGMMA.A11 VER 0.2       25-APR-77
+        >.EE35036
+          -------
+        035036 /000107
+
+******* NOTE: TO PATCH AN A10 DIAGNOSTIC YOUR HAVE TO FOLLOW THE A10 ****
+              PATCHING TECHNIQUE LOCATED ON THE KLAD20.MEM DOCUMENT. ****
+              YOU CANNOT PATCH A10 DIAGNOSTICS ON THE KLAD10 PACK,   ****
+              BECAUSE OF A MONITOR CHANGE.                           ****
+*************************************************************************
+
+                                                                        PAGE 10
+APPENDIX B.     FORMATTING YOUR PACK ON A STAND ALONE SYSTEM
+                --------------------------------------------
+
+YOU HAVE TO USE A KLAD PACK THAT IS ALREADY MADE TO DO THE FOLLOWING.
+
+TO FORMAT A PACK YOU HAVE TO HAVE THE KLAD PACK ON THE SYSTEM.
+SET SWITCHES ON THE 11 TO (OCTAL) 203.
+THEN YOU PRESS, AT THE SAME TIME, "ENABLE" AND "SW REG".
+
+        THIS WILL LOAD RSX-20F FOR YOU.
+
+        RSX-20F VA14-45 13:04 18-NOV-81
+
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+
+        KLI -- VERSION V12-27 RUNNING
+        KLI -- ENTER DIALOG [NO,YES,EXIT,BOOT]?
+        KLI>YES<CR>
+            ------
+
+        KLI -- KL10 S/N: ####., MODEL B, 60 HERTZ
+        KLI -- KL10 HARDWARE ENVIRONMENT:
+                MOS MASTER OSCILLATOR
+                EXTENDED ADDRESSING
+                INTERNAL CHANNELS
+                CACHE
+
+        KLI -- RELOAD MICROCODE [YES,VERIFY,FIX,NO]?
+        KLI>YES<CR>
+            ------
+
+        KLI -- MICROCODE VERSION 231 LOADED
+        KLI -- RECONFIGURE CACHE [FILE,ALL,YES,NO]?
+
+        KLI>ALL<CR>
+            ------
+        KLI -- ALL CACHES ENABLED
+        KLI -- CONFIGURE KL MEMORY [FILE,ALL,REVERSE,FORCE,YES,NO]?
+        KLI>FORCE<CR>
+            --------
+        STARTING MF20 DBE SCAN. WAIT 25 SEC/256K.
+
+        MEMORY RESOURCES:
+        CONTROLLER ADDRESS   TYPE  MODULES/GROUPS
+                                 7 6 5 4 3 2 1 0
+
+                10      MF20     0 0 0 0 0 0 0 4
+        KLI -- CONFIGURE MOS MEMORY [ALL,YES,NO]?
+        KLI>ALL<CR>
+            ------
+
+                                                                        PAGE 11
+        LOGICAL MEMORY CONFIGURATION:
+          ADDRESS  SIZE  INT  TYPE CONTROLLER
+    0000000   256K   4   MF20  10
+
+        KLI -- LOAD KL BOOTSTRAP [FILE,YES,NO,FILENAME]?
+        KLI>NO<CR>
+            -----
+        KLI -- EXIT [YES,RESTART]?
+        KLI>YES<CR>
+            ------
+        KLI -- CONFIGURATION FILE ALTERED
+        CTRL \
+            ---
+
+        PAR%MCR BOO<CR>
+            ----------
+        BOO>DBOOT<CR>
+            --------
+
+        DECSYSTEM DIAGNOSTIC CONSOLE
+        VERSION 0.17
+        SWR = 000002    DTE # 0
+        CMD:
+
+        >.RP0<CR>
+          ------
+        >.BT<CR>
+          -----
+        U.RAM IS LOADED, MEMORY IS CONFIGURED, SUBRTN IS LOADED AND KLDDT.
+
+        >. P DDRPI<CR>
+           ----------
+        DDRPI.A10  VER 0.7  20-AUG-79
+
+        PUT THE PACK THAT YOU ARE GOING TO FORMAT ONTO A DISK DRIVE.
+        ALSO PUT UP SWITCH 1 ON THE 11 FRONT-END.
+
+        >.STD<CR>
+          ------
+        LIST THE PGM SWITCH OPTIONS? Y OR N <CR> - N
+                                                   --
+        DRIVES'S <TYPE> AVAILABLE = 0<4> - 2<6>
+        WHAT DRIVES(S) TO BE TESTED (00 TO 77, ALL, H=HELP)?
+        # 0<CR>
+         -----
+        TYPE "H" FOR TEST NAME HELP MESSAGE
+
+        WHAT TEST? - PAKINT<CR>
+                     ---------
+
+                                                                        PAGE 12
+        PAKINT - PACK INITIALIZE SCRIPT
+
+        THIS SCRIPT WILL FORMAT - MAP - AND GENERATE THE BAT BLOCKS
+
+        FOR THE SELECTED RP04/05/06 DISK DRIVES.
+
+        PROCEED WITH THE SCRIPT? (Y OR N) Y<CR>
+                                          ----
+
+        MAPOUT SOFT (RECOVERABLE) READ ERROR BLOCKS Y OR N <CR> - Y<CR>
+                                                                 -----
+        PROGRAM RUN TIME = 0:0:53       FORMAT
+
+
+        THE PACK SPECIFICATION ALLOWS A TOTAL OF 20 ERRORS...
+
+        OF WHICH 5 MAY BE "HARD" ERRORS.
+
+        CYLINDER 000 SURFACE 00 CANNOT HAVE ANY "HARD" ERRORS!
+
+        PROGRAM RUN TIME = 0:1:1        FORMATTING STARTED
+
+        PROGRAM RUN TIME = 0:11:50      OPERATION COMPLETED
+
+        PROGRAM RUN TIME = 0:11:53      RONLY
+
+        PROGRAM RUN TIME = 0:21:49      MAPOUT ROUTINE
+
+        BAT BLOCK CONTENTS
+        DRIVE 540 - 0<4>
+
+        NO BAT BLOCK FOUND FOR THIS DRIVE!
+
+        DRIVE BAT BLOCKS CREATED
+        %% DRIVE #00 CONTAINS 0. BAD SPOT ENTRY(S)
+
+        WHAT TEST? - CTRL C
+                         ---
+
+        YOUR PACK SHOULD NOW BE FORMATTED.
+
+                                                                        PAGE 13
+APPENDIX C.     SAVING YOUR KLAD10 PACK                 
+                -----------------------                         
+
+TYPE IN, ONLY WHAT IS UNDERLINED.
+                      ----------
+
+1.      LOAD KLAD MONITOR AS NORMAL
+
+2.      LOG IN A [1,2] JOB
+
+3.      AS MTA?<CR>
+        ----------
+4.      SET DEN MTA?:1600<CR>
+        --------------------
+5.      REW MTA?<CR>
+        -----------
+6.      GET KLAD:FEFILE[1,4]<CR>                                
+        -----------------------
+        JOB SETUP
+
+7.      SAV MTA?:FEFILE<CR>                                     
+        ------------------
+        FEFILE SAVED
+
+8.      SAV MTA?:FEFILE<CR>
+        ------------------
+        FEFILE SAVED
+
+9.      GET KLAD:BACKUP[1,4]<CR>
+        -----------------------
+        JOB SETUP
+
+10.     SAV MTA?:BACKUP<CR>
+        ------------------
+        BACKUP SAVED
+
+11.     R BACKUP<CR>
+        -----------
+12.     /TA MTA?<CR>
+         ----------
+13.     /DEN 1600<CR>
+         -----------
+14.     /SUP ALW<CR>
+         ----------
+15.     /SORT FILES ALPHA<CR>
+         -------------------
+16.     /SAV KLAD:[1,4]<CR>                             
+         -----------------
+        !1,4    KLAD                            
+
+        DONE
+
+                                                                        PAGE 14
+17.     /SAV KLAD:[6,10]<CR>
+         ------------------
+        !6,10   KLAD
+
+        DONE
+
+18.     /SAV KLAD:[35,1414]<CR>
+         ---------------------
+        !35,1414   KLAD
+
+        DONE
+
+19.     /SAV KLAD:[10,*]<CR>
+         ------------------
+        !10,7   KLAD
+        KLAD:[10,7]FILE.EXT(BLOCK=##)
+
+        $BKPEOT REACHED EOT--MOUNT NEW TAPE THEN TYPE "GO"
+
+20.     /GO<CR>
+         -----
+        !10,7
+        10,701
+        10,70113
+        10,10
+        10,700
+        10,61
+        KLAD:[10,61]FILE.EXT(BLOCK=##)
+
+        $BKPEOT REACHED EOT--MOUNT NEW TAPE THEN TYPE "GO"
+
+21.     /GO<CR>
+         -----
+        !10,61
+        10,15
+        10,20
+
+        DONE
+
+22.     /UNL<CR>
+         ------
+23.     /PRESS CTRL C
+                   ---
+24.     .FIN<CR>
+         ------
+
+                                                                        PAGE 15
+        IF FOR SOME REASON, IN THE MIDDLE OF BACKING UP YOUR PACK
+        YOU GET A TAPE PARITY ERROR, YOU DON'T HAVE TO START OVER
+        AGAIN. JUST DO THE FOLLOWING:
+
+        DO A CTRL C TO BACKUP
+                 ---
+        R BACKUP<CR>
+        -----------
+        /TA MT??<CR>
+         ----------
+        /REW<CR>
+         ------
+        /DEN ????<CR>
+         -----------
+        /SUP ALW<CR>
+         ----------
+        /SORT FILES ALPHA<CR>
+         -------------------
+        /INIT KLAD:[##,#]FILE.EXT<CR>   ;YOU PUT THE LAST FILE THAT WAS SAVED
+         ---------------------------    ;ON THE PREVIOUS TAPE BEFORE THE
+                                        ;TAPE THAT GOT THE ERROR.
+        /SAV KLAD:<CR>                  ;AND CONTINUE ON SAVING THE KLAD
+         ------------
+
+NOTE: IF YOU ARE UPDATING YOUR KLAD PACK, USING ALTERNATIVE #2. CONTINUE ON
+----- TO APPENDIX D. PAGE 16, STEP 3. & FOLLOW THE INSTRUCTIONS THERE.
+
+                                                                        PAGE 16
+APPENDIX D.     CREATING A 1090 OR 1091 KLAD PACK
+                ---------------------------------
+
+        DO THIS PART OF THE PROCEDURE STAND ALONE.
+        ------------------------------------------
+
+        PLEASE TYPE WHAT IS UNDERLINED. WHEN YOU SEE "$" PLEASE PRESS
+        ALTMODE OR ESCAPE KEY.
+
+        ALTERNATE WAYS OF UPDATING YOUR KLAD PACK WITH A SET OF FIELD
+        UPDATE TAPES.
+
+        ALTERNATIVE 1:  (STAND ALONE)
+
+                CREATING A KLAD PACK FROM FIELD UPDATE TAPES
+
+        ALTERNATIVE 2:  
+
+                CREATING A KLAD PACK USING THE EXISTING MONITOR ON
+                YOUR PRESENT KLAD
+
+        ALTERNATIVE 3:
+
+                CREATING A KLAD PACK USING A BOOTSTRAP OF THE CUSTOMER'S
+                MONITOR ON A BOOTABLE MAGTAPE (EMERGENCY USE CONDITION)
+
+        ALTERNATIVE 4:
+
+                GO TO ANOTHER SITE, TO MAKE A KLAD PACK IF YOU CAN'T DO
+                THE PACK, ANY OF THE WAYS LISTED ABOVE
+
+        NOTE: THIS PROCEDURE IS TO BE USED ON A SYSTEM WITH ONLY A RP04
+        ----- OR RP06B(0) ON A RH20 #0 OR RH10 #0 ON-LINE. PLEASE POWER
+              DOWN ALL OTHER DRIVES. THE UPDATE TAPES ARE 9TRK.
+
+        ALTERNATIVES:
+        -------------
+        1:      CREATING A KLAD PACK FROM FIELD UPDATE TAPES
+
+        REQUIREMENTS:
+        -------------
+        1 KL10
+        1 RP04/6B(0) RH20 #0
+
+        AND AT LEAST ONE OF THE FOLLOWING STYLE MAGTAPE SUBSYSTEMS
+
+        RH20 #1-DX20 TU70/72-MTA/--/TM02/03/TU45/77-MTB (1090/91)
+                        OR
+        RH20 #2-DX20 TU70/72-MTC/--/TM02/03/TU45/77-MTD (1090/91)
+                        OR
+        RH20 #3-DX20 TU70/72-MTE/--/TM02/03/TU45/77-MTF (1090/91)
+                        OR
+                DX10-MTG  (1090)
+                THEN START WITH STEP 3. IN APPENDIX D. PAGE 16
+                                                                        PAGE 17
+        ALTERNATIVE:
+        ------------
+
+        2:      SAVE CURRENT KLAD PACK THAT YOU ALREADY HAVE. PRESUMES
+                THAT THE MONITOR YOU HAVE ON THIS KLAD FITS YOUR SYS-
+                TEM CONFIGURATION.
+
+                START SAVING KLAD AT STEP #1 APPENDIX C. PAGE 12
+
+        ALTERNATIVE:
+        ------------
+
+        3:      USE BOOTSTRAP OF CUSTOMER'S MONITOR ON BOOTABLE MAGTAPE.
+                *****(EMERGENCY USE CONDITION ONLY)*****
+
+        NOTE: THIS IS ONLY AN EXAMPLE OF HOW TO PUT A MONITOR ON A
+        ----- BOOTABLE MAGTAPE. DID YOU MOUNT SCRATCH TAPE WRITE-ENA-
+              BLED ON UNIT 0 ????
+
+                .AS MTA0<CR>
+                 ----------
+                MTA0 ASSIGNED
+                .SET DEN MTA0:1600<CR>
+                 --------------------
+                .REW MTA0<CR>
+                 -----------
+                .GET SYS:BACKUP<CR>
+                 -----------------
+                JOB SETUP
+                .SAV MTA0:BACKUP<CR>
+                 ------------------
+                BACKUP SAVED
+                .R BACKUP<CR>
+                 -----------
+                /TA MTA0<CR>
+                 ----------
+                /DEN 1600<CR>
+                 -----------
+                /SAV DSKB:[1,4]=MAST:[1,4]SYSTEM.EXE<CR>
+                 --------------------------------------
+                !1,4    MAST
+                "DONE
+                /REW<CR>
+                 ------
+                THEN PROCEED TO APPENDIX D. PAGE 16 STEP 3. AND CONTINUE ON
+
+        ALTERNATIVE:
+        ------------
+
+        4:      GO TO ANOTHER SITE AND DO THE KLAD PACK UPDATE.
+
+                                                                        PAGE 18
+        NOTE: IF YOU ARE DOING 1091 UPDATE MOUNT SYSTEM FLPY A IN DX0:
+        ----- (AS-M348A-BB) AND SYSTEM FLPY B IN DX1: (AS-M349A-BB).
+
+        NOTE: IF YOU ARE DOING 1090 UPDATE LOAD FRONT-END DECTAPE #1 ONTO
+        ----- DT0:(AL-J189C-BB). LOAD FRONT-END DECTAPE #2 ONTO DT1:
+              (AL-J190C-BB). ***** WRITE ENABLED *****
+
+        NOTE: IF YOU ARE DOING ALTERNATIVE #3 PUT THE BOOTABLE MONITOR
+        ----- MAGTAPE ON UNIT 0.
+
+3.      MOUNT A FORMATTED DISK PACK ON A DUAL-PORTED DRIVE (0) OF A
+        RH20 #0 OR A RH10 #0.
+
+        NOTE: IF YOU ARE DOING ALTERNATIVE #1: PLEASE MOUNT MAGTAPE
+        ----- #1 FROM THE FIELD UPDATE KIT ON MAGTAPE UNIT 0.
+
+4.      PUT THE SWITCHES 0,1,2 ON THE 11 FRONT-END UP.
+
+        NOTE: #1 IF YOU ARE DOING A FIELD UPDATE OF YOUR KLAD
+        PACK USING ALTERNATIVE #2, PLEASE MOUNT TAPE #1 FROM
+        THE SET THAT YOU JUST MADE FROM APPENDIX C. ON MAGTAPE
+        UNIT 0. THEN CONTINUE ON FOLLOWING THIS PROCEDURE.
+                                                                        
+5.      THEN PRESS ENABLE AND SW/REG -- THIS WILL GET YOU TO -RSX-
+
+        RSX-20F VE14-45 13:04 18-NOV-81
+
+        [SY0: REDIRECTED TO DX0:]
+        [DX0: MOUNTED]
+        KLI -- VERSION VA12-27 RUNNING
+        KLI -- ENTER DIALOG [NO,YES,EXIT,BOOT]?
+6.      KLI>YES<CR>
+            ------
+        KLI -- KL10 S/N: ####., MODEL B, 60 HERTZ
+        KLI -- KL10 HARDWARE ENVIRONMENT:
+                MOS MASTER OSCILLATOR
+                EXTENDED ADDRESSING
+                INTERNAL CHANNELS
+                CACHE
+
+        KLI -- RELOAD MICROCODE [YES,VERIFY,FIX,NO]?
+7.      KLI>YES<CR>
+            ------
+        KLI -- MICROCODE VERSION 231 LOADED
+        KLI -- RECONFIGURE CACHE [FILE,ALL,YES,NO]?
+8.      KLI>ALL<CR>
+            ------
+        KLI -- ALL CACHES ENABLED
+        KLI -- CONFIGURE KL MEMORY [FILE,ALL,REVERSE,FORCE,YES,NO]?
+9.      KLI>FORCE<CR>
+            --------
+        STARTING MF20 DBE SCAN. WAIT 25 SEC/256K.
+
+                                                                        PAGE 19
+        MEMORY RESOURCES:
+        CONTROLLER ADDRESS  TYPE  MODULES/GROUPS
+                                7 6 5 4 3 2 1 0
+                10      MF20    0 0 0 0 0 0 0 4
+
+        KLI -- CONFIGURE MOS MEMORY [ALL,YES,NO]?
+10.     KLI>ALL<CR>
+            ------
+        LOGICAL MEMORY CONFIGURATION.
+          ADDRESS  SIZE  INT  TYPE CONTROLLER
+        000000000  256K   4   MF20  10
+
+        KLI -- LOAD KL BOOTSTRAP [FILE,YES,NO,FILENAME]?
+11.     KLI>BOOTM<CR>
+            --------
+        KLI -- WRITE CONFIGURATION FILE [YES,NO]?
+12.     KLI>NO<CR>
+            -----
+        KLI -- BOOTSTRAP LOADED AND STARTED
+        BOOTM V5(27)
+
+        BEFORE YOU DO ANYTHING ELSE, PLEASE READ THESE FEW LINES, VERY CAREFULLY
+        ------------------------------------------------------------------------
+        IF YOU HAVE A DX20 YOU USE A /DX20 SWITCH.
+
+        IF YOU HAVE A TM02 YOU USE A /TM02 SWITCH.
+
+        IF YOU HAVE A TM03 YOU USE A /TM03 SWITCH.
+
+        /DEN:1600 REFERS TO THE DENSITY OF THE MAGTAPE THAT YOU ARE USING.
+
+
+13.     BTM>KLAD:SYSTEM/TM03/DEN:1600<CR>
+
+                THIS WILL LOAD KLAD:SYSTEM.EXE[1,4]
+
+            ----------------------------
+        NOTE: IF YOU ARE FOLLOWING ALTERNATIVES 2 OR 3 THE ?'S WILL VARY
+        ----- ACCORDING TO THE MONITOR THAT YOU ARE USING. IF TAPE MARK IN
+              SAVE FILE PRINTS OUT-DO CTRL "\",THEN "J 400" CONTINUE ON.
+
+14.     SYSCHK(N,Y):<CR>
+                    ----                                                        
+        1091    03-11-83
+15.     WHY RELOAD: OTHER KLAD BUILD<CR>
+                    -------------------
+        NOTE: ENTER CURRENT DAY AND TIME
+        -----
+
+                                                                        PAGE 20
+16.     DATE:3 11 <CR>
+             ---------
+17.     TIME:1330<CR>
+             -------
+18.     STARTUP OPTION:L<CR>
+                       ----
+***********************************************************************
+
+        NOTE: THE FOLLOWING INFORMATION REFLECTS THE PRINTOUTS
+              EXPECTED WITH A NEWLY FORMATTED PACK WHICH HAS
+              NEVER BEEN INITIALIZED FOR A TOPS10 OPERATING SYSTEM.
+
+              IT IS RECOMMENDED THAT THE PACK BE FORMATTED ( OR
+              RE-FORMATTED) ACCORDING TO THE PROCEDURE CONTAINED
+              IN APPENDIX B: (FORMATTING YOUR PACK ON A TIMESHARING
+              SYSTEM OR STAND ALONE SYSTEM)
+
+***********************************************************************
+
+        IN THE FOLLOWING DIALOG, ALL NUMBERS ARE DECIMAL.
+        TYPE <CR> IF OK, OR A NEW NUMBER TO CHANGE VALUE.
+
+        RPA0 FIRST HOM BLOCK CONSISTENCY ERROR
+        RPA0 SECOND HOM BLOCK CONSISTENCY ERROR
+
+        DO YOU WANT TO INITIALIZE THE HOME BLOCKS ON THIS UNIT?
+19.     Y<CR>
+        ----
+        ?NO UNITS IN ACTIVE SWAPPING LIST
+
+        NOTE: IF THERE WERE ANY HARD SPOTS MAPPED OUT WHEN YOU FORMATTED
+        ----- THE PACK, THE QUESTION TYPE PHYSICAL UNIT NAME TO LIST #
+              BAD REGIONS(<CR> IF NONE, ALL IF ALL) WILL PRINT OUT .
+              ANSWER WITH <CR> IF THIS QUESTIONS PRINTS OUT.
+
+        DSK FILE STRUCTURES(STRS):
+
+        UNITS NOT IN A FILE STRUCTURE:
+        RPA0(),RPA1(),RPB0(),RPB1()
+
+        UNITS IN ACTIVE SWAPPING LIST:
+
+        STRUCTURES IN SYSTEM SEARCH LIST:
+
+        STRUCTURES IN SYSTEM DUMP LIST:
+
+        TYPE PHYS UNIT NAME TO LIST ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+20.     <CR>
+        ----
+        BEFORE "HOME" BLOCKS ARE REWRITTEN,                             
+
+        DO YOU WANT TO CHANGE ANY DISK PARAMETERS?
+21.     Y<CR>
+        ----
+        TYPE STR NAME TO BE DEFINED(<CR> IF NONE)
+
+22.     KLAD<CR>
+        -------
+        TYPE NAMES OF PHYS UNITS IN STR(ALL IF ALL, EXTRA <CR> WHEN DONE)
+
+23.     RPA0<CR>
+        -------
+24.     <CR>                            
+        ----
+
+                                                                        PAGE 21
+        NOTE: TYPE STRUCTURE NAME TO BE DEFINED(<CR> IF NONE) MIGHT PRINT
+        ----- OUT HERE. IF SO PRESS <CR>.
+                                    ----
+        TYPE STR NAME TO CHANGE ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+
+25.     KLAD<CR>
+        -------
+
+        NOTE: THE FIGURES GIVEN BELOW ARE FOR A RP06. RP04
+        ----- FIGURES ARE APPROXIMATELY ONE-HALF.
+
+        AFTER EACH PRINTING OF CURRENT VALUE, TYPE NEW VALUE OR <CR>
+
+        PARAMETERS WHICH MAY BE CHANGED WITHOUT REFRESHING
+        #OF CONSECUTIVE BLOCKS TRIED FOR ON OUTPUT = 30
+        MIN = 1 MAX = 262143
+26.     <CR>
+        ----
+        SUM OF BLOCKS GUARANTEED TO USERS = 0
+        MIN = 0 MAX = 307800
+
+27.     <CR>
+        ----
+        # BLOCKS ALLOWED FOR OVERDRAW PER USER = 500
+        MIN = 0 MAX = 307800
+
+28.     <CR>                            
+        ----
+
+        IS THIS A PRIVATE STR? (TYPE Y IF PRIVATE, N IF NO ACCESS RESTRICTIONS)
+29.     N<CR>
+        ----
+        PARAMETERS WHICH MAY NOT BE CHANGED WITHOUT REFRESHING
+        K FOR CRASH.EXE = 256
+        MIN = 0 MAX = 4096
+
+        NOTE: RP04=0, RP06=1024
+        -----
+30.     1024<CR>
+        -------
+
+        BLOCKS PER CLUSTER = 10
+        MIN = 1 MAX = 511
+31.     <CR>
+        ----
+        THEREFORE BITS PER CLUSTER ADR. = 15
+        THEREFORE BLOCKS PER SUPER-CLUSTER = 10
+        THEREFORE SUPER-CLUSTERS PER UNIT = 30780
+
+        BITS PER CLUSTER COUNT = 12
+        MIN = 1 MAX = 18
+
+32.     <CR>
+        ----
+
+                                                                        PAGE 22
+        THEREFORE BITS PER CHECKSUM = 9
+
+        TYPE STR NAME TO CHANGE ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+
+33.     <CR>
+        ----
+        TYPE PHYS UNIT NAME TO CHANGE ITS PARAMETERS(<CR> IF NONE,ALL IF ALL)
+
+34.     RPA0<CR>
+        -------
+
+        AFTER EACH PRINTING OF CURRENT VALUE, TYPE NEW VALUE OR CR
+
+        PARAMETERS WHICH MAY NOT BE CHANGED WITHOUT REFRESHING
+
+        NOTE: THE FIGURES GIVEN BELOW ARE FOR A RP06. THE RP04 FIGURES
+        ----- ARE APPROXIMATELY ONE-HALF.
+
+        # OF SAT BLOCKS ON UNIT = 8
+        MIN = 8 MAX = 83
+
+35.     <CR>
+        ----
+        THEREFORE CLUSTERS PER SAT = 3848
+        THEREFORE WORDS PER SAT = 107
+
+        K FOR SWAPPING ON UNIT = 0
+        MIN = 0 MAX = 4095
+
+        NOTE: RP04=300, RP06=2000
+        -----
+36.     2000<CR>
+        -------
+
+        COMPUTED 1ST. LOGICAL BLOCK FOR SWAPPING = 145900
+        1ST. LOGICAL BLOCK FOR SWAPPING = 145900
+        MIN = 8510 MAX = 291800
+
+        NOTE: TYPE WHATEVER MAX VALUE IS FROM ABOVE IF RP04, OTHERWISE <CR>
+        -----                                   
+37.     <CR>
+        ----
+
+        PARAMETERS WHICH MAY BE CHANGED WITHOUT REFRESHING
+
+        UNIT ID IS      !
+
+38.     REV12<CR>
+        --------
+
+                                                                        PAGE 23
+        # SAT BLOCKS IN CORE = 1
+        MIN = 1 MAX = 8
+
+        NOTE: TYPE WHATEVER MAX VALUE IS FROM ABOVE.
+        -----
+39.     <CR>
+        ----
+
+        TYPE PHYS UNIT NAME TO CHANGE ITS PARAMETERS(<CR> IF NONE,ALL IF ALL)
+
+40.     <CR>
+        ----
+        UNITS IN ACTIVE SWAPPING LIST:
+
+        DO YOU WANT TO CHANGE THE ACTIVE SWAPPING LIST?
+
+41.     Y<CR>
+        ----
+
+        FOR EACH CLASS TYPE PHYS UNIT NAMES(EXTRA <CR> WHEN DONE)
+        CLASS 0
+
+42.     RPA0<CR>
+        -------
+43.     <CR>
+        ----
+        CLASS 1
+44.     <CR>
+        ----
+
+        STRUCTURES IN SYSTEM SEARCH LIST:                               
+                                        
+        DO YOU WANT TO CHANGE THE SYSTEM SEARCH LIST?
+
+45.     Y<CR>
+        ----
+        TYPE STR NAMES FOR SYSTEM SEARCH LIST(EXTRA <CR> WHEN DONE)
+
+46.     KLAD<CR>
+        -------
+47.     <CR>
+        ----                                                                    
+
+        STRUCTURES IN SYSTEM DUMP LIST:
+
+        DO YOU WANT TO CHANGE THE SYSTEM DUMP LIST?
+
+48.     Y<CR> FOR RP06, IF RP04 JUST A <CR>
+        -----                          ----
+        TYPE STR NAMES FOR SYSTEM DUMP LIST(EXTRA <CR> WHEN DONE)
+
+                                                                        PAGE 24
+49.     KLAD<CR>
+        -------
+        <CR>
+        ----
+        BEFORE "HOME" BLOCKS ARE WRITTEN
+
+        TYPE STR NAME FOR A LIST OF ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+
+50.     <CR>
+        ----
+        TYPE PHYS UNIT NAME TO LIST ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+
+51.     <CR>
+        ----
+        DO YOU WANT TO CHANGE ANY DISK PARAMETERS?(<CR> IF NO)
+52.     <CR>
+        ----
+        HOME BLOCKS TO BE WRITTEN ON WHICH PHYS UNIT(EXTRA <CR> WHEN THROUGH)
+        (<CR> IF NONE, ALL IF ALL ;"ALL" IS NORMAL CASE)
+
+53.     ALL<CR>
+        ------
+        HOME BLOCKS WRITTEN
+
+        NOTE: %NO STRUCTURES IN SYSTEM DUMP LIST WILL TYPE OUT IF YOU
+        ----- ARE UPDATING A RP04 PACK.
+
+        NOTE: IF ANY BAD SPOTS WERE MAPPED OUT, DURING THE FORMATTING
+        ----- OF THE PACK, TYPE PHYSICAL UNIT NAME TO LIST # BAD REGIONS
+              (<CR> IF NONE, ALL IF ALL) WILL PRINT OUT, ANSWER WITH A
+              <CR>.
+              ----
+        DSK FILE STRUCTURES:
+        NEEDS REFRESHING KLAD:RPA0(REV12)
+
+        UNITS IN ACTIVE SWAPPING LIST:
+        RPA0(0)
+
+        STRUCTURES IN SYSTEM SEARCH LIST:
+        KLAD
+
+        NOTE: BELOW WILL ONLY TYPE OUT IF YOU ARE UPDATING A RP06 PACK.
+        ----- STRUCTURES IN SYSTEM DUMP LIST:
+
+        TYPE STR NAME FOR A LIST OF ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+54.     <CR>
+        ----
+
+        TYPE PHYS UNIT NAME TO LIST ITS PARAMETERS(<CR> IF NONE, ALL IF ALL)
+55.     <CR>
+        ----
+
+                                                                        PAGE 25
+        DO YOU WANT TO CHANGE ANY DISK PARAMETERS?(<CR> IF NONE)
+56.     <CR>
+        ----
+
+        TYPE STR NAME TO BE REFRESHED(<CR> IF NONE, ALL IF ALL)
+57.     KLAD<CR>
+        -------
+
+        TYPE STR NAME TO BE REFRESHED(<CR> IF NONE, ALL IF ALL)
+58.     <CR>
+        ----
+
+59.     STARTUP OPTION: Q<CR>                                           
+                        ----
+        TO AUTOMATICALLY LOG-IN UNDER [1,2] TYPE LOGIN<CR>
+        1091    14:08:54
+
+        NOTE: THE ABOVE HEADER WILL VARY ACCORDING TO WHAT MONITOR
+        ----- YOU ARE USING ON THE SYSTEM.
+
+60.     .LOGIN<CR>
+         --------
+
+        NOTE: #2 IF YOU ARE UPDATING YOUR KLAD PACK USING ALTERNATIVE #2
+        ----- OR #3 PLEASE REMOVE MAGTAPE FROM UNIT 0. THEN MOUNT
+              MAGTAPE #1 FROM THE FIELD UPDATE KIT ON MAGTAPE UNIT 0.
+              THEN CONTINUE ON FOLLOWING THESE INSTRUCTIONS.
+
+        NOTE: IF YOU ARE USING ALTERNATIVE #1 & HAVE NO DX10 ON SYSTEM.
+        ----- A MESSAGE MTA OFF-LINE WILL PRINT. TYPE "SET NOM MTA"<CR>
+              OR "SET NOM MTB" ETC. TO STOP MESSAGE FROM BEING PRINTED.
+
+61.     .RES<CR>
+         ------
+
+        NOTE: THIS WILL TELL YOU WHAT RESOURCES YOU HAVE ON THE SYSTEM
+        -----YOU CAN TELL WHAT TYPE OF MGT.YOU HAVE FROM THESE 2 NOTES.
+
+62.     .AS MTA0<CR>
+         ----------
+        MTA000 ASSIGNED
+
+63.     .SET DEN MTA0:1600<CR>
+         --------------------
+64.     .GET MTA0:FEFILE<CR>
+         ------------------
+        JOB SETUP
+
+                                                                        PAGE 26
+        NOTE: ONLY IF YOU GET A *** ?TRANSMISSION ERROR *** PRINTED OUT
+        -----                        ------------------
+              AFTER YOU DO STEP #64. YOU HAVE TO DO THE FOLLOWING,
+              OTHERWISE SKIP A. THROUGH G.
+                             -          -
+                A.-GET MTA0:BACKUP<CR>
+                   ------------------
+                    JOB SETUP
+
+                B.-ST<CR>
+                   -----
+                C.-/TA MTA0<CR>
+                    ----------
+                D.-/REW<CR>
+                    ------
+                E.-/SKIP 1<CR>
+                    ---------
+                F.-/CTRL C
+                        ---
+                G.-GET MTA0:FEFILE<CR>
+                   ------------------
+                    JOB SETUP
+
+        PLEASE CONTINUE ON WITH THE PROCEDURE.
+
+        NOTE: #3 IF YOU ARE UPDATING YOUR KLAD PACK USING ALTERNATIVE #2
+        ----- OR #3 REPEAT STEP 64. AGAIN, THEN CONTINUE ON.
+
+65.     .ST<CR>
+         -----
+66.     DISK UNIT NAME:RPA0<CR>
+                       -------
+        SIZE OF FILE IN BLOCKS (<CRLF> GIVES DEFAULT OF 2000)
+67.     <CR>
+        ----
+
+        [2008 DATA BLOCKS ALLOCATED TO FE.SYS]
+
+        NOTE: THIS STEP TAKES A FEW MINUTES.
+        -----
+        [FE.SYS AREA STARTS AT LOGICAL BLOCK 8441.]
+        [FRONT END FILE CREATED, HOM BLOCKS WRITTEN]
+
+68.     .GET MTA0:BACKUP<CR>
+         ------------------
+        JOB SETUP
+
+69.     .SAV BACKUP<CR>
+         -------------
+        BACKUP SAVED
+
+                                                                        PAGE 27
+70.     .RU BACKUP<CR>
+         ------------
+71.     /TA MTA0<CR>
+         ----------
+72.     /SKIP 1
+         ----------
+73.     /REST<CR>
+         -------
+        !1,4    KLAD
+        !1,7    KLAD
+        !2,5    KLAD
+        !5,11   KLAD
+        !6,6    KLAD
+        !6,10   KLAD
+        !35,1414   KLAD
+        !Done
+
+74.     /PRESS CTRL C
+                   ---
+75.     .DEAS MTA0:<CR>
+         -------------
+
+        NOTE: #4 IF YOU ARE UPDATING YOUR KLAD PACK USING ALTERNATIVE
+        ----- #2 OR #3. FOLLOW THESE INSTRUCTIONS. OTHERWISE GO TO
+              STEP #78. PAGE 28
+
+              R WLBOOT<CR>
+              -----------
+              TYPE "HELP" FOR HELP
+              SELECT UNITS?<CR>
+                           ----
+              EXIT
+              .
+              PRESS CTRL \
+                        ---
+              PAR>SHUT<CR>          ? DEPENDING ON THE TYPE OF SYSTEM YOU HAVE
+                  -------           ? YOU CAN GET A DIFFERENT PRINTOUT HERE.
+              DUMPING ON KLAD:CRASH.EXE[1,4]
+              BOOTS
+              KLAD:MON090 OR MON091<CR> DEPENDING ON WHAT MONITOR YOU ARE USING
+              -----------    ------
+              SYSCHK(N,Y):<CR>
+                          ----
+              1091      05-08-80
+              WHY RELOAD: OTHER CONTINUE KLAD BUILD<CR>
+                          ----------------------------
+              DATE:
+              TIME:
+              STARTUP OPTION: Q<CR>
+                              ----
+
+                                                                        PAGE 28
+              WHEN SYSTEM NOW READY TO RUN AND *
+              PRINTS OUT THEN PRESS CTRL C
+                                        ---
+              .K/F<CR>
+               ------
+              THEN CONTINUE ON WITH THIS PROCEDURE STARTING WITH STEP 76.
+
+76.     .R DAEMON<CR>
+         -----------
+        DETACHING
+
+77.     CTRL C
+            ---
+78.     .LOG 6,11<CR>
+         -----------
+        JOB 2 1091              CTY
+
+79.     PASSWORD:KL10<CR>
+                 -------
+80.     .R SETSRC<CR>
+         -----------
+81.     *C /LIB:[6,10]KLAD<CR>
+         --------------------
+82.     *T<CR>
+         ----
+        /LIB:[6,10] KLAD:, FENCE
+83.     *PRESS CTRL C
+                   ---
+84.     .AS KLAD DEV<CR>
+         --------------
+        KLAD ASSIGNED
+
+85.     .RU WHEEL<CR>
+         -----------
+        SETTING WHEEL CAPABILITY
+        JOB # 2 (MAINTENANCE )  SETTING WHEEL.
+
+86.     .RU KLAD10<CR>                          
+         ------------
+        DECSYSTEM10 RP04/RP06 KLAD PACK CREATION PROGRAM, VER 0.2
+        COMMAND                                                         
+
+87.     *P1011[6,10]@<CR>
+         ---------------
+        NOTE: THIS STEP TAKES ABOUT 30 MINUTES.
+        -----
+        NOTE: IF ILLEGAL MEMORY REFERENCE PRINTS OUT ON THE CTY, STOP WHAT YOU
+        ----- ARE DOING, FORMAT YOUR PACK AGAIN AND START FROM THE BEGINNING.
+        EXIT
+
+                                                                        PAGE 29
+88.     .RU WHEEL<CR>                           
+         -----------                                    
+        CLEARING WHEEL CAPABILITY                               
+        JOB # 2 (MAINTENANCE ) CLEARING WHEEL.
+
+NOTE: ONLY FOLLOW THE INSTRUCTIONS IN THIS NOTE IF YOU ARE UPDATING A RP04
+----- DISK PACK. GO BACK TO THE [1,2] AREA & DELETE ALL OF THE HARDWARE
+      SUPPORT & ISOLATION FILES I.E. (.A11 & .TIC FILES) YOU DO NOT NEED
+      FROM THE [6,10] AREA. SINCE YOU ALREADY MOVED THEM TO THE[6,11] AREA.
+
+NOTE: KILL THE JOB YOU ARE PRESENTLY LOGGED IN UNDER, AND LOGIN AGAIN UNDER
+----- [1,2] PASSWORD FAILSA AND CONTINUE ON WITH THE PROCEDURE.
+
+89.     .AS MTA0:<CR>
+         -----------
+        MTA000 ASSIGNED
+
+90.     .SET DENSITY MTA0:1600<CR>
+         ------------------------
+91.     .R BACKUP<CR>
+         -----------
+92.     /TA MTA0:<CR>
+         -----------
+93.     /SUP ALW<CR>
+         ----------
+94.     /REST<CR>
+         -------
+        !10,7   KLAD
+        KLAD:[10,7]FILE.EXT (BLOCK=###)
+        $BKPEOT REACHED EOT--MOUNT NEW TAPE THEN TYPE "GO"
+
+95.     /GO<CR>
+         -----
+        !10,7
+        10,701
+        10,70113
+        10,20
+        
+        Done
+
+                                                                        PAGE 30
+96.     /UNL<CR>
+         ------
+97.     /PRESS CTRL C
+                   ---
+98.     .K/F<CR>
+         ------
+        JOB 2 USER MAINTENANCE [6,11]
+        LOGGED -OFF CTY AT 14:42:27 ON 2-FEB-79
+
+99.     .PRESS CTRL \
+                   ---
+100.    PAR>AB<CR>                                      
+            -----
+        NOTE: ALWAYS WAIT UNTIL THE DECTAPE STOPS MOVING BEFORE GOING ON.
+        -----
+        PUT UP SWITCHES 0 AND 1 ON THE 11 FRONT-END AND DO A SWITCH/REG LOAD
+
+        RSX-20F VA14-45 12:11 18-NOV-81
+
+        [SY0: REDIRECTED TO DX0:]
+        [DX0: MOUNTED]
+        [DX1: MOUNTED]
+
+101.    PRESS CTRL \
+                  ---
+102.    PAR>AB<CR>
+            -----
+103.    PAR%SET CON MAI<CR>
+            --------------
+        CONSOLE MODE: MAINTENANCE
+
+104.    PAR%RES<CR>
+            ------
+105.    PAR#ST MIC<CR>
+            ---------
+106.    PAR%SET CON OP<CR>
+            -------------
+         CONSOLE MODE: OPERATOR
+
+        NOTE: IF DECTAPE UPDATE DO THE FOLLOWING: OTHERWISE SKIP A.-> D.
+        -----
+                A.-PAR%M MOU<CR>
+                       --------
+                B.-MOU>DT1:<CR>
+                       -------
+                MOU -- MOUNT COMPLETE
+
+                C.-MOU>PRESS CTRL Z
+                                 ---
+                D.-PRESS CTRL \
+                             ---
+                CONTINUE ON WITH STEP 107.
+
+                                                                        PAGE 31
+107.    PAR%M INI<CR>
+            --------
+108.    INI>DB0:<CR>
+            -------
+        NOTE: THE TERMINAL WILL ONLY CARRIAGE RETURN
+        -----
+109.    PRESS CTRL \
+                  ---
+110.    PAR%M MOU<CR>
+            --------
+111.    MOU>DB0:<CR>
+            -------
+        MOU -- MOUNT COMPLETE
+
+112.    MOU>PRESS CTRL Z<CR>
+                      -----
+113.    PRESS CTRL \
+                  ---
+114.    PAR%M UFD<CR>                                                   
+            --------
+115.    UFD>DB0:[5,5]<CR>
+            ------------
+
+        NOTE: THE TERMAINAL WILL ONLY CARRIAGE RETURN AS WITH INI.
+        -----
+116.    PRESS CTRL \
+                  ---
+117.    PAR%M PIP<CR>
+            --------
+
+        NOTE: IF DECTAPE UPDATE DO THE FOLLOWING: OTHERWISE SKIP
+        ----- A. -> H. & CONTINUE ON WITH STEP 118.
+
+        5 MIN.  A.-PIP>DB0:=DT0:F11ACP.TSK,PARSER.TSK,DT1:PIP.TSK<CR>
+                       ---------------------------------------------
+                B.-PIP>PRESS CTRL Z
+                                 ---
+                C.-    PRESS CTRL \
+                                 ---
+                D.-PAR%M RED<CR>
+                       --------
+                E.-RED>DB0:=SY0:<CR>
+                       ------------
+                F.-    PRESS CTRL \
+                                 ---
+                G.-PAR%M PIP<CR>
+                       --------
+        20 MIN. H.-PIP>DB0:=DT0:*.*,DT1:*.*<CR>
+                       -----------------------
+                   CONTINUE ON WITH STEP 119.
+
+                                                                        PAGE 32
+118.    PIP>DB0:=DX0:,DX1:<CR>
+            -----------------
+        THE CONTENTS OF THE SYSTEM FLOPPIES A & B ARE BEING PIPPED
+        TO THE FILES 11 AREA OF THE KLAD PACK. THIS PROCESS TAKES
+        ABOUT 5 TO 10 MINUTES. WHEN THE PIP PROMPT RETURNS CONTINUE ON.
+
+119.    PIP>DB0:/LI<CR>
+            ----------
+SECTION 1:
+                DIRECTORY DB0:[5,5]
+                18-NOV-81 13:03
+        F11ACP.TSK;1            77.     C       18-NOV-81
+        PARSER.TSK;1            71.     C       18-NOV-81
+        PIP.TSK;1               56.     C       18-NOV-81
+        KLDISC.TSK;1            5.      C       18-NOV-81
+        KLRING.TSK;1            6.      C       18-NOV-81
+        LOGXFR.TSK;1            10.     C       18-NOV-81
+        MIDNIT.TSK;1            4.      C       18-NOV-81
+        SETSPD.TSK;1            5.      C       18-NOV-81
+        TKTN.TSK;1              6.      C       18-NOV-81
+        KLI.TSK;1               73.     C       18-NOV-81
+        MOU.TSK;1               5.      C       18-NOV-81
+        UA.MCB;231              33.             18-NOV-81
+        UB.MCB;231              35.             18-NOV-81
+        BOOT.EXB;1              16.             18-NOV-81
+        BOOTM.EXB;1             54.             18-NOV-81
+        BF16N1.A11;1            1.              18-NOV-81
+        PARSER.CMD;1            10.             18-NOV-81
+        T20ACP.TSK;1            8.      C       18-NOV-81
+        BOO.TSK;1               19.     C       18-NOV-81
+        COP.TSK;1               8.      C       18-NOV-81
+        DMO.TSK;1               5.      C       18-NOV-81
+        INI.TSK;1               23.     C       18-NOV-81
+        RED.TSK;1               6.      C       18-NOV-81
+        SAV.TSK;1               23.     C       18-NOV-81
+        UFD.TSK;1               9.      C       18-NOV-81
+        ZAP.TSK;1               38.     C       18-NOV-81
+        RSX20F.SYS;1445         58.     C       18-NOV-81
+        RSX20F.MAP;1            150.            18-NOV-81
+
+                TOTAL OF 814. BLOCKS IN 28. FILES
+
+        NOTE: THE ABOVE LIST IS THE DIRECTORY OF THE FILES THAT WERE
+        ----- JUST PIPPED TO THE FRONT-END.
+
+        NOTE: IF KL.CFG PRINTS OUT IN THE ABOVE LIST DO THE FOLLOWING:
+        ----- IF NOT SKIP STEP 120.
+
+120.    PIP>DB0:KL.CFG;*/DE<CR>
+            ------------------
+
+                                                                        PAGE 33
+121.    PIP>PRESS CTRL Z<CR>
+                       ----
+122.    PRESS CTRL \
+                  ---
+
+        NOTE: IF DECTAPE UPDATE GO TO STEP 126. IF NOT CONTINUE ON.
+        -----
+123.    PAR%M RED<CR>
+            --------
+124.    RED>DB0:=SY0:<CR>
+            ------------
+
+        NOTE: THE TERMINAL WILL ONLY CARRIAGE RETURN
+        -----
+125.    PRESS CTRL \
+                  ---
+126.    PAR%M SAV<CR>
+            --------
+127.    SAV>SY0:/WB<CR>
+            ----------
+        [DB0: DISMOUNTED]
+        [DX0: DISMOUNTED]
+        [DX1: DISMOUNTED]
+
+        RSX-20F VA14-45 13:04 18-NOV-81
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+
+        NOTE: REMOVE FLOPPIES OR DECTAPES FROM DRIVES.
+        -----
+        NOTE: IF YOU HAVE A THIRD FLOPPY TO PUT ONTO THE FRONT-END OF THE
+        ----- KLAD-10 PACK PUT THE THIRD FLOPPY IN DX0: NOW, AND DO THE
+              FOLLOWING, OTHERWISE SKIP THESE STEPS- A. THROUGH N.
+
+                A.-PRESS CTRL \
+                             ---
+                B.-PAR>MCR MOU<CR>
+                       ----------
+                C.-MOU>DX0:<CR>
+                       -------
+                   MOU -- MOUNT COMPLETE
+
+                D.-MOU>PRESS CTRL Z
+                                 ---
+                E.-PRESS CTRL \
+                             ---
+                F.-PAR>MCR PIP<CR>
+                       ----------
+                G.-PIP>DB0:=DX0:<CR>
+                       ------------
+                H.-PIP>TT:=DB0:/LI<CR>
+                       --------------
+                THIS WILL GIVE YOU A DIRECTORY OF WHAT IS ON THE [5,5] AREA.
+
+                                                                        PAGE 34
+                I.-PIP>PRESS CTRL Z
+                                 ---
+                J.-PRESS CTRL \
+                             ---
+                K.-PAR>MCR DMO<CR>
+                       ----------
+                L.-DMO>DX0:<CR>
+                       -------
+                DMO -- DISMOUNT COMPLETE
+
+                M.-DMO>PRESS CTRL Z
+                                 ---
+                N.-PRESS CTRL \
+                             ---
+                PAR> CONTINUE ON WITH THE PROCEDURE
+
+SECTION 2:
+
+128.    DO A SW/REG LOAD WITH 0,1,2 & 7 SWITCHES UP ON THE 11 FRONT-END.
+
+        RSX-20F VA14-45 13:04 18-NOV-81
+
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+
+        KLI -- VERSION VA12-27 RUNNING
+        KLI -- ENTER DIALOG [NO,YES,EXIT,BOOT]?
+129.    KLI><CR>
+            ----
+        KLI -- KL10 S/N: 2500., MODEL B, 60 HERTZ
+        KLI -- KL10 HARDWARE ENVIRONMENT:
+                MOS MASTER OSCILLATOR
+                EXTENDED ADDRESSING
+                INTERNAL CHANNELS
+                CACHE
+
+        KLI -- MICROCODE VERSION 231 LOADED
+        KLI -- % NO FILE - ALL CACHE BEING CONFIGURED
+        KLI -- ALL CACHES ENABLED
+        KLI -- % NO FILE - ALL MEMORY BEING CONFIGURED
+
+        LOGICAL MEMORY CONFIGURATION.
+          ADDRESS  SIZE  INT  TYPE CONTROLLER
+         00000000  256K   4   MF20  10
+
+        KLI -- % NO FILE - LOADING BOOTSTRAP
+        KLI -- CONFIGURATION FILE WRITTEN
+        KLI -- BOOTSTRAP LOADED AND STARTED                             
+        BOOTS V1(4)
+
+        NOTE: IF YOU ARE DOING A 1091 UPDATE USE "MON091" BELOW.
+        ----- "   "   "    "   " 1090    "    "  "MON090"   "
+
+                                                                        PAGE 35
+
+130.    BTS>KLAD:MON0##<CR>
+            --------------
+131.    SYSCHK(N,Y):<CR>
+                    ----
+        1091            05-08-80
+
+132.    WHY RELOAD: OTHER INSTALL REST OF FE<CR>
+                    ---------------------------
+
+        NOTE: INSERT CURRENT DAY AND TIME
+        -----
+133.    DATE:3 11<CR>
+             -------
+        TIME:1330<CR>
+             -------
+
+        NOTE: IF YOU HAVE STARTED FROM THE BEGINNING OF THIS PROCEDURE
+        ----- I.E. UPDATING YOUR KLAD PACK GO TO STEP 147.
+
+134.    STARTUP OPTION: C<CR>
+                        ----
+        %LOGICAL UNIT 0 MISSING FROM ACTIVE SWAPPING LIST
+        %LOGICAL STRUCTURE # 0 MISSING FROM SYSTEM SEARCH LIST
+
+        TYPE STRUCTURE NAME TO CHANGE ITS PARAMETERS(CR IF NONE, ALL IF ALL)
+
+135.    <CR>
+        ----
+        TYPE PHYSICAL UNIT NAME TO CHANGE ITS PARAMETERS(CR IF NONE,ALL IF ALL)
+
+136.    <CR>
+        ----
+
+        DO YOU WANT TO CHANGE THE ACTIVE SWAPPING LIST?
+
+137.    Y<CR>
+        -----
+        FOR EACH CLASS TYPE PHYSICAL UNIT NAMES(EXTRA CR WHEN DONE)
+        CLASS 0
+
+138.    RPA0<CR>
+        -------
+        <CR>
+        ----
+        CLASS 1
+
+139.    <CR>
+        ----
+        DO YOU WANT TO CHANGE THE "SYS" SEARCH LIST?
+
+                                                                        PAGE 36
+
+140.    Y<CR>
+        -----
+        TYPE STR NAMES FOR "SYS" SEARCH LIST(EXTRA <CR> WHEN DONE)
+
+141.    KLAD<CR>
+        -------
+142.    <CR>
+        ----
+        DO YOU WANT TO CHANGE THE SYSTEM DUMP LIST?
+
+143.    <CR>
+        ----
+
+        HOME BLOCKS TO BE WRITTEN ON WHICH PHYSICAL UNITS (EXTRA <CR> WHEN THROU
+GH)
+        (<CR> IF NONE, ALL IF ALL ;"ALL" IS NORMAL CASE)
+
+144.    ALL<CR>
+        ------
+145.    <CR>
+        ----
+        HOME BLOCKS WRITTEN
+
+        %NO STRUCTURES IN SYSTEM DUMP LIST
+
+146.    STARTUP OPTION: Q<CR>
+                        -----
+        1091            05-08-80        CTY                     
+        .LOGIN 1,2
+        .R OPSER
+        [OPRPAF PROCESSING AUTO COMMAND FILE]
+        15:46:09(D)
+                .
+                DETACHING
+                .
+        15:46:13(QUA)
+                ..
+        15:46:15(QUA)
+                .
+        15:46:17(QUA\1)
+                .
+                .FROM JOB 3
+                .
+        15:46:21(MIC)
+                .
+                MIC VERSION - 6A(32)
+                DETACHING
+                .
+        15:46:23(0)
+                .                                       
+        ;;OPR: - SYSTEM NOW READY TO RUN
+        15:46:24(0)
+                .
+
+                                                                        PAGE 37
+
+147.    *PRESS CTRL C
+                   ---
+148.    .COP SYS:=KLAD:[35,1414]FEUIC.TXT<CR>
+         -----------------------------------
+149.    .R FE<CR>
+         -------
+150.    PRESS CTRL \
+                  ---
+151.    PAR>M MOU<CR>
+            --------
+152.    MOU>FE:<CR>
+            ------
+
+        MOU -- MOUNT COMPLETE
+
+153.    MOU>PRESS CTRL Z
+                      ---
+154.    PRESS CTRL \
+                  ---
+155.    PAR>M PIP<CR>
+            --------
+156.    PIP>DB0:=FE:[100,100]DBOOT.CMD,DBOOT.OBJ,DBOOT.MAP<CR>
+            -------------------------------------------------
+157.    PIP>DB0:=FE:[100,100]DBOOT.SYS/CONT,TKB.TSK/CONT,KLDCP.BIN<CR>
+            ---------------------------------------------------------
+158.    PIP>DB0:/LI<CR>                                         
+            ----------
+
+        DIRECTORY DB0:[5,5]
+        2-FEB-79 15:53
+
+        IF YOU HAVE JUST FINISHED MOVING THE FRONT-END ONTO YOUR PACK
+        YOU WILL HAVE THE SAME DIRECTORY THAT IS LISTED IN APPENDIX D: IN
+        SECTION 1: PAGE 32.
+
+        ALSO YOU HAVE JUST MOVED THE DBOOT, TKB, AND KLDCP FILES TO THE [5,5]
+        AREA. THEY SHOULD LOOK LIKE THE FOLLOWING. THE 6 FILES LISTED BELOW
+        SHOULD BE THE LAST 6 FILES IN THE ABOVE 2 DIRECTORIES.
+
+        NOTE: DATE LISTED BELOW DEPENDS ON CURRENT DATE.
+        -----
+
+        DBOOT.CMD;1     1.              02-APR-79
+        DBOOT.OBJ;1     6.              02-APR-79
+        DBOOT.MAP;1     2.              02-APR-79
+        DBOOT.SYS;1     8.      C       02-APR-79
+        TKB.TSK;1       119.    C       02-APR-79
+        KLDCP.BIN;1     51.             02-APR-79
+
+                                                                        PAGE 38
+
+159.    PIP>PRESS CTRL Z<CR>
+                      -----
+160.    PRESS CTRL C
+                  ---
+161.    PRESS CTRL C
+                  ---
+162.    .PRESS CTRL \
+                   ---
+163.    PAR>AB<CR>
+            -----
+164.    DO A SW/REG LOAD WITH 203 IN THE 11 FRONT-END SWITCHES
+
+        RSX-20F VA14-45 12:11 18-NOV-81
+
+        [SY0: REDIRECTED TO DB0:]
+        [DB0: MOUNTED]
+
+165.    PRESS CTRL \
+                  ---
+166.    PAR%M BOO<CR>
+            --------
+167.    BOO>DBOOT<CR>
+            --------
+
+        DECSYSTEM DIAGNOSTIC CONSOLE
+        VERSION 0.17
+        SWR = 000000    DTE # 0
+        CMD:
+        >.
+
+                                                                        PAGE 39
+APPENDIX E.     KLAD10 HELP FILE
+                ----------------
+
+;KLAD10.HLP     VER 0.3         15-JUN-79
+
+1.  KLAD10 DISK PACK CREATION PROCEDURES
+
+THE FOLLOWING ASSUMES THAT YOU HAVE ALREADY RESTORED THE [6,10]
+DIAGNOSTIC AREA ON THE KLAD PACK FROM THE DIAGNOSTIC DISTRIBUTION
+MAGTAPE.  IF NOT, DO STEP 2 FIRST. ALSO, IF YOUR PACK IS NOT "KLAD",
+SUBSTITUTE ITS NAME WHERE "KLAD" IS USED.
+
+.LOG 6,11                       ;LOGIN TO 6,11 AREA
+ --------
+ PASSWORD: KL10
+           ----
+.MOUNT KLAD                     ;MOUNT YOUR KLAD PACK
+ ----------
+.R SETSRC                       ;SETUP SEARCH LIST
+ --------
+*C /LIB:[6,10]KLAD              ;LIBRARY AREA FROM [6,10]
+ -----------------
+^C
+ -
+.ASSIGN KLAD: DEV               ;ASSIGN LOGICAL NAME "DEV" TO "KLAD"
+ ----------------
+.RUN WHEEL                      ;REQUIRES PRIVILIGES TO MAKE KLAD
+ ---------
+.RUN KLAD10                     ;RUN THE KLAD CREATION PROGRAM
+ ----------
+ COMMAND:
+*P1011[6,10]@                   ;OR APPROPRIATE COMMAND FILE
+ ------------
+.EXIT                           ;COMPLETED
+
+.RUN WHEEL                      ;RELEASE PRIVILIGES
+ ---------
+.REMOVE KLAD                    ;REMOVE KLAD PACK FROM SYSTEM
+ -----------
+.K/F                            ;LOGOUT
+ ---
+
+                                                                        PAGE 40
+2.  DIAGNOSTIC DISTRIBUTION MAGTAPE TO KLAD [6,10] RESTORE
+
+.LOG 6,10                       ;LOGIN TO 6,10 AREA
+ --------
+ PASSWORD: KL10
+           ----
+.MOUNT KLAD                     ;MOUNT YOUR KLAD PACK
+ ----------
+.R SETSRC                       ;SETUP SEARCH LIST
+ --------
+*C KLAD                         ;KLAD DISK ONLY
+ ------
+*^C
+ ---
+.ZERO KLAD:                     ;CLEAN OUT OLD FILES
+ ----------
+.AS MT?#:                       ;ASSIGN A MAGTAPE DRIVE
+ --------                       ;MOUNT THE DIAGNOSTIC MAGTAPE
+
+.REW MT?#:                      ;REWIND MAGTAPE
+ ---------
+.SET DENSITY MT?#:800 OR 1600 BPI
+ --------------------    ----
+.SET BLOCKSIZE MT?#:512 WORDS
+ ----------------------------
+.SKIP MT?#:1 FILE
+ ----------------
+.COPY MAGTAP.SAV=MT?#:          ;RETRIEVE MAGTAP PROGRAM
+ ---------------------
+.RUN MAGTAP                     ;RUN MAGTAP PROGRAM
+ ----------
+ DIAGNOSTIC DISTRIBUTION MAGTAPE CREATOR
+
+ MAGTAPE DEVICE - MT?#:
+                  -----
+ WHAT DENSITY - 800 OR 1600
+                ---    ----
+ COMMAND - GET                  ;RETRIEVE ALL PROGRAMS FROM MAGTAPE
+           ---
+ COMMAND - UNLOAD               ;UNLOAD MAGTAPE
+           ------
+.K/F                            ;LOGOUT, ALL DONE
+ ---
+
+                                                                        PAGE 41
+3.  KLAD10 COMMAND FORMATS:
+
+    A.  /SWITCH
+
+    B.  /SWITCH:VALUE
+
+    C.  FILENAME.EXT[PPN]/SWITCH:VALUE
+
+    D.  OUTPUT FILENAME.EXT[PPN]=INPUT FILENAME.EXT[PPN]/SWITCH:VALUE
+
+4.  SWITCHES:
+
+    A.  /DEV:DEVICE NAME
+
+        INDICATES ON WHAT DEVICE THE FRONT-END DIRECTORY STRUCTURE
+        WILL BE LOCATED.  DEVICE NAME MAY BE LOGICAL, PHYSICAL
+        OR A FILE STRUCTURE NAME.
+
+    B.  /CREATE:N
+
+        CREATE A NEW OR SUPERSEDE AN EXISTING FRONT-END
+        DIRECTORY WITH N DIRECTORY ENTRIES ALLOCATED.
+
+    C.  FILENAME.EXT/ALLOC:N
+
+        ALLOCATE A DIRECTORY ENTRY WITH N DATA BLOCKS FOR A DUMMY
+        FILE SPECIFIED BY FILENAME.  NO DATA IS TRANSFERRED.  N MUST
+        BE >0.
+
+    D.  FILENAME.EXT/DELETE
+
+        THE FRONT-END DIRECTORY IS SEARCHED FOR THE FILE SPECIFIED
+        BY THE FILENAME.  IF FOUND, THE FILE WILL BE DELETED FROM
+        THE FRONT-END DIRECTORY AND THE [6,11] DIRECTORY.
+        IF FILE IS NOT FOUND, THE USER WILL BE NOTIFIED.
+
+    E.  FILENAME.EXT[PPN]/BOOT
+
+        WRITE THE -11 BOOTSTRAP PROGRAM SPECIFIED BY THE FILENAME
+        TO THE HARDWARE BOOT AREA OF THE DISK.
+        FILE MUST BE "KLADBT.BIN".
+
+        :ROM406
+
+        IF THIS SWITCH VALUE IS APPENDED TO THE /BOOT SWITCH THE BOOT
+        WILL ALSO BE WRITTEN TO DISK CYLINDER 406 BLOCK 0 TO ALLOW FOR
+        THE OLD KL10 BM873 ROM.
+                                                                        PAGE 42
+    F.  FILENAME.EXT[PPN]/TO11
+
+        THE FRONT-END DIRECTORY MUST EXIST PRIOR TO THE USE
+        OF THIS SWITCH.
+
+        THE -10 DIRECTORY IS SEARCHED FOR THE FILE SPECIFIED BY THE
+        FILE NAME.  IF FOUND, THE FILE IS COPIED FROM THE -10 FILE
+        SYSTEM TO THE FRONT-END FILE SYSTEM.
+        DATA CONVERSION IS PERFORMED UNLESS THE FILE EXTENSION IS
+        ONE OF THOSE LISTED UNDER /BINARY SWITCH.
+
+        /ASCII AND /BINARY ARE THE ONLY SWITCHES WHICH MAY
+        BE USED WITH /TO11.
+
+    G.  OUTPUT FILENAME.EXT[PPN]=INPUT FILENAME.EXT/TO10
+
+        THE FRONT-END DIRECTORY IS SEARCHED FOR THE INPUT FILE
+        SPECIFIED.  IF FOUND, THE INPUT FILE IS COPIED TO THE -10 FILE
+        SYSTEM BY THE OUTPUT FILENAME.  DATA CONVERSION IS PERFORMED
+        UNLESS THE FILE EXTENSION IS LISTED UNDER /BINARY SWITCH.
+        OUTPUT MUST NOT BE TO THE [6,11] AREA.
+
+    H.  FILENAME.EXT[PPN]/REPLACE
+
+        REPLACE FILE IN -11 DIRECTORY WITH A NEW VERSION
+
+    I.  /ASCII
+
+        FORCE DATA CONVERSION FROM 7-BIT BYTES TO 8-BIT BYTES IF USED
+        WITH /TO11.  FORCE DATA CONVERSION FROM 8-BIT BYTES TO 7-BIT
+        BYTES IF USED WITH /TO10.  THIS SWITCH IS ASSUMED (I.E. DEFAULT)
+        UNLESS THE FILE EXTENSION IS ONE OF THOSE LISTED UNDER /BINARY.
+
+    J.  /BINARY
+
+        CANCEL DATA CONVERSION FOR INPUT FILES WHOSE FILE EXTENSION
+        IS NOT ONE OF:  .ABS, .BIN, .BIC, .CIL, .LBO, .LDA, .LDR, .LOD,
+        .MFD, .OBJ, .SAV, .SYM, .SYS, .UFD.  THIS SWITCH IS ASSUMED FOR
+        FILES WITH ABOVE FILE EXTENSIONS.
+
+    K.  /LIST
+
+        THIS SWITCH IS USED TO GET THE FRONT-END DIRECTORY LISTING.
+
+        :SUM
+
+        IF THIS SWITCH IS APPENDED TO THE /LIST SWITCH ONLY THE
+        DIRECTORY SUMMARY INFORMATION WILL BE PRINTED.
+
+
+a@Wê
