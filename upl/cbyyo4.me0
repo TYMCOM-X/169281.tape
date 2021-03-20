@@ -1,0 +1,1147 @@
+PROCEDURE WHITESTONE.REPORTING BEGIN
+  
+        %*******************************************************%
+        %                                                       %
+        %      PROGRAM OBJECTIVES -                             %
+        %                                                       %
+        %      RECEIVE INPUT FOR AND PRINT THE FOLLOWING        %
+        %      REPORTS FOR WHITESTONE CORP -                    %
+        %                                                       %
+        %        (1) SCHEDULE OF FEDERAL INCOME TAX             %
+        %            INFORMATION (SCEHDULE A)                   %
+        %                                                       %
+        %        (2) SCHEDULE OF FEDERAL INCOME TAX             %
+        %            INFORMATION (SCHEDULE B)                   %
+        %                                                       %
+        %        (3) STATEMENT OF ADVANCES AND EXPENDITURES     %
+        %                                                       %
+        %        (4) BUDGET FOR THE YEAR (PREPARED QUARTERLY)   %
+        %                                                       %
+        %                                                       %
+        %      INPUT FILES (DATA BASE) -                        %
+        %                                                       %
+        %      OWNER         PROGRAM     DIVISION.OF.INTEREST   %
+        %                                                       %
+        %                                                       %
+        %      OUTPUT FILE - PEPORT.FIL                         %
+        %                                                       %
+        %      LATEST REVISED DATE - DECEMBER 5, 1979           %
+        %                                                       %
+        %      BY MIKE VICK                                     %
+        %                                                       %
+        %*******************************************************%
+        
+        
+              %                                        %
+              %         FIELD DEFINITIONS              %
+              %                                        %
+              
+  FIELDS
+ 
+COL.1                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.2                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.3                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.4                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.5                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.6                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.7                    AS '(ZZZ,ZZZ,ZZZ)',
+COL.8                    AS '(ZZZ,ZZZ,ZZZ)',
+COLUMN.1                 AS '8-N',
+COLUMN.2                 AS '8-N',
+COLUMN.3                 AS '8-N',
+COLUMN.4                 AS '8-N',
+COLUMN.5                 AS '8-N',
+COLUMN.6                 AS '8-N',
+COLUMN.7                 AS '8-N',
+COLUMN.8                 AS '8-N',
+TEMP1.YEAR               AS 'N',
+TEMP2.YEAR               AS 'N',
+BSUM.1                   AS '(Z,ZZZ,ZZZ)',
+BSUM.2                   AS '(Z,ZZZ,ZZZ)',
+BSUM.3                   AS '(Z,ZZZ,ZZZ)',
+BSUM.4                   AS '(Z,ZZZ,ZZZ)',
+BSUM.5                   AS '(Z,ZZZ,ZZZ)',
+BSUM.6                   AS '(Z,ZZZ,ZZZ)',
+BSUM.7                   AS '(Z,ZZZ,ZZZ)',
+BSUM.8                   AS '(Z,ZZZ,ZZZ)',
+PROGRAM.NUMBER           AS '4C',
+REPORT.NUMBER            AS 'N' VERIFY REPORT.NUMBER EQ 1 OR 2 OR 3 OR 4,
+DATE.PREPARED            AS DATE 'MM/DD/YY',
+BUDGET.YEAR              AS '4N',
+PERIOD.END               AS DATE 'MM/DD/YY',
+COLUMN.TOT               AS '10-N',
+ANSWER                   AS '3C',
+X                        AS '8-N.NNNN',
+SUBTOTAL.SWITCH          AS 'N',
+TEMP.1                   AS '1-N.NNN',
+TEMP.2                   AS '1-N.NNN',
+TEMP.3                   AS '1-N.NNN',
+TEMP.4                   AS '1-N.NNN',
+TEMP.5                   AS '1-N.NNN',
+TEMP.6                   AS '1-N.NNN',
+TEMP.7                   AS '1-N.NNN',
+TEMP.8                   AS '1-N.NNN'
+
+
+        
+              %                                        %
+              %     TEMPORARY DATA BASE DEFINITION     %
+              %                                        %
+              
+              
+        RELATION RPT IS
+        
+           KEY  PROGRAM.YEAR,
+                PROGRAM.SEQUENCE,
+                PAYOUT.CODE
+        
+           DATA COLUMN.1,
+                COLUMN.2,
+                COLUMN.3,
+                COLUMN.4,
+                COLUMN.5,
+                COLUMN.6,
+                COLUMN.7,
+                COLUMN.8
+        
+        
+        RELATION OWNER.REPORT IS
+           KEY  OWNER.NUMBER,
+                PROGRAM.YEAR,
+                PROGRAM.SEQUENCE,
+                PAYOUT.CODE
+           
+           DATA PERCENT,
+                COL.1,
+                COL.2,
+                COL.3,
+                COL.4,
+                COL.5,
+                COL.6,
+                COL.7,
+                COL.8
+        
+        
+        
+        RELATION PROGRAM.REPORT IS
+        
+           KEY  PROGRAM.YEAR,
+                PROGRAM.SEQUENCE,
+                PAYOUT.CODE,
+                OWNER.NUMBER
+        
+           DATA PERCENT,
+                COL.1,
+                COL.2,
+                COL.3,
+                COL.4,
+                COL.5,
+                COL.6,
+                COL.7,
+                COL.8
+        
+              %                                        %
+              %          REPORT DECLARATIONS           %
+              %                                        %
+              
+REPORT PR1 APPEND TO 'REPORT.FIL-A'
+              
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 20
+        
+        
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %      IF PROGRAM.SEQUENCE EQ 1
+              THEN PRINT @TAB 60,PROGRAM.NAME,@CR
+              ELSE PRINT @TAB 50,PROGRAM.NAME,@CR
+        
+        
+%  2 %  IF PAYOUT.CODE EQ 'A'
+          THEN PRINT @TAB TO 56,'AFTER PROGRAM PAYOUT',@CR
+          ELSE
+            SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+              THEN PRINT @TAB TO 55,'BEFORE PROGRAM PAYOUT',@CR
+              ELSE PRINT @CR
+%  3 %  PRINT @CR,
+%  4 %  @TAB TO 45,'CO-OWNERS OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 47,'ADMINISTERED BY ',ADMINISTERED.BY,@CR,
+%  7 %  @CR,
+%  8 %  @TAB TO 39,'SCHEDULE OF FEDERAL INCOME TAX INFORMATION (SCHEDULE A)',@CR,
+%  9 %  @CR,
+% 10 %  @TAB TO 50,'FOR THE YEAR ENDED ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 11 %  @CR,
+% 12 %  @CR,
+% 13 %  @TAB TO 69,'TENTATIVE',@CR,
+% 14 %  @TAB TO 42,'NET TAXABLE   ALLOWABLE    ALLOWABLE   NET TAXABLE',@CR,
+% 15 %  @TAB TO 41,'INCOME (LOSS)  STATUTORY    STATUTORY  INCOME (LOSS)',@CR,
+% 16 %  @TAB TO 44,'BEFORE     DEPLETION ON  DEPLETION      AFTER',@CR,
+% 17 %  @TAB TO 32,'PERCENT  DEDUCTION FOR  QUALIFIED  ON OIL & NON- DEDUCTION OF',
+          '  NET GAIN (LOSS) ON SALE OF PROPERTY',@CR,
+% 18 %  @TAB TO 34,'OF       STATUTORY       GAS     QUALIFIED GAS  STATUTORY',
+        '   - - - - - - - - - - - - - - - - - - -',@CR,
+% 19 %  @TAB TO 11,'CO-OWNER',
+        @TAB TO 32,'INTEREST   DEPLETION    PRODUCTION   PRODUCTION   DEPLETION    ',
+        'SECT 1231    SECT 1245    SECT 1254',@CR,
+% 20 %   '------------------------------ --------  -----------  -----------',
+        '  -----------  -----------  -----------  -----------  -----------'
+        END % PAGE HEADING %
+        GROUP.HEADING ON PAYOUT.CODE PRINT PAGE.TOP
+        GROUP.FOOTING ON PAYOUT.CODE
+        BEGIN
+%LINE%  PRINT
+% NO %  
+%  1 %  @TAB TO 32,'--------  -----------  -----------  -----------  ',
+         '-----------  -----------  -----------  -----------',@CR,
+%  2 %  @TAB TO 32,SUM(PERCENT) AS '2ZN.NNNN','  $'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1)AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.6) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.6) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.7) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.7) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 32,'========  ===========  ===========  ===========',
+            '  ===========  ===========  ===========  ===========',@CR,
+%  4 %  @CR,
+%  5 %  @CR,
+%  6 %  @CR,
+%  7 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE',
+        ' NEAREST DOLLAR.',@CR,
+%  8 %  @CR,
+%  9 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+        'THIS SCHEDULE.'
+        END % GROUP FOOTING %
+        
+REPORT OR1 APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 20
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %  
+%  1 %  PRINT @TAB TO 52,OWNER.NAME,@CR,
+%  2 %  @CR,
+%  3 %  @CR,
+%  4 %  @TAB TO 46, 'CO-OWNER OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 31,'ADMINISTERED BY MR. GEORGE F. CLEMENTS, JR. OR WHITESTONE CORPORATION',@CR,
+%  7 %  @CR,
+%  8 %  @TAB TO 39,'SCHEDULE OF FEDERAL INCOME TAX INFORMATION (SCHEDULE A)',@CR,
+%  9 %  @CR,
+% 10 %  @TAB TO 50,'FOR THE YEAR ENDED ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 11 %  @CR,
+% 12 %  @CR,
+% 13 %  @TAB TO 69,'TENTATIVE',@CR,
+% 14 %  @TAB TO 42,'NET TAXABLE   ALLOWABLE    ALLOWABLE   NET TAXABLE',@CR,
+% 15 %  @TAB TO 41,'INCOME (LOSS)  STATUTORY    STATUTORY  INCOME (LOSS)',@CR,
+% 16 %  @TAB TO 44,'BEFORE     DEPLETION ON  DEPLETION      AFTER',@CR,
+% 17 %  @TAB TO 32,'PERCENT  DEDUCTION FOR  QUALIFIED  ON OIL & NON- DEDUCTION OF',
+          '  NET GAIN (LOSS) ON SALE OF PROPERTY',@CR,
+% 18 %  @TAB TO 34,'OF       STATUTORY       GAS     QUALIFIED GAS  STATUTORY',
+        '   - - - - - - - - - - - - - - - - - - -',@CR,
+% 19 %  @TAB TO 11,'PROGRAM',
+        @TAB TO 32,'INTEREST   DEPLETION    PRODUCTION   PRODUCTION   DEPLETION    ',
+        'SECT 1231    SECT 1245    SECT 1254',@CR,
+% 20 %  '------------------------------ --------  -----------  -----------',
+        '  -----------  -----------  -----------  -----------  -----------',@CR
+        END % PAGE HEADING %
+        GROUP.HEADING ON OWNER.NUMBER PRINT PAGE.TOP
+        GROUP.FOOTING ON OWNER.NUMBER
+        BEGIN
+%LINE%  PRINT
+% NO %  
+%  1 %  @TAB TO 42,          '-----------  -----------  -----------  ',
+        '-----------  -----------  -----------  -----------',@CR,
+%  2 %  @TAB TO 42,'$'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.6) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.6) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.7) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.7) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 32,'          ===========  ===========  ===========',
+            '  ===========  ===========  ===========  ===========',@CR,
+%  4 %  @CR,
+%  5 %  @CR,
+%  6 %  @CR,
+%  7 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE ',
+                   'NEAREST DOLLAR.',@CR,
+%  8 %  @CR,
+%  9 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+                   'THIS SCHEDULE.'
+        END % GROUP FOOTING %
+        
+REPORT PR2 APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 20
+        
+        
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %
+%  1 %  IF PROGRAM.SEQUENCE EQ 1
+          THEN PRINT @TAB 60,PROGRAM.NAME,@CR
+          ELSE PRINT @TAB 50,PROGRAM.NAME,@CR
+%  2 %  IF PAYOUT.CODE EQ 'A'
+          THEN PRINT @TAB TO 56,'AFTER PROGRAM PAYOUT',@CR
+          ELSE
+            SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+              THEN PRINT @TAB TO 55,'BEFORE PROGRAM PAYOUT',@CR
+              ELSE PRINT @CR
+%  3 %  PRINT @CR,
+%  4 %  @TAB TO 45,'CO-OWNERS OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 47,'ADMINISTERED BY ',ADMINISTERED.BY,@CR,
+%  7 %  @CR,
+%  8 %  @TAB TO 39,'SCHEDULE OF FEDERAL INCOME TAX INFORMATION (SCHEDULE B)',@CR,
+%  9 %  @CR,
+% 10 %  @TAB TO 50,'FOR THE YEAR ENDED ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 11 %  @CR,
+% 12 %  @CR,
+% 13 %  @TAB TO 57,'STATUTORY DEPLETION',@CR,
+% 14 %  @TAB TO 58,'WHICH CONSTITUTES      INTANGIBLE    QUALIFIED',@CR,
+% 15 %  @TAB TO 58,'A TAX PREFERENCE        DRILLING    INVESTMENT',@CR,
+% 16 %  @TAB TO 54,'- - - - - - - - - - - - -  COST WHICH       IN',
+        '      RESTORATION',@CR,
+% 17 %  @TAB TO 44,'PERCENT  ON QUALIFIED ON OIL & NON- CONSTITUTES    PROPERTY',
+        '      OF TAX',@CR,
+% 18 %  @TAB TO 46,'OF          GAS     QUALIFIED GAS    A TAX      (7+ YEAR',
+        '     INVESTMENT',@CR,
+% 19 %  @TAB TO 21,' CO-OWNER              INTEREST  PRODUCTION   ',
+        'PRODUCTION    PREFERENCE       LIFE)      CREDIT',@CR,
+% 20 %  @TAB TO 13,'------------------------------ --------  -----------  ',
+                   '-----------  -----------  -----------  -----------'
+        END % PAGE HEADING %
+        GROUP.HEADING ON PAYOUT.CODE
+        
+              PRINT PAGE.TOP
+        
+        GROUP.FOOTING ON PAYOUT.CODE
+        BEGIN
+%LINE%  PRINT
+% NO %
+%  1 %  @TAB TO 44,'--------  -----------  -----------  -----------  ',
+        '-----------  -----------',@CR,
+%  2 %  @TAB TO 44,SUM(PERCENT) AS '3Z.NNNN','  $'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 44,'========  ===========  ===========  ',
+                             '===========  ===========  ===========',@CR,@CR,@CR,@CR,
+%  4 %   @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE ',
+                   'NEAREST DOLLAR.',@CR,
+%  5 %  @CR,
+%  9 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+                   'THIS SCHEDULE.'
+        END %GROUP FOOTING%
+REPORT OR2 APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 20
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %
+%  1 %  PRINT @TAB TO 52,OWNER.NAME,@CR,
+%  2 %  @CR,
+%  3 %  @CR,
+%  4 %  @TAB TO 46,'CO-OWNER OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 31,'ADMINISTERED BY MR. GEORGE F. CLEMENTS, JR. OR WHITESTONE CORPORATION',@CR,
+%  7 %  @CR,
+%  8 %  @TAB TO 39,'SCHEDULE OF FEDERAL INCOME TAX INFORMATION (SCHEDULE B)',@CR,
+%  9 %  @CR,
+% 10 %  @TAB TO 50,'FOR THE YEAR ENDED ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 11 %  @CR,
+% 12 %  @CR,
+% 13 %  @TAB TO 57,'STATUTORY DEPLETION',@CR,
+% 14 %  @TAB TO 58,'WHICH CONSTITUTES      INTANGIBLE    QUALIFIED',@CR,
+% 15 %  @TAB TO 58,'A TAX PREFERENCE        DRILLING    INVESTMENT',@CR,
+% 16 %  @TAB TO 54,'- - - - - - - - - - - - -  COST WHICH       IN',
+        '      RESTORATION',@CR,
+% 17 %  @TAB TO 44,'PERCENT  ON QUALIFIED ON OIL & NON- CONSTITUTES    PROPERTY',
+        '      OF TAX',@CR,
+% 18 %  @TAB TO 46,'OF          GAS     QUALIFIED GAS    A TAX      (7+ YEAR',
+        '     INVESTMENT',@CR,
+% 19 %  @TAB TO 21,'PROGRAM                INTEREST  PRODUCTION    ',
+        'PRODUCTION   PREFERENCE       LIFE)      CREDIT',@CR,
+% 20 %  @TAB TO 13,'------------------------------ --------  -----------  ',
+                   '-----------  -----------  -----------  -----------',@CR
+        END % PAGE HEADING %
+        
+        GROUP.HEADING ON OWNER.NUMBER
+        
+              PRINT PAGE.TOP
+        
+        GROUP.FOOTING ON OWNER.NUMBER
+        BEGIN
+%LINE%  PRINT
+% NO %
+%  1 %  @TAB TO 44,'          -----------  -----------  -----------  ',
+        '-----------  -----------',@CR,
+%  2 %  @TAB TO 54,'$'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 44,'          ===========  ===========  ',
+                             '===========  ===========  ===========',@CR,@CR,@CR,@CR,
+%  4 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE ',
+                   'NEARELLAR.',@CR,
+%  5 %  @CR,
+%  9 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+                   'THIS SCHEDULE.'
+        END % GROUP FOOTING %
+        
+        
+REPORT PR3 APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 17
+        
+        
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %
+%  1 %  IF PROGRAM.SEQUENCE EQ 1
+          THEN PRINT @TAB 60,PROGRAM.NAME,@CR
+          ELSE PRINT @TAB 50,PROGRAM.NAME,@CR
+%  2 %  IF PAYOUT.CODE EQ 'A'
+          THEN PRINT @TAB TO 56,'AFTER PROGRAM PAYOUT',@CR
+          ELSE
+            SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+              THEN PRINT @TAB TO 55,'BEFORE PROGRAM PAYAOUT',@CR
+              ELSE PRINT @CR
+%  3 %  PRINT @CR,
+%  4 %  @TAB TO 45,'CO-OWNERS OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 47,'ADMINISTERED BY ',ADMINISTERED.BY,@CR,
+%  7 %  @CR,
+%  8 %  @TAB TO 47,'STATEMENT OF ADVANCES AND EXPENDITURES',@CR,
+%  9 %  @CR,
+% 10 %  @TAB TO 50,'FOR THE YEAR ENDED  ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 11 %  @CR,
+% 12  % @CR,
+% 13 %  @TAB TO 55,'BALANCE         ADD                DEDUCT',
+                   '           BALANCE',@CR,
+% 14 %  @TAB TO 44,'PERCENT       OF        CO-OWNERS   - - - - - - - - - - - -',
+                   '      OF',@CR,
+% 15 %  @TAB TO 46,'OF       ADVANCES        ',PERIOD.END AS DATE 'YYYY',
+        @TAB TO 86,'CO-OWNERS ',PERIOD.END AS DATE 'YYYY',
+        @TAB TO 107,'ADVANCES',@CR,
+% 16 %  @TAB TO 21,' CO-OWNER              ',
+        'INTEREST   ',PERIOD.END AS DATE 'MM/DD/',((((PERIOD.END AS DATE 'YY') AS '2C')
+              AS '2N')-1) AS '2N','     ADVANCES      REFUNDS   EXPENDITURES   ',
+        PERIOD.END AS DATE 'MM/DD/YY',@CR,
+% 17 %  @TAB TO 13,'------------------------------ --------  -----------  ',
+                   '-----------  -----------  -----------  -----------',@CR
+        END % PAGE HEADING %
+        
+        GROUP.HEADING ON PAYOUT.CODE
+        
+              PRINT PAGE.TOP
+        GROUP.FOOTING ON PAYOUT.CODE
+        BEGIN
+%LINE%  PRINT
+% NO %
+%  1 %  @TAB TO 44,'--------  -----------  -----------  -----------  ',
+        '-----------  -----------',@CR,
+%  2 %  @TAB TO 44,SUM(PERCENT) AS '3Z.NNNN','  $'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 44,'========  ===========  ===========  ',
+                             '===========  ===========  ===========',@CR,@CR,@CR,@CR,
+%  4 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE ',
+                   'NEAREST DOLLAR.',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+                   'THIS SCHEDULE.'
+        END % GROUP FOOTING %
+        
+        
+REPORT OR3 APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 18
+        
+        
+%LINE%  PAGE.HEADING BEGIN
+% NO %
+%  1 %  PRINT @TAB TO 52,OWNER.NAME,@TAB TO 106,'EXHIBIT I',@CR,
+%  2 %  @CR,
+%  3 %  @CR,
+%  4 %  @TAB TO 46,'CO-OWNER OF CERTAIN OIL & GAS PROPERTIES',@CR,
+%  5 %  @CR,
+%  6 %  @TAB TO 58,'ADMINISTERED BY ',@CR,
+% 7&8%  @TAB TO 39,'MR. GEORGE F. CLEMENTS, JR. OR WHITESTONE CORPORATION',@CR,@CR,
+%  9 %  @TAB TO 47,'STATEMENT OF ADVANCES AND EXPENDITURES',@CR,
+% 10 %  @CR,
+% 11 %  @TAB TO 50,'FOR THE YEAR ENDED ',PERIOD.END AS DATE 'MMM DD, YYYY',@CR,
+% 12 %  @CR,
+% 13 %  @CR,
+% 14 %  @TAB TO 55,'BALANCE         ADD                DEDUCT',
+                   '           BALANCE',@CR,
+% 15 %  @TAB TO 44,'PERCENT      OF         CO-OWNERS   - - - - - - - - - - - -',
+                   '      OF',@CR,
+% 16 %  @TAB TO 46,'OF       ADVANCES       ',PERIOD.END AS DATE 'YYYY',
+        @TAB TO 86,'CO-OWNERS ',PERIOD.END AS DATE 'YYYY',
+        @TAB TO 107,'ADVANCES',@CR,
+% 17 %  @TAB TO 21,' PROGRAM               ',
+        'INTEREST   ',PERIOD.END AS DATE 'MM/DD/',((((PERIOD.END AS DATE 'YY') AS '2C')
+              AS '2N')-1) AS '2N','     ADVANCES      REFUNDS   EXPENDITURES   ',
+        PERIOD.END AS DATE 'MM/DD/YY',@CR,
+% 18 %  @TAB TO 13,'------------------------------ --------  -----------  ',
+                   '-----------  -----------  -----------  -----------',@CR
+        END % PAGE HEADING %
+        GROUP.HEADING ON OWNER.NUMBER
+        
+              PRINT PAGE.TOP
+        
+        GROUP.FOOTING ON OWNER.NUMBER
+        BEGIN
+%LINE%  PRINT
+% NO %  
+%  1 %  @TAB TO 44,'          -----------  -----------  -----------  ',
+        '-----------  -----------',@CR,
+%  2 %  @TAB TO 54,'$'
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6,' $'
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)',' $'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 44,'          ===========  ===========  ',
+                             '===========  ===========  ===========',@CR,@CR,@CR,@CR,
+%  4 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE',
+                         ' NEAREST DOLLAR.',@CR,
+%  5 %  @CR,
+%  9 %  @TAB TO 34,'THE ACCOMPANYING NOTES ARE AN INTEGRAL PART OF ',
+                   'THIS SCHEDULE.'
+        END % GROUP FOOTING %
+        
+REPORT BUD APPEND TO 'REPORT.FIL-A'
+        
+        PAGE.SIZE 58
+        TOP.MARGIN 5
+        PAGE.TOP @FF
+        HEADING.SIZE 19
+        
+        
+        
+%LINE%  PAGE.HEADING PRINT
+% NO %
+%  1 %  @TAB TO 55,'GEORGE F. CLEMENTS, JR.',@CR,
+%  2 %  @CR,
+%  3 %  @TAB TO 55,'WHITESTONE CORPORATION',@CR,
+%  4 %  @CR,
+%  5 %  @TAB TO 54,'BUDGET FOR THE YEAR ',BUDGET.YEAR,@CR,
+%  6 %  @CR,
+%  7 %  @TAB TO 54,'PREPARED ON ',DATE.PREPARED AS DATE 'MMM DD, YYYY',@CR,
+%  8 %  @CR,
+%  9 %  @TAB TO 56,'FOR THE INTEREST OF',@CR,
+% 10 %  @CR,
+% 11 %  @TAB TO 52,OWNER.NAME,@CR,
+% 12 %  @CR,
+% 13 %  @CR,
+% 14 %  @TAB TO 61,'CASH RECEIPTS',@TAB TO 108,'DEPLETION INTANGIBLE',@CR,
+% 15 %  @TAB TO 52,'- - - - - - - - - - - - - - - -     NET',@TAB TO 99,
+        'NET       WHICH     DRILLING',@CR,
+% 16 %  @TAB TO 32,'PERCENT   ADVANCES   SALE OF      SALE OF',
+        @TAB TO 87,'CAPITAL   TAXABLE    IS A TAX   COSTS ON',@CR,
+% 17 %  @TAB TO 34,'OF       DURING    PROPERTY    OIL AND',
+        @TAB TO 88,'GAIN      INCOME   PREFERENCE PRODUCTIVE',@CR,
+% 18 %  @TAB TO 10,'PROGRAM',@TAB 15,'INTEREST   PERIOD   INTERESTS      GAS      ',
+        'TOTAL      (LOSS)     (LOSS)      ITEM      WELLS',@CR,
+% 19 %  '------------------------------ -------- ---------- ---------- ',
+        '---------- ---------- ---------- ---------- ---------- ---------- ',@CR
+        
+        
+        GROUP.HEADING ON OWNER.NUMBER
+        
+        PRINT PAGE.TOP
+        
+        
+        GROUP.FOOTING ON OWNER.NUMBER
+        BEGIN
+%LINE%  PRINT
+% NO %
+%  1 %  @TAB TO 41,'---------- ---------- ---------- ---------- ---------- ',
+                   '---------- ---------- ----------',@CR,
+%  2 %  @TAB TO 41
+        IF SUM(COL.1) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.1) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.2) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.2) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.3) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.3) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.4) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.4) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.5) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.5) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.6) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.6) AS '(Z,ZZZ,ZZZ)'
+        IF SUM(COL.7) EQ 0
+          THEN PRINT @TAB 4,'-',@TAB 6
+          ELSE PRINT SUM(COL.7) AS '(Z,ZZZ,ZZZ)'
+         IF SUM(COL.8) EQ 0
+          THEN PRINT @TAB 4,'-'
+          ELSE PRINT SUM(COL.8) AS '(Z,ZZZ,ZZZ)'
+%  3 %  PRINT @CR,@TAB TO 41,'========== ========== ========== ========== ========== ',
+                             '========== ========== ==========',@CR,
+%  4 %  @CR,
+%  5 %  @CR,
+%  6 %  @CR,
+%  7 %  @TAB TO 34,'NOTE:  AMOUNTS HAVE BEEN COMPUTER ROUNDED TO THE',
+        ' NEAREST DOLLAR.'
+        END % GROUP FOOTING %
+              %                                        %
+              %          PROCEDURE LOGIC               %
+              %                                        %
+              
+                                   % LOGIC FOR INTERACTIVE MODE %
+
+
+BEGIN
+
+LOOP:
+      BEGIN
+        TYPE @CR,'ENTER REPORT NUMBER: '
+        ACCEPT REPORT.NUMBER
+        IF REPORT.NUMBER EQ 1 OR 2 OR 3 OR 4
+          THEN FINISH LOOP
+          ELSE
+            BEGIN
+              TYPE @CR,'INVALID REPORT NUMBER'
+              REPEAT LOOP
+            END
+       END %LOOP%
+  IF REPORT.NUMBER EQ 4
+    THEN
+      BEGIN
+        TYPE @CR,'ENTER BUDGET YEAR (4 DIGITS): '
+        ACCEPT BUDGET.YEAR
+        TYPE @CR,'ENTER DATE PREPARED (MM/DD/YY): '
+        ACCEPT DATE.PREPARED
+      END
+    ELSE
+      BEGIN
+        TYPE @CR,'ENTER DATE OF YEAR END (MM/DD/YY): '
+        ACCEPT PERIOD.END
+      END
+  LOOP1: BEGIN
+           TYPE @CR,'ENTER PROGRAM NUMBER (YY,N,C): '
+           ACCEPT PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE
+           SELECT PROGRAM VIA KEY
+             THEN NOTHING
+             ELSE 
+               BEGIN
+                 TYPE @CR,'ERROR - INVALID PROGRAM NUMBER'
+                 REPEAT LOOP1
+               END
+   
+  LOOP2: BEGIN
+           TYPE @CR,'ENTER COLUMNS: '
+           IF REPORT.NUMBER EQ 1
+             THEN ACCEPT COLUMN.1, COLUMN.2,COLUMN.3,COLUMN.4,COLUMN.5,COLUMN.6,COLUMN.7
+             ELSE
+               IF REPORT.NUMBER EQ 4
+                 THEN ACCEPT COLUMN.1,COLUMN.2,COLUMN.3,COLUMN.4,COLUMN.5,COLUMN.6,COLUMN.7,COLUMN.8
+                 ELSE ACCEPT COLUMN.1,COLUMN.2,COLUMN.3,COLUMN.4,COLUMN.5
+           LET COLUMN.TOT = COLUMN.1+COLUMN.2+COLUMN.3+COLUMN.4
+                            +COLUMN.5+COLUMN.6+COLUMN.7+COLUMN.8
+           TYPE @CR,'COLUMNS TOTAL IS ',COLUMN.TOT,' - OK? '
+           LOOP3: BEGIN
+                   ACCEPT ANSWER
+                   IF ANSWER EQ 'Y' OR 'YES'
+                     THEN INSERT INTO RPT
+                     ELSE
+                       IF ANSWER EQ 'N' OR 'NO'
+                         THEN REPEAT LOOP2
+                         ELSE
+                           BEGIN
+                             TYPE @CR,'YES OR NO ONLY - COLUMN TOTAL OK? '
+                             REPEAT LOOP3
+                           END
+                   FINISH LOOP3
+                  END % LOOP3 %
+         END % LOOP2 %
+           
+           TYPE @CR,'HAS ALL DATA FOR REPORT BEEN ENTERED? '
+           LOOP4: BEGIN
+                    ACCEPT ANSWER
+                    IF ANSWER EQ 'N' OR 'NO'
+                      THEN REPEAT LOOP1
+                      ELSE
+                        IF ANSWER EQ 'Y' OR 'YES'
+                          THEN FINISH LOOP4
+                          ELSE
+                            BEGIN
+                              TYPE @CR,'YES OR NO ONLY - ALL DATA ENTERED?'
+                              REPEAT LOOP4
+                            END
+                    FINISH LOOP4
+                  END % LOOP4 %
+                FINISH LOOP1
+         END % LOOP1 %
+                                    % PROCESSING LOGIC %
+  
+  FOR EACH RPT
+%1% BEGIN
+      MOVE 0 TO TEMP.1,TEMP.2,TEMP.3,TEMP.4,TEMP.5,TEMP.6,TEMP.7,TEMP.8
+      FOR EACH DIVISION.OF.INTEREST VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE)
+        BEGIN
+          IF REPORT.NUMBER EQ 4 AND FIRST.YEAR.ADVANCE NE 0
+            THEN MOVE FIRST.YEAR.ADVANCE TO COL.1
+            ELSE
+              BEGIN
+                LET X = PERCENT/100.000000*COLUMN.1
+                LET COL.1 = TEMP.1+X
+                LET TEMP.1 = X-COL.1+TEMP.1
+              END
+          IF REPORT.NUMBER EQ 3 AND FIRST.YEAR.ADVANCE NE 0
+            THEN MOVE FIRST.YEAR.ADVANCE TO COL.2
+            ELSE
+              BEGIN
+                LET X = PERCENT/100.000000*COLUMN.2
+                LET COL.2 = TEMP.2+X
+                LET TEMP.2 = X-COL.2+TEMP.2
+              END
+          LET X = PERCENT/100.000000*COLUMN.3
+          LET COL.3 = TEMP.3+X
+          LET TEMP.3 = X-COL.3+TEMP.3
+          LET X = PERCENT/100.000000*COLUMN.4
+          LET COL.4 = TEMP.4+X
+          LET TEMP.4 = X-COL.4+TEMP.4
+          LET X = PERCENT/100.000000*COLUMN.5
+          LET COL.5 = TEMP.5+X
+          LET TEMP.5 = X-COL.5+TEMP.5
+          LET X = PERCENT/100.000000*COLUMN.6
+          LET COL.6 = TEMP.6+X
+          LET TEMP.6 = X-COL.6+TEMP.6
+          LET X = PERCENT/100.000000*COLUMN.7
+          LET COL.7 = TEMP.7+X
+          LET TEMP.7 = X-COL.7+TEMP.7
+          LET X = PERCENT/100.000000*COLUMN.8
+          LET COL.8 = TEMP.8+X
+          LET TEMP.8 = X-COL.8+TEMP.8
+          INSERT INTO OWNER.REPORT
+          INSERT INTO PROGRAM.REPORT
+        END
+%1%  END
+
+
+
+
+
+                                      % REPORT PRINTING LOGIC %
+
+IF REPORT.NUMBER EQ 1
+  THEN
+    BEGIN
+      FOR EACH PROGRAM.REPORT
+        WRITE REPORT PR1
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE ADMINISTERED.BY TO ADMINISTERED.BY OF WHITESTONE.REPORTING
+                    MOVE PROGRAM.NAME TO PROGRAM.NAME OF WHITESTONE.REPORTING
+                    PRINT TO PR1 OWNER.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.5
+                    IF COL.6 EQ 0
+                      THEN PRINT TO PR1 '      -      '
+                      ELSE PRINT TO PR1 COL.6
+                    IF COL.7 EQ 0
+                      THEN PRINT TO PR1  '      -      ',@CR
+                      ELSE PRINT TO PR1 COL.7,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+      FOR EACH OWNER.REPORT
+        WRITE REPORT OR1
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE OWNER.NAME TO OWNER.NAME OF WHITESTONE.REPORTING
+                    IF PAYOUT.CODE EQ 'A'
+                      THEN PRINT TO OR1 PROGRAM.NAME,@CR,'  AFTER PROGRAM PAYOUT        ',' ',PERCENT,' '
+                      ELSE
+                        SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+                          THEN PRINT TO OR1 PROGRAM.NAME,@CR,'  BEFORE PROGRAM PAYOUT       ',' ',PERCENT,' '
+                          ELSE PRINT TO OR1 PROGRAM.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.5
+                    IF COL.6 EQ 0
+                      THEN PRINT TO OR1 '      -      '
+                      ELSE PRINT TO OR1 COL.6
+                    IF COL.7 EQ 0
+                      THEN PRINT TO OR1 '      -      ',@CR
+                      ELSE PRINT TO OR1 COL.7,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+    END
+IF REPORT.NUMBER EQ 2
+  THEN
+    BEGIN
+      FOR EACH PROGRAM.REPORT
+        WRITE REPORT PR2
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE ADMINISTERED.BY TO ADMINISTERED.BY OF WHITESTONE.REPORTING
+                    MOVE PROGRAM.NAME TO PROGRAM.NAME OF WHITESTONE.REPORTING
+                    PRINT TO PR2 @TAB TO 13, OWNER.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO PR2 '      -      '
+                      ELSE PRINT TO PR2 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO PR2 '      -      '
+                      ELSE PRINT TO PR2 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO PR2 '      -      '
+                      ELSE PRINT TO PR2 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO PR2 '      -      '
+                      ELSE PRINT TO PR2 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO PR2 '      -      ',@CR
+                      ELSE PRINT TO PR2 COL.5,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+      FOR EACH OWNER.REPORT
+        WRITE REPORT OR2
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE OWNER.NAME TO OWNER.NAME OF WHITESTONE.REPORTING
+                    IF PAYOUT.CODE EQ 'A'
+                      THEN PRINT TO OR2 @TAB TO 13, PROGRAM.NAME,@CR,@TAB TO 13,'  AFTER PROGRAM PAYOUT        ',' ',PERCENT,' '
+                      ELSE
+                        SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+                         THEN PRINT TO OR2 @TAB TO 13, PROGRAM.NAME,@CR,@TAB TO 13,'  BEFORE PROGRAM PAYOUT       ',' ',PERCENT,' '
+                          ELSE PRINT TO OR2 @TAB TO 13, PROGRAM.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO OR2 '      -      '
+                      ELSE PRINT TO OR2 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO OR2 '      -      '
+                      ELSE PRINT TO OR2 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO OR2 '      -      '
+                      ELSE PRINT TO OR2 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO OR2 '      -      '
+                      ELSE PRINT TO OR2 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO OR2 '      -      ',@CR
+                      ELSE PRINT TO OR2 COL.5,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+    END
+IF REPORT.NUMBER EQ 3
+  THEN
+    BEGIN
+      FOR EACH PROGRAM.REPORT
+        WRITE REPORT PR3
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE ADMINISTERED.BY TO ADMINISTERED.BY OF WHITESTONE.REPORTING
+                    MOVE PROGRAM.NAME TO PROGRAM.NAME OF WHITESTONE.REPORTING
+                    PRINT TO PR3 @TAB TO 13,OWNER.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO PR3 '      -      '
+                      ELSE PRINT TO PR3 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO PR3 '      -      '
+                      ELSE PRINT TO PR3 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO PR3 '      -      '
+                      ELSE PRINT TO PR3 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO PR3 '      -      '
+                      ELSE PRINT TO PR3 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO PR3 '      -      ',@CR
+                      ELSE PRINT TO PR3 COL.5,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+      FOR EACH OWNER.REPORT
+        WRITE REPORT OR3
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE OWNER.NAME TO OWNER.NAME OF WHITESTONE.REPORTING
+                    IF PAYOUT.CODE EQ 'A'
+                      THEN PRINT TO OR3 @TAB TO 13, PROGRAM.NAME,@CR,@TAB TO 13,'  AFTER PROGRAM PAYOUT        ',' ',PERCENT,' '
+                      ELSE
+                        SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+                          THEN PRINT TO OR3 @TAB TO 13,PROGRAM.NAME,@CR,@TAB TO 13,'  BEFORE PROGRAM PAYOUT       ',' ',PERCENT,' '
+                          ELSE PRINT TO OR3 @TAB TO 13,PROGRAM.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO OR3 '      -      '
+                      ELSE PRINT TO OR3 COL.1
+                    IF COL.2 EQ 0
+                      THEN PRINT TO OR3 '      -      '
+                      ELSE PRINT TO OR3 COL.2
+                    IF COL.3 EQ 0
+                      THEN PRINT TO OR3 '      -      '
+                      ELSE PRINT TO OR3 COL.3
+                    IF COL.4 EQ 0
+                      THEN PRINT TO OR3 '      -      '
+                      ELSE PRINT TO OR3 COL.4
+                    IF COL.5 EQ 0
+                      THEN PRINT TO OR3 '      -      ',@CR
+                      ELSE PRINT TO OR3 COL.5,@CR
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+    END
+IF REPORT.NUMBER EQ 4
+  THEN
+    BEGIN
+      FOR EACH OWNER.REPORT
+        WRITE REPORT BUD
+         BEGIN
+          LET TEMP1.YEAR=PROGRAM.YEAR
+          IF TEMP1.YEAR EQ TEMP2.YEAR
+            THEN LET SUBTOTAL.SWITCH=0
+            ELSE
+              BEGIN
+                LET SUBTOTAL.SWITCH=1
+                LET TEMP2.YEAR=TEMP1.YEAR
+              END
+          SELECT OWNER VIA KEY
+            THEN
+              SELECT PROGRAM VIA KEY
+                THEN
+                  BEGIN
+                    MOVE OWNER.NAME TO OWNER.NAME OF WHITESTONE.REPORTING
+
+                    IF PROGRAM.YEAR EQ (BUDGET.YEAR-1900) AND SUBTOTAL.SWITCH EQ 1
+                      THEN
+                        BEGIN
+                          PRINT TO BUD @TAB TO 41,'---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------',@CR,
+                          '     SUBTOTAL FOR PRIOR YEARS',@TAB TO 41
+        IF BSUM.1 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.1 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.2 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.2 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.3 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.3 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.4 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.4 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.5 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.5 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.6 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.6 AS '(Z,ZZZ,ZZZ)'
+        IF BSUM.7 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@TAB 6
+          ELSE PRINT TO BUD BSUM.7 AS '(Z,ZZZ,ZZZ)'
+         IF BSUM.8 EQ 0
+          THEN PRINT TO BUD @TAB 4,'-',@CR,@CR
+          ELSE PRINT TO BUD BSUM.8 AS '(Z,ZZZ,ZZZ)',@CR,@CR
+                    END
+                    ELSE NOTHING
+                    IF PAYOUT.CODE EQ 'A'
+                      THEN PRINT TO BUD PROGRAM.NAME,@CR,'  AFTER PROGRAM PAYOUT        ',' ',PERCENT,' '
+                      ELSE
+                        SELECT PROGRAM VIA (PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE='A')
+                          THEN PRINT TO BUD PROGRAM.NAME,@CR,'  BEFORE PROGRAM PAYOUT       ',' ',PERCENT,' '
+                          ELSE PRINT TO BUD PROGRAM.NAME,' ',PERCENT,' '
+                    IF COL.1 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.1 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.2 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.2 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.3 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.3 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.4 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.4 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.5 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.5 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.6 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.6 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.7 EQ 0
+                      THEN PRINT TO BUD   '    -      '
+                      ELSE PRINT TO BUD COL.7 AS '(Z,ZZZ,ZZZ)'
+                    IF COL.8 EQ 0
+                      THEN PRINT TO BUD    '    -      ',@CR
+                      ELSE PRINT TO BUD COL.8 AS '(Z,ZZZ,ZZZ)',@CR
+               LET  BSUM.1=BSUM.1+COL.1
+               LET  BSUM.2=BSUM.2+COL.2
+               LET  BSUM.3=BSUM.3+COL.3
+               LET  BSUM.4=BSUM.4+COL.4
+               LET  BSUM.5=BSUM.5+COL.5
+               LET  BSUM.6=BSUM.6+COL.6
+               LET  BSUM.7=BSUM.7+COL.7
+               LET  BSUM.8=BSUM.8+COL.8
+                  END
+                ELSE ABORT @CR,'INVALID PROGRAM ',PROGRAM.YEAR,PROGRAM.SEQUENCE,PAYOUT.CODE,@CR
+            ELSE ABORT @CR,'INVALID OWNER ',OWNER.NUMBER,@CR
+        IF OWNER.NUMBER OF OWNER.REPORT CHANGING
+          THEN 
+            BEGIN
+              LET BSUM.1=0
+              LET BSUM.2=0
+              LET BSUM.3=0
+              LET BSUM.4=0
+              LET BSUM.5=0
+              LET BSUM.6=0
+              LET BSUM.7=0
+              LET BSUM.8=0
+            END
+          ELSE NOTHING
+      END
+    END
+  END % PROCEDURE LOGIC %
+END % WHITESTONE REPORTING %
+ N 
+¸
