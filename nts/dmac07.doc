@@ -1,0 +1,6002 @@
+                                                              September 4, 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                          MAC DIAGNOSTIC USER'S GUIDE
+
+
+                                  VERSION 7.6
+
+
+
+
+
+
+
+
+                                    TYMNET
+                        NETWORK TECHNOLOGY DEVELOPMENT
+                               September 4, 1990
+
+
+
+
+
+
+
+
+
+
+     ====================================================================
+     |       THIS DOCUMENT IS THE SOLE PROPERTY AND CONFIDENTIAL        |
+     |       INFORMATION OF TYMNET, INC., AND MAY  NOT BE COPIED        |
+     |       IN  WHOLE OR IN PART  OR  DISCLOSED  TO  ANY  THIRD        |
+     |       PARTY WITHOUT THE PRIOR WRITTEN CONSENT OF TYMNET.         |
+     ====================================================================
+
+
+
+   Copyright 1990 by Tymnet -- The McDonnell Douglas Network Systems Company
+
+
+
+
+
+
+                   Memory Access Controller Diagnostic User's Guide      DMAC07
+                                                              September 4, 1990
+
+
+
+
+
+
+
+                                   TABLE OF CONTENTS
+
+        Section                                                            Page
+
+
+
+        1.   OVERVIEW                                                         1
+
+
+        2.   APPLICABLE DOCUMENTS                                             4
+
+
+        3.   EQUIPMENT                                                        5
+
+
+        4.   CONFIGURATION CONSTRAINTS                                        6
+
+
+        5.   LOADING PROCEDURE                                                7
+          5.1   LOADING PROCEDURE FOR ENGINE FAMILY                           7
+          5.2   LOADING PROCEDURES FOR TSI CONTROLLER                         7
+
+
+        6.   OPERATING PROCEDURES                                             9
+          6.1   Default Tests with Engine Console and Terminal               10
+          6.2   Nondefault Tests with Engine Console and Terminal            14
+          6.3   Testing Procedure with Engine Console Only                   15
+          6.4   Testing Procedure with Terminal Only                         18
+          6.5   RESTARTING THE DIAGNOSTIC                                    19
+          6.6   CONSOLE DISPLAY                                              20
+          6.7   WATCHDOG TIMER                                               21
+
+
+        7.   COMMANDS                                                        22
+          7.1   OPERATING COMMANDS                                           24
+             7.1.1    ADDT  : Add tests and sections                         25
+             7.1.2    BOOT :  Load engine bootstrap                          25
+             7.1.3    BRKP  : Breakpoint                                     26
+             7.1.4    CKSM  : Diagnostic code checksum                       27
+             7.1.5    DELT  : Delete tests and sections                      27
+             7.1.6    <ESC> : Escape from current test                       28
+             7.1.7    EXA   : Examine memory                                 28
+             7.1.8    GO    : Execute from address                           28
+             7.1.9    LOOP  : Set loop count                                 29
+             7.1.10   MOD   : Modify memory                                  30
+             7.1.11   NOCK  : No diagnostic code checksum                    30
+             7.1.12   RUN   : Run test(s)                                    31
+
+
+                   Memory Access Controller Diagnostic User's Guide      DMAC07
+                                                              September 4, 1990
+
+
+          7.2   DISPLAY COMMANDS                                             32
+             7.2.1    DMEM  : Display memory map                             32
+             7.2.2    DOC   : Display user's guide source                    32
+             7.2.3    HELP  : Display list of commands                       32
+             7.2.4    NAME  : Display test names                             33
+             7.2.5    OPTN  : Display the diagnostic options                 33
+             7.2.6    STAT  : Last error message                             33
+
+          7.3   ERROR AND MESSAGE CONTROL COMMANDS                           34
+             7.3.1    BELL : Set bell ring on error                          34
+             7.3.2    ECON : Error control                                   35
+             7.3.3    MESG : Message control                                 38
+             7.3.4    NOBE : No bell ring on error                           39
+
+          7.4   EDITING COMMANDS                                             40
+             7.4.1    CONTROL-Q : Cancel command entry                       40
+             7.4.2    CONTROL-A : Delete single character                    40
+             7.4.3    CONTROL-W : Delete whole word                          40
+
+
+        8.   TEST DESCRIPTIONS                                               42
+          8.1   Test 1, Test is not currently implemented                    43
+          8.2   Test 2, Segmentation Register Test                           43
+             8.2.1    Section 1, Segmentation Register Data                  43
+             8.2.2    Section 2, Segmentation Register Addressing            44
+             8.2.3    Section 3, Walking Zeros and Ones                      45
+
+          8.3   Test 3, Relocation Test                                      46
+             8.3.1    Section 1, Relocation                                  46
+
+          8.4   Test 4, Protection Test                                      47
+             8.4.1    Section 1, Presence Bit Reset                          49
+             8.4.2    Section 2, Presence Bit Set                            49
+             8.4.3    Section 3, Execute Protection                          51
+             8.4.4    Section 4, Write Interrupt Function                    51
+             8.4.5    Section 5, Write Protection                            52
+             8.4.6    Section 6, Limit Protection                            52
+
+          8.5   Test 5, Multi-Megabyte Test                                  54
+             8.5.1    Section 1, Sequential Access                           57
+             8.5.2    Section 2, Bank Select                                 59
+
+          8.6   Test 6, Relocation Scope Loop Test                           61
+             8.6.1    Testing Procedure                                      62
+             8.6.2    Test 6 Command Descriptions                            63
+                8.6.2.1     BANK  : Memory bank select                       64
+                8.6.2.2     CLR   : CLEAR MEMORY CYCLE                       64
+                8.6.2.3     COND  : CONSOLE DISPLAY MODE                     65
+                8.6.2.4     DEF   : DEFAULT PARAMETER SELECT                 65
+                8.6.2.5     DISP  : Display Current Parameters               65
+                8.6.2.6     <ESC> : Abort Testing                            66
+                8.6.2.7     EXIT  : Exit from Test 6                         66
+                8.6.2.8     FTCH  : Instruction Fetch Memory Cycle           66
+
+                   Memory Access Controller Diagnostic User's Guide      DMAC07
+                                                              September 4, 1990
+
+
+                8.6.2.9     HELP  : Help Menu                                66
+                8.6.2.10    PATT  : Data Pattern Select                      67
+                8.6.2.11    PROT  : Protection Select                        67
+                8.6.2.12    RANG  : Memory Range Select                      68
+                8.6.2.13    READ  : Read-Data Memory Cycle                   68
+                8.6.2.14    REL   : Relocation Value Select                  68
+                8.6.2.15    RMWR  : Read-Modify-Write Memory Cycle           69
+                8.6.2.16    RUN   : Run Command                              69
+                8.6.2.17    SEG   : Segmentation Register Contents           69
+                8.6.2.18    SET   : Segmentation Register Set                70
+                8.6.2.19    WRIT  : Write-Data Memory Cycle                  70
+
+             8.6.3    Command Sequence Examples                              71
+
+
+        9.   ERROR DESCRIPTIONS                                              77
+          9.1   Unexpected System Errors                                     81
+          9.2   Test 2 Error Codes                                           82
+          9.3   Test 3 Error Codes                                           82
+          9.4   Test 4 Error Codes                                           83
+          9.5   Test 5 Error Codes                                           88
+          9.6   Test 6 Error Codes                                           88
+
+
+        10.  DATA PATTERNS                                                   89
+          10.1  Test 1 Data Pattern                                          89
+          10.2  Test 2 Data Patterns                                         89
+          10.3  Test 3 Data Patterns                                         90
+          10.4  Test 4 Data Patterns                                         91
+          10.5  Test 5 Data Patterns                                         91
+          10.6  Test 6 Data Patterns                                         93
+
+
+                                     APPENDICES
+                                     ==========
+
+
+        I.   COMMAND SUMMARY                                                 95
+
+
+        II.  TEST 6 COMMANDS SUMMARY                                         97
+
+
+        III. DEDICATED MEMORY ALLOCATION                                     99
+
+
+
+
+
+
+
+
+
+
+                   Memory Access Controller Diagnostic User's Guide      DMAC07
+        OVERVIEW                                              September 4, 1990
+
+
+
+
+
+
+                                     1 -  OVERVIEW
+
+
+             This  diagnostic  examines  the  operation  of  the  Memory Access
+        Controller (MAC) circuitry.  In an Engine, or Mini-Engine, it tests MAC
+        I, MAC  II, MAC  III and  MAC V boards;  in a  Micro-Engine, or  a HDLC
+        Micro-Engine, or a PXL Engine, it tests the MAC circuitry on the memory
+        board.  In  a  TSI  controller,  it  tests  the  gate  array  MAC.  The
+        diagnostic can be  used either to verify  the working condition  of the
+        hardware or to  troubleshoot apparent hardware problems.  The following
+        specific functions are checked:
+
+               o  All segmentation registers
+
+               o  Segmentation register select
+
+               o  Relocation and protection
+
+               o  Multi-megabyte access (MAC II only)
+
+             Functions that relate to DMA transfers are NOT tested.
+
+             Table 1-1 lists all tests performed by this diagnostic.  Each test
+        and/ or test section can be selected and run individually. Tests  2, 3,
+        and  4  comprise the  default  test group,  which  performs  a complete
+        verification of either a MAC I,  II, III, V, TSI MAC or  a Micro-Engine
+        (HDLC  Micro-Engine)  without operator  intervention.  Test  5 verifies
+        multi-megabyte access for  the MAC II board  if the machine  under test
+        has more than  1 megabyte of memory  installed. Test 6 is  a relocation
+        scope  loop test;  it has  its own  set of  commands.  (Test  1  is not
+        currently implemented.)
+
+             The recommended  operating procedure requires  the use of  both an
+        Engine display console and a terminal.  If a terminal is not used, only
+        the default tests can be performed, and error codes are  not displayed.
+        If  a terminal  is  used alone,  without a  display  console, operating
+        flexibility is severely limited.
+
+             Throughout the document the term "virtual memory  location" refers
+        to a memory address before  relocation by the MAC. The  term "relocated
+        address"  refers to  an actual  physical address  in memory.   The term
+        "initial  state" refers  to conditions  in effect  when the  program is
+        first started after loading or restarted from the Engine  console.  The
+        term "default  action" refers  to the effect  produced by  not entering
+        optional parameters.
+
+
+             To run the MAC Diagnostic on the TSI ccontroller, please  refer to
+        the documents listed in Section 2.
+
+        1          Memory Access Controller Diagnostic User's Guide      DMAC07
+        OVERVIEW                                              September 4, 1990
+
+
+             This  diagnostic  does  not require  that  the  watchdog  timer be
+        disabled.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        2          Memory Access Controller Diagnostic User's Guide      DMAC07
+        OVERVIEW                                              September 4, 1990
+
+
+                       Table 1-1.  Individual Diagnostic Tests
+
+                Test #               Test Name
+
+                   1        Not currently implemented
+
+                   2        Segmentation Register Test
+
+                            Section 1 - Segmentation Register Data
+                            Section 2 - Segmentation Register Addressing
+                            Section 3 - Walking Zeros and Ones
+
+                   3        Relocation Test
+
+                   4        Protection Test
+
+                            Section 1 - Presence Bit Reset
+                            Section 2 - Presence Bit Set
+                            Section 3 - Execute Protection
+                            Section 4 - Write Interrupt Function
+                            Section 5 - Write Protection
+                            Section 6 - Limit Protection
+
+                   5        Multi-Megabyte Test
+
+                            Section 1 - Sequential Access
+                            Section 2 - Bank Select
+
+                   6        Relocation Scope Loop Test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        3          Memory Access Controller Diagnostic User's Guide      DMAC07
+        APPLICABLE DOCUMENTS                                  September 4, 1990
+
+
+
+
+
+
+                               2 -  APPLICABLE DOCUMENTS
+
+
+             The user may  find it useful to  refer to the  following documents
+        when running this diagnostic.
+
+                o  Diagnostics User's Guide - Introduction
+
+                o  TYMNET Engine Maintenance - Functional Description,
+                                               MAC Board
+
+                o  TSI Console Users Guide
+
+                o  TSI Engine Debugger Command Description
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        4          Memory Access Controller Diagnostic User's Guide      DMAC07
+        EQUIPMENT                                             September 4, 1990
+
+
+
+
+
+
+                                    3 -  EQUIPMENT
+
+
+             The MAC Diagnostic requires the following equipment:
+
+           o  Either an  Engine display console  or a terminal  for controlling
+              the diagnostic.  (A hard-copy terminal is recommended.) In  a TSI
+              Controller,  a virtual  console is  installed and  a  terminal is
+              required.
+
+           o  128K bytes of memory (minimum).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        5          Memory Access Controller Diagnostic User's Guide      DMAC07
+        CONFIGURATION CONSTRAINTS                             September 4, 1990
+
+
+
+
+
+
+                            4 -  CONFIGURATION CONSTRAINTS
+
+
+        Except for the MAC circuitry under test, the hardware must be  in known
+        working order.  If there is  any doubt regarding  the condition  of the
+        hardware, run the CPU and Memory Diagnostics first.
+
+        If a terminal is used,  it must be connected to the  terminal interface
+        port on the multifunction board of an Engine or Mini-Engine, or  to the
+        multifunction  port (labeled  MULTIFN) on  the rear  panel of  a Micro-
+        Engine  (HDLC Micro-Engine).   The  setting of  the  baud-rate selector
+        switch for the terminal interface must correspond to the  terminal baud
+        rate.
+
+
+                              CAUTIONS
+
+             The minimum amount of memory required to run this
+             diagnostic is 128K bytes.
+
+             The terminal Baud Rate should be set to 1200 BAUD or less
+             because there have been terminal overruns when a higher BAUD
+             terminal with auxiliary printer has been used with the
+             terminal enabled.
+             For a TSI controller, set the terminal Baud Rate to 4800 and DO
+             NOT use the auxiliary printer.
+
+
+        The Multi-Megabyte Test, Test 5, requires that the system configuration
+        include  a  MAC II  board  and some  amount  of memory  greater  than 1
+        megabyte.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        6          Memory Access Controller Diagnostic User's Guide      DMAC07
+        LOADING PROCEDURE                                     September 4, 1990
+
+
+
+
+
+
+                                5 -  LOADING PROCEDURE
+
+
+
+
+
+
+
+                       5.1  LOADING PROCEDURE FOR ENGINE FAMILY
+
+
+        The  MAC Diagnostic  can be  loaded  by any  one of  the  four standard
+        loading procedures described in Diagnostics Introduction.
+
+
+                                     NOTE
+
+             Only a synchronous load (LOADII, BITS or ELF) will automatically
+             start the diagnostic at memory location A00.
+             fore, when testing a Mini-Engine or a Micro-Engine
+             without a console, use only a synchronous load.
+             See Section 6.4, Testing Procedure with Terminal Only.
+
+
+
+
+
+
+                      5.2  LOADING PROCEDURES FOR TSI CONTROLLER
+
+
+
+        The TSI controller virtual  console has a Monitor and  three processes,
+        they are  IOCbug, ENGbug, and  TTY I/O. The  ENGbug displays  the front
+        console output display.
+
+
+        Loading procedures for TSI Controller :
+
+        1. User Action : power up the system
+
+           System Response : TSI Engine Debugger   ver x.x  mm/dd/yy
+
+                             ENGbug>
+
+        2. User Action : type "boot"   ( " is not part of the command )
+
+           System Response : xxxxxxxxx>
+                             (Where x ia a hex digit. Emulated front console
+
+        7          Memory Access Controller Diagnostic User's Guide      DMAC07
+        LOADING PROCEDURE                                     September 4, 1990
+
+
+                             start blinking, system is in boot)
+
+        3. User Action : load the diagnostic (see section 4.1 for details)
+
+           System Response : start loading,
+                             when the diagnostic is loaded, the status display
+                             200000000> will alternate with the error display
+                             000000000>
+
+        4. User Action : type "Control n"
+
+           System Response : displays diagnostic program banner
+                             and system configuration messages.
+                             (see Section 5.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        8          Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+
+
+
+
+                               6 -  OPERATING PROCEDURES
+
+
+        The MAC Diagnostic can be run using any one of the  following equipment
+        options:
+
+           o  Engine display console and terminal (recommended)
+
+           o  Engine display console only
+
+           o  Terminal only
+
+        If an Engine display console is used alone, only the default  tests can
+        be run.  If  a terminal is  used alone, the  program must be  loaded by
+        either LOADII, BITS  or ELF. If  a Micro-Engine (HDLC  Micro-Engine) is
+        tested using  only a  terminal, the program  cannot be  restarted after
+        halting on an error.
+
+
+        A  separate  portion  of  the  program  called  the  Diagnostic Monitor
+        controls how the program executes. The monitor allows the user to enter
+        commands on a terminal change command parameters, and  run individually
+        selected tests or  test sections. After a  command, test, or  series of
+        tests is executed, the  monitor displays the diagnostic prompt  (*) and
+        is ready to accept further commands.
+
+
+        While  the diagnostic  is running,  the console  display  should change
+        continually between the status and error display every two  seconds. If
+        it  does  not, the  Diagnostic  has halted.  See  Section  6.6, Console
+        Display.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        9          Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                  6.1  Default Tests with Engine Console and Terminal
+
+
+        The recommended  testing procedure requires  an Engine  display console
+        and  a terminal  that is  connected to  the terminal  interface  of the
+        machine under test.  The  procedure described in this  section executes
+        the default test group, with all commands set to their  default values.
+        Each of the following tests is executed once in numerical order.
+
+             Test #                 Test Name
+
+                2         Segmentation Register Test (all sections)
+
+                3         Relocation Test
+
+                4         Protection Test (all sections)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        10         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+        Before running the program, perform the following preliminary steps:
+
+           1. Connect a terminal to the terminal interface of the machine under
+              test.  Set  the baud-rate  selector switch  (SWT-9 on  the Engine
+              multifunction board or S-2 on the Micro-Engine I/O board  or s-10
+              or s-11 on the HDLC Micro-Engine I/O board) to correspond  to the
+              terminal baud rate.
+
+           2. Load the diagnostic by  one of the standard methods  described in
+              Diagnostics Introduction.
+
+           3. Start the diagnostic by pressing the following keys on the Engine
+              console:
+
+                 DTA, A, 0, 0, ADR, RUN
+
+           If a downline load was performed using LOADII or BITS, the
+           diagnostic will initialize itself automatically after loading,
+           and step 3 can be ignored.
+
+        When the diagnostic program  initializes, it checks several  aspects of
+        the machine  under test.  It  then displays a  message on  the terminal
+        consisting of the diagnostic title, Engine type determined, type of MAC
+        board found,  device address  of available  SIO board(s),  addresses of
+        available memory, and the diagnostic prompt (*).  The  prompt indicates
+        that the diagnostic monitor is ready to accept commands.
+
+        Example:
+
+             MEMORY ACCESS CONTROLLER DIAGNOSTIC - VERSION 7.6 (07-15-90)
+
+             SYSTEM TYPE FOUND = NORMAL ENGINE
+
+             MAC III FOUND
+
+             SIO BOARD X'80' FOUND
+
+             MEMORY FOUND
+             000000 - 0FFFFF
+
+             BLOCK NUMBER     MEMORY ADDRESS      MEMORY TYPE
+              00 -  0F        000000 -  0FFFFE    MAC 3
+
+             *
+
+                                  NOTE
+
+        Most of the Engine and HDLC Micro-Engines have the SIO board X'80'.
+        Some of the Engines have SIO boards X'81', X'82' and X'83'. The regular
+        Micro-Engine does not have the SIO board. The TSI Controller has a
+        emulated SIO board X'80'.
+
+
+
+        11         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+        To run the default tests, enter this command on the terminal:
+
+             RUN<CR>
+
+        The monitor then executes the default tests in numerical  order.  While
+        the program is  running, the test  number, section number,  and end-of-
+        test messages (including error  counts) are displayed on  the terminal.
+        When all  default tests  have been  completed, a  pass count  and error
+        count are displayed, followed by the diagnostic prompt (*).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        12         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+        To execute multiple iterations of the default tests, enter the Set Loop
+        Count command (LOOP n) before entering the RUN command.
+
+
+        To  execute the  default tests  with breakpoints,  see  Section 7.1.3.,
+        Breakpoint.
+
+
+
+        Total Execution Time for Default Tests (One Pass)
+
+
+        MAC I, Micro-Engine or HDLC Micro-Engine MAC:  35 seconds (1 MB system)
+
+
+        MAC II :  6 minutes 54 seconds (1 MB system)
+
+
+        MAC III : 3 minutes 14 seconds
+
+
+        MAC V : 1 minutes 50 seconds (2 MB system)
+
+
+        TSI MAC : 2 minutes 19 seconds
+
+
+        (Execution times vary depending on the amount of system memory)
+
+
+                                        NOTE
+
+
+             The monitor checks three  hardware items to determine  what system
+             type the program is running on:  the type of MAC, the  presence of
+             SIO X'80' and the number of synchronous lines.  Five  system types
+             are distinguished:  NORMAL ENGINE  (a full-size Engine or  a Mini-
+             Engine),  MICRO  ENGINE,  HDLC  Micro-Engine,  TSI  controller and
+             UNKNOWN.   If   a  hardware   malfunction   produces  incompatible
+             indications  that  result  in  the  message  SYSTEM  TYPE  FOUND =
+             UNKNOWN, CHECK  HARDWARE!!! displayed on  the terminal  and system
+             error code F1  displayed on the front  panel and the  program will
+             halt.
+
+
+
+
+
+
+
+
+
+
+
+        13         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                6.2  Nondefault Tests with Engine Console and Terminal
+
+
+        The procedure  for selecting and  running individual test  sections, or
+        tests  other than  the  default test  group, involves  entering  on the
+        terminal the Delete Tests command (DELT), the Add Tests command (ADDT),
+        and the  RUN command.  The  default tests remain  in effect  unless the
+        DELT or ADDT command is used to select other tests.
+
+        For example, if only Sections 1 and 2 of Test 5 are to be run,  and the
+        default tests are in effect, the procedure is as follows:
+
+          1. At the prompt, enter:
+
+     EE PAGES =       #B  #B   Ü   ç   ,~   ,~   cD   : x  ,~   
+THERE ARE NO MULTIPLY USED PAGES (BELONG TO MORE THAN ONE FILE).
+  
+THE FOLLOWING PAGES ARE MULTIPLY USED (BELONG TO MORE THAN ONE FILE):
+  
+TOTAL NUMBER OF MULTIPLY USED PAGES =         !   #…      #E   +‘   Ø   Æ   ±   ∞   è   Ä   Ä            Ä   Q>lP g   GJ: k   k   gg  gg  g0  6@ p+  +
+'   ,~   6@ p+  *
+"  ,~   (P  é    Q    	`  û
+'   ,~   \"x	b  ê "   J  Äab Já,~      +U   , &+  À   +[+  ∞   +^+  ∞   +d+  ∞   +h+  ∞   +k+  ∞   +p+  ∞   +u+  ∞   +˚, &  *ï    < ¿ \ #t, ü "   B  Ö   #À, &   +m+  ∞6@  , “P  Ö,~      +˛+  ∞   ,Ç+  ∞3b –+  G" ˇ B –abˇ	b  Ñ,~   +  \"x	b  ê "   `B  + x     ,ë, &	`     Z, &, 8	`  , 87@ p	`  [  (	b  Ñ+      ,6@ P+  U!"  	b  û+      ,î	b  ê  , B s@@ Û  ,ï*" u!">π B Ú " ÚQ"  Ä	b  é+ Ÿ
+DO NOT ATTEMPT TO BRING SYSTEM UP FOR USERS        ,+  ∞   ,ò+  ∞,>  Ä ˇ" ,õ B #J2b Ò B Ò,^  Ä,~   ,>  ,>  Ä  #J3$ ò+  èO@ # [ Ä1DYR+  ë7B Å+  Ó 0  , #t, ∆ x  6B , ∆ 0  î, #t x     , ∆ x  R Ä6@  Ä, ¬, ∆ x  7@ +  ¯ 0  ≠, #t[ ,  , ¡Z ,   0  Æ, #t7,ˇ+  ˝   ,, =, ,,     ,ù, =, ,û,  , ø, ø[ x  6@   , =, ≈7@ @+  è   ,, =,>  4 , , Ñ,^    ‚, ∆   ,ù, =, ,†,     ,!, =Z @,     ,", =[ A,  , ¡Z A,     ,#, =  ¿, ∆, ≈@@ @,^  Ä,^  ,~   6L 3L *%7    +  È 0  ≠, #t[  ,  , ¡Z  ,   0  Æ, #t+  p     7 ,$ 0   .  +  ú7 ,$ 0   .   N #C<b !3,  É, #t$ #C+  7 ,§ .   N #C& #CQNx  6@  , ![x  .0  + #t, ,%,  0 ,•4P ß.0   , #t 0  , #t, ,&,   0  î, #t, ,¶4L è 0  ñ, #t+   , E!"}Q   ÄX   Ñ	`  ê      @l*b .   l, =, ≈  #«, ∆   *û, =  Ô », ∆   ,', =, ‘+  E   ,©, &  *ï " ¿ B #t, ‘, E, √   #À+  &Q A`   4P è, #t+  Ω 0  + #t 0  + #t 0  + #t 0  + #t 0   + #t, ≈, ≈-  =
+        )@      .0  , #t5B ∆,~   ,>    *ï P #Û 0 M P #t,^  P #Û0P  ,~   ,>   !  J!@ #t@ #Û   #À, &,^   ,~   ?` í|   P ,~      ,´  ,≠	d  êO   4$ j  ,.	f  ê &     ,Æ *  	jÈ *   ,>  Ç,>     Å&$    Å&(  &$  ^*7 ,$ 0  , #t "   ( , ô8j _, ø, ø,^  &$  è , Ä "  , ô&$    p (   , = ,V, ü,^     ,/6@  , =   ,Ø, =  ,1	d  ê $   &$    , ü-  = MINUTES     ,±   ,≤   ,≥   ,¥   ,µ   ,∂   ,∑   ,∏   ,π   ,∫   ,ª   ,º "    : ,Ω+  ˘   ,@+  ˘   ,E : * <  ! Dp £ Dpá û DpS     *ï $ ¿ D #tO   X"p                              September 4, 1990
+
+
+              least-significant  digits  are  displayed,  two  digits  for  the
+              pass count  and two  digits for the       error count.   When the
+              maximum value  has been reached  for      either count,  the next
+              event resets that count to zero,      and the count starts over.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        16         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                    Figure 6-1.  Engine Console Digital Display
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        17         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                       6.4  Testing Procedure with Terminal Only
+
+
+        Running the MAC Diagnostic on  a Mini-Engine or a Micro-Engine  using a
+        terminal alone (that is,  without an Engine console) has  the following
+        disadvantage:
+
+
+           o  There  is no  indication as  to whether  the diagnostic  is still
+              running (Normally displayed of the front console).
+
+
+        The  procedure for  loading  and running  the diagnostic  using  only a
+        terminal is essentially  the same as when  both a console  and terminal
+        are used, exept for the following:
+
+          o  When the machine under test is booted, there is no indication that
+             the  bootstrap  program is  running,  other than  the  report from
+             LOADII, BITS or ELF that the object code is loading.
+
+          o  Only a synchronous  load (LOADII, BITS or ELF)  will automatically
+             start  the  program at  memory  location A00  (the  terminal start
+             address).  Therefore, use a synchronous load.
+
+          o  If  the program  halts on  an error  while testing  a Mini-Engine,
+             depressing  the SYSCLR  switch on  the CPU  board gives  a MACHINE
+             MALFUNCTION INTERRUPT message and a prompt.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        18         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                            6.5  RESTARTING THE DIAGNOSTIC
+
+
+        The diagnostic  can be  restarted by  using the  GO command.  (Enter GO
+        A00).  In TSI  controller, use GD A00  to restart the diagnostic  if in
+        ENGbug mode or in TTY I/O mode.
+
+
+        The diagnostic can also be restarted manually by pressing the following
+        keys on the console:
+
+               DTA, F, 0, SET, A, 0, 0, ADR, RUN
+
+
+        Note however that if the watchdog timer is enabled, the  above sequence
+        should  be completed  as quickly  as possible,  in order  to  avoid the
+        watchdog  timer loading  the boot.  (In about  1 second).  Instead, the
+        operator should disable  the watchdog timer, or  use the GO  command to
+        restart the diagnostic.
+
+        Restarting sets all  the commands to  their initial values,  except for
+        those in the Scope Loop test.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        19         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                                 6.6  CONSOLE DISPLAY
+
+
+        The engine front console will alternate between a status display and an
+        error display. The status display has the following format:
+
+                2.TTSS.XYPP
+
+
+        where 2 indicates that this is the MAC diagnostic, and TT and  SS refer
+        to  the  test  and  section  number  currently  being  run.  X  is  the
+        segmentation   register  set   currently  being   tested.   Y   is  the
+        segmentation  register currently  being tested.   PP is  the  number of
+        passes completed so far.
+
+        The error display has this format:
+
+                S.EECC.0000
+
+
+        where S indicates whether no errors have occured (S is 0), or if errors
+        have been found  (S is E).  If the system is  being tested with  only a
+        front console, S will be F when errors occur (instead of E).  This also
+        indicates that the diagnostic is halted. EE refers to the error code of
+        the last error  found. When combined with  TT and SS, these  six digits
+        are the same as  the error code displayed  on a terminal. CC  refers to
+        the last two digits of the error count. When CC is incrementing, errors
+        are being found, and if CC  remains the same, it is the error  count at
+        the  time the last error was found. When no errors have been found, the
+        error display will be zeros.
+
+        Each display  is updated  every half second,  and alternates  after two
+        seconds.  When no test is  being run, only 2.0000.00PP is  displayed in
+        the status display.
+
+
+        For  a  TSI  controller,  a  firmware  simulated  virtual   console  is
+        installed.  When the user  enters the ENGbug mode while  the diagnostic
+        is running, the console is displaying. It is exactly the same as Engine
+        console.  In ENGbug mode, the user may issue the CIO command to display
+        the console.
+
+
+        The HANDHELD front console or the PXL Engine front console displays ten
+        digits.  The  left most  digit  is always  zero  during  the diagnostic
+        execution.
+
+
+
+
+
+
+
+
+        20         Memory Access Controller Diagnostic User's Guide      DMAC07
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                                  6.7  WATCHDOG TIMER
+
+
+        This diagnostic will  run with the  watchdog timer enabled.  Because of
+        this, it is not possible  to halt the diagnostic's execution  (with the
+        PSW switch on the front console) for longer than one second.  When this
+        happens, the engine will load and run the boot program. If the operator
+        wants to use the engine front console, and thereby cause the program to
+        be halted, the watchdog timer should be disabled.
+
+        ( For detailed information -  how to disable the watchdog  timer. refer
+        to   Engine  Maintenance   Manual,  Tymnet   publication   number  282,
+        Multifunction Board section for Engine or Mini-Engine.  Refer to Micro-
+        Engine Maintenance Manual  with Diagnostics, Tymnet  Publication number
+        651, Multifunction Logic section for the regular Micro-Engine. For HDLC
+        Micro-Engine, turn off  switch at I.C. location  10W position 4  to the
+        I/O board to disable the watchdog timer. For a TSI controller, the user
+        may issue the "wd on" and "wd off" command to turn on and turn  off the
+        watchdog timer. )
+
+        Because the watchdog timer  must be toggled frequently,  the diagnostic
+        never actually  halts. All options  which specify that  execution cease
+        (for  example,  ECON),  will  cause  the  diagnostic  to  loop   in one
+        position.  This allows  the watchdog timer to  be toggled by  a routine
+        which interrupts this loop to  toggle the timer. When this happens, the
+        front  console error  display will  have an  F as  a first  digit.  The
+        operator can resume diagnostic  execution by pressing the  INC followed
+        immediately by the RUN key on the front console.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        21         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+
+
+
+
+                                     7 -  COMMANDS
+
+
+        Operator control of  this diagnostic is  provided by means  of commands
+        entered on  the terminal.  These  commands are described  in subsequent
+        sections according to the following categories:
+
+                o  operating commands
+
+                o  display commands
+
+                o  error and message control commands
+
+                o  editing commands
+
+                o  Relocation Scope Loop Commands (described separately,
+                   see Section 8.6, Test 6)
+
+
+        A  special  portion  of the  program,  called  the  diagnostic monitor,
+        interprets operator input from  the terminal and passes  valid commands
+        to  the  program for  execution.   When the  diagnostic  prompt  (*) is
+        displayed on  the terminal, the  monitor is ready  to accept  a command
+        (which may be entered in  either upper or lower case).  If  the monitor
+        receives  an  error in  command  syntax, it  responds  with  an invalid
+        command or invalid parameter  message and another prompt (*).   See the
+        Diagnostics Introduction   for a general  discussion of  command format
+        and syntax.
+
+        In the following command descriptions, "syntax" shows the  command word
+        and correct format; "initial state" shows the condition in  effect when
+        the program is first started; "default action" shows the effect  of not
+        entering optional  parameters; and "values"  shows the value  range for
+        parameters.   The commands  are listed  alphabetically by  "SYNTAX". If
+        "initial  state","default  action"   and/or  "values"  have   not  been
+        specified for a command, then the command does not use them.
+
+        Note that each command line  must end with a carriage return  <cr>, and
+        only one  command can be  entered per line.  This does not  include the
+        reconfiguration section.  There  must be at  least one space  between a
+        command word and its parameters. There must be spaces or commas between
+        parameters themselves.  Parameter shown in brackets are  optional. (For
+        example, [YY] in the ADDT command). All other parameters are mandatory.
+        (For example, XX in the  ADDT command).  Any one of the  following will
+        cancel a command line if  entered before the <cr>:  a control-q,  or an
+        escape <esc>.
+
+
+        This diagnostic does not provide SPRS and NOSP commands.
+
+        22         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                                        NOTE
+
+
+             A summary of  commands for tests  2, 3, 4,  and 5 is  presented in
+             Appendix I. Test 6 commands are summarized in Appendix II.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        23         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                                7.1  OPERATING COMMANDS
+
+
+        The  operating  commands  initiate testing  (RUN),  add  tests  or test
+        sections  (ADDT),  delete  tests or  test  sections  (DELT),  cause the
+        program to loop (LOOP), and allow up to 16 breakpoints to be set in the
+        program  (BRKP). Also,  they  will cause  the  system to  go  into boot
+        (BOOT), perform periodic checksums on the diagnostic code  portion (not
+        the data portion) of memory (CKSM), examine and modify memory  (EXA and
+        MOD), and begin execution from a specific location (GO).  One  can also
+        ESCAPE from a Test by inputting an ESCAPE CHARACTER (<ESC>).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        24         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.1  ADDT  : Add tests and sections
+
+        SYNTAX:  ADDT xx[yy],...
+
+        INITIAL STATE: Test 2, 3 and 4
+
+        DEFAULT ACTION:  yy (all sections of test xx are added)
+
+        VALUES:  xx = 02 to 06
+                 yy = 01 to 06
+
+        This command selects the tests and sections to be executed, where xx is
+        the test number (in decimal) and yy is the section number (in decimal).
+        When a  test number only  is specified, all  sections of that  test are
+        selected.  If both a test and a section number are specified,  only the
+        specified section of that test is selected.  Any number of tests and/or
+        sections may  be specified on  the same command  line, but  the command
+        line must not exceed 80 characters.
+
+        The test number  (xx) can be  entered as either  a one- or  a two-digit
+        number, but  the section  number (yy)  must be  entered as  a two-digit
+        number, with one leading zero.
+
+        Example:
+
+             *ADDT 203<cr>
+
+             *ADDT 0404
+
+
+                                         NOTE
+
+             If  any parameter  in  a command  string is  invalid,  the monitor
+             ignores the invalid parameter and any subsequent parameters in the
+             string. Only the valid parameter(s) preceding the invalid  one are
+             added to the selected test(s) or section(s).
+
+
+
+
+
+                    7.1.2  BOOT :  Load engine bootstrap
+
+        SYNTAX:  BOOT
+
+        BOOT  will halt  the diagnostic  execution, causing  an engine  with an
+        enabled  watchdog  timer to  load  the  boot from  its  PROM's.  If the
+        watchdog timer is disabled, the diagnostic will halt. (The  program can
+        be restarted using the RUN  switch on the front console).  This command
+        will  have  more  significance  in  a  latter  implementation  of  this
+        diagnostic.
+
+
+
+        25         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.3  BRKP  : Breakpoint
+
+        SYNTAX:  BRKP [xx,yyyyy],...
+
+        DEFAULT ACTION:  Displays current breakpoints.
+
+        VALUES:     xx = 01 to 16 (in decimal)
+                    yyyyy = any memory location in the program
+
+        This  command  lists the  breakpoint  settings currently  in  effect if
+        entered without parameters.  When  entered with parameters, it  sets up
+        one  or  more new  breakpoints,  where xx  is  the number  of  each new
+        breakpoint  to be  set  (from 1  to 16  in  decimal) and  yyyyy  is the
+        physical  address  corresponding   to  each  breakpoint.        When  a
+        breakpoint is reached during execution, the program halts, restores the
+        original  instruction  for  that  memory  location,  and  displays  the
+        following message:
+
+                breakpoint # xx found at yyyyy
+
+                Enter an escape to halt testing, or a c/r to continue.
+
+            If a carriage return <cr>  is entered, that breakpoint is  reset to
+        0000, and the program continues executing.  If the user  presses escape
+        <esc> , the program returns  to the monitor, resets that  breakpoint to
+        0000, and displays the diagnostic prompt; all unencountered breakpoints
+        remain set.  To reset an undesired breakpoint, use location 0000.
+        Example:
+
+                *BRKP 01,29D2,02,2E78,03,EFD2<cr>
+
+                *BRKP 02,0,03,0<cr>
+
+
+                                    NOTE
+
+
+             These breakpoint addresses are  for sample purposes. They  are not
+             consistent with the current program listing.
+
+             Use of  this command requires  a program listing  (see Diagnostics
+             Introduction  for the procedure  to create a listing).   Note also
+             that each breakpoint is reset to 0000 as it is  encountered during
+             program execution, so that new breakpoints must be set  after each
+             pass.
+
+
+
+
+
+
+
+
+
+        26         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.4  CKSM  : Diagnostic code checksum
+
+        SYNTAX:  CKSM
+
+        INITIAL STATE: No periodic checksum is performed.
+
+        Used to cause a periodic  checksum of the diagnostic code  section (not
+        the data section) in memory.   The checksum is performed once  every 30
+        seconds, and takes approximately  one 15th of a second.  (Slows testing
+        by 0.5% ).  This command  will ensure that the diagnostic has  not been
+        damaged and will print an error message if it has been. This  option is
+        switched off by entering the NOCK (for no checksum) command.
+
+
+
+
+
+                    7.1.5  DELT  : Delete tests and sections
+
+        SYNTAX:  DELT xx[yy],...
+
+        INITIAL STATE: Test 2, 3 and 4
+
+        DEFAULT ACTION:  yy (all sections of test xx are deleted)
+
+        VALUES:  xx = 02 to 06
+                 yy = 01 to 06
+
+        This command deletes tests and sections from execution, where xx is the
+        test number  (in decimal) and  yy is the  section number  (in decimal).
+        When a  test number only  is specified, all  sections of that  test are
+        deleted.  If both a test  and a section number are specified,  only the
+        specified section of that test is deleted.  Any number of  tests and/or
+        sections may  be specified on  the same command  line, but  the command
+        line must not  exceed 80 characters.      The  test number (xx)  can be
+        entered as either a one- or a two-digit number, but the  section number
+        (yy) must be entered as a two-digit number, with one leading zero.
+        Example:
+
+            *DELT 203<cr>
+
+            *DELT 0404<cr>
+
+
+                                        NOTE
+
+           If any parameter in a command string is invalid, the monitor ignores
+        the invalid parameter and any subsequent parameters in the string. Only
+        the valid parameter(s) preceding  the invalid one are deleted  from the
+        selected test(s) or section(s).  If  all tests are deleted and  the RUN
+        command is entered without tests  being added by the ADDT  command, the
+        message no test or section selected to be run is displayed.
+
+
+        27         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.6  <ESC> : Escape from current test
+
+        SYNTAX:  <ESC>
+
+
+        Will interrupt current  test and return  to the '*'  prompt (diagnostic
+        monitor level).
+
+        The Scope  Loop test does  not exit  to the monitor  after an  <ESC> is
+        input. Control returns to the  Scope Loop command input.  EXIT  must be
+        entered in order to return to the monitor.
+
+        Enter the  Escape key  and the Carriage  Return (CR)  key to  abort the
+        current test, while  the diagnostic is running  on the Micro  Engine or
+        the HDLC Micro Engine.
+
+
+
+
+
+                    7.1.7  EXA   : Examine memory
+
+        SYNTAX:  EXA A,C
+
+        VALUES:  A is any memory address, C is a count of number of
+                 halfwords to display. (Both A and C must be hexadecimal.)
+
+
+        Reads and displays C number of halfwords starting at the location  A in
+        memory.
+
+
+
+
+
+                    7.1.8  GO    : Execute from address
+
+        SYNTAX:  GO A
+
+        VALUES:  A must be a valid instruction address.
+
+
+        The CPU will begin to execute from the address specified.  Be cautioned
+        that  an  invalid  address will  simply  cause  an  illegal instruction
+        interrupt.
+
+
+
+
+
+
+
+
+
+        28         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.9  LOOP  : Set loop count
+
+        SYNTAX:  LOOP [N]
+
+        INITIAL STATE: 1
+
+        DEFAULT ACTION:  Displays current loop value.
+
+        VALUES:  0 to 32,768 (in decimal)
+
+
+        This command specifies the number of times the selected tests  and test
+        sections are to  be executed, where n  is the number of  iterations (in
+        decimal)  ranging from  0 to  32,768.  All  selected test  sections are
+        executed  in numerical  order  (by the  RUN command),  before  the next
+        iteration starts.
+
+        If  a  loop  value  of  zero  is  entered,  the  selected  sections run
+        continually until halted manually, by a hardware malfunction, or  by an
+        error  (see section  9.3.2,  error control).   If the  LOOP  command is
+        entered without a parameter, the monitor outputs the current loop value
+        (n).
+
+        If a loop value greater than 32,768 is entered, the monitor divides the
+        entered value by 32,768 and uses the remainder as the value of  n.  For
+        example, if the decimal number 65,537 were entered as parameter  n, the
+        monitor would convert that number to a loop value of 1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        29         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.10  MOD   : Modify memory
+
+        SYNTAX:  MOD A,C,D
+
+        VALUES:  A is any memory address, C is a count of the
+                 halfwords to store, and D is C number of halfwords.
+                 Note that all parameters A, C and D must be hex.
+
+
+        This command stores the specified number of halfwords at  the requested
+        location.  The  data  is  stored  halfword  at  a  time.  Any  halfword
+        containing  a  non   hexadecimal  character  will  abort   all  further
+        modifications specified on that line. The halfwords specified in  D are
+        separated by a space or a comma.
+
+
+
+
+
+                    7.1.11  NOCK  : No diagnostic code checksum
+
+        SYNTAX:  NOCK
+
+        INITIAL STATE: No periodic checksum is performed.
+
+
+        Used  to  switch  off  the periodic  checksum  of  the  diagnostic code
+        section.  See CKSM command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        30         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.1.12  RUN   : Run test(s)
+
+        SYNTAX:  RUN
+
+        INITIAL STATE: Tests 2, 3, and 4
+
+
+        This command  starts execution  of the default  tests and  sections, or
+        those  tests and  sections  previously selected  by the  add  tests and
+        sections  command  (ADDT) and  the  delete tests  and  sections command
+        (DELT).  When  the diagnostic  is first started  or restarted,  the RUN
+        command executes the default tests  (tests 2, 3, and 4).   The selected
+        tests and  sections are executed  in numerical order  as many  times as
+        specified by the LOOP command.
+
+        If  the RUN  command is  entered, but  no tests  or sections  have been
+        selected,  the message  NO TEST  OR SECTION  IS SELECTED  TO BE  RUN is
+        displayed on the terminal.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        31         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                                 7.2  DISPLAY COMMANDS
+
+
+        These commands are informational commands, provided to aid the operator
+        determine the overall status of the diagnostic. The HELP  command lists
+        all commands  for the  diagnostic, while OPTN  displays the  setting of
+        current  diagnostic  options. Test  titles  are listed  using  the NAME
+        command.  STAT will display the last error that occured.
+
+
+
+
+
+                    7.2.1  DMEM  : Display memory map
+
+        SYNTAX:  DMEM
+
+
+        The map of memory is displayed.  The map is divided by memory  type and
+        test selection.
+
+
+
+
+
+                    7.2.2  DOC   : Display user's guide source
+
+        SYNTAX:  DOC
+
+
+        The on-line source of the  current user's guide for this  diagnostic is
+        displayed.
+
+
+
+
+
+                    7.2.3  HELP  : Display list of commands
+
+        SYNTAX: HELP
+
+
+        All  the  commands,  plus  a  brief  explanation  of  each  command are
+        displayed.
+
+
+
+
+
+
+
+
+
+
+        32         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.2.4  NAME  : Display test names
+
+        SYNTAX:  NAME
+
+
+        The number and title of each test is displayed.
+
+
+
+
+
+                    7.2.5  OPTN  : Display the diagnostic options
+
+        SYNTAX:  OPTN
+
+
+        The following diagnostic options are displayed: default and non default
+        test  and section  numbers, and  whether they  are selected  to  be run
+        (indicated  by  an '*'),  the  loop options  value,  error  and message
+        controls, and whether the checksum and bell option have been selected.
+
+
+
+
+
+                    7.2.6  STAT  : Last error message
+
+        SYNTAX:  STAT
+
+
+        This command causes the  last error encountered to be  displayed.  Note
+        that  the error  will be  displayed even  if error  or  message control
+        prevented its being printed at the time the error occurred.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        33         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                        7.3  ERROR AND MESSAGE CONTROL COMMANDS
+
+
+        Two commands are provided that together determine what the monitor will
+        do when an error is encountered (ECON) and how much information will be
+        displayed on the terminal (MESG). In addition, a bell can be sounded or
+        suppressed on error (BELL or NOBE).
+
+
+
+
+
+                    7.3.1  BELL : Set bell ring on error
+
+        SYNTAX:  BELL
+
+        INITIAL STATE: No bell will ring on error.
+
+
+        This command has no parameters. It will cause a bell to  sound whenever
+        an error is found (regardless of whether the error is printed  or not).
+        This option is reversed by entering NOBE , the no bell command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        34         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.3.2  ECON : Error control
+
+        SYNTAX:  ECON [x],[y],[n]
+
+        INITIAL STATE: x = 0 (continue after an error)
+                       n = 0 (parameter y is ignored)
+
+        DEFAULT ACTION:  Resets x and n to initial state.
+
+        VALUES:  x = 0 to 5
+                 y = 0 to 7
+                 n = 0 to 2,147,483,647 (in decimal)
+
+
+        This  command  controls error  handling  by the  monitor  in  two ways.
+        First, it sets up what  action the monitor will take (parameter  x) for
+        the first N errors encountered.  Second, it permits a  different action
+        (parameter  y)  to be  selected  for subsequent  errors.   When entered
+        without parameters, the initial  state of continuing after an  error (x
+        equal to zero) is selected.
+
+
+        Each time the RUN command is entered, the error count is reset to zero.
+        As  errors  are  encountered  during  execution,  the  error  count  is
+        incremented  and compared  to n.   (Note that  unexpected  system error
+        messages are not affected by this command.)
+
+
+        Parameter n is  a positive number ranging  from 0 to  2,147,483,647 (in
+        decimal).  If the value for n is greater than 2,147,483,647 the monitor
+        divides the entered number by 2,147,483,647, and uses the  remainder as
+        the  value of  n.  Note  that if  zero is  entered as  the value  of n,
+        parameter y is ignored.
+
+
+        Any  one of  the three  parameters can  be omitted,  provided  that all
+        appropriate commas are entered  before the last parameter.   Any commas
+        after the last parameter are  ignored.  If parameter n is  not entered,
+        parameter y is ignored.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        35         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+        The values and their meanings for parameters x and y are as follows:
+
+        0  continues the diagnostic after encountering an error (will
+           not re-enable error messages when used with parameter y).
+
+        1  Halts the diagnostic after encountering
+           an error and printing the error message.  The program may be
+           restarted by pressing the increment (INC) followed immediately
+           by the run (RUN) key on the console. To return control to the
+           Monitor when in a halt, press <ESC>.
+
+        2  Returns control to the monitor after encountering an
+           error and printing the error message
+           [see message control command (MESG)].
+
+        3  Continues the diagnostic after displaying the first error
+           message, but does not display error messages if further
+           errors are encountered.
+
+        4  Loops on the section where the error was encountered.  The
+           operator may stop the diagnostic by pressing the PSW key on
+           the console (will not re-enable error messages when used in
+           parameter y).
+
+        5  Loops on the section where the error was encountered, but does
+           not display further error messages;  the first error message
+           message will be displayed, if enabled by the MESG command.
+           (the diagnostic can be halted by pressing the PSW key.)
+
+        6  Continues the diagnostic after an error is encountered;
+           further error messages are displayed if any errors
+           are encountered (when enabled by the MESG command).
+           Use this value for parameter y to re-enable error
+           messages when values 3 or 5 are entered for parameter x.
+
+        7  Loops on the section where the error was encountered and
+           displays error messages (when enabled by the MESG command)
+           if any errors are encountered.
+           Use this value for parameter y to re-enable error
+           messages when values 3 or 5 are entered for parameter x.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        36         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                                     NOTE
+
+              Values of 6 and 7 are  valid only for parameter y.  If  either of
+              these values  is entered  for parameter  x, an  invalid parameter
+              message will be displayed.  If any entered parameter  is invalid,
+              the entire command is ignored.
+
+
+              The MESG  command also enables  and disables error  messages.  if
+              the  ECON  and  MESG  commands  have  selected  different message
+              display options, error messages will not be displayed.
+
+
+              If a loop on section option is selected, the program will loop on
+              the section  encountering the error,  but the header  and trailer
+              messages will not be displayed in subsequent passes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        37         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.3.3  MESG : Message control
+
+        SYNTAX:  MESG x
+
+        INITIAL STATE: 1
+
+        VALUES:  1 to 6
+
+
+        This command controls which types of diagnostic messages  are displayed
+        on the  terminal.  Values for  parameter x  can range from  1 to  6 (in
+        decimal) with the following meanings:
+
+        1  displays all messages
+
+        2  displays only error messages
+
+        3  displays no messages
+
+        4  displays only periodic error and pass counts
+
+        5  displays only error messages and periodic error and
+           pass counts
+
+        6  displays all messages except error messages (test and
+           section headings, and test and section ending messages
+           are displayed with error and pass counts)
+
+        Periodic error and pass  counts are messages displayed  during multiple
+        passes of  selected tests.   These messages  are displayed  after every
+        pass (for passes 1 to 10),  after every tenth pass (passes 11  to 100),
+        after  every  hundredth pass  (passes  101 to  1001),  and  after every
+        thousandth  pass (for  passes 1001  and up).   options 4  and  5, which
+        control periodic messages, must be used in conjunction with appropriate
+        values of the LOOP command.  Each time the RUN command is  entered, the
+        pass count  is reset to  zero, and the  process of  displaying periodic
+        messages starts over.
+                                 NOTE
+
+             The MESG command controls the display of diagnostic messages only,
+             and not those of the  monitor.  The ECON command also  enables and
+             disables  the display  of error  messages.  If  the ECON  and MESG
+             commands have selected different error message options, then error
+             messages will not  be displayed.
+
+
+
+
+
+
+
+
+
+
+        38         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                    7.3.4  NOBE : No bell ring on error
+
+        SYNTAX:  NOBE
+
+        INITIAL STATE: No bell will ring on error.
+
+
+        This command will ensure that no bell rings when an error occurs. It is
+        used  to switch off the BELL command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        39         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+                                 7.4  EDITING COMMANDS
+
+
+        Editing commands provide the operator with a means of  correcting input
+        errors on the terminal before  they have been entered, that  is, before
+        they  have  been passed  to  the monitor.   These  commands  cancel the
+        command  line  (control-q  or  <esc>),  delete  the  previous character
+        (control-a), and delete the previous word (control-w).
+
+
+
+
+
+                    7.4.1  CONTROL-Q : Cancel command entry
+
+        SYNTAX:  CONTROL-Q  or <ESC>
+
+
+        A control-q or  an escape <ESC> entered  in the command  string cancels
+        the command  being entered and  causes the monitor  to display a  ? and
+        another prompt.  Each form of this command has the same effect  and may
+        be entered anywhere  in the command  string before the  carriage return
+        <cr>.   Once a  <cr> has  been entered,  however, a  command  cannot be
+        cancelled.
+
+
+
+
+
+                    7.4.2  CONTROL-A : Delete single character
+
+        SYNTAX:  CONTROL-A
+
+
+        This command deletes the immediately preceding character in the command
+        line.  If entered more than once, the next preceding character  will be
+        deleted  for  each  control-a  entered.   The  command  can  be entered
+        anywhere  in the  command line  before the  carriage return  <cr>.  The
+        deleted character(s) are displayed on the terminal  between backslashes
+        (      ).  If all characters in a command line are deleted, a line feed
+        and carriage return result, and the monitor prompts for a new command.
+
+
+
+
+
+                    7.4.3  CONTROL-W : Delete whole word
+
+        SYNTAX:  CONTROL-W
+
+
+        This command deletes the immediately preceding word in the command line
+
+
+        40         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMANDS                                              September 4, 1990
+
+
+        (a word being any series of characters preceded by a space).  it can be
+        entered anywhere in the  command line before the carriage  return <cr>.
+        If more than one control-w is entered, the next preceding word  will be
+        deleted  for  each  entry  of the  command.   The  deleted  word(s) are
+        displayed on the terminal between backslashes ().   if all  words  in a
+        command line are deleted, a  line feed and carriage return  result, and
+        the monitor prompts for a new command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        41         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+
+
+
+
+                                8 -  TEST DESCRIPTIONS
+
+
+        After  the  diagnostic has  been  loaded and  started,  the  Monitor is
+        automatically invoked.  If the default tests are run without alteration
+        of  any command parameters,  the diagnostic performs a  verification of
+        the  MAC hardware  without operator  intervention.  Note  that  Test 5,
+        which tests  multi-megabyte access,  Test 6, Scope  Loop Test,  are not
+        default tests. ( Note : Test 6 does not run on TSI controller  or MAC-V
+        board. )
+
+        The individual tests and the functions that they check are discussed in
+        the following sections.  Figure 8-1 shows segmentation  register fields
+        by bit position.
+
+
+                                  NOTE
+
+              Segmentation registers 0  and 1 are  reserved for control  of the
+              diagnostic  program  itself.   These  two  registers,   in  every
+              segmentation register set, are not  used or tested by any  of the
+              Tests except Test 2.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 Figure 8-1.  Segmentation Register Format
+
+
+        42         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.1  Test 1, Test is not currently implemented
+
+
+        Test 1 is not currently implemented.
+
+
+
+
+
+
+                        8.2  Test 2, Segmentation Register Test
+
+
+        Test  2   consists  of  three   sections.   Each  section   checks  all
+        segmentation registers, and the MAC is  not enabled.  If a MAC II  or a
+        MAC III or a  MAC V is under  test, all segmentation register  sets are
+        used.
+
+
+
+
+
+                    8.2.1  Section 1, Segmentation Register Data
+
+        This section of Test 2 verifies that data written to  each segmentation
+        register are read back without change.  An incrementing data pattern is
+        written to each register in each segmentation register set, and is read
+        back and verified.
+
+        Each  segmentation register  is tested  with the  entire  data pattern,
+        before testing the next segmentation register in the register set.
+
+        During execution of this  test section, the number of  the segmentation
+        register set  currently being  tested is  displayed at  X on  the front
+        console.   (See  Figure  6-1  and  Section  6.6)  The  number   of  the
+        segmentation register  currently being tested  is displayed at  Y.  The
+        current error  count is displayed  at CC (if  an error  occurred).  The
+        current pass count is displayed at PP.
+
+        Execution Time
+
+        MAC I, Micro-Engine or HDLC Micro-Engine :  8 seconds
+
+        MAC II:  1 minute 43 seconds (1 megabyte system)
+
+        MAC III : 55 seconds
+
+        MAC V : 18 seconds
+
+        TSI MAC : 5 seconds
+
+
+
+
+        43         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.2.2  Section 2, Segmentation Register Addressing
+
+        This  section  of  Test  2 tests  the  addressing  of  the segmentation
+        registers.  A  unique  data pattern  is  written  to  each segmentation
+        register, read back, and verified.
+
+        During  execution of  this test  section, the  Test and  Section number
+        currently being tested are displayed at TT and SS on the front console.
+        (See Figure 6-1 and Section  6.6) The current error count  is displayed
+        at CC (if an error  occurred).  The current pass count is  displayed at
+        PP.
+
+        Execution Time
+
+        MAC I, II,  III, V, Micro-Engine, HDLC  Micro-Engine, or TSI MAC   :  1
+        second
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        44         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.2.3  Section 3, Walking Zeros and Ones
+
+        This section of  Test 2 writes, reads,  and verifies a data  pattern of
+        walking zeros and ones for the segmentation registers.
+
+        Zeros are written to the segmentation registers; then the first  bit of
+        the first segmentation register is set, and all the registers  are read
+        and  verified.  This  is repeated  using the  second bit  of  the first
+        segmentation register  and continued  until the last  bit of  the first
+        segmentation  register  has  been set  and  verified.   The  process is
+        repeated, going through all bits of each segmentation register.
+
+        When this has been completed, ones are written to all  the segmentation
+        registers.   Then  all  the  bits  of  the  segmentation  registers are
+        individually reset and verified.
+
+        During  execution of  this test  section, the  Test and  Section number
+        currently being tested are displayed at TT and SS on the  front console
+        (See  Figure 6-1  and  Section 6.6).   The number  of  the segmentation
+        register set currently begin tested  is displayed at X.  The  number of
+        the segmentation  register currently  being tested  is displayed  at Y.
+        The current error count is displayed at CC (if an error occurred).  The
+        current pass count is displayed at PP.
+
+        Execution Time
+
+        MAC I, Micro-Engine or HDLC Micro-Engine :  3 seconds
+
+        MAC II:  1 minute 10 seconds (1 megabyte system)
+
+        MAC III : 40 seconds
+
+        MAC V  : 75 seconds
+
+        TSI MAC : 58 seconds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        45         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                             8.3  Test 3, Relocation Test
+
+
+        Test  3 checks  the relocation  function of  the MAC;  it has  only one
+        section.  All segmentation registers except 0 and 1 are tested. In this
+        Section all segmentation register set are used.
+
+
+
+
+
+                    8.3.1  Section 1, Relocation
+
+        Section  1 verifies  the relocation  function of  the  MAC.  Relocation
+        values  are  written to  the  segmentation registers,  and  the  MAC is
+        enabled.  A  data pattern  is then  written to  a series  of locations.
+        These  locations  are  read twice:  once,  immediately  after  the data
+        pattern has been  written and second, after  the data pattern  has been
+        written to  all locations  and the  MAC is  disabled.  The  second read
+        operation confirms that data was written to the proper  physical memory
+        location.
+
+        The segmentation  registers are tested  with random  relocation values.
+        If  the  relocated  address  is a  location  within  the  program  or a
+        nonexistent address, the test at that location is not performed.
+
+
+        The following virtual memory addresses are used:
+
+        20000     28400     30000     40000     48000
+        50000     60000     68000     70000     80000
+        90000     A0000     A8000     B0000     B4000
+        C0000     D0000     E0000     F4000     F8000
+
+
+        For MAC-V, the following memory addresses are used :
+
+        020344    0F8EF2    16225A    28A39E    398E3C
+        4A9666    5CFC94    6D2A8A    7E2FE6    8FA5AE
+        92D426    96F666    A08284    A9D1AA    B5473C
+        BCA3F8    CD33FA    DE5554    EF4902    F0F99A
+
+        The relocation function of the  MAC will be tested adequately  when the
+        system has  128K bytes of  memory.  The test  is more thorough  if more
+        memory is available.
+
+        During the execution of this test section, the Test and  Section number
+        currently being tested are displayed at TT and SS on the  front console
+        (See  Figure 6-1  and  Section 6.6).   The number  of  the segmentation
+        register set currently begin tested  is displayed at X.  The  number of
+        the segmentation  register currently  being tested  is displayed  at Y.
+        The current error count is  displayed at CC (if an error  occurred) and
+        the current pass count is displayed at PP.
+
+        46         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Execution Time
+
+        MAC I, Micro-Engine or HDLC Micro-Engine :  6 seconds
+
+        MAC II: 10 seconds (1 megabyte system)
+
+        MAC III : 6 seconds
+
+        MAC V : 4 seconds
+
+        TSI MAC : 5 seconds
+
+        Execution time varies depending on the amount of system memory.
+
+
+
+
+
+
+                             8.4  Test 4, Protection Test
+
+
+        Test 4 checks the protection function  of the MAC.  In each of  the six
+        sections  of this  test, the  MAC is  set up  for a  different  type of
+        protection  (for  example, write,  execute,  limit)  before data-write,
+        data-read,  and instruction  fetch memory  accesses are  executed.  The
+        results  of  the  memory  accesses are  then  compared  to  the results
+        expected with that  level of protection.  This test also  validates the
+        MAC error registers.
+
+        In a MAC I, Micro-Engine, HDLC Micro-Engine MAC, or MAC II
+        this test validates
+
+            o  Last instruction fetch register (physical)
+            o  Last instruction fetch register (virtual)
+
+        In a MAC III; V, this Test validates
+
+            o  Last instruction fetch register (physical)
+            o  Last instruction fetch register (virtual)
+            o  Error address register (virtual)
+
+        In a TSI MAC, this Test validates
+
+            o  Any memory error address register (physical)
+            o  Any memory error address register (virtual)
+            o  Last instruction fetch register (virtual)
+
+
+
+        If a MAC I board, Micro-Engine, or HDLC Micro-Engine (which have  1 set
+        of 16 segmentation registers) is under test, all segmentation registers
+
+
+        47         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        except 0 and 1 are tested.  If a MAC II board, a MAC III board, a MAC V
+        board, or a TSI MAC  (which have 16 sets of 16  segmentation registers)
+        is under  test, all segmentation  register sets are  used; segmentation
+        registers 2 through F in each set are tested.  Segmentation registers 0
+        and  1  in each  segmentation  register set  are  reserved  for program
+        control and are not tested.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        48         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.4.1  Section 1, Presence Bit Reset
+
+        This section of Test 4  verifies that access to memory segments  can be
+        prohibited by not setting the presence bit in the segmentation register
+        for that memory segment.
+
+        The segmentation registers  are set up with  a relocation value  of 000
+        and the presence  bit reset.  The MAC  is enabled, memory  accesses are
+        made  through  the  segmentation  registers,  and  a  MAC  interrupt is
+        expected.  The relocated address used is physical address 0000.
+
+        The virtual memory addresses used are as follows:
+
+        20000     30000     40000     50000     60000
+        70000     80000     90000     A0000     B0000
+        C0000     D0000     E0000     F0000
+
+        For MAC V, the virtual memory addresses used are as follows :
+
+        120000    220000    320000    420000    520000
+        620000    720000    820000    920000    A20000
+        B20000    C20000    D20000    E20000    F20000
+
+        During the execution of this test section, The Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+        front  console.  (See  figure 6-1  and Section  6.6) The  current error
+        count is  displayed at  CC (if  an error  occurred).  The  current pass
+        count is displayed at PP.
+
+        Execution Time
+
+        MAC I,  II, III, V,  Micro-Engine, HDLC Micro-Engine,  or TSI MAC  :  1
+        second
+
+
+
+
+
+                    8.4.2  Section 2, Presence Bit Set
+
+        This section verifies the  functioning of the memory presence  bit when
+        set in the segmentation register.
+
+        The segmentation registers  are set up with  a relocation value  of 000
+        and the memory presence bit  set.  The MAC is then enabled,  and memory
+        accesses  are  made   through  the  segmentation  registers.    No  MAC
+        interrupts should  be generated.  The  virtual memory  locations tested
+        are 20000, 20400, 208000, 20C000, .........; nonexistent  locations and
+        locations within the monitor and test code are skipped.
+
+        During the execution of this test section, The Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+
+
+        49         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        front  console.  (See  Figure 6-1  and Section  6.6) The  current error
+        count is  displayed at  CC (if  an error  occurred).  The  current pass
+        count is displayed at PP.
+
+        Execution Time
+
+        MAC I,  II, III, V,  Micro-Engine, HDLC Micro-Engine,  or TSI MAC  :  2
+        seconds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        50         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.4.3  Section 3, Execute Protection
+
+        This section verifies the execute protection function of the MAC.
+
+        The  segmentation registers  are  set up  for relocation  to  the first
+        location of each 64K block in  memory in the system except block  0 and
+        block  1.   If  the  block  does not  exist  in  the  system,  then the
+        segmentation registers are set up for relocation to the  first location
+        of memory (which is 0), and the execute protection bit is set.  The MAC
+        is then enabled, and memory accesses are made through  the segmentation
+        registers.   MAC interrupts  are  expected only  for  instruction fetch
+        cycles.
+
+        During the execution of this test section, The Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+        front  console.  (See  Figure 6-1  and Section  6.6) The  current error
+        count is  displayed at  CC (if  an error  occurred).  The  current pass
+        count is displayed at PP.
+
+        Execution Time
+
+        MAC I, II,  III, V, Micro-Engine, HDLC  Micro-Engine, or TSI MAC   :  1
+        second
+
+
+
+
+
+                    8.4.4  Section 4, Write Interrupt Function
+
+        This section verifies the write interrupt function of the MAC.
+
+        The  segmentation registers  are  set up  for relocation  to  the first
+        location of  memory, and the  write interrupt bit  is set.  The  MAC is
+        then enabled,  and memory  accesses are  made through  the segmentation
+        registers.  MAC interrupts are expected only on data write  cycles, and
+        the relocated address (location 0000) is checked to make sure  that the
+        data have been written there.
+
+        During the execution of this test section, The Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+        front  console.  (See  Figure 6-1  and Section  6.6) The  current error
+        count is  displayed at  CC (if  an error  occurred).  The  current pass
+        count is displayed at PP.
+
+
+        This Section does  not validate the MAC  error registers for the  MAC I
+        board.
+
+        Execution Time
+
+        MAC I, II,  III, V, Micro-Engine, HDLC  Micro-Engine, or TSI MAC   :  1
+        second
+
+        51         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.4.5  Section 5, Write Protection
+
+        This section verifies the  write protection function of the  MAC.  This
+        function is similar  to the write  interrupt function, except  that the
+        data are not written when the interrupt occurs.
+
+        The  segmentation registers  are  set up  for relocation  to  the first
+        location of memory,  and the write protection  bit is set.  The  MAC is
+        then enabled,  and memory  accesses are  made through  the segmentation
+        registers.  MAC  interrupts are expected  only on memory  write cycles,
+        and the relocated address (location 0000) is checked to make  sure that
+        data have not been written there.
+
+        During the execution of this test section, The Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+        front  console.  (See  Figure 6-1  and Section  6.6) The  current error
+        count is  displayed at  CC (if  an error  occurred).  The  current pass
+        count is displayed at PP.
+
+        Execution Time
+
+        MAC I,  II, III,  V, TSI MAC,  Micro-Engine or  HDLC Micro-Engine  :  1
+        second
+
+
+
+
+
+                    8.4.6  Section 6, Limit Protection
+
+        This section verifies the limit protection function of the MAC.
+
+        The  segmentation registers  are  set up  for relocation  to  the first
+        location of  memory.  The MAC  is then enabled,  and memory  cycles are
+        made through the segmentation registers.  Various combinations of limit
+        values  and virtual  memory  addresses are  used.  A  MAC  interrupt is
+        expected  only when  the  virtual memory  address is  beyond  the limit
+        value.
+
+        The relocated memory address used for testing is location  0000.  Every
+        fifth  limit  value  (from  00  to  FF)  is  used  in  the segmentation
+        registers.  Each limit value is used with the following  virtual memory
+        locations:  x0000, x0700, x0E00,  x1500, ..., xEE00, xF500,  and xFC00,
+        where x is the number  of the segmentation register being  tested.  For
+        MAC V, the  virtual memory locations are  0, 77800, EF000,  ......, and
+        the maximum memory size.
+
+        During  execution of  this test  section, The  Test and  Section number
+        currently being tested are displayed  at TT and SS respectively  on the
+        front console,  the number of  the segmentation register  set currently
+        being tested is displayed at  X on the front console.  (See  Figure 6-1
+        and  Section 6.6)  The number  of the  segmentation  register currently
+
+
+        52         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        being tested is displayed at  Y.  The current error count  is displayed
+        at CC (if an error  occurred).  The current pass count is  displayed at
+        PP.
+
+        Execution Time
+
+        MAC I, Micro-Engine or HDLC Micro-Engine :  12 seconds
+
+        MAC II:  2 minutes 45 seconds (1 megabyte system)
+
+        MAC III : 1 minute 27 seconds
+
+        MAC V : 6 seconds
+
+        TSI MAC : 1 minute 5 seconds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        53         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                           8.5  Test 5, Multi-Megabyte Test
+
+
+        Test 5  is intended to  verify MAC II  capability for  accessing memory
+        greater than 1 megabyte.  Test 5 requires that the system configuration
+        include a  MAC II  board and some  amount of  memory beyond  1 megabyte
+        (that is, which begins at physical memory address 100000).
+
+        Test 5 is  not a default test.   It can be run  by itself, or  with any
+        other tests except  Test 6.  However, Test  5 does assume that  Tests 2
+        and 3 have been run without error.
+
+
+        To  run  Test 5  alone,  first use  the  DELT command  to  delete tests
+        currently in effect  (example:  DELT 2,3,4  <CR>).  Next, use  the ADDT
+        command to add Test 5 (example:   ADDT 5 <CR>), and then enter  the RUN
+        command.
+
+
+        Testable memory for Test 5 is defined as beginning at the start  of the
+        second 512K of system memory (physical address 80000) and ending at the
+        highest  possible  memory  address  (physical  address  3FFFFF  in  a 4
+        megabyte system).
+
+
+        Each of the two  sections in Test 5  uses a different method  to access
+        testable memory.  Section 1 accesses memory sequentially  by halfwords;
+        Section 2 read/verifies specific locations within each megabyte bank of
+        memory by continually rotating through the available banks.   (The term
+        "megabyte  bank" has  a special  meaning in  Test 5  and is  defined in
+        Section 9.5.2.)
+
+
+        If  Test 5  is unable  to  detect a  MAC II  board in  the  system, the
+        following message is displayed on the terminal:
+
+
+             ABORTING TEST 5 -
+
+
+             MULTI M-BYTE TEST - REQUIRES MAC-II - NOT FOUND!!
+
+
+        If Test 5 is  unable to detect system  memory in excess of  1 megabyte,
+        the following message is displayed on the terminal:
+
+
+             MAX. MEMORY ADDR. = xxxxx
+
+
+             ABORTING TEST 5 -
+
+
+
+        54         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+             MULTI M-BYTE TEST - REQUIRES MEM. > FFFFF - NOT FOUND!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        55         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Figure 8-2.  Test 5, Section 1, Testable Memory
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        56         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.5.1  Section 1, Sequential Access
+
+        This  section  of  Test 5  performs  sequential  write  and read/verify
+        operations  throughout  system  memory,  beginning  with   the  highest
+        possible memory address (for  example, 3FFFFF in a  4-megabyte system),
+        and ending at  the start of the  second 512K bytes of  memory (physical
+        address 80000).  This is defined as "testable memory" for  this section
+        of Test 5 (see Figure 8-2).
+
+
+        Section 1  writes to and  read/verifies every halfword  within testable
+        memory at  least once,  using all  segmentation registers  except those
+        reserved  for use  by  the program.   (The MAC  Diagnostic  code itself
+        requires segmentation  registers 0  and 1 from  each of  the 16  MAC II
+        segmentation register sets.)
+
+
+        Section 1 divides testable memory into blocks of 16K bytes each.  These
+        16K blocks are each subdivided into 32 512-byte test blocks  to provide
+        enhanced  halfword-level   resolution.   In   order  to   exercise  all
+        segmentation registers,  some 16K blocks  are accessed more  than once.
+        The extent  of this  "internal recycling" is  determined solely  by the
+        amount of testable memory in the system.
+
+
+        Section 1 sequentially writes to all available 16K memory blocks.  Data
+        is then sequentially read back and compared with the value written.
+
+
+        A unique set  of data patterns  is used for  each 16K block.   The data
+        pattern  is derived  from the  22-bit relocated  start address  for the
+        specific  16K  block being  tested.   (See Section  10.5,  Test  5 Data
+        Patterns, for details.)
+
+
+        During execution of this  test section, the number of  the segmentation
+        register set  currently being  tested is  displayed at  X on  the front
+        console.   (See  Figure  6-1  and  Section  6.6)  The  number   of  the
+        segmentation register  currently being tested  is displayed at  Y.  The
+        current error count is displayed at CC. (if error occurred) The current
+        pass count is displayed at PP.
+
+
+        Execution Time
+
+
+        4 megabyte system:  58 seconds
+
+
+
+
+
+
+
+        57         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                 Figure 9-2.  Test 5, Section 2, Megabyte Banks
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        58         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.5.2  Section 2, Bank Select
+
+        This section of  Test 5 exercises the  MAC II bank-select  circuitry by
+        accessing  testable  memory on  1-megabyte  bank  boundaries.  Testable
+        memory is  dynamically defined  by the  program according  to available
+        system memory.  By definition there  will always be at least  two banks
+        of  memory  (the  second  512K  and  the  second  megabyte).   A system
+        containing 4 megabytes would, of course, contain four banks.
+
+
+        The testable portion  of each megabyte bank  is limited to the  size of
+        the  smallest bank  (see Figure  8-3).  For  example, in  a  4 megabyte
+        system, the first testable bank  is the second 512K of memory,  so that
+        the first  512K of the  second megabyte is  dynamically defined  as the
+        second testable bank.  In such  a case, the second 512K of  the second,
+        third,  and fourth  megabytes would  not be  tested by  Section  2.  If
+        system  memory consists  of 2  megabytes plus  128K, the  size  of each
+        testable bank will be 128K:  in this case, the first testable bank will
+        be the low 128K of the  second 512K of memory, and the  second testable
+        bank will be the 128K that begins at physical address 100000.
+
+
+        Section 2 sequentially writes to all locations of a particular 16K test
+        block within each  available bank.  The data  is then read back  in the
+        following order:   first location from  the first bank,  first location
+        from the  second bank, first  location from the  third bank,  and first
+        location from the fourth bank.  The next set of accesses  would address
+        the second location from the  first bank, the second location  from the
+        second  bank,  the second  location  from the  third  bank,  the second
+        location from  the fourth bank,  and so on,  until all 16K  blocks from
+        each bank have  been  completely addressed.  skip  Section 2 of  Test 5
+        does not use every  possible segmentation register, nor does  it access
+        every possible 16K memory block.  The maximum number of 16K blocks that
+        will be tested in  a 1 megabyte bank is  equal to the number  of blocks
+        available in the smallest bank.  Since the first memory bank is defined
+        as the second 512K bytes of memory, a maximum of 32 16K blocks  will be
+        accessed in a given bank.  (The number of testable 16K blocks  could be
+        considerably smaller if the second, third, or fourth  megabyte actually
+        contains  less than  512K bytes.)  Despite this  limitation,  Section 2
+        gives the bank-select hardware a reasonably thorough exercise.
+
+
+        Test data used by Section 2 is derived from the 22-bit  relocated start
+        address for  a given  16K block,  in the  same manner  as that  used in
+        Section 1 of this test (See Section 10.5, Tet Data Patterns).
+
+
+
+
+
+
+
+
+
+        59         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        During execution of this  test section, the number of  the segmentation
+        register set  currently being  tested is  displayed at  X on  the front
+        console.   (See  Figure  6-1  and  Section  6.6)  The  number   of  the
+        segmentation register  currently being tested  is displayed at  Y.  The
+        current error count is displayed at CC. (if error occurred) The current
+        pass count is displayed at PP.
+
+
+        4 megabyte system:  57 seconds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        60         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                        8.6  Test 6, Relocation Scope Loop Test
+
+
+
+        Test 6 is an oscilloscope loop, consisting of one section.   (This Test
+        does NOT run on the TSI controller or MAC V board). It allows  the user
+        to check the MAC relocation and protection circuitry under a variety of
+        conditions.   Watchdog Timer  should  be disabled  before  running this
+        test.   Terminal commands  are provided  that permit  the  selection of
+        either  default   or  operator-specified   values  for   the  following
+        parameters:
+
+
+        Parameter                             Default
+
+        Segmentation register set             set 0
+
+        Segmentation limit field              FF
+
+        Relocation value                      first 1K boundary after
+                                              diagnostic code
+
+        Segment protection type(s)            presence bit set
+
+        Memory access type(s)                 read from relocated memory
+
+        Data pattern                          AAAA
+
+        Virtual memory range:
+
+          more than 128K physical memory      end of diagnostic code to
+                                              virtual address 0FFFFE
+
+          128K of physical memory only        virtual address 20000 to
+                                              20000 plus amount of physical
+                                              memory in excess of 71K
+
+
+
+
+        These  values  are set  and  the  MAC enabled  before  the  loop begins
+        executing.  The loop repeats  continually until halted by  the terminal
+        Escape  key  (or by  the  PSW key  on  the Engine  console).   The loop
+        consists  of a  user-specified  combination of  memory  accesses (read,
+        write, fetch, or read-modify-write) performed through  the segmentation
+        registers from the highest  to the lowest virtual memory  address.  The
+        same address is used  for each segment before decrementing  the address
+        for all segments.  At the low end of the virtual memory range, the loop
+        repeats if an Escape character has not been entered.
+
+
+
+
+
+        61         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Test 6 has no error codes or error messages.  However, a variety of MAC
+        interrupts  can  be  generated,  depending  on  how   the  segmentation
+        registers  are  set  up.   As  each  interrupt  occurs,  information is
+        displayed on the console in the form:
+
+                s reee iiii
+
+
+        where  s  is  the  segmentation register  set,  r  is  the segmentation
+        register of the program execution address when the  interrupt occurred,
+        eee is the interrupt count, and iiii is the contents of the  MAC Status
+        Register pertaining to  that interrupt (see  Figure 9-1).  Note  that r
+        will be zero unless a memory fetch cycle is being executed alone.
+
+
+                                    NOTE
+
+
+             Information displayed on the Engine console during  loop execution
+        is determined by the value of the Console Display command (COND).  Each
+        time the  RUN command is  entered, the console  display is  cleared and
+        reset to:
+
+                     D 1A05 0000
+
+
+             During  execution,  if  the  value  of  COND  is  1  (the  default
+        condition), the display contains D 1A05 xxxx, where xxxx is  the number
+        of passes (from 0000 to FFFF in hexadecimal) through the virtual memory
+        range. If a MAC interrupt occurs, the display shifts to the form s reee
+        iiii.  See Console Display Mode command, Section 8.6.2.3.
+
+
+
+
+
+                    8.6.1  Testing Procedure
+
+        Test  6  must be  selected  and  run individually  by  entering  on the
+        terminal the DELT, ADDT, and RUN commands as follows:
+
+        Example:
+                *DELT 2,3,4,5<CR>
+                *ADDT 6<CR>
+                *RUN<CR>
+
+
+
+
+
+
+
+
+
+        62         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        The following message is then  displayed, along with the Test  6 prompt
+        (>) indicating that Test 6 commands can be entered:
+
+             TEST 6 RELOCATION SCOPE LOOP TEST STARTING
+             SECTION 01 STARTING
+             ENTER COMMAND:
+             >
+
+
+        The  RUN command  starts execution  of the  loop using  the  default or
+        operator-specified parameters.  The  Abort Testing command  <ESC> halts
+        the loop  and returns  a prompt  (>) when  the low  end of  the virtual
+        memory  range  is reached.   The  EXIT command  terminates  Test  6 and
+        returns control to the Diagnostic Monitor.
+
+
+                                       NOTE
+
+
+             The length of time required for the loop to halt when an  <ESC> is
+        entered could be as much as 1 minute, depending on the  memory cycle(s)
+        selected and the amount of system memory.
+
+
+
+
+
+
+
+                    8.6.2  Test 6 Command Descriptions
+
+        Valid commands for Test 6  are described in the following  sections (in
+        alphabetical  order,  by  mnemonic).   For  those   commands  requiring
+        arguments,  an  INVALID  message will  result  if  valid  arguments are
+        omitted.  The term  "initial state" refers  to the condition  in effect
+        when Test  6 is  first started,  or when  the Default  Parameter Select
+        command  (DEF) has  been entered.   Test 6  commands are  summarized in
+        Appendix II.
+
+
+        Several commands can be entered on the same line (separated by commas),
+        so long as line length does not exceed 80 characters.  Commands  may be
+        entered in  either upper  or lower case.   Arguments must  be separated
+        from command words by a space.  The correct format is as follows:
+
+
+             >cmd1 arg1 arg2,cmd2 arg1,cmd3<CR>
+
+
+        When  several  commands  are  entered on  one  line,  the  commands are
+        processed  in  the order  given.   In the  case  of  mutually exclusive
+        commands (such as FTCH and  RMWR), the last command entered will  be in
+
+
+        63         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        effect when the loop executes.  If RUN is entered on a line  with other
+        commands, it  must be the  last command in  the line.  Commands  in the
+        same line following the RUN command are ignored.
+
+        Standard  diagnostic  line  editing  commands   (Control-A,  Control-W,
+        Control-Q) can be  used in Test 6.   When a command line  containing an
+        error(s) is entered, the position number(s) of the erroneous command(s)
+        is displayed on the terminal.  In such a case, only the  bad command(s)
+        (with any arguments) need be re-entered.
+
+
+                                NOTE
+
+
+             The Clear Memory Cycle command (CLR) allows the user to cancel and
+        reselect  the   memory  cycle(s)  without   altering  any   other  test
+        parameters.   The Display  Current Parameters  command  (DISP) confirms
+        selected test values and segmentation registers before the  RUN command
+        is entered.  Note  that test values are  not actually loaded  until the
+        user enters the RUN command.
+
+
+
+
+
+        8.6.2.1  BANK  : Memory bank select
+
+        Syntax:  BANK x
+
+        Initial State: 0
+
+        Values:  0 to 3
+
+        This command selects  the megabyte bank  used for memory  accesses.  It
+        sets bits 2 and 3  in segmentation registers 2 through F.   The command
+        is valid only for a MAC  II.  Note that the BANK command  is overridden
+        by the SEG command.
+
+
+
+
+
+        8.6.2.2  CLR   : CLEAR MEMORY CYCLE
+
+        Syntax:  CLR
+
+        This command clears all previously selected memory cycles, allowing the
+        user to input new memory cycle commands (see FTCH, READ, RMWR, and WRIT
+        commands).
+
+
+
+
+
+        64         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.3  COND  : CONSOLE DISPLAY MODE
+
+        Syntax:  COND x
+
+        Initial State: 1
+
+        Values:  0 or 1
+
+        This command specifies the type  of information to be displayed  on the
+        Engine console as  the loop executes.  When  entered with a value  of 1
+        (the initial state), this command sets the console display to the form:
+
+              D 1A05 xxxx
+
+
+        This is the "normal" console display mode, where xxxx is the  number of
+        passes (from 0000  to FFFF in  hexadecimal) through the  virtual memory
+        range.  If an interrupt occurs, the display shifts to the form:
+
+                        s reee iiii
+
+
+        where s is the segmentation  register set, eee is the  interrupt count,
+        and iiii represents the MAC Status Register.
+
+
+        When entered with a  value of 0, this  command sets the display  to the
+        form s  reee iiii.   While in this  mode, the  display does  not change
+        during loop execution unless interrupts occur.
+
+
+
+        8.6.2.4  DEF   : DEFAULT PARAMETER SELECT
+
+        Syntax:  DEF
+
+        This  command  resets  all  test  parameters  to  their  default values
+        (including the memory cycle to read)
+
+
+
+        8.6.2.5  DISP  : Display Current Parameters
+
+        Syntax:  DISP
+
+        This command displays a  list of all currently selected  parameters and
+        all  segmentation  registers.   It should  be  entered  before  the RUN
+        command  to confirm  that desired  parameters have  been  selected.  If
+        entered after the RUN command in the same line, it has no effect.
+
+
+
+
+
+        65         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.6  <ESC> : Abort Testing
+
+        Syntax:  Escape key <ESC>
+
+        This command halts execution of the loop when it reaches the low end of
+        the virtual memory  range.  The Escape key  can be pressed at  any time
+        during loop  execution, and the  Test 6 prompt  will be  displayed.  No
+        test parameter values are changed.  Note that the loop may take as long
+        as 1 minute to halt, depending on the memory cycle(s) selected  and the
+        amount of system memory.
+
+
+
+        8.6.2.7  EXIT  : Exit from Test 6
+
+        Syntax:  EXIT
+
+        This  command  exits  Test  6 and  returns  control  to  the Diagnostic
+        Monitor.  To select  and run other tests,  use the DELT, ADDT,  and RUN
+        commands.
+
+
+
+        8.6.2.8  FTCH  : Instruction Fetch Memory Cycle
+
+        Syntax:  FTCH
+
+        This  command specifies  an  instruction fetch  as the  type  of memory
+        access  to be  performed;  a jump  instruction (data  pattern  0300) is
+        executed within the virtual memory range.  This command can be combined
+        with the READ command and/or  the WRIT command.  The FTCH and  the RMWR
+        commands are mutually  exclusive; if both FTCH  and RMWR are  used, the
+        last command entered will be in effect.
+
+
+
+        8.6.2.9  HELP  : Help Menu
+
+        Syntax:  HELP
+
+        This command prints a HELP menu that lists all valid commands  for Test
+        6.
+
+
+
+
+
+
+
+
+
+
+
+
+        66         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.10  PATT  : Data Pattern Select
+
+        Syntax:  PATT xxxx
+
+        Initial State: AAAA
+
+        Values:  0000 to FFFF
+
+        This command specifies the  data pattern used for read-data  and write-
+        data memory cycles, where  xxxx is the operator-specified  data pattern
+        in  hexadecimal.   The  specified  pattern  is  stored  throughout that
+        portion of memory not containing the diagnostic code.
+
+        When this command is not  entered, the default data pattern AAAA  is in
+        effect.  If the FTCH command  is used, the data pattern 0300  is stored
+        throughout available memory instead of the selected data pattern.
+
+
+
+        8.6.2.11  PROT  : Protection Select
+
+        Syntax:  PROT x
+
+        Initial State: 1 (presence bit)
+
+        Values:  0 to F
+
+        This  command  sets  the  type of  protection  to  be  loaded  into all
+        segmentation registers under  test.  The value of  x can range 0  to F,
+        representing the following bit settings:
+
+             0001    presence bit
+             0010    write protection
+             0100    write interrupt
+             1000    execute protection
+
+        The initial state of this  command is 1, which prevents  MAC interrupts
+        caused by presence error.  Note that the PROT command is  overridden by
+        the SEG command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        67         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.12  RANG  : Memory Range Select
+
+        Syntax:  RANG xxxxxx yyyyyy
+
+        Initial State: 012000 to 0FFFFE (more than 128K of memory)
+                       020000 to 02E3FE (128K of memory)
+
+        Values:  x = 0 to 0FFFFF
+                 y = 0 to 0FFFFF
+
+
+        This command specifies the virtual memory range used for testing, where
+        xxxxxx  is the  starting  virtual address,  and yyyyyy  is  the highest
+        virtual  address.  For  system memory  in excess  of 128K,  the default
+        range begins at  address 012000, which is  the first 1K  boundary after
+        the end of the diagnostic code.  For system memory of 128K, the default
+        range (020000 to 02E3FE) tests all of available memory.
+
+
+
+        8.6.2.13  READ  : Read-Data Memory Cycle
+
+        Syntax:  READ
+
+        Initial State: Enabled
+
+        This command selects the read memory cycle as the type of memory access
+        to be  performed.  The command  can be combined  with the  FTCH command
+        and/or the WRIT  command.  The READ command  and the RMWR  commands are
+        mutually exclusive; if both commands are used, the last command entered
+        will be in effect.
+
+
+
+        8.6.2.14  REL   : Relocation Value Select
+
+        Syntax:  REL xxx00
+
+        Initial State: 120
+
+        Values:  000 to FFF (read cycle only, if Bank Select is 0)
+                 120 to FFF (any memory cycle, if Bank Select is 0)
+                 000 to FFF (any memory cycle, if Bank Select is not 0)
+
+
+        This  command specifies  a  relocation value  (xxx) to  be  loaded into
+        segmentation registers 2 through F.  In order to protect the diagnostic
+        code when the value of Bank Select is zero, relocation values below 120
+        are invalid for all memory cycles except read.  When the value  of Bank
+        Select is other than zero,  relocation values 000 to FFF are  valid for
+        all memory cycles.  Note that the REL command is overridden by  the SEG
+        command.
+
+
+        68         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.15  RMWR  : Read-Modify-Write Memory Cycle
+
+        Syntax:  RMWR
+
+        This command selects the read-modify-write memory cycle as the  type of
+        memory access to  be performed.  The  instruction executed is  the test
+        and set instruction (TS).
+
+
+                                         NOTE
+
+
+             The RMWR command and the other three memory-cycle  select commands
+        (FTCH, READ,  WRIT) are  mutually exclusive.  If  RMWR is  entered, any
+        previously selected  memory cycle is  ignored.  Similarly, if  RMWR has
+        been selected and  either the FTCH, READ,  or WRIT command  is entered,
+        the RMWR command is ignored.
+
+
+
+        8.6.2.16  RUN   : Run Command
+
+        Syntax:  RUN
+
+        This  command causes  default  or operator-specified  parameters  to be
+        loaded and starts the loop.  Memory accesses will be made from  the top
+        to the bottom of the virtual memory range.  The test continues  to loop
+        until the Escape key  is pressed.  When RUN  is entered on a  line with
+        other commands, the RUN command  must be the last command on  the line.
+        Any  commands  entered in  the  same  line after  the  RUN  command are
+        ignored.
+
+
+
+        8.6.2.17  SEG   : Segmentation Register Contents
+
+        Syntax:  SEGx yyyyyyyy
+
+        Initial State: x 0FF12010
+
+        Values:         x = 2 to F
+                 yyyyyyyy = 0 to FFFFFFFF
+
+
+        This  command is  valid for  segmentation registers  2 through  F only.
+        (Registers 0 and 1 are reserved for program control.) The  command sets
+        bits (y)  in the  specified segmentation  register (x).   The specified
+        value remains  unchanged until either the SEG command is  re-entered or
+        the DEF command is entered.  The program does not validate the y value,
+        except to ensure the integrity  of the diagnostic code before  the loop
+        begins executing.  Note that this command overrides the PROT,  REL, and
+        BANK commands for segmentation register x only.
+
+
+        69         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        8.6.2.18  SET   : Segmentation Register Set
+
+        Syntax:  SET x
+
+        Initial State: 0
+
+        Values:  0 to F
+
+
+        This command is  valid only when  testing a MAC II  board or a  MAC III
+        board.  The command selects the specified segmentation register  set to
+        be used, where x is the register set from 0 through F.  Note  that this
+        command can be  used repeatedly to change  register sets prior  to each
+        entry of the RUN command without having to re-enter  other segmentation
+        register values.
+
+
+
+        8.6.2.19  WRIT  : Write-Data Memory Cycle
+
+        Syntax:  WRIT
+
+        Initial State: None
+
+        This command  specifies the memory  write cycle as  the type  of memory
+        access to  be performed.   The command  can be  combined with  the READ
+        command and/or the FTCH command.  The WRIT command and the RMWR command
+        are mutually  exclusive; if  both commands are  used, the  last command
+        entered will be in effect.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        70         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+                    8.6.3  Command Sequence Examples
+
+        Typical testing situations and  command sequences for Test 6  are shown
+        in the following examples.  Operator input on the terminal is  given in
+        lower case; Test 6 terminal messages are given in uppercase.
+
+
+
+        Example 1 :  Initiate testing using default parameters.
+                     Display selected parameters before starting loop.
+
+             *delt 2,3,4,5<CR>
+             *addt 6<CR>
+             *run<CR>
+             TEST 6 RELOCATION SCOPE LOOP TEST STARTING
+                 SECTION 01 STARTING
+             ENTER COMMAND:
+             >disp<CR>
+             DEFAULT PARAMETER SETTINGS FOR RELOCATION SCOPE LOOP TEST:
+             MEMORY CYCLE:  READ,
+             MEMORY RANGE:  012000 TO: 0FFFFE
+             RELOCATION FACTOR: 12000
+             PATTERN: AAAA
+             PROTECTION: PRESENCE BIT SET,
+
+             NORMAL CONSOLE DISPLAY IS ON
+
+             SEGMENTATION REGISTER SET: 0.
+             SEGMENTATION REGISTERS:
+
+             0: 0FF00010    1: 0FF10010    2: 0FF12010    3: 0FF12010
+             4: 0FF12010    5: 0FF12010    6: 0FF12010    7: 0FF12010
+             8: 0FF12010    9: 0FF12010    A: 0FF12010    B: 0FF12010
+             C: 0FF12010    D: 0FF12010    E: 0FF12010    F: 0FF12010
+             ENTER COMMAND:
+             >run<CR>
+             LOOP NOW BEGINNING.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        71         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Example  2 :   Perform instruction  fetch and  read  operations through
+        segmentation register set 9, using relocation value 234,  presence bit,
+        write  protect  bit, and  contents  1FF300F0 for  register  4.  Display
+        selected parameters before execution.  (The loop in Example 1  is still
+        executing.)
+
+             <ESC>
+             ENTER COMMAND:
+             >ftch,prot 3,rel 23400,set 9,seg4 1FF300F0,disp,run<CR>
+             MEMORY CYCLE:  READ, FETCH,
+             MEMORY RANGE:  012000  TO: 0FFFFE
+             RELOCATION FACTOR: 23400
+             PATTERN: AAAA
+             PROTECTION: PRESENCE BIT SET, WRITE BIT SET,
+             NORMAL CONSOLE DISPLAY IS ON
+             SEGMENTATION REGISTER SET: 9
+             SEGMENTATION REGISTERS:
+
+             0: 0FF00010    1: 0FF10010    2: 0FF23430    3: 0FF23430
+             4: 1FF300F0    5: 0FF23430    6: 0FF23430    7: 0FF23430
+             8: OFF23430    9: 0FF23430    A: 0FF23430    B: 0FF23430
+             C: 0FF23430    D: 0FF23430    E: 0FF23430    F: 0FF23430
+             LOOP NOW BEGINNING.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        72         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Example 3 :  Reset  parameters to default values;  perform memory-write
+        cycles through segmentation register set 0, with presence bit and write
+        interrupt bit set, using  data pattern 1234; display  parameters before
+        execution.   These test  parameters should  generate  write interrupts.
+        During execution the Engine display console contains s reee iiii, where
+        s  is the  register set,  r is  the segmentation  register, eee  is the
+        interrupt count,  and iiii  is the  value of  the MAC  Status Register.
+        Note that  for a MAC  I, iiii should  contain 0002; for  a MAC II  or a
+        Micro-Engine,  iiii   should  contain  0402.    (Example  2   is  still
+        executing.)
+
+             <ESC>
+             ENTER COMMAND:
+             >def,clr,writ,prot 5,patt 1234,disp<CR>
+             MEMORY CYCLE: WRITE
+             MEMORY RANGE: 012000 TO: 0FFFFE
+             RELOCATION FACTOR: 12000
+             PATTERN: 1234
+             PROTECTION: PRESENCE BIT SET, WRITE INTERRUPT,
+
+             NORMAL CONSOLE DISPLAY IS ON
+
+             SEGMENTATION REGISTER SET: 0
+             SEGMENTATION REGISTERS:
+
+             0: 0FF00010    1: 0FF10010    2: 0FF12050    3: 0FF12050
+             4: 0FF12050    5: 0FF12050    6: 0FF12050    7: 0FF12050
+             8: 0FF12050    9: 0FF12050    A: 0FF12050    B: 0FF12050
+             C: 0FF12050    D: 0FF12050    E: 0FF12050    F: 0FF12050
+             ENTER COMMAND:
+             >run<CR>
+             LOOP NOW BEGINNING.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        73         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Example  4  :   Perform only  read-modify-write  cycles  to  the second
+        megabyte of  memory using the  same parameters as  Example 3,  but with
+        write protection instead of write interrupt.  Display parameters before
+        execution.   Expect MAC  interrupts with  a MAC  status value  of 0404.
+        (Example 3 is still executing.)
+
+             <ESC>
+             ENTER COMMAND:
+             >rmwr,bank 1,prot 3,disp<CR>
+             MEMORY CYCLE: READ MODIFY WRITE
+             MEMORY RANGE: 012000  TO: 0FFFFE
+             RELOCATION FACTOR: 12000
+             PATTERN: 1234
+             PROTECTION: PRESENCE BIT SET, WRITE BIT SET
+
+             NORMAL CONSOLE DISPLAY IS ON
+
+             SEGMENTATION REGISTER SET: 0
+             SEGMENTATION REGISTERS:
+
+             0: 0FF00010    1: 0FF10010    2: 1FF12030    3: 1FF12030
+             4: 1FF12030    5: 1FF12030    6: 1FF12030    7: 1FF12030
+             8: 1FF12030    9: 1FF12030    A: 1FF12030    B: 1FF12030
+             C: 1FF12030    D: 1FF12030    E: 1FF12030    F: 1FF12030
+             ENTER COMMAND:
+             >run<CR>
+             LOOP NOW BEGINNING.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        74         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Example 5 :  Syntax errors and messages
+
+             ENTER COMMAND:
+             >def,rang 30000 4fffe,seg3 ff00010,writ,run<CR>
+             SEGMENTATION REGISTER: 3 CONTAINS A RELOCATION THAT WILL
+             OVERWRITE THE DIAGNOSTIC.  PLEASE MAKE THE APPROPRIATE
+             CORRECTION.
+             ENTER COMMAND:
+             >seg3 ffe00d0,disp<CR>
+             MEMORY CYCLE: READ, WRITE
+             MEMORY RANGE: 030000 TO: 04FFFE
+             RELOCATION FACTOR: 12000
+             PATTERN: AAAA
+             PROTECTION: PRESENCE BIT SET,
+
+             NORMAL CONSOLE DISPLAY IS ON
+
+             SEGMENTATION REGISTER SET: 0
+             SEGMENTATION REGISTERS:
+
+             0: 0FF00010    1: 0FF10010    2: 0FF12010    3: 0FFE00D0
+             4: 0FF12010    5: 0FF12010    6: 0FF12010    7: 0FF12010
+             8: 0FF12010    9: 0FF12010    A: 0FF12010    B: 0FF12010
+             C: 0FF12010    D: 0FF12010    E: OFF12010    F: 0FF12010
+             ENTER COMMAND:
+             >run<CR>
+             LOOP NOW BEGINNING.
+
+             <ESC>
+             ENTER COMMAND:
+             >rel 92320<CR>
+             RELOCATION FACTOR INVALID. COMMAND ABORTED.
+             ENTER COMMAND:
+             >rdl 30000,set 3<CR>
+             COMMAND #1 IS INVALID. COMMAND ABORTED.
+             ENTER COMMAND:
+             >rel 30000,run<CR>
+             LOOP NOW BEGINNING.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        75         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST DESCRIPTIONS                                     September 4, 1990
+
+
+        Example 5 :  Syntax errors and messages--Continued
+
+             <ESC>
+             ENTER COMMAND:
+             >exit<CR>
+
+                    SECTION 01 - NO ERRORS
+
+             END OF TEST 6  NO ERRORS FOUND
+             PASS - 00000001    NUMBER OF ERRORS FOUND = 00000000
+             END OF TESTING
+             *delt 6<CR>
+             *
+
+
+                                    NOTE
+
+             The pass count and error count in the End-of-Test message do not
+             apply to Test 6 and should be ignored.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        76         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+
+
+
+
+                                9 -  ERROR DESCRIPTIONS
+
+
+        Error messages  displayed on  the terminal  consist of  combinations of
+        the following lines, in the following order:
+
+        ERROR xxyyzz        ERROR COUNT xxxx        PASS COUNT xxxx
+        DATA READ       xxxxxxxx
+        DATA EXPECTED   xxxxxxxx
+        DEVICE ADDRESS xx             DEVICE STATUS xx
+        READ BUFFER ADDRESS xxxxx     WRITE BUFFER ADDRESS xxxxx
+        BUFFER INDEX xxxxx            BUFFER LENGTH xxxxx
+        other text
+        EXPLANATION OF THIS ERROR:
+        explanation text
+
+        Table 9-1 lists  the information contained in  each field of  the error
+        message.  Individual error codes may reference the MAC  Status Register
+        shown in Figure 9-1.
+
+                         Table 9-1.  Error Message Fields
+
+
+        Field                             Content
+
+        ERROR                    xx = test number, yy = section number,
+                                 zz = error code.
+
+        ERROR COUNT              xxxx = number of errors (in decimal) found
+                                 since entry of the last RUN command.
+
+        PASS COUNT               xxxx = number of passes (in decimal) since
+                                 the last RUN command was entered.
+                                 If the number of passes is greater than
+                                 FFFF, only the four least-significant
+                                 digits are displayed.
+
+        DATA READ                xxxxxxxx = the first bad data read.
+
+        DATA EXPECTED            xxxxxxxx = the data that was expected.
+
+        DEVICE ADDRESS           xx = the device addressed when the error
+                                 occurred.  Data is not displayed
+                                 unless a device was addressed.
+
+        MEMORY ADDRESS           xxxxx = the physical memory address where
+                                 the error occurred.  Data is not displayed
+                                 unless memory was accessed.
+
+
+        77         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        DEVICE STATUS            xx = the status of the device causing the
+                                 error.  Data is not displayed
+                                 unless a device was addressed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        78         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                         Table 9-1.  Error Message Fields--Continued
+
+        Field                             Content
+
+        READ BUFFER ADDRESS      xxxxx = the starting address of the
+                                 read buffer used when the error
+                                 occurred. Data is not displayed
+                                 unless a buffer is being used.
+
+        WRITE BUFFER ADDRESS     xxxxx = the starting address of the
+                                 write buffer used when the error
+                                 occurred. Data is not displayed
+                                 unless a buffer is being used.
+
+        BUFFER LENGTH            xxxxx = the length of the buffers in
+                                 bytes. Data is not displayed unless
+                                 a buffer is being used.
+
+        BUFFER INDEX             xxxxx = the index from the start of the buffer
+                                 to where the first bad data was
+                                 found. Data is not displayed unless
+                                 a buffer is being used.
+
+        EXPLANATION OF ERROR:    an explanation of this error is displayed.
+
+        OTHER TEXT               Depending on the error involved,
+                                 the following relevant data may be
+                                 displayed:
+
+                                   Segmentation Register Number
+                                   Segmentation Register Set
+                                   Relocation Value
+                                   Nonrelocated (virtual) Address
+                                   Relocated Address
+                                   MAC Status
+                                   Segmentation Register Contents Written
+                                   Segmentation Register Contents Read
+                                   Data Written
+                                   Data Read
+                                   PSW
+                                   Location Counter
+                                   Jump Address
+
+
+
+
+
+
+
+
+
+
+
+
+        79         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Figure 9-1.  MAC Status Register, Location 0342
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        80         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                             9.1  Unexpected System Errors
+
+
+        When the diagnostic is run with a terminal, an unexpected  system error
+        will  cause the  monitor to  display an  error message  and  prompt for
+        another  command.   If  the  error  occurs  while  no  test  section is
+        executing, the test and section portions of the error code  (xxyy) will
+        be  0000.  If  the  diagnostic is  being  run without  a  terminal, the
+        default tests are automatically restarted.
+
+        Unexpected system errors have the following error codes:
+
+                xxyyF2  Illegal instruction interrupt
+
+                xxyyF5  Unexpected MAC interrupt
+
+                xxyyF9  Unexpected trace interrupt
+
+        The following error messages may also be generated:
+
+           ILLEGAL PROGRAM TERMINATION - A program or hardware error
+                                         occurred that does not
+                                         allow the Diagnostic to run
+
+           UNEXPECTED I/O INTERRUPT OCCURRED - An unexpected I/O
+                                               device interrupted.
+
+           INVALID TEST SELECTED - An attempt was made to run a
+                                   nonexistent test.
+
+           UNEXPECTED SVC EXECUTED - An unexpected SVC instruction
+                                     Supervisor Call) was executed.
+
+           UNEXPECTED MACHINE MALFUNCTION INTERRUPT - An unexpected machine
+                                                      malfunction interrupt
+                                                      occurred, caused by
+                                                      one of the following:
+
+             o  Recovery from a power failure (same as cold start)
+
+             o  Pressing the front console INI key (which simulates a
+                power-fail condition)
+
+             o  A memory parity error
+
+             o  Depressing the SYSCLR switch on the CPU board
+
+
+
+
+
+
+
+
+        81         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                                9.2  Test 2 Error Codes
+
+        Error
+        Number                           Cause
+
+        020101       Data read from a segmentation register is not
+                     equal to data written to that register.
+
+        020202       Same as above.
+
+        020303       Same as above.
+
+
+                                      NOTE
+
+             For all the  errors in Test 2,  the OTHER TEXT field  contains the
+             respective numbers of  the segmentation register and  register set
+             where the error occurred.
+
+
+
+
+
+
+                                9.3  Test 3 Error Codes
+
+        Error
+        Number                           Cause
+
+        030104       Data read from a memory location is not equal to the
+                     data written to that location (relocation enabled).
+
+        030105       Data read from a memory location is not equal to
+                     the data written to the location (relocation
+                     not  enabled).
+
+
+                                         NOTE
+
+
+             For  both errors  in Test  3, the  OTHER TEXT  field  contains the
+             nonrelocated address,  the relocated  address, and  the relocation
+             value used when the error occurred.
+
+
+
+
+
+
+
+
+
+
+
+        82         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                                9.4  Test 4 Error Codes
+
+        (Where yy is the test section number)
+
+        Error                            Cause
+        Number
+
+                                   Section 1,2,3,4,5,6
+
+        04yy91    The expected and the actual error address (absolute)
+                  values do not match.
+
+        04yy92    The expected and the actual error address (virtual)
+                  values do not match.
+
+        04yy93    The expected and the actual last instruction fetch
+                  (virtual) addresses do not match.
+
+        04yy94    The expected and the actual last instruction fetch
+                  (absolute) addresses do not match.
+
+
+        Error                            Cause
+        Number
+                                       Section 1
+
+
+        040106    MAC interrupt did not occur during a memory-write cycle
+                  (presence bit reset in the segmentation register).
+
+        040107    MAC interrupt did not occur during a memory-read cycle
+                  (presence bit reset in the segmentation register).
+
+        040108    MAC interrupt did not occur during an attempted
+                  instruction fetch (presence bit reset
+                  in the segmentation register).
+
+        040109    Bad or no MAC status (other than presence error) found
+                  after a MAC interrupt occurred during a memory-write
+                  cycle (presence bit reset in the segmentation register).
+
+        040110    Bad or no MAC status (other than presence error) found
+                  after a MAC interrupt occurred during a memory-read
+                  cycle (presence bit reset in the segmentation register).
+
+        040111    Bad or no MAC status (other than presence error)
+                  found after a MAC interrupt occurred during an
+                  instruction fetch from memory
+                  (presence bit reset in the segmentation register).
+
+        040112    Unexpected MAC interrupt occurred on a condition other
+                  than error codes 040106, 040107, and 040108 (presence
+                  bit reset in the segmentation register).
+
+        83         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        040113    An illegal instruction interrupt occurred while
+                  attempting an instruction fetch from memory (presence
+                  bit reset in the segmentation register).
+
+
+                                      Section 2
+
+        040214    Data written was not equal to the data read (presence
+                  bit set in the segmentation register).
+
+        040215    Unexpected MAC interrupt occurred with a MAC status
+                  other than presence error (presence bit set
+                  in the segmentation register).
+
+        040216    Unexpected MAC interrupt occurred with a MAC status
+                  of presence error (presence bit set
+                  in the segmentation register).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        84         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Error
+        Number                           Cause
+
+                                       Section 3
+        040317    Data written was not equal to the data read (execute
+                  protect bit set in the segmentation register).
+
+        040318    MAC interrupt did not occur during an instruction fetch
+                  (execute protect bit set in the segmentation register).
+
+        040319    Unexpected MAC interrupt occurred during a memory-write
+                  cycle (execute protect bit set in the segmentation
+                  register).
+
+        040320    Unexpected MAC interrupt occurred during a memory-read
+                  cycle (execute protect bit set in the segmentation
+                  register).
+
+        040321    Unexpected MAC interrupt occurred under conditions other
+                  than error codes 040319 and 040320 (execute protect
+                  bit set in the segmentation register).
+
+        040327    Bad or no MAC status (other than execute protect error)
+                  after a MAC interrupt occurred (execute protect
+                  bit set in segmentation register).
+
+
+                                     Section 4
+
+
+        040422    MAC interrupt did not occur on a memory-write cycle
+                  (write interrupt bit set in the segmentation register).
+
+        040423    Bad or no MAC status (other than write interrupt) after
+                  a MAC interrupt occurred during a memory-write cycle
+                  (write interrupt bit set in the segmentation register).
+
+        040424    Occurs on a memory-read cycle (write interrupt bit set
+                  in the segmentation register).  If testing a MAC I then
+                  bad MAC status was found (that is, status other than 2).
+                  If testing a Micro-Engine, HDLC Micro-Engine, a MAC II,
+                  a MAC III, or a TSI MAC then an unexpected MAC interrupt
+                  occurred.
+
+        040425    Occurs on an instruction fetch from memory
+                  (write interrupt bit set in the segmentation register
+                  ).  If testing a MAC I then bad MAC status was found
+                  (that is, status other than 2). If testing a HDLC
+                  Micro-Engine, Micro-Engine, a MAC II, a MAC III, or a
+                  TSI MAC then an unexpected MAC interrupt occurred.
+
+        040426    Unexpected MAC interrupt occurred on a condition
+                  other than error codes 040424 or 040425 (write interrupt
+
+        85         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                  bit set in the segmentation register).
+
+        040445    Data read was not equal to the data written
+                  (write interrupt bit set in the segmentation register).
+
+        040446    Instruction fetch from the test location failed,
+                  as if the jump to the test location were a NOP instruction
+                  instruction (no operation)
+                  (write interrupt bit set in the segmentation register).
+
+                                     Section 5
+
+        040528    MAC interrupt did not occur on a memory-write cycle
+                  (write protest bit set in the segmentation register).
+
+        040529    Data was written to the test location on a memory-write
+                  cycle (write protect bit set in the segmentation
+                  register).
+
+        040530    Instruction fetch from the test location failed,
+                  as if the jump to the test location were a NOP
+                  instruction (no operation) (write protect
+                  bit set in the segmentation register).
+
+        040531    Bad or no MAC status (that is, other than write
+                  protect error) after a MAC interrupt occurred (write
+                  protect bit set in the segmentation register).
+
+        040532    Unexpected MAC interrupt occurred on a memory-read
+                  cycle (write protect bit set in the segmentation
+                  register).
+
+        040533    Unexpected MAC interrupt occurred on an instruction
+                  fetch from memory (write protect bit set in the
+                  segmentation register).
+
+        040534    Unexpected MAC interrupt occurred on conditions other
+                  than error codes 040532 or 040533 (write protect bit
+                  set in the segmentation register).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        86         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Error
+        Number                           Cause
+
+                                       Section 6
+
+        040635    MAC interrupt did not occur during a memory-write cycle
+                  (virtual address larger than the limit value
+                  in the segmentation register).
+
+        040636    MAC interrupt did not occur on a memory-read cycle
+                  (virtual address larger than the limit
+                  value in the segmentation register).
+
+        040637    MAC interrupt did not occur on an instruction fetch
+                  from memory (virtual address larger than
+                  the limit value in the segmentation register).
+
+        040638    Unexpected MAC interrupt occurred while testing the
+                  limit protection function with conditions other than
+                  error codes 040639, 040641, and 040643.
+
+        040639    Unexpected MAC interrupt occurred during a memory-write
+                  cycle (virtual address less than the
+                  limit value in the segmentation register).
+
+        040640    Bad or no MAC status (other than limit error) after a
+                  MAC interrupt occurred during a memory-write cycle
+                  (virtual address greater than the limit value
+                  in the segmentation register).
+
+        040641    Unexpected MAC interrupt occurred during a memory-read
+                  cycle (virtual address less than the limit
+                  value in the segmentation register).
+
+        040642    Bad or no MAC status (other than limit error) after a
+                  MAC interrupt occurred on a memory-read cycle (virtual
+                  address greater than the limit value in the
+                  segmentation register).
+
+        040643    Unexpected MAC interrupt occurred on an instruction
+                  fetch from memory (virtual address less
+                  than the limit value in the segmentation register).
+
+        040644    Bad or no MAC status (other than limit error) after a
+                  MAC interrupt occurred on an instruction fetch from memory
+                  (virtual address greater than the
+                  limit value in the segmentation register).
+
+
+
+
+
+
+
+        87         Memory Access Controller Diagnostic User's Guide      DMAC07
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                                9.5  Test 5 Error Codes
+
+        Error
+        Number                          Cause
+                                      Section 1
+
+        050150    Data read from a relocated address was not equal to data
+                  written.
+
+        050151    Unexpected machine malfunction interrupt occurred, most
+                  probably caused by a memory parity error.
+
+        050152    Unexpected MAC II interrupt occurred.  Test 5 does not
+                  intentionally perform operations that cause such
+                  interrupts.
+
+
+
+                                      Section 2
+
+        050250    Data read from a relocated address was not equal to data
+                  written.
+
+        050251    Unexpected machine malfunction occurred, most probably
+                  caused by a memory parity error.
+
+        050252    Unexpected MAC II interrupt occurred.  Test 5 does not
+                  intentionally perform operations that cause such
+                  interrupts.
+
+
+
+
+
+
+                                9.6  Test 6 Error Codes
+
+
+        There are no error codes for Test 6.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        88         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DATA PATTERNS                                         September 4, 1990
+
+
+
+
+
+
+                                  10 -  DATA PATTERNS
+
+
+        Each of the tests has its  own set of data patterns. They are  shown if
+        the following sections.
+
+
+
+
+
+
+                               10.1  Test 1 Data Pattern
+
+
+        Not currently implemented.
+
+
+
+
+
+
+                              10.2  Test 2 Data Patterns
+
+
+        The data patterns for each section of Test 2 are shown below.
+
+        Section 1
+
+             00000000 00010010 00020020 00030030    .    .    . FFFFFF00
+
+        The hexadecimal value  00010010 is added to  the current test  value to
+        determine the next test value.
+
+        Section 2
+
+             000000xy
+
+        where:  x = the segmentation register number (in hexadecimal)
+
+        y = the segmentation register set number (in hexadecimal)
+
+        Section 3
+
+             Walking zeros and walking ones.
+
+
+
+
+
+
+        89         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DATA PATTERNS                                         September 4, 1990
+
+
+                              10.3  Test 3 Data Patterns
+
+
+        Test 3 has only one section.  It uses the following data pattern:
+
+             The location address is written to itself.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        90         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DATA PATTERNS                                         September 4, 1990
+
+
+                              10.4  Test 4 Data Patterns
+
+
+        All sections of Test 4 use the following data:
+
+             4300 400x xxxx
+
+        This is an unconditional jump instruction, where x xxxx is  the address
+        to jump to within the section currently executing.
+
+
+
+
+
+
+                              10.5  Test 5 Data Patterns
+
+
+        Each megabyte bank is divided  into 16K test blocks, which are  in turn
+        divided into 32 256-halfword  sub-blocks.  The following test  data are
+        used in both sections 1 and 2:
+
+              1st bank (beginning at physical address 080000)
+
+                   2000, 2001, 2002,..., 20FF
+                   (1st 16K block, repeated 32 times)
+
+                   2100, 2101, 2102,..., 21FF
+                   (2nd 16K block, repeated 32 times)
+                        .
+                        .
+                        .
+                      up to
+
+                   3F00, 3F01, 3F02,..., 3FFF
+                   (32nd 16K block, repeated 32 times)
+
+              2nd bank (beginning at physical address 100000)
+
+                   4000, 4001, 4002,... 40FF
+                   (1st 16K block, repeated 32 times)
+
+                   4100, 4101, 4102,... 41FF
+                   (2nd 16K block, repeated 32 times)
+                        .
+                        .
+                        .
+                      up to
+
+                   7F00, 7F01, 7F02,...,7FFF
+                   (64th 16K block, repeated 32 times)
+
+
+
+        91         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DATA PATTERNS                                         September 4, 1990
+
+
+              3rd bank (beginning at physical address 200000)
+
+                   8000, 8001, 8002,..., 80FF
+                   (1st 16K block, repeated 32 times)
+
+                   8100, 8101, 8102,..., 81FF
+                   (2nd 16K block, repeated 32 times)
+                        .
+                        .
+                        .
+                      up to
+
+                   BF00, BF01, BF02,..., BFFF
+                   (64th 16K block, repeated 32 times)
+
+             4th bank (beginning at physical address 300000)
+
+                   C000, C001, C002,..., C0FF
+                   (1st 16K block, repeated 32 times)
+
+                   C100, C101, C102,..., C1FF
+                   (2nd 16K block, repeated 32 times)
+                        .
+                        .
+                        .
+                      up to
+
+                   FF00, FF01, FF02,..., FFFF
+                   (64th 16K block, repeated 32 times)
+
+        Data patterns for  each available 16K test  block are derived  from the
+        most-significant 8 bits of the relocated start address for  that block.
+        For example, the  first testable 16K  block starts at  physical address
+        080000.  This  value is  right-shifted 6 bits  to produce  the halfword
+        value 2000.   The least-significant  8 bits of  this halfword  are then
+        logically  or'ed  with   an  ascending  8-bit   value  (00  to   FF  in
+        hexadecimal), producing data patterns 2000, 2001, 2002,...,  20FF.  The
+        first pattern (2000) is written to the first address in the  16K block,
+        the second pattern (2001) is written to the next address in that block,
+        and  so on  through the  256th address  (pattern 20FF).   This sequence
+        (2000 to 20FF) is repeated for each 256-halfword sub-block  within this
+        16K block.  The same process  is repeated for subsequent 16K  blocks in
+        each megabyte  bank.  Note that  section 1 accesses  each 16K  block at
+        least once, while section 2 accesses a maximum of 32 16K blocks in each
+        bank.
+
+
+
+
+
+
+
+
+
+        92         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DATA PATTERNS                                         September 4, 1990
+
+
+                              10.6  Test 6 Data Patterns
+
+
+        Possible data patterns for Test 6 are as follows:
+
+             AAAA (default)
+
+             xxxx (operator-specified)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        93         Memory Access Controller Diagnostic User's Guide      DMAC07
+                                                              September 4, 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      *   ****  ****  ***** *   * ****  ***** *   *
+                     * *  *   * *   * *     **  * *   *   *    * * 
+                    ***** ****  ****  ****  * * * *   *   *     *  
+                    *   * *     *     *     *  ** *   *   *    * * 
+                    *   * *     *     ***** *   * ****  ***** *   *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        94         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMAND SUMMARY                                       September 4, 1990
+
+
+
+
+
+
+                             APPENDIX I.   COMMAND SUMMARY
+
+
+
+        Valid commands for  all tests of  this diagnostic are  summarized here.
+        Some commands  have parameters,  and some do  not.  For  those commands
+        having optional  parameters, a  default action  will occur  if optional
+        parameters are  omitted.  Except  for control-a,  control-q, control-w,
+        and <esc>,  a carriage  return <cr> must  always terminate  the command
+        line. See Section 8.0 for detailed command descriptions.
+
+
+        COMMAND SYNTAX                   FUNCTION
+
+        ADDT xx[yy],...                  adds tests or test sections
+                                         default:  yy (all sections)
+
+        BELL                             sounds bell on error message
+                                         display
+
+        BOOT                             load engine boot
+
+        BRKP [xx,yyyyy],...              sets 1 to 16 breakpoints
+
+             default:  lists current
+                       breakpoints
+
+        CKSM                             perform periodic checksums
+
+        control-a                        deletes previous character
+
+        control-q                        cancels command entry
+
+        control-w                        deletes previous word
+
+        DELT xx[yy],...                  deletes tests or sections
+
+             default:  yy (all sections)
+
+        DMEM                             display memory map
+
+        DOC                              display source of current
+                                         on-line user's guide
+
+        ECON [x],[y],[n]                 controls  error  handling  by  the
+                                         monitor
+             defaults:  x = 0
+                        n = 0
+
+
+        95         Memory Access Controller Diagnostic User's Guide      DMAC07
+        COMMAND SUMMARY                                       September 4, 1990
+
+
+        escape key <esc>                 return to monitor prompt
+
+        EXA  addr, n  halfwords          display memory
+
+        GO addr                          execute from address
+
+        HELP                             displays list of valid commands
+
+        LOOP [n]                         sets number of iterations executed
+                                         by the RUN command
+
+             default:  gives current
+                       loop value
+
+        MESG x                           controls diagnostic messages
+
+        MOD addr, n halfwords,data       modify memory
+
+        NAME                             print test titles
+
+        NOBE                             sound no bell on error message
+
+        NOCK                             perform no periodic checksump
+
+        OPTN                             display diagnostic options
+
+        RUN                              executes selected tests or test
+                                         sections
+
+        STAT                             print last error message
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        96         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST 6 COMMANDS SUMMARY                               September 4, 1990
+
+
+
+
+
+
+                        APPENDIX II.   TEST 6 COMMANDS SUMMARY
+
+
+
+        Test 6, the Relocation Scope Loop, has its own set of  commands.  These
+        commands are valid only after Test 6 has been individually selected and
+        the TEST 6  STARTING message has been  displayed.  There is  no default
+        action for commands having parameters.  See Section 8.6.2  for detailed
+        command descriptions.
+        Command Syntax                   Function
+
+        BANK x                        selects megabyte bank
+
+
+        CLR                           clears previously selected
+                                      memory cycle(s)
+
+
+        COND x                        specifies  information
+                                      displayed by Engine console
+
+
+        DEF                           selects default test parameters
+
+
+        DISP                          displays current test parameters
+                                      and segmentation registers
+
+
+        Escape Key <ESC>              halts loop and displays Test 6
+                                      prompt
+
+
+        EXIT                          exits Test 6, returns to
+                                      Diagnostic Monitor
+
+
+        FTCH                          selects instruction fetch memory
+                                      skip
+        HELP                          displays HELP screen with valid
+                                      Test 6 commands
+
+        PATT xxxx                     specifies data pattern for read and
+                                      write memory cycles
+
+        PROT x                        specifies protection types
+
+
+
+
+        97         Memory Access Controller Diagnostic User's Guide      DMAC07
+        TEST 6 COMMANDS SUMMARY                               September 4, 1990
+
+
+        Command Syntax                Function
+
+        RANG xxxxxx yyyyyy            specifies virtual memory range
+                                      from xxxxxx to yyyyyy
+
+
+        READ                          selects memory-read cycle
+
+
+        REL xxx00                     specifies relocation value
+
+
+        RMWR                          selects read-modify-write cycle
+
+
+        RUN                           begins loop execution
+
+
+        SEGx yyyyyyyy                 loads values (y) into segmentation
+                                      register (x)
+
+        SET x                         selects segmentation register set
+
+
+        WRIT                          selects memory-write cycle
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        98         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+
+
+
+
+                      APPENDIX III.   DEDICATED MEMORY ALLOCATION
+
+
+
+        The  first 96KB  of memory  contains the  code for  the  program.  This
+        diagnostic uses the following dedicated memory allocations:
+
+
+        Label     Address                    Contents
+
+                  A00      Starting address, terminal connected to
+                           the terminal interface.
+
+                  A04      Alternate starting address, terminal not
+                           connected to the terminal interface.
+
+        CURSEC    C1C      The number of the test section currently
+                           running (1 byte).
+
+        CURTST    C1D      The number of the test currently running
+                           (1 byte).
+
+        EBUF01    C1E      The error code of the last error for which
+                           error information was displayed on the
+                           terminal (6 bytes).
+
+        EBUF02    C24      The error count at the time the last error
+                           occurred (1 fullword).
+
+        EBUF03    C28      The pass count at the time the last error
+                           occurred (1 fullword).
+
+        EBUF04    C2C      The data read at the time the last error
+                           occurred (2 fullwords).
+
+        EBUF05    C34      The data expected at the time the last error
+                           occurred (2 fullwords).
+
+        EBUF06    C3C      The device address at the time the last error
+                           occurred (1 fullword).
+
+        EBUF07    C40      The device status at the time the last error
+                           occurred (1 fullword).
+
+        EBUF08    C44      The read buffer address at the time the
+                           last error occurred (6 bytes).
+
+        EBUF09    C4A      The write buffer address at the time the
+                           last error occurred (6 bytes).
+
+        99         Memory Access Controller Diagnostic User's Guide      DMAC07
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+        EBUF10    C50      The read and write buffer length in bytes
+                           at the time the last error occurred (6 bytes).
+
+        EBUF11    C56      The offset from the start of
+                           the buffer to where the first bad data was
+                           found (6 bytes).
+
+        EBUF12    C5E      The OTHER TEXT field at the time the last
+                           error occurred (hexadecimal format, 102 bytes).
+
+        ECOUNT    D60      The current error count, which is set to
+                           zero each time that a RUN command is executed
+                           (1 fullword).
+
+        ERRCNT    D64      The current option selected for control
+                           of the error message format (1 halfword).
+
+        ERROPT    D66      The current option selected for specifying
+                           what action will be taken when an error is
+                           detected (1 halfword).
+
+        FORCE     D68      The current value of force error message
+                           option: 0 = do not force error messages,
+                           1 = force error message 1 byte, not
+                           yet implemented).
+
+        LOPOPT    D6A      The current value of the Loop command
+                           (1 halfword).
+
+        MACTYP    D6C      The type of MAC in the system, 1 = MAC I,
+                           2 = MAC II, 3 = MAC III, 4 = TSI MAC and
+                           6 = MAC V (1 byte).
+
+        MAP       D70      The amount of memory available to the system,
+                           one bit is set for each 32K bytes of memory
+                           (4 fullwords).
+
+        MSGDEV    D80      The current value of the message device option:
+                           <0 = use only line printer, 0 = use only
+                           terminal, >0 = use both terminal and line
+                           printer (1 halfword, not yet implemented).
+
+        MSGFLG    D82      The current option selected for indicating
+                           which types of messages will be displayed
+                           on the terminal (1 halfword).
+
+        PCOUNT    D84      The current pass count, which is set to zero
+                           when the RUN command is executed (1 fullword).
+
+        SECADR    D88      The starting address of the test section being
+                           executed.  If no section is being executed,
+                           it contains the starting address of the last
+                           section executed (1 fullword).
+
+        100        Memory Access Controller Diagnostic User's Guide      DMAC07
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+        TERADD    D8C      The terminal device address (1 byte).
+
+        TERFLG    D8D      The terminal available flag:
+                           0 = terminal not available,
+                           1 = terminal available,
+                           set by the start address (1 byte).
+
+        TERRED    D90      The Read command of the terminal (1 byte).
+
+        TERWRT    D91      The Write command of the terminal (1 byte).
+
+        TEST      D92      A table indicating which tests are selected
+                           and the section number of the first section
+                           in each test (20 halfwords).
+
+        TRCADR    DD4      The address of optional trace interrupt
+                           routine if TRCOPT = 1 (1 fullword, not
+                           implemented).
+
+        TRCOPT    DD8      The trace option flag:  0 = trace interrupts
+                           disabled, 1 = trace interrupts enabled
+                           (1 byte, not yet implemented).
+
+        TYPENG    DD9      The type of Engine the program is running on:
+                           0 = UNKNOWN, 1 = NORMAL (Engine or Mini-Engine)
+                           , 2 = MICRO 3 = HDLC Micro-Engine and
+                           4 = TSI controller (1 byte).
+
+        CMDTBL    DDC      The name of each command and the starting
+                           address of the routine for that command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        101        Memory Access Controller Diagnostic User's Guide      DMAC07
+    )÷
