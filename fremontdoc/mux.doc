@@ -1,0 +1,1393 @@
+                                                           April 1, 1983
+
+
+
+
+
+
+
+                  **      **   **      **   **      **
+                  ****  ****   **      **     **  **  
+                  **  **  **   **      **       **    
+                  **      **   **      **     **  **  
+                  **      **     ******     **      **
+
+
+                            MUX User's Guide
+                              Version 3.00
+
+                             Bruce Barrett
+                               Dave Smith
+                             Dan Upthegrove
+                      NETWORK TECHNOLOGY DIVISION
+                             April 1, 1983
+
+
+
+
+
+
+
+
+
+
+  ====================================================================
+  |       THIS DOCUMENT IS THE SOLE PROPERTY AND CONFIDENTIAL        |
+  |       INFORMATION  OF  TYMSHARE,  INC.,  AND  MAY  NOT BE        |
+  |       COPIED  IN  WHOLE OR IN PART  OR  DISCLOSED  TO ANY        |
+  |       THIRD PARTY  WITHOUT THE PRIOR  WRITTEN  CONSENT OF        |
+  |       TYMSHARE.                                                  |
+  ====================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                MUX User's Guide                 MUX.DOC
+                                                           April 1, 1983
+
+
+
+
+
+
+
+                               TABLE OF CONTENTS
+
+        Section                                                     Page
+
+
+
+        1.   Using the MUX                                             1
+          1.1   Introduction                                           1
+          1.2   Operating Modes                                        2
+          1.3   Login Procedure                                        2
+             1.3.1    Login and Greeting                               2
+
+
+        2.   MUX Commands                                              4
+          2.1   Types of Commands                                      4
+          2.2   Command Format                                         4
+          2.3   Informational Commands                                 5
+             2.3.1    HELP                                             5
+             2.3.2    VERSION                                          5
+             2.3.3    WHO                                              5
+             2.3.4    ALLWHO                                           6
+             2.3.5    LIST                                             6
+             2.3.6    DATE, TIME                                       6
+             2.3.7    MESSAGE                                          6
+
+          2.4   Operational Commands                                   7
+             2.4.1    MAKE                                             7
+             2.4.2    CHARACTER                                        8
+             2.4.3    SEND                                             8
+             2.4.4    EXIT, QUIT                                       9
+             2.4.5    ZAP                                              9
+             2.4.6    FREEZE, THAW                                     9
+             2.4.7    TRANSFER                                        10
+             2.4.8    OFF, ON                                         10
+             2.4.9    CONNECT                                         10
+             2.4.10   LABEL,NOLABEL                                   11
+             2.4.11   GREETING                                        11
+             2.4.12   TALK                                            11
+             2.4.13   HEAR, NOHEAR                                    12
+             2.4.14   SET                                             12
+
+          2.5   Immediate Commands                                    12
+             2.5.1    ATTN-ATTN                                       13
+             2.5.2    ATTN-Z                                          13
+             2.5.3    ATTN-E                                          13
+             2.5.4    ATTN-B                                          13
+             2.5.5    ATTN-F                                          14
+             2.5.6    ATTN-C                                          14
+
+                                MUX User's Guide                 MUX.DOC
+                                                           April 1, 1983
+
+
+             2.5.7    ATTN-N                                          14
+
+
+                                     APPENDICES
+                                     ==========
+
+
+        I.   Command Summary                                          16
+
+
+        II.  MULTIPLEXER Version 3.00 Changes                         18
+
+
+        III. MUX Configuration                                        19
+
+
+                                      INDEX
+                                      =====                           20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                MUX User's Guide                 MUX.DOC
+        Using the MUX                                      April 1, 1983
+
+
+
+
+
+
+                               1 -  Using the MUX
+
+
+
+
+
+
+
+                               1.1  Introduction
+
+
+           The  MUX is  a process,  which resides  in an  ISIS  slot and
+        allows a  user to create  and communicate with  several circuits
+        through a  single (physical)  terminal, or  circuit.  It  can be
+        used to build, interconnect, and control sets of circuits.
+
+           Each user is allowed to control his own set of circuits; each
+        set of  circuits is  associated with a  unique user  name.  Your
+        user name is  the name you  used to log  into the MUX,  and this
+        user name must be assembled into the code.  There is no  way for
+        another user to access or control another user's circuits.
+
+           The MUX  can be  accessed by multiple  users each  having one
+        controlling or BOSS circuit.  This circuit, in  conjunction with
+        different MUX  commands, is used  to control the  other circuits
+        assigned to the user.
+
+           Through the MUX a user :
+
+              1.  Can have immediate access to more than 1 circuit.
+              2.  Can  communicate  with these  circuits  through 1
+                  physical  terminal (such  as  at home  or  on the
+                  road.).
+              3.  Can telecopy between circuits.
+              4.  Can interleave  the output  of two  different but
+                  related circuits.  (So that their  times relative
+                  to each other may be viewed)
+              5.  Can retain all circuit connections  regardless of
+                  status  of  controlling  terminal.   For example,
+                  other   circuits   remain    connected   although
+                  controlling circuit is zapped.
+              6.  Can communicate with  any other MUX user,  who is
+                  logged in at the same time.
+              7.  Selective output  to a hard  copy or  CRT through
+                  use of inter-circuit telecopy.
+
+
+
+
+
+        1                       MUX User's Guide                 MUX.DOC
+        Using the MUX                                      April 1, 1983
+
+
+                              1.2  Operating Modes
+
+
+           The MUX operates in three different modes. These are:
+
+              A)  Command  mode: where  the users  input  (from the
+                  boss port) is  taken as commands directed  to the
+                  MUX.
+
+              B)  Send mode: in this  mode all of the  data entered
+                  at the BOSS port (by the user) is sent  along the
+                  user's  SEND port.   This appears  like  a normal
+                  network connection.
+
+              C)  Talk  mode:  during  which one  user can  talk to
+                  another.   It  is not  necessary  for  the person
+                  receiving the message to be in talk mode,  he may
+                  be in any mode.  The commands HEAR and NOHEAR are
+                  used to turn on and off the talk function  if the
+                  user does not wish to be interrupted.   This mode
+                  is  not  as transparent  as  send  mode:  Certain
+                  control characters are  filtered out in  order to
+                  protect the innocent.
+
+
+
+
+
+
+                              1.3  Login Procedure
+
+
+
+
+
+
+                    1.3.1  Login and Greeting
+
+           To gain access to the MUX you must first have your  user name
+        assembled into the current  MUX.  Along with the user  name, the
+        user's  default  attention  character  (ATTN),  and  HEAR/NOHEAR
+        status is defined.  Once  your user name has been  assembled in,
+        you  may  log  into  the MUX  just  like  any  other  host (i.e.
+        username:999;password).  When you log in you will be  greeted by
+        something like this:
+
+              >>> MULTIPLEXER <<<
+              VERSION 3.00, HOST 999
+              <<some optional message>>
+              <<other circuits, if any>>
+              BOSS
+
+              &
+
+        2                       MUX User's Guide                 MUX.DOC
+        Using the MUX                                      April 1, 1983
+
+
+           First of  all, the  version number  is printed  and therefore
+        indicates whether or not the MUX has changed since the last time
+        you used it.
+
+           The MUX has  printed the host  number as a  verification that
+        you have logged into the MUX that you wanted to.
+
+           An  optional  greeting  message  can be  set  by  use  of the
+        GREETING command.  This message will be output to each user only
+        once, upon the initial login after the message is set.
+
+           If other circuits are still present from a prior login, these
+        will be  listed with  the asterisk  indicating the  current send
+        port.
+
+           The MUX prints a prompt character to inform the user  that he
+        is in command mode.  The MUX prompt character can be one of four
+        characters: "#", "$", "%", "&".  This character varies  with the
+        host number, and can be used to distinguish between  MUX's.  The
+        formula for  determining the prompt  character is based  on host
+        number as follows:
+
+              evenly divisible by 4..........#
+              (evenly divisible by 4)+1......$
+              (evenly divisible by 4)+2......%
+              (evenly divisible by 4)+3......&
+
+           When you log into a  MUX that circuit becomes the  BOSS.  The
+        BOSS is the  only circuit that is  allowed to issue  commands to
+        the MUX.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        3                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+
+
+
+
+                               2 -  MUX Commands
+
+
+
+
+
+
+
+                             2.1  Types of Commands
+
+
+           There are  two types  of commands  available.  The  first are
+        commands which are entered when the MUX is in command  mode.  In
+        this mode you are talking directly to the MUX (As opposed to one
+        of your user circuits.) The MUX will display a  prompt character
+        on your screen to indicate  that it is waiting for  input.  This
+        is the mode that you start off in.
+
+           The second type of  command is the immediate  command.  These
+        commands are entered using a special, user  definable, attention
+        character (ATTN).
+
+
+
+
+
+
+                              2.2  Command Format
+
+
+           Commands sent directly to the MUX have the following format:
+
+              <command><dlim><string>
+
+              where
+
+                <command>  is   a  valid   MUX  command   or  valid
+                            abbreviation  of  a  MUX  command.   It
+                            should be  noted that the  commands are
+                            not dependent on case; lower-case is as
+                            valid as upper case.
+
+                <dlim>     is  a  valid mux  delimiter.   These are
+                            comma,  space,  period,  slash,  colon,
+                            delete, or carriage-return.
+
+                <string>   is   an   optional   string   containing
+                            parameters  for  the  command,  such as
+                            port numbers, or a login string.
+
+        4                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+           Keeping  the  above  in  mind  you  can  see  that  there are
+        different ways  to represent  the HELP  command, all  valid, all
+        produce the same result.  They are: HELP, HEL, HE, and H.
+
+
+
+
+
+
+                          2.3  Informational Commands
+
+
+
+
+
+
+                    2.3.1  HELP
+
+           The  HELP  command prints  a  descriptive list  of  valid MUX
+        commands and a configuration definable message.
+
+
+
+
+
+                    2.3.2  VERSION
+
+           The VERSION command will display the current version and host
+        number in the format:
+
+              VERSION 3.00, HOST 999
+
+
+
+
+
+                    2.3.3  WHO
+
+           The WHO command  will display the names  of all of  the users
+        currently logged in  on the MUX.  Printed  to the right  of each
+        name  is a  special character  indicating their  current status.
+        The exclamation  point (!)  indicates that the  user has  a boss
+        port logged into  the MUX.  This  is redundant in  this command,
+        since only the users that are logged in are listed, but  is used
+        in the ALLWHO  list.  You may  communicate with another  user by
+        going  into TALK  mode as  described later.   Your user  name is
+        indicated by an asterisk.
+
+
+
+
+
+
+
+        5                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+                    2.3.4  ALLWHO
+
+           The ALLWHO  command lists  all users that  are valid  on this
+        MUX, even if they are  not logged in.  Users that are  logged in
+        have their  names followed by  an exclamation point.   Your user
+        name is indicated by an asterisk.
+
+
+
+
+
+                    2.3.5  LIST
+
+           The LIST command is used to list all of your active circuits.
+        The output format is:
+
+              Lab1
+              254 *
+              BOSS
+
+           The fields (Lab1, 254 and BOSS in the above example)  are the
+        names of  the circuits  which you  have assigned.   The asterisk
+        indicates the latest  circuit which was  in send mode.   The MUX
+        always  assigns a  numeric  label to  every port  that  has been
+        created.  The boss is always assigned the label "BOSS",  and you
+        are not allowed to change it.  In cases where the "BOSS" circuit
+        is  transferred, either  by  a later  login or  by  the TRANSFER
+        command, the old "BOSS" is automatically labelled "SLAVE".  This
+        name can  be changed  by the user.   When constructing  a normal
+        circuit the MUX assigns a label in the form: "XXX", where XXX is
+        the decimal ISIS port number.
+
+
+
+
+
+                    2.3.6  DATE, TIME
+
+           The DATE command prints the date and the 24-hour time  of day
+        (i.e. 31Dec83 23:59).  The TIME command prints only  the 24-hour
+        time of day (i.e. 23:59).
+
+
+
+
+
+                    2.3.7  MESSAGE
+
+           Displays  the  current  system  message.   The  MUX  has  the
+        ability, through the  GREETING command, to broadcast  a message,
+        once to each user, at  the time they log in.  Typically  this is
+        used to inform users when  the MUX is expected to be  down, what
+        the latest revisions are, etc.
+
+        6                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+                           2.4  Operational Commands
+
+
+
+
+
+
+                    2.4.1  MAKE
+
+           The  MAKE  command  is  probably  the  most  frequently  used
+        command.  As it's name implies it is used to make a new circuit.
+
+           The format of the instruction is:
+
+              MAKE<cr><dlim><user-name>:<sys>;<password><dlim>
+
+           examples:
+
+              make c<cr>    [a circuit to gateway]
+
+              M<cr>
+              c<cr>         [same circuit as above]
+
+              make,USERNAME:170;<password><cr>
+
+           After  the  circuit  has been  requested,  you  are connected
+        directly to it (send mode).  Any characters that you  type, once
+        the  circuit has  been  established are  now sent  down  the new
+        circuit and not treated as commands to the MUX.
+
+           This becomes a very  natural sequence, as this  example shows
+        (comments are in [brackets], computer responses in UPPER-CASE):
+
+              make,PLEASE LOG IN:c<cr>   [make circuit to pub-net]
+              INTER-LINK ESTABLISHED FROM BUBB-NET TO TYMNET
+              PLEASE LOG IN:username:555;<password>
+              WELCOME TO TYMSHARE SYSTEM 555.
+              READY>_
+
+           We  are now  in communication  with a  host somewhere  in the
+        public network, and everything you type will be sent to  it, and
+        all of it's responses will be sent to you.
+
+           The only commands which the  MUX will respond to now  are the
+        immediate commands, entered by use of the attention character.
+
+
+
+
+
+
+
+
+
+        7                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+                    2.4.ARACTER
+
+           The CHARACTER command sets  the character that is to  be used
+        as the attention character.   The default, set at  assembly time
+        is usually the ESC  (escape) character.  As you are  typing data
+        into  your terminal,  and  it is  being switched  to  the proper
+        circuit that you have created  with the MAKE command the  MUX is
+        continually scanning the characters that you type.  If  it spots
+        your attention character,  special action is taken.
+
+           First  the MUX  looks  at the  next character  and  checks it
+        against the list it has  of immediate commands.  If it  does not
+        find  a match  then both  characters are  discarded,  and normal
+        processing  continues.   If  the  second  character  is  also an
+        attention character  then one attention  character is  sent.  If
+        the second character is an immediate command character then that
+        command is executed (see section on immediate commands).
+
+           This  is  the only  way  that you  can  interrupt  the normal
+        sending of data on a circuit.
+
+
+
+
+
+                    2.4.3  SEND
+
+           The SEND command is  used to define the destination  port for
+        characters  you  are  typing.  The  format  of  this  command is
+        "SEND<dlim><port label>".  Where port  label is the name  of one
+        of your ports.
+
+           Using  the LIST  command  you can  get  a list  of  your port
+        labels.  For example if your list command resulted in:
+
+              %l<cr>
+              C39
+              PROBE *
+              BOSS
+              %_
+        And you wanted to send data or commands to the circuit  that you
+        had labeled "C39", you  would type "S C39<cr>", "s  c<cr>", etc.
+        Note that the <cr> is required to terminate any SEND command, no
+        other delimiter will work.
+
+           This will give you a full-duplex path that appears  just like
+        a  normal  network  connection  (with  the  exception   of  your
+        attention character, which must be pressed twice every  time you
+        wish to send it once.)
+
+           The send command has one other format, that is "S<cr>".  This
+        will cause you to "SEND" on the last port you last port you were
+
+
+        8                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+        sending to, if that port is still active.  For  your convenience
+        the port  that you would  send to if  you choose this  format is
+        flagged  (by the  list command)  with an  asterisk (*).   In the
+        example  above, typing  "S<cr>" would  have you  sending  to the
+        circuit labeled "PROBE".
+
+
+
+
+
+                    2.4.4  EXIT, QUIT
+
+           Exit from the MUX
+
+           The EXIT command, in effect  zaps the boss port.  It  has the
+        same  effect as  disconnecting,  or turning  off  your terminal.
+        Please  note  that all  of  your other  (non-BOSS  circuits will
+        remain intact.
+
+           The QUIT command  zaps all of  the circuits assigned  to your
+        user name.   This includes both  the boss port  and all  of your
+        user ports.
+
+
+
+
+
+                    2.4.5  ZAP
+
+           Zap any given port(s).   This command zaps the port  or ports
+        specified.   The command  continues  to accept  (and  zap) ports
+        until either a)  A <cr> is entered,  or b) an  unrecognized port
+        label is specified.  A  "ZAP BOSS" command is equivalent  to the
+        EXIT command.   A ZAP  command with no  parameters will  zap the
+        current send port (the port flagged by an asterisk in  your port
+        list).
+
+
+
+
+
+                    2.4.6  FREEZE, THAW
+
+           The FREEZE  command locks the  BOSS circuit onto  the current
+        BOSS  port.   Lock  boss  on this  port.   This  command  in the
+        opposite of the THAW command.  It informs the MUX that  you want
+        to retain this circuit as the BOSS even if another  circuit logs
+        in  to the  MUX  with your  user name.   Under  normal, default,
+        conditions if you log into  a MUX with a user name  that already
+        has a boss associated with it the MUX will recognize the new log
+        in as the BOSS and down-grade the old boss to a SLAVE.
+
+
+
+        9                       MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+           The THAW command thaws  the BOSS port after a  FREEZE command
+        has been issued.  Any new  ports logging in with your  user name
+        will automatically become the BOSS port.  This condition  is the
+        default.
+
+           By the  way, the  TRANSFER command still  works, even  if the
+        boss is frozen.
+
+
+
+
+
+                    2.4.7  TRANSFER
+
+           TRANSFER <port label>,  Transfer boss circuit.   This command
+        transfers control of your boss circuit to the  circuit specified
+        by <port  label>.  The MUX  will only allow  you to  transfer to
+        ports that logged  in to the MUX,  not those the MUX  has built.
+        The  current  BOSS  port  will  become  a  SLAVE,  and  the port
+        specified will be the new BOSS.
+
+
+
+
+
+                    2.4.8  OFF, ON
+
+           OFF <port label>, Set output off.  This command  places ports
+        in flush mode (i.e. stop sending data comming from this  port to
+        the boss).  This state can be exited (changed) by any one of the
+        following:  1)  By  entering  the  reversing  "ON  <port label>"
+        command,  2)  By sending  to  that port  (either  by  the "SEND"
+        command or by typing an ATTN-E,B, or F sequence)
+
+           ON <port label>, Turn output back on.  This command turns the
+        output of <port label>  back on after either an  ATTN-F, ATTN-B,
+        or OFF <port label> command.
+
+
+
+
+
+                    2.4.9  CONNECT
+
+           CONNECT  <port  label   1>,<port  label   2>  --  Connect two
+        circuits.  This command connects the output of the first circuit
+        to the input of the second.
+
+           If you  want a full  duplex path you  will need to  issue two
+        connect  commands.  The  first CONNECT  A,B; the  second CONNECT
+        B,A.  To  restore a port  to normal operation  you may  omit the
+        second <port label> and the MUX will reconnect that port  to the
+
+
+        10                      MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+        BOSS.  In this case the first <port label> MUST be terminated by
+        a carriage return.
+
+
+
+
+
+                    2.4.10  LABEL,NOLABEL
+
+           The LABEL command starts circuit labelling.  With this option
+        selected each time data is about to be printed on the  boss port
+        (from a user circuit.) The  MUX first checks to see if  the last
+        data  sent was  also from  the same  port.  If  it was,  the MUX
+        simply passes  the data on.   If the last  data sent was  from a
+        different  circuit then  the  MUX prints  the label  of  the new
+        circuit, and then the data.
+
+           The NOLABEL command stops circuit labeling; no labels will be
+        printed with data printed on the BOSS port.  This is the default
+        state.
+
+
+
+
+
+                    2.4.11  GREETING
+
+           The  GREETING  command is  used  for adding  or  changing the
+        optional greeting message output  to users at login or  with the
+        MESSAGE command.  The message only appears at login if  the user
+        has not received it at  a prior login.  This command  resets the
+        flags  which  indicate this,  and  all users  will  get  the new
+        message at the next login.
+
+           The format of the greeting message is:
+
+              GREETING<dlim><...text...><CTRL-D>
+
+        The text  can be multiple  lines as a  CTRL-D is the  only valid
+        terminator for the text.
+
+
+
+
+
+                    2.4.12  TALK
+
+           The TALK command allows one user to talk to another  user, as
+        long as  the other  user has a  BOSS port  logged into  the MUX.
+        Valid  recipients  can  be  found  by  using  the  WHO  command.
+        However, a user may prevent others from talking to him by use of
+        the NOHEAR command.
+
+
+        11                      MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+           The format of this command is:
+
+              TALK<dlim><user name><dlim>
+              <yak.......yak..........yak...
+              .......yak.......yak><ATTN-Z>
+
+        Once you have switched to TALK mode, the only way to  leave TALK
+        mode is with the ATTN-Z immediate command.  All other characters
+        are sent to the other user.
+
+
+
+
+
+                    2.4.13  HEAR, NOHEAR
+
+           The HEAR command allows other users to TALK to you.   This is
+        the default state.  The NOHEAR command prevents other users from
+        using  the TALK  command to  communicate with  you.  HEAR/NOHEAR
+        status can  be established  for each  user in  the configuration
+        parameter file.
+
+
+
+
+
+                    2.4.14  SET
+
+           The SET command allows the setting of terminal  parameters at
+        the BOSS circuit's Tymsat.  The format is:
+
+              SET<dlim><type><dlim><value><dlim>
+
+              where
+                   type    the decimal parameter type
+                   value   the decimal value
+
+           What these types and values are can be found in ISIS.DOC.
+
+
+
+
+
+
+                            2.5  Immediate Commands
+
+
+           Immediate commands  are one (1)  character commands  that are
+        preceded by your attention character.  Many of them are valid in
+        some modes, but not others.
+
+
+
+
+        12                      MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+                    2.5.1  ATTN-ATTN
+
+           The simplest  of immediate commands:  The user must  type two
+        attention characters  in order to  send one  attention character
+        down the current circuit.
+
+
+
+
+
+                    2.5.2  ATTN-Z
+
+           Return to  command mode.  This  command, valid in  all modes,
+        returns you to command mode, and prints the prompt character and
+        waits for you to enter a MUX command.  This is used to  get back
+        into command mode  so that you can  make a new circuit,  look at
+        existing circuits, look at who is logged in, etc.
+
+
+
+
+
+                    2.5.3  ATTN-E
+
+           Switch  to New  Circuit.  This  command, only  valid  in send
+        mode, will cause  you to "SEND" to  the next port that  you have
+        defined, and print that port's label.  The MUX treats  your list
+        of ports as circular  so that if you type  ATTN-E consecutively,
+        enough times, you will end up on the port you started  from.  If
+        you only have one user  (not boss) port defined you  will remain
+        sending to that port, but it's label will print.
+
+
+
+
+
+                    2.5.4  ATTN-B
+
+           Backpressure, and  advance to next  port.  This  command also
+        moves you to the next  port (as does the ATTN-E command)  but it
+        also applies backpressure to  the port you had been  sending to.
+        This command is only valid when in send mode.
+
+
+
+
+
+
+
+
+
+
+
+
+        13                      MUX User's Guide                 MUX.DOC
+        MUX Commands                                       April 1, 1983
+
+
+                    2.5.5  ATTN-F
+
+           Flush, and advance to  next port.  This command  is identical
+        to  the ATTN-B  command except  that instead  of  applying back-
+        pressure to the old port,  is places it into flush  mode.  Where
+        all data received from that port is ignored.
+
+
+
+
+
+                    2.5.6  ATTN-C
+
+           Circuit Labeling.  This command takes the next  15 characters
+        (or up to the <cr> if that occur first) and creates a  label for
+        the current SEND circuit.  Labels default to "XXX" where  XXX is
+        the corresponding ISIS port  number.  ATTN-C works only  in send
+        mode.
+
+           Circuits may be labeled/relabeled at any time,  except during
+        the login for a new circuit.  The label assigned is printed when
+        you do any of the following:
+
+              ATTN-E
+              ATTN-B
+              ATTN-F
+              LIST
+              LABEL
+              when a circuit is zapped
+
+
+
+
+
+                    2.5.7  ATTN-N
+
+           Sends user name out on circuit.  This command,  recognised in
+        send mode, sends the user  name, followed by a colon  (:), along
+        the circuit.  Very convenient for login dialogues.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        14                      MUX User's Guide                 MUX.DOC
+                                                           April 1, 1983
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                  *   ****  ****  ***** *   * ****  ***** *   *
+                 * *  *   * *   * *     **  * *   *   *    * * 
+                ***** ****  ****  ****  * * * *   *   *     *  
+                *   * *     *     *     *  ** *   *   *    * * 
+                *   * *     *     ***** *   * ****  ***** *   *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        15                      MUX User's Guide                 MUX.DOC
+        Command Summary                                    April 1, 1983
+
+
+
+
+
+
+                         APPENDIX I.   Command Summary
+
+
+                       Commands are in Alphabetical Order
+
+           The upper-case part of  the command is the  minimum required,
+        any more (up to the end of the command) is also allowed.
+
+
+        Command:    Parameter(s)  Description
+        ----------  ------------  -------------------------------------
+        ALlwho      none          List all valid user names.
+        CHaracter   <chr>         Set/display your attention character.
+        COnnect     <pl>[,<pl>]   Connect the output of 1st port  to the
+                                   input of the second [, or Boss]
+        Date        none          Prints  date  and  time   as:  31Dec99
+                                   23:59.
+        EXit        none          Leave the MUX, with other cir's intact
+        Freeze      none          Freeze  the  current  Boss  port,  new
+                                   logins will not become the Boss.
+        GReeting    <msg><^D>     Defines login greeting message.
+        HEAr        none          Allow other users to TALK to you.
+        HELp        none          Print help message
+        LIst        none          List  all  active  ports  for  current
+                                   user.
+        LAbel       none          Label all output sent toward the Boss.
+        Make        <login>       Make a new circuit.
+        MEssage     none          Print last message.
+        NOHear      none          Turns  off ability  of other  users to
+                                   TALK to you.
+        NOLabel     none          Turn off labeling.
+        OFf         <pl>          Set  port  number to  flush  (turn off
+                                   output.)
+        ON          <pl>          Turn output back on.
+        Quit        none          Zap all circuits, and leave.
+        Send        [<pl>]        Send to a port number, default  to the
+                                   port labeled with "*".
+        SET         <typ><val>    Set terminal parameters.
+        TAlk        <username>    Talk to another user.
+        THaw        none          Un-freeze current Boss port.
+        Time        none          Prints time as: 23:59
+        TRansfer    <pl>          Transfer control from this Boss.
+        Version     none          Print version and host number.
+        Who         none          List active users.
+        Zap         <pl>[,pl>]..  Zap a port or ports
+
+        -------------------------
+        <pl> - A port label.
+        <chr> - An ascii character
+
+        16                      MUX User's Guide                 MUX.DOC
+        Command Summary                                    April 1, 1983
+
+
+        [ and ] indicate optional parameters.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        17                      MUX User's Guide                 MUX.DOC
+        MULTIPLEXER Version 3.00 Changes                   April 1, 1983
+
+
+
+
+
+
+                APPENDIX II.   MULTIPLEXER Version 3.00 Changes
+
+
+
+        1.  Passwords should  no longer  be echoed  when you  are making
+            a circuit.
+
+        2.  The  commands "H=A"  and "H=H"  have been  removed.   If you
+            didn't know they ever  existed, you're lucky.   If  you miss
+            them, too bad.
+
+        3.  The "HELP" command now prints a nice summary of all  the MUX
+            commands.
+
+        4.  When  the  current  send  circuit  gets  a  zapper,  you are
+            returned     to command mode, instead of just hanging there.
+            Also, the     next circuit in your list is made  the current
+            circuit, so     that a "SEND" command with no parameter will
+            start sending     to it.
+
+        5.  A  "ZAP"  command with  no  parameter will  zap  the current
+            circuit, instead of zapping a random circuit.
+
+        6.  Terminal parameter changes (except input/output  baud rates)
+            are now passed through to  the boss.  Each time you  move to
+            a different circuit,  the terminal parameters in  the Tymsat
+            are made to agree with what the circuit expects.
+
+        7.  You can now  use the immediate  commands to leave  a circuit
+            that  is in  login  mode.  You  can also  use  the immediate
+            commands or the "SEND" command to move to a circuit in login
+            mode.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        18                      MUX User's Guide                 MUX.DOC
+        MUX Configuration                                  April 1, 1983
+
+
+
+
+
+
+                       APPENDIX III.   MUX Configuration
+
+
+                    Sample Command File -- (SOURCE)MUX03.C00
+
+
+        ;;      MULTIPLEXER SAMPLE COMMAND FILE
+        TITLE MULTIPLEXER HOST VERSION 3.00
+        ;@(SOURCE)MUX03.I00
+        ;@(SOURCE)MUX03.T00
+        ;@(SOURCE)MUX03.R00
+        1;FND9999.N99
+        CTA,CTASIZ;PSEG0,S0SIZE;PSEG1,S1SIZE;P%P%Q
+
+
+                   Sample Parameter File -- (SOURCE)MUX03.T00
+
+        ::      MULTIPLEXER SAMPLE TYM FILE
+
+        HOSTNO   EQ   $A 760    :HOST NUMBER
+        NPORT    EQ   $A 256    :NUMBER OF PORTS
+        ;;  NPORT maximum is $A 64 for Tymnet-I,
+        ;;          256 for Tymnet-II.
+        TIMZON   EQ   $A -8     :TIME ZONE (PST)
+        ;;  value is offset in hours from GMT.
+
+        BADMSG("8D"8APlease Ontyme TYM.BUBBNET for validation)
+        ;;  This is message printed when invalid user attempts
+        ;;    to log into the MUX.
+        HLPMSG(See (DNDUTIL:39)MUX.DOC for documentation."8D"8A)
+        ;;  This message is output at end of HELP command list.
+
+        ;;  Good-Guy List macro GG format:  GG(H,A,U)
+        ;;     where
+        ;;       H     HEAR or NOHEAR    initial status
+        ;;       A     2 digit hex       ascii for default attention
+        ;;                                 character (ATTN)
+        ;;       U     string            user name.
+        ;;
+        GG(HEAR,7E,SMITHDE)             :GOOD-GUY LIST
+        GG(HEAR,5E,UPTGROVE)
+
+
+
+
+
+
+
+
+
+        19                      MUX User's Guide                 MUX.DOC
+        INDEX                                              April 1, 1983
+
+
+                                     INDEX
+
+        ALLWHO  5, 6, 16                  Immediate
+        asterisk  5, 6, 9                    command  4, 8, 12, 13, 18
+        attention                         invalid user  19
+           char  2, 4, 8, 12, 19
+        ATTN  2, 4, 19
+        ATTN-ATTN  13                     label  6, 11, 14, 16
+        ATTN-B  10, 13                    LIST  6, 8, 16
+        ATTN-C  14                        Login  2, 11, 18
+        ATTN-E  13
+        ATTN-F  10, 14
+        ATTN-N  14                        MAKE  7, 16
+        ATTN-Z  12, 13                    MESSAGE  6, 11, 16
+                                          Modes  2
+
+        Backpressure  13
+        BADMSG  19                        NOHEAR  2, 11, 12, 16, 19
+        BOSS  1, 3, 6, 10                 NOLABEL  11, 16
+                                          NPORT  19
+                                          number of ports  19
+        CHARACTER  8, 16
+        command file  19
+        Command mode  2, 4, 13            OFF  10, 16
+        Commands  4                       ON  10, 16
+        configuration  19
+        CONNECT  10, 16
+                                          parameter file  19
+                                          Passwords  18
+        DATE  6, 16                       port number  6, 14
+        dlim  4                           prompt  3, 4, 13
+
+
+        exclamation point  5, 6           QUIT  9, 16
+        EXIT  9, 16
+
+                                          S  see SEND
+        Flush  14                         SEND  2, 8, 16
+        FREEZE  9, 10, 16                 Send mode  2, 7
+                                          SET  12, 16
+                                          SLAVE  6, 10
+        GG  see good-guy
+        good-guy list  19
+        GREETING  3, 6, 11, 16            TALK  2, 5, 11, 12, 16
+                                          Talk mode  2, 12
+                                          terminal parameters  12, 18
+        H=A  18                           THAW  9, 10, 16
+        H=H  18                           TIME  6, 16
+        HEAR  2, 12, 16, 19               time zone  19
+        HELp  16, 18, 19                  TIMZON  19
+        HLPMSG  19                        TRANSFER  6, 10, 16
+        host number  3, 5, 19             tym file  see parameter file
+        HOSTNO  19
+
+        20                      MUX User's Guide                 MUX.DOC
+        INDEX                                              April 1, 1983
+
+
+
+
+        user name  1, 2, 14, 19
+
+
+        VERSION  5, 16
+        Version 3.00  18
+        version number  3, 5
+
+
+        WHO  5, 11, 16
+
+
+        ZAP  9, 16, 18
+        zapper  18
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        21                      MUX User's Guide                 MUX.DOC
+ y(Z}
