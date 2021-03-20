@@ -1,0 +1,25 @@
+begin
+
+  require "(SAILIB)SAIL.DEF"    source!file;
+  require "(SAILIB)UUOSYM.DEF"  source!file;
+
+  integer array DDB[ -3:'10 ];
+  integer count;
+
+
+    DDB[-3]_ !sdDDA;			! function to read DDBs ;
+    DDB[-2]_ 0;				! start at the beginning ;
+
+    do begin
+	calli( !xwd( '10+3, location(DDB[-3]) ), calli!SYSDVF );
+	if ( DDB[ -2 ] ) and
+	    ( ( ( DDB[ 0 ] XOR cvSIX("TTY") ) lsh -18 ) = 0 ) and
+	    ( DDB[ 1 ] lsh -30 )
+	 then print( cvs( count_ count + 1 ), "  ",
+		     cvxstr( DDB[0] ), " job ", cvs( DDB[1] lsh -30 ),
+		     crlf
+		   );
+    end until DDB[ -2 ] = 0;
+
+end;
+
