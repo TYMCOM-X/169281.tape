@@ -1,0 +1,5167 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                          RAM
+
+                                   OPERATOR'S GUIDE
+
+
+                                     Version 10.05
+
+
+
+
+                                    August 30, 1984
+
+
+
+
+
+
+
+
+
+                                        TYMNET
+
+
+                            Network Technology Development
+
+
+
+
+
+
+
+
+                 This document  is the sole property  and confidential
+                 information of Tymnet and may  not be copied in whole
+                 or part or  disclosed to any third  party without the
+                 prior written consent of Tymnet.
+
+
+
+                 Copyright 1984 by Tymnet--A McDonnell Douglas Company
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  SUMMARY OF CHANGES
+
+                                 RAM Operator's Guide
+                                Publications Number 535
+
+                                    August 30, 1984
+
+            This guide documents software version 10.05  of RAM.  It super-
+            cedes the RAM  Operator's Guide of  July 25, 1983,  which docu-
+            mented software version 10.01.
+
+
+            Version 10.02            _____________
+
+              1. A message has been added at login to tell you that you are
+                 the privileged user.
+
+              2. The control-Q  and control-H special characters  have been
+                 added and escape has been modified.
+
+              3. The Status command  includes RAM's  host number  and tape-
+                 blocking  factor.   In  addition,  when  this  command  is
+                 issued, if a  Supervisor has not been  accessed the values
+                 under the  RAM and Supervisor  block headings will  be "NO
+                 DATA" instead of "0 0".
+
+              4. The Drain  command has been changed  to pause and  to tell
+                 you when it is done draining.
+
+              5. Chapter Ten has been changed from "TAPE DRIVE MAINTENANCE"
+                 to "MAINTENANCE"  and includes  system maintenance  proce-
+                 dures.
+
+              6. The text of several RAM messages has been changed.  (Refer
+                 to Appendix B.)
+
+            Version 10.03            _____________
+
+              1. The Setblock command now confirms what the next block num-
+                 ber will be.
+
+            Version 10.04            _____________
+
+              1. The control-A  and control-H special characters  have been
+                 modified.  When  control-A is entered,  deleted characters
+                 are echoed; when  control-H is  entered, the  cursor back-
+                 spaces.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              2. All dates in the status report now include the year.
+
+              3. The status report will show the date  of JAN 1, 1974 for a
+                 supervisor from which accounting data  has never been col-
+                 lected.
+
+            Version 10.05            _____________
+
+            Version 10.05 code changes do not impact this document.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        PREFACE
+
+
+            This guide  briefly describes the  Raw Accounting  Merger (RAM)
+            program, which  collects accounting  data  from network  Super-
+            visors  and writes  it to  magnetic tape.   The guide  contains
+            detailed procedures  needed by its  intended user,  the network
+            operator.  The guide is organized into eleven chapters.
+
+            Chapter One is an  overview of RAM, which has  a brief descrip-
+            tion of a  TYMNET network and shows  how RAM is applied  in the
+            network.
+
+            Chapter Two is an operations summary.  It describes the various
+            classes of  RAM users, introduces  all the commands,  and shows
+            how the commands are used and how they relate to each other.
+
+            Chapter Three  details command  structure and  command sequence
+            and discusses special characters.
+
+            Chapter Four describes the RAM login procedure.
+
+            Chapter  Five shows  how  to obtain  and  interpret RAM  status
+            reports.
+
+            Chapter Six is a  procedures checklist, which lists  RAM opera-
+            tions to be performed at specific intervals.
+
+            Chapter Seven  details the  procedures  for  starting RAM  ini-
+            tially, for  starting RAM after  a system malfunction,  and for
+            starting RAM after a new version of RAM is installed.
+
+            Chapter  Eight describes  the procedure  for  changing the  RAM
+            tape.
+
+            Chapter Nine describes the procedure  for duplicating data on a
+            second tape using a second tape drive.
+
+            Chapter  Ten describes  procedures for  system maintenance  and
+            briefly discusses tape drive maintenance.
+
+            Chapter Eleven discusses  several ways to resolve  problems and
+            errors that may appear during various RAM procedures.
+
+            The main  text is followed by  a glossary and  four appendixes:
+            Command Summary,  RAM System  Messages, Network  Supervisor Log
+            Messages, and Command Table.
+
+
+
+
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                       CONTENTS                                       ________
+
+
+            OVERVIEW .................................................... 1
+
+            OPERATIONS SUMMARY .......................................... 2
+
+            COMMANDS .................................................... 6
+
+               Command Structure and Command Sequence ................... 6
+
+               Special Characters ....................................... 8
+
+            LOGIN ....................................................... 9
+
+            STATUS REPORTS ............................................. 11
+
+            PROCEDURES CHECKLIST ....................................... 17
+
+            RAM STARTUP ................................................ 19
+
+               Initial Start ........................................... 19
+
+               System Malfunction ...................................... 22
+
+               New Version of RAM ...................................... 24
+
+            TAPE REPLACEMENT ........................................... 30
+
+            DATA DUPLICATION ON A SECOND TAPE .......................... 33
+
+            MAINTENANCE ................................................ 41
+
+               System Maintenance ...................................... 41
+
+               Tape Drive Maintenance .................................. 48
+
+            DIAGNOSTICS ................................................ 49
+
+            GLOSSARY ................................................... 55
+
+            Appendix A, COMMAND SUMMARY ................................ 59
+
+            Appendix B, RAM SYSTEM MESSAGES ............................ 67
+
+            Appendix C, NETWORK SUPERVISOR LOG MESSAGES ................ 69
+
+            Appendix D, COMMAND TABLE .................................. 75
+
+
+                                                                     Page i
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            INDEX ...................................................... 77
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                    Page ii
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                      CHAPTER ONE
+
+
+            OVERVIEW            ________
+
+            A TYMNET network consists of  a number of minicomputers (TYMNET
+            Engines) interconnected  by communications links.   The network
+            provides high-quality data communication  between distant loca-
+            tions.  It enables  users at computer terminals  to communicate
+            with host computers (terminal to  host).  It also enables users
+            to communicate directly  with other  users (terminal  to termi-
+            nal).   Lastly, it  enables direct  communication between  host
+            computers (host to host).
+
+            The TYMNET Engines are referred to as network nodes.  The links
+            between these nodes may be  high-grade telephone lines, coaxial
+            cables,  optical  fibers,  microwave   radio  transmitters  and
+            receivers, or satellite channels.
+
+            Certain nodes  in the network  contain programs to  control and
+            monitor the  network; these are  called Supervisors  in TYMNET.
+            One function of a Supervisor is to collect and store accounting
+            data on  magnetic disk.   This data includes  all users  of the
+            network, the time of the login,  the length of the session, the
+            destination accessed, the amount of data sent, etc.
+
+            This accounting information is  collected from the Supervisors,
+            merged into records suitable for accounting purposes, and writ-
+            ten to magnetic tape.  The program that does this is called Raw
+            Accounting Merger (RAM).
+
+            The purpose  of this manual  is to instruct  network operations
+            personnel in the use of RAM.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         OVERVIEW    Page 1
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                      CHAPTER TWO
+
+
+            OPERATIONS SUMMARY            __________________
+
+            The RAM operator needs to know how to log in to RAM, issue com-
+            mands to start  the collection of data and to  write the merged
+            data to  magnetic tape, correct  any error conditions  that may
+            arise, and log out of RAM.
+
+            Log in to  RAM according to the procedure  described in Chapter
+            Four, Login.  It is possible for  several users to be logged in
+            to RAM  simultaneously under the  same username.   After login,
+            the RAM prompt, an asterisk (*), is displayed at your terminal,
+            indicating that RAM is ready to accept operator commands.
+
+            Not all  users are  authorized to use  all RAM  commands.  This
+            manual addresses two  classes of commands, privileged  and non-
+            privileged.  Refer to the  RAM Reference Manual for  a descrip-                                       ____________________
+            tion of a third class of commands, used only by system program-
+            mers.
+
+            Nonprivileged users are only permitted to do the following:
+
+              o  Log in.
+
+              o  Ask for a  list of available commands  (the Help command).
+                 Only those commands  appropriate to the user's  status are
+                 displayed.
+
+              o  Display a  RAM status  report (the  Status command).   The
+                 status report  shows whether RAM  is running,  the current
+                 time and  date, the  time and  date RAM  was started,  the
+                 Supervisor from  which RAM  is currently  collecting data,
+                 whether a tape unit is attached, etc.
+
+              o  Display a  list of  status and  error messages  related to
+                 RAM's tape and disk units (the Profile command).
+
+              o  Log out of RAM (the Exit command).
+
+            Privileged commands alter the status of RAM, its tape units, or
+            its tapes.  Although several users  with privileged status (and
+            nonprivileged as well) may be  logged in to RAM simultaneously,
+            only  one user  may issue  privileged commands.   This user  is
+            called the  privileged user.   The first  user to  log in  to a
+            username with privileged (or  system programmer) status becomes
+            the privileged user.
+
+
+                                               OPERATIONS SUMMARY    Page 2
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Note the  distinction between privileged status  and privileged
+            user.  At any time there is  only one privileged user, and only
+            that  user may  issue privileged  commands.   Other users  with
+            privileged status may be logged in to RAM, but they are not the
+            privileged user.
+
+            It is  possible for  a user  with privileged  status to  obtain
+            privilege from the current  privileged user with the  Grab com-
+            mand.  This of  course will interfere  with the  current privi-
+            leged  user's  collection,  merging,  and  recording  of  data.
+            Therefore, the Grab command should be used only if it is neces-
+            sary to perform a crucial operation that cannot be delayed.
+
+            The two most  frequently used commands,  Run and  Pause, corre-
+            spond to RAM's two normal states, Running and Paused.  When RAM
+            is running, it is processing accounting data normally; that is,
+            it  is  collecting  accounting data  blocks  from  the  ACCOUNT
+            slaves, backing up information onto  disk, and storing complete
+            session records on  tape.  RAM can be paused at  any time.  The
+            Pause command  causes RAM  to stop  collecting data,  write all
+            information in memory  to disk, and terminate  the current tape
+            file.  Further,  the Pause  command must  be issued  before any
+            command  involving a  tape  unit is  issued.   The Run  command
+            causes RAM to resume normal processing.
+
+            When RAM is running, it builds a circuit through the network to
+            the ACCOUNT slave  program in each Supervisor.   The Supervisor
+            stores accounting information in a  circular file, comprising a
+            specified number of  blocks into which data is  written.  It is
+            called a circular file because as the last block in the file is
+            filled, succeeding data  is written into the  first block, then
+            the second, etc.  The data previously in the block is destroyed
+            when new data is written over it.  RAM must be run continuously
+            or frequently enough to ensure that  all data is retrieved from
+            the Supervisors' circular files before it is written over.  RAM
+            and ACCOUNT coordinate the  transfer of the data  over the cir-
+            cuit, block by block, from the circular file to RAM.
+
+            If there is more than one Supervisor in the network with uncol-
+            lected accounting data, RAM collects data first from the Super-
+            visor that has the oldest data.  However, RAM continues to mon-
+            itor the  age of  the data  in all  the Supervisors.   When RAM
+            determines that another Supervisor  has older uncollected data,
+            RAM collects  data from  that Supervisor  until RAM  determines
+            that another  Supervisor has  older uncollected  data, and  the
+            process is  repeated.  This continues  until all data  has been
+            collected from all Supervisors in the  network or until the RAM
+            program is stopped for some reason.
+
+
+                                               OPERATIONS SUMMARY    Page 3
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            If 5 minutes elapse and no data  is transmitted over a particu-
+            lar circuit, that circuit is  considered terminated.  RAM does,
+            however, keep  a record  of the age  of the  data held  in that
+            ACCOUNT slave.   The circuit to  that ACCOUNT slave  is rebuilt
+            when that data is determined to be the oldest in any ACCOUNT.
+
+            Each block of accounting data  may contain information for many
+            sessions.  RAM collects  all the information for  a session and
+            merges it  into a single record  called a session  record.  RAM
+            also periodically backs up the data onto magnetic disk.  A typ-
+            ical session record includes:
+
+              o  username
+
+              o  login time
+
+              o  logout time
+
+              o  input octet count
+
+              o  output octet count
+
+              o  originating device node number
+
+              o  destination device node number
+
+
+            RAM holds  the session  record in  memory until  RAM determines
+            that it will receive no more  information for the session.  The
+            session records are then written to magnetic tape, and the tape
+            should be stored for further processing by accounting programs.
+
+            Before the  session records can be  written, the tape  unit and
+            the tape must be properly prepared.  The Attach command assigns
+            the physical tape drive to the  RAM program.  The Label command
+            causes identifying information to be  recorded at the beginning
+            and end  of the  tape and  between the  session records  on the
+            tape.  The Tape command controls tape  motion.  The Detach com-
+            mand removes  the tape drive from  RAM control, freeing  it for
+            use by other programs.
+
+            RAM's function  is complete once  the accounting data  has been
+            written to tape.
+
+            There are six additional privileged commands, but these are not
+            used in normal  day-to-day RAM  operation.  Two  of these  com-
+            mands, Warmstart  and Coldstart,  are used  to initialize  RAM.
+
+
+
+                                               OPERATIONS SUMMARY    Page 4
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            They are normalld only when  RAM is first started or after
+            a system malfunction (a crash).
+
+            Warmstart is usually issued after a system malfunction, and RAM
+            resumes  data collection  and processing  essentially from  the
+            point at  which it  stopped.  RAM reads  data into  its session
+            pool from the backup disk, and no data remains uncollected.
+
+            A coldstart is performed when RAM is  first started or if a new
+            version of the RAM program is installed.  From a coldstart, RAM
+            essentially starts  afresh.  Any incomplete session  records on
+            disk are  ignored.  If a Warmstart  command is entered  after a
+            new version of RAM  has been installed, RAM  automatically per-
+            forms a coldstart.
+
+            The Resetprofile  command erases  from RAM's  log all  messages
+            reported by the Profile command.
+
+            The Slave command instructs RAM that a particular Supervisor or
+            its ACCOUNT slave is not functioning, and subsequently, that it
+            once again  is functioning  properly.  This  prevents RAM  from
+            continuously attempting to build a  circuit to an ACCOUNT slave
+            that has accounting data but that  cannot respond because it is
+            malfunctioning.
+
+            The  Drain command  stops  RAM's collection  of  data from  the
+            ACCOUNT  slaves,  finishes processing  all  incomplete  session
+            records in  memory, and writes them  to tape, even if  they are
+            incomplete.  If it becomes necessary to  use the Coldstart com-
+            mand (e.g.,  to install  a new  version of  RAM), this  command
+            writes to tape data that would otherwise be lost.  This command
+            is also used to empty the session pool when it becomes full.
+
+            The Setblock command causes RAM  to begin collecting accounting
+            data from a  specified Supervisor at a  specified block number.
+            This command overrides RAM's determination of the next block of
+            accounting data  to be collected.   It is used  most frequently
+            following a Coldstart command or system reload.
+
+                                        CAUTION                                        _______
+
+                 The Setblock  command is  very powerful  and must  be
+                 used with extreme caution.   Used incorrectly, it can
+                 have  serious, unintended  consequences.   If set  so
+                 accounting blocks  are skipped, accounting  data will
+                 be lost;  if set so  accounting blocks  are collected
+                 twice, data may be written to tape as incomplete ses-
+                 sions.
+
+
+                                               OPERATIONS SUMMARY    Page 5
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER THREE
+
+
+            COMMANDS            ________
+
+            This chapter details command structure and command sequence and
+            discusses special characters.
+
+
+            Command Structure and Command Sequence            ______________________________________
+
+            The following notation is used in this manual:
+
+                 UPPERCASE   Show RAM's prompts  and responses.   In Appen-
+                 CHARACTERS  dix A, Command Summary,  the uppercase letters
+                             in the syntax depiction show  the minimum seg-
+                             ment of  the command or parameter  required to
+                             define the command or parameter.
+
+                 lowercase   Show variable or optional  entries.  In syntax
+                 characters  depictions,  the  lowercase letters  show  the
+                             optional segment of the command or parameter.
+
+                 [ ]         Enclose a  list of  parameter options,  one of
+                             which must  be chosen.   The brackets  are not
+                             entered as part of the command.
+
+                 |           Represents  an  "or" choice  between  optional
+                             parameters.  It is not entered  as part of the
+                             command.
+
+            The command  word (DRain, PAuse, RUn,  etc.)  is followed  by a
+            space, the parameters, and a carriage return or if there are no
+            parameters, a carriage  return alone.  Commands may  be entered
+            using  uppercase  or  lowercase characters.   RAM  responds  to
+            invalid commands  or parameters with  a question mark  (?)  and
+            repeats the prompt.
+
+            Commands that require one or more  parameters may be entered in
+            two ways.  The first is to enter the command followed by a car-
+            riage return.   RAM prompts for  each required  parameter.  The
+            prompt  consists of  the parameter  name followed  by an  equal
+            sign (=).  At  each prompt, enter  a value appropriate  to that
+            parameter.  RAM  returns to  the asterisk  prompt (*)  when all
+            required parameters have  been entered and any  output has been
+            displayed.
+
+
+
+
+                                                         COMMANDS    Page 6
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            The second way is to enter the command, a space, and the param-
+            eters.  If more than one parameter is to be specified on a com-
+            mand line,  the parameters must be  separated by commas  but no
+            spaces.  The parameters may be entered  in any order.  The for-
+            mat is
+
+                 c p=v
+
+            where c is the command word, p  is the parameter name, and v is                  _                      _                             _
+            the parameter value.  The equal  sign between the parameter and
+            its value is required.
+
+            If several parameters are put on a single line, the format is
+
+                 c p1=v1,p2=v2,...,pn=vn
+
+            If a command  requires more than one parameter  and you specify
+            only some  of the parameters on  the same line as  the command,
+            RAM will prompt for the parameter(s)  that have not been speci-
+            fied.
+
+            The maximum command line length permitted  by RAM is 63 charac-
+            ters.  If  you exceed  63 characters, RAM  will respond  with a
+            question mark  (?), and you must  reenter the command.   If you
+            are not familiar with RAM,  or if you are trying to  use a com-
+            mand  with many  parameters, let  RAM prompt  for the  required
+            information.
+
+            The effect of the following three examples is the same.  In the
+            first,  you  merely enter  the  command;  RAM prompts  for  the
+            required parameters.  In the second example, you enter the com-
+            mand and one  parameter; RAM prompts for  the second parameter.
+            In the final example, you enter the command and both parameters
+            on a single line.
+
+            Example 1:
+
+                 *setblock
+
+                 SUPERVISOR=121
+
+                 BLOCK=200
+
+            Example 2:
+
+                 *set sup=121
+
+                 BLOCK=200
+
+
+                                                         COMMANDS    Page 7
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Example 3:
+
+                 *se b=200,s=121
+
+
+            Special Characters            __________________
+
+            RAM recognizes four special characters, escape, control-Q, con-
+            trol-A, and control-H.
+
+            The escape deletes the current  line and any previously entered
+            parameters for the command.  RAM returns to the asterisk prompt
+            (*) and displays
+
+                  ESCAPE !!
+                 *
+
+            at your terminal.
+
+            The control-Q deletes the current  input line.  RAM repeats the
+            current prompt.  This applies while  entering a command name at
+            an asterisk  prompt or  while entering a  value at  a parameter
+            prompt.
+
+            Note that the control-Q entered at  a parameter prompt does not
+            return  you to  the asterisk  prompt; it  causes the  parameter
+            prompt to be repeated.
+
+            The  control-A or  control-H may  be  used to  delete the  most
+            recent  character(s) entered.   If  control-A  is entered,  the
+            deleted character(s) will  be echoed at your  terminal, one for
+            each control-A  entered.  If control-H  is entered,  the cursor
+            will backspace  one character for  each control-H  entered.  If
+            the number  of control-A's or  control-H's entered  exceeds the
+            number  of  characters  originally  entered,  RAM  repeats  the
+            prompt.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         COMMANDS    Page 8
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER FOUR
+
+
+            LOGIN            _____
+
+            Any valid  username may  be used  for logging  in, and  several
+            users may be  logged in to RAM  at the same time  with the same
+            username.  If the username specified at login is not valid, the
+            following message  will be  displayed and  the circuit  will be
+            terminated.
+
+                 LOGIN NOT ACCEPTED BY RAM, USERNAME UNRECOGNIZED
+
+            RAM accepts logins without interrupting  normal accounting pro-
+            cesses.  When you log  in, RAM displays the name  RAM, the cur-
+            rent RAM version number, and an  asterisk (*).  The asterisk is
+            the system prompt.  If you have privileged or system programmer
+            status, the  username of  the current  privileged user  is also
+            displayed.  If you have privileged  or system programmer status
+            and there is  no privileged user, you  automatically become the
+            privileged user when you log in.  The message
+
+                 YOU ARE THE PRIVILEGED USER
+
+            will be displayed at your terminal.  To log in to RAM, enter:
+
+                 username;password
+
+                       or
+
+                 username:host number;password
+
+            Follow your local operating procedures to determine which style
+            to use and the correct username, password, etc.
+
+            Example 1:
+
+                 PLEASE LOG IN: ram
+
+                 PASSWORD: password
+
+                 RAM VERSION 10.05
+                 *
+
+
+
+
+
+
+
+                                                            LOGIN    Page 9
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                 or
+
+                 PLEASE LOG IN: ram;password
+
+                 RAM VERSION 10.05
+                 *
+
+            Example 2 (privileged user):
+
+                 PLEASE LOG IN: ram;password
+                 RAMDBUG CURRENTLY IS THE PRIVILEGED USER
+
+                 RAM VERSION 10.05
+                 *
+
+                 or
+
+                 PLEASE LOG IN: ram;password
+                 YOU ARE THE PRIVILEGED USER
+
+                 RAM VERSION 10.05
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                           LOGIN    Page 10
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER FIVE
+
+
+            STATUS REPORTS            ______________
+
+            Obtain a RAM  status report by issuing the  Status command.  An
+            example of a RAM status report follows.
+
+
+                 *status
+
+            (1) RAM VERSION 10.05 - PAUSED -  17:33:27 JUN 23, 1984
+            (2) RAM HOST NUMBER:  69
+            (3) RAM DISK:  UP
+            (4) COLD START:  0:00:00 JUN 21, 1984
+                WARM START: 12:30:13 JUN 22, 1984
+            (5) BACKUP AT:  17:23:37 JUN 23, 1984
+            (6) RESTART COUNT:  1
+            (7) CIRCUIT COUNT:  4
+            (8) SESSIONS:   256 /   512
+
+            (9) BLOCKING FACTOR:  1
+                UNIT STATE  TAPE   TIME                FILES SEQUENCE ERRORS
+            (10)   0 ONLINE IN USE 12:31:00 JUN 22, 1984 128     7F31      1
+            (11)   1 TAPE UNIT IS NOT ATTACHED TO RAM'S SLOT !!
+
+                   SUP#  RAM  SUP
+                    121 100F 1010 17:10:33 JUN 23, 1984 CAUGHT UP
+                --> 122  C00  FAB 17:00:11 JUN 23, 1984 GOOD DATA RECEIVED
+                    123   BC   BD 17:11:02 JUN 23, 1984 CAUGHT UP
+                    125   NO DATA   ** DISABLED  **
+                    127   NO DATA 00:00:00 JAN  1, 1974
+
+
+            The numbers in parentheses on the  left side of the example are
+            line numbers  and are  not part  of the  report; the  following
+            explanation of the  status report references specific  lines of
+            the report using these numbers.
+
+            Line 1 shows  three fields of information.  The  first is RAM's
+            version number.  The second is RAM's current state, either Run-
+            ning, Paused, or Draining  (see the Run, Pause,  and Drain com-
+            mands in Appendix A, Command  Summary, for descriptions of each
+            state).  The  third field contains  the current time  and date.
+            All dates  and times in the  report are in Greenwich  Mean Time
+            (GMT).
+
+            Line 2 shows the host number.
+
+
+                                                  STATUS REPORTS    Page 11
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Line 3 reflects the status of the RAM disk.  If the disk status
+            is Down, RAM status will be Paused.
+
+            Line 4 shows the time and date (GMT) of the most recent startup
+            commands.  If the most recent startup was a coldstart, no warm-
+            start information  will be  displayed; a  coldstart clears  all
+            history information  (see the Coldstart and  Warmstart commands
+            in Appendix A, Command Summary).
+
+            Line  5 shows  the most  recent time  and date  (GMT) that  RAM
+            backed up its session pool to disk.  RAM performs a backup each
+            time it  finishes writing a file  to tape.  If 15  minutes have
+            elapsed since the last backup,  RAM terminates the current tape
+            file and performs a backup to  minimize the possibility of los-
+            ing session records.   In addition, the session  pool is backed
+            up when  the Pause  command is  issued (see  Appendix A).  This
+            line will not  be displayed if a backup has  not occurred since
+            the last coldstart.
+
+            Line 6 shows  the number of times RAM has  been restarted since
+            the slot was loaded.  The initial  startup counts as a restart,
+            so this number will always be 1 or greater.
+
+            Line 7  shows the total number  of circuits currently  built to
+            ACCOUNT slaves and  to RAM users.  The count  will fluctuate as
+            users log  in and  log out  and as  ACCOUNT slave  circuits are
+            built and terminated.
+
+            Line 8  shows the number  of primary session  records currently
+            held in the session pool and the maximum number of primary ses-
+            sion records that may be in memory at any given time.
+
+            Line 9 shows the tape-blocking factor.
+
+            Lines 10 and 11 show the state of  the RAM tape units, the sta-
+            tus of  the RAM tapes,  the last time  and date (GMT)  the tape
+            unit state or the tape status was changed, the number (in deci-
+            mal) of files RAM has written  to tape, the sequence number (in
+            hexadecimal) assigned to the next  session record to be written
+            to tape, and the number of uncorrectable parity errors for that
+            tape.
+
+
+
+
+
+
+
+
+
+                                                  STATUS REPORTS    Page 12
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            The state of the tape units may be one of the following:
+
+                 TAPE UNIT IS NOT ATTACHED TO RAM'S SLOT !!
+
+            The tape unit is not attached to RAM.  In this case, the Attach
+            command should be issued again (see Appendix A).
+
+                 OFFLINE
+
+            The tape unit is attached to RAM; however, the tape unit is not
+            online.
+
+                 ONLINE
+
+            The tape unit is  attached to RAM, and the tape  unit is ready.
+            However, the status of the tape may not be Ready.
+
+
+            The status of the tape may be one of the following:
+
+                 NOT READY
+
+            The tape unit  is offline.  This message may  also be displayed
+            if the  tape unit is  online, but RAM  was unable to  write the
+            VOL1 label on  the tape.  The tape should be  replaced as there
+            is no valid data on it.
+
+                 DISABLED
+
+            Too many  parity errors were found  on the tape.  The  tape was
+            rewound, and the  tape unit was taken offline.   There is valid
+            data on the tape.
+
+                 FINISHED
+
+            The tape was completed normally.  The tape was rewound, and the
+            tape unit was taken offline.  There is valid data on the tape.
+
+                 READ ONLY
+
+            No  write ring  is  inserted in  the tape.   The  tape unit  is
+            online.
+
+                 READY
+
+            The tape is  ready to be written  to by RAM.  A  tape must have
+            this status for  RAM to write accounting data to  it.  The tape
+            unit is online.
+
+
+                                                  STATUS REPORTS    Page 13
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                 IN USE
+
+            RAM is  currently writing to this  tape.  Only one tape  can be
+            designated In Use at  any given time, and only  RAM can promote
+            the tape status from Ready to In Use.  The tape will be demoted
+            to Finished status  when RAM encounters the  end-of-tape marker
+            or to Disabled status if RAM  encounters too many parity errors
+            on the tape.  The tape unit is online.
+
+
+            The remainder of the report displays five columns of RAM infor-
+            mation for each Supervisor in the network.
+
+            The first column shows the Supervisor host number.  An arrow to
+            the left of the column of  Supervisors points to the Supervisor
+            from which RAM will collect data next.
+
+            The second column contains the block number (in hexadecimal) of
+            the accounting block that RAM has most recently received.
+
+            The third  column contains  the block  number (in  hexadecimal)
+            that the Supervisor will write into next.  The notation NO DATA
+            appears in columns 2 and 3 if  RAM has never collected account-
+            ing data from that Supervisor.
+
+            The fourth column  displays either the timestamp  of the oldest
+            data RAM  collected when  the most  recent accounting  data was
+            received from the Supervisor or the message
+
+                 ** DISABLED **
+
+            if the  Slave command has  been executed  to signal RAM  that a
+            Supervisor or its ACCOUNT slave is  down (see the Slave Command
+            in Appendix A).   If accounting data  has never  been collected
+            from a Supervisor that  is up, then the date of  JAN 1, 1974 is
+            displayed for that Supervisor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                  STATUS REPORTS    Page 14
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            The fifth column displays, for each Supervisor that is not dis-
+            abled, a message  describing the status of  RAM's collection of
+            data from the  Supervisor's ACCOUNT slave.  The  following mes-
+            sages may appear:
+
+                 BAD CHECKSUM
+
+            The checksum sent by the ACCOUNT slave with an accounting block
+            did not match RAM's checksum of  the block.  Report this situa-
+            tion to your technical support representative.
+
+                 CANNOT BUILD CIRCUIT
+
+            RAM could not build a circuit to  an ACCOUNT slave because of a
+            network failure (see  the Slave Command in  Appendix A, Command
+            Summary), and RAM  builds a circuit to the  next ACCOUNT slave.
+            RAM  returns to  the  unresponsive  ACCOUNT slave  at  periodic
+            intervals and attempts to build a circuit.
+
+                 CAUGHT UP
+
+            RAM has collected all accounting blocks up to and including the
+            block into which the Supervisor last wrote.  This block may not
+            be complete.
+
+                 CIRCUIT BUILT
+
+            A circuit has been built to an ACCOUNT slave, but no accounting
+            data has yet been received.  If this condition persists, report
+            the message to your technical support representative.
+
+                 GOOD DATA RECEIVED
+
+            RAM encountered no errors when the most recent accounting block
+            was received from the Supervisor.
+
+                 NORMAL WAIT
+
+            The time required to build a circuit  or to receive an account-
+            ing block has not elapsed.
+
+                 NOT YET ACCESSED
+
+            RAM  has not  built  a circuit  to an  ACCOUNT  slave that  was
+            recently declared up with the Slave command (see Appendix A).
+
+
+
+
+
+                                                  STATUS REPORTS    Page 15
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                 TIMEOUT
+
+            A circuit was  not built  or an accounting  block was  not col-
+            lected within the  allotted interval.  RAM attempts  to rebuild
+            the circuit.
+
+                 UNEXPECTED MESSAGE RECEIVED
+
+            The data  preceding an accounting block  was not in  the proper
+            sequence, and RAM was unable to interpret the block as account-
+            ing data.
+
+                 WAITING FOR CIRCUIT
+
+            RAM has requested a  circuit to an ACCOUNT slave,  but the cir-
+            cuit has not been completed.  No action is required.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                  STATUS REPORTS    Page 16
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                      CHAPTER SIX
+
+
+            PROCEDURES CHECKLIST            ____________________
+
+            At an  interval specified by  your local  operating procedures,
+            perform the following:
+
+              1. Log in to RAM (see Chapter Four,  Login) and obtain a sta-
+                 tus report (see Chapter Five, Status Reports).  You should
+                 find the following:
+
+                   o  RAM is running.
+
+                   o  The disk status is Up.
+
+                   o  The tape unit state is Online or Enabled.
+
+                   o  For  each Supervisor,  there is  no large  difference
+                      between the  number of the  accounting block  RAM has
+                      most recently received and the number of the account-
+                      ing block into which the  Supervisor will next write.
+                      Note that although the numerical difference between a
+                      block number near block 0 and a block number near the
+                      maximum block  number may  be large,  because of  the
+                      nature of  a circular file  the difference  for RAM's
+                      purposes can in fact be quite small.
+
+                   o  No ACCOUNT slaves are disabled.
+
+                   o  The number of  session records held in  memory is not
+                      the maximum the session pool can hold.
+
+              2. If RAM is running properly, at intervals specified by your
+                 local operating procedures or  by equipment manufacturers,
+                 perform the following:
+
+                   o  Change the  tape (see  Chapter  Eight, Tape  Replace-
+                      ment).
+
+                   o  Duplicate accounting data on a second tape (see Chap-
+                      ter Seven, Data Duplication on a Second Tape).
+
+                   o  Perform  tape  drive maintenance  (see  Chapter  Ten,
+                      Maintenance).
+
+                   o  Enable or disable ACCOUNT slaves  (see the Slave Com-
+                      mand in Appendix A, Command Summary).
+
+
+                                            PROCEDURES CHECKLIST    Page 17
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+              3. If RAM is  not running properly as  indicated above, refer
+                 to Chapter Eleven, Diagnostics.
+
+              4. Log out of RAM, if specified  by your local operating pro-
+                 cedures.
+
+              5. Keep the  last status  report as  specified by  your local
+                 operating procedures.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            PROCEDURES CHECKLIST    Page 18
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER SEVEN
+
+
+            RAM STARTUP            ___________
+
+            RAM's two normal states are Running and Paused.  RAM is usually
+            paused only  for disk and  tape unit maintenance,  for changing
+            the tape, or if it is intended  that no accounting data be col-
+            lected.  However, RAM must be started initially and RAM must be
+            restarted following a  system malfunction.   Also, as  new ver-
+            sions of RAM are  installed, RAM must be stopped,  the new ver-
+            sion installed  in the  system, and  RAM restarted.   The basic
+            commands to accomplish this are Coldstart and Warmstart.
+
+            From  a coldstart,  RAM ignores  any  data that  may have  been
+            stored on disk and starts collecting only current data from the
+            ACCOUNT slaves.   If RAM  had been  running previously  and had
+            collected and stored data on disk, that data would be lost.
+
+            From a warmstart, RAM reloads data stored on disk into its ses-
+            sion pool  and continues processing  that data and  any current
+            data it collects.  The most frequent  use of this command is to
+            restart RAM after a system malfunction.
+
+            Data stored  on disk by  one version of  RAM cannot be  read by
+            another version.   If the Warmstart  command is issued  after a
+            new version of RAM is installed,  RAM attempts to read the data
+            on disk  stored by  the previous  version, determines  that the
+            data  was stored  by the  previous  version, and  automatically
+            switches to a coldstart.  To prevent  the loss of data, use the
+            Drain command before the new version of RAM is installed.
+
+            When  the Drain  command is  issued, RAM  stops collecting  new
+            accounting data  from the  ACCOUNT slaves,  finishes processing
+            all session records in memory, and writes them to tape, even if
+            they are  incomplete.  Once all the  data collected by  the old
+            version of RAM is written to tape,  it can be consolidated by a
+            data processing program with data collected and written to tape
+            by the new version of RAM.
+
+
+            Initial Start            _____________
+
+            Usually, when  RAM is started  for the  first time, it  will be
+            started by those  in your organization responsible  for loading
+            the RAM slot.  RAM is coldstarted automatically as part of this
+            procedure.
+
+
+
+                                                     RAM STARTUP    Page 19
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           Log in to RAM.
+
+                           RAM will be  paused.  If RAM is  running, deter-
+                           mine  from other  network operators  how and  by
+                           whom  it was  started; no  other  action may  be
+                           required.
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information specified in the
+                           next step by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+
+
+
+                                                     RAM STARTUP    Page 20
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           Normally,  if a  carriage return  is entered  in
+                           response to any of the  five prompts, the infor-
+                           mation entered for that parameter in the preced-
+                           ing Label command  is retained.   RAM then  dis-
+                           plays the next parameter prompt.  However, after
+                           a coldstart,  as in this procedure,  no previous
+                           values exist, and blanks  or zeros (depending on
+                           the parameter)  will be  written to  tape for  a
+                           carriage return response to a parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            *run           Start RAM  by entering  the Run  command.  RAM's
+            - RUNNING -    response is shown.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+
+
+
+                                                     RAM STARTUP    Page 21
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            System Malfunction            __________________
+
+            The Warmstart command starts RAM using  data from its last disk
+            backup.  This command  is used whenever RAM stops  because of a
+            system malfunction or  whenever RAM is stopped  for some reason
+            but the  version of  RAM is  not changed.   (If the  version is
+            changed, and a warmstart is  attempted, RAM automatically cold-
+            starts.)
+
+                           Log in to RAM.
+
+            *warmstart     Issue the Warmstart command.   RAM's response is
+                           shown.
+
+            WARMSTART: RAM DISK BACKUP RELOADED
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information specified in the
+                           next step by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+
+                                                     RAM STARTUP    Page 22
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *label         Specify the  tape identification  information to
+                           be written to tape using the Label command.  The
+                           Label command has five  parameters: tape volume,
+                           tape owner, date, file  identification, and sys-
+                           tem identification.  RAM prompts for each of the
+                           parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           If a carriage  return is entered in  response to
+                           any of the five prompts, the information entered
+                           for that parameter  in the preceding  Label com-
+                           mand is  retained.  RAM  then displays  the next
+                           parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            *run           Start RAM  by entering  the Run  command.  RAM's
+            - RUNNING -    response is shown.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+                                                     RAM STARTUP    Page 23
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            New Version of RAM            __________________
+
+            Because a  new version of  RAM cannot  read from disk  the data
+            written to disk by a previous  version, before a new version of
+            RAM is installed,  it is desirable to  interrupt the collection
+            of  data from  ACCOUNT slaves  and to  write to  tape the  data
+            already collected.   The command  for doing  this is  the Drain
+            command.
+
+            The new version of RAM is then started, and it resumes the col-
+            lection and consolidation of data from the ACCOUNT slaves.
+
+            The following procedure must be  coordinated with those in your
+            organization responsible  for loading  the RAM  slot, who  will
+            install the new version of RAM.   Part of the procedure must be
+            performed before the  old version is removed, and  part must be
+            performed after the new version is installed.
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.  From the report, verify
+                           that RAM is running.
+            (The status
+            report will
+            be dis-
+            played.)
+
+            *drain         Only incomplete  session records  remain in  the
+            - DRAINING -   session  pool.  Write  these incomplete  session
+                           records  to tape  with the  Drain command.   RAM
+                           responds that the session pool is being drained.
+
+                           When all  session records  have been  written to
+                           tape,  RAM  pauses itself.   RAM's  response  is
+                           shown below.
+
+            *
+             FINISHED DRAINING SESSION POOL
+            - PAUSED -
+
+
+            *status        Obtain another  status report.   The report  now
+                           reflects that RAM  is paused.  Save a  hard copy
+            (The status    of  this report.   Later in  this procedure  you
+            report will    will need to  know the number of  the accounting
+            be dis-        block in each Supervisor that RAM received last.
+            played.)
+
+
+
+                                                     RAM STARTUP    Page 24
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *tape          Rewind the tape.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store the tape as specified  by your local oper-
+                           ating procedures.
+
+            At this point, the new version of RAM can be installed.  Retain
+            the last status  report obtained; it contains  information that
+            will be needed  when RAM is restarted.  The new  version of RAM
+            will be installed by those in your organization responsible for
+            loading the RAM slot.
+
+            If  requested  to do  so,  notify  those in  your  organization
+            responsible for loading the RAM slot  that RAM has been drained
+            and paused as  described in the  preceding part of  this proce-
+            dure.
+
+            After you  have been  notified that  the new  version has  been
+            installed, you are ready to resume collecting data.
+
+
+
+
+
+
+
+
+
+
+
+                                                     RAM STARTUP    Page 25
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.
+
+            (The status
+            report will
+            be dis-
+            played.)
+
+            Refer to the  final status report taken before  the new version
+            was installed.  Verify that the new  report shows a new version
+            number.  The  time of the last  coldstart will have  changed to
+            coincide with the time the new RAM version was installed.  If a
+            warmstart time  appeared on  the previous  report, it  will not
+            appear on  the new one.   Other items  in the report  will have
+            changed also.
+
+            If the new  report shows that the RAM version  has not changed,
+            notify your manager and/or those in your organization responsi-
+            ble for loading the RAM slot.
+
+            It is  not necessary  to issue a  Coldstart command.   RAM will
+            have been coldstarted and then paused  as part of the installa-
+            tion of the new version of RAM.
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+
+
+                                                     RAM STARTUP    Page 26
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           Normally,  if a  carriage return  is entered  in
+                           response to any of the  five prompts, the infor-
+                           mation entered for that parameter in the preced-
+                           ing Label command  is retained.   RAM then  dis-
+                           plays the next parameter prompt.  However, after
+                           a coldstart,  as in this procedure,  no previous
+                           values exist, and blanks  or zeros (depending on
+                           the parameter)  will be  written to  tape for  a
+                           carriage return response to a parameter prompt.
+
+
+
+                                                     RAM STARTUP    Page 27
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            When RAM  is coldstarted  and the  Run command  is issued,  RAM
+            begins collecting data at block  0 in the Supervisors' circular
+            files.
+
+            The final status report taken before the new version of RAM was
+            installed shows the last block  number from which RAM collected
+            data.  RAM  should now be  instructed to begin  collecting data
+            from the same block in the circular file.  The block from which
+            RAM collects data can be specified with the Setblock command.
+
+            *setblock      Use  the Setblock  command  to  instruct RAM  to
+                           begin  collecting  accounting   data  from  each
+                           Supervisor at a specified block number.
+
+            SUPERVISOR=    RAM prompts  for the  3-digit Supervisor  number
+                           (in decimal).
+
+            BLOCK=         RAM  prompts for  the 4-digit  block number  (in
+                           hexadecimal).  Refer to the  final status report
+                           taken  before   the  new  version  of   RAM  was
+                           installed and  note the  Supervisor numbers  and
+                           the block number in each one from which data was
+                           last  collected.  Set  the block  number to  the
+                           number  shown  on  the   status  report.   RAM's
+                           response is shown below.
+
+            BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+                           Repeat the Setblock command  for each Supervisor
+                           in the network.
+
+            *status        Obtain  a status  report.  Verify  that the  new
+                           status report reflects the changed block numbers
+            (The status    for each Supervisor.   If any of the  block num-
+            report will    bers do  not match  the previous  status report,
+            be dis-        repeat  the appropriate  Setblock command.   The
+            played.)       report also shows the tape  unit state as Online
+                           and the tape status as Ready  as a result of the
+                           Attach command.
+
+
+
+
+
+
+                                                     RAM STARTUP    Page 28
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+            *profile       Issue the Profile command to display any tape or
+                           disk unit  status and error messages.   Refer to
+            (The error     Profile Command  in Chapter  Two, Commands,  RAM                                                                        ___
+            messages will  Reference Manual or follow  your local operating                           ________________
+            be dis-        procedures regarding any error messages that may
+            played.)       be displayed.
+
+            *resetprofile  Issue  the Resetprofile  command  to clear  from
+                           RAM's log any  tape or disk error  messages that
+                           may have been displayed by the Profile command.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     RAM STARTUP    Page 29
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER EIGHT
+
+
+            TAPE REPLACEMENT            ________________
+
+            The tape should be changed if the following occur:
+
+              o  The tape status is Finished.  The  tape was completed nor-
+                 mally.
+
+              o  The  tape status  is  Disabled.   Too many  parity  errors
+                 occurred on the tape.
+
+              o  The  tape unit  state is  Online  and the  tape status  is
+                 Not Ready.  RAM was unable to write  the VOL1 label on the
+                 tape.
+
+              o  The interval specified by  your local operating procedures
+                 at which the tape is to be changed has elapsed.
+
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.  From the report, verify
+                           that RAM is running.
+            (The status
+            report will
+            be dis-
+            played.)
+
+            *pause         Pause RAM; RAM's response is  shown.  If the end
+            - PAUSED -     of the tape has been reached or if too many tape
+                           errors  have  occurred,  RAM  will  have  paused
+                           itself and will have rewound the tape.
+
+            *tape          If the tape has not been rewound, rewind it.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+
+
+
+
+
+
+                                                TAPE REPLACEMENT    Page 30
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store the tape as specified  by your local oper-
+                           ating procedures.
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is attached and  tape status is Ready,
+                           the tape will not physically  move until the Run
+                           command is issued later in this procedure.
+
+
+                                                TAPE REPLACEMENT    Page 31
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           If a carriage  return is entered in  response to
+                           any of the five prompts, the information entered
+                           for that parameter  in the preceding  Label com-
+                           mand is  retained.  RAM  then displays  the next
+                           parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+                                                TAPE REPLACEMENT    Page 32
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                     CHAPTER NINE
+
+
+            DATA DUPLICATION ON A SECOND TAPE            _________________________________
+
+            If  your  local  operating  procedures  require  it,  duplicate
+            accounting data  can be  collected on  two tapes.   Essentially
+            this is done by the following procedures:
+
+              o  Draining  incomplete sessions  from the  session pool  and
+                 writing them to tape.
+
+              o  Detaching the tape unit in use.
+
+              o  Clearing RAM's memory with the Coldstart command.
+
+              o  Attaching a second tape unit.
+
+              o  Instructing RAM to  collect accounting data from  the same
+                 accounting blocks  from which  data  was collected  previ-
+                 ously.
+
+              o  Draining incomplete session records  from the session pool
+                 a second time.
+
+              o  Clearing RAM's memory with the  Coldstart command a second
+                 time.
+
+              o  Detaching the second tape unit and reattaching the first.
+
+              o  Instructing  RAM  to continue  collecting  and  processing
+                 accounting  data  from the  point  at  which it  had  been
+                 stopped the first time.
+
+            In this procedure  it is assumed that two tape  drives are used
+            and that  accounting data already written  to the tape  on tape
+            unit 0 is to be collected again and written to a second tape on
+            tape unit 1.
+
+            Considering a set of tapes to be  all the tapes made on a given
+            tape unit  (i.e., the unit 0 set  and the unit 1 set)  each set
+            contains complete accounting data.  However,  if tapes are com-
+            pared in pairs (i.e., a unit 0 tape compared to the unit 1 tape
+            made  immediately after  the unit 0  tape was  made) the  tapes
+            probably will not be identical.  Each probably starts and stops
+            at slightly different points in the data collection process.
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 33
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Further,  each tape  contains incomplete  session records;  the
+            data needed to complete the session records is contained in the
+            following tape.
+
+            When you enter the Setblock  command during this procedure, you
+            will need  to know the number  of the accounting block  in each
+            Supervisor  that  RAM  received  last   when  tape  unit 0  was
+            detached.  This block number is the response given to the Block
+            parameter.  The first time this procedure is performed you will
+            need to obtain this information  independently.  If this proce-
+            dure  is performed  routinely from  RAM's  initial start,  this
+            information can be obtained from  those responsible for loading
+            the RAM slot (see Initial Start in Chapter Seven, RAM Startup).
+            For subsequent data duplication, the  procedure contains a step
+            for recording and storing this information.
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.  From the report, verify
+                           that RAM is running.
+            (The status
+            report will
+            be dis-
+            played.)
+
+            *drain         Only incomplete  session records  remain in  the
+            - DRAINING -   session  pool.  Write  these incomplete  session
+                           records  to tape  with the  Drain command.   RAM
+                           responds that the session pool is being drained.
+
+                           When all  session records  have been  written to
+                           tape,  RAM  pauses itself.   RAM's  response  is
+                           shown below.
+
+            *
+             FINISHED DRAINING SESSION POOL
+            - PAUSED -
+
+
+            *status        Obtain another  status report.   The report  now
+                           reflects that RAM  is paused.  Save a  hard copy
+            (The status    of  this report.   Later in  this procedure  you
+            report will    will need to  know the number of  the accounting
+            be dis-        block in each Supervisor that RAM received last.
+            played.)
+
+            *tape          Rewind the tape.
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 34
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 0.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 0.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store  the tape  as specified  by your  internal
+                           procedures.
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch  tape reel and mount  the tape on
+                           tape unit 1.
+
+            *coldstart     Clear RAM's  memory with the  Coldstart command.
+                           RAM's response is shown below.
+
+            COLDSTART: RAM SESSION TABLES CLEARED
+
+            *setblock      Use  the Setblock  command  to  instruct RAM  to
+                           begin  collecting  accounting   data  from  each
+                           Supervisor at a specified block number.
+
+            SUPERVISOR=    RAM prompts  for the  3-digit Supervisor  number
+                           (in decimal).
+
+            BLOCK=         RAM  prompts for  the 4-digit  block number  (in
+                           hexadecimal).  Enter the accounting block number
+                           that  RAM received  last  when  tape unit 0  was
+                           attached.  RAM's response is shown below.
+
+            BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 35
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           Repeat the Setblock command  for each Supervisor
+                           in the network.
+
+            *attach        Attach tape unit 1  to RAM with the  Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6 or less) specified  by your inter-
+                           nal procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your internal procedures.
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 36
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified by your inter-
+                           nal procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for the system identification  specified by your
+                           internal procedures.
+
+                           Normally,  if a  carriage return  is entered  in
+                           response to any of the  five prompts, the infor-
+                           mation entered for that parameter in the preced-
+                           ing Label command  is retained.   RAM then  dis-
+                           plays the next parameter prompt.  However, after
+                           a coldstart,  as in this procedure,  no previous
+                           values exist, and blanks  or zeros (depending on
+                           the parameter)  will be  written to  tape for  a
+                           carriage return response to a parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+            *status        Obtain a  status report  to verify  that RAM  is
+                           running.  Note the block number (in hexadecimal)
+            (The status    of the  accounting block  RAM has  most recently
+            report will    received from each Supervisor.  Continue obtain-
+            be dis-        ing  status  reports at  appropriate  intervals.
+            played.)       When the  block numbers  that RAM  most recently
+                           received match  the block numbers in  the status
+                           report obtained earlier, which showed no session
+                           records remaining in the session pool, issue the
+                           Drain command.  If the specified block number is
+                           passed, some data may not  be collected (see the
+                           Setblock Command  in  Appendix A,  Command  Sum-
+                           mary).
+
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 37
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *drain         Write incomplete  session records  to tape  with
+            - DRAINING -   the Drain command.   RAM responds that  the ses-
+                           sion pool is being drained.
+
+                           When all  session records  have been  written to
+                           tape,  RAM  pauses itself.   RAM's  response  is
+                           shown below.
+
+
+            *
+             FINISHED DRAINING SESSION POOL
+            - PAUSED -
+
+
+            *status        Obtain another  status report.   The report  now
+                           reflects that RAM  is paused.  Save a  hard copy
+            (The status    of  this report.   Later in  this procedure  you
+            report will    will need to  know the number of  the accounting
+            be dis-        block in each Supervisor that RAM received last.
+            played.)
+
+            *tape          Rewind the tape.
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 1.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 1.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store  the tape  as specified  by your  internal
+                           procedures.
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 38
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch  tape reel and mount  the tape on
+                           tape unit 0.
+
+            *coldstart     Clear RAM's  memory with the  Coldstart command.
+                           RAM's response is shown below.
+
+            COLDSTART: RAM SESSION TABLES CLEARED
+
+            *setblock      Use  the Setblock  command  to  instruct RAM  to
+                           begin  collecting  accounting   data  from  each
+                           Supervisor at a specified block number.
+
+            SUPERVISOR=    RAM prompts  for the  3-digit Supervisor  number
+                           (in decimal).
+
+            BLOCK=         RAM  prompts for  the 4-digit  block number  (in
+                           hexadecimal).  Enter the accounting block number
+                           that  RAM received  last  when  tape unit 0  was
+                           detached.  RAM's response is shown below.
+
+            BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+                           Repeat the Setblock command  for each Supervisor
+                           in the network.
+
+            *attach        Attach tape unit 0  to RAM with the  Attach com-
+                           mand.
+
+            UNIT=          RAM prompts for  the tape unit number.   In this
+                           case, enter a 0.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape using the Label command.
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 39
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6 or less) specified  by your inter-
+                           nal procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your internal procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros where required.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified by your inter-
+                           nal procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for the system identification  specified by your
+                           internal procedures.
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               DATA DUPLICATION ON A SECOND TAPE    Page 40
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                      CHAPTER TEN
+
+
+            MAINTENANCE            ___________
+
+            This chapter covers  system maintenance and tape  drive mainte-
+            nance.
+
+
+            System Maintenance            __________________
+
+            System maintenance may involve RAM directly or indirectly.  RAM
+            is affected directly if RAM's disk requires maintenance or if a
+            new version  of RAM  is installed  (see New  Version of  RAM in
+            Chapter Seven, RAM Startup, for a discussion of installation of
+            a  new version  of RAM).   RAM  is affected  indirectly if  the
+            Engine on which RAM is running  must be stopped for some reason
+            not related to RAM (e.g., the  upgrade of some system unrelated
+            to RAM but which shares the Engine with RAM).
+
+            The procedure  for halting and  restarting RAM is  different if
+            the maintenance will  result in RAM's being unable  to read the
+            data on disk.
+
+            A further consideration  is the length of  time the maintenance
+            will require.   The Supervisor continues  collecting accounting
+            data and storing it in its  circular file regardless of whether
+            RAM is running.  If RAM is not  run frequently enough or is not
+            run at all, the Supervisor eventually writes over circular file
+            data RAM has not yet collected.  The data is lost and cannot be
+            retrieved.  To prevent this, if  approximately half the data in
+            the Supervisor's  circular file is  uncollected, PROBE  or TMCS
+            displays the message
+
+                 ACCOUNTING FILE BLOCKS LEFT #
+
+            where #  is the  number (in decimal)  of blocks  remaining (see
+            Appendix C,  Network  Supervisor Log  Messages).   For  further
+            information refer to the PROBE and TMCS reference manuals.
+
+            The message is  displayed periodically thereafter.  It  is dis-
+            played with increasing  frequency as the amount  of uncollected
+            data increases, and it is  possible to determine an approximate
+            circular file fill rate by the frequency of the messages.
+
+
+
+
+
+
+                                                     MAINTENANCE    Page 41
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            From this you can estimate the  amount of time remaining before
+            the Supervisor begins writing over uncollected data in the file
+            (i.e., a wraparound  occurs).  If this  occurs and RAM  is run-
+            ning, RAM displays the message
+
+                 SUPERVISOR PASSED RAM (WRAP AROUND) !!
+
+            (See Appendix B, RAM System Messages, for more information.)
+
+            Your local operating  procedures should prescribe that  you not
+            let  the number  of available  accounting blocks  fall below  a
+            specified amount, and you  must take steps to  prevent its hap-
+            pening.
+
+            Because  the network  has  more than  one  Supervisor, you  can
+            obtain  more time  by activating  another Supervisor.   Network
+            accounting blocks  will be sent to  the accounting file  in the
+            newly activated Supervisor.
+
+            The following procedure must be  coordinated with those in your
+            organization responsible  for loading  the RAM  slot, who  will
+            perform the maintenance.   Part of the  procedure must  be per-
+            formed before  the maintenance is  performed, and part  must be
+            performed after.
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.  From the report, verify
+                           that RAM is running.
+            (The status
+            report will
+            be dis-
+            played.)
+
+            If the  maintenance to  be performed does  not involve  the RAM
+            disk (i.e., the  information stored on the disk  is not cleared
+            or changed), issue the Pause command.
+
+            *pause         Pause RAM;  RAM's response  is shown.   Skip the
+            - PAUSED -     next two  steps (the Drain and  Status commands)
+                           and continue at the Tape command.
+
+            If the maintenance involves the disk  or it is likely that disk
+            data may be altered, issue the Drain and Status commands.
+
+
+
+
+
+
+                                                     MAINTENANCE    Page 42
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *drain         Only incomplete  session records  remain in  the
+            - DRAINING -   session  pool.  Write  these incomplete  session
+                           records  to tape  with the  Drain command.   RAM
+                           responds that the session pool is being drained.
+
+                           When all  session records  have been  written to
+                           tape,  RAM  pauses itself.   RAM's  response  is
+                           shown below.
+
+            *
+             FINISHED DRAINING SESSION POOL
+            - PAUSED -
+
+            *status        Obtain another  status report.   The report  now
+                           reflects that RAM  is paused.  Save a  hard copy
+            (The status    of this report.  Later in this procedure you may
+            report will    need to know the number  of the accounting block
+            be dis-        in each Supervisor that RAM received last.
+            played.)
+
+            *tape          Rewind the tape.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store the tape as specified  by your local oper-
+                           ating procedures.
+
+
+
+
+
+                                                     MAINTENANCE    Page 43
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            At this  point, the maintenance  can be performed.   Retain the
+            status report obtained  after the session pool  was drained; it
+            contains information that may be  needed when RAM is restarted.
+            Maintenance will  be performed  by those  in your  organization
+            responsible for loading the RAM slot.
+
+            If  requested  to do  so,  notify  those in  your  organization
+            responsible for loading the RAM slot  that RAM has been drained
+            and paused as  described in the  preceding part of  this proce-
+            dure.
+
+            If the  maintenance to  be performed is  expected to  take more
+            time than that  required for half the accounting  blocks in the
+            Supervisor's circular file to be  filled, monitor the number of
+            uncollected  accounting blocks  closely.   The List  Accounting
+            Block  (LACCT) and  Account Status  (ACCT)  PROBE commands  and
+            information from the TMCS error log  may be used to monitor the
+            accounting blocks.  Refer to the PROBE and TMCS reference manu-
+            als.  Take steps to prevent data from being lost.
+
+            After you have been notified  that maintenance is complete, you
+            are ready to resume collecting data.
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.
+
+            (The status
+            report will
+            be dis-
+            played.)
+
+            RAM will have  been coldstarted and then paused as  part of the
+            performance of the maintenance.
+
+            *warmstart     Issue the  Warmstart command.  If  the warmstart
+                           is successful, RAM responds as shown.
+
+            WARMSTART: RAM DISK BACKUP RELOADED
+
+                           If the maintenance performed makes it impossible
+                           for RAM to read  the disk, a coldstart  is auto-
+                           matically performed.  This  clears RAM's memory.
+                           RAM's response is shown below.
+
+            COLDSTART: RAM SESSION TABLES CLEARED
+
+
+
+
+                                                     MAINTENANCE    Page 44
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+
+
+
+                                                     MAINTENANCE    Page 45
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           Normally,  if a  carriage return  is entered  in
+                           response to any of the  five prompts, the infor-
+                           mation entered for that parameter in the preced-
+                           ing Label command  is retained.   RAM then  dis-
+                           plays the next parameter prompt.  However, after
+                           a coldstart,  as in this procedure,  no previous
+                           values exist, and blanks  or zeros (depending on
+                           the parameter)  will be  written to  tape for  a
+                           carriage return response to a parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+            If the  warmstart previously  performed in  this procedure  was
+            successful, skip the intervening steps  and continue the proce-
+            dure at the Run command.
+
+            When RAM  is coldstarted  and the  Run command  is issued,  RAM
+            begins collecting data at block  0 in the Supervisors' circular
+            files.
+
+            The final status report taken before the new version of RAM was
+            installed shows the last block  number from which RAM collected
+            data.  RAM  should now be  instructed to begin  collecting data
+            from the same block in the circular file.  The block from which
+            RAM collects data can be specified with the Setblock command.
+
+            *setblock      Use  the Setblock  command  to  instruct RAM  to
+                           begin  collecting  accounting   data  from  each
+                           Supervisor at a specified block number.
+
+
+
+
+                                                     MAINTENANCE    Page 46
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            SUPERVISOR=    RAM prompts  for the  3-digit Supervisor  number
+                           (in decimal).
+
+            BLOCK=         RAM  prompts for  the 4-digit  block number  (in
+                           hexadecimal).  Refer to the  final status report
+                           taken  before   the  new  version  of   RAM  was
+                           installed and  note the  Supervisor numbers  and
+                           the block number in each one from which data was
+                           last  collected.  Set  the block  number to  the
+                           number  shown  on  the   status  report.   RAM's
+                           response is shown below.
+
+            BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+                           Repeat the Setblock command  for each Supervisor
+                           in the network.
+
+            *status        Obtain  a status  report.  Verify  that the  new
+                           status report reflects the changed block numbers
+            (The status    for each Supervisor.   If any of the  block num-
+            report will    bers do  not match  the previous  status report,
+            be dis-        repeat  the appropriate  Setblock command.   The
+            played.)       report also shows the tape  unit state as Online
+                           and the tape status as Ready  as a result of the
+                           Attach command.
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+            *profile       Issue the Profile command to display any tape or
+                           disk unit  status and error messages.   Refer to
+            (The error     Profile Command  in Chapter  Two, Commands,  RAM                                                                        ___
+            messages will  Reference Manual or follow  your local operating                           ________________
+            be dis-        procedures regarding any error messages that may
+            played.)       be displayed.
+
+            *resetprofile  Issue  the Resetprofile  command  to clear  from
+                           RAM's log any  tape or disk error  messages that
+                           may have been displayed by the Profile command.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+
+
+                                                     MAINTENANCE    Page 47
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Tape Drive Maintenance            ______________________
+
+            Follow your local operating procedures or the schedule and pro-
+            cedures specified by the manufacturer of the tape drive.
+
+            Tape heads should be cleaned each time a tape is removed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     MAINTENANCE    Page 48
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                    CHAPTER ELEVEN
+
+
+            DIAGNOSTICS            ___________
+
+            RAM responds  in various ways  to commands.  RAM  verifies that
+            commands  have been  accepted by  displaying a  message or  the
+            asterisk prompt (*).  For example, RAM responds to the Run com-
+            mand with the following message:
+
+                 - RUNNING -
+
+            If a  command is not accepted,  RAM displays either  a question
+            mark  (?) or  a message  explaining  why it  was not  accepted.
+            Refer  to  RAM  Reference Manual  for  additional  information.                       _____________________
+            These messages reveal problems and errors in RAM's operation.
+
+            The Status and Profile commands can  also be used to detect RAM
+            problems  (see Chapter  Five, Status  Reports, and  Appendix A,
+            Command Summary).
+
+            PROBE and TMCS messages reveal a  great deal about RAM problems
+            and errors (see Appendix C, Network Supervisor Log Messages).
+
+            (See Appendix B, RAM  System Messages, for  additional informa-
+            tion.)
+
+            Determine first whether the problem  has been caused intention-
+            ally by another network operator.
+
+            If the problems are related to tape, dismount the tape, perform
+            tape drive maintenance (see Chapter Ten, Maintenance) and mount
+            a new tape (see Chapter Eight, Tape Replacement).  If the prob-
+            lems cannot be resolved, coldstart RAM using the following pro-
+            cedure.
+
+                           Log in to RAM.
+
+            *status        Obtain a status report.
+
+            (The status
+            report will
+            be dis-
+            played.)
+
+
+
+
+
+
+                                                     DIAGNOSTICS    Page 49
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *pause         Pause RAM  if RAM  is not  paused already.   RAM
+            - PAUSED -     will have paused  itself if it has  attempted to
+                           write the VOL1 label on  the tape but was unable
+                           to  do so.   This is  indicated by  a tape  unit
+                           state of Online  and a tape status  of Not Ready
+                           (see Chapter Five, Status Reports).  Replace the
+                           tape  (see  Chapter  Eight,  Tape  Replacement).
+                           RAM's response is shown.
+
+            *drain         Only incomplete  session records  remain in  the
+            - DRAINING -   session  pool.  Write  these incomplete  session
+                           records  to tape  with the  Drain command.   RAM
+                           responds that the session pool is being drained.
+
+                           When all  session records  have been  written to
+                           tape,  RAM  pauses itself.   RAM's  response  is
+                           shown below.
+
+            *
+             FINISHED DRAINING SESSION POOL
+            - PAUSED -
+
+
+            *status        Obtain another  status report.   The report  now
+                           reflects that RAM  is paused.  Save a  hard copy
+            (The status    of  this report.   Later in  this procedure  you
+            report will    will need to  know the number of  the accounting
+            be dis-        block in each Supervisor that RAM received last.
+            played.)
+
+            *tape          Rewind the tape.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            COUNT=         RAM prompts for  the number of times  the opera-
+                           tion is to  be performed.  A 1  should always be
+                           entered if the tape is to be rewound.
+
+            OPERATION=     RAM prompts for the operation that is to be per-
+                           formed.   Enter RW  to rewind  the tape.   RAM's
+                           response is shown below.
+
+            TAPE REWIND INITIATED
+
+            *detach        Detach the tape unit.
+
+
+
+
+                                                     DIAGNOSTICS    Page 50
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.  RAM's response is shown below.
+
+            TAPE UNIT DETACHED
+
+                           Dismount  the tape  and remove  its write  ring.
+                           Store the tape as specified  by your local oper-
+                           ating procedures.
+
+                           If tape drive maintenance has not been performed
+                           recently, do so at this time.
+
+            *coldstart     Clear RAM's  memory with the  Coldstart command.
+                           RAM's response is shown below.
+
+            COLDSTART: RAM SESSION TABLES CLEARED
+
+                           Verify that a write ring  is inserted in the hub
+                           of the scratch tape reel and mount the tape.
+
+            *attach        Attach the tape unit to RAM with the Attach com-
+                           mand.
+
+                           An attach may not be successful for several rea-
+                           sons.  Refer  to Attach Command in  Chapter Two,
+                           Commands, RAM  Reference Manual  for causes  and                                     _____________________
+                           corrective procedures.  Correct  the problem and
+                           reenter the Attach command.
+
+            UNIT=          RAM prompts  for the  tape unit  number, enter 0
+                           or 1.
+
+            POSITION=      RAM  prompts for  the physical  position on  the
+                           tape to  which the tape  is to be  moved.  Place
+                           the tape at the beginning-of-tape mark by enter-
+                           ing RW after the equal sign (=).  RAM's response
+                           is shown below.
+
+            TAPE UNIT ATTACHED AND TAPE IS READY
+
+                           The tape is initialized by RAM writing to it the
+                           tape identification information  specified below
+                           by the Label command.
+
+                           Note  that although  RAM will  respond that  the
+                           tape unit is  attached and that the  tape status
+                           is  Ready, the  tape  will  not physically  move
+
+
+
+                                                     DIAGNOSTICS    Page 51
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                           until the  Run command is  issued later  in this
+                           procedure.
+
+            *label         Specify the  tape identification  information to
+                           be written to the tape  using the Label command.
+                           The Label command has five parameters: tape vol-
+                           ume, tape owner, date,  file identification, and
+                           system identification.  RAM prompts  for each of
+                           the parameters.
+
+            VOLUME=        After  the  equal sign  enter  the  alphanumeric
+                           characters (6  or less) specified by  your local
+                           operating procedures.
+
+            OWNER=         Enter the  alphanumeric characters (14  or less)
+                           specified by your local operating procedures.
+
+            DATE=          Enter the date in the  format yyddd, where yy is
+                           the last two  digits of the year and  ddd is the
+                           Julian date.  Five numerals must be entered; use
+                           leading zeros  where required.  For  example, if
+                           the date is February 13, 1984, enter 84044.
+
+            FILE=          Enter the  alphanumeric characters (17  or less)
+                           for file identification specified  by your local
+                           operating procedures.
+
+            SYSTEM=        Enter the  alphanumeric characters (13  or less)
+                           for  system  identification  specified  by  your
+                           local operating procedures.
+
+                           Normally,  if a  carriage return  is entered  in
+                           response to any of the  five prompts, the infor-
+                           mation entered for that parameter in the preced-
+                           ing Label command  is retained.   RAM then  dis-
+                           plays the next parameter prompt.  However, after
+                           a coldstart,  as in this procedure,  no previous
+                           values exist, and blanks  or zeros (depending on
+                           the parameter)  will be  written to  tape for  a
+                           carriage return response to a parameter prompt.
+
+                           It is also possible, within limits, to enter the
+                           command and its parameters on one line (see Com-
+                           mand Structure  and Command Sequence  in Chapter
+                           Three, Commands, for complete instructions).
+
+
+
+
+
+                                                     DIAGNOSTICS    Page 52
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            When RAM  is coldstarted  and the  Run command  is issued,  RAM
+            begins collecting data at block  0 in the Supervisors' circular
+            files.
+
+            The final status report taken shows  the last block number from
+            which  RAM collected  data.  RAM  should now  be instructed  to
+            begin collecting data from the same block in the circular file.
+            The block  from which RAM collects  data can be  specified with
+            the Setblock command.
+
+            *setblock      Use  the Setblock  command  to  instruct RAM  to
+                           begin  collecting  accounting   data  from  each
+                           Supervisor at a specified block number.
+
+            SUPERVISOR=    RAM prompts  for the  3-digit Supervisor  number
+                           (in decimal).
+
+            BLOCK=         RAM  prompts for  the 4-digit  block number  (in
+                           hexadecimal).  Refer to the  final status report
+                           taken before  the Coldstart  command was  issued
+                           and note  the Supervisor  numbers and  the block
+                           number in each one from which data was last col-
+                           lected.   Set the  block  number  to the  number
+                           shown on  the status report.  RAM's  response is
+                           shown below.
+
+            BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+                           Repeat the Setblock command  for each Supervisor
+                           in the network.
+
+            *status        Obtain  a status  report.  Verify  that the  new
+                           status report reflects the changed block numbers
+            (The status    for each Supervisor.   If any of the  block num-
+            report will    bers do  not match  the previous  status report,
+            be dis-        repeat  the appropriate  Setblock command.   The
+            played.)       report also shows the tape  unit state as Online
+                           and the tape status as Ready  as a result of the
+                           Attach command.
+
+            *run           Restart RAM by entering  the Run command.  RAM's
+            - RUNNING -    response is shown.
+
+
+
+
+
+
+
+
+                                                     DIAGNOSTICS    Page 53
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            *profile       Issue the Profile command to display any tape or
+                           disk unit  status and error messages.   Refer to
+            (The error     Profile Command  in Chapter  Two, Commands,  RAM                                                                        ___
+            messages will  Reference Manual or follow  your local operating                           ________________
+            be dis-        procedures regarding any error messages that may
+            played.)       be displayed.
+
+            *resetprofile  Issue  the Resetprofile  command  to clear  from
+                           RAM's log any  tape or disk error  messages that
+                           may have been displayed by the Profile command.
+
+                           The procedure is complete.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     DIAGNOSTICS    Page 54
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                       GLOSSARY
+
+
+            ACCOUNT
+
+            A  slave program  within  each  Supervisor.  It  has  read-only
+            access to the accounting information stored on the Supervisor's
+            disk.
+
+
+            BLOCK
+
+            Accounting data received  by RAM from an  ACCOUNT slave treated
+            as a single unit.  Each block contains 1024 bytes.
+
+
+            CIRCULAR FILE
+
+            A file accessed such that when  the file becomes full, new data
+            is written over  the oldest data.  In a sense,  a circular file
+            never runs out of space because new data can always be added to
+            it.
+
+
+            COLDSTART
+
+            The command that  initializes RAM's memory.  It is  used when a
+            new version of RAM  is installed or when a  system problem pre-
+            vents RAM  from reading  session pool  and history  information
+            from the Supervisor's disk.
+
+
+            DRAIN
+
+            The command  that causes RAM to  stop collecting data  from the
+            Supervisors and to write session pool  data to tape.  The Drain
+            command is used, for example,  to save session pool information
+            before a  new version of RAM  is installed or when  the session
+            pool is full.
+
+
+            HOST
+
+            A computer  or processor on  which programs  run.  It may  be a
+            mainframe computer on  which many programs run or  an ISIS slot
+            in a TYMNET Engine dedicated to a single system or application.
+
+
+
+
+                                                        GLOSSARY    Page 55
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            INTER-RECORD GAP
+
+            The unrecorded  section between two  physical records on  a RAM
+            tape.
+
+
+            ISIS
+
+            Internally Switched  Interface System.   ISIS is  a specialized
+            operating system that manages the resources of a TYMNET Engine.
+            ISIS divides  the Engine's  memory into  partitions, or  slots,
+            each of which contains a specific function.  It enables several
+            applications and  network interfaces to  run concurrently  in a
+            single Engine.
+
+
+            KERNEL
+
+            The ISIS control  program, which is responsible  for scheduling
+            the various processes that run under ISIS.
+
+
+            OCTET
+
+            A sequence  of eight bits operated  on or considered as  a unit
+            and usually concerned with an 8-bit byte (i.e, representing one
+            character or two hexadecimal numerals).
+
+
+            PAUSE
+
+            The command  that interrupts  RAM processing.   Pause is  RAM's
+            normal inactive state.   The Pause command terminates  the cur-
+            rent tape file, even if it is not full, and backs up the infor-
+            mation currently in memory to the RAM disk.
+
+
+            RECORD (logical record on tape)
+
+            A sequence of 240 bytes of data treated as a unit.
+
+
+
+
+
+
+
+
+
+
+                                                        GLOSSARY    Page 56
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            RAM DISK
+
+            The disk  unit to which the  session pool data stored  in RAM's
+            memory is backed up.  RAM backs up data to the disk:
+
+              o  after writing each file to tape
+
+              o  if 15 minutes have  elapsed since the last  backup, and no
+                 file has been  written to tape and there is  data in RAM's
+                 memory to be written to tape
+
+              o  when the Pause command is issued
+
+            The disk unit must be operational for RAM to function.
+
+
+            SESSION POOL
+
+            The area in  RAM's memory in which  accounting information from
+            the  network Supervisors  is collected  and merged.   Completed
+            session records  are copied  from the session  pool to  the RAM
+            tape.
+
+
+            SESSION RECORD
+
+            The merged accounting  information that RAM writes  to tape.  A
+            session record is created  for every circuit built  in the net-
+            work.  It includes  such information as login  and logout time,
+            input and output octet counts,  and origin and destination node
+            numbers.
+
+
+            SLOT
+
+            A section  of memory in a  TYMNET Engine running ISIS  code.  A
+            slot contains the code for  a specific function or application.
+            A TYMNET Engine may have as many as 63 slots.
+
+
+            SUPERVISOR
+
+            A network node that is responsible for controlling and monitor-
+            ing the  network.  The Supervisor  verifies usernames  at login
+            and builds  least-cost-path circuits that  balance the  load in
+            the network.   The Supervisor  also contains  PROBE, a  program
+
+
+
+
+                                                        GLOSSARY    Page 57
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            that is used to monitor the status of the network and to inter-
+            vene manually when problems arise.   The Supervisor maintains a
+            network log that  may be examined using  PROBE.  The Supervisor
+            is also responsible for collecting network usage data (account-
+            ing data) that is passed on to RAM.
+
+            While a given network may contain several Supervisors, only one
+            Supervisor is active at a given time.  The inactive Supervisors
+            act as backup to the Supervisor that is active.
+
+
+            TYMFILE
+
+            A file containing a set of  statements that define the configu-
+            ration of the code running in an ISIS slot in a TYMNET Engine.
+
+
+            WARMSTART
+
+            The command that starts RAM, typically  following a system mal-
+            function.  RAM copies into its memory the session pool and his-
+            tory information previously  backed up onto disk.   RAM resumes
+            processing essentially from where it was interrupted.
+
+
+            WRAPAROUND
+
+            A wraparound occurs when  the block number into  which the cur-
+            rent Supervisor  is writing  passes the  block number  RAM most
+            recently collected,  that is,  the Supervisor  is writing  over
+            data not yet collected by RAM.
+
+
+            WRITE RING
+
+            A physical device placed in the hub of a tape reel that signals
+            the tape drive that data may be written to that tape.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        GLOSSARY    Page 58
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                              Appendix A, COMMAND SUMMARY
+
+
+            This appendix contains a brief  description of the RAM commands
+            available to system  operators.  Refer to RAM  Reference Manual                                                      _____________________
+            for a complete description of the commands.
+
+
+            Nonprivileged Commands            ______________________
+
+            Nonprivileged RAM commands are used  primarily to obtain infor-
+            mation.  They  are listed in  alphabetical order.  You  may use
+            these commands regardless of your user status.
+
+
+            Exit Command            ____________
+
+            Syntax: Exit
+
+            This command terminates  your RAM session.  Other  users logged
+            in to RAM are not affected.
+
+
+            Help Command            ____________
+
+            Syntax: Help
+
+            This command displays  a list of valid RAM  commands.  The list
+            includes  only those  commands  appropriate  to your  privilege
+            level.
+
+
+            Profile Command            _______________
+
+            Syntax: PROfile
+
+            This command  displays a list  of status, error,  and exception
+            condition messages related to  RAM's tape or disk  units.  Mes-
+            sages that represent serious error  conditions are flagged with
+            an exclamation point.  All messages are  cleared at system ini-
+            tialization or following a coldstart.  The Resetprofile command
+            is used to clear all current messages while RAM is running.
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 59
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Status Command            ______________
+
+            Syntax: STatus
+
+            This command displays a RAM status report.  The report includes
+            the following:
+
+              o  RAM's version number
+
+              o  RAM's current status
+
+              o  current date and time
+
+              o  current state of the RAM disk, state of the RAM tape unit,
+                 and status of the RAM tape
+
+              o  date and time of the most recent system startup and backup
+
+              o  number of times RAM has been restarted
+
+              o  number of  circuits currently  built between  RAM and  the
+                 network Supervisor(s)
+
+              o  number of session records RAM currently has in memory
+
+            The output  also includes  the following  information regarding
+            the Supervisor(s) from which RAM is collecting data:
+
+              o  host number(s) of the network Supervisor(s)
+
+              o  next Supervisor from which RAM will collect data
+
+              o  block number  of the data  most recently collected  from a
+                 Supervisor
+
+              o  block number  into which the  Supervisor was  writing when
+                 RAM collected the last block of data
+
+              o  timestamp of the oldest data
+
+              o  status of RAM's data collection efforts
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 60
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Privileged Commands            ___________________
+
+            This section describes privileged commands, which permit you to
+            start and  stop RAM processing and  to change the state  of the
+            RAM tape units  and the status of  the RAM tapes.  You  may use
+            privileged commands only  if you are the  privileged user.  The
+            commands are listed in alphabetical order.
+
+
+            Attach Command            ______________
+
+            Syntax: Attach Unit=[0|1],Position=[TMTM|BACK|RW]
+
+            This command attaches  the specified tape unit to  the RAM slot
+            and instructs the  tape drive to move the tape  to the location
+            on the tape  at which recording is  to begin.  The tape  is not
+            actually physically moved until the tape is promoted to In Use.
+
+            The value  of the  tape unit parameter  must be  either 0 or 1.
+            The value  of the position parameter  must be one of  the three
+            codes listed below.
+
+                 TMTM  Causes  the tape  to be  positioned at  the pair  of
+                       adjacent tape marks at the  end of the last complete
+                       file written to tape.
+
+                 BACK  Causes the  tape to backspace  to the HDR1  label at
+                       the beginning of the current file.
+
+                 RW    Causes the tape to be rewound and initialized.
+
+
+            Coldstart Command            _________________
+
+            Syntax: COLDstart
+
+            This command initializes  RAM's memory.  It is used  when a new
+            version of RAM is  installed or when a  system malfunction pre-
+            vents RAM  from copying  session pool  and history  information
+            from the RAM disk into RAM's memory during a warmstart.
+
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 61
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Detach Command            ______________
+
+            Syntax: DEtach Unit=[0|1]
+
+            This  command releases  the specified  tape unit  and makes  it
+            available to  other ISIS  slots.  The  value of  the tape  unit
+            parameter must be either 0 or 1.
+
+
+            Drain Command            _____________
+
+            Syntax: DRain
+
+            RAM  stops collecting  new  accounting  data from  the  ACCOUNT
+            slaves, finishes processing all session  records in memory, and
+            writes them  to tape, even if  they are incomplete.   The Drain
+            command is  issued if the  session pool  is full or  before the
+            Coldstart  command is  issued to  prevent data  in memory  from
+            being lost.   RAM will  pause when  the session  pool has  been
+            drained.
+
+
+            Grab Command            ____________
+
+            Syntax: Grab
+
+            This command takes  privilege from the current  privileged user
+            and makes you the new privileged user.  There is only one priv-
+            ileged user  at any  given time.  You  should use  this command
+            only to perform a crucial operation that cannot be delayed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 62
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Label Command            _____________
+
+            Syntax: Label Volume=vv,Owner=oo,Date=yyddd,File=ff,System=ss
+
+            RAM  writes  the specified  information  to  tape in  the  tape
+            labels.  The volume  and owner parameters are part  of the VOL1
+            label that is  recorded at the beginning of each  tape.  When a
+            tape is in use, the date,  file identification, and system code
+            will be written to the beginning of each file as HDR1 and HDR2.
+
+            If  the Label  command is  not  entered, RAM  sets the   volume
+            serial number  to ASCII zeros  and the remaining  parameters to
+            blanks.  The parameters are the following:
+
+                 vv     Tape  serial  number.   This field  may  contain  6
+                        alphanumeric characters.
+
+                 oo     Tape owner  identifier.  This field may  contain 14
+                        alphanumeric characters.
+
+                 yyddd  5-digit creation  date, where  yy is  the last  two
+                        digits of the  current year, and ddd  is the Julian
+                        date.
+
+                 ff     File  identifier.  This  field may  may contain  17
+                        alphanumeric characters.
+
+                 ss     System  identifier.   This  field  may  contain  13
+                        alphanumeric characters.
+
+            To avoid exceeding the maximum allowed  line length of 63 char-
+            acters, let RAM prompt for each parameter rather than trying to
+            string the parameters together on the command line.
+
+            If you respond to any of  the parameter prompts with a carriage
+            return, RAM will  use values set by the  previous Label command
+            for that parameter.
+
+            Follow your local operating procedures or check with your oper-
+            ations manager to determine what  values the host computer that
+            will process the tapes requires in the parameter fields.
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 63
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Pause Command            _____________
+
+            Syntax: PAuse
+
+            RAM stops collecting  new accounting data, terminates  the cur-
+            rent tape file (even though it  may not contain the maximum 256
+            primary  sessions), and  writes all  information  in memory  to
+            disk.
+
+
+            Resetprofile Command            ____________________
+
+            Syntax: REsetprofile
+
+            This command clears the list of  messages displayed by the Pro-
+            file command.
+
+
+            Run Command            ___________
+
+            Syntax: RUn
+
+            RAM  begins or  resumes normal  processing  following a  Pause,
+            Drain, Coldstart, or Warmstart command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 64
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Setblock Command            ________________
+
+            Syntax: SEtblock Supervisor=sss,Block=bbbb
+
+            RAM begins collecting accounting data from the specified Super-
+            visor at  the specified block number.   The parameter sss  is a                                                                  ___
+            3-digit  Supervisor host  number (in  decimal), and  bbbb is  a                                                                 ____
+            block number  (in hexadecimal) of  four or fewer  digits.  Both
+            parameters are mandatory.
+
+            This command  overrides RAM's determination  of the  next block
+            number to be  processed.  If the block number  pointer is moved
+            forward, data in the intervening area of the circular file will
+            not be collected.
+
+                                        CAUTION                                        _______
+
+                 This  command  is  powerful and  must  be  used  with
+                 extreme caution.  Used incorrectly, it can have seri-
+                 ous, unintended  consequences.  If set  so accounting
+                 blocks are skipped, accounting data  will be lost; if
+                 set so  accounting blocks  are collected  twice, data
+                 may be written  to tape as incomplete  sessions.  The
+                 Coldstart command must  be issued to clear  the table
+                 RAM uses to track collected session records.
+
+
+            Slave Command            _____________
+
+            Syntax: SLave [Up|Down]=nnn
+
+            This command informs  RAM that the specified  Supervisor number
+            nnn (or its ACCOUNT  slave) is either up or  down.  Each Super-            ___
+            visor in the network is considered  up by RAM until you declare
+            it down using the Slave command.  Once a Supervisor is declared
+            down, RAM stops trying to build a circuit to the ACCOUNT slave.
+            This prevents RAM from continuously attempting  to build a cir-
+            cuit to  an ACCOUNT slave that  has the oldest  accounting data
+            but that  is currently down.  RAM  will not attempt to  build a
+            circuit to  the specified  Supervisor until  it is  declared up
+            again.
+
+            Several up  and down parameters may  be entered on  one command
+            line (separated  by commas).  However,  if the  same Supervisor
+            number is specified more than once, only the last occurrence of
+            that  number  is  recognized.   All  previous  occurrences  are
+            ignored.
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 65
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            Tape Command            ____________
+
+            Syntax: Tape Unit=[0|1],Count=nn,Operation=[RR|BR|AF|BF|EF|RW]
+
+            RAM performs the specified tape operation.   The tape unit num-
+            ber must be 0 or 1.  The value nn indicates the number (in dec-                                           __
+            imal) of times the operation is to be performed.  The operation
+            parameter must be one of the following 2-character codes:
+
+
+                 RR  Read Record
+
+                 BR  Backspace Record
+
+                 AF  Advance File
+
+                 BF  Backspace File
+
+                 EF  Write End of File
+
+                 RW  Rewind tape
+
+
+            Warmstart Command            _________________
+
+            Syntax: WARMstart
+
+            RAM starts,  using the history  information and  session tables
+            previously stored on disk.  RAM  is usually warmstarted follow-
+            ing a system malfunction  so that RAM data  collection may con-
+            tinue from where it was interrupted.  If the RAM version number
+            backed up on disk is not the  same as the RAM version currently
+            in RAM's memory, or if RAM is unable  to read the disk, a cold-
+            start is automatically performed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     Appendix A, COMMAND SUMMARY    Page 66
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                            Appendix B, RAM SYSTEM MESSAGES
+
+
+            The following are messages that may be displayed on your termi-
+            nal.
+
+                 ?
+
+            A question mark indicates that you  have entered a command con-
+            taining a  syntax error or that  the command is longer  than 63
+            characters.
+
+                 name CURRENTLY IS THE PRIVILEGED USER
+
+            This message is displayed at login  to users with privileged or
+            system programmer status.  It tells  you that another user with
+            privileged status  is logged  in to  RAM and  currently is  the
+            privileged user.
+
+                 DISK UNAVAILABLE
+
+            This is displayed if RAM's disk is not available.
+
+                 name IS NOW THE PRIVILEGED USER !!
+
+            This indicates  you are  no longer  the privileged  user, where
+            name is  the username entering the  Grab command to  become the            ____
+            new privileged user.
+
+                 name IS NO LONGER THE PRIVILEGED USER
+
+            This indicates you  are the new privileged user as  a result of
+            having issued the Grab command.  The username name is no longer                                                          ____
+            the privileged user.
+
+                 LOGIN NOT ACCEPTED BY RAM, USERNAME NOT RECOGNIZED
+
+            This indicates that you have attempted to  log in to RAM with a
+            username that has not been assembled into RAM.
+
+                 SESSION POOL FULL !!
+
+            This indicates  that the  number of  session records  currently
+            held in  memory is the maximum  number of session  records that
+            may be in memory at any given time.  RAM will force a pause.
+
+
+
+
+
+                                 Appendix B, RAM SYSTEM MESSAGES    Page 67
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                 YOU ARE NOT THE PRIVILEGED USER
+
+            This indicates that  a user who is not the  privileged user has
+            entered a command reserved for the privileged user.
+
+                 THIS IS A RESTRICTED COMMAND
+
+            This indicates that a privileged user without system programmer
+            status has entered a restricted command.
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            This indicates that  RAM must be paused before  this command is
+            entered.  The commands that must be preceded by a Pause command
+            are Attach,  Coldstart, Detach,  Dump, Label,  Print, Setblock,
+            Tape, and Warmstart.
+
+                 SUPERVISOR PASSED RAM (WRAP AROUND) !!
+
+            This indicates  that the  block number  into which  the current
+            Supervisor  is writing  has passed  the block  number RAM  most
+            recently received.
+
+            This is a serious condition because it  means that RAM was una-
+            ble to collect accounting data  before the accounting block was
+            written over.   Some accounting  data was  probably lost.   RAM
+            automatically resets its pointer, moving  it ahead 64 blocks to
+            prevent a second wraparound.
+
+                 TAPE UNIT n UNUSABLE - TAPE DISABLED
+
+            This is displayed  on the terminal(s) of all  current RAM users
+            if RAM attempts a tape operation  and receives no response from
+            the specified  tape unit n within  9 minutes.  RAM  assumes the                                     _
+            tape unit to  be offline  and demotes the  tape status  to Dis-
+            abled.  If a second tape unit is  online and its tape status is
+            Ready, RAM will promote this unit  to the In Use state.  If the
+            second unit  is not  online with  tape status  Ready, RAM  will
+            force a pause.
+
+
+
+
+
+
+
+
+
+
+
+                                 Appendix B, RAM SYSTEM MESSAGES    Page 68
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                      Appendix C, NETWORK SUPERVISOR LOG MESSAGES
+
+
+            RAM sends  node reports  to the  active Supervisor's  error log
+            when a system error occurs.  The  active Supervisor also gener-
+            ates a log message  when RAM begins to fall behind  in its col-
+            lection of accounting data from that Supervisor.  To monitor or
+            review RAM's  status, use  PROBE or  TMCS to  obtain a  list of
+            these error messages.
+
+            The following messages may be retrieved using PROBE:
+
+                 ACCOUNTING FILE BLOCKS LEFT #
+
+                 NODE REPORT node# FROM SLOT slot# RAM TYPE aa bbbb
+
+            The following procedure may be used to list these messages:
+
+                           Log in to  PROBE.  Refer to the  PROBE Reference                                                            _______________
+                           Manual.                           ______
+
+            :report m42    Issue the Report command  to restrict the output
+                           of log messages to those generated by RAM.
+
+            :rlog 28 40    Issue the  Restrict Log command to  restrict the
+                           output of log messages  to Supervisor accounting
+                           file  messages (28)  and to  node reports  (40).
+                           The RAM node  report shown above is  one of many
+                           node reports that  may be generated by  the node
+                           on which RAM is running.
+
+            :log cf#       Issue the Log command with the C and F options.
+
+            To review log messages generated in  the past, specify a time #                                                                          _
+            from which  the message output should  begin.  The time  may be
+            specified as  a number  nnn, indicating  the number  of minutes                                    ___
+            before the present time, or it  may be specified using the form
+            ddd:hh:mm, indicating  the day of the  year, the hour,  and the
+            minute (GMT) from which output from  the PROBE log is to begin.
+            PROBE displays the message CAUGHT UP  when it reaches the pres-
+            ent time; it then continues to output current messages.
+
+            If you do  not specify a time  when you issue the  Log command,
+            PROBE outputs only current messages.  PROBE continues to output
+            log messages until you hit an escape.
+
+
+
+
+
+                     Appendix C, NETWORK SUPERVISOR LOG MESSAGES    Page 69
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            PROBE issues a timestamp every minute;  from this can be deter-
+            mined the  time a reported  event occurred.  An  explanation of
+            the RAM node report output follows.
+
+            155:20:09:43
+             NODE REPORT 2033 FROM SLOT 3 RAM TYPE 23 0003
+            155:20:10:43
+             ACCOUNTING FILE BLOCKS LEFT 650
+
+            :exi           Log out of PROBE when through.
+
+
+            The following messages may be output using TMCS:
+
+                 ACCOUNTING FILE BLOCKS LEFT #
+
+                 node# NODE REPORT FROM SLOT slot# RAM TYPE aa bbbb
+
+
+            The following procedure may be used to list these messages:
+
+                             Log in to TMCS.  Refer to TMCS User's Guide.                                                       _________________
+
+            *sel   node #    Issue the Select Node  command to restrict the
+                             output of  log messages to those  generated by
+                             the node on  which RAM is running.   If you do
+                             not know the node number, ignore this command.
+
+            *sel isis 22-29  Issue the Select ISIS  command to restrict the
+                             output of  log messages to ISIS  message types
+                             22 through 29, as  RAM generates ISIS messages
+                             in this range.   Look for the RAM  node report
+                             in the output, as other slots in this node may
+                             also generate  ISIS messages  in the  range 22
+                             through 29.
+
+              *res event 5   Issue  the  Restore Event  command  to  output
+                             Supervisor   accounting  file   log   messages
+                             (type 5).
+
+              :log #         Issue the Log command.
+
+            To review RAM related log messages generated in the past, spec-
+            ify a time  # from which the message output  should begin.  The                        _
+            time may be specified as a number nnn, indicating the number of                                              ___
+            minutes before the  present time, or it may  be specified using
+            the form mm/dd/yy hh:mm, indicating the month, day, year, hour,
+
+
+
+                     Appendix C, NETWORK SUPERVISOR LOG MESSAGES    Page 70
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            and minute  (GMT) from which output  is to begin.  The  year is
+            optional; if it is omitted, TMCS  will assume the current year.
+            The time may also be specified as a range of two numbers or two
+            dates in  the form # to  #, indicating the starting  and ending                               _     _
+            times of the  output.  If you do  specify a range of  time, the
+            first specified time must be earlier than the second.
+
+            If you do  not specify a time  when you issue the  Log command,
+            TMCS outputs only current messages.  Unless you specify a range
+            of time, TMCS continues to output log messages until you hit an
+            escape.
+
+            Each TMCS log message is preceded by a line indicating the time
+            the  reported event  occurred and  the  active Supervisor.   An
+            explanation of the RAM node report output follows.
+
+            5/27/84 17:19:56  SUPERVISOR:  123
+            2007 NODE REPORT FROM SLOT 4 RAM TYPE 22 022000000  <ISIS 22>
+
+            5/27/84 17:34:56  SUPERVISOR:  123
+            2007 NODE REPORT FROM SLOT 4 RAM TYPE 22 022000000  <ISIS 22>
+
+            5/27/84 17:49:56  SUPERVISOR:  123
+            2007 NODE REPORT FROM SLOT 4 RAM TYPE 22 022000000  <ISIS 22>
+
+            5/27/84 18:04:56  SUPERVISOR:  123
+            2007 NODE REPORT FROM SLOT 4 RAM TYPE 22 022000000  <ISIS 22>
+
+            5/27/84 18:10:24  SUPERVISOR:  123
+            ACCOUNTING BLOCKS LEFT  662
+
+            *quit          Issue the Quit command to log out of TMCS.
+
+
+            The message  output by PROBE and  TMCS regarding the  number of
+            blocks left in the accounting file  on the active Supervisor is
+            first generated  when half of  the file  has been used.   It is
+            generated with  increasing frequency if  the file  continues to
+            fill.
+
+
+
+
+
+
+
+
+
+
+
+                     Appendix C, NETWORK SUPERVISOR LOG MESSAGES    Page 71
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            The RAM node reports that are  output by PROBE and TMCS contain
+            the same information, as follows:
+
+                 node# = node number
+
+                 slot# = slot number
+
+                 aa    = RAM error type
+
+                 bbbb  = submessage failure reason, if not 0
+
+            If aa is 22,  RAM cannot write to a tape  unit because the tape               __
+            status is not  Ready or In Use.  The value bbbb  will always be                                                       ____
+            0.  This  message repeats every 15  minutes for as long  as the
+            condition exists.
+
+            If aa is 23, there is a  disk error.  The message repeats every               __
+            15 minutes for as long as the disk is unusable.  The reason for
+            the failure, indicated by bbbb, is as follows:                                      ____
+
+                 0001  The disk area is too small for RAM's use.
+
+                 0002  A bad  status condition was  returned from  the disk
+                       unit or the controller.
+
+                 0003  A checksum  error occurred with data  retrieved from
+                       the disk.
+
+            If aa is 24, invalid accounting data was received from the net-               __
+            work, and  RAM ignores  it.  The  value bbbb  is the  number of                                                    ____
+            invalid records ignored by RAM.   This message repeats every 15
+            minutes for as long as the invalid data exists.
+
+            If aa is  25, the ACCOUNT slave program  transmitted an invalid               __
+            checksum  disk block  to  RAM.  This  message  is  sent if  any
+            invalid checksums  were detected  in the  preceding 15 minutes.
+            The  value  bbbb  indicates the  number  of  invalid  checksums                        ____
+            received since the last coldstart.
+
+            If aa is  27, the session pool  is full.  RAM pauses  when this               __
+            occurs.  The value bbbb indicates the  number of times the ses-                               ____
+            sion pool has overflowed.
+
+            If aa is 28, the current session number is not one greater than               __
+            the previous session number.  This occurs when a new Supervisor
+            is awakened, in which case approximately 45 session numbers may
+            be skipped.  It also  occurs when the Supervisor  builds a com-
+            mand circuit, in which case  the session counter is incremented
+
+
+                     Appendix C, NETWORK SUPERVISOR LOG MESSAGES    Page 72
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            but  no accounting  data is  reported.  The  Supervisor can  be
+            optioned to  generate a special  accounting message  to account
+            for these  command circuits.  This  reduces the  occurrences of
+            this message.
+
+            This message is  sent if any discrepancy in  the session number
+            count was detected in the preceding 15 minutes.  The value bbbb                                                                       ____
+            is the number of times the increment between successive session
+            numbers was other than one.
+
+            If aa is  29, the Supervisor has passed  RAM (wraparound).  The               __
+            value bbbb is  the RAM accounting block number  that was passed                  ____
+            by the Supervisor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                     Appendix C, NETWORK SUPERVISOR LOG MESSAGES    Page 73
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                               Appendix D, COMMAND TABLE
+
+
+            Nonprivileged Commands            ______________________
+
+            Exit       Terminates the current RAM session.
+
+            Help       Displays a list of valid RAM commands.
+
+            PROfile    Displays a list of disk or tape status messages.
+
+            STatus     Displays a RAM status report.
+
+
+            Privileged Commands            ___________________
+
+            Attach Unit=[0|1],Position=[TMTM|BACK|RW]
+                       Attaches the specified tape unit to the RAM slot.
+
+            COLDstart  Initializes RAM's memory.
+
+            DEtach Unit=[0|1]
+                       Detaches the specified tape unit from the RAM slot.
+
+            DRain      Stops accounting data collection,  processes the ses-
+                       sion records in memory, and writes them to tape.
+
+            Grab       Takes privilege from privileged user.
+
+            Label Volume=vv,Owner=oo,Date=yyddd,File=ff,System=ss
+                       Specifies tape label information.
+
+            PAuse      Terminates  normal  RAM  processing  and  performs  a
+                       backup.
+
+            REsetprofile
+                       Clears the list of messages  displayed by the Profile
+                       command.
+
+            RUn        Resumes normal RAM processing.
+
+            SEtblock Supervisor=sss,Block=bbb
+                       Sets the accounting block number  from which RAM will
+                       next collect accounting data.
+
+
+
+
+
+
+                                       Appendix D, COMMAND TABLE    Page 75
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+            SLave [Up|Down]=nnn
+                       Informs RAM  that the specified  Supervisor is  up or
+                       down.
+
+            Tape Unit=[0|1],Count=#,Operation=[RR|BR|AF|BF|RW]
+                       Performs the specified tape operation.
+
+            WARMstart  Copies history information and  session tables stored
+                       on RAM disk into memory.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                       Appendix D, COMMAND TABLE    Page 76
+
+
+
+
+
+
+
+
+
+            RAM Operator's Guide                            August 30, 1984
+
+
+                                         INDEX
+
+
+
+            Attach command .................................... 61
+
+            Coldstart command ................................. 61
+            Command structure and sequence .................... 6
+            Control-A ......................................... 8
+            Control-H ......................................... 8
+
+            Detach command .................................... 62
+            Drain command ..................................... 62
+
+            Error messages .................................... 67
+            Escape character .................................. 8
+            Exit command ...................................... 59
+
+            Grab command ...................................... 62
+
+            Help command ...................................... 59
+
+            Label command ..................................... 63
+            Login ............................................. 9
+
+            Nonprivileged commands ............................ 59
+
+            Pause command ..................................... 64
+            Privileged commands ............................... 61
+            Profile command ................................... 59
+
+            RAM tapes ......................................... 61, 62, 63,
+             64, 66
+            Resetprofile command .............................. 64
+            Run command ....................................... 64
+
+            Setblock command .................................. 65
+            Slave command ..................................... 65
+            Special characters ................................ 8
+            Status command .................................... 60
+
+            Tape command ...................................... 66
+
+            Warmstart command ................................. 66
+
+
+
+
+
+
+                                                           INDEX    Page 77
+
+
+
+
+
+#Q,F
