@@ -1,0 +1,692 @@
+Procedure ALLFILES
+Begin
+
+Fields  T.SYS.N         as 'zzn',
+        T.Set.no        as 'zn',
+        T.Date.Written  as date 'zm-zd-yy' DEFAULT date '20000101',
+        T.Date.to.Write as date 'zm-zd-yy' Default date '20000101',
+        T.Base.date     as date 'zm-zd-yy',
+        Comm            as '15c',
+        T.set.order     as 'zn',
+        Yes.no          as '3c',
+        No.of.chars     as 'zzn',
+        No.of.blocks    as 'zzn',
+        Start.date      as date 'zm-zd-yy' Default date '20000101',
+        Begin.date      as date 'zm-zd-yy' Default date '20000101'
+
+Relation T.AF.SET is
+   Key  T.SYS.N,
+        T.SET.NO
+
+   Data T.DATE.WRITTEN,
+        T.DATE.TO.WRITE
+
+REPORT ALLFILES.RPT to '*'
+        Top.margin       3
+        Bottom.margin    3
+        Page.size       66
+        heading.size     3
+
+Page.heading
+    Begin
+    Print to ALLFILES.RPT @TAB 10, 'A L L F I L E S   S T A T U S   R E P O R T',@cr,
+        @tab 24, 'For: ' , Begin.date
+    End
+
+CENT:
+Begin
+
+Type @cr,@cr,'Current centers are:',@cr
+
+For each AF.CENTER
+    Begin
+    Type Center.id,@cr
+    End
+
+AA:
+    Begin
+    Type @cr,'Enter the center id: '
+    AAA:
+    BEGIN
+    Accept from terminal Center.id
+    IF CENTER.ID = '' THEN REPEAT AAA
+    END
+    Select AF.CENTER via key then
+        Begin
+        Type @cr,@cr, 'Current systems are:', @cr
+        For each AF.SYSTEM via CENTER = CENTER.ID
+            Begin
+            Type ' ', SYS.NO
+            End
+        Type @cr,@cr
+        Finish AA
+        End
+    else
+        Begin
+        AB:
+            Begin
+            Type @cr, trim (CENTER.ID), ' is a new center - Ok? '
+            Accept from terminal YES.NO
+            If YES.NO = 'Y' or 'YE' or 'YES' then
+                Begin
+                Insert into AF.CENTER
+                Finish AB
+                End
+            else if YES.NO = 'N' or 'NO' then
+                Begin
+                Repeat AA
+                End
+            else
+                Begin
+                Repeat AB
+                End
+            End
+        Finish AA
+        End
+    End
+
+Let CENTER = CENTER.ID
+
+%***** Clean up routine *****%
+
+For each AF.SET
+    Begin
+    Let sys.no = sys.n
+    Select AF.SYSTEM via key then
+        Begin
+
+        BA:
+            Begin
+            If DATE.TO.WRITE lt today then
+                Begin
+                Let DATE.WRITTEN = DATE.TO.WRITE
+                If SET.NO = SP.SET then
+                    Begin
+                    Let DATE.TO.WRITE = DATE.TO.WRITE + SP.DAYS
+                    End
+                else
+                    Begin
+                    Let DATE.TO.WRITE = DATE.TO.WRITE + (NO.OF.SETS * NO.OF.DAYS)
+                    End
+                Alter AF.SET
+                Repeat BA
+                End
+            else
+                Begin
+                Finish BA
+                End
+            End
+        End
+    else
+        Begin
+        Nothing
+        End
+    End
+
+
+COMMAND.M:
+    Begin
+    Type @cr,@cr,'>'
+    Accept from terminal COMM
+
+%***** Add system routine *****%
+
+    If COMM = 'A' or 'AD' or 'ADD' then
+        Begin
+
+        CB:
+            Begin
+            Type @cr, 'Enter the system number: '
+            Accept from terminal SYS.NO
+            Let SYS.N = SYS.NO
+            Select AF.SYSTEM via key then
+                Begin
+
+                CC:
+                    Begin
+                    Type @cr, 'System ', SYS.NO, ' already exists - Delete? '
+                    Accept from terminal YES.NO
+                    If YES.NO = 'Y' or 'YE' or 'YES' then
+                        Begin
+                        Delete from AF.SET via SYS.N = SYS.NO
+                        Delete from AF.SYSTEM via key
+                        Finish CC
+                        End
+                    else if YES.NO = 'N' or 'NO' then
+                        Begin
+                        Repeat CB
+                        End
+                    else
+                        Begin
+                        Repeat CC
+                        End
+                    End
+                End
+            else
+                Begin
+                Nothing
+                End
+    
+            CC.2:
+                Begin
+                Type @cr, 'What is the number of the special set? (If none enter 0): '
+                Accept from terminal SP.SET
+                If SP.SET = 1 then
+                    Begin
+                    Type @cr,'Set 1 cannot be used as the special set.',@cr
+                    Repeat CC.2
+                    End
+                else if SP.SET ne 0 then
+                    Begin
+                    Type 'Number of days before overwritting? '
+                    Accept from terminal SP.DAYS
+                    Type 'Enter the last date that set ',SP.SET,' was written - '
+                    Accept from terminal SP.BASE
+                    Let SET.NO = SP.SET
+                    Let DATE.WRITTEN = SP.BASE
+                    Let DATE.TO.WRITE = SP.BASE + SP.DAYS
+                    Let SET.ORDER = 0
+                    Insert into AF.SET
+                    Finish CC.2
+                    End
+                else
+                    Begin
+                    Finish CC.2
+                    End
+                End
+
+            Let SET.ORDER = 1
+    
+            GET.WEEK.DAY: begin
+            Type 'Day of the week for this system : '
+            Accept from terminal WEEK.DAY
+            if WEEK.DAY gt "         " then
+                finish GET.WEEK.DAY else
+                repeat GET.WEEK.DAY
+            end %GET.WEEK.DAY%
+            Type 'What is the first set number? '
+            Accept from terminal SET.NO
+            Let T.SET.NO = SET.NO
+            Type 'How many regular sets are there? '
+            Accept from terminal NO.OF.SETS
+            Type 'How many days between each set? '
+            Accept from terminal NO.OF.DAYS
+            Type 'What is the first date that set ',T.SET.NO,
+                ' was written on? '
+            Accept from terminal BASE.DATE
+            Insert into AF.SYSTEM
+            Let DATE.WRITTEN = BASE.DATE
+            Let DATE.TO.WRITE = BASE.DATE + (NO.OF.SETS * NO.OF.DAYS)
+            Insert into AF.SET
+            Let SET.ORDER = 2
+            Type @cr,'Now give the <setnumbers><cr> in the order of appearance.'
+            Type @cr,@cr,'First set is number ',T.SET.NO,'.',@cr
+    
+            CD:
+                Begin
+                Type 'Set number? '
+                Accept from terminal SET.NO
+                If SET.NO = SP.SET then
+                    Begin
+                    Type 'You cannot use the special set.',@cr,@cr
+                    repeat CD
+                    End
+                Select AF.SET via key then
+                    Begin
+                    Type 'This record already exists.',@cr,@cr
+                    repeat CD 
+                    End
+                else nothing
+        
+                Let DATE.WRITTEN = DATE.WRITTEN + NO.OF.DAYS
+                If DATE.WRITTEN Gt Today then
+                    Begin
+                    Let DATE.TO.WRITE = DATE.WRITTEN
+                    Type 'Date written (new)      Date to write over ',
+                        DATE.TO.WRITE,@cr,@cr
+                    End
+                else
+                    Begin
+                    Let DATE.TO.WRITE = DATE.WRITTEN + (NO.OF.DAYS * NO.OF.SETS)
+                    Type 'Date written ',DATE.WRITTEN,@tab 3,'Date to write over ',
+                        DATE.TO.WRITE,@cr,@cr
+                    End
+        
+                    Insert into AF.SET
+                Let SET.ORDER = SET.ORDER + 1
+                If SET.ORDER gt NO.OF.SETS then
+                    Begin
+                    Finish CD
+                    End
+                else
+                    Begin
+                    Repeat CD
+                    End
+                End
+
+            CE:
+                Begin
+                Type @cr,'Add another system? '
+                Accept from terminal YES.NO
+                If YES.NO = 'Y' or 'YE' or 'YES' then
+                    Begin
+                    Repeat CB
+                    End
+                else if YES.NO = 'N' or 'NO' then
+                    Begin
+                    Finish CB
+                    End
+                else
+                    Begin
+                    Repeat CE
+                    End
+                End
+            End
+        Repeat COMMAND.M
+        End
+    
+%***** Quit command *****%
+
+    else if COMM = 'QUIT' or 'QUI' or 'QU' or 'Q' then
+        Begin
+        Finish CENT
+        End
+%***** Get info *****%
+
+    else if COMM = 'G' or 'GE' or 'GET' then
+        Begin
+        DA:
+            Begin
+            Delete from T.AF.SET all
+            Type @cr,@cr,'Get information for system: '
+            Accept from terminal Sys.n
+            Let SYS.NO = SYS.N
+            Select AF.SYSTEM via key then
+                Begin
+                Type @cr,'Date: '
+                Accept from terminal Begin.date
+                For each AF.SET via SYS.N
+                    Begin
+                    Let T.SYS.N = SYS.N
+                    Let T.SET.NO = SET.NO
+                    Let T.DATE.WRITTEN = DATE.WRITTEN
+                    Let T.DATE.TO.WRITE = DATE.TO.WRITE
+                    Insert into T.AF.SET
+                    End
+                For each T.AF.SET
+                    BEGIN
+                    DB:
+                        Begin
+                        If T.DATE.TO.WRITE lt BEGIN.DATE then
+                            Begin
+                            Let T.DATE.WRITTEN = T.DATE.TO.WRITE
+                            If T.SET.NO = SP.SET then
+                                Begin
+                                Let T.DATE.TO.WRITE = T.DATE.TO.WRITE + SP.DAYS
+                                End
+                            else
+                                Begin
+                                Let T.DATE.TO.WRITE = T.DATE.TO.WRITE + (NO.OF.DAYS * NO.OF.SETS)
+                                End
+                            Alter T.AF.SET
+                            Repeat DB
+                            End
+                        else if T.DATE.WRITTEN gt BEGIN.DATE then
+                            Begin
+                            Let T.DATE.TO.WRITE = T.DATE.WRITTEN
+                            If T.SET.NO = SP.SET then
+                                Begin
+                                Let T.DATE.WRITTEN = T.DATE.WRITTEN - SP.DAYS
+                                End
+                            else
+                                Begin
+                                Let T.DATE.WRITTEN = T.DATE.WRITTEN - (NO.OF.DAYS * NO.OF.SETS)
+                                End
+                            Alter T.AF.SET
+                            Repeat DB
+                            End
+                        else
+                            Begin
+                            Finish DB
+                            End
+                        End
+                    End
+                Type @cr,@cr, 'Set no.   Written on   Write over', @cr
+                For each T.AF.SET sorted on T.DATE.WRITTEN
+                    Begin
+                    Type @cr,@tab to 3,(T.SET.NO AS 'zn'), @tab 7
+                    If T.DATE.WRITTEN lt BASE.DATE then
+                        Begin
+                        Type 'New tape', @tab 5,(T.DATE.TO.WRITE as date 'zm-dd-yy')
+                        End
+                    else
+                        Begin
+                        Type (T.DATE.WRITTEN as date 'zm-dd-yy'),@tab 5,
+                            (T.DATE.TO.WRITE as date 'zm-dd-yy')
+                        End
+                    If T.SET.NO eq SP.SET then
+                        Begin
+                        Type @tab 2, 'Special set'
+                        End
+                    else
+                        Begin
+                        Nothing
+                        End
+                    End
+                End
+            else
+                Begin
+                Type @cr,'This system number does not exist in data base.',
+                    @cr
+                End
+            DC:
+                Begin
+                Type @cr, 'Get another system? '
+                Accept from terminal YES.NO
+                If Yes.no = 'Y' or 'YE' or 'YES' then
+                    Begin
+                    Repeat DA
+                    End
+                else if YES.NO = 'N' or 'NO' then
+                    Begin
+                    Finish DA
+                    End
+                else
+                    Begin
+                    Repeat DC
+                    End
+                End
+            End
+        Repeat COMMAND.M
+        End
+
+%***** Delete Command *****%
+
+    else if COMM = 'D' or 'DE' or 'DEL' or 'DELE' or 'DELET' or 'DELETE' then
+        Begin
+
+        EA:
+            Begin
+            Type @cr, 'Delete system number: '
+            Accept from terminal SYS.NO
+            Let SYS.N = SYS.NO
+            Select AF.SYSTEM via key then
+                Begin
+
+                EB:
+                    Begin
+                    Type @cr,"Delete system ", sys.no,' - Ok? '
+                    Accept from terminal YES.NO
+                    If YES.NO = 'Y' or 'YE' or 'YES' then
+                        Begin
+                        Delete from AF.SYSTEM via key
+                        Delete from AF.SET via SYS.N
+                        Finish EA
+                        End
+                    else if YES.NO = 'N' or 'NO' then
+                        Begin
+                        Type @cr,'System ' , sys.n,' not deleted',@cr
+                        Finish EA
+                        End
+                    else
+                        Begin
+                        Repeat EB
+                        End
+                    End
+                End
+            else
+                Begin
+                Type @cr,'System ',SYS.NO, ' does not exist in the data base.',@cr
+                Finish EA
+                End
+            End
+        Repeat COMMAND.M
+        End
+
+
+%***** Change a set date *****%
+
+    else if COMM = 'C' or 'CH' or 'CHA' or 'CHAN' or 'CHANG' or 'CHANGE' then
+        Begin
+        Type @cr,@cr,'Change dates for system? '
+        Accept from terminal SYS.N
+        Type @cr,'Set number? '
+        Accept from terminal SET.NO
+        Select AF.SET via key then
+            Begin
+            Type @cr,@cr,'System: ', SYS.N,@CR,'Set number: ',SET.NO
+            Type @cr,@cr,'Date written: ',(Date.written as date 'zm-dd-yy')
+            Type @cr,'Date to write over: ',(Date.to.write as date 'zm-dd-yy')
+            Type @cr,@cr, 'Actual date written? '
+            Accept from terminal DATE.WRITTEN
+            Type @cr, 'Date to write over: '
+            Accept from terminal DATE.TO.WRITE
+            Alter AF.SET
+            End
+        else
+            Begin
+            Type @cr,'This set was not found.',@cr
+            End
+        Repeat COMMAND.M
+        End
+
+%****** Report Command ******%
+
+    else if COMM = 'R' or 'RE' or 'REP' or 'REPO' or 'REPOR' or 'REPORT' then
+        Begin
+        Type @cr,@cr, 'Date of report? '
+        Accept from terminal BEGIN.DATE
+        FC:
+            Begin
+            Type @cr, 'Enter width of report in chars: '
+            Accept from terminal no.of.chars
+            If no.of.chars gt 135 then
+                Begin
+                Type 'Maximum line size is 135 chars.',@cr
+                Repeat FC
+                End
+            else if no.of.chars eq 135 then
+                Begin
+                Let no.of.blocks = 11
+                Finish FC
+                End
+            else if no.of.chars gt 124 and lt 135 then
+                Begin
+                Let no.of.blocks = 10
+                Finish FC
+                End
+            else if no.of.chars gt 114 and lt 125 then
+                Begin
+                Let no.of.blocks = 9
+                Finish FC
+                End
+            else if no.of.chars gt 104 and lt 115 then
+                Begin
+                Let no.of.blocks = 8
+                Finish FC
+                End
+            else if no.of.chars gt 94 and lt 105 then
+                Begin
+                Let no.of.blocks = 7
+                Finish FC
+                End
+            else if no.of.chars gt 84 and lt 95 then
+                Begin
+                Let no.of.blocks = 6
+                Finish FC
+                End
+            else if no.of.chars gt 74 and lt 85 then
+                Begin
+                Let no.of.blocks = 5
+                Finish FC
+                End
+            else if no.of.chars gt 64 and lt 75 then
+                Begin
+                Let no.of.blocks = 4
+                Finish FC
+                End
+            else if no.of.chars gt 54 and lt 65 then
+                Begin
+                Let no.of.blocks = 3
+                Finish FC
+                End
+            else 
+                Begin
+                Type 'Minimum line size is 55 chars.',@cr
+                Repeat FC
+                End
+            End
+        Delete from T.AF.SET all
+        For each AF.SET
+            Begin
+            Let T.SYS.N = SYS.N
+            Let T.SET.NO = SET.NO
+            Let T.DATE.WRITTEN = DATE.WRITTEN
+            Let T.DATE.TO.WRITE = DATE.TO.WRITE
+            Insert into T.AF.SET
+            End
+        For each T.AF.SET
+            Begin
+            Let SYS.N = T.SYS.N
+            Select AF.SYSTEM via key then
+                Begin
+                FA:
+                    Begin
+                    If T.DATE.TO.WRITE lt BEGIN.DATE then
+                        Begin
+                        Let T.DATE.WRITTEN = T.DATE.TO.WRITE
+                        If T.SET.NO = SP.SET then
+                            Begin
+                            Let T.DATE.TO.WRITE = T.DATE.TO.WRITE + SP.DAYS
+                            End
+                   else
+                            Begin
+                            Let T.DATE.TO.WRITE = T.DATE.TO.WRITE + (NO.OF.DAYS * NO.OF.SETS)
+                            End
+                        Alter T.AF.SET
+                        Repeat FA
+                        End
+                    else if T.DATE.WRITTEN gt BEGIN.DATE then
+                        Begin
+                        Let T.DATE.TO.WRITE = T.DATE.WRITTEN
+                        If T.SET.NO = SP.SET then
+                            Begin
+                            Let T.DATE.WRITTEN = T.DATE.WRITTEN - SP.DAYS
+                            End
+                        else
+                            Begin
+                            Let T.DATE.WRITTEN = T.DATE.WRITTEN - (NO.OF.SETS * NO.OF.DAYS)
+                            End
+                        Alter T.AF.SET
+                        Repeat FA
+                        End
+                    else
+                        Begin
+                        Finish FA
+                        End
+                    End
+                End
+            else
+                Begin
+                Nothing
+                End
+            End
+        Write report ALLFILES.RPT
+        Begin
+        For each AF.SYSTEM via CENTER
+            Begin
+            Print to ALLFILES.RPT @cr,@cr,@cr,'System ', SYS.NO,'  *** ', WEEK.DAY
+            Let START.DATE = ('01/01/00' as date 'mm/dd/yy')
+            FB:
+                BEGIN
+                Let T.SET.ORDER = 1
+                Print to ALLFILES.RPT @cr,'Set number   '
+                For each T.AF.SET where T.SYS.N = SYS.NO and T.DATE.WRITTEN GE START.DATE
+                    sorted on T.DATE.WRITTEN
+                    Begin
+                    If T.SET.ORDER gt NO.OF.BLOCKS then 
+                        Begin
+                        End
+                    else
+                        Begin
+                        Print to ALLFILES.RPT ':    ',(T.SET.NO as 'zn'),@tab 4
+                        Let T.SET.ORDER = T.SET.ORDER + 1
+                        End
+                    End
+                LET T.SET.ORDER = 1
+                Print to ALLFILES.RPT ':',@cr,'Date written '
+                For each T.AF.SET where T.SYS.N = SYS.NO and T.DATE.WRITTEN ge START.DATE
+                    sorted on T.DATE.WRITTEN
+                    Begin
+                    If T.SET.ORDER gt NO.OF.BLOCKS then
+                        Begin
+                        Nothing
+                        End
+                    else
+                        Begin
+                        Print to ALLFILES.RPT ': ',(T.DATE.WRITTEN as date 'zm-dd-yy'),@tab 1
+                        Let T.SET.ORDER = T.SET.ORDER + 1
+                        End
+                    End
+                Let T.SET.ORDER = 1
+                Print to ALLFILES.RPT ':', @cr, 'Write over   '
+                For each T.AF.SET where T.SYS.N = SYS.NO AND T.DATE.WRITTEN GE START.DATE
+                    Sorted on T.DATE.WRITTEN
+                    Begin
+                    If T.SET.ORDER gt NO.OF.BLOCKS then
+                        Begin
+                        Let T.SET.ORDER = 1
+                        Let START.DATE = T.DATE.WRITTEN
+                        Print to ALLFILES.RPT ':',@cr,@cr
+                        Repeat FB
+                        End
+                    else
+                        Begin
+                        Print to ALLFILES.RPT ': ',(T.DATE.TO.WRITE as date 'zm-dd-yy'),' '
+                        End
+                    Let T.SET.ORDER = T.SET.ORDER + 1
+                    End
+                Print to ALLFILES.RPT ':'
+                End
+            Let START.DATE = ('01/01/00' as date 'mm/dd/yy')
+            End
+        End
+        Repeat COMMAND.M
+        End
+
+%***** Help command *****%
+
+    else if comm = '?' or 'H' or 'HE' or 'HEL' or 'HELP' then
+        Begin
+        Type @cr,@cr,'Valid commands are:',@cr
+        Type @cr,'ADD    - Add a new system to the database.'
+        Type @cr,'CHANGE - Change the date written and/or the date to write'
+        Type @cr,'         for a particular allfiles set.'
+        Type @cr,'DELETE - Delete a system from the allfiles database.'
+        Type @cr,'GET    - Gets allfiles status for one system.'
+        Type @cr,'HELP   - Reprints this list.'
+        Type @cr,'QUIT   - Quits to xexec.'
+        Type @cr,'REPORT - Reports the allfile status for all system on a file'
+        Type @cr,'         or TER = terminal.  Any date can be entered.'
+        Type @cr,'CENTER - Allows going from one center to another.'
+        Type @cr,@cr,'Commands can be as little as the first letter.',@cr,@cr
+        Repeat command.m
+        End
+
+%***** Change center *****%
+
+    else if comm = 'CE' OR 'CEN' OR 'CENT' OR 'CENTE' OR 'CENTER' then
+        Begin
+        Type @cr,'Current center id is: ', center,@cr
+        Repeat CENT
+        End
+    else
+        Begin
+        Type @cr,@cr,'Type HELP for assistance.',@cr,@cr
+        Repeat command.m
+        End
+
+    End
+End
+End
+   @	|‹
