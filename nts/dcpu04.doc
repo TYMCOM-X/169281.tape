@@ -1,0 +1,4815 @@
+                                                              September 4, 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                          CPU DIAGNOSTIC USER'S GUIDE
+
+
+                                  VERSION 4.6
+
+
+
+
+
+
+
+
+                                    TYMNET
+                        NETWORK TECHNOLOGY DEVELOPMENT
+                               September 4, 1990
+
+
+
+
+
+
+
+
+
+
+     ====================================================================
+     |       THIS DOCUMENT IS THE SOLE PROPERTY AND CONFIDENTIAL        |
+     |       INFORMATION OF TYMNET, INC., AND MAY  NOT BE COPIED        |
+     |       IN  WHOLE OR IN PART  OR  DISCLOSED  TO  ANY  THIRD        |
+     |       PARTY WITHOUT THE PRIOR WRITTEN CONSENT OF TYMNET.         |
+     ====================================================================
+
+
+
+   Copyright 1990 by Tymnet -- The McDonnell Douglas Network Systems Company
+
+
+
+
+
+
+                               CPU Diagnostic User Guide                 DCPU04
+                                                              September 4, 1990
+
+
+
+
+
+
+
+                                   TABLE OF CONTENTS
+
+        Section                                                            Page
+
+
+
+        1.   OVERVIEW                                                         1
+
+
+        2.   APPLICABLE DOCUMENTS                                             3
+
+
+        3.   EQUIPMENT                                                        4
+
+
+        4.   LOADING PROCEDURES                                               5
+          4.1   LOADING PROCEDURES FOR ENGINE FAMILY                          5
+          4.2   LOADING PROCEDURES FOR TSI CONTROLLER                         5
+
+
+        5.   OPERATING PROCEDURES                                             7
+          5.1   DEFAULT TESTS WITH ENGINE CONSOLE AND TERMINAL                8
+          5.2   NONDEFAULT TESTS WITH ENGINE CONSOLE AND TERMINAL             9
+          5.3   TESTING PROCEDURE WITH ENGINE CONSOLE ONLY                   10
+             5.3.1    CHANGE THE ITERATION NUMBER IN CONSOLE MODE            11
+             5.3.2    BYPASS THE TIME-CONSUMING REGISTER SET TEST            11
+
+          5.4   TESTING PROCEDURE WITH TERMINAL ONLY                         12
+          5.5   RESTARTING THE DIAGNOSTIC                                    13
+
+
+        6.   CONSOLE DISPLAY                                                 14
+          6.1   CONSOLE DISPLAY FORMAT IN TERMINAL MODE                      14
+          6.2   CONSOLE DISPLAY FORMAT IN CONSOLE MODE                       15
+
+
+        7.   WATCHDOG TIMER                                                  16
+
+
+        8.   COMMANDS                                                        17
+          8.1   OPERATING COMMANDS                                           18
+             8.1.1    ADDT: ADD TESTS AND SECTIONS                           18
+             8.1.2    BOOT: LOAD ENGINE BOOTSTRAP                            19
+             8.1.3    BRKP: BREAKPOINT                                       19
+             8.1.4    DELT: DELETE TESTS AND SECTIONS                        20
+             8.1.5    <ESC>: ESCAPE FROM CURRENT TEST                        21
+             8.1.6    EXA: EXAMINE MEMORY                                    21
+             8.1.7    GO: EXECUTE FROM ADDRESS                               21
+
+                               CPU Diagnostic User Guide                 DCPU04
+                                                              September 4, 1990
+
+
+             8.1.8    LOOP: SET LOOP COUNT                                   22
+             8.1.9    MOD: MODIFY MEMORY                                     22
+             8.1.10   RUN: RUN                                               23
+
+          8.2   DISPLAY COMMANDS                                             23
+             8.2.1    DOC: Display user guide source                         23
+             8.2.2    HELP: DISPLAY LIST OF COMMANDS                         24
+             8.2.3    NAME: DISPLAY TEST NAMES                               24
+             8.2.4    OPTN: DISPLAY THE DIAGNOSTIC OPTIONS                   24
+
+          8.3   ERROR AND MESSAGE CONTROL COMMANDS                           24
+             8.3.1    BELL: SET BELL RING ON ERROR                           25
+             8.3.2    ECON: ERROR CONTROL                                    25
+             8.3.3    MESG: MESSAGE CONTROL                                  27
+             8.3.4    NOBE: NO BELL RING ON ERROR                            28
+
+          8.4   EDITING COMMANDS                                             28
+             8.4.1    CONTROL-Q or <ESC>: CANCEL COMMAND ENTRY               28
+             8.4.2    CONTROL-A: DELETE SINGLE CHARACTER                     28
+             8.4.3    CONTROL-W: DELETE WHOLE WORD                           29
+
+
+        9.   DIAGNOSTIC DESCRIPTION                                          30
+          9.1   LOAD PSW AND JUMP ON CONDITION                               30
+          9.2   LOAD AND COMPARE                                             30
+          9.3   TEST AND SET, STORE AND LOAD MULTIPLE                        31
+          9.4   JUMP AND LINK                                                31
+          9.5   AND, OR, EXCLUSIVE OR                                        31
+          9.6   TEST IMMEDIATE, SHIFT LOGICAL, EXCHANGE AND LOAD PSW REGISTER32
+          9.7   LOAD, COMPARE LOGICAL, STORE BYTE OR BYTE REGISTER           32
+          9.8   ADD, SUBTRACT, COMPARE                                       33
+          9.9   SUPERVISOR CLL                                               34
+          9.10  GENERAL PURPOSE REGISTER TEST                                34
+          9.11  SHIFT AND ROTATE LOGICAL, SHIFT RIGHT ARITHMETIC             35
+          9.12  MULTIPLY AND DIVIDE                                          35
+          9.13  ILLEGAL INSTRUCTION TEST                                     36
+          9.14  TEST, SET AND RESET BIT, COMPLEMENT BIT, LOAD HALFWORD REG   36
+          9.15  COPY, ARRAY AND, JUMP AND FIND FIRST ONE, USER PSW           37
+
+
+        10.  ERROR DESCRIPTIONS                                              39
+          10.1  UNEXPECTED SYSTEM ERRORS                                     40
+          10.2  Test 1 Error indications                                     41
+          10.3  Test 2 Error indications                                     41
+          10.4  Test 3 Error indications                                     42
+          10.5  Test 4 Error indications                                     42
+          10.6  Test 5 Error indications                                     43
+          10.7  Test 6 Error indications                                     43
+          10.8  Test 7 Error indications                                     44
+          10.9  Test 8 Error indications                                     45
+          10.10 Test 9 Error indications                                     56
+          10.11 Test 10 Error indications                                    56
+          10.12 Test 11 Error indications                                    57
+
+                               CPU Diagnostic User Guide                 DCPU04
+                                                              September 4, 1990
+
+
+          10.13 Test 12 Error indications                                    57
+          10.14 Test 13 Error indications                                    62
+          10.15 Test 14 Error indications                                    62
+          10.16 Test 15 Error indications                                    62
+
+
+        11.  DATA PATTERNS                                                   64
+          11.1  Test 2 Data Patterns                                         64
+          11.2  Test 3 Data Patterns                                         64
+          11.3  Test 5 Data Patterns                                         65
+          11.4  Test 6 Data Patterns                                         67
+          11.5  Test 7 Data Patterns                                         67
+          11.6  Test 8 Data Patterns                                         68
+          11.7  Test 10 Data Patterns                                        69
+          11.8  Test 11 Data Patterns                                        71
+          11.9  Test 12 Data Patterns                                        72
+          11.10 Test 14 Data Patterns                                        73
+
+
+                                     APPENDICES
+                                     ==========
+
+
+        I.   COMMAND SUMMARY                                                 75
+
+
+        II.  DEDICATED MEMORY ALLOCATION                                     77
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               CPU Diagnostic User Guide                 DCPU04
+        OVERVIEW                                              September 4, 1990
+
+
+
+
+
+
+                                     1 -  OVERVIEW
+
+
+        The CPU Diagnostic tests the instruction set, registers, arithmetic and
+        logic operations, addressing modes, jump trace feature, and the illegal
+        instruction interrupt for an  Engine, a Mini-Engine, a  Micro-Engine, a
+        HDLC  Micro-Engine,  a  PXL  Engine  or  a  TSI  controller.   The  CPU
+        Diagnostic will function  on an enhanced  or unenhanced Engine,  but it
+        does not test the enhanced features.
+
+        The diagnostic tests compatible sets of instructions in order  from the
+        least  complex  to  the  most complex.   The  effect  of  the  tests is
+        cumulative; the successful completion of each test is necessary  to the
+        test that follows.
+
+        The CPU Diagnostic  tests the following functions of a Tymnet CPU board
+        installed in an  Engine, Mini-Engine, Micro-Engine,  HDLC Micro-Engine,
+        or TSI controller through the use of data patterns and test cases.
+
+           o  The complete instruction set
+
+           o  All registers
+
+           o  Arithmetic operation results
+
+           o  Condition code flags
+
+           o  All possible addressing modes
+
+           o  ALU outputs, including sign extension
+
+           o  Interrupt vectoring, including illegal instruction
+
+           o  Verification of the jump trace feature
+
+           o  Halfword and fullword instructions with operands that
+              have odd/even byte and halfword boundaries
+
+
+        To  run the  CPU  Diagnostic on  TSI  controller, please  refer  to the
+        documents listed in Section 2.
+
+
+
+
+        The  following  table lists  the  tests and  the  specific instructions
+        checked by each.
+
+
+
+        1                      CPU Diagnostic User Guide                 DCPU04
+        OVERVIEW                                              September 4, 1990
+
+
+             Test     Instruction Tested
+
+              1       LPSW, JT, JF, JTBS, JTFS, JFBS, JFFS,
+                      Flags G, C, and L
+
+              2       LI, CLI, L, CLR, CL, LR, LHL, LA, LCS, LHI,
+                      CLHI, LH, CLH, LIS
+
+              3       ST, LM, STM, TS, STH
+
+              4       JAL, JFCR, JTCR, JALR
+
+              5       XR, XI, X, OR, OI, O, NR, NI, N, XHI, XH,
+                      OHI, OH, NHI, NH
+
+              6       EPSR, LPSWR, TI, THI, EXHR, SLLS, SRLS,
+                      SLHLS, SRHLS, SLHL, SRHL
+
+              7       LB, CLB, STB, STBR, LBR, EXBR
+
+              8       AIS, SIS, AR, SR, A, S, AI, SI, AM, AH, SH,
+                      AHI, SHI, AHM, CR, C, CI, CH, CHI
+
+              9       SVC
+
+             10       Register sets 0 through 15
+
+             11       SRL, SLL, RRL, RLL, SRA
+
+             12       MR, M, D, DR, MH, MHR, DH, DHR
+
+             13       Illegal instruction interrupt, Trace feature exerciser
+
+             14       TBT, SBT, RBT, CBT, LHR
+
+             15       COPY, ARAND, JFFO, JFFOH, UPSW
+
+
+
+                         TABLE 1: CPU DIAGNOSTIC TEST COVERAGE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        2                      CPU Diagnostic User Guide                 DCPU04
+        APPLICABLE DOCUMENTS                                  September 4, 1990
+
+
+
+
+
+
+                               2 -  APPLICABLE DOCUMENTS
+
+
+        Refer to the following documents when running this diagnostic :
+
+           o  Tymnet Engine Diagnostic Manual
+              Introduction
+
+           o  Tymnet Engine Maintenance Manual
+              Function Description, CPU I Board
+
+           o  TSI Console Users Guide
+
+           o  TSI Engine Debugger Command Description
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        3                      CPU Diagnostic User Guide                 DCPU04
+        EQUIPMENT                                             September 4, 1990
+
+
+
+
+
+
+                                    3 -  EQUIPMENT
+
+
+        The  CPU Diagnostic  requires that  at least  128K bytes  of  memory be
+        installed in the machine under test.  As a display console is installed
+        in the  Engine as a  standard item, a  terminal is  optional.  However,
+        either a console or  a terminal (or both)  must be attached to  a Mini-
+        Engine, a Micro-Engine  or a HDLC Micro-Engine to display  error codes.
+        If a terminal is not used, error codes are not displayed in full.  If a
+        terminal  is   used  alone,  without   a  display   console,  operating
+        flexibility  is limited.   In a  TSI Controller,  a virtual  console is
+        installed and a terminal is required.
+
+        Note that a console is required to perform an asynchronous network load
+        or to  enter any  of the  operator control  functions described  in the
+        Operating Procedures section.
+
+        The terminal Baud Rate should be set to 1200 baud or less because there
+        have been terminal overruns when a higher baud terminal  with auxiliary
+        printer has been used with the terminal enabled.  For a TSI Controller,
+        the terminal  Baud Rate  should be set  to 4800  baud and  no auxiliary
+        printer should be used.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        4                      CPU Diagnostic User Guide                 DCPU04
+        LOADING PROCEDURES                                    September 4, 1990
+
+
+
+
+
+
+                                4 -  LOADING PROCEDURES
+
+
+
+
+
+
+
+                       4.1  LOADING PROCEDURES FOR ENGINE FAMILY
+
+
+        The  CPU Diagnostic  can be  loaded  by any  one of  the  four standard
+        loading procedures described in the Diagnostics Introduction.
+
+        Only a synchronous load (Loadii, BITS or Elf) will  automatically start
+        the diagnostic at memory location A00.  Therefore, when testing a Mini-
+        Engine , a Micro-Engine or a HDLC Micro-Engine  without a  console, use
+        only  a synchronous  load.  Note  also that  if the  watchdog  timer is
+        enabled, the diagnostic  must begin execution automatically,  (in other
+        words use only Loadii, BITS or Elf). If it does not, the system will go
+        into boot.  See section 5.4, testing procedure with terminal only.
+
+
+
+
+
+
+                      4.2  LOADING PROCEDURES FOR TSI CONTROLLER
+
+
+
+        The TSI controller virtual  console has a Monitor and  three processes,
+        they are  IOCbug, ENGbug, and  TTY I/O. The  ENGbug displays  the front
+        console output display.
+
+
+        Loading procedures for TSI Controller :
+
+        1. User Action : power up the system
+
+           System Response : TSI Engine Debugger   ver x.x  mm/dd/yy
+
+                             ENGbug>
+
+        2. User Action : type "boot"   ( " is not part of the command )
+
+           System Response : xxxxxxxxx>
+                             (Where x ia a hex digit. Emulated front console
+                             start blinking, system is in boot)
+
+        5                      CPU Diagnostic User Guide                 DCPU04
+        LOADING PROCEDURES                                    September 4, 1990
+
+
+        3. User Action : load the diagnostic (see section 4.1 for details)
+
+           System Response : start loading,
+                             when the diagnostic is loaded, the status display
+                             300000000> will alternate with the error display
+                             000000000>
+
+        4. User Action : type "Control n"
+
+           System Response : displays diagnostic program banner
+                             and system configuration messages.
+                             (see Section 5.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        6                      CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+
+
+
+
+                               5 -  OPERATING PROCEDURES
+
+
+        The CPU diagnostic can be run on an Engine, Mini-Engine, a Micro-Engine
+        , a HDLC Micro-Engine, a PXL Engine or a TSI Controller using  either a
+        console or/and a terminal to display error codes.  One pass through the
+        diagnostic takes  about 3  minutes in  the terminal  mode and  about 40
+        seconds  in  the non-terminal  mode  in the  Micro-Engine  (HDLC Micro-
+        Engine).  In  an Engine (configured  with MAC II)  with 1200  baud rate
+        setting in the  multi-function board, it takes  about 2 minutes  in the
+        terminal mode  and about 40  seconds in the  non-terminal mode.   In an
+        Engine (configured  with MAC III)  with 1200 baud  rate setting  in the
+        multi-function  board,  it  takes  about 1  minute  34  seconds  in the
+        terminal mode and about 22 seconds in the non-terminal mode.  In  a TSI
+   Controller (4800 baud rate) , it takes about 47 seconds in the terminal
+        mode.
+
+        After  the diagnostic  is loaded,  the operator  can select  either the
+        terminal mode starting from A00 (hexadecimal) or the  non-terminal mode
+        starting from A04 (hexadecimal) of operation.
+
+        If  the diagnostic  is loaded  into the  machine using  the synchronous
+        network load method (LOADII, BITS or ELF), it will initialize and start
+        itself under  the terminal mode.  While it is  running (A00  mode), the
+        diagnostic  monitor  outputs  two  displays  alternately  at  2  second
+        intervals.   These  two  displays, the  status  display  and  the error
+        display, show the diagnostic  I.D., pass count, error count,  and error
+        code to the Engine console.  The formats for the displays  are referred
+        in the section Console Display.
+
+        A  separate  portion  of  the  program  called  the  diagnostic monitor
+        controls the program execution.   The monitor allows the user  to enter
+        commands on a terminal, change command parameters, and run individually
+        selected tests or test sections.   After a command, test, or  series of
+        tests is executed, the  monitor displays the diagnostic prompt  (*) and
+        is ready to accept further commands.
+
+        The recommended  testing procedure requires  an engine  display console
+        and  a terminal  that is  connected to  the terminal  interface  of the
+        tested machine.  All 15 tests in the CPU Diagnostic will be executed in
+        default.   That  means  there  are no  non  default  tests  in  the CPU
+        Diagnostic.
+
+
+
+
+
+
+
+
+        7                      CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                  5.1  DEFAULT TESTS WITH ENGINE CONSOLE AND TERMINAL
+
+
+        The recommended  testing procedure requires  an engine  display console
+        and  a terminal  that is  connected to  the terminal  interface  of the
+        machine under test.  The  procedure described in this  section executes
+        the default test group, with all commands set to their  default values.
+        All 15 tests in the CPU Diagnostic will be executed in default mode.
+
+        Before  running the  program on  Engine Family,  perform  the following
+        preliminary steps:
+
+           1. Connect a terminal to the terminal interface of the machine under
+              test.  Set  the baud-rate  selector switch  (swt-9 on  the Engine
+              multifunction board, s-2 on the Micro-Engine I/O board or s-10 or
+              s-11 on  the HDLC  Micro-Engine I/O board)  to correspond  to the
+              terminal baud rate.
+
+           2. Load the diagnostic by  one of the standard methods  described in
+              Diagnostics introduction.
+
+           3. Start the diagnostic by pressing the following keys on the engine
+              console:
+                                DTA, A, 0, 0, ADR, RUN
+
+           If a  downline load  was performed  using Loadii,  BITS or  Elf, the
+           diagnostic will initialize  itself automatically after  loading, and
+           step 3 can be ignored.
+
+           If  Loadii,BITS or  Elf  is not  used,  the watchdog  timer  must be
+           disabled before loading, in  order to prevent the system  going into
+           boot once the load is finished.
+
+        When the diagnostic program  initializes, it checks several  aspects of
+        the machine  under test.  It  then displays a  message on  the terminal
+        consisting of the  diagnostic title, engine type  determined, addresses
+        of available memory, and the diagnostic monitor prompt (*).  The prompt
+        indicates that the diagnostic monitor is ready to accept commands.
+
+        Example:
+
+        ENGINE CPU DIAGNOSTIC - VERSION 4.6 (07-15-90)
+
+        SYSTEM TYPE FOUND = NORMAL ENGINE
+
+        MAC III FOUND
+
+        SIO BOARD X'80' FOUND
+
+        MEMORY FOUND 000000 - OFFFFF
+
+        *
+                                  NOTE
+
+        8                      CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+             Most  of the  Engine and  HDLC Micro-Engines  have the  SIO X'80'.
+             Some of them have SIO  boards X'81', X'82' and X'83'.  The regular
+             Micro-Engine does not have the SIO board.
+
+             The monitor checks three  hardware items to determine  what system
+             type the program is running on : the type of MAC, the  presence of
+             the SIO  X'80' and  the number of  synchronous lines.  Five system
+             types are distinguished  : Normal Engine  ( a full-size  Engine, a
+             PXL Engine or a Mini-Engine ), TSI controller,  Micro-Engine, HDLC
+             Micro-Engine  and  UNKNOWN.  If  a  hardware  malfunction produces
+             incompatible indications  that result in  the message  SYSTEM TYPE
+             FOUND = UNKNOWN, CHECK HARDWARE!!!  displayed on the  terminal and
+             the system  error code  F1 displayed  on the  front panel  and the
+             program will halt.
+
+        To run the default tests, enter this command on the terminal:
+
+                                        RUN<cr>
+
+        The monitor then executes the default tests in numerical  order.  While
+        the program is  running, the test  number, section number,  and end-of-
+        test messages (including error  counts) are displayed on  the terminal.
+        When all  default tests  have been  completed, a  pass count  and error
+        count  are  displayed,  followed by  the  diagnostic  prompt  (*).  The
+        diagnostic then runs until 5 passes have been completed (the  number of
+        passes may be changed using the LOOP command), or until the ESC  key on
+        the terminal is pressed.
+
+        To  execute the  default tests  with breakpoints,  see  section 8.1.3.,
+        Breakpoint.
+
+        Whenever  an  error is  encountered,  the CPU  Diagnostic  is  going to
+        display  the  error code  and  error description  on  the  terminal and
+        continue to execute the program if the error did not halt the program.
+
+
+
+
+
+
+                5.2  NONDEFAULT TESTS WITH ENGINE CONSOLE AND TERMINAL
+
+
+        The  procedure  for  selecting  and  running  individual  test sections
+        involves entering on the terminal the delete tests command  (DELT), the
+        add  tests command  (ADDT),  and the  RUN command.   The  default tests
+        remain in  effect unless  the DELT or  ADDT command  is used  to select
+        other tests.  For example, if only  section 2 of test 1 and test  7 are
+        to be run,  and the default  tests are in  effect, the procedure  is as
+        follows:
+
+           1. At the prompt, enter:
+
+
+        9                      CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+           DELT 1,2,3,4,5,6,8,9,10,11,12,13,14,15<cr>
+
+           this deletes all sections of tests 1 to 15 except test 7.
+
+           2. At the prompt, enter:
+
+           ADDT 102<cr>
+
+           this selects section 2 of test 1.
+
+           3. At the prompt, enter:
+
+           RUN<cr>
+
+           the monitor then executes sections 2 of test 1 and test 7.
+
+        If additional tests or sections are to be run, repeat steps 2 and  3 by
+        entering the necessary test and/or section numbers.
+
+
+
+
+
+
+                    5.3  TESTING PROCEDURE WITH ENGINE CONSOLE ONLY
+
+
+        When the diagnostic is run using a display console without  a terminal,
+        watchdog timer must be disabled.
+
+        The operating procedure is as follows:
+
+           1. Load  the  diagnostic  by one  of  the  standard  loading methods
+              described in the Diagnostics Introduction.
+
+           2. Start  and  run the  diagnostic  by pressing  these  keys  on the
+              display console:
+
+           DTA, A, 0, 4, ADR, RUN
+
+        The  diagnostic  will  initialize  and  execute  the  default  tests in
+        numerical order.  The test sequence repeats continually until  5 passes
+        have been completed,  until an error is  encountered, or until  the PSW
+        key on the console is pressed.
+
+        After  the number  of  passes have  been completed  without  error, the
+        diagnostic halts and  displays the last test  number (test 15)  and the
+        section number (section  2) on the console.   The user can  restart the
+        program by pressing "RUN" key on the console.
+
+        If an  error is encountered,  the error count  is incremented,  and the
+        error display on the front console is updated.  If the diagnostic finds
+
+
+        10                     CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+        an error,  it will  halt and the  leftmost digit  on the  front console
+        error display will be F.  (See Section 6.0, Console Display).  The user
+        can continue executing the next section following the error  section by
+        pressing "RUN" key on the console.  When an unexpected system interrupt
+        occurs, the user can restart  the diagnostic by pressing the  "RUN" key
+        on the console.
+
+        Note: The maximum value for error count is 4,294,967,295 (2 to the 32nd
+        power, minus 1).  Only  the least-significant two digits for  the error
+        count are displayed.  When the maximum value has been reached, the next
+        event resets that count to zero, and the count starts over.
+
+
+
+
+
+                    5.3.1  CHANGE THE ITERATION NUMBER IN CONSOLE MODE
+
+        To execute multiple iterations of the default Tests, enter the Set Loop
+        Count command ( LOOP n ) before entering the RUN command.
+
+        The number of times the Diagnostic will loop on itself is controlled by
+        the  location  D6A  (hexadecimal)  labeled  LOPOPT  (See  Appendices II
+        Dedicated Memory  Allocation). The default  value is 5,  but it  may be
+        changed by entering  the following sequence  of commands at  the Engine
+        Console to modify the location D6A:
+
+                    DTA, D,6,A, ADR, DTA, <hexadecimal number>, WRT
+
+        The value of LOPOPT can  be read by entering the following  sequence of
+        commands:
+                                  DTA, D,6,A, ADR, RD
+
+        The present value of LOPOPT will then be displayed in the  DATA portion
+        of the console.
+
+        Note: The Diagnostic will loop  infinitively if the value of  LOPOPT is
+        set to zero.
+
+
+
+
+
+                    5.3.2  BYPASS THE TIME-CONSUMING REGISTER SET TEST
+
+        When  running  the  diagnostic, the  time-consuming  register  set test
+        sections (section 5 to 10 of test 10) which are selected in default may
+        be  bypassed  by  storing   non-zero  value  into  the   location  1040
+        (hexadecimal) labeled BYPASS.
+
+        For example, enter the following command sequence at the Engine Console
+        to bypass that time-consuming register set test sections:
+
+
+        11                     CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                            DTA, 1,0,4,0, ADR, DTA, 1, WRT
+
+        (Write one to location 1040.)
+
+        This  will  cause  the  diagnostic  to  exclude  the  execution  of the
+        following sections in test 10:
+
+           SECTION 5: Checkerboard pattern with delayed read (part 1)
+           SECTION 6: Checkerboard pattern with delayed read (part 2)
+           SECTION 7: Walking 1
+           SECTION 8: Walking 0
+           SECTION 9: GALPAT 1
+           SECTION 10: GALPAT 0
+
+        The bypass option of the  diagnostic can be reset to include  the above
+        sections by storing zero into the location 1040.
+
+
+
+
+
+
+                       5.4  TESTING PROCEDURE WITH TERMINAL ONLY
+
+
+        Running the CPU diagnostic on a Mini-Engine, a Micro-Engine  or  a HDLC
+        Micro-Engine  using  a  terminal  alone  (that  is,  without  an engine
+        console) has the following disadvantage:
+
+           o  there is no indication as to whether the the diagnostic  is still
+              running or halted (Normaly displayed on the front console).
+
+        The  procedure for  loading  and running  the diagnostic  using  only a
+        terminal is essentially  the same as when  both a console  and terminal
+        are used, except for the following:
+
+           o  when the  machine under  test is booted,  there is  no indication
+              that the bootstrap program is running, other than the report from
+              Loadii, BITS or Elf that the object code is loading.
+
+           o  only a synchronous load (Loadii, BITS or Elf)  will automatically
+              start  the program  at memory  location A00  (the  terminal start
+              address).  Therefore, use a synchronous load.
+
+           o  if the  program halts  on an error  while testing  a mini-engine,
+              depressing the  SYSCLR switch  on the cpu  board gives  a machine
+              malfunction interrupt message and a prompt.
+
+
+
+
+
+
+
+        12                     CPU Diagnostic User Guide                 DCPU04
+        OPERATING PROCEDURES                                  September 4, 1990
+
+
+                            5.5  RESTARTING THE DIAGNOSTIC
+
+
+        The diagnostic  can be  restarted by  using the  GO command.  (Enter GO
+        A00).  In a TSI Controller, use GD A00 to restart the diagnostic  if in
+        ENGbug mode or in TTY I/O mode.
+
+        The diagnostic can also be restarted manually by pressing the following
+        keys on the console:
+
+        DTA, F, 0, SET, A, 0, 0, ADR, RUN
+
+        Note however that if the watchdog timer is enabled, the  above sequence
+        should  be completed  as quickly  as possible,  in order  to  avoid the
+        watchdog  timer loading  the boot.  (In about  1 second).  Instead, the
+        operator should disable  the watchdog timer, or  use the GO  command to
+        restart the diagnostic. (See Section 8.1.7).
+
+        Restarting sets all the commands to their initial values.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        13                     CPU Diagnostic User Guide                 DCPU04
+        CONSOLE DISPLAY                                       September 4, 1990
+
+
+
+
+
+
+                                 6 -  CONSOLE DISPLAY
+
+
+        After  the  diagnostic is  loaded,  it  may be  started  in  either the
+        terminal  or  non-terminal  mode  of  operation.  Following  paragraphs
+        describe the  console output  formats in both  two modes,  terminal and
+        console modes.
+
+
+        For  a  TSI  controller,  a  firmware  simulated  virtual   console  is
+        installed. When the user enters the ENGbug mode while the diagnostic is
+        running, the console is displaying continually. It is exactly  the same
+        as Engine  console. In  Engbug mode, the  user may  also issue  the CIO
+        command to display the console.
+
+        The HANDHELD front console or the PXL Engine front console displays ten
+        digits.   The left  most  digit is  always zero  during  the diagnostic
+        execution.
+
+
+
+
+
+
+                     6.1  CONSOLE DISPLAY FORMAT IN TERMINAL MODE
+
+
+        The engine front console will alternate between a status display and an
+        error display  when a  test is  executing. The  status display  has the
+        following format:
+
+                                      3.TTSS.00PP
+
+        where 3 indicates that this is the CPU diagnostic, and TT and  SS refer
+        to the test and section number currently being run. PP is the number of
+        passes completed so far.
+
+        The  status display  will alternate  with the  error display  every two
+        seconds. The error display has this format:
+
+                                      S.EECC.0000
+
+        where S indicates  whether no errors have  occured (S is 0),  if errors
+        have been  found (S  is E), or  the diagnostic  has halted  when errors
+        occur (S is F).  EE refers  to the error code of the last  error found.
+        When combined  with TT and  SS, these  six digits are  the same  as the
+        error code displayed on a  terminal and corresponding to errors  in the
+        error descriptions  section. CC refers  to the last  two digits  of the
+
+
+        14                     CPU Diagnostic User Guide                 DCPU04
+        CONSOLE DISPLAY                                       September 4, 1990
+
+
+        error count. When CC is incrementing, errors are being found, and if CC
+        remains the same, it is the error count at the time the last  error was
+        found. When no errors have been found, the error display will be zeros.
+        When no test is being run, only 3.0000.00PP is displayed in  the status
+        display.
+
+        Each display  is updated  every half second,  and alternates  after two
+        seconds.
+
+
+
+
+
+
+                      6.2  CONSOLE DISPLAY FORMAT IN CONSOLE MODE
+
+
+        The engine front console will steadily display the error  status, error
+        code,  error  count,  current  test  number,  and  section  number with
+        following format:
+
+                                      S.EECC.TTSS
+
+
+        where S indicates either that no errors have occured (S is 0),  or that
+        the diagnostic has halted when  errors occured (S is F).  EE  refers to
+        the error code  of the current error  found. When combined with  TT and
+        SS, these six digits are correspond to errors in the error descriptions
+        section. CC refers to the last two digits of the error count.   When no
+        errors have  been found,  the display will  be zeros  except TT  and SS
+        digits (0.0000.TTSS).
+
+        After  five passes  (default) have  been completed  without  error, the
+        diagnostic  halts and  displays the  last test  number and  the section
+        number on the console (0.0000.0F02).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        15                     CPU Diagnostic User Guide                 DCPU04
+        WATCHDOG TIMER                                        September 4, 1990
+
+
+
+
+
+
+                                  7 -  WATCHDOG TIMER
+
+
+        This diagnostic will  run with the  watchdog timer enabled  in terminal
+        mode.  Because  of this, it  is not possible  to halt  the diagnostic's
+        execution (with the  PSW switch on the  front console) for  longer than
+        one second.  When this happens,  the engine will load and run  the boot
+        program. If the operator wants to use the engine front console, causing
+        the program to be halted, the watchdog timer should be disabled.
+
+        ( For detailed information -  how to disable the watchdog  timer. refer
+        to   Engine  Maintenance   Manual,  Tymnet   publication   number  282,
+        Multifunction Board section for Engine or Mini-Engine.  refer to Micro-
+        Engine Maintenance Manual  with Diagnostics, Tymnet  Publication number
+        651,  Multifunction Logic  section for  regular Micro-Engine.  For HDLC
+        Micro-Engine,  turn off  switch  10, position  4  to the  I/O  board to
+        disable the watchdog  timer. For a TSI  controller, the user  may issue
+        the "wd on" and "wd off"  command to turn on and turn off  the watchdog
+        timer.)
+
+        Because the watchdog timer  must be toggled frequently,  the diagnostic
+        never actually  halts. All options  which specify that  execution cease
+        (for  example,  ECON),  will  cause  the  diagnostic  to  loop   in one
+        position.  This allows  the watchdog timer to  be toggled by  a routine
+        which interrupts the loop to  toggle the timer. When this  happens, the
+        front  console error  display will  have  an F  as a  first  digit. The
+        operator can resume diagnostic  execution by pressing the  INC followed
+        by the RUN key on the front console.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        16                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+
+
+
+
+                                     8 -  COMMANDS
+
+
+        Operator control of  this diagnostic is  provided by means  of commands
+        entered on  the terminal.  These  commands are described  in subsequent
+        sections according to the following categories:
+
+             o  operating commands
+             o  display commands
+             o  error and message control commands
+             o  editing commands
+
+
+        A  special  portion  of the  program,  called  the  diagnostic monitor,
+        interprets operator input from  the terminal and passes  valid commands
+        to  the  program for  execution.   When the  diagnostic  prompt  (*) is
+        displayed on  the terminal, the  monitor is ready  to accept  a command
+        (which may be entered in  either upper or lower case).  If  the monitor
+        receives  an  error in  command  syntax, it  responds  with  an invalid
+        command or invalid parameter  message and another prompt (*).   See the
+        Diagnostics Introduction for a general discussion of command format and
+        syntax.
+
+        In the following command descriptions, "syntax" shows the  command word
+        and correct format; "initial state" shows the condition in  effect when
+        the program is first started; "default action" shows the effect  of not
+        entering optional  parameters; and "values"  shows the value  range for
+        parameters.  The commands  are listed  alphabetically by  "SYNTAX".  If
+        "initial  state",  "default  action",  and/or  "value"  have  not  been
+        specified for a command, then the command does not use them.
+
+        Note that each command line  must end with a carriage return  <cr>, and
+        only one command can be entered per line. There must be a space between
+        a command  word and  its parameters.   There must  be spaces  or commas
+        between  parameters  themselves.   Parameter  shown  in   brackets  are
+        optional.   (For  example,  [YY]  in  the  ADDT  command.)   All  other
+        parameters are mandatory.  (For  example, XX in the ADDT  command.) Any
+        one of the following will  cancel a command line if entered  before the
+        <cr>:  a control-q, or an escape <esc>.
+
+        This Diagnostic does not provide STAT, CKSM and NOCK commands.
+
+        Note a summary of commands for all tests is presented in Appendix I.
+
+
+
+
+
+
+
+        17                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                                8.1  OPERATING COMMANDS
+
+
+        The  operating  commands  initiate testing  (RUN),  add  tests  or test
+        sections  (ADDT),  delete  tests or  test  sections  (DELT),  cause the
+        program to loop (LOOP), and allow up to 16 breakpoints to be set in the
+        program  (BRKP).  Also,  they will  cause the  system to  go  into boot
+        (BOOT), examine and  modify memory (EXA  and MOD), and  begin execution
+        from a specific location (GO).
+
+
+
+
+
+                    8.1.1  ADDT: ADD TESTS AND SECTIONS
+
+        SYNTAX:  ADDT xx[yy],...
+
+        INITIAL STATE: All tests (1-15) are selected
+
+        DEFAULT ACTION:  yy (all sections of test xx are added)
+
+        VALUES:  xx = 01 to 15
+                 yy = 01 to 10
+
+
+        This command selects the tests and sections to be executed, where xx is
+        the test number (in decimal) and yy is the section number (in decimal).
+        When a  test number only  is specified, all  sections of that  test are
+        selected.  If both a test and a section number are specified,  only the
+        specified section of that test is selected.  Any number of tests and/or
+        sections may  be specified on  the same command  line, but  the command
+        line must not exceed 80 characters.
+
+        The test number  (xx) can be  entered as either  a one- or  a two-digit
+        number, but  the section  number (yy)  must be  entered as  a two-digit
+        number, with one leading zero.
+        Example:
+
+                *ADDT 102<cr>
+                *ADDT 1501<cr>
+
+
+        Note: If  any parameter  in a  command string  is invalid,  the monitor
+              ignores the  invalid parameter and  any subsequent  parameters in
+              the string.   Only the valid  parameter(s) preceding  the invalid
+              one are added to the selected test(s) or section(s).
+
+
+
+
+
+
+
+        18                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.1.2  BOOT: LOAD ENGINE BOOTSTRAP
+
+        SYNTAX:  BOOT
+
+        BOOT  will halt  the diagnostic  execution, causing  an engine  with an
+        enabled  watchdog  timer to  load  the  boot from  its  PROM's.  If the
+        watchdog timer is disabled, the diagnostic will halt. (The  program can
+        be restarted using the RUN  switch on the front console).  This command
+        will  have  more  significance  in  a  latter  implementation  of  this
+        diagnostic.
+
+
+
+
+
+                    8.1.3  BRKP: BREAKPOINT
+
+        SYNTAX:  BRKP [xx,yyyyy],...
+
+        DEFAULT ACTION:  Displays current breakpoints.
+
+        VALUES:     xx = 01 to 16 (in decimal)
+                 yyyyy = any memory location in the program
+
+
+        This  command  lists the  breakpoint  settings currently  in  effect if
+        entered without parameters.  When  entered with parameters, it  sets up
+        one  or  more new  breakpoints,  where xx  is  the number  of  each new
+        breakpoint  to be  set  (from 1  to 16  in  decimal) and  yyyyy  is the
+        physical address corresponding to each breakpoint.
+
+        When  a  breakpoint is  reached  during execution,  the  program halts,
+        restores  the  original  instruction  for  that  memory  location,  and
+        displays the following message:
+
+        breakpoint   xx found at yyyyy
+
+        Enter an escape to halt testing, or a c/r to continue.
+
+        If a carriage return <cr> is entered, that breakpoint is reset to 0000,
+        and the program continues executing.  If the user presses escape <esc>,
+        the program returns to the monitor, resets that breakpoint to 0000, and
+        displays the  diagnostic prompt;  all unencountered  breakpoints remain
+        set.  To reset an undesired breakpoint, use location 0000.
+
+        Example:
+
+                *BRKP 01,34A4,02,3614,03,7B36<cr>
+
+                *BRKP 02,0,03,0<cr>
+
+                                NOTE
+
+
+        19                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+        These  breakpoint  addresses  are for  sample  purposes,  they  are not
+        consistent with the current program listing.
+
+
+        Use  of  this  command  requires  a  program  listing  (see Diagnostics
+        Introduction  for the procedure  to create a listing).  Note  also that
+        each breakpoint is  reset to 0000 as  it is encountered  during program
+        execution, so that new breakpoints must be set after each pass.
+
+
+
+
+
+                    8.1.4  DELT: DELETE TESTS AND SECTIONS
+
+        SYNTAX:  DELT xx[yy],...
+
+        INITIAL STATE: All tests (1-15) are selected
+
+        DEFAULT ACTION:  yy (all sections of test xx are deleted)
+
+        VALUES:  xx = 01 to 15
+                 yy = 01 to 10
+
+
+        This command deletes tests and sections from execution, where xx is the
+        test number  (in decimal) and  yy is the  section number  (in decimal).
+        When a  test number only  is specified, all  sections of that  test are
+        deleted.  If both a test  and a section number are specified,  only the
+        specified section of that test is deleted.  Any number of  tests and/or
+        sections may  be specified on  the same command  line, but  the command
+        line must not exceed 80 characters.
+
+        The test number  (xx) can be  entered as either  a one- or  a two-digit
+        number, but  the section  number (yy)  must be  entered as  a two-digit
+        number, with one leading zero.
+        Example:
+
+                *DELT 102<cr>
+
+                *DELT 1004<cr>
+
+
+        If any parameter  in a command string  is invalid, the  monitor ignores
+        the  invalid parameter  and any  subsequent parameters  in  the string.
+        Only the valid parameter(s) preceding the invalid one are  deleted from
+        the selected test(s) or section(s).
+
+        If all tests are deleted  and the RUN command is entered  without tests
+        being added by the ADDT command, the following message is displayed :
+
+        NO TEST OR SECTION SELECTED TO BE RUN
+
+
+        20                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.1.5  <ESC>: ESCAPE FROM CURRENT TEST
+
+        SYNTAX:  <ESC>
+
+
+
+        Will interrupt current  test and return  to the '*'  prompt (diagnostic
+        monitor level).
+
+        Enter the  Escape key  and the Carriage  Return (CR)  key to  abort the
+        current test, while  the diagnostic is running  on the Micro  Engine or
+        HDLC Micro Engine.
+
+
+
+
+
+                    8.1.6  EXA: EXAMINE MEMORY
+
+
+        SYNTAX:  EXA A,C
+
+        VALUES:  A is any memory address,  C is a count of number  of halfwords
+                 to display. (Both A and C must be hexadecimal.)
+
+        Reads and displays C number of halfwords starting at the location  A in
+        memory.
+
+
+
+
+
+                    8.1.7  GO: EXECUTE FROM ADDRESS
+
+        SYNTAX:  GO A
+
+        VALUES:  A must be a valid instruction address.
+
+
+        The CPU will begin to execute from the address specified.  Be cautioned
+        that  an  invalid  address will  simply  cause  an  illegal instruction
+        interrupt.
+
+
+
+
+
+
+
+
+
+
+
+
+        21                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.1.8  LOOP: SET LOOP COUNT
+
+        SYNTAX:  LOOP [N]
+
+        INITIAL STATE: 5
+
+        DEFAULT ACTION:  Displays current loop value.
+
+        VALUES:  0 to 32,768 (in decimal)
+
+
+        This command specifies the number of times the selected tests  and test
+        sections are to  be executed, where n  is the number of  iterations (in
+        decimal)  ranging from  0 to  32,768.  All  selected test  sections are
+        executed  in numerical  order  (by the  RUN command),  before  the next
+        iteration starts.
+
+        If  a  loop  value  of  zero  is  entered,  the  selected  sections run
+        continually until halted manually, by a hardware malfunction, or  by an
+        error  (see section  8.3.2,  error control).   If the  LOOP  command is
+        entered without a parameter, the monitor outputs the current loop value
+        (n).
+
+        If a loop value greater than 32,768 is entered, the monitor divides the
+        entered value by 32,768 and uses the remainder as the value of  n.  For
+        example, if the decimal number 65,537 were entered as parameter  n, the
+        monitor would convert that number to a loop value of 1.
+
+
+
+
+
+                    8.1.9  MOD: MODIFY MEMORY
+
+        SYNTAX:  MOD A,C,D
+
+        DEFAULT ACTION:  None
+
+
+        VALUES:  A is  any memory  address, C is  a count  of the  halfwords to
+                 store,  and  D  is  C  number  of  halfwords.  Note  that  all
+                 parameters A, C, and D must be hex.
+
+        This command stores the specified number of halfwords at  the requested
+        location.  The  data  is  stored  halfword  at  a  time.  Any  halfword
+        containing  a  non   hexadecimal  character  will  abort   all  further
+        modifications specified on that line.
+
+        For example, MOD D6A 1 20 will write 20 at memory address D6A.
+
+        The halfwords specified in D are separated by a comma or a space.
+
+
+
+        22                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.1.10  RUN: RUN
+
+        SYNTAX:  RUN
+
+        INITIAL STATE: All tests from test 1 to test 15.
+
+        This command  starts execution  of the default  tests and  sections, or
+        those  tests and  sections  previously selected  by the  add  tests and
+        sections  command  (ADDT) and  the  delete tests  and  sections command
+        (DELT).  When  the diagnostic  is first started  or restarted,  the RUN
+        command executes the default tests (tests 1 - 15).  The  selected tests
+        and sections are executed in numerical order as many times as specified
+        by the LOOP command.
+
+        If  the RUN  command is  entered, but  no tests  or sections  have been
+        selected,  the message  NO TEST  OR SECTION  IS SELECTED  TO BE  RUN is
+        displayed on the terminal.
+
+
+
+
+
+
+                                 8.2  DISPLAY COMMANDS
+
+
+        These commands are informational commands, provided to aid the operator
+        determine the overall status of the diagnostic. The HELP  command lists
+        all commands  for the  diagnostic, while OPTN  displays the  setting of
+        current  diagnostic  options. Test  titles  are listed  using  the NAME
+        command.   DOC  displays  the  current  user  guide  source.   The  CPU
+        Diagnostic does not provide the STAT command.
+
+
+
+
+
+                    8.2.1  DOC: Display user guide source
+
+        SYNTAX:  DOC
+
+        The on-line  source of the  current user guide  for this  diagnostic is
+        displayed.
+
+
+
+
+
+
+
+
+
+
+
+        23                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.2.2  HELP: DISPLAY LIST OF COMMANDS
+
+        SYNTAX: HELP
+
+
+
+        All  the  commands,  plus  a  brief  explanation  of  each  command are
+        displayed.
+
+
+
+
+
+                    8.2.3  NAME: DISPLAY TEST NAMES
+
+        SYNTAX:  NAME
+
+        The number and title of each test is displayed.
+
+
+
+
+
+                    8.2.4  OPTN: DISPLAY THE DIAGNOSTIC OPTIONS
+
+        SYNTAX:  OPTN
+
+        The following diagnostic options are displayed: default and non default
+        test  and section  numbers, and  whether they  are selected  to  be run
+        (indicated  by  an  '*'),  the loop  option  value,  error  and message
+        controls, and whether the bell option is in effect or not.
+
+
+
+
+
+
+                        8.3  ERROR AND MESSAGE CONTROL COMMANDS
+
+
+        Two commands are provided that together determine what the monitor will
+        do when an error is encountered (ECON) and how much information will be
+        displayed on the terminal (MESG). In addition, a bell can be sounded or
+        suppressed on error (BELL or NOBE).
+
+
+
+
+
+
+
+
+
+
+        24                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.3.1  BELL: SET BELL RING ON ERROR
+
+        SYNTAX:  BELL
+
+        INITIAL STATE: No bell will ring on error.
+
+        This command has no parameters. It will cause a bell to  sound whenever
+        an error is found (regardless of whether the error is printed  or not).
+        This option is reversed by entering NOBE , the no bell command.
+
+
+
+
+
+                    8.3.2  ECON: ERROR CONTROL
+
+        SYNTAX:  ECON [x],[y],[n]
+
+        INITIAL STATE: x = 0 (continue after an error)
+                       n = 0 (parameter y is ignored)
+
+        DEFAULT ACTION:  Resets x and n to default condition.
+
+        VALUES:  x = 0 to 5
+                 y = 0 to 7
+                 n = 0 to 2,147,483,647 (in decimal)
+
+        This  command  controls error  handling  by the  monitor  in  two ways.
+        First, it sets up what  action the monitor will take (parameter  x) for
+        the first N errors encountered.  Second, it permits a  different action
+        (parameter  y)  to be  selected  for subsequent  errors.   When entered
+        without parameters, the default condition of continuing after  an error
+        (x equal to zero) is selected.
+
+        Each time the RUN command is entered, the error count is reset to zero.
+        As  errors  are  encountered  during  execution,  the  error  count  is
+        incremented  and compared  to n.   (Note that  unexpected  system error
+        messages are not affected by this command.)
+
+        Parameter n is  a positive number ranging  from 0 to  2,147,483,647 (in
+        decimal).  If the value for n is greater than 2,147,483,647 the monitor
+        divides the entered number by 2,147,483,647, and uses the  remainder as
+        the  value of  n.  Note  that if  zero is  entered as  the value  of n,
+        parameter y is ignored.
+
+        Any  one of  the three  parameters can  be omitted,  provided  that all
+        appropriate commas are entered  before the last parameter.   Any commas
+        after the last parameter are  ignored.  If parameter n is  not entered,
+        parameter y is ignored.
+
+        The values and their meanings for parameters x and y are as follows:
+
+
+
+        25                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+        0  continues the diagnostic after  encountering an error (will  not re-
+           enable error messages when used with parameter y).
+
+        1  Halts the  diagnostic after encountering  an error and  printing the
+           error  message.   The  program  may  be  restarted  by  pressing the
+           increment (INC)  followed immediately  by the run  (RUN) key  on the
+           console. To  return control  to the  Monitor when  in a  halt, press
+           <ESC>.
+
+        2  Returns  control  to the  monitor  after encountering  an  error and
+           printing the error message [see message control command (MESG)].
+
+        3  Continues the diagnostic  after displaying the first  error message,
+           but  does  not  display   error  messages  if  further   errors  are
+           encountered.
+
+        4  Loops on the section where the error was encountered.   The operator
+           may stop the diagnostic by pressing the PSW key on the console (will
+           not re-enable error messages when used in parameter y).  If  the PSW
+           key is used, the watchdog timer must be disabled.
+
+        5  Loops on the section where  the error was encountered, but  does not
+           display further  error messages;   the first  error message  will be
+           displayed, if enabled by  the MESG command.  (The diagnostic  can be
+           halted  by pressing  the PSW  key, but  the watchdog  timer  must be
+           disabled.)
+
+        6  Continues  the diagnostic  after  an error  is  encountered; further
+           error messages  are displayed  if any  errors are  encountered (when
+           enabled by the MESG command).  Use this value for parameter y to re-
+           enable error messages when values  3 or 5 are entered  for parameter
+           x.
+
+        7  Loops on the  section where the  error was encountered  and displays
+           error messages (when enabled by the MESG command) if any  errors are
+           encountered.   Use this  value for  parameter y  to  re-enable error
+           messages when values 3 or 5 are entered for parameter x.
+
+
+
+
+        Note: Values of 6 and 7 are  valid only for parameter y.  If  either of
+              these values  is entered  for parameter  x, an  invalid parameter
+              message will be displayed.  If any entered parameter  is invalid,
+              the entire command is ignored.
+
+
+        The MESG command also enables and disables error messages.  if the ECON
+        and  MESG commands  have  selected different  message  display options,
+        error messages will not be displayed.
+
+        If a loop on section option  is selected, the program will loop  on the
+
+
+        26                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+        section encountering  the error,  but the  header and  trailer messages
+        will not be displayed in subsequent passes.
+
+
+
+
+
+                    8.3.3  MESG: MESSAGE CONTROL
+
+        SYNTAX:  MESG x
+
+        DEFAULT: 1
+
+        VALUES:  1 to 6
+
+        This command controls which types of diagnostic messages  are displayed
+        on the  terminal.  Values for  parameter x  can range from  1 to  6 (in
+        decimal) with the following meanings:
+
+
+
+          1  displays all messages
+
+          2  displays only error messages
+
+          3  displays no messages
+
+          4  displays only periodic error and pass counts
+
+          5  displays only error messages and periodic error and pass counts
+
+          6  displays  all messages  except  error messages  (test  and section
+             headings, and test and section ending messages are  displayed with
+             error and pass counts)
+
+        Periodic error and pass  counts are messages displayed  during multiple
+        passes of  selected tests.   These messages  are displayed  after every
+        pass (for passes 1 to 10),  after every tenth pass (passes 11  to 100),
+        after  every  hundredth pass  (passes  101 to  1001),  and  after every
+        thousandth  pass (for  passes 1001  and up).   options 4  and  5, which
+        control periodic messages, must be used in conjunction with appropriate
+        values of the LOOP command.  Each time the RUN command is  entered, the
+        pass count  is reset to  zero, and the  process of  displaying periodic
+        messages starts over.
+
+        Note: The  MESG command  controls  the display  of  diagnostic messages
+              only,  and  not those  of  the monitor.   The  ECON  command also
+              enables and disables the display of error messages.  If  the ECON
+              and MESG commands have selected different error  message options,
+              then error messages will not be displayed.
+
+
+
+
+        27                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.3.4  NOBE: NO BELL RING ON ERROR
+
+        SYNTAX:  NOBE
+
+        INITIAL STATE: No bell will ring on error.
+
+        This command will ensure that no bell rings when an error occurs. It is
+        used to switch off the BELL command.
+
+
+
+
+
+
+                                 8.4  EDITING COMMANDS
+
+
+        Editing commands provide the operator with a means of  correcting input
+        errors on the terminal before  they have been entered, that  is, before
+        they  have  been passed  to  the monitor.   These  commands  cancel the
+        command  line  (control-q  or  <esc>),  delete  the  previous character
+        (control-a), and delete the previous word (control-w).
+
+
+
+
+
+                    8.4.1  CONTROL-Q or <ESC>: CANCEL COMMAND ENTRY
+
+        SYNTAX:  CONTROL-Q or <ESC>
+
+        A control-q or  an escape <ESC> entered  in the command  string cancels
+        the command  being entered and  causes the monitor  to display a  ? and
+        another prompt.  Each form of this command has the same effect  and may
+        be entered anywhere  in the command  string before the  carriage return
+        <cr>.   Once a  <cr> has  been entered,  however, a  command  cannot be
+        cancelled.
+
+
+
+
+
+                    8.4.2  CONTROL-A: DELETE SINGLE CHARACTER
+
+        SYNTAX:  CONTROL-A
+
+        This command deletes the immediately preceding character in the command
+        line.  If entered more than once, the next preceding character  will be
+        deleted  for  each  control-a  entered.   The  command  can  be entered
+        anywhere  in the  command line  before the  carriage return  <cr>.  The
+        deleted character(s) are displayed on the terminal after slash (/).  If
+        all characters in a command line are deleted, a line feed  and carriage
+        return result, and the monitor prompts for a new command.
+
+        28                     CPU Diagnostic User Guide                 DCPU04
+        COMMANDS                                              September 4, 1990
+
+
+                    8.4.3  CONTROL-W: DELETE WHOLE WORD
+
+        SYNTAX:  CONTROL-W
+
+        This command deletes the immediately preceding word in the command line
+        (a word being any series of characters preceded by a space).  it can be
+        entered anywhere in the  command line before the carriage  return <cr>.
+        If more than one control-w is entered, the next preceding word  will be
+        deleted  for  each  entry  of the  command.   The  deleted  word(s) are
+        displayed on the terminal after  slash (/).  If all words in  a command
+        line  are deleted,  a line  feed and  carriage return  result,  and the
+        monitor prompts for a new command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        29                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+
+
+
+
+                              9 -  DIAGNOSTIC DESCRIPTION
+
+
+        The  CPU Diagnostic  willl continuously  cycle 5  times through  the 15
+        tests  if  no  error or  interruption  happens.   The  instructions and
+        operations  tested  by  the  individual  tests  are  discussed  in  the
+        following test descriptions.
+
+
+
+
+
+
+                          9.1  LOAD PSW AND JUMP ON CONDITION
+
+
+        The following instructions are tested in sequence in the test 1 section
+        1:
+
+             LPSW
+             JT, JF
+             JTFS, JTBS
+             JFFS, JFBS
+
+
+
+
+        In the test  1 section 2  checks flag bits  G, L, and  C of the  PSW to
+        ensure that these bits can be set and reset.
+
+
+
+
+
+
+                                 9.2  LOAD AND COMPARE
+
+
+        The following instructions are tested in sequence:
+
+             LI, LIS, CLI
+             L, CLR
+             CL
+             LR
+             LHL
+             LA
+             LCS
+             LHI
+             CLHI
+
+        30                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+             LH
+             CLH
+
+
+
+
+
+
+
+                      9.3  TEST AND SET, STORE AND LOAD MULTIPLE
+
+
+        The following instructions are tested in sequence:
+
+             ST
+             LM
+             STM
+             TS
+             STH
+
+
+
+
+
+
+
+                                  9.4  JUMP AND LINK
+
+
+        The following instructions are tested in sequence:
+
+             JAL
+             JTCR, JFCR
+             JALR
+
+
+
+
+
+
+
+                              9.5  AND, OR, EXCLUSIVE OR
+
+
+        The following instructions are tested in sequence:
+
+             XR
+             XI
+             X
+             OR
+             OI
+             O
+             NR
+
+        31                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+             NI
+             N
+             XHI
+             XH
+             OHI
+             OH
+             NHI
+             NH
+
+
+
+
+
+
+
+          9.6  TEST IMMEDIATE, SHIFT LOGICAL, EXCHANGE AND LOAD PSW REGISTER
+
+        The following instructions are tested in sequence:
+
+             EPSR
+             LPSWR
+             TI
+             THI
+             EXHR
+             SLLS, SRLS
+             SLHLS, SRHLS
+             SLHL, SRHL
+
+
+
+
+
+
+
+                9.7  LOAD, COMPARE LOGICAL, STORE BYTE OR BYTE REGISTER
+
+        The following instructions are tested in sequence:
+
+             LB
+             CLB
+             STB
+             STBR
+             LBR
+             EXBR
+
+
+
+
+
+
+
+
+
+
+        32                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+                              9.8  ADD, SUBTRACT, COMPARE
+
+
+        The arithmetic logic operations  and instructions in Test 8  are listed
+        in  the  sequence  in  which they  are  tested.   The  instructions and
+        operations are divided into five groups and are tested according to the
+        special conditions applicable to each group.
+
+             AIS 0+1   =  1?
+             SIS 1-1   =  0?
+             AIS 0+15  = 15?
+             SIS 15-15 =  0?
+
+
+
+        The checks in the following group are performed three times.  The value
+        of "m" changes for each check.
+
+             AIS, SIS (m+1)-1   = m?
+             AIS, SIS (m+2)-2   = m?
+             AIS, SIS (m+4)-4   = m?
+             AIS, SIS (m+8)-8   = m?
+             AIS, SIS (m+15)-15 = m?
+
+        Five different data patterns are  used for the add instructions  in the
+        following  group,  and six  different  data patterns  for  the subtract
+        instructions.
+
+             AR, A, AI, AM, AH, AHI, AHM
+             SR, S, SI, SH, SHI
+
+
+
+        The checks in the following  group are run with 15 different  values of
+        "n".  The  last three  checks in the  group are  run with  15 different
+        values of "m" for each value of "n".
+
+             AR      -n+n    = 0?
+             A       n+(-n)  = 0?
+             AI      -n+n    = 0?
+             AR, SR  (n+n)-n = n?
+             S       (n+n)-n = n?
+             SI      (n+n)-n = n?
+             AR, SR  (m+n)-n = m?
+             A, S    (m+n)-n = m?
+             AI, SI  (m+n)-n = m?
+
+
+
+        The  following  group of  comparisons  is run  with  13  different data
+        patterns:
+
+             CR, C, CI, CH, CHI
+
+        33                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+                                  9.9  SUPERVISOR CLL
+
+
+        The following instruction is tested:
+
+             SVC (0 - 15)
+
+
+
+
+
+
+                          9.10  GENERAL PURPOSE REGISTER TEST
+
+
+        Test 10 verifies the  integrity of all 16  registers in each of  the 16
+        register sets that make up  the Engine CPU register set.  This  test is
+        composed of the following sections.
+
+        Section  1: Unique Address Test.   This test writes a  different number
+                    into each  register and then  reads and verifies  that each
+                    register holds the unique number assigned.
+
+        Section  2: Load and Check All Zeros.   This test writes all 0s  to all
+                    registers and then reads the registers to verify  that none
+                    of the bits are stuck-at-one.
+
+        Section  3: Pattern A5A5 A5A5 Test.  This test loads all registers with
+                    the alternating  bit pattern A5A5  A5A5 and then  reads the
+                    registers to verify that there are no adjacent bit faults.
+
+        Section  4: Pattern  5A5A   5A5A  Test.   This   test  is   similar  to
+                    Section  3, but uses the pattern 5A5A 5A5A.
+
+        Section  5: Checkerboard Pattern with Delayed Read--Part 1.   This test
+                    writes  the checkerboard  pattern to  all  registers, waits
+                    about 8 seconds, and verifies the register contents.
+
+        Section  6: Checkerboard Pattern with Delayed Read--Part 2.   This test
+                    is similar to Section  5, but the test pattern is  the ones
+                    complement.
+
+        Section  7: Walking 1 Test.  This  test writes a background  pattern of
+                    all 0s to  all registers.  A 1  is then walked  within each
+                    nibble of  the register under  test.  After each  walk, all
+                    other registers are read to verify that they  still contain
+                    all 0s.
+
+        Section  8: Walking 0 Test.  This  test writes a background  pattern of
+                    all 1s to  all registers.  A 0  is then walked  within each
+                    nibble of  the register under  test.  After each  walk, all
+                    other registers are read to verify that they  still contain
+                    all 1s.
+
+        34                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+        Section  9: Galpat 1 Test.  Writes a background pattern of all zeros to
+                    all registers.  Then, in each nibble of the  register under
+                    test, the rightmost bit is  set to one. After the  bits are
+                    set, the  register under test  and the other  registers are
+                    read to  verify the  integrity of  the test  and background
+                    patterns. The bits under  test are then reset to  zero, the
+                    bit to the left of each  bit under test is set to  one, and
+                    the test repeated until  all the bits in all  the registers
+                    have been tested.
+
+        Section 10: Galpat 0  Test.  This test  writes a background  pattern of
+                    all ones  to all  registers.  then, in  each nibble  of the
+                    register undertest, the rightmost bit is set to zero. After
+                    the bits  are set,  the register under  test and  the other
+                    registers  are read to verify the integrity of the test and
+                    bacground patterns. The bits  under test are then  reset to
+                    one, the bit to the left  of each bit under test is  set to
+                    zero, and the test repeated  until all the bits in  all the
+                    registers have been tested.
+
+
+
+
+
+
+                9.11  SHIFT AND ROTATE LOGICAL, SHIFT RIGHT ARITHMETIC
+
+
+        Each check  of the  following instructions is  done several  times with
+        different shift values:
+
+             SRL
+             SLL
+             RLL
+             RRL
+             SRA
+
+
+
+
+
+
+                               9.12  MULTIPLY AND DIVIDE
+
+
+        The  following instructions  are checked  by multiplying  "a x b", then
+        "b x a" for 12 different pairs of values:
+
+             MR, M
+
+
+
+        If neither "a" nor "b" is 0, the following are checked:
+
+        35                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+             a x b
+             b x a
+
+
+
+        The following instructions are checked with 10 different sets of data:
+
+             MHR, MH
+
+
+
+        The following instructions are checked with 12 different sets of data:
+
+             DR, D
+
+
+
+        The following instructions are checked with 16 different sets of data:
+
+             DHR, DH
+
+
+
+
+
+
+                            9.13  ILLEGAL INSTRUCTION TEST
+
+
+        Both the illegal instruction  interrupt and the jump trace  feature are
+        checked in this test.
+
+
+
+
+
+
+           9.14  TEST, SET AND RESET BIT, COMPLEMENT BIT, LOAD HALFWORD REG
+
+
+        The following instructions are tested in sequence:
+
+             TBT
+             SBT
+             RBT
+             CBT
+             LHR
+
+
+
+
+
+
+
+        36                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+               9.15  COPY, ARRAY AND, JUMP AND FIND FIRST ONE, USER PSW
+
+
+        The  following  instructions are  tested  in sequence  in  the  test 15
+        section 1:
+
+             COPY
+             ARAND
+
+
+
+        Test algorithm for COPY instruction:
+
+          1. Copy all 1s to a memory block with a background pattern of  all 0s
+             using the  COPY instruction.   Verify that all  1s are  written to
+             this memory block.
+
+          2. Write each byte  of the source block  with a unique  number.  Copy
+             the  source  block  to  the  destination  block  using   the  COPY
+             instruction.   Verify  that  each byte  of  the  destination block
+             contains an appropriate unique number.
+
+          3. Write all 1s as the background pattern of the source block and all
+             0s as  the background  pattern of the  destination block.   Copy a
+             half of the source block  to the destination block using  the COPY
+             instruction.   Verify  that  just half  of  the  destination block
+             becomes all 1s.
+
+
+
+        Test algorithm for ARAND instruction:
+
+          1. Write array number one with the A5A5 background pattern  and array
+             number two with  the 5A5A background  pattern. Verify that  a skip
+             (+2)  return  is  performed  after  the  execution  of  the  ARAND
+             instruction because all 0s are stored in the result array.
+
+          2. Write array  number one with  a background pattern  of all  1s and
+             array number two with a background pattern of all 0s.  Ripple  a 1
+             through  array  number  two  and  perform  the  ARAND instruction.
+             Verify that the R2 of the instruction contains the correct set bit
+             position and that the R1  and R1+1 of the instruction  contain the
+             correct halfword address for each array under test.
+
+          3. Write  array number  one and  array number  two with  a background
+             pattern  of all  1s.   Ripple a  0  through array  number  two and
+             perform  the  ARAND  instruction.   Verify  that  the  R2  of  the
+             instruction contains the correct set bit position and that  the R1
+             and R1+1 of the instruction contain the correct halfword addresses
+             for each array under test.
+
+
+
+
+        37                     CPU Diagnostic User Guide                 DCPU04
+        DIAGNOSTIC DESCRIPTION                                September 4, 1990
+
+
+        The following instructions are tested in the test 15 section 2:
+
+        JFFO
+        JFFOH
+        UPSW
+
+
+
+
+        Test algorithm for the JFFO and JFFOH instructions:
+
+          1. Execute JFFO with the  value of R1 set  to 0, and verify  that the
+             machine executes the next instruction.
+
+          2. Execute JFFO  while rippling a  1 from left  to right  through R1.
+             Verify that the machine does not execute the next  instruction and
+             that the content of R1+1 is matched to the set bit position of R1.
+
+          3. Execute JFFO  while rippling a  0 from right  to left  through R1.
+             Verify that the machine does not execute the next  instruction and
+             that  the  content of  R1+1  is  matched to  the  highest  set bit
+             position of R1.
+
+          4. Repeat the the above three steps using JFFOH instead of JFFO.
+
+
+
+        Test algorithm for the UPSW instruction:
+
+          1. Create  the  background  pattern   00F0  for  the  PSW   by  using
+             instruction EPSR.  Try  to load value FF0F  into the PSW  by using
+             the instruction UPSW.   Verify that just  the bits masked  by 100F
+             are changed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        38                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+
+
+
+
+                               10 -  ERROR DESCRIPTIONS
+
+
+        Each test in the CPU  Diagnostic must execute without error  before the
+        diagnostic will continue to the next test.  If an error is  detected in
+        a test, it is possible to disable the I/O flag by clearing the bit 1 in
+        the PSW,  disable watchdog  timer, and  single-step through  the failed
+        test to determine which instruction or operation failed.  A  listing is
+        necessary to do this.
+
+        Error messages  displayed on  the terminal  consist of  combinations of
+        the following lines, in the following order:
+
+        ERROR xxyyzz      ERROR COUNT xxxx      PASS COUNT xxxx
+        DATA READ      xxxxxxxx
+        DATA EXPECTED  xxxxxxxx
+        other text
+        EXPLANATION OF THIS ERROR:
+        explanation text
+
+        The following table  lists the information  contained in each  field of
+        the error message.
+
+
+
+        FIELD                   CONTENT
+
+        ERROR                    xx =  test number, yy  = section number,  zz =
+                                 error code.
+
+        ERROR  COUNT             xxxx  = number  of errors  (in  decimal) found
+                                 since entry of the last RUN command.
+
+        PASS COUNT               xxxx = number of passes (in decimal) since the
+                                 last RUN command  was entered.  If  the number
+                                 of passes is greater than FFFF, only  the four
+                                 least-significant digits are displayed.
+
+        DATA READ                xxxxxxxx = the data that was observed (Test 10
+                                 only)
+
+        DATA EXPECTED            xxxxxxxx = the data that was  expected.  (Test
+                                 10 only)
+
+        EXPLANATION OF ERROR:    an explanation of this error is displayed.
+
+        OTHER TEXT               depending on the error involved, the following
+                                 relevant data may be displayed:
+
+
+        39                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                                   the name of instruction that failed
+                                   entire PSW
+                                   location counter
+                                   data at that location
+                                   condition code
+                                   first operand           second operand
+                                   actual result
+                                   actual condition code
+                                   expected PSW            PSW after compare
+                                   64-bit obtained result
+                                   PSW after the operation
+                                   dividend                divisor
+                                   remainder obtained
+                                   quotient obtained
+                                   register set            register number
+
+
+
+
+
+
+                            10.1  UNEXPECTED SYSTEM ERRORS
+
+
+        When the diagnostic  is running with  a terminal, an  unexpected system
+        error will cause the monitor to display an error message and prompt for
+        another command.  On the other hand, the diagnostic is going to be held
+        on  these  unexpected system  errors  when it  is  running  with Engine
+        Console only.
+
+        If the error  occurs while no test  section is executing, the  test and
+        section  portions  of the  error  code  (xxyy) will  be  0000.   If the
+        diagnostic  is being  run  without a  terminal, the  default  tests are
+        automatically restarted.
+
+        Unexpected system errors have the following error codes:
+
+             xxyyF2  illegal instruction interrupt
+             xxyyF5  unexpected MAC interrupt
+             xxyyF9  unexpected trace interrupt
+
+
+        The following error messages may also be generated:
+
+             ILLEGAL PROGRAM TERMINATION - a program or hardware error occurred
+             that does not allow the diagnostic to run.
+
+             UNEXPECTED  I/O  INTERRUPT  OCCURRED -  an  unexpected  I/O device
+             interrupted.
+
+             INVALID TEST SELECTED - an  attempt was made to run  a nonexistent
+             test.
+
+
+        40                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+             UNEXPECTED   SVC  EXECUTED   -  an   unexpected   svc  instruction
+             (supervisor call) was executed.
+
+             UNEXPECTED MACHINE MALFUNCTION  INTERRUPT - an  unexpected machine
+             malfunction interrupt occurred, caused by one of the following:
+
+
+               o  recovery from a power failure (same as cold start)
+
+               o  pressing the front console INI key (which simulates  a power-
+                  fail)
+
+               o  a parity interrupt which occurs in the diagnostic  code (This
+                  will result in the diagnostic being halted.)
+
+               o  depressing the SYSCLR switch on the cpu board
+
+
+
+
+
+
+                            10.2  Test 1 Error indications
+
+             Error
+             Number        Instructions Failed
+
+             010101             LPSW
+             010102             JT, JF (condition code = 0)
+             010103             JT, JF (condition code = F)
+             010104             JTFS, JTBS
+             010105             JFFS, JFBS
+             010206             G or L flags bad
+             010207             L flag bad
+             010208             G flag bad
+             010209             C flag bad
+
+
+
+
+
+
+
+                            10.3  Test 2 Error indications
+
+
+             Error
+             Number        Instructions Failed
+
+             020101             LI, CLI, LIS
+             020102             L, CLR
+             020103             CL
+             020104             LR
+
+        41                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+             020105             LHL
+             020106             LA
+             020107             LCS
+             020108             LHI
+             020109             CLHI
+             02010A             LH
+             02010B             CLH
+
+
+
+
+
+
+
+
+                            10.4  Test 3 Error indications
+
+             Error
+             Number   Instructions Failed
+
+             030101             ST
+             030102             LM
+             030103             STM
+             030104             TS
+             030105             STH
+
+
+
+
+
+
+
+                            10.5  Test 4 Error indications
+
+             Error
+             Number   Instructions Failed
+
+             040101             JAL
+             040102             JFCR, JTCR
+             040103             JALR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        42                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                            10.6  Test 5 Error indications
+
+             Error
+             Number   Instructions Failed
+
+             050101             XR
+             050102             XI
+             050103             X
+             050104             OR
+             050105             OI
+             050106             O
+             050107             NR
+             050108             NI
+             050109             N
+             05010A             XHI
+             05010B             XH
+             05010C             OHI
+             05010D             OH
+             05010E             NHI
+             05010F             NH
+
+
+
+
+
+
+
+                            10.7  Test 6 Error indications
+
+             Error
+             Number   Instructions Failed
+
+             060101             EPSR
+             060102             LPSWR
+             060103             TI
+             060104             THI
+             060105             EXHR
+             060106             SLLS, SRLS
+             060107             SLHLS, SRHLS
+             060108             SLHL, SRHL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        43                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                            10.8  Test 7 Error indications
+
+             Error
+             Number   Instructions Failed
+
+             070101             LB
+             070102             CLB
+             070103             STB
+             070104             STBR
+             070105             LBR
+             070106             EXBR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        44                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                            10.9  Test 8 Error indications
+
+
+        Test  8  checks a  large  number of  complicated  arithmetic  and logic
+        instructions.  The errors occurring in these instructions are different
+        for  different  groups.   In  this section  the  errors  are  listed in
+        compatible groups.
+
+        An error encountered during Test  8 causes the PSW and/or  the contents
+        of the pertinent registers to be output following the error  number.  A
+        maximum of  four fullwords may  be output.  The  new PSW is  ANDed with
+        0000000F to force all bits in the new PSW except the condition  code to
+        zero.
+
+
+
+        Errors 080101 and 080102:
+
+             Error    Instruction Used or
+             Number   Operations Checked
+
+             080101           AIS, SIS
+
+             080102           AIS, SIS
+                           (m+n)-n = m   *
+
+        * NOTE: Error number  080102 indicates  error detected  while verifying
+                the results  of operations  between the  operands "m"  and "n".
+                Refer to  Data Patterns, Test  8 for the  value of "m"  and "n"
+                which are used to test the hardware extensively.
+
+        NO results  obtained or condition  codes are displayed.  For additional
+                information refer to Test Description, Test 8.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        45                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080111 through 08011B:
+
+        These error numbers indicate errors detected while testing instructions
+        AR and SR.  The operands are obtained from Table T83TBL in memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                   Expected
+             Error     First       Second               Expected   Condition
+             Number    Operand     Operand  Instruction  Result    Code, CVGL
+
+             080111    0000 0000   0000 0000      AR     0000 0000     0000
+
+             080112    0000 0000   0000 0000      SR     0000 0000     1000
+
+             080113    0000 0000   FFFF FFFF      AR     FFFF FFFF     0001
+
+             080114    0000 0000   FFFF FFFF      SR     0000 0001     0010
+
+             080115    7FFF 8000   0000 0001      AR     7FFF 8001     0010
+
+             080116    AAAA AAAA   F555 5555      AR     9FFF FFFF     1001
+
+             080117    FFFF FFFF   7FFF FFFF      SR     8000 0000     1001
+
+             080118    0000 0000   8000 0000      SR     8000 0000     0001
+
+             080119    0000 0001   8000 0001      SR     8000 0000     0001
+
+             08011A    8000 0000   0000 0001      SR     7FFF FFFF     1010
+
+             08011B    7FFF FFFF   0000 0001      AR     8000 0000     0001
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+
+
+
+
+
+
+        46                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080121 through 08012B:
+
+        These error numbers indicate errors detected while testing instructions
+        A and S.  The operands  are obtained from Table T83TBL in  memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                   Expected
+             Error      First       Second               Expected  Condition
+             Number     Operand     Operand  Instruction  Result   Code, CVGL
+
+             080121     0000 0000   0000 0000     A       0000 0000    0000
+
+             080122     0000 0000   0000 0000     S       0000 0000    1000
+
+             080123     0000 0000   FFFF FFFF     A       FFFF FFFF    0001
+
+             080124     0000 0000   FFFF FFFF     S       0000 0001    0010
+
+             080125     7FFF 8000   0000 0001     A       7FFF 8001    0010
+
+             080126     AAAA AAAA   F555 5555     A       9FFF FFFF    1001
+
+             080127     FFFF FFFF   7FFF FFFF     S       8000 0000    1001
+
+             080128     0000 0000   8000 0000     S       8000 0000    0001
+
+             080129     0000 0001   8000 0001     S       8000 0000    0001
+
+             08012A     8000 0000   0000 0001     S       7FFF FFFF    1010
+
+             08012B     7FFF FFFF   0000 0001     A       8000 0000    0001
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+
+
+
+
+
+
+        47                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080131 through 08013B:
+
+
+        These error numbers indicate errors detected while testing instructions
+        AI and SI.  The operands are obtained from Table T83TBL in memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                   Expected
+             Error      First       Second               Expected  Condition
+             Number     Operand     Operand  Instruction  Result   Code, CVGL
+
+             080131     0000 0000   0000 0000     AI      0000 0000    0000
+
+             080132     0000 0000   0000 0000     SI      0000 0000    1000
+
+             080133     0000 0000   FFFF FFFF     AI      FFFF FFFF    0001
+
+             080134     0000 0000   FFFF FFFF     SI      0000 0001    0010
+
+             080135     7FFF 8000   0000 0001     AI      7FFF 8001    0010
+
+             080136     AAAA AAAA   F555 5555     AI      9FFF FFFF    1001
+
+             080137     FFFF FFFF   7FFF FFFF     SI      8000 0000    1001
+
+             080138     0000 0000   8000 0000     SI      8000 0000    0001
+
+             080139     0000 0001   8000 0001     SI      8000 0000    0001
+
+             08013A     8000 0000   0000 0001     SI      7FFF FFFF    1010
+
+             08013B     7FFF FFFF   0000 0001     AI      8000 0000    0001
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+
+
+
+
+
+        48                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080141 through 080149:
+
+        These  error  numbers  indicate  errors  detected  while  verifying the
+        results of operations between the operands "m" and "n".  The  values of
+        "m" and "n" are selected to test the hardware extensively.
+
+
+        Error    Operation                   Condition
+        Number   Checked      Instruction    Code, CVGL
+
+        080141    n+(-n)  = 0      AR            0000
+
+        080142    n+(-n)  = 0      A             0000
+
+        080143    n+(-n)  = 0      AI            0000
+
+        080144    (n+n)-n = n      AR, SR        00xx
+
+        080145    (n+n)-n = n      A, S          00xx
+
+        080146    (n+n)-n = n      AI, SI        00xx
+
+        080147    (m+n)-n = m      AR, SR        xxxx
+
+        080148    (m+n)-n = m      A, S          xxxx
+
+        080149    (m+n)-n = m      AI, SI        xxxx
+
+
+
+        An x in the condition code indicates a "don't care" condition.
+
+                                NOTE
+
+           No results obtained or condition codes are displayed.
+           For additional information refer to Test Description, Test 8.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        49                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors  080151 through  08015D; 080161  through 08016D;  080171 through
+        08017D:
+
+        These error numbers indicate errors detected while testing instructions
+        Compare Register  (CR), Compare  (C), and  Compare Immediate  (CI). The
+        expected  condition  and  the  condition  code  after  the  compare are
+        displayed on the terminal.  The operands are obtained from Table T8CMPR
+        in memory.
+
+
+                                                          Expected
+             CR       C        CI        Operands         Con. Code
+
+             080151   080161   080171   00000000:00000000   x000
+
+             080152   080162   080172   FFFFFFFF:0000FFFF   x001
+
+             080153   080163   080173   FFFFFFFF:FFFFFFFF   x000
+
+             080154   080164   080174   00000001:00000000   x010
+
+             080155   080165   080175   FFFFFFFF:FFFFFFFE   x010
+
+             080156   080166   080176   FFFFFFFF:00000000   x001
+
+             080157   080167   080177   80000001:80000001   x000
+
+             080158   080168   080178   80000001:80000002   x001
+
+             080159   080169   080179   00000000:80000001   x010
+
+             08015A   08016A   08017A   7FFF0000:7FFE0001   x010
+
+             08015B   08016B   08017B   FFFE0002:FFFF0001   x001
+
+             08015C   08016C   08017C   FFFE8000:FFFF8000   x001
+
+             08015D   08016D   08017D   8001FFFF:8000FFFF   x010
+
+
+             An x in the condition code indicates a "don't care" condition.
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Expected condition code
+             1008 = Condition code after compare
+
+
+
+
+
+
+
+        50                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080181 through 08018B:
+
+        These error numbers indicate errors detected while  testing instruction
+        AM.   The  operands are  obtained  from Table  T83TBL  in  memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                    Expected
+        Error   First           Second                  Expected    Condition
+        Number  Operand         Operand     Instruction  Result     Code, CVGL
+
+        080181  0000 0000       0000 0000       AM      0000 0000       0000
+
+        080183  0000 0000       FFFF FFFF       AM      FFFF FFFF       0001
+
+        080185  7FFF 8000       0000 0001       AM      7FFF 8001       0010
+
+        080186  AAAA AAAA       F555 5555       AM      9FFF FFFF       1001
+
+        08018B  7FFF FFFF       0000 0001       AM      8000 0000       0001
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        51                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 080191 through 08019E:
+
+        These error numbers indicate errors detected while testing instructions
+        AH and SH.  The operands are obtained from Table T8HTBL in memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                    Expected
+        Error   First           Second                  Expected    Condition
+        Number  Operand         Operand     Instruction  Result     Code, CVGL
+        080191  0000 0000       FFFF 0000       AH      0000 0000       0000
+
+        080192  0000 0000       0000 FFFF       AH      FFFF FFFF       0001
+
+        080193  FFFF 0000       0001 0001       AH      FFFF 0001       0001
+
+        080194  0000 7FFF       FFFF 0001       AH      0000 8000       0010
+
+        080195  0000 FFFF       FFFF 0001       AH      0001 0000       0010
+
+        080196  FFFF FFFF       0000 8000       AH      FFFF 7FFF       1001
+
+        080197  0000 0000       0000 8000       AH      FFFF 8000       0001
+
+        080198  0000 1000       0000 F000       AH      0000 0000       1000
+
+        080199  0000 0000       FFFF 0000       SH      0000 0000       1000
+
+        08019A  0000 0000       0000 FFFF       SH      0000 0001       0010
+
+        08019B  FFFF FFFF       FFFF 7FFF       SH      FFFF 8000       1001
+
+        08019C  0000 0000       0000 8000       SH      0000 8000       0010
+
+        08019D  0000 0001       0000 8000       SH      0000 8001       0010
+
+        08019E  7FFF FFFF       0000 FFFF       SH      8000 0000       0001
+
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+        52                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0801A1 through 0801AE:
+
+        These error numbers indicate errors detected while testing instructions
+        AHI and SHI.   The operands are obtained  from Table T8HTBL  in memory.
+        The results and the condition code are compared to the expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                   Expected
+        Error   First           Second                  Expected   Condition
+        Number  Operand         Operand    Instruction  Result     Code, CVGL
+
+        0801A1  0000 0000       FFFF 0000       AHI     0000 0000       0000
+
+        0801A2  0000 0000       0000 FFFF       AHI     FFFF FFFF       0001
+
+        0801A3  FFFF 0000       0001 0001       AHI     FFFF 0001       0001
+
+        0801A4  0000 7FFF       FFFF 0001       AHI     0000 8000       0010
+
+        0801A5  0000 FFFF       FFFF 0001       AHI     0001 0000       0010
+
+        0801A6  FFFF FFFF       0000 8000       AHI     FFFF 7FFF       1001
+
+        0801A7  0000 0000       0000 8000       AHI     FFFF 8000       0001
+
+        0801A8  0000 1000       0000 F000       AHI     0000 0000       1000
+
+        0801A9  0000 0000       FFFF 0000       SHI     0000 0000       1000
+
+        0801AA  0000 0000       0000 FFFF       SHI     0000 0001       0010
+
+        0801AB  FFFF FFFF       FFFF 7FFF       SHI     FFFF 8000       1001
+
+        0801AC  0000 0000       0000 8000       SHI     0000 8000       0010
+
+        0801AD  0000 0001       0000 8000       SHI     0000 8001       0010
+
+        0801AE  7FFF FFFF       0000 FFFF       SHI     8000 0000       0001
+
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+        53                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0801B1 through 0801B8:
+
+        These error numbers indicate errors detected while  testing instruction
+        AHM.   The operands  are  obtained from  Table T8HTBL  in  memory.  The
+        results and  the condition  code are compared  to the  expected values.
+        The results obtained and the  new condition code are displayed   on the
+        terminal.
+
+
+                                                                   Expected
+        Error   First           Second                  Expected   Condition
+        Number  Operand         Operand   Instruction   Result     Code, CVGL
+
+        0801B1  0000 0000       FFFF 0000       AHM     FFFF 0000       0000
+
+        0801B2  0000 0000       0000 FFFF       AHM     0000 FFFF       0001
+
+        0801B3  FFFF 0000       0001 0001       AHM     0001 0001       0001
+
+        0801B4  0000 7FFF       FFFF 0001       AHM     FFFF 8000       0010
+
+        0801B5  0000 FFFF       FFFF 0001       AHM     FFFF 0000       0010
+
+        0801B6  FFFF FFFF       0000 8000       AHM     0000 7FFF       1001
+
+        0801B7  0000 0000       0000 8000       AHM     0000 8000       0001
+
+        0801B8  0000 1000       0000 F000       AHM     0000 0000       1000
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Actual result
+             1008 = Actual condition code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        54                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0801C1 through 0801CD and 0801D1 through 0801DD:
+
+        These error numbers indicate errors detected while testing instructions
+        Compare  Halfword  (CH)  and  Compare  Halfword  Immediate  (CHI).  The
+        operands  are obtained  from Table  T8CMPR in  memory.  The  actual and
+        expected  condition  codes  are displayed  on  the  terminal  after the
+        compare.
+
+
+                                Fullword    Halfword      Expected
+                                 First       Second       Condition
+             CH         CHI      Operand     Operand      Code
+
+             0801C1    0801D1   0000 0000     0000         x000
+
+             0801C2    0801D2   FFFF FFFF     FFFF         x001
+
+             0801C3    0801D3   FFFF FFFF     FFFF         x000
+
+             0801C4    0801D4   0000 0001     0000         x010
+
+             0801C5    0801D5   FFFF FFFF     FFFE         x010
+
+             0801C6    0801D6   FFFF FFFF     0000         x001
+
+             0801C7    0801D7   8000 0001     0001         x000
+
+             0801C8    0801D8   8000 0001     0002         x001
+
+             0801C9    0801D9   0000 0000     0001         x010
+
+             0801CA    0801DA   7FFF 0000     0001         x010
+
+             0801CB    0801DB   FFFE 0002     0001         x001
+
+             0801CC    0801DC   FFFE 8000     8000         x001
+
+             0801CD    0801DD   8001 FFFF     FFFF         x010
+
+
+
+        Error information is also stored into the following locations:
+
+             1004 = Expected condition code
+             1008 = Condition code after compare
+
+
+
+
+
+
+
+
+
+        55                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                            10.10  Test 9 Error indications
+
+             Error     Type of Failure or
+             Number    Instructions Failed
+
+             090101    SVC  did  not  generate  an  interrupt  or  jump  to the
+                       appropriate entry of the SVC service table
+
+             090102    old PSW, old program counter, or the second  operand was
+                       not correctly preserved into a specific  memory location
+                       after the SVC call
+
+
+
+
+
+
+                           10.11  Test 10 Error indications
+
+                Error
+                Number  Test Failed
+
+                0A0101  Unique Address
+                0A0202  Load all 0 and Verify
+                0A0303  Pattern A5A5 A5A5
+                0A0404  Pattern 5A5A 5A5A
+                0A0505  Checkerboard Pattern--Part 1
+                0A0606  Checkerboard Pattern--Part 2
+                0A0707  Walking 1
+                0A0808  Walking 0
+                0A0909  Galpat 1
+                0A0A0A  Galpat 0
+
+
+        Error information is also stored into the following locations:
+
+             1004 = The register number where the fault is detected
+             1008 = The register set number where the fault is detected
+             100C = The expected data
+             1010 = The received data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        56                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                           10.12  Test 11 Error indications
+
+
+
+             Error     Type of Failure or
+             Number    Instructions Failed
+
+             0B0101             SRL
+             0B0102             SLL
+             0B0103             SRA
+             0B0104             RRL
+             0B0105             RLL
+
+
+
+
+
+
+                           10.13  Test 12 Error indications
+
+
+        In addition to  the information displayed by  the other tests,  test 12
+        also display operation operands, expected result, obtained  result, and
+        the PSWs.  Test 12 errors are discussed in compatible groups.
+
+
+
+
+
+        Errors 0C0101 through 0C0102 and 0C0111 through 0C0112:
+
+        These error numbers indicate errors detected while testing instructions
+        MR and M.  The operands are obtained from Table T12MUT in  memory.  The
+        results obtained are compared to the expected results.  The PSWs before
+        and after the multiply instruction are compared and must be the same.
+
+        If an error is detected, the values are stored as:
+
+             1004     = Operand 1
+             1008     = Operand 2
+             100C, 1010 = 64-bit Expected result
+             1014     = PSW before the operation
+             1018, 101C = 64-bit Obtained result
+             1020     = PSW after the operation
+
+
+             MR          M      Operation Verified
+
+             0C0101    0C0111          a * b
+             0C0102    0C0112          b * a
+
+
+                                         NOTE
+
+        57                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        All multiply and divide instructions are unsigned; the  result includes
+        all 64 or 32 bits, as applicable.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        58                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0C0121 through 0C012A and 0C0131 through 0C013A:
+
+        These error numbers indicate errors detected while testing instructions
+        MHR and MH. The operands  are obtained from Table T12MTL in  memory The
+        PSWs before and after the operation are compared and must be the same.
+
+        If an error is detected, the values are stored as:
+
+             1004 = Operand 1
+             1008 = Operand 2
+             100C = Expected result
+             1010 = PSW before the operation
+             1014 = Obtained result
+             1018 = PSW after the operation
+
+
+             Error Number      Instruction Failed
+
+             0C0121 - 0C012A           MHR
+
+             0C0131 - 0C013A           MH
+
+
+
+        MHR     MH     Multiplicand   Multiplier   Result
+
+        0C0121  0C0131  FFFFFFFF      FFFF0001   0000FFFF
+
+        0C0122  0C0132  FFFFFFFF      0000FFFF   FFFE0001
+
+        0C0123  0C0133  00000000      00000000   00000000
+
+        0C0124  0C0134  00000000      0000FFFF   00000000
+
+        0C0125  0C0135  00007FFF      00000000   00000000
+
+        0C0126  0C0136  00001111      FFFFFFFF   1110EEEF
+
+        0C0127  0C0137  00008121      FFFFFABC   7E790E3C
+
+        0C0128  0C0138  FFFFFFFF      FFFFFFFF   FFFE0001
+
+        0C0129  0C0139  FFFF8000      FFFFFFFF   7FFF8000
+
+        0C012A  0C013A  FFFF8000      FFFF8000   40000000
+
+
+
+
+
+
+
+
+
+        59                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0C0141 through 0C014C and 0C0151 through 0C015C:
+
+        These error numbers indicate errors detected while testing instructions
+        DR and D.  The operands are obtained from Table T12DTL in  memory.  The
+        results, remainders, and quotients are compared to the expected values.
+
+        If an error is detected, the values are stored as:
+
+
+             1004 = DIVIDEND (Upper 32 bits)
+             1008 = DIVIDEND (Lower 32 bits)
+             100C = DIVISOR
+             1010 = Expected remainder
+             1014 = Expected quotient
+             1018 = Remainder obtained
+             101C = Quotient obtained
+             1020 = PSW before the operation
+             1024 = PSW after the operation
+
+
+        DR       D        Dividend       Divisor    Remainder   Quotient
+
+        0C0141  0C0151  0000000000000000  00000001    00000000   00000000
+
+        0C0142  0C0152  0000000000000001  00000001    00000000   00000001
+
+        0C0143  0C0153  AAAAAAAAAAAAAAAA  FFFFFFFF    55555555   AAAAAAAB
+
+        0C0144  0C0154  0000000000000000  7FFFFFFF    00000000   00000000
+
+        0C0145  0C0155  0000000000000000  FFFFFFFF    00000000   00000000
+
+        0C0146  0C0156  1C71C71C838E38E3  55555555    4AAAAAAA   55555555
+
+        0C0147  0C0157  C000000080000000  80000001    00000000   80000000
+
+        0C0148  0C0158  3FFFFFFF80000000  7FFFFFFF    00000000   80000000
+
+        0C0149  0C0159  0000000190000000  FFFFFFFF    90000001   00000001
+
+        0C014A  0C015A  5555555555555555  AAAAAAAA    55555555   80000000
+
+        0C014B  0C015B  3FFFFFFFFFFFFFFF  80000001    00000000   7FFFFFFF
+
+        0C014C  0C015C  5DDDDDDEE6666665  BBBBBBBB    AAAAAAAA   80000001
+
+
+
+
+
+
+
+
+
+        60                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+        Errors 0C0160 through 0C016F and 0C0170 through 0C017F:
+
+        These error numbers indicate errors detected while testing instructions
+        DHR and  DH.  The operands  are obtained from  Table T12DTB  in memory.
+        The  result,  remainder,  and quotient  are  compared  to  the expected
+        values.  If an error is detected, the values are stored as:
+
+
+
+             1004 = Dividend
+             1008 = Divisor
+             100C = Expected remainder
+             1010 = Expected quotient
+             1014 = Remainder obtained
+             1018 = Quotient obtained
+             101C = PSW before the operation
+             1020 = PSW after the operation
+
+        DHR      DH     Dividend     Divisor     Remainder    Quotient
+
+        0C0160  0C0170  0000 0000    FFFF 0001   0000 0000    0000 0000
+
+        0C0161  0C0171  0000 0001    FFFF 0002   0000 0001    0000 0000
+
+        0C0162  0C0172  6E00 9000    AAAA B000   0000 9000    0000 A000
+
+        0C0163  0C0173  0000 0000    0000 7FFF   0000 0000    0000 0000
+
+        0C0164  0C0174  C000 8000    0008 0001   0000 8001    0000 FFFF
+
+        0C0165  0C0175  0000 0000    0000 8000   0000 0000    0000 0000
+
+        0C0166  0C0176  3FFF 8000    0000 7FFF   0000 0000    0000 8000
+
+        0C0167  0C0177  4000 BFFF    AAAA 6001   0000 5555    0000 AAAA
+
+        0C0168  0C0178  3FFF 7FFF    0000 7FFF   0000 7FFE    0000 7FFF
+
+        0C0169  0C0179  3B0C 1A49    FFFF B123   0000 AAAA    0000 5555
+
+        0C016A  0C017A  3FFF FFFE    0000 8001   0000 8000    0000 7FFE
+
+        0C016B  0C017B  366E E322    0000 6CDE   0000 5000    0000 7FFF
+
+        0C016C  0C017C  3FFF FFFF    FFFF 8001   0000 0000    0000 7FFF
+
+        0C016D  0C017D  DDDC EEEF    0000 DDDD   0000 CCCC    0000 FFFF
+
+        0C016E  0C017E  0000 0001    0000 FFFF   0000 0001    0000 0000
+
+        0C016F  0C017F  0C2F FFFF    FFFF AAAA   0000 0C2F    0000 1248
+
+
+
+        61                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                           10.14  Test 13 Error indications
+
+
+
+             Error     Type of Failure or
+             Number    Instructions Failed
+
+
+             0D0101    An illegal instruction failed to generate  an interrupt,
+                       the  old  PSW  or  the old  P.C.  was  not  preserved in
+                       specific location, or the new PSW was not as expected.
+
+             0D0102    Trace feature error
+
+
+
+
+
+
+
+                           10.15  Test 14 Error indications
+
+
+             Error     Type of Failure or
+             Number    Instructions Failed
+
+             0E0101             TBT
+             0E0102             SBT
+             0E0103             RBT
+             0E0104             CBT
+             0E0105             LHR
+
+
+
+
+
+
+                           10.16  Test 15 Error indications
+
+
+        Error Number   Type of Error
+
+        0F0101           COPY  instruction failed  to copy  all 1s  from source
+                         block to destination block.
+
+        0F0102           COPY instruction failed to address data  byte (written
+                         with a unique  value) in either source  or destination
+                         block.
+
+        0F0103, 0F0104   COPY instruction failed to transfer half of the source
+                         block  to  the  destination  block  correctly.   Error
+                         0F0103 signals an error in the half of the destination
+
+
+        62                     CPU Diagnostic User Guide                 DCPU04
+        ERROR DESCRIPTIONS                                    September 4, 1990
+
+
+                         block  that  was  not supposed  to  be  changed; error
+                         0F0104 signals an error in the half that  was supposed
+                         to receive data.
+
+        0F0105, 0F0106   ARAND instruction failed with result set to  0.  Error
+                         0F0105 is output  if the machine  did not take  a skip
+                         (+2) return; error 0F0106 is output if there was wrong
+                         data in the result registers.
+
+        0F0107, 0F0108   ARAND instruction  failed while rippling a 1  from the
+                         highest to  the lowest position  of the  result array.
+                         Error 0F0107 is output if the machine did not take the
+                         correct  branch  address; error  0F0108  is  output if
+                         there was incorrect data in the result registers.
+
+        0F0109, 0F010A   ARAND instruction  failed while rippling a 0  from the
+                         highest to  the lowest position  of the  result array.
+                         Error 0F0109 is output if the machine did not take the
+                         correct  branch  address; error  0F010A  is  output if
+                         there was incorrect data in the result registers.
+
+        0F020B             Instruction  JFFO   failed  to   execute   the  next
+                         instruction when the value of R1 was set to 0.
+
+        0F020C, 0F020D   Instruction JFFO  failed while rippling a 1  from left
+                         to right of R1.   Error code is 0F020C if  the machine
+                         took  the wrong  branch address;  0F020D if  there was
+                         incorrect data in the result registers.
+
+        0F020E, 0F020F   Instruction JFFO  failed while rippling a 0  from left
+                         to right of R1.   Error code is 0F020E if  the machine
+                         took  the wrong  branch address;  0F020F if  there was
+                         incorrect data in the result registers.
+
+        0F0210            Instruction   JFFOH  failed   to  execute   the  next
+                         instruction when the value of R1 was set to 0.
+
+        0F0211, 0F0212   Instruction JFFOH failed while rippling a 1  from left
+                         to right of R1.   Error code is 0F0211 if  the machine
+                         took  the wrong  branch address;  0F0212 if  there was
+                         incorrect data in the result registers.
+
+        0F0213, 0F0214   Instruction JFFOH failed while rippling a 0  from left
+                         to right of R1.   Error code is 0F0213 if  the machine
+                         took  the wrong  branch address;  0F0214 if  there was
+                         incorrect data in the result registers.
+
+        0F0215           Failed UPSW instruction.
+
+
+
+
+
+
+        63                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+
+
+
+
+                                  11 -  DATA PATTERNS
+
+
+        Each test  except Tests  1, 4, 9,  13 and  15 has its  own set  of data
+        patterns.  The data patterns are listed in the following subsections.
+
+
+
+
+
+
+                              11.1  Test 2 Data Patterns
+
+        Instruction LR, CL, CLR, L, LA,      Instruction LIS, LCS:
+        LI, CLI:
+
+        55555555                                00000000
+        AAAAAAAA                                00000001
+        00000000                                00000002
+        00000002                                00000004
+        FFFFFFFE                                00000008
+                                                0000000F
+
+        Instruction LHI, CLHI, LH, CLH:
+
+        00000000
+        00005555
+        FFFFAAAA
+
+
+
+
+
+
+
+                              11.2  Test 3 Data Patterns
+
+
+        Instruction ST, LM, STM:             Instruction STH:
+
+        FFFFFFFF                                0000AAAA
+        FFFFFFFE                                00005555
+        FFFFFFFD                                0000FFFF
+        00000000                                AAAA5555
+        00000001
+        00000002
+        00000003
+        00000004
+        00000005
+
+        64                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+        00000006
+        00000007
+        00000008
+        00000009
+        0000000A
+        0000000B
+        0000000C
+        0000000D
+        0000000E
+        0000000F
+        0000FFFF
+        FFFF0000
+
+
+
+
+
+
+
+                              11.3  Test 5 Data Patterns
+
+
+        Instruction XR:                      Instruction X:
+
+        55555555, 55555555                      00000000, 55555555
+        00000000, 55555555                      FFFFFFFF, AAAAAAAA
+        FFFFFFFF, AAAAAAAA                      AAAAAAAA, 55555555
+        55555555, AAAAAAAA                      00000000, 00000000
+                                                55555555, 55555555
+                                                00000000, AAAAAAAA
+
+        Instruction XI:                      Instruction OR:
+
+        FFFFFFFF, 55555555                      00000000, 55555555
+        00000000, 55555555                      55555555, AAAAAAAA
+        FFFFFFFF, AAAAAAAA                      FFFFFFFF, 00000000
+        FFFFFFFF, FFFFFFFF                      00000000, 00000000
+        55555555, AAAAAAAA
+
+
+        Instruction OI:                      Instruction XHI:
+
+        5FF5F55F, A55A5AA5                      55555555, 0000AAAA
+        00000000, A55A5AA5                      AAAAFFFF, 00005555
+        00000000, 55555555                      AAAAAAAA, 0000AAAA
+        FFFFFFFF, 00000000                      55550000, 00005555
+        FFFFFFFF, AAAAAAAA                      00005555, 5555FFFF
+        00000000, 00000000
+
+
+        Instruction O:                       Instruction XH:
+
+        00000000, 00000000                      AAAAFFFF, 55555555
+
+        65                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+        00000000, 55555555                      AAAAFFFF, AAAAAAAA
+        55555555, AAAAAAAA                      55555555, 00000000
+        FFFFFFFF, 00000000                      55555555, FFFFFFFF
+        FFFFFFFF, FFFFFFFF                      AAAAAAAA, FFFF0000
+                                                55550000, 00005555
+
+
+        Instruction NR:                      Instruction OHI:
+
+        00000000, 55555555                      AAAAAAAA, AAAAAAAA
+        55555555, AAAAAAAA                      AAAAAAAA, 00000000
+        AAAAAAAA, 55555555                      AAAAAAAA, 55555554
+        AAAAAAAA, AAAAAAAA                      FFFFFFFE, 0000AAAA
+        55555555, 55555555                      00000000, 00005555
+                                                00000000, 00000000
+
+
+        Instruction NI:                      Instruction OH:
+
+        FFFFFFFF, AAAAAAAA                      FFFFAAAA, 00005555
+        00000000, 55555555                      00000000, 0000AAAA
+        55555555, AAAAAAAA                      FFFFFFFF, 00000000
+        AAAAAAAA, AAAAAAAA                      0000AAAA, 00005555
+        FFFFFFFF, 55555555                      00000000, 00005555
+                                                00000000, 00000000
+                                                00005555, 00005555
+
+        Instruction N:                       Instruction NHI:
+
+        00000000, AAAAAAAA                      00000000, 55555555
+        FFFFFFFF, AAAAAAAA                      00000000, 0000AAAA
+        FFFFFFFF, 55555555                      FFFFFFFF, 0000AAA9
+        FFFFFFFF, 00000000                      AAAAAAA9, 00005555
+        55555555, AAAAAAAA
+
+
+        Instruction NH:
+
+        00000000, 00005555
+        00000000, 0000AAAA
+        55555555, 0000FFFF
+        55555555, 0000AAAA
+        FFFFFFFF, 0000AAAA
+        FFFFAAAA, 00005555
+
+
+
+
+
+
+
+
+
+
+        66                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+                              11.4  Test 6 Data Patterns
+
+
+        Instruction EXHR:                    Instruction SLHLS:
+
+        EF09ABCD                                FFFFFFFF
+        00000000                                FFFFFFF9
+        56781234                                0000FFF8
+                                                0000F800
+
+        Instruction SLLS:                    Instruction SRHLS:
+
+        55555555                                FFFFFFFE
+        AAAAAAAA                                FFFF00FF
+        55555550                                00005555
+        50000000
+
+        Instruction SRLS:                    Instruction SLHL:
+
+        FFFFFFF8                                AAAAAAAA
+        7FFFFFFC                                AAAA5400
+        1FFFFFFF                                AAAA8000
+        001FFFFF                                55555555
+        0000003F
+
+        Instruction SRHL:
+
+        5555AAA8
+        55550055
+        55550000
+        FFFFFFFD
+
+
+
+
+
+
+
+                              11.5  Test 7 Data Patterns
+
+
+        Instruction LB:                      Instruction STBR:
+
+        FF                                      23
+        00                                      00
+        55                                      AB
+        AA
+
+        Instruction CLB:                     Instruction LBR:
+
+        FF, FF                                  FF
+        FF, 55                                  00
+        55, 55                                  AB
+
+        67                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+        AA, AA                                  23
+        FF, AA
+
+        Instruction STB:                     Instruction EXBR:
+
+        00                                      45670123
+        FF                                      ABCD4567
+        67                                      00000000
+        AB
+        23
+
+
+
+
+
+
+
+                              11.6  Test 8 Data Patterns
+
+
+        Instruction AIS:                     Instruction SH,SHI:
+
+        00000000, 01                            00000000, FFFF0000
+        00000000, 0F                            00000000, 0000FFFF
+        00000000, 07                            FFFFFFFF, FFFF7FFF
+        7FFFFFF5, 0B                            00000000, 00008000
+                                                00000001, 00008000
+                                                FFFFFFFF, 0000FFFF
+
+        Instruction SIS:                     Instruction SR, S, SI:
+
+        00000001, 01                            00000000, 00000000
+        0000000F, 0F                            00000000, FFFFFFFF
+        00000000, 07                            FFFFFFFF, 7FFFFFFF
+        7FFFFFFC, 07                            00000000, 80000000
+                                                00000001, 80000001
+                                                80000000, 00000001
+
+        Instruction AR, A, AI, AM:           Instruction CR, C, CI, CH, CHI:
+
+        00000000, 00000000                      00000000, 00000000
+        00000000, FFFFFFFF                      FFFFFFFF, 0000FFFF
+        7FFF8000, 00000001                      FFFFFFFF, FFFFFFFF
+        AAAAAAAA, F5555555                      00000001, 00000000
+        7FFFFFFF, 00000001                      FFFFFFFF, FFFFFFFE
+                                                FFFFFFFF, 00000000
+                                                80000001, 80000001
+        Instruction AH, AHI, AHM:               80000001, 80000002
+                                                00000000, 80000001
+        00000000, FFFF0000                      7FFF0000, 7FFE0001
+        00000000, 0000FFFF                      FFFE0002, FFFF0001
+        FFFF0000, 00010001                      FFFE8000, FFFF8000
+        00007FFF, FFFF0001                      8001FFFF, 8000FFFF
+
+        68                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+        0000FFFF, FFFF0001
+        FFFFFFFF, 00008000
+        00000000, 00008000
+        00001000, 0000F000
+
+        To determine which data  pattern is associated with a  particular error
+        code, refer to the Test 8 error indications.
+
+
+
+
+
+
+                              11.7  Test 10 Data Patterns
+
+
+        Section 1:   The data used to test each register is the  register's own
+                     set and  register number.  For  example, the data  used to
+                     test register 5 of set 2 is 25.
+
+        Section 2:   All registers of all sets use the following pattern.
+
+
+                     0000 0000
+
+
+
+        Section 3:   All registers of all sets use the following pattern.
+
+
+                     A5A5 A5A5
+
+
+
+        Section 4:   All registers of all sets use the following pattern.
+
+
+                     5A5A 5A5A
+
+
+
+        Section 5:   The register set under test uses the following pattern.
+
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+
+        69                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+
+
+
+        Section 6:   The register set under test uses the following pattern.
+
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+                     A5A5 A5A5
+                     5A5A 5A5A
+
+
+
+        Section 7:   Each register will be tested with the following patterns.
+
+                     1111 1111
+                     2222 2222
+                     4444 4444
+                     8888 8888
+
+
+
+        Section 8:   Each register will be tested with the following patterns.
+
+                     EEEE EEEE
+                     DDDD DDDD
+                     BBBB BBBB
+                     7777 7777
+
+
+
+        Section 9:   Each register will be tested with the following patterns.
+
+                     1111 1111
+                     2222 2222
+                     4444 4444
+
+        70                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+                     8888 8888
+
+
+
+        Section 10:  Each register will be tested with the following patterns.
+
+                     EEEE EEEE
+                     DDDD DDDD
+                     BBBB BBBB
+                     7777 7777
+
+
+
+
+
+
+                              11.8  Test 11 Data Patterns
+
+
+
+        Instruction SRL:                     Instruction RRL:
+
+        AAB42D55                                00000000
+        555A16AA                                8F70E6A0
+        155685AA                                1EE1CD41
+        0155685A                                3DC39A82
+        00015568                                0E6A08F7
+        AA957355                                70E6A08F
+        0000AA95                                E6A0BF70
+
+        Instruction SLL:                     Instruction SRA:
+
+        D2BB2D55                                3DC39A82
+        A5765AAA                                00007B87
+        95D96AA8                                AAB42D55
+        5D96AA80                                D55A16AA
+        96AA8000                                F55685AA
+        96AA67A5                                FF55685A
+        67A50000                                AA957355
+                                                FFFF5568
+                                                55B42DAA
+
+        Instruction RLL:
+
+        8F70E6A0
+        F70E6A08
+        00000000
+
+
+
+
+
+
+
+        71                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+                              11.9  Test 12 Data Patterns
+
+
+        Instruction M, MR:                   Instruction MH, MHR:
+
+        00000000, 00000000                      FFFFFFFF, FFFF0001
+        FFFFFFFF, FFFFFFFF                      FFFFFFFF, 0000FFFF
+        FFFFFFFF, 11111111                      00000000, 00000000
+        11111111, 11111111                      00000000, 0000FFFF
+        77777777, 10000001                      00007FFF, 00000000
+        7FFFFFFF, 7FFFFFFF                      00001111, FFFFFFFF
+        80000000, 80000000                      00008121, FFFFFABC
+        80000001, 80000000                      FFFFFFFF, FFFFFFFF
+        12345678, 12345678                      FFFF8000, FFFFFFFF
+        9ABC1234, A1234567                      FFFF8000, FFFF8000
+        FABC7812, 73125467
+        80000000, 7FFFFFFF
+
+
+        Instruction D, DR:
+
+        64 Bit Dividend         32 Bit Divisor
+
+        00000000, 00000000       00000001
+        00000000, 00000001       00000001
+        AAAAAAAA, AAAAAAAA       FFFFFFFF
+        00000000, 00000000       7FFFFFFF
+        00000000, 00000000       FFFFFFFF
+        1C71C71C, 838E38E3       55555555
+        C0000000, 80000000       80000001
+        3FFFFFFF, 80000000       7FFFFFFF
+        00000001, 90000000       FFFFFFFF
+        55555555, 55555555       AAAAAAAA
+        3FFFFFFF, FFFFFFFF       80000001
+        5DDDDDDE, E6666665       BBBBBBBB
+
+
+        Instruction DH, DHR:
+
+        Dividend    Divisor
+
+        00000000    FFFF0001
+        00000001    FFFF0002
+        6E009000    AAAAB000
+        00000000    00007FFF
+        C0008000    00080001
+        00000000    00008000
+        3FFF8000    00007FFF
+        4000BFFF    AAAA6001
+        3FFF7FFF    00007FFF
+        3B0C1A49    FFFFB123
+        3FFFFFFE    00008001
+        366EE322    00006CDE
+
+        72                     CPU Diagnostic User Guide                 DCPU04
+        DATA PATTERNS                                         September 4, 1990
+
+
+        3FFFFFFF    FFFF8001
+        DDDCEEEF    0000DDDD
+        00000001    0000FFFF
+        0C2FFFFF    FFFFAAAA
+
+
+
+
+
+
+
+
+                             11.10  Test 14 Data Patterns
+
+
+        Instruction TBT, SBT, RBT, CBT:
+
+        AAAAAAAA, 55555555, A55AA55A
+
+
+        Instruction LHR:
+
+        0000, 0000
+        0000, 0001
+        0000, 000A
+        5555, AAAA
+        8000, 8000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        73                     CPU Diagnostic User Guide                 DCPU04
+                                                              September 4, 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      *   ****  ****  ***** *   * ****  ***** *   *
+                     * *  *   * *   * *     **  * *   *   *    * * 
+                    ***** ****  ****  ****  * * * *   *   *     *  
+                    *   * *     *     *     *  ** *   *   *    * * 
+                    *   * *     *     ***** *   * ****  ***** *   *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        74                     CPU Diagnostic User Guide                 DCPU04
+        COMMAND SUMMARY                                       September 4, 1990
+
+
+
+
+
+
+                             APPENDIX I.   COMMAND SUMMARY
+
+
+
+        Valid commands for  all tests of  this diagnostic are  summarized here.
+        Some commands  have parameters,  and some do  not.  For  those commands
+        having optional  parameters, a  default action  will occur  if optional
+        parameters are  omitted.  Except  for control-a,  control-q, control-w,
+        and <esc>,  a carriage  return <cr> must  always terminate  the command
+        line.  See Section 8 for detailed command descriptions.
+
+
+
+        COMMAND                 SYNTAX FUNCTION
+
+        ADDT xx[yy],...         adds tests or test sections
+                                default:  yy (all sections)
+
+        BELL                    sounds bell on error message display   
+        BOOT                    load engine boot program, if the watchdog
+                                is enabled
+
+        BRKP [xx,yyyyy],...     1 to 16 breakpoints
+                                default:  lists current breakpoints
+
+        control-a               delete previous character
+
+        control-q               cancels command entry
+
+        control-w               delete previous word
+
+        DELT xx[yy],...         delete tests or sections
+                                default:  yy (all sections)
+
+        DOC                     display on-line source of current
+                                user guide
+
+        ECON [x],[y],[n]        control error handling by the monitor
+                                defaults:  x = 0
+                                           n = 0
+
+        escape key <esc>        return to monitor prompt
+
+        EXA addr,n halfwords    display memory
+
+        GO addr                 execute from address
+
+        HELP                    display list of valid commands
+
+
+        75                     CPU Diagnostic User Guide                 DCPU04
+        COMMAND SUMMARY                                       September 4, 1990
+
+
+        LOOP [n]                set number of iterations executed
+                                by the RUN command
+
+                                default:  give current loop value
+
+        MESG x                  control diagnostic messages
+
+        MOD addr,n halfwords,data       modify memory
+
+        NAME                    print test titles
+
+        NOBE                    sound no bell on error message
+
+        OPTN                    display diagnostic options
+
+        RUN                     execute selected tests or test sections
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        76                     CPU Diagnostic User Guide                 DCPU04
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+
+
+
+
+                      APPENDIX II.   DEDICATED MEMORY ALLOCATION
+
+
+
+        The  first 96KB  of memory  contains the  code for  the  program.  This
+        diagnostic uses the following dedicated memory allocations:
+
+
+        Label     Address                    Contents
+
+                  A00      Starting address, terminal connected to
+                           the terminal interface.
+
+                  A04      Alternate starting address, terminal not
+                           connected to the terminal interface.
+
+        CURSEC    C1C      The number of the test section currently
+                           running (1 byte).
+
+        CURTST    C1D      The number of the test currently running
+                           (1 byte).
+
+        EBUF01    C1E      The error code of the last error for which
+                           error information was displayed on the
+                           terminal (6 bytes).
+
+        EBUF02    C24      The error count at the time the last error
+                           occurred (1 fullword).
+
+        EBUF03    C28      The pass count at the time the last error
+                           occurred (1 fullword).
+
+        EBUF04    C2C      The data read at the time the last error
+                           occurred (2 fullwords).
+
+        EBUF05    C34      The data expected at the time the last error
+                           occurred (2 fullwords).
+
+        EBUF06    C3C      The device address at the time the last error
+                           occurred (1 fullword).
+
+        EBUF07    C40      The device status at the time the last error
+                           occurred (1 fullword).
+
+        EBUF08    C44      The read buffer address at the time the
+                           last error occurred (6 bytes).
+
+        EBUF09    C4A      The write buffer address at the time the
+                           last error occurred (6 bytes).
+
+        77                     CPU Diagnostic User Guide                 DCPU04
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+        EBUF10    C50      The read and write buffer length in bytes
+                           at the time the last error occurred (6 bytes).
+
+        EBUF11    C56      The offset from the start of
+                           the buffer to where the first bad data was
+                           found (6 bytes).
+
+        EBUF12    C5E      The OTHER TEXT field at the time the last
+                           error occurred (hexadecimal format, 102 bytes).
+
+        ECOUNT    D60      The current error count, which is set to
+                           zero each time that a RUN command is executed
+                           (1 fullword).
+
+        ERRCNT    D64      The current option selected for control
+                           of the error message format (1 halfword).
+
+        ERROPT    D66      The current option selected for specifying
+                           what action will be taken when an error is
+                           detected (1 halfword).
+
+        FORCE     D68      The current value of force error message
+                           option: 0 = do not force error messages,
+                           1 = force error message 1 byte, not
+                           yet implemented).
+
+        LOPOPT    D6A      The current value of the Loop command
+                           (1 halfword).
+
+        MACTYP    D6C      The type of MAC in the system, 1 = MAC I,
+                           2 = MAC II, 3 = MAC III, 4 = TSI MAC, and
+                           6 = MAC V (1 byte).
+
+        MAP       D70      The amount of memory available to the system,
+                           one bit is set for each 32K bytes of memory
+                           (4 fullwords).
+
+        MSGDEV    D80      The current value of the message device option:
+                           <0 = use only line printer, 0 = use only
+                           terminal, >0 = use both terminal and line
+                           printer (1 halfword, not yet implemented).
+
+        MSGFLG    D82      The current option selected for indicating
+                           which types of messages will be displayed
+                           on the terminal (1 halfword).
+
+        PCOUNT    D84      The current pass count, which is set to zero
+                           when the RUN command is executed (1 fullword).
+
+        SECADR    D88      The starting address of the test section being
+                           executed.  If no section is being executed,
+                           it contains the starting address of the last
+                           section executed (1 fullword).
+
+        78                     CPU Diagnostic User Guide                 DCPU04
+        DEDICATED MEMORY ALLOCATION                           September 4, 1990
+
+
+        TERADD    D8C      The terminal device address (1 byte).
+
+        TERFLG    D8D      The terminal available flag:
+                           0 = terminal not available,
+                           1 = terminal available,
+                           set by the start address (1 byte).
+
+        TERRED    D90      The Read command of the terminal (1 byte).
+
+        TERWRT    D91      The Write command of the terminal (1 byte).
+
+        TEST      D92      A table indicating which tests are selected
+                           and the section number of the first section
+                           in each test (20 halfwords).
+
+        TRCADR    DD4      The address of optional trace interrupt
+                           routine if TRCOPT = 1 (1 fullword, not
+                           implemented).
+
+        TRCOPT    DD8      The trace option flag:  0 = trace interrupts
+                           disabled, 1 = trace interrupts enabled
+                           (1 byte, not yet implemented).
+
+        TYPENG    DD9      The type of Engine the program is running on:
+                           0 = UNKNOWN, 1 = NORMAL (Engine or Mini-Engine)
+                           , 2 = MICRO, 3 = HDLC Micro-Engine and
+                           4 = TSI Controller (1 byte).
+
+        CMDTBL    DDC      The name of each command and the starting
+                           address of the routine for that command.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        79                     CPU Diagnostic User Guide                 DCPU04
+  LÇ
