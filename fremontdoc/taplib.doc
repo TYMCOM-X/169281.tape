@@ -1,0 +1,1094 @@
+
+
+
+   ******************************
+  ****                        ****
+ ****                          ****
+ ****                          ****
+ *****                        *****
+ ******                      ******      TAPLIB USER'S MANUAL
+ ******                      ******
+ ******                      ******      (CURRENT AS OF VERS. 1.13)
+ *******                    *******
+ *******                    *******
+ ********                  ********
+ ********                  ********
+ *********                *********
+ *********                *********
+ **********::::::::::::::**********
+ **********::::::::::::::**********
+ ***********::::::::::::***********
+ ***********::::::::::::***********
+ ************::::::::::************
+ ************::::::::::************
+ *************::::::::*************
+ *************::::::::*************
+ **************::::::**************
+ **************::::::**************
+ ***************::::***************
+ ***************::::***************      PREPARED BY
+ ****************::****************
+ ****************::****************      COMPUTER OPERATIONS DIVISION
+ *************** :: ***************
+ *************** :: ***************              EDMUND GAUCI
+ **************  ::  **************
+ **************  ::  **************      ACKNOWLEGEMENTS:
+ *************   ::   *************
+ *************   ::   *************              ADELE GADOL
+ ************    ::    ************              BOB MARTINEZ
+ ************    ::    ************
+ ***********     ::     ***********
+ ***********     ::     ***********
+ **********      ::      **********
+ **********      ::      **********
+ *********       ::       *********
+ *********      ::::      *********
+ ********      ::::::      ********
+ ********     ::::::::     ********
+ *******     ::::::::::     *******
+ *******    ::::::::::::    *******      SEPTEMBER 1980
+ ******    ::::::::::::::    ******
+ ******   ::::::::::::::::   ******              REPLACES 8/77 DOCUMENT
+ *****   ::::::::::::::::::   *****
+ *****  ::::::::::::::::::::  *****
+ ****  ::::::::::::::::::::::  ****
+  ****::::::::::::::::::::::::****
+   ******************************
+
+
+
+                           Table of Contents
+                             
+
+
+
+
+
+Section                                                             Page
+
+
+
+
+1.     INTRODUCTION           .  .  .  .  .  .  .  .  .  .  .  .  .  . 1
+
+
+2.     COMMAND SUMMARY        .  .  .  .  .  .  .  .  .  .  .  .  .  . 2
+
+
+3.     COMMAND DESCRIPTIONS   .  .  .  .  .  .  .  .  .  .  .  .  .  . 3
+
+       3.1    ADD command     .  .  .  .  .  .  .  .  .  .  .  .  .  . 3
+
+       3.2    CHANGE command  .  .  .  .  .  .  .  .  .  .  .  .  .  . 4
+
+       3.3    RELEASE command .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+
+       3.4    TRANSFER command   .  .  .  .  .  .  .  .  .  .  .  .  . 6
+
+       3.5    ACCEPT command  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+
+       3.6    DUPLICATE command  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+
+       3.7    REPORT command  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+
+       3.8    HISTORY command .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+
+       3.9    MAP command     .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+
+       3.10   SLOTS command   .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+
+       3.11   BILLING command .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+
+
+4.     SAMPLE RUNS            .  .  .  .  .  .  .  .  .  .  .  .  .   10
+
+
+5.     ERRORS AND RECOVERIES  .  .  .  .  .  .  .  .  .  .  .  .  .   16
+
+
+
+
+
+
+
+
+
+
+                                   i
+
+
+
+1    INTRODUCTION
+     
+
+     The 'TAPELIB'  is a database  management system designed  to manage
+the  information  on  all  Tymshare and  customer  tapes  within  all of
+Tymshare's national computer centers.  Specifically, all  magnetic tapes
+used  by  customers for  additional  and personal  off-line  storage are
+indexed  and  administered  by this  program.   Tapes  used  by Tymshare
+Operations for incremental backup or periodic 'All Files' dumps  are not
+included in this system.
+
+     The tape library may  be accessed from any  X, IX or 370  through a
+satellite program.  That program  accesses the master software  and data
+bases on the validations system (now C36).
+
+     Except for  the 370's, you  may access the  tape library  under the
+username you are logged in under.  On the 370's, you must attach  to the
+username 'TAPELIB'.   If you do  not directly log  in to TAPELIB  on the
+370's, you must make sure that TAPELIB's 191 mdisk is accessed as a read
+only extention of  your 'A' disk.   The CP ATTACH  command automatically
+insures this.  In addition, your 370 logged in username must have AUXLIC
+license.
+
+     Access to the the tape library on the IX's is obtained  by entering
+'1TAPELIB',  on the  X's  by 'RUN  (UTIL)TAPELIB'  and on  the  370's by
+'TAPELIB'.
+
+     Several centers are  currently defined by  the CENTER data  base of
+the tape library system:
+
+   CUPA   Cupertino Bldg. A
+   CUPC   Cupertino Bldg. C
+   HOU    Houston Operations
+   VF     Valley Forge Operations
+   DA     Dallas Operations
+   SF     San Francisco Operations
+   PSC    Paris - Saint Cloud
+   PP     Paris - Puteaux
+
+     The IX's  and the X's  satellite programs begin  by asking  you for
+your license username and password.  A check is made to insure  that you
+are inhouse and  have the proper status.   Once you have  been accepted,
+the program will build an  auxillary circuit to the tape  library system
+and respond with the program prompt which is the colon (:).
+
+     Commands may  be executed  at that time  depending upon  the status
+obtained from the username-license sequence.  Users are flagged with the
+following status: OPERATOR,  CUSTOMER SERVICES (C/S)  and/or ACCOUNTING.
+You may have  any combination of  the mentioned status's.   Execution of
+commands is dependent  upon your status.  A  short list of  the commands
+and  a  quick  summary  of their  actions  follow.   Refer  to specified
+explanations  in  the  COMMAND DESCRIPTION  section  to  determine which
+commands are restricted to whom.
+
+
+
+
+                                   1
+
+
+
+
+
+
+
+2    COMMAND SUMMARY
+      
+
+
+
+
+   ADD            ADDS A TAPE TO THE LIBRARY
+
+   RELEASE        RELEASES A TAPE FROM THE LIBRARY
+
+   CHANGE         CHANGES INFORMATION ON A TAPE IN THE LIBRARY
+
+   TRANSFER       TRANSFERS A TAPE RECORD TO ANOTHER CENTER
+
+   ACCEPT         ACCEPTS A TRANSFER TAPE TO YOUR LIBRARY
+
+   DUPLICATE      CREATES A DUPLICATE TAPE LABEL
+
+   REPORT         GENERATES REPORTS ON TAPES
+
+   HISTORY        GIVES INFORMATION ABOUT A RELEASED TAPE
+
+   MAP            LISTS THE SYSTEM-CENTER MAP
+
+   SLOTS          OUTPUTS A LIST OF UNASSIGNED TRP'S
+
+   BILLING        CREATES AN ACCOUNTING FILE OF THE ENTIRE
+                  TAPE LIBRARY
+
+   HELP           REPEATS THIS LIST
+
+   QUIT           EXITS THE PROGRAM
+
+
+
+
+NOTE:   All commands may be entered in the shortest form which will make
+  
+       them unique.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   2
+
+
+
+
+
+
+
+3    COMMAND DESCRIPTIONS
+      
+
+     Within this document, it will be assumed that 'TRP' will mean "Tape
+Rack Position"  and that 'TID'  will mean "Tape  Identification number".
+TRP'S will be  re-cycled as tapes are  released (a Trp is  available for
+re-assignment 5  days after it  is freed) but  TID'S will  always remain
+unique and never be re-cycled.  TID'S will be pulled from  a centralized
+file, so it is  more than likely that  TID'S for a computer  center will
+not be consecutive, but will be ascending.  All commands (except DUP and
+REPORT TAPE TRP) request you to supply TID.
+
+     It is very likely  that the TRP of a  tape may change from  time to
+time.  therefore, to avoid confusion, it is necessary that operators and
+users re-orient communications  about tapes in  the library to  focus on
+TID rather that TRP.
+
+
+
+3.1    ADD command
+        
+
+     This command is  restricted to operators  and C/S.  The  command is
+used for entering a  tape to the library and  to receive a TRP  and TID.
+The first thing you will be  prompted for is the username to  be charged
+for storage of the tape in the library.  This username will be validated
+to be current and the user's customer id, district and company name will
+be obtained from the validation.
+
+     The next prompt will be for the requestor-owner.  This is  the name
+of  the  person who  requested  that the  tape  be entered  to  the tape
+library.  Entry  is free  form, up to  15 characters  in length,  and is
+terminated by a 'CR'.
+
+     Next you will be prompted  for the ownership code of the  tape, for
+which there are four: TR, TO, TP and CO.  TR stands for Tymshare Rented,
+which is a tape owned by Tymshare, but used by the customer  for holding
+his information.
+
+     TO  stands for  Tymshare Owned  and is  a tape  used and  saved for
+Tymshare personel.
+
+     TP stands for Tape Purchased and is used on only the TYMCOM-370 for
+enabling tape purchase charges in the accounting.
+
+     CO stands for Customer Owned.  This code is for a tape  supplied by
+the customer or purchased from Tymshare for the customers use.  The tape
+is the property of the customer.
+
+     You will  then be  asked the main  system where  the tape  is used.
+
+
+
+                                   3
+
+
+
+Operators may only specify a system which is located in the  center they
+are running from.   For example, an operator  running from H32  may only
+specify systems located in Houston.  Persons flagged with C/S status may
+specify any system regardless of where they are logged in  from.  System
+numbers are entered  as digits only.  Do  not include the  center prefix
+code.
+
+     If the system specified is a 370, you will be prompted to determine
+if the tape is a 'REGULAR' or 'MINI'.
+
+     Next you are prompted for  a tape description.  This is  free form,
+up  to 40  characters and  is terminated  by a  'CR'.  If  the requestor
+didn't  specify a  tape  description, the  project code  from  the batch
+request calling for that tape should be used.
+
+     Last,  you  will be  prompted  for other  usernames  which  will be
+allowed access to the tape.  This information should be supplied  by the
+requestor of the tape.  The username entered in the beginning of the add
+command is  already assumed, so  it should not  be re-entered.   You may
+enter, one at a time, usernames that will have access to the tape.  Each
+entry is terminated by a 'CR'.  Each name will be validated and added to
+an access list.  Should a group of people wish to be validated, an entry
+may be  made such  as 'GAN=NNNNNN'  where 'NNNNNNN'  will be  the Global
+Account Number of the group.   Also, if no restrictions are to  be made,
+an  entry  line  'GAN=ALL'  is also  allowed.   In  addition,  the entry
+'ANY=R/O' indicates that all users have access to the tape in  read only
+mode (no write  ring).  Access entries are  unlimited, entered one  at a
+time and  terminated by a  'CR'.  to terminate  the access  list, simply
+respond with a 'CR' when asked for the next access username.
+
+     When the  access list  has been  terminated, a  label is  typed out
+which should be attached to the tape.  This label will contain  the TRP,
+TID, requestor-owner, access list, center, system, district no., date of
+entry to tape library and tape description.
+
+     At  the same  time, a  label with  the same  information, but  in a
+crescent label  format will be  appended to a  file in (TAPEDIR)  on the
+validations system.  The file name  will be the same as the  center name
+(i.e.   HOU, CUPA)  and the  extension will  be 'LBL'.   It will  be the
+responsibility of  Operations to print  this file on  the labels  and to
+delete it when completed.
+
+     Upon completion, the tape will be given active status (A).
+
+
+
+3.2    CHANGE command
+        
+
+     This command  is reserved  for Operators and  C/S.  The  command is
+used for changing various key information about the tape.
+
+     The program will begin by prompting you for the TID of the  tape to
+be changed.  The  program will then  display information about  the tape
+
+
+
+                                   4
+
+
+
+with that TRP  and ask you to  verify that it has  the tape you  wish to
+change.
+
+     Upon finding the correct record,  you will be asked to  specify the
+item you wish to change.  The items that can be changed are numbered and
+you must specify  one of these numbers.   After an item number  has been
+specified, you will  be prompted for  the correct information.   Data is
+entered in the same format and with the same restrictions as  when using
+the 'ADD' command.
+
+     Once  the program  has received  the new  information, you  will be
+asked if the entry is correct with an 'OK?' query.  A 'NO' response will
+cause the entry to be rejected while a 'YES' will cause the the  data to
+be accepted.
+
+     After a  change has been  made, you  will be asked  if you  wish to
+change another item  in the tape record.   A 'YES' response  will return
+you to  answering which item  you wish to  change while a  'NO' response
+will  terminate the  change session  and cause  a new  tape label  to be
+printed to yous terminal.
+
+     Please note that  when changing the  'USER' username, you  are also
+changing  the customer  id., you's  district and  possibly,  the billing
+responsibility for the tape.
+
+     Also, the system  change can only reflect  a system located  in the
+center of which the tape is assigned.  To change to a system outside the
+center, the 'TRANSFER' command must be used.
+
+
+
+3.3    RELEASE command
+        
+
+     This command  is used  for the releasing  of a  tape from  the tape
+library.   Operators can  only  release tapes  for the  center  they are
+logged in through.
+
+     The program will type  out all relevent information about  the tape
+and ask you to verify that the library has the correct tape  to release.
+Upon locating the  correct tape to release,  the user will be  asked the
+disposition of the tape upon  release, such as, 'SCRATCH' or  'SEND BACK
+TO OWNER'.  Data is entered free form with up to 25 characters accepted.
+Data  is  terminated  with a  'CR'.   You  will also  be  asked  for the
+pertinent batch request number and name of the person requesting release
+of  the tape.   Until the  record  is purged  from the  library  via the
+'BILLING' command,  the tape  will remain in  the library  with released
+status (R).
+
+
+
+
+
+
+
+
+
+                                   5
+
+
+
+3.4    TRANSFER command
+        
+
+     This command reserved for  Operators and C/S.  The command  is used
+to transfer a tape from one center to another.
+
+     You will be prompted for  the transfer center and the tape  will be
+marked as being in a transfer state (T).  Except for C/S,  Operators may
+only transfer tapes from their own center.
+
+     Even though a  tape has been put  in transfer, the tape  will still
+belong  to  the transfering  center:  only they  can  report,  change or
+release the tape.  The receiving  center can not have any access  to the
+tape until they have accepted the tape with the 'ACCEPT' command.
+
+     Should the  transferring center later  decide that the  tape should
+not be transfered, they may  remove the tape from its transfer  state by
+doing  another  'TRANSFER' on  the  tape back  to  the  original center.
+However, this can only be done before the receiving center  has accepted
+the tape.
+
+     The TRP of the tape is not released until the receiving  center has
+accepted the tape.
+
+
+
+3.5    ACCEPT command
+        
+
+     Reserved  for  Operators only.   This  command will  accept  a tape
+transfered to the Operator's computer center.
+
+     The Operator may find out which requests are waiting  acceptance by
+issuing the 'REPORT TRANSFER' command.
+
+     Upon acceptance of the TID,  the Operator is asked what  the system
+of main use  will be.  The system  will be validated for  the Operator's
+center.   Upon acceptance  of  the system,  the  tapes old  TRP  will be
+released to the sending center and a new TRP will be assigned.   The TID
+will  remain the  same.  A  new tape  label will  also be  typed  to the
+terminal.
+
+
+
+3.6    DUPLICATE command
+        
+
+     Reserved for Operator and C/S.   The purpose of this command  is to
+generate a  label of the  same type created  when the 'ADD'  command was
+used.
+
+
+
+
+
+
+
+
+
+                                   6
+
+
+
+3.7    REPORT command
+        
+
+     Reserved  for  Operators  and  C/S.   This  command  is   used  for
+generating  reports on  tapes  in the  tape  library.  In  all  types of
+reports available, output may be directed to yous terminal or to  a disk
+file.  Disk files are always created under the username of  (TAPEDIR) on
+the validations system.  When asked where the output is to  be directed,
+you may  specify 'TTY, 'TERMINAL',  'TELETYPE' or the  name of  the disk
+file.  Disk file  names may not include  (username) since the  file will
+always be created under 'TAPEDIR'.  File names may only use  the letters
+a-z and the numbers 0-9 and must be in Tymcom-X format.
+
+     In  the 'REPORT  USERNAME', 'REPORT  CUSID', 'REPORT  TRP'  and the
+'REPORT  TID'  you will  be  asked if  you  want the  report  to include
+released tapes.  You may reply 'ALL' or 'ACTIVE'.  'ALL' will signify to
+include  released tapes  while 'ACTIVE'  will only  include  those tapes
+which are active.  For all other REPORT commands, only active tapes will
+be shown.
+
+REPORT TID 'TID'
+
+     This command is for  reporting on an individual tape  identified by
+the tape TID.  All tapes with the specified TID will be shown.   You may
+also specify the word 'ALL' for the TID in which case a report  for yous
+center  will be  created for  all  tapes sorted  by TID.   You  may also
+fy if you want released tapes included in the report output.
+
+REPORT TRP 'TRP'
+
+     This command is for  reporting on an individual tape  identified by
+the TRP number.   Only tapes from you's  center will be shown.   You may
+also specify if you want released tapes included with this report.
+
+REPORT SYSTEM 'SYSTEM NO'
+
+     Use this command to generate  a report on all tapes  used primarily
+on the system specified.  Output will be sorted numerically by TRP.
+
+REPORT CENTER 'CENTER'
+
+     This generates a report on all tapes in the library for  the center
+specified.   Output should  be kept  recent as  a directory  of customer
+tapes for the center.  It is sorted by TRP.
+
+REPORT ALL
+
+     With OPERATOR status this command will default to the REPORT CENTER
+command.  For C/S status, all  centers in the library will  be reported.
+In this case, output will be sorted by center and TRP.
+
+REPORT DISTRICT 'NO.'
+
+     You may specifiy  an individual district  or the word  'ALL'.  When
+'ALL' is used, districts will be sorted numerically by district number.
+
+
+                                   7
+
+
+
+REPORT USER 'USERNAME'
+
+     This generates a  report on all tapes  in the library  belonging to
+the specified username.  Use  this command to facilitate  tape searches.
+You may  also specify  if you want  the released  tapes included  in the
+report output.
+
+REPORT CUSTOMER 'CUSID'
+
+     Given the  Customer ID.,  a report will  be generated  containing a
+list of all tapes belonging  to the specified customer.  Output  will be
+sorted on center, system and username.  You may also specify if you want
+released tapes included in the report output.
+
+REPORT TRANSFER
+
+     When you  first run the  tape library,  a check is  made to  see if
+there are any tapes that  have been transfered to your site.   A message
+will  appear if  there are  any.   This command  gives a  report  to the
+terminal listing all tapes that are in a transfer state to yous computer
+center.  It is recommended that the Operator issue this command prior to
+doing the 'ACCEPT' command.
+
+
+
+3.8    HISTORY command
+        
+
+     Restricted  to  Operator  and C/S.   This  command  is  for getting
+information about a released tape.  It is keyed by the TID.  Information
+supplied will be the TRP, TID, owner, company, district, center, system,
+date of release,  the batch request  requesting the release,  the person
+requesting the release, the destination of the tape upon release and the
+name of the Operator that released the tape.
+
+
+
+3.9    MAP command
+        
+
+     This command is used for referencing the system-center map  kept by
+the tape library.  The center-system map is a map of all  systems, their
+type and to what center they belong.
+
+
+
+3.10    SLOTS command
+         
+
+     This command outputs a list of all trp's in a specific library that
+do not  have tapes  assigned to  them and  the date  that each  Trp will
+become or has become available  for assignment.  The date may  be blank,
+in which case, the Trp  is available for reassignment at any  time.  You
+must supply the center name and a system number.
+
+
+
+
+
+                                   8
+
+
+
+3.11    BILLING command
+         
+
+     Reserved for accounting only.
+
+     Each  record in  the library  will be  examined.  If  60  days have
+elapsed since a tape has  been released, the tape record will  be purged
+from the tape library, otherwise it will be entered into  the accounting
+file.
+
+     Records  that  have not  been  released will  be  validated  by the
+username assigned to the tape.  If the usernames customer id., district,
+gan, or uun have been changed, updates will be made to the tape library.
+If  the username  has changed,  a correction  is made  as well.   If the
+username  has become  invalid, an  error is  recorded.  The  record will
+still be entered to the accounting file.
+
+     The accounting file is  created under (*1BATCH) on  the validations
+system with a file name of TAPES.DAT.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   9
+
+
+
+4    SAMPLE RUNS
+      
+
+
+
+        ENTERING THE PROGRAM
+        --------------------
+
+        '-'1TAPELIB(CR)                 ;ON TYMCOM-IX
+        (OR)
+        '.'R (UTIL)TAPELIB(CR)          ;ON TYMCOM-X
+        (OR)
+        ''TAPELIB(CR)                   ;ON TYMCOM-370
+
+
+        'TAPE LIBRARY'
+        'ENTER YOUR NAME:' PEREZG       ;USE OPERATOR STATUS PSWD
+        'PASSWORD:' (PSWD)
+                                        ;THE 370 SATELLITE DOES NOT
+                                        ;ASK FOR NAME AND PASSWORD.
+        'VERSION 1.13'                  ;TAPELIB REPORTS YOUR STATUS.
+        'YOU HAVE OPER STATUS'
+
+        ':'                             ;COMMAND PROMPTER
+
+        THE ADD COMMAND
+        ---------------
+
+        (YOU CAN ONLY ADD A TAPE TO A SYSTEM BELONGING TO A SYSTEM
+         IN THE CENTER YOU ARE LOGGED INTO. ONLY A LEAD OR BATCH
+         CONTROLLER SHOULD USE ANY COMMANDS EXCEPT 'REPORT'.)
+
+        ':'ADD
+          'USERNAME:' OPER
+          'REQUESTOR:' JOHN DOE
+          'CODE:' TO                    ;MEANS TYMSHARE OWNED.
+          'SYSTEM:' 33                  ;ONLY TO AND CO USED AT WCO.
+          'DESCRIPTION:' PROJ.CODE      ;IF NONE IS SUPPLIED BY
+                                        ;REQUESTOR USE BATCH REQ. PROJ
+          'ACCESS:'                     ;CODE; JUST (CR) MEANS NO DESCR.
+           '-USERNAMES:' OPER370        ;LIST OF USERS WHO MAY USE
+                                        ;THIS TAPE. USE FINAL (CR) TO
+                                        ;FINISH. JUST (CR) MEANS NO
+                                        ;ACCESS LIST AVAILABLE.
+        '*****************************
+
+         TRP: C284                      ;NOW YOU GET A LABEL TO BE
+         TID: 7431                      ;PUT ON THE TAPE.
+         OWNER: JOHN DOE
+         COMPANY: TYMSHARE, INC
+         CENTER: CUPC
+         SYS: 33
+         DIST.: 0
+         DATE: 03/21/77
+         USER: OPER
+
+
+                                   10
+
+
+
+         ACCESS: OPER370
+         DESC.; PROJ.CODE
+
+        *******************************'
+
+
+        THE RELEASE COMMAND
+        -------------------
+
+        ':'RELEASE(CR)                  ;FOR USE WHEN USER REQUESTS
+           'TID:' 7431                  ; THE TAPE BE SENT TO HIM/HER
+
+        'TRP: A629                      ;THIS INFO OUTPUTS SO YOU CAN
+         TID: 7431                      ;VERIFY THE TAPE IS CORRECT.
+         OWNER: JANE DOE
+         COMPANY: TYMSHARE, INC
+         USER: OPER
+         CENTER: CUPA
+         SYS: 19
+         CODE: TO'
+
+        'CORRECT TAPE?' Y               ;A 'NO' ABORTS COMMAND.
+        'TAPE DESTINATION:' MAILED TO DIST N
+        'BATCH NO.:' 19145              ;DESTINATION SHOULD BE
+        'REQUESTOR:' JANE DOE           ;COMPANY NAME OR DISTRICT.
+                                        ;TAPE WAS MAILED TO AS PER
+        'TAPE RELEASED'                 ;A BATCH REQUEST OR MSG.
+
+        THE CHANGE COMMAND
+        ------------------
+
+        (USE THIS TO ALTER SPECIFIC INFORMATION ABOUT A TAPE IN THE
+         LIBRARY DATA BASE.)
+
+        ':'CHANGE
+          'TID:' 7431                   ;INDEX BY TID
+        'TRP: A629
+         TID: 7431                      ;USE THIS INFO TO VERIFY
+         1. USER: OPER                  ;TAPE REFERENCED IS CORRECT
+         2. OWNER: JOHN DOE
+         COMPANY: TYMSHARE INC
+         3. ACCESS:
+         CENTER: CUPA
+         4. SYS: 19
+         5. DESC.: PROJ.CODE
+
+        'CORRECT TAPE?' Y               ;NOW CHANGE NUMBERED ITEMS
+        'CHANGE WHICH ITEM-ENTER NO.' 2 ;IN OUTPUT ABOVE.
+          'REQUESTOR:' JANE DOE         ;ENTER NEW REQUESTOR NAME.
+        'OK?' Y                         ;A 'NO' ABORTS CHANGE.
+        'CHANGE COMPLETED
+         ANOTHER?' N
+
+        '***********************
+
+
+                                   11
+
+
+
+         TRP: A629                      ;A NEW LABEL OUTPUTS NOW
+         TID: 7431                      ;TO BE USED TO REPLACE
+         OWNER: JANE DOE                ;THE OLD LABEL ON THE
+         COMPANY: TYMSHARE INC.         ;TAPE.
+         (ETC)
+
+        **************************'
+
+
+        THE TRANSFER COMMAND
+        --------------------
+
+        (USE THIS TO CHANGE THE CENTER A TAPE IS ASSOCIATED WITH.
+         NOTE: THE RECEIVING CENTER MUST USE THE 'ACCEPT' COMMAND
+         TO COMPLETE THE TRANSFER. THIS IS SHOWN BELOW.)
+
+        ':' TRANSFER
+           'TID:' 7431                  ;A TAPE'S TID SHOULD
+        'TRP: C284                      ;ALWAYS REMAIN THE SAME.
+         TID: 7431
+         USER: OPER
+         OWNER: JANE DOE
+         COMPANY: TYMSHARE, INC
+         CENTER: CUPC                   ;CURRENT CENTER
+         SYS: 33
+
+        'CORRECT TAPE?' Y
+           'CENTER:' CUPA               ;TRANSFER CENTER
+        'OK?' Y
+        'TRANSFER COMPLETE'
+
+
+        THE ACCEPT COMMAND
+        ------------------
+
+        (WHENEVER A TAPE IS TRANSFERRED TO YOUR CENTER YOU WILL
+         RECEIVE THE FOLLOWING MESSAGE WHEN YOU ACCESS THE
+         TAPE LIBRARY:
+                'N RECORD(S) IN TRANSFER STATE TO YOUR SITE'
+         AT THIS POINT YOU SHOULD USE THE 'REPORT TRANSFER' COMMAND
+         TO LIST DETAILS ABOUT THE TAPE(S) IN TRANSFER STATE.)
+
+        ':' REPORT TRANSFER
+        'SORTING...'
+        '1 RECORD(S)
+        'OUTPUT TO:' T                  ;A FILE NAME CAN ALSO BE USED
+
+        '03/21/77
+        'TRP    TID     CEN     SYS     COMPANY USER    STA
+         C234   7431    CUPC    33      TYMSHARE     OPER    T-CUPA
+
+
+        ':' ACCEPT                      ;YOU SHOULD NOT ACCEPT A
+          'TID' 7431                    ;TAPE UNTIL IT IS PHYSICALLY
+
+
+                                   12
+
+
+
+        'TRP: C284                      ;AT YOUR CENTER.
+        'TID: 7431
+        'USER: OPER                     ;VERIFY INFO IS CORRECT.
+        (ETC)
+
+        'TAPE CORRECT?' Y
+           'SYSTEM' 19                  ;PRIMARY SYSTEM. ONCE
+                                        ;A TAPE HAS BEEN ACCEPTED
+        '**************************     ;A NEW LABEL WILL OUTPUT
+                                        ;TO REPLACE THE OLD ONE
+         TRP: A629                      ;ON THE TAPE.
+
+
+         TID: 7431
+         OWNER: JANE DOE                ;LABEL REFLECTS NEW CENTER
+         COMPANY; TYMSHARE              ;SYSTEM AND TRP NUMBER.
+         (ETC)
+
+         **************************'
+
+
+        THE REPORT COMMAND
+        ------------------
+
+        ':'REPORT (CR)
+        'BY:' ?                         ;THESE ARE THE REPORT
+                                        ;SUBCOMMAND OPTIONS.
+        'VALID SUBCOMMANDS ARE:
+         TRP            REFERENCES TAPES BY TRP
+         TID            REFERENCES TAPES BY TID
+         USER           REFERENCES ALL TAPES FOR A USER
+         CUSTOMER       REFERENCES ALL TAPES VIA CUSID
+         SYSTEM         REFERENCES ALL TAPES FOR A SYSTEM
+         CENTER         REFERENCES ALL TAPES PER CENTER
+         ALL            REFERENCES ALL TAPES FOR ALL CENTERS
+         DISTRICT       REFERENCES ALL TAPES BY DISTRICT OR
+                        "ALL" FOR ALL TAPES IN ALL DISTRICTS
+         TRANSFER       REFERENCES ALL TAPES IN TRANSFER STATE'
+
+        ':'REPORT TRP A629              ;THIS GET'S DATA ON
+        'ALL OR ACTIVE?' ALL            ;SPECIFIED TRP NO.
+        'OUTPUT TO:' T
+        '04/25/77
+         TRP    TID     CEN     SYS     COMPANY USERNAME        STA
+         A629   7431    CUPA    19      TYM,INC OPER            A'
+
+        ':'REPORT TID 7431              ;USE THIS TO GET DATA
+        'ALL OR ACTIVE?' ALL            ;INDEXED BY TID NO.
+        'OUTPUT TO:' T
+
+        (SAME OUTPUT AS REPORT TRP ABOVE)
+
+
+        ':'REPORT USER OPER             ;THIS GETS SORT BY CENTER
+
+
+                                   13
+
+
+
+        'ALL OR ACTIVE?' ALL            ;AND TRP FOR ALL OPER TAPES.
+        'SORTING'
+        '18 RECORDS'
+        'OUTPUT TO:' FILE1              ;OUTPUT LIST TO FILE.
+
+        'FILE CREATED UNDER (TAPEDIR) ON SYS <validations host number>'
+                                        ;YOU CAN TYPE OR LIST FILE
+                                        ;FROM EXEC LEVEL.
+
+        ':'REPORT CUSTOMER 121          ;HERE WE SORT BY CID NO.
+        'ALL OR ACTIVE' ALL
+        'SORTING'
+        '139 RECORDS'                   ;CUST. 121 HAS 139 TAPE RECORDS.
+        'OUTPUT TO:' FILE2
+        'FILE ALREADY EXISTS, CONTINUE?' Y
+
+
+                                        ;ELSE 'NO' TO AVOID
+                                        ;OVERWRITING EARLIER 'FILE2'
+        'FILE CREATED UNDER (TAPEDIR) ON SYS <validations host number>'
+
+
+        ':'REPORT CENTER CUPA           ;USE THIS TO GET LISTING OF
+        'SORTING'                       ;OF ALL TAPES IN YOUR CENTER.
+        '739 RECORDS'
+        'OUTPUT TO:' FILE4
+        'FILE CREATED UNDER (TAPEDIR) ON <validations host number>'
+
+
+        THE HISTORY COMMAND
+        -------------------
+
+        (USE THIS TO OBTAIN INFORMATION ON TAPES WHICH HAVE 'R'
+         IN THE ACTIVITY FIELD; THAT IS, TO CHECK ON RELEASED
+         TAPES.)
+
+        ':'HISTORY(CR)
+           'TID:' 9072                  ;INDEXES TID.
+        'TRP: A995
+         TID: 9072
+         USER: OPER
+         OWNER: GARY PEREZ
+         COMPANY: TYMSHARE, INC.
+         CENTER: CUPA
+         SYS: 19
+         TAPE DESTINATION: MAILED TO DIST 11
+         BATCH NO. 35456                ;THIS INFO HELPS
+         REQUESTOR: GARY PEREZ          ;TRACK RELEASED TAPES.
+         OPERATOR: PEREZ
+         RELEASED DATE: 05/11/77'
+        ':'
+
+
+
+
+
+                                   14
+
+
+
+        THE MAP COMMAND
+        ---------------
+
+        (USE THIS TO LIST THE SYSTEM NUMBERS CURRENTLY
+         INCLUDED IN ANY COMPUTER CENTER.)
+
+        ':'MAP(CR)
+           'CENTER:' CUPA
+        'SYSTEMS INCLUDE:'
+        '940S - 1, 2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 16, 18, 19, 20'
+
+
+
+        THE SLOTS COMMAND
+        -----------------
+
+        (USE THE SLOTS COMMAND TO GET A LIST OF UNUSED TAPE RACK
+         POSITIONS.)
+
+        ':'SLOTS(CR)
+        'CENTER:' DA
+        'SYSTEM:' 54                    ; NEEDED TO IDENTIFY RACK.
+        'OUPUT TO:' T                   ; OR A FILENAME.
+
+       'THE FIRST SLOT THAT WILL BE ASSIGNED IS R6393
+
+         TRP   AVAILABLE
+        R102   09/14/80
+              .
+              .
+        R6390  09/17/80
+
+        THE HIGHEST OCCUPIED TRP IS R6392  '
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   15
+
+
+
+5    ERRORS AND RECOVERIES
+       
+
+     If there are any problems with the building of circuits from you to
+the TAPLIB database  system, a message will  output to this  effect from
+both TAPLIB  and the  network.  Most likely  the data  base will  not be
+harmed by net problems while TAPLIB is running.  Login and  restart what
+you were doing.  Also, you will  not be able to run this program  if the
+validations system is unavailable.
+
+     If  you see  the  error message  '1022  ERROR LLNN'  (where  LL are
+letters and NN are numbers)  you should quit the program and  report the
+errors to your supervisor.   The SYSTEMS RESOURCE ALLOCATION  group must
+be notified of all these types of errors as soon as possible.
+
+     Upon completion of the  accounting run, which is suspected  to last
+several hours, if any usernames have been found to be in-valid, an error
+file is created under user  'SRA' on the validations system with  a file
+name of TAPES.ERR.  Mail will also be sent to 'SRA' telling of the error
+file.  In the case  that mail cannot be  sent, an error message  will be
+sent to yous terminal telling of the error condition and to notify S.R.A
+immediateley.
+
+     If the 370 satellite program ever outputs the error 'RETURN  CODE 1
+ON RDBUF ACTGSYS DATA A1'  then the file 'ACTGSYS DATA' has  either been
+erased or cannot be read.  The file resides on TAPELIB's 191  mdisk.  It
+is allright to telecopy the file from another host.
+
+     The  Systems Resource  Allocation group  is in  Cupertino,  and the
+telephone number is (408) 446-6315.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   16
+
+9 F
