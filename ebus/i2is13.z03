@@ -1,0 +1,1360 @@
+        ******************************************************************
+        **                  PROPRIETARY INFORMATION                     **
+        **                                                              **
+        **  BT  TYMNET's  proprietary   rights  are  included  in  the  **
+        **  information disclosed herein.  The recipient, by receiving  **
+        **  this document,  agrees that neither this document nor  the  **
+        **  information disclosed herein nor any part thereof shall be  **
+        **  reproduced  or  transferred to other documents or used  or  **
+        **  disclosed  to  others for manufacturing or for  any  other  **
+        **  purpose  except as specifically authorized in  writing  by  **
+        **  B T TYMNET.                                                 **
+        ******************************************************************
+        ==================================================================
+                      TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  1 OF 24
+        ==================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT ID   :  ISIS                               VERSION:  13.03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual		   DATE:  01/13/93
+        ==================================================================
+
+			    DOCUMENT DESCRIPTION
+
+        A) FUNCTIONS VISIBLE TO THE USER:
+
+	A.1   ASYNC RING STRUCTURES (ASYNEW and NEWARN)
+
+	There  are two Tymfile  equates  that  impact  the choice of async
+	ring drivers and  ring  structures which are  assembled into ISIS:
+	ASYNEW and NEWARN.
+
+	ASYNEW  is used to  define  the type of async driver to be used by
+	ISIS, and NEWARN simply redefines the async ring structures.  Both
+	ASYNEW  and   NEWARN   defined   which  SVC  operations  will   be
+	available, and NEWARN effectively  overrides  the value of ASYNEW.
+	The SVC op codes available are as follows:
+
+		SVC opcode =  3  used when ASYNEW is equal to 0
+		
+		SVC opcode = 12  used when ASYNEW is equal to 1 or 2
+		                 and  when NEWARN is equal to 0
+
+		SVC opcode = 14  used when ASYNEW is equal to 1 or 2
+		                 and  when NEWARN is equal to 1
+
+
+                              NEWARN = 0     NEWARN = 1
+	                  +---------------+---------------+
+	           A   0  |     OP =  3   |     OP = 14   |
+	           S      +---------------+---------------+
+	           Y   1  | OP=3 or OP=12 |     OP = 14   |
+	           N      +---------------+---------------+
+		   E   2  |     OP = 12   |     OP = 14   |
+	           W      +---------------+---------------+
+
+	ASYNEW  was developed  to  define  two  ring  structures that were
+	implemented in ISIS many years ago.   Although it is possible some
+	interfaces  still  use  the SVC opcode  3 style async  drivers and
+	connect  method,  it  is  generally  conceded   that   most  async
+	interfaces use either the  SVC opcode 12  or  SVC opcode  14 style
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  2 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+	async  drivers and  connect.   Without  concrete evidence that the
+	SVC opcode  3  drivers  were  no longer  being  used,   NEWARN was
+	designed as  the  new  equate  to redefine the  type of async ring
+	drivers and connect: SVC opcode 12 or SVC opcode 14.
+
+	    
+
+	NEWARN was introduced into ISIS  beginning  with ISIS 11.33.  ISIS
+	13.02 incorporated this new async module as wells  maintaining the
+	old module. Beginning with version 13.02  ISIS had the ability  to
+	include one of the  async modules depending upon the configuration
+	setting of the NEWARN  equate statement in the ISIS tymfile.  This
+	section will describe the usages of the async modules and settings
+	for it.
+
+
+	The  default values for  ASYNEW  and  NEWARN  are  now  defined as
+	follows:
+
+		ASYNEW	EQ	2 	: Defines new async drivers
+		NEWARN	EQ	1	: Defines new async modules
+
+
+
+	The  async module  assembled  into  the  ISIS structure is  solely
+	dependent  upon  the  setting  of the  NEWARN equate  in the  ISIS
+	tymfile.  The construct for this equate is as follows:
+
+	      NEWARN     EQ     0     : Use old async modules
+
+	           --  or  --
+		   
+	      NEWARN     EQ     1     : Use new async modules
+
+
+	The  NEWARN equate in ISIS tells  ISIS which of the async  modules
+	to  include in ISIS:  NEWARN set to 0 includes only the  OLD async
+	module, while NEWARN set to 1 includes only the NEW async module.
+
+
+	The NEW connect  and async ring structures in ISIS 11.33 and above
+	can be described as the following:
+
+           o  Uses ISIS connect SVC number 14
+           o  Uses negative ring structure and indexing
+
+        The OLD connect and async  ring structures in all versions of ISIS
+	except 11.33 can be described as the following:
+
+           o  Uses ISIS connect SVC number 12
+           o  Uses positive ring structure and indexing
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  3 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+        The  NEWARN  value  defaults  to 1  (meaning  using the NEW  async
+	module).
+
+        There can only be one  async module in ISIS, either the NEW or the
+	OLD but not both.
+        The  ring  structures  are  critical to any ASYNC interface as the
+	slot will crash if the wrong async modules is in  ISIS.   A  quick
+	table of the async modules and network interfaces is as follows:
+
+
+         +-----------------------------+---------------+----------------+
+         |                             |     NEW       |       OLD      |
+         |  Interface Type             | ASYNC Module  |  ASYNC Module  |
+         |                             |  (NEWARN=1)   |   (NEWARN=0)   |
+         +-----------------------------+---------------+----------------+
+         |  CONSAT  6.03               |               |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  CONSAT  6.05               |               |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  CONSAT  6.40               |     XX        |                |
+         +-----------------------------+---------------+----------------+
+         |  CONSAT 11.05               |     XX        |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  TYMCOM  3.01               |               |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  TYMCOM  4.05               |               |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  TYMCOM  4.06               |               |      XX        |
+         +-----------------------------+---------------+----------------+
+         |  TINET (Payment Systems)    |               |      XX        |
+         +-----------------------------+---------------+----------------+
+
+
+
+	Note  that CONSAT  6.40 requires the NEW async module  in ISIS and
+	all  other  versions   of async interfaces  (CONSAT's  other  than
+	6.40,  TYMCOM and  all  TINET - Payment Systems slots) require the
+	OLD async module in ISIS.
+
+
+	The  result for a  mismatch in ISIS async module and the interface
+	slot async expectations will be that the interface slot will crash
+	with an async connect SVC failure.  Typically the slot crash codes
+	under this mismatch will be along the lines of the following:
+
+		CONSAT  crash code 80:  Connect Async SVC failure
+		TYMCOM  crash code 21:  Async SVC failure
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  4 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	A.2   ISIS has  been  modified  for non-MAC5 code  generations to
+	check the total  memory  requirements  versus  the  configuration
+	memory  available.   This  checking  was  not available for  MAC5
+	based code  generations as the  hardware  may not necessarily  be
+	restricted  to a  single  megabyte  of memory.   The total memory
+	available  is  based  on  the  1Mb   memory  limitations  of  the
+	current platforms.   Current platforms using the extended  memory
+	definition macro DEFEXT are not taken into consideration.
+
+ 	In  the event the  code  generation  detects memory exceeding the
+	configuration  memory available  the code generation process will
+	be terminated and  a failure  message displayed noting the memory
+	size mismatch:
+
+
+	  TYMNET-II Node 2521, Kernel Host 11725
+
+          Maximum slot number is 2
+
+
+               >>> HARDWARE CONFIGURATION <<<
+
+          Expects enhanced sync microcode
+	  Expects enhanced async microcode
+	  Expects MAC II
+	  Expects maximum baud rate of 1200
+	  Expects 2 SIO mother-board processor(s)
+	     Board 0 has 2 channel(s), device address 80
+	     Board 1 has 10 channel(s), device address 81
+
+	       >>> SLOT CONFIGURATIONS <<<
+
+	  SLOT 0, NODE CODE, has 320 K-bytes of core, from 1D300 to 6D2FF
+
+	     2 logical unit(s)
+	     L.U. 0 is mboard 80 channel 0
+	     L.U. 1 is mboard 80 channel 1
+
+	  SLOT 1 has 70 K-bytes of core, from 6D300 to 7EAFF
+
+	     2 logical unit(s)
+  	     L.U. 0 is mboard 81 channel 0
+	     L.U. 1 is mboard 81 channel 1
+
+	  SLOT 2 has 570 K-bytes of core, from 7EB00 to 10D2FF
+
+	     no logical units
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  5 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+
+	  ***Highest location used in this configuration is 0FF100
+
+          MEMORY SIZE CONFIGURATION INCONSISTENCY!
+
+          Assembly Memory Size Exceeds Total Configuration Memory Size
+
+          Assembly Memory Size:        1021kb
+          Configuration Memory Size:   1024kb
+
+
+	  Fatal error ... machine over configured.. assembly killed!
+	  *** QUIT directive returning control to Unix/Cmf environment
+          EXIT
+
+
+
+	NOTE ON LBOOT EQUATE:
+
+	There has been a basic  misconception  about  the  purpose of the
+	LBOOT tymfile  parameter.   The boot  reserves 4Kb  at the top of
+	memory  for the boot  code  function.   The status  of  the LBOOT
+	parameter  has nothing to  do with this issue.  ISIS always takes
+	the 4Kb used  for  this purpose into account for computing memory
+	size.   LBOOT EQ 1  directs ISIS  to  reserve  3Kb  of memory for 
+	the  boot  loader code.   This  is  required since  otherwise the
+	BOOT will overwrite areas  in  ISIS that  are  not desired.  This
+	increases the size of the Kernel by 3Kb.
+
+
+
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  6 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	A.3  AUTOMATIC SLOT HALT ON REPEATED CRASH/RESTART FAILURES.
+
+	ISIS has been  modified to insure a slot repeatedly restarting is
+	taken off of the  run list if it fails 5 times within a 10 minute
+	time span.    This  was  implemented  to  prevent  a  slot   from
+	continually crashing and restarting.  A  new DDT command has been
+	created to  Disable/Enable  Automatic  Slot Halting and is issued 
+	by entering  ?DASH  at  the  DDT command  prompt ("*"). The ?DASH 
+	command will disable the  automatic slot halting function  if the
+	function is  enabled  (default),  or enable the function if it is
+	already  enabled.  The  DDT Execute  command (E) will  reset  the
+	timer and enable the automatic  slot halt  function  (the Execute
+	command may be manually entered or be part of a slot load).
+
+	Should the slot experiencing the repeated slot restarting symptom
+	be the node  code slot  (slot 0) ISIS will then crash hard with a
+	BAD04 8755  (or  type 55)  crash to  indicate remedial action  is
+	necessary.
+
+	An  example of the  usage  of  the Disable Automatic Slot Halting
+	command is as follows:
+
+                please log in: ddt220:2276;
+                node: 6001
+                host: 2276
+
+                slot #: !
+                Slot FF
+		*?dash 
+		disable auto slot halt? (Y/N)?        <if enabled>
+	        *?dash
+		enable auto slot halt? (Y/N)?	     <if disabled>
+
+
+
+
+	A.4  SYNC BOARD CHECKING.
+
+	ISIS has been modified to insure that when  it  is configured for
+	sync port there is in fact a sync board present in the  hardware.
+	This is done during ISIS initialization by issuing a sense status
+	command  (SSR for addresses 0BFx for the first sync board or 0FFx
+	for the  second sync board).  If the sense status command returns
+	a device failure  status  (indicating no sync hardware responded)
+	ISIS will crash hard with a BAD00 8778  (or type 0078) crash code
+	to  indicate no  sync hardware  was  found.   This  test  is  not
+	performed on the PXL hardware platform.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  7 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	A.5  SOFT CRASH FOR KERNEL RANGE ERROR.
+
+	ISIS 13.02  restructured the  MAC interrupt handling routines and
+	introduced  a newly enhanced  memory  range  checking scheme that
+	can result in  hard ISIS crashes indicating memory  range  errors
+	(BAD04 8754  or  type 453 crashes).    These  memory range errors
+	occur  when a MAC  interrupt  is  taken with  no interrupt status
+	register (ISR)  value  and  generally happen  when  the  incident
+	triggering the interrupt occur  during the ISIS MAC'ed  state and
+	the interrupt is not taken immediately  but  is queued  waiting a
+	return to the un-MACed state.  Once ISIS  returns to the un-MACed
+	state the information surrounding  the  violation may be lost due
+	to the processing taken  place before  the  interrupt is handled.
+	With ISIS unable to take an immediate interrupt and  the loss  of
+	data indicating the precise cause of  the  memory range  error it
+	was decided  to  modify  ISIS  to  handle  the range error  in  a
+	modified manner such that ISIS will  take a "soft"  crash on  the
+	first  occurrence  of  the range  error  and only take  a  "hard"
+	crash if a second memory range error occurs within seven (7) days
+	of the first incident.  The "soft" crash  will  result  in  a DDT
+	history log event being generated and ISIS restarting  by  taking
+	an unconditional jump to the ISIS  start up  address.   This soft
+	crash  is necessary  to  reset all  internal ISIS  values  (which
+	results in  a short interruption of service) but given that there
+	is  little or  no  debugging information  available a node reload
+	is not necessary.   Should  a  second occurrence appear ISIS will
+	take a hard crash  in  order for support personnel to take a full
+	engine  dump followed  by  a  node reload.    The DDT history log
+	event will appear as follows:
+
+
+                please log in: ddt220:2276;
+                node: 6001
+                host: 2276
+
+                slot #: !
+                Slot FF
+		*?hist
+
+		Current system time is:   62:01:51:19
+		  62:01:51:18 ago, slot   0: kernel range error
+	        *
+
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  8 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+        B) FUNCTIONS NOT VISIBLE TO USER:
+
+
+	B.1   ISIS USER LICENSES.
+
+
+	There  have been  several  changes   to  the  DDT  user   license
+	structures which should be documented and as a result of this the
+	following  section  will  document  them.
+
+
+
+        The  ISIS user  licenses and  goodguy  lists are designed to give
+	specific  privileges to  selected DDT users.  These licenses give
+	the  user tility to  perform certain functions which may not
+	generally be allowed for all users.
+
+
+        The  licenses and goodguy lists are defined via the use of the GG
+	macro which can be assembled into the ISIS code either a separate
+	file or appended to the ISIS tymfile itself.
+
+
+        The GG (goodguy) macro construct is defined as follows:
+
+          GG(license,access,username,machine)
+
+  	  where
+            license  = DDT privilege license
+  	    access   = slot access privilege
+  	    username = login username (first 8 bytes)
+  	    machine  = machine of circuit termination
+	               (-1 specifies wildcard)
+
+
+ 
+        an example of this could be as follows:
+
+
+  	  GG(L.L!L.H!L.P!L.E,-1,GATEWAY)    :For LOADII slot loading
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE  9 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	The importance of the new goodguy licenses and their meanings  is
+	of greater importance now  that  there have been  changes  to the
+	basic ISIS  slot halting  criteria and the implementation  of the
+	new GNO Network Security goodguy list for GNO nodes.
+
+        Restrictions  have been implemented  in regards to slot  0  (node
+	code).   Slot 0 can never be  halted  using the "H" command  from
+	an external port.  The ?HALT  command (followed by a confirmation
+	prompt)  command  is  only  valid  from  the  TTY  port. The only
+	exception to this  is the  ?HALT command  will  be  allowed  from
+	a  network login  user  (not  just  TTY port) if the debug option
+	(NTDDBG)  is enabled in the  ISIS  tymfile.  In order for ISIS to
+	complete the  slot halting  or  execution  the user must have the
+	L.H. (slot halting) license.
+
+	It should be noted that the new GNO goodguy list does not contain
+	the  username  ISISTECH,  but   has  usernames  that  follow  the
+	DDTxxx  construct.   For questions regarding the GNO goodguy list
+	or usernames  validations within it,  please  contact GNO Network
+	Security.
+
+
+
+
+        The licenses and their generic meanings are as follows:
+
+        License
+        Mnemonic   License Meaning
+        --------   ------- -------
+
+         L.DISC    License to allow user to format a disk
+         L.SYA     License to allow user to access system (DDT)
+         L.S0A     License to allow user to access slot 0
+	 L.SUA     License to allow user to access SUP slots
+	 L.HALT    License that requires slot be halted (not for goodguy)
+         L.W       License to allow user to write slots memory
+         L.R       License to allow user to read  slots memory
+         L.L       License to allow user to load a slot
+         L.E       License to allow user to control execute of slot
+         L.H       License to allow user to halt a slot
+         L.P       License to allow user to patch a slot
+         L.S0R     License to allow user to read  memory in slot 0
+         L.S0P     License to allow user to patch memory in slot 0
+         L.SYR     License to allow user to read  system memory (kernel)
+         L.SYP     License to allow user to patch system memory (kernel)
+
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 10 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	B.2   ISIS CRASH CODES.
+
+
+        There are several new ISIS crash codes which should be documented
+	and as a result of this the following  section will  document the
+	current  ISIS crash  codes  and  very generic possible causes for
+	them.
+
+
+        The  ISIS crash  codes can  be noted  from  either the ISIS crash
+	table or the engine front console.
+
+
+        The ISIS crash table location can be found as follows:
+
+	   o  Log into DDT slot FF (ISIS kernel)
+
+	   o  Read the address at 6C which will point to the location
+	      of the crash table.
+
+
+	   o  Read the ISIS crash table for 100x bytes.
+
+                please log in: ddt220:2276;
+                node: 6001
+                host: 2276
+
+                slot #: !
+                Slot FF
+                *r 6c 4
+                00006C  0000  0954
+                *r 952 100
+                000952  0000  0C01  0007  0001  0516  239C  3C25  0001
+                000962  0001  0000  0000  65FA  0000  0F10  8000  0000
+                000972  0002  0030  0000  65FA  0010  557E  239C  3803
+                000982  0001  0000  0000  60F2  0000  0F10  8000  0000
+                ......
+                ......
+
+
+
+
+	      The crash code shows up on the summary entry as follows:
+
+	       000972  0002  0030  0000  65FA  0010  557E  239C  3803
+	                     ----
+
+
+              This translates to the BADxx 87xx code as as BAD00 8730.
+	      In the ISIS crash table only the xx values are stored in
+	      memory.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 11 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+	The engine front console display can be viewed as follows:
+
+    	     +---+---+---+---+---+---+---+---+---+---+
+             | 0 | B | A | D | x | x | 8 | 7 | x | x |
+    	     +---+---+---+---+---+---+---+---+---+---+
+
+        with the xx values determine the crash type as follows:
+
+
+
+        CONSOLE DISPLAY  SYMPTOM and POSSIBLE CAUSE
+
+         BAD00 8720	 Parity error detected during initialization.
+                         [MAC or MEMORY]
+
+         BAD00 8730      Unexpected I/O interrupt.
+                         [Any  I/O  controller - clocks  on undefined
+			 ports generally standard SYNC]
+
+         BAD00 8740      Illegal instruction during initialization.
+                         [CPU, MAC or MEMORY]
+
+         BAD00 8750      MAC interrupt during initialization.
+                         [MAC or MEMORY]
+
+         BAD00 8760      SVC trap during initialization.
+                         [Software and Hardware configuration mismatch]
+
+         BAD00 8763      Unable to connect slot 0 on startup.
+                         [Hardware and software configuration mismatch,
+			 code generation error or BITS loading problem]
+
+         BAD00 8778      Excessive SYNC board found.
+                         [Hardware/Software mismatch - extra or  unused
+			 sync  board found that was not defined in ISIS
+			 configuration]
+
+         BAD00 8779      Baudr mismatch.
+                         [Hardware and software configuration mismatch]
+
+         BAD00 8790      Daughterboard timeout during disconnect.
+                         [SIO Motherboard or daughtercard]
+
+
+
+         BAD02 8720      Parity error within kernel.
+                         [MAC or MEMORY]
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 12 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+         BAD02 8740      Illegal instruction within kernel.
+                         [Single bit parity error, CPU, MAC, MEMORY]
+
+         BAD02 8750      Unexpected MAC interrupt during initialization
+                         of semiconductor memory above 1 Mb.
+                         [MAC or backplane wiring]
+
+         BAD02 8763      Bad REPOP operation.
+                         [ROM I/O]
+
+         BAD02 8765      "GCI" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+	 BAD04 8721      Mac register set 0 bad (Bad MAC set).
+                         [MAC]
+
+         BAD04 8730      Unexpected enhanced SYNC interrupt.
+                         [Configuration mismatch, SYNC]
+
+         BAD04 8741      Bad MAC.
+                         [MAC, CPU, ROM I/O, MEMORY]
+
+         BAD04 8751      Bad MAC register set 0.
+                         [MAC]
+
+         BAD04 8752      DMA device timeout.
+                         [MAC or any DMA controller]
+
+         BAD04 8753      Memory range error in kernel.
+                         [MAC, MEMORY, Code generation error]
+
+         BAD04 8755      Node Code (Slot 0) automatic slot halt.
+                         [Repeated node  code  crash  -  software  and/or
+			 configuration error, missing hardware]
+
+         BAD04 8762      Unexpected SYNC interrupt.
+                         [ROM  I/O, SYNC card,  Backplane  wiring,   code
+			 generation error]
+
+         BAD04 8763      Wild transfer to low core.
+                         [MAC, MEMORY or CPU]
+
+         BAD04 8765      "WCI" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+         BAD04 8770      Memory range inconsistency in ISIS kernel
+          		 [Code generation error]
+
+         BAD04 8775      Memory range inconsistency between actual memory
+	                 size and ISIS system configuration memory size.
+    		         [Code generation error]
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 13 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+         BAD06 8720      Parity error within dispatcher.
+                         [MEMORY or MAC]
+
+         BAD06 8740      Illegal instruction within dispatcher.
+                         [ROM I/O, CPU, MAC]
+
+         BAD06 8750      Protection violation.
+                         [MAC, MEMORY]
+
+         BAD06 8760      Illegal SVC within dispatcher.
+                         [Code]
+
+         BAD06 8762      Disc interrupt queue overrun.
+                         [Code]
+
+	 BAD06 8763      System crash (parity error within kernel)
+                         [MEMORY, MAC]
+
+         BAD06 8765      "WRECI" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+
+
+         BAD08 8763      Invalid routine address (from queue address)
+                         [Kernel bug]
+
+         BAD08 8765      "EMPTY" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+
+         BAD0A 8763      Invalid queue address.
+                         [Kernel bug]
+
+         BAD0A 8765      "TOPUT" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+
+
+         BAD0C 8762      MSC controller locked during recalibrate.
+                         [MSC controller]
+
+         BAD0C 8765      Accounting crash within dispatcher.
+                         [Slot code bug]
+
+
+     
+         BAD0E 8720      Parity error within dispatcher.
+                         [MEMORY, MAC]
+
+         BAD0E 8740      Illegal instruction within dispatcher.
+                         [MAC, MEMORY]
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 14 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+         BAD0E 8750      Protection violation withing dispatcher.
+                         [MAC, MEMORY]
+
+         BAD0E 8760      Illegal instruction in dispatcher.
+                         [MAC, MEMORY, CPU]
+
+         BAD0E 8761      Kernel crash.
+                         [Anything]
+
+         BAD0E 8763      System crash.
+                         [Anything]
+
+         BAD0E 8765      "GCI" crash within dispatcher.
+                         [ROM I/O, MAC]
+
+
+         BAD10 8763      "TOPUT" crash with dispatcher.
+                         [ROM I/O, MAC]
+
+	 BAD12 8763      Accounting crash within dispatcher.
+                         [Slot code bug]
+
+         BAD14 8763      Invalid channel I/O buffer address.
+                         [MAC, MEMORY, CPU, ROM I/O]
+
+         BAD16 8763      No dispatcher present.
+                         [Software generation error]
+
+
+         BAD18 8760      XPI timeout.
+         BAD18 8761      XPI halted.
+         BAD18 8762      Bad interrupt message from XPI.
+         BAD18 8763      XPI start-up check failure.
+         BAD18 8764      XPI motherboard crash.
+         BAD18 8765      XPI too slow with KDIO.
+         BAD18 8766      Bad KDIO message from XPI.
+         BAD18 8767      MXP machine number mismatch.
+         BAD18 8768      XPI memory image not loaded.
+                         [XPI motherboard]
+
+         BAD20 8710      SIO ring software inconsistency
+         BAD20 8720      No room in SIO control ring
+         BAD20 8730      KIO port out of range
+         BAD20 8740      KIO port inconsistency
+         BAD20 8750      Invalid KIO control message
+         BAD20 8760      SIO Ring motherboard unavailable
+         BAD20 8770      Unexpected SIO ring device interrupt
+         BAD20 8780      Unexpected SIO ring error code
+                         [SUP node - SIO motherboard]
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 15 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	B.3   DISPATCHER CRASH CODES.
+
+	ISIS  crashes slots when it uncovers anomalies within  the  rings
+	that is  not  consistent or  within  defined limitations.   These
+	crashes become slot  dispatcher crashes  and usually  points to a
+	problem  area in  the  interface slot.   There  are currently  43
+	different infractions within ISIS that can trigger the dispatcher
+	crash, and ISIS has  been changed to  append the dispatcher crash
+	type to the DDT History event:
+
+                please log in: ddt220:2276;
+                node: 6001
+                host: 2276
+
+                slot #: !
+                Slot FF
+		*?hist
+
+		Current system time is:   62:01:51:19
+		  62:01:51:18 ago, slot   0: Restarted
+		  62:01:51:18 ago, slot   1: dispat crash#01
+	        *
+
+        The dispatcher infractions (crash#xx) are defined as follows:
+
+	  crash#01:
+		Fails in the MAIN routine with a range failure with
+		range-check on ring cursors (fill cursor > size (I)).
+
+	  crash#02:
+		Fails in the MAIN routine with a range failure with
+	        range-check on ring cursors (fill cursor > size (O)).
+
+	  crash#03:
+		Fails in the MAIN routine with a range failure with
+		range-check on ring cursors (empty cursor > size (I)).
+
+	  crash#04:
+		Fails in the MAIN routine with a range failure with
+		range-check on ring cursors (empty cursor > size (O)).
+	
+	  crash#05:
+		Fails in the MMFR routine with a range failure with
+		range check on a specified port.
+
+	  crash#06:
+		Fails in the MMFR routine with a check on
+		message-license message license failure.
+
+	  crash#07:
+		Fails in the MMFR routine with a check on
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 16 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+		active "normal" port for unrecognizable message.
+
+	  crash#08:
+		Fails in the MMFRS routine with a check on
+		message requiring special handling. Fails for
+		unrecognizable message type.
+
+	  crash#09:
+		Fails for the "accounting addendum" type (B7)
+		on slot 0 with 'bogus' slot value.
+
+	  crash#10:
+		Fails for the "log-in character" type (B3)
+		for circuit not LOGIN-state.
+
+	  crash#11:
+		Fails for the "successful login" type (B6).
+		Valid only from slot 0.
+
+	  crash#12:
+		Fails for the "LOG-II response/reject circuit request"
+		message type (C3). Valid only from slot 0.
+
+	  crash#13:
+		Fails for the "Log-II circuit request supplement message"
+		type (C4). Not valid slot 0.
+
+	  crash#14:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Valid only from slot 0.
+
+	  crash#15:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Bad first element. LGCS MO
+
+	  crash#16:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). APL . Cons. LGSC wrong element.
+
+	  crash#17:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Bad second element. RMO MO
+
+	  crash#18:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). UNI . Cons .  RMO
+
+	  crash#19:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Overrun failure.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 17 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+	  crash#20:
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Overun failure again.
+
+	  crash#21 21):
+		Fails for the "Log-II logon success indicator message"
+		type (C6). Failure on next element.
+
+	  crash#22:
+		Fails in the GNOME routine with a
+		range failure on slot.
+
+	  crash#23:
+		Fails in the GNOMEO routine (restart request).
+		with an acceptance error.
+
+	  crash#24:
+		Fails in the GNOME1 routine (response to restart request)
+		with an acceptance error.
+
+	  crash#25:
+		Fails in the GNOME4 routine (report host-status).
+		Fails on valid host.
+
+	  crash#26:
+		Fails in the GNOME4 routine (report host-status).
+		Fails on change in # of ports.
+
+	  crash#27:
+		Fails in the GNOME4 routine (report host-status).
+		Fails on change in host #.
+
+	  crash#28:
+		Fails in the GNOME7 routine (request for Pseudo-needle).
+		Failure on request.
+
+	  crash#29:
+		Fails in the GNOME9 routine (unable to supple pseudo-
+		needle). Failure on range check.
+
+	  crash#30:
+		Fails in the GNOMEA routine (report host-port/Host-Cost).
+		Invalid Host on port available.
+
+	  crash#31:
+		Fails in the GNOMEB routine (host unacceptable).
+		Fails range check.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 18 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	  crash#32:
+		Fails in the GNOM12 routine (Log-II early circuit 
+		reject message). Fails range check.
+
+	  crash#33:
+		Fails in the NEEDLE routine (Needle Logic).
+		Request not slot 0.
+
+	  crash#34:
+		Fails in the NEEDLE routine (Needle Logic).
+		Permuter-Table in timout.
+
+	  crash#35:
+		Fails in the NEED4 routine (port on destination).
+		Port out of range.
+
+	  crash#36:
+		Fails for the "pseudo-needle logic" type (B2).
+		Valid only from slot 0.
+
+	  crash#37:
+		Fails for the "pseudo-needle logic" type (B2).
+		Permuter-Table in timout.
+
+	  crash#38:
+		Fails for the "Log-II ISN ISIS needle" type (C2).
+		Not slot 0 error.
+
+	  crash#39:
+		Fails for the "Log-II ISN ISIS needle" type (C2).
+		Have port on Destination with a port 0 error.
+
+	  crash#40:
+		Fails for the "Log-II ISN ISIS needle" type (C2).
+		Have port on Destination with port out of range.
+
+	  crash#41:
+		Fails for the "LOG-II ASLP" type (C5) 
+		Valid ONLY from slot 0.
+		
+	  crash#42:
+		Fails for the "LOG-II ASLP" type (C5) 
+		Permuter-table in timeout.
+
+	  crash#43:
+		Fails in the GNOME routine (system message logic).
+		Command not valid from this slot.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 19 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	C) FUNCTIONS NO LONGER AVAILABLE TO THE USER: 
+
+	C.1  None.
+
+        _________________________________________________________________
+        D) CHANGES TO SYSTEM GENERATION PARAMETERS:
+
+
+	D.1  CURRENT PARAMETER DEFAULT VALUES.
+
+
+	Several default values have changed within ISIS and the following
+	section  will outline  the  default values for all relevant  user
+	parameters.   A  review of this section  can reduce the amount of
+	entries  in the  ISIS  tymfile by removing those parameters which
+	define the already default  value.   The  current parameters  and
+	their default values are as follows:
+
+
+	     Parameter	Default  Parameter Description
+	     ---------  -------  --------- -----------
+
+
+	     ENGINE       1      Hardware is engine
+	     MACHIN       1      Machine is engine
+	     MICRO	  1      Enhanced microcode
+	     ZITEL        0      Zitel Memory
+	     LBOOT        1      Reserve 3Kb of memory for boot
+
+	     TIINEW	  0	 Xray statistical collection for NodeCode
+	     FGFREQ	 $A 15   Foreground frequency
+	     EE.BP	  0      Support end-to-end backpressure
+	     LOG.II       0      Dispatcher support of LOG-II
+	     SPAM         0      System Performance Analysis Monitor
+	     PICONS	  1      Enable PICO TTY port console emulation
+	     SIOINC       0      More frequent SIO device-status polling
+
+	     M.NCARD      0      No SIO present
+	     NPRINT       0      No printer present
+	     NSYNC        0      No sync present
+
+	     NASYNG       0      No async groups present
+	     BAUDR	  0      Low speed async supported (300-1200)
+	     LOWSPD	  0	 Low speed async 50-110 baud enabled
+	     N.ADA        0      Use old async addressing
+	     ASYNEW       2      Uses NEW async driver
+	     NEWARN       1      Uses NEW async ring modules
+
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 20 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	     		
+
+	D.2  MACHNS Macro.
+
+	ISIS 13.02 introduced a new macro used to  identify  the hardware
+	platform  the code was being generated for.  Some enhancements to
+	the parameter options  have been  made and as a result the MACHNS
+	is documented as follows:
+
+    	      MACHNS(hardware, cpu, mac)
+
+              where
+                hardware =  defines   the   hardware   platform  of  the
+		            target node with the options as follows:
+
+			      ENGINE, MINI, MICRO, HDLC, TSI, PICO, PXL
+
+			    the default is ENGINE.
+
+		cpu      =  defines the  CPU  installed on the node with
+		            the options as follows:
+
+			       CPU2, CPU3, CPU4 and CPU5
+
+			    the default is CPU3.    
+
+
+		mac      =  defines MAC  type installed on the node with
+		            the options as follows:
+
+			      MAC1, MAC2, MAC3, and MAC5
+
+			    the default is MAC3.
+
+ 	The MACHNS  macro  is primarily  used  for  tymfile documentation
+	purposes.
+
+   	Examples of the MACHNS macro usage are as follows:
+
+	  MACHNS(ENGINE,CPU3,MAC3)	: CPU III/MAC III Engine
+  	  MACHNS(MINI,CPU2,MAC2)	: CPU  II/MAC  II Mini Engine
+	  MACHNS(HDLC,CPU2,MAC2)	: HDLC Micro (Micro IV)
+	  MACHNS(MICRO,CPU2,MAC2)       : Micro II or Micro III
+	  MACHNS(PXL,CPU3,MAC5)		: PXL-I
+	  MACHNS(PICO,CPU3,MAC3)	: PICO Engine
+	  MACHNS(PICO,CPU3,MAC3)	: TSI  Engine
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 21 OF 24
+
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+	D.3  LUDEF MACRO RANGES.
+
+	The LUDEF macro is  used to  define  the logical unit assignments
+	for a given slot.   This macro  has  been  modified  to allow for
+	inputing a single LU or  a  range of LU's.    The  format for the
+	LUDEF is as follows:
+
+	   LUDEF(putype, arg1, arg2)
+
+	   where
+	     putype = logical unit type
+		      (SYNC, ASYNC, SIO, PRINTER, IPI, TBUS, or NULL)
+		      
+             arg1   = defines  the logical unit  number  based on the
+	              PUTYPE defined previously:
+		        where putype equals:
+			  SYNC    = is the SYNC port number or range
+			  ASYNC   = is the ASYNG group number or range
+			  SIO     = is the SIO motherboard address
+			  PRINTER = is the printer address
+			  IPI     = is the IPI board address
+
+	     arg2   = defines the SIO port number or range
+
+
+	Sample usage of the LUDEF is as follows:
+
+		LUDEF(ASYNC,0)	    : defines async group 0
+		LUDEF(ASYNC,0-1)    : defines async groups 0 and 1
+		LUDEF(SYNC,0)       : defines sync port 0
+		LUDEF(SYNC,0-7)     : defines sync ports 0-7
+		LUDEF(SIO,0,0)      : defines SIO Mb 80 port 0
+		LUDEF(SIO,1,0-3)    : defines SIO Mb 81 ports 0-3
+	
+
+
+
+
+
+	D.4  NUMBER OF DDT CIRCUITS INCREASED.
+
+	ISIS  has been  changed  to  increase  the  number of allowed DDT
+	circuits by one.  This was implemented so that on switcher  nodes
+	to  give ISIS  the ability to have 2 simultaneous DDT users.  The
+	number  of  DDT  circuit  available  is  based  on the  following
+	calculation:
+
+	   number_DDT_users = 2 + number_of_slots + supervisor
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 22 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+ 
+
+
+	D.5  PATCH FILES FOR PICO ENGINES.
+
+	The following PICO specific  patch  files  have been incorporated
+	into the ISIS 13.03 source code:
+
+	   	 CONSOL.PAT
+	   	 INTR69.PAT
+
+
+
+	The  CONSOL.PAT  patch file  was  designed to prevent unnecessary
+	PICO  internal  mailbox overhead  in attempting  to  emulate  the
+	standard engine  front  console  display on the  PICO  TTY  port.
+	There is no loss of PICO TTY  port  functionality, but connecting
+	a terminal  to the  PICO TTY  port will  no  longer  display  the
+	constant  engine  front  console  emulation.   Enabling  of  this
+	front console emulation on  the  PICO TTY port is  done by adding
+	the PICONS equate as follows:
+
+		PICONS	EQ	1	: Enable console emulation
+
+
+
+	The  INTR69.PAT  patch  file  was designed  to prevent  ISIS from
+	taking a hard unexpected I/O interrupt (BAD00 8730  or  type  30)
+	when  encountering  a  device address  69 interrupt.   The device
+	address  69 interrupt  is  a  left  over  from  the TSI (Tymshare
+	Spirt  Interface)  architecture  and  is not  valid for the  PICO
+	engine.
+
+
+   
+
+	D.6  SIO MOTHERBOARD TIMEOUT PATCH FILE.
+
+        The TIMOUT.PAT patch file was designed to pad out the  timer ISIS
+	uses  before  it  declares an  SIO motherboard timeout  has  been
+	incorporated into the ISIS 13.03 source code.
+
+
+
+
+
+	D.7  TEMPERATURE REPORTING SUPRESSION PATCH.
+
+	The  patch for suppressing the reporting of the hardware internal
+	temperature has been removed to  prevent  erroneous reporting  of
+	invalid temperatures on  hardware  where there is no  temperature
+	sensing ability.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 23 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+
+
+	D.8  TSI MEMORY CONSTRAINTS.
+
+
+	ISIS  has been  modified to print an error message and  terminate
+	the  code generation  on a  TSI  platform  if  the  code  exceeds
+	960Kb  in size.  This is necessary as the last 64Kb of  memory is
+	require for  the TSI  (Tymshare Spirit Interface) to  communicate
+	with the MDC Spirit computer (via the TSI bus).
+
+
+
+
+
+	D.9  SUMMARY OUTPUT GENERATION CHANGES.
+
+	The assembly output containing the  system configuration has been
+	changed  to display the SIO slot logical units as SIO motherboard
+	and port number:
+
+
+          SLOT 0, NODE CODE:
+
+          Base Memory  394d K-Bytes (from 39400 to 9BBFF)
+          DMA   Memory 56 d K-Bytes (from 19000 to 27000)
+          Total Memory 450d K-Bytes
+
+          12 logical unit(s)
+	  L.U. 0 is sync line 2
+	  L.U. 1 is sync line 3
+	  L.U. 2 is sync line 10
+	  L.U. 3 is sync line 11
+	  L.U. 4 is mboard 80 channel 0
+	  L.U. 5 is mboard 80 channel 1
+	  L.U. 6 is mboard 80 channel 4
+	  L.U. 7 is mboard 80 channel 5
+          L.U. 8 is mboard 80 channel 6
+	  L.U. 9 is mboard 80 channel 7
+	  L.U. 10 is mboard 80 channel 8
+	  L.U. 11 is mboard 80 channel 9
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+
+                         DOCUMENT CHANGE DESCRIPTION       PAGE 24 OF 24
+        =================================================================
+        DOCUMENT FILE:  I2IS13.Z03
+        PRODUCT NAME :  ISIS
+	DOCUMENT NAME:  ISIS Reference Manual              DATE: 01/13/93
+        =================================================================
+        _________________________________________________________________
+        E) DESCRIPTION OF DOCUMENT CHANGES (INCLUDE SECTION NUMBERS):
+
+	E.1  Incorporate section A into ISIS Reference Manual.
+
+	E.2  Incorporate section B into ISIS Reference Manual.
+
+	E.3  Incorporate section D into ISIS Reference Manual.
+
+     0
