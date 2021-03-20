@@ -1,0 +1,505 @@
+SCHEMA MUR
+BEGIN
+
+%****************************************************************************%
+%*                                                                          *%
+%*  This is SCHEMA MUR ... the description of the MUR data base.            *%
+%*  All relations in this schema have some purpose in the data base.        *%
+%*  Please do not delete any relation within this text unless you           *%
+%*  are positive BEYOND A SHADOW OF A DOUBT that it will not be used.       *%
+%*                                                                          *%
+%*  All procedures within this schema should have a banner describing       *%
+%*  the function of the procedure plus any other descriptive                *%
+%*  information.                                                            *%
+%*                                                                          *%
+%*  Schema:  MUR                                                            *%
+%*  Schema Version:  39                                                     *%
+%*  Date Last Compiled:  October 22, 1982                                   *%
+%*  Compiles under MAGNUM version:  13.07 820907                            *%
+%*  Date Written:  Circa 1977 (exact date unkown)                           *%
+%*  Date Last Modified:  October 22, 1982                                   *%
+%*  Modified by:  Leslie Lee                                                *%
+%*                                                                          *%
+%****************************************************************************%
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The field declarations begin here.  Most of these fields are common     *%
+%*  to all procedures within the MUR data base.                             *%
+%*                                                                          *%
+%****************************************************************************%
+
+  FIELDS
+
+    ABBREV              AS '3C',                      % General character field for three letter abbreviations. %
+    ACCESS.COUNT        AS '4ZN',
+    ADJSTD.CRASHES      AS 'ZN.N',
+    ADJSTD.PERCENT      AS '2ZN.NN',
+    APPLICABLE          AS 'C',                       % Flag that indicates whether a system is to be figured into the calculations
+                                                        being generated (i.e. availability, crash counts, incentives, etc.). %
+    AVAIL.24HOUR        AS '4ZN.5N',                  % Numeric field for twenty-four hour availability calculations. %
+    AVAIL.PRIME         AS '4ZN.5N',                  % Numeric field for prime time availability calculations. %
+    AVAIL.SCHED         AS '4ZN.5N',                  % Numeric field for scheduled time availability calculations. %
+    AVAIL.ADJSTD        AS '4ZN.5N',                  % Numeric field for adjusted scheduled time availability calculations. %
+  
+    BUSY                AS '4ZN',                     % Numeric field for time in seconds past midnight local to the user that
+                                                        is running the UPDATER. procedure.  This field determines if the UPDATER.
+                                                        procedure is available for use. %
+  
+    CLASS.ID            AS 'ZN',                      % Numeric field that uniquely identifies a class of systems. %
+    CODE                AS 'ZN',                      % Numeric field for the codes used by Operations. %
+    CODE.ID             AS '2ZN',                     % Numeric field that uniquely identifies a code. %
+  
+    DATE.               AS DATE 'MM-DD-YY',           % General date field for dates in month-day-year format. %
+  
+    END.DATE            AS DATE 'MM-DD-YY',           % Date field for ending dates in month-day-year format. %
+    EXCEPTION.FLAG      AS 'C',                       % Flag that indicates if a code is to be figured into the calculations
+                                                        being generated. %
+  
+    FT.FLAG             AS 'N',                       % Flag that indicates a field test situation. %
+  
+    GROUP.ID            AS '4ZN',                     % Numeric field that uniquely identifies a general group of codes. %
+  
+    HOLIDAY             AS DATE 'MM-DD-YY',           % Date field for holidays in month-day-year format. %
+    HW.ID               AS '3C',                      % Character field for alpha hardware identifiers. %
+  
+    ID                  AS '4ZN',                     % General numeric field used to uniquely identify classes, codes,
+                                                        groups, sites and systems. %
+  
+    MONTH.YEAR          AS DATE 'MM-YY',              % General date field for dates in month-year format. %
+  
+    OUTPUT.FILE         AS '30C'
+                        DEFAULT 'TERMINAL',           % Character field for the destination of a report; this may either be the
+                                                        terminal or a file external to MAGNUM. %
+  
+    PLOT.NUMBER.TYPE    AS '15C',                     % Character field for the different types of plot numbers.  These types
+                                                        are determined by the procedure that generates the plot values. %
+    POS                 AS 'ZN',                      % Numeric field that determines the reporting order of the groups and types. %
+    PRIME.FLAG          AS 'N',                       % Flag that indicates a system's prime time; '1' is for prime time and
+                                                        '2' is for non-prime time. %
+    PRIME.START         AS '4N',                      % Numeric field that indicates the time when prime time begins; this time
+                                                        is expressed in minutes after midnight. %
+    PRIME.STOP          AS '4N',                      % Numeric field that indicates the time when prime time ends; this time is
+                                                        expressed in minutes after midnight. %
+  
+    REPORT.DIRECTORY    AS '14C'
+                        DEFAULT '(MURRPT      )',     % Character field for the directory where a report is to be generated;
+                                                        reports are forced to the user directory that the user has logged into. %
+  
+    SCHED.DN            AS '4N',                      % Numeric field that indicates the time when a system's scheduled up time
+                                                        ends; this time is expressed in minutes after midnight. %
+    SCHED.FLAG          AS 'N',                       % Flag that indicates a system's scheduled time; '1' is for scheduled time
+                                                        and '2' is for non-scheduled time. %
+    SCHED.UP            AS '4N',                      % Numeric field that indicates the time when a system's scheduled up time
+                                                        begins; this time is expressed in minutes after midnight. %
+    SITE.ID             AS 'ZN',                      % Numeric field that uniquely identifies a system's site (location). %
+    START.DATE          AS DATE 'MM-DD-YY',           % Date field for starting dates in month-day-year format. %
+    START.TIME          AS '4N',                      % Numeric field for starting times expressed in minutes after midnight. %
+    STOP.TIME           AS '4N',                      % Numeric field for stopping times expressed in minutes after midnight. %
+    SYSNO               AS '3ZN',                     % Numeric field for software system numbers. %
+    SYSTEM.ID           AS '4ZN',                     % Numeric field that uniquely identifies a system. %
+  
+    TITLE               AS '15C',                     % General character field for titles. %
+    TYPE.ABBREV         AS '3C',                      % Character field for time type abbreviations (e.g. UP, SDN, LST ). %
+  
+    UNADJSTD.CRASHES    AS 'ZN.N',
+    UNADJSTD.PERCENT    AS '2ZN.NN',
+    UPDATE.DATE         AS DATE 'MM-DD-YY',           % Date field for the date a user accesses the UPDATER. procedure; the date
+                                                        is expressed in month-day-year format. %
+    UPDATE.TIME.IN      AS '4ZN',                     % Numeric field for the time a user enters the UPDATER. procedure; the time
+                                                        is expressed in seconds after midnight local to the user. %
+    UPDATE.TIME.OUT     AS '4ZN',                     % Numeric field for the time a user exits the UPDATER. procedure; the time
+                                                        is expressed in seconds after midnight local to the user.  UPDATE.TIME.OUT
+                                                        has the same value as UPDATE.TIME.IN until the user leaves the UPDATER.
+                                                        procedure. %
+    UPDATE.USER         AS '9C'                       % Character field for the user name of the user that is accessing the
+                                                        UPDATER. procedure. %
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The contents of the relation BUSY. determines the availability of       *%
+%*  the UPDATER. procedure; it controls the use of the UPDATER. procedure   *%
+%*  so that only one user can update the data base at a time.  If there     *%
+%*  is no instance in the BUSY. relation, the UPDATER. procedure is         *%
+%*  available for use; but if there is an instance in the BUSY. relation,   *%
+%*  access to the UPDATER. procedure is denied to other users.  When        *%
+%*  a user quits out of the UPDATER. procedure, all instances in the        *%
+%*  relation are deleted allowing access to the UPDATER. procedure.         *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION BUSY. IS
+
+    KEY     BUSY
+
+    DATA    DATE.,
+            ACCESS.COUNT
+
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation CLASS. contains a list of the different hardware types.    *%
+%*  This relation contains the following information:                       *%
+%*      1.  a unique numeric identifier for the class                       *%
+%*      2.  the abbreviation of the class                                   *%
+%*      3.  the title of the class                                          *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION CLASS. IS
+
+    KEY     ID
+
+    DATA    ABBREV,
+            TITLE
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation CODE. contains a list of the operation codes used to       *%
+%*  describe a system's activity and descriptive information for each code. *%
+%*  This relation contains the following information:                       *%
+%*      1.  a unique numeric identifier for the code                        *%
+%*      2.  the identifier of the class of hardware the code is used for    *%
+%*      3.  the abbreviation of the code                                    *%
+%*      4.  the identifier of the group the code is classified under        *%
+%*      5.  the numeric code used by Operations                             *%
+%*      6.  the abbreviation of the code                                    *%
+%*      7.  the title of the code                                           *%
+%*      8.  the date the code became effective; the start date              *%
+%*      9.  the date the code became ineffective; the end date              *%
+%*     10.  the exception flag that indicates if the code is to be          *%
+%*          factored into adjusted availability and crash count             *%
+%*          calculations                                                    *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION CODE. IS
+
+    KEY     ID
+
+    DATA    CLASS.ID,
+            TYPE.ABBREV,
+            GROUP.ID,
+            CODE,
+            ABBREV,
+            TITLE,
+            START.DATE,
+            END.DATE,
+            EXCEPTION.FLAG
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation GROUP. contains a list of the general categories into      *%
+%*  which the codes can be classified.  This relation contains the          *%
+%*  following information:                                                  *%
+%*      1.  a unique numeric identifier for the group                       *%
+%*      2.  the position which determines the order for reporting the       *%
+%*          groups of codes                                                 *%
+%*      3.  the types of time that the codes in each group describe         *%
+%*          (e.g. up time, scheduled down time, lost time).                 *%
+%*      4.  the abbreviation of the group                                   *%
+%*      5.  the title of the group                                          *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION GROUP. IS
+
+    KEY     ID
+
+    DATA    POS,
+            TYPE.ABBREV,
+            ABBREV,
+            TITLE
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation HOLIDAY. contains a list of holiday dates for which        *%
+%*  there are to be no prime time considerations.  Data cannot be entered   *%
+%*  into the data base for dates past the last holiday in the HOLIDAY.      *%
+%*  relation.                                                               *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION HOLIDAY. IS
+
+    KEY     HOLIDAY
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation HW.TIME. contains data for each piece of hardware.         *%
+%*  There is a one-to-one correspondence between the instances in the       *%
+%*  HW.TIME. relation and the TIME. relation.  An instance in the HW.TIME.  *%
+%*  relation can be recreated from the corresponding instance in the        *%
+%*  TIME. relation, but the reverse is not true.  This relation is one      *%
+%*  of the "core" relations of the MUR data base.  The HW.TIME. relation    *%
+%*  contains the following information:                                     *%
+%*      1.  the hardware identifier of the hardware                         *%
+%*      2.  the date for which the hardware is being documented             *%
+%*      3.  the starting time of a code for this day and hardware           *%
+%*      4.  the unique numeric identifier of the software that was running  *%
+%*          on this hardware on this day and at this time                   *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION HW.TIME. IS
+  
+    KEY     HW.ID,
+            DATE.,
+            START.TIME,
+            SYSTEM.ID
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation PLOT.NUMBERS.24HOUR. contains availability figures over    *%
+%*  a twenty-four hour period.                                              *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION PLOT.NUMBERS.24HOUR. IS
+
+    KEY     MONTH.YEAR,
+            SITE.ID,
+            CLASS.ID,
+            PLOT.NUMBER.TYPE
+
+    DATA    AVAIL.24HOUR
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation PLOT.NUMBERS.ADJSTD. contains adjusted availability        *%
+%*  figures during scheduled time.                                          *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION PLOT.NUMBERS.ADJSTD. IS
+
+    KEY         MONTH.YEAR,
+                SITE.ID,
+                CLASS.ID,
+                PLOT.NUMBER.TYPE
+
+    DATA        AVAIL.ADJSTD
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation PLOT.NUMBERS.PRIME. contains availability figures          *%
+%*  during prime time.                                                      *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION PLOT.NUMBERS.PRIME. IS
+
+    KEY     MONTH.YEAR,
+            SITE.ID,
+            CLASS.ID,
+         OT.NUMBER.TYPE
+
+    DATA    AVAIL.PRIME
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation PLOT.NUMBERS.SCHED. contains availability figures          *%
+%*  during scheduled time.                                                  *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION PLOT.NUMBERS.SCHED. IS
+
+    KEY     MONTH.YEAR,
+            SITE.ID,
+            CLASS.ID,
+            PLOT.NUMBER.TYPE
+
+    DATA    AVAIL.SCHED
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation NORMAL.SCHEDULE. contains a list of the scheduled up       *%
+%*  and down times for each system.  Each system is identified by its       *%
+%*  unique numeric system identifier.                                       *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION NORMAL.SCHEDULE. IS
+
+  KEY     SYSTEM.ID,
+          SCHED.UP
+
+    DATA    SCHED.DN
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation SITE. contains a list of the different sites where the     *%
+%*  systems can be located.  This relation contains the following           *%
+%*  information:                                                            *%
+%*      1.  a unique numeric identifier for the site                        *%
+%*      2.  the abbreviation of the site                                    *%
+%*      3.  the title of the site                                           *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION SITE. IS
+
+    KEY     ID
+
+    DATA    ABBREV,
+            TITLE
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation SYSTEM. contains a list of the systems being monitored     *%
+%*  in the data base and information defining each system.  This relation   *%
+%*  contains the following information:                                     *%
+%*      1.  a unique numeric identifier for the system                      *%
+%*      2.  the software system number                                      *%
+%*      3.  the hardware identifier of the hardware the system is           *%
+%*          running on                                                      *%
+%*      4.  the identifier of the site where the system is located          *%
+%*      5.  the identifier of the class of hardware                         *%
+%*      6.  the starting time of the system's prime time                    *%
+%*      7.  the stopping time of the system's prime time                    *%
+%*      8.  the date the system came into existence; the start date         *%
+%*      9.  the date the system ceased to exist; the end date               *%
+%*     10.  the applicable flag that indicates if the system is to be       *%
+%*          factored into the calculations being generated                  *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION SYSTEM. IS
+
+    KEY     ID
+
+    DATA    SYSNO,
+            HW.ID,
+            SITE.ID,
+            CLASS.ID,
+            PRIME.START,
+            PRIME.STOP,
+            START.DATE,
+            END.DATE,
+            APPLICABLE
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation THRESHOLD. contains a list of classes and associated       *%
+%*  threshold values (e.g. adjusted percent availability, adjusted          *%
+%*  crash count, unadjusted percent availability, and unadjusted crash      *%
+%*  count).  These are arbitrary values that have been established as       *%
+%*  standards for a system's performance.                                   *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION THRESHOLD. IS
+
+    KEY     ABBREV
+
+    DATA    UNADJSTD.CRASHES,
+            UNADJSTD.PERCENT,
+            ADJSTD.CRASHES,
+            ADJSTD.PERCENT
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation TIME. contains each system's performance data.  This       *%
+%*  relation is one of the "core" relations of the MUR data base.  This     *%
+%*  relation contains the following information:                            *%
+%*      1.  the identifier of the system                                    *%
+%*      2.  the date for which the system is being documented               *%
+%*      3.  the starting time of a code for this day and system             *%
+%*      4.  the identifier of the site where the system is located          *%
+%*      5.  the identifier of the class of hardware                         *%
+%*      6.  the identifier of the code for this day and time                *%
+%*      7.  the stopping time of the code for this day and time             *%
+%*      8.  the schedule flag that indicates if the code occurred           *%
+%*          during the system's scheduled time (1) or unscheduled           *%
+%*          time (2)                                                        *%
+%*      9.  the prime flag that indicates if the code occurred during       *%
+%*          the system's prime time (1) or non-prime time (2)               *%
+%*     10.  the field test flag                                             *%
+%*     11.  the hardware identifier of the hardware the system is           *%
+%*          running on                                                      *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION TIME. IS
+
+    KEY     SYSTEM.ID,
+            DATE.,
+            START.TIME
+
+    DATA    SITE.ID,
+            CLASS.ID,
+            CODE.ID,
+            STOP.TIME,
+            SCHED.FLAG,
+            PRIME.FLAG,
+            FT.FLAG,
+            HW.ID
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation TYPE. contains a list of the different types of time.      *%
+%*  This relation contains the following information:                       *%
+%*      1.  the abbreviation of the type                                    *%
+%*      2.  the position which determines the order for listing the         *%
+%*          types                                                           *%
+%*      3.  the title of the type                                           *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION TYPE. IS
+
+    KEY     ABBREV
+
+    DATA    POS,
+            TITLE
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relation UPDATE.RECORD. contains a list of the users that have      *%
+%*  accessed the UPDATER. procedure.  This relation contains the            *%
+%*  following information:                                                  *%
+%*      1.  the date the UPDATER. procedure was accessed                    *%
+%*      2.  the time the procedure was entered                              *%
+%*      3.  the time the procedure was exited                               *%
+%*      4.  the user who accessed the procedure                             *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION UPDATE.RECORD. IS
+
+    KEY     UPDATE.DATE,
+            UPDATE.TIME.IN
+
+    DATA    UPDATE.TIME.OUT,
+            UPDATE.USER
+
+%****************************************************************************%
+%*                                                                          *%
+%*  The relations TIME.COPY. and HW.TIME.COPY. are temporary storage        *%
+%*  areas for the contents of TIME. and HW.TIME., respectively, when        *%
+%*  deleting old information from the data base, eliminating the           *%
+%*  empty space in these relations, etc.                                    *%
+%*                                                                          *%
+%****************************************************************************%
+
+  RELATION HW.TIME.COPY. SAME AS HW.TIME.
+
+  RELATION TIME.COPY. SAME AS TIME.
+
+RELATION UPDATE.RECORD.COPY  SAME AS UPDATE.RECORD.
+
+  CONTROLS FOR DIRECTORY
+    RETRY.INTERVAL 15
+    RETRY.MAXIMUM 120
+
+ CONTROLS FOR RELATIONS
+    RETRY.INTERVAL 30
+    RETRY.MAXIMUM 240
+
+  CONTROLS FOR RELATION BUSY.
+    RETRY.INTERVAL 1
+    RETRY.MAXIMUM 1
+
+END
+TixÂ
