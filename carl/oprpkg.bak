@@ -1,0 +1,314 @@
+
+Entry
+
+	RadX45
+,	OprGet, OprHSH, OprTxt
+,	PasHSH, PasGet, PasChk
+
+;
+begin "OPRPKG"
+
+require "(SAILIB)SAIL.DEF"   source!file;
+
+
+internal simple integer procedure RadX45( Integer C );
+begin "Radix 45"
+
+    if ( C = " " ) then return(  0 );
+
+    if ( C geq "A" and C leq "Z" ) then return( C+1  - "A" );
+    if ( C geq "a" and C leq "z" ) then return( C+1  - "a" );
+    if ( C geq "," and C leq ":" ) then return( C+27 - "," );
+
+    if ( C = "*" ) then return( 42 );
+    if ( C = "'" ) then return( 43 );
+    if ( C = "$" ) then return( 44 );
+
+    return(  0 );
+
+end "Radix 45";
+
+
+internal simple string procedure OprGet;
+begin "operator name"
+    string S;
+
+    while ( true )
+     do begin "get name"
+
+	print( "Oper name: " );		! prompt first time or on "?" ;
+	if ( "?" = S_ inchwl )		! read oper name ;
+	 then print( "Enter your name as it appears in the OPER"&
+		     " license file."& crlf )
+	 else return( S );		! user may be stuck, so leave ;
+
+     end "get name";
+
+end "operator name";
+
+
+internal simple procedure OprHsh( reference integer L; reference string Name );
+begin "oper name hash"
+    string  OperName;
+    integer C;
+    own safe integer array NM[0:1];
+
+    if not( length( Name ) )		! if not specified ;
+     then Name_ OprGet;			! prompt and obtain a name ;
+
+    OperName_ (Name & "            ")[1 for 12];
+    arrclr( NM );
+
+    while ( length( OperName ) )	! make name reasonable ;
+     do begin "translate"
+	C _ RadX45( Lop( OperName ) );
+	start!code
+	MOVE	3,NM[0];		! get high order part ;
+	MOVE	1,NM[1];		! .. low order .. ;
+	IMULI	3,45;			! multiply high by 45 ;
+	MULI	1,45;			! multiply low ;
+	ADD	1,3;			! add low overflow to high ;
+	ADD	2,C;			! add character to low ;
+	DMOVEM	1,NM[0];		! store for loop ;
+	end;
+     end "translate";
+
+    arrblt( L, NM[0], 2 );		! return result from array ;
+
+end "oper name hash";
+
+
+Define RadixChar = {" ABCDEFGHIJKLMNOPQRSTUVWXYZ,-./0123456789:*'$"};
+Define Top40 = 40;
+Own safe integer array RadixByte[ 0:Top40 ];
+
+internal simple string procedure OprTxt( reference integer Name );
+begin "name of oper"
+    string Str;
+    integer RadixSize, Cnt;
+
+    arrclr( RadixByte );		! clear name to spaces ;
+    start!code
+	define NM='13, NM1='14, NM2='15, PTR='1, P='17;
+	label NAMPR, NAMPR1, NAMPRX;
+
+NAMPR:	DMOVE	NM1,Name;		! copy name ;
+	SETZB	PTR,RadixSize;		! to string area ;
+
+	MOVE	NM,NM1;			! work register ;
+NAMPR1:	IDIVI	NM,45;			! divide, remainder setup ;
+	DIVI	NM1,45;			! divide remainder plus 2nd word ;
+	MOVEM	NM2,RadixByte[0](PTR);	! remember letter ;
+	AOS	PTR,RadixSize;		! count letters in name ;
+	CAILE	PTR,Top40;		! clip at array max ;
+	  JRST	NAMPRX;			!  too many? scoot ;
+	MOVE	NM2,NM1;		! reset low order part ;
+	SKIPN	NM1;			! if any left ;
+	SKIPE	NM;			! ........... ;
+	  JRST	NAMPR1;			! loop through numbers ;
+NAMPRX:
+    end;
+
+    Str_ null;
+    For Cnt_ RadixSize-1 downto 0
+     do Str_ Str & RadixChar[ RadixByte[ Cnt ]+1 for 1 ];
+
+    return( Str );
+
+end;
+
+
+
+internal simple integer procedure PasHsh( string PW );
+begin
+    integer C,FIVES,T1,T2,T3,T4;
+    own safe integer array X[0:4];
+
+    X[0]_ X[2]_ X[4]_ '555555555555;
+    X[1]_ X[3]_ '361275431652;
+    FIVES_ '343277244615;
+    T3_ 0;
+
+    while ( length( PW ) )
+     do begin "PSWLP"
+
+	C_ lop(PW);
+	X[0]_ X[0] + C;
+	X[3]_ X[3] + C;
+	T4_ '40;
+
+	do begin "RAND"
+	    T1_ X[T3];
+
+	    start!code
+		MOVE	1,T1;
+		MUL	1,FIVES;
+		MOVEM	1,T1;
+		MOVEM	2,T2;
+	     end;
+
+	     T3_ T3 + 1;
+	     X[T3]_ X[T3] + T2;
+
+	     if ( T3 = 4 )
+	      then begin
+		 T3_ X[4] lsh -'42;
+		 X[0]_ X[0] + X[4];
+	      end;
+
+	  end "RAND" until (T4_T4-1) leq 0;
+
+      end "PSWLP";
+
+    return( X[0] );
+
+end;
+
+
+internal simple string procedure PasGet( string Text("Password: ") );
+begin "license password"
+    string S;
+    boolean old!tty;
+
+    old!tty_ TTYUP(TRUE);		! Force upper case ;
+    auxclr( -1, memory['200], '64 );	! Turn off echo;
+    while ( true )
+     do begin "prompt and read"
+	if length( Text )		! default is to prompt ;
+	 then print( Text );		! ask for password ;
+	if ( "?" = S_ inchwl )		! if "?" give help ;
+	 then print( "?"& crlf & "Enter your password associated " &
+		     "with the specified OPER name."& crlf )
+	 else done;			!  else go on ;
+     end "prompt and read";
+
+    print( crlf );
+    TTYUP( old!tty );			! Reset TTY case ;
+    auxclr( -1, memory[0], '64 );	! Turn on echo ;
+    auxclv( -1, 0, '11);		! LevDef ;
+
+    return( S );			! return password string ;
+
+end "license password";
+
+
+integer OKAYbrk,NONSPACEbrk,ILLEGALbrk;
+preset!with "TYMSHARE", "TYMNET", "PASSWORD", "WELCOME",
+	"MDNSC", "MDIPC", "MDACS", "MCAIR", "MDAIS",
+	"MDFSC", "MDFSCO", "MDCSC",
+	"MCDONNELL", "DOUGLAS", "MCDONNELLDOUGLAS";
+string array TRITE[1:15];		! list of trite passwords;
+
+
+comment	Illegal characters are:
+    <null> and <rubout>       -- ignored,
+    <cr> and <semi-colon>     -- terminators,
+    <'33-'37> and <'173-'176> -- escapes;
+
+define	IllegalChars = {0&13&";"};
+forc ILLCHR _ '33 stepc 1 untilc '37 doc {
+    redefine IllegalChars = cvms(IllegalChars)&{&ILLCHR};
+} endc
+forc ILLCHR _ '173 stepc 1 untilc '177 doc {
+    redefine IllegalChars = cvms(IllegalChars)&{&ILLCHR};
+} endc
+
+
+procedure OKAYbrkINI;
+begin
+    setbreak( OKAYbrk_getbreak, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", null, "XS" );
+    setbreak( NONSPACEbrk_getbreak, " ", null, "XS" );
+    setbreak( ILLEGALbrk_getbreak, IllegalChars, null, "IS" );
+end;
+require OKAYbrkINI initialization;
+
+
+internal simple boolean procedure PasChk( string PASSWORD, NAME );
+comment
+	Return true if given password meets security restrictions.
+;
+begin
+    boolean OK;				! set if problem detected;
+    OK := true;				! innocent until proven guilty;
+!
+	RULE 1: must not resemble user name
+;
+    begin "RULE1"
+	integer B;
+	string S1,S2;
+	S1 := null;
+	S2 := PASSWORD;
+	do				! S1 = alpha portion of password;
+	    S1 := S1 & scan( S2,OKAYbrk,B )
+	 until length( S2 ) = 0;
+	if equ( NAME,S1 ) or equ( NAME,PASSWORD )
+	 then begin
+	    print( "?password closely resembles user name (",NAME,")"& crlf );
+	    OK := false;
+	 end;
+    end "RULE1";
+!
+	RULE 2: must be at least 7 characters
+;
+    begin "RULE2"
+	if length( PASSWORD ) < 7 then begin
+	    print( "?password less than 7 characters"& crlf );
+	    OK := false;
+	end;
+    end "RULE2";
+!
+	RULE 3: must contain embeded non-alphabetic
+;
+    begin "RULE3"
+	integer B;
+	string S1,S2;
+	S2 := PASSWORD;
+	lop( S2 );		! don't count the first character;
+	S1 := scan( S2,OKAYbrk,B );
+	if B=0 or length(S2)=0 then begin
+	    print( "?password lacks an embedded non-alphabetic"& crlf );
+	    OK := false;
+	end;
+    end "RULE3";
+!
+	RULE 4: must not be trite or obvious
+;
+    begin "RULE4"
+	integer I,B;
+	string S1,S2;
+	S2 := PASSWORD;
+	scan( S2,NONSPACEbrk,B );
+	if not B then begin
+	    print( "?password is trivial (blanks)"&crlf );
+	    OK := false;
+	end;
+	S1 := null;
+	S2 := PASSWORD;
+	do
+	    S1 := S1 & scan( S2,OKAYbrk,B )
+	until length( S2 ) = 0;
+	for I := arrinfo( TRITE, 1 ) upto arrinfo( TRITE, 2 ) do
+	    if equ( S1, TRITE[i] ) then begin
+		print( "?password is trite (",S1,")"&crlf );
+		OK := false;
+	    end;
+    end "RULE4";
+!
+	RULE 5: password must not contain illegal characters.
+;
+    begin "RULE5"
+	integer B;
+	string S;
+	S := PASSWORD;
+	scan( S,IllegalBrk,B );
+	if B then begin
+	    print( "?Illegal character in password (",
+		if B < 32 then "^"&(B+64) else """"&B&"""",
+		")"&crlf );
+	    OK := false;
+	end;
+    end "RULE5";
+    return( OK );
+end;
+
+end "OPRPKG";
