@@ -1,0 +1,1667 @@
+
+
+
+       BBBB  TTTTTT        TTTTTT YY    YY MMM   MMM NN      NN EEEEEE TTTTTT
+       BBBBB TTTTTT        TTTTTT  YY  YY  MMMM MMMM NN      NN EEEEEE TTTTTT
+       B   B   TT            TT     YYYY   MM  M  MM NNN     NN EE       TT
+       B   B   TT            TT      YY    MM     MM NNNN    NN EE       TT
+       BBBB    TT            TT      YY    MM     MM NN  NN  NN EEEE     TT
+       BBBB    TT            TT      YY    MM     MM NN  NN  NN EEEE     TT
+       B   B   TT            TT      YY    MM     MM NN    NNNN EE       TT
+       B   B   TT            TT      YY    MM     MM NN     NNN EE       TT
+       BBBBB   TT            TT      YY    MM     MM NN      NN EEEEEE   TT
+       BBBB    TT            TT      YY    MM     MM NN      NN EEEEEE   TT
+
+
+                             IIIIII    NN     NN    CCCC
+                             IIIIII    NN     NN   CCCCCC
+                               II      NNN    NN   CC  CC
+                               II      NNNN   NN   CC
+                               II      NN NN  NN   CC
+                               II      NN NNN NN   CC
+                               II      NN   NNNN   CC
+                               II      NN    NNN   CC  CC
+                             IIIIII    NN     NN   CCCCCC
+                             IIIIII    NN     NN    CCCC
+
+
+
+                          OPERATOR AND TAPE LIBRARIAN
+
+                                 DOCUMENTATION
+
+                                 10 JULY 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                         SUPERSEDES:  16 JANUARY 1990
+
+       (FREMONTDOC:74)TAPLIB.MEM
+                                                                         Page 2
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONNALY LEFT BLANK
+                                                                         Page 3
+OPER/TAPLIB DOCUMENTATION
+
+
+                               TABLE OF CONTENTS
+                               -----------------
+
+       TITLE                                   PAGE
+       -----                                   ----
+
+       TAPES/RECORDS/LABELS                       5
+
+       ADDING TAPES                               8
+
+       RELEASING TAPES                            9
+
+       TRANSFERRING TAPES                        13
+
+       ALLFILE STATUS REPORT                     15
+
+       ALL FILES                                 16
+
+       ALLFILE MICROFICHE                        17
+
+       ARCUS                                     19
+
+       MAGNETIC BOARD                            23
+
+       PROCEDURES FOR CLEANING AND 
+         RECERTIFYING TAPES                      25
+
+       APPENDIX I - COMPILING AND SPOOLING
+                    "TID AND TRP" REPORT         27
+
+       APPENDIX II - COMPILING AND SPOOLING
+                     "MAGTAPE LOGOUT" FORM       31
+
+       APPENDIX III - COMPILING AND SPOOLING
+                      "RELEASED TAPE LOG" FORM   35
+
+       APPENDIX IV - "DAILY TAPE LOGOUT" FORM    39
+
+       APPENDIX V - COMPILING AND SPOOLING
+                    "ALLFILES" STATUS REPORT     41
+
+       INDEX                                     43
+                                                                         Page 4
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                         Page 5
+OPER/TAPLIB DOCUMENTATION
+
+
+                                     TAPES
+                                     -----
+
+       FILE TAPES:
+
+       NEW TAPES PLUS ANY TAPE WITH LESS THAN 35 ERRORS IS  CONSIDERED  A  FILE
+       TAPE.
+
+       ALLFILE TAPES AND NEW TAPES ARE SIGNED OUT ON THE "MAGTAPE LOGOUT SHEET"
+       ON TOP OF THE TABLE IN THE TAPE LIBRARY.  (SEE APPENDIX II)
+
+       THE FILE TAPE LOGOUT SHEETS SHOULD BE  KEPT  ON  FILE  FOR  AT  LEAST  3
+       MONTHS.  WITH THIS LOGOUT SHEET WE GET A GENERAL IDEA OF WHERE THE TAPES
+       ARE GOING.
+
+       SCRATCH TAPES:
+
+       THESE ARE ANY TAPES WITH 35 WRITE ERRORS OR LESS.  TAPES WITH MORE  THAN
+       35 WRITE ERRORS ARE TO BE CYCLED OUT FOR CERTIFICATION.
+
+                                    RECORDS
+                                    -------
+
+       ALWAYS KEEP A COPY OF THE  BATCH  REQUEST  WHEN  ADDING,  RELEASING,  OR
+       TRANSFERRING  TAPES.   THESE  PPR COPIES MUST BE RETAINED FOR AT LEAST 6
+       MONTHS.  ALWAYS WRITE TID AND TRP NUMBER ON YOUR COPY.
+
+       THE TAPE CHECK-OUT LOG FOR BACK UP TAPES,  ALLFILE  TAPES,  OR  CUSTOMER
+       TAPES MUST BE KEPT FOR A PERIOD OF 4 - 6 MONTHS.
+
+                                  TAPE LABELS
+                                  -----------
+
+       THE FILE TO USE TO PRINT OUT LABELS FOR MAGCON TAPES IS IN THE DIRECTORY
+       OF FREMONTDOC ON SYSTEM 74 - FILENAME:  MAGCON.LBL.
+
+       THE FILE TO USE TO PRINT OUT LABELS FOR THE OSIRIS ACCOUNTING  TAPES  IS
+       IN THE DIRECTORY OF FREMONTDOC ON SYSTEM 74 - FILENAME:  OSIRIS.ACT.
+                                                                         Page 6
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                         Page 7
+OPER/TAPLIB DOCUMENTATION
+
+
+                                 ADDING TAPES
+                                 ------------
+
+       1.  PROCEDURES FOR ADDING TAPES TO THE "TAPELIB" DATA-BASE  ARE  COVERED
+       IN  MINI-MANUAL  #1A.  IN ADDITION TO THE INSTRUCTIONS CONTAINED IN THIS
+       MANUAL, THE FOLLOWING SHOULD BE CHECKED BEFORE ADDING ANY  TAPE  TO  THE
+       LIBRARY.   EVERY  OPERATOR, WHO "ADDS" OR "RELEASES" A TAPE, IS REQUIRED
+       TO COMPLETE THE APPROPRIATE FORM.  IF THESE FORMS ARE UNAVAILABLE,  THEY
+       CAN  BE  LISTED  OUT  ON  TTY  PAPER  FROM  THE DIRECTORY OF FREMONTDOC.
+       FILENAMES ARE:  "ADDTAP.MEM" AND "RELTAP.MEM".
+
+           A.  READ BATCH REQUEST TO ASCERTAIN IF TAPE(S) ARE TO  BE  ADDED  TO
+           LIBRARY.
+
+           B.  IF TAPE(S) ARE TO BE ADDED,  DO  YOU  HAVE  THE  ORIGINAL  BATCH
+           REQUEST WITH ALL HARDCOPY?
+
+           C.  IS THERE A TAPE DIRECTORY WITH EACH TAPE?   THE  ONLY  TIME  YOU
+           WON'T HAVE A DIRECTORY IS WHEN FILES WERE "MAGCON" TO TAPE.
+
+
+                                         NOTE
+
+           EACH  TAPE  SHOULD  BE  MOUNTED  SEPARATELY  WHEN   PRINTING   A
+           DIRECTORY.   TAPE  DIRECTORY  HEADERS  SHOULD  NOT  START IN THE
+           MIDDLE OF A PAGE IF MORE THAN ONE TAPE IS TO BE ADDED.
+
+
+           D.  DID YOU MARK THE "TRP" AND "TID" NUMBERS ON THE  TAPE  DIRECTORY
+           AND BATCH REQUEST AS YOU ENTERED THE TAPE(S) IN LIBRARY?
+
+       2.  AFTER THE TAPE(S) ARE ADDED TO THE LIBRARY, TEAR OFF  YOUR  HARDCOPY
+       FROM THE TERMINAL AND DO THE FOLLOWING:
+
+           A.  CUT OUT YOUR FIRST LABEL AND SCOTCH-TAPE ALL FOUR (4)  SIDES  TO
+           THE  TAPE(S).   IF  THERE ARE ANY LABELS ON THE TAPE - LEAVE THEM ON
+           THE TAPE.  DO THIS WITH EACH TAPE.
+
+           B.  AFTER ALL TAPE(S) ARE LABELED, FILE THE TAPE  DIRECTORY  IN  THE
+           "TAPE DIRECTORY" FILE CABINET IN THE APPROPRIATE FOLDER.
+
+           C.  TAKE THE TAPE(S) OVER TO THE TAPE RACK AND  REMOVE  THE  "BLANK"
+           STRAP  AND  PUT  THE  STRAP  WITH THE "TRP" ON IT AND HANG IT IN ITS
+           PROPER PLACE.  HANG THE "BLANK" STRAP WITH THE OTHER BLANK STRAPS.
+
+           D.  AFTER COMPLETING THE ABOVE, SEND MAIL TO THE USER, GIVING  "TID"
+           NUMBERS ONLY EVEN IF BATCH REQUEST ASKS FOR BOTH.
+
+           E.  MAKE A COPY OF THE BATCH REQUEST FOR THE TAPE  LIBRARIAN.   GIVE
+           ORIGINAL REQUEST BACK TO "BATCH CONTROLLER" FOR "QA".
+
+           F.  ENTER THE PPR INTO BCHARGE AS A "JOB TYPE #4".   CHARGE  AS  ONE
+           (1) FILE PER TAPE.
+                                                                         Page 8
+OPER/TAPLIB DOCUMENTATION
+
+
+                            ADD TAPE CHECK-OFF LIST
+                            -----------------------
+
+       <--------------------------------------------------------------->
+       < ITEMS 1 THROUGH 12 MUST BE CHECKED OFF BEFORE JOB IS COMPLETE >
+       <--------------------------------------------------------------->
+
+       1. DO YOU HAVE ORIGINAL PPR WITH HARDCOPY?             -----
+
+       2. DOES EACH TAPE HAVE TAPE DIRECTORY?                 -----
+
+          IF YES GO ON TO STEP # 3.
+
+          IF NOT, PRINT DIRECTORY UNLESS "MAGCON TO TAPE".    -----
+
+       3. RUN "ADD TAPE" TO LIBRARY. (FOR TAPE LABEL).        -----
+
+       4. WRITE TID # AND TRP # ON TAPE DIRECTORY AND PPR.    -----
+
+       5. SCOTCH TAPE LABEL ON ALL 4 SIDES TO TAPE.           -----
+
+                                     NOTE
+                                     ----
+
+                      **********************************
+                      * LEAVE ALL OTHER LABELS ON TAPE *
+                      **********************************
+
+       6. FILE TAPE DIRECTORY IN TAPE DIRECTORY "FILE".       -----
+
+       7. PUT CORRECT TRP # STRAP ON TAPE.                    -----
+
+       8. PLACE BLANK STRAP WITH OTHER BLANK STRAPS.          -----
+
+       9. SEND MAIL TO USER GIVING TID # ONLY.                -----
+
+       10. CHARGE FOR THE ADDING OF TAPE (S). PROCEDURE AS
+           FOLLOWS: JOB TYPE 4, 1 TAPE = 1 FILE, 2 TAPES =
+           2 FILES ETC.                                       -----
+
+       11. MAKE A COPY OF PPR FOR TAPE LIBRARIAN.             -----
+
+       12. GIVE ORIGINAL PPR BACK TO BATCH CONTROLLER FOR "QA"
+           WITH ALL HARDCOPY ATTACHED, WITH TAPE & DIRECTORY. -----
+
+
+       REQUEST #----------
+
+
+       INITIALS----------
+
+
+       DATE:-------------
+
+
+       (FREMONTDOC:74)ADDTAP.MEM
+                                                                         Page 9
+OPER/TAPLIB DOCUMENTATION
+
+
+                                RELEASING TAPES
+                                ---------------
+
+       1.  TAPES ARE RELEASED FROM THE TAPE LIBRARY WHEN REQUESTED BY THE OWNER
+       OF  THE  TAPE  BY  SUBMITTING A BATCH REQUEST.  THE BATCH REQUEST SHOULD
+       CONTAIN INSTRUCTIONS AS TO THE DISPOSITION OF THE TAPE.  IF IT  DOESN'T,
+       NO  TAPE  IS RELEASED UNTIL THIS INFORMATION IS OBTAINED FROM THE PERSON
+       WHO SUBMITTED THE REQUEST.
+
+       2.  TAPES ARE DISPOSED OF IN SEVERAL WAYS:   RELEASED  AND  RETURNED  TO
+       USER;  OR, RELEASED AND SCRATCHED.
+
+       3.  BEFORE A TAPE IS RELEASED,  CERTAIN  PROCEDURES  MUST  BE  PERFORMED
+       FIRST.  THESE PROCEDURES ARE LISTED BELOW.
+
+           A.  RELEASED AND RETURNED TO USER.
+
+               (1) DO YOU HAVE THE CORRECT TAPE?
+
+               (2) DO THE "TID'S" MATCH?  COMPARE BATCH  REQUEST  AGAINST  TAPE
+               LABEL.
+
+               (3) IF APPLICABLE, DID  YOU  PULL  "TAPE"  DIRECTORY  FROM  TAPE
+               DIRECTORY CABINET?  IS IT THE CORRECT DIRECTORY?
+
+               (4) DID YOU STAMP THE "TAPE LABEL" AND THE "BATCH" REQUEST  WITH
+               THE  "RELEASED  FROM  BT  TYMNET"  RUBBER STAMP OR "TRANSFERRED"
+               RUBBER STAMP?
+
+               (5) DID YOU REMOVE THE CURRENT "TAPE STRAP" FROM TAPE AND PUT  A
+               "BLANK" TAPE STRAP ON TAPE?
+
+               (6) DID YOU PUT THE STRAP YOU REMOVED ABOVE BACK  IN  THE  "TRP"
+               POSITION ON TAPE RACK?
+
+               (7) IS THERE A RUBBER "HOLD-DOWN" ON TAPE?
+
+               (8) DID YOU LOG THE TAPE OUT IN THE "TAPE RELEASED"  LOG?   (SEE
+               APPENDIX III)
+                                                                        Page 10
+OPER/TAPLIB DOCUMENTATION
+
+
+               (9) DID YOU PROVIDE A COPY OF THE BATCH  REQUEST  FOR  THE  TAPE
+               LIBRARIAN?
+
+               (10) DID YOU LOG THE TAPE OUT IN THE "DAILY TAPE" CHECK OUT  LOG
+               AND  "STAMP"  IT  AS  BEING  "RELEASED"  OR "TRANSFERRED"?  (SEE
+               APPENDIX IV)
+
+               (11) DID YOU SEND MAIL AND ENTER THE BATCH REQUEST INTO BCHARGE?
+               CHARGE  AS  A  JOB TYPE #4.  1 TAPE = 1 FILE, 2 TAPES = 2 FILES,
+               ETC.
+
+               (12) BEFORE TAKING THE TAPE TO  DISTRIBUTION  FOR  MAILING,  DID
+               YOU:
+
+                    (A) MAKE TWO (2) COPIES OF THE BATCH REQUEST?
+
+                    (B) TAPE A COPY OF THE  BATCH  REQUEST  TO  THE  TAPE  WITH
+                    DIRECTORY?
+
+           B.  RELEASED AND SCRATCHED.
+
+               (1) SEE PARAGRAPH 3.A(1) THROUGH 3.A(10).
+
+               (2) DID YOU MAKE UP A "HOLD AND DESTROY" FORM AND ATTACH  IT  TO
+               TAPE WITH DIRECTORY?
+
+               (3) DID YOU INDICATE THE TAPE TO BE SCRATCHED IN FORTY-FIVE (45)
+               DAYS?
+
+               (4) DID YOU PLACE IT IN THE "HOLD AND DESTROY" CABINET?
+
+               (5) DID YOU SEND MAIL AND VOID THE REQUEST IN  BCHARGE?   CHARGE
+               AS A JOB TYPE #4.  1 TAPE = 1 FILE, 2 TAPES = 2 FILES, ETC.
+
+               (6) DID YOU MAKE COPIES  OF  THE  BATCH  REQUEST  FOR  THE  TAPE
+               LIBRARIAN?
+                                                                        Page 11
+OPER/TAPLIB DOCUMENTATION
+
+
+                         RELEASING TAPE CHECK-OFF LIST
+                         -----------------------------
+
+       <-------------------------------------------------------------->
+       <  ALL ITEMS MUST BE COMPLETED BEFORE REQUEST IS FINISHED      >
+       <-------------------------------------------------------------->
+
+          IF RELEASED AND RETURNED TO USER COMPLETE SECTION A.
+
+          IF RELEASED TO  SCRATCH COMPLETE SECTION'S A & B.
+
+                                   SECTION A
+                                   ---------
+
+       1.  DO YOU HAVE CORRECT TAPE?                   -----
+
+       2.  COMPARE BATCH REQUEST AGAINST TAPE
+           LABEL.  DO THE TID NUMBERS MATCH?           -----
+
+       3.  IF APPLICABLE, PULL "TAPE" DIRECTORY FROM
+           TAPE DIRECTORY CABINET.  IS IT THE
+           CORRECT DIRECTORY?                          -----
+
+       4.  DID YOU STAMP THE "TAPE LABEL" AND BATCH
+           REQUEST WITH THE "RELEASED FROM BT TYMNET"
+           RUBBER STAMP?                               -----
+
+       5.  DID YOU REMOVE THE CURRENT "TAPE STRAP"
+           FROM TAPE AND PUT A "BLANK" TAPE STRAP
+           ON THE TAPE?                                -----
+
+       6.  DID YOU PUT THE STRAP YOU REMOVED ABOVE
+           BACK IN THE "TRP" SLOT?                     -----
+
+       7.  IS THERE A RUBBER "HOLD DOWN" ON TAPE?      -----
+
+       8.  DID YOU LOG THE TAPE OUT IN THE "TAPE
+           RELEASED" LOG BINDER ON TAPE LIBRARIAN DESK?-----
+
+       9.  DID YOU LOG THE TAPE OUT IN THE "DAILY
+           TAPE CHECK OUT LOG" AND STAMP IT AS
+           BEING RELEASED?                             -----
+
+       10.  DID YOU SEND MAIL AND BCHARGE THE REQUEST?
+            (CHARGE FOR RELEASING A TAPE IS AS FOLLOWS:
+            JOB TYPE 4, 1 TAPE = 1 FILE, 2 TAPES = 2 
+            FILES, ETC.)                               -----
+
+       11.  DID YOU PROVIDE A COPY OF THE BATCH REQUEST
+            FOR THE TAPE LIBRARIAN?                    -----
+
+       12.  GIVE COMPLETED BATCH BACK TO CONTROLLER FOR
+            "QA".  ALL HARDCOPY WITH TAPE(S).          -----
+                                                                        Page 12
+OPER/TAPLIB DOCUMENTATION
+
+
+                                   SECTION B
+                                   ---------
+
+                          RELEASING TAPES TO SCRATCH
+                          --------------------------
+
+       1.  DID YOU MAKE UP A "HOLD AND DESTROY" FORM
+           AND ATTACH IT TO THE TAPE WITH DIRECTORY?   -----
+
+       2.  DID YOU INDICATE THE TAPE TO BE SCRATCHED
+           IN 45 DAYS?                                 -----
+
+       3.  DID YOU PLACE IT IN THE "HOLD AND DESTROY"
+           CABINET?                                    -----
+
+
+
+
+
+       REQUEST #----------
+
+
+       INITIALS:----------
+
+
+       DATE:--------------
+
+
+       (FREMONTDOC:74)RELTAP.MEM
+                                                                        Page 13
+OPER/TAPLIB DOCUMENTATION
+
+
+                              TRANSFERRING TAPES
+                              ------------------
+
+       1.  TAPE(S) IS/ARE NEVER "RELEASED" WHEN THEY ARE TO BE  TRANSFERRED  TO
+       ANOTHER CENTER OR SYSTEM.  THEY ARE "TRANSFERRED" INSTEAD.
+
+       2.   BEFORE  TRANSFERRING  A  TAPE(S),  FOLLOW  ALL  THE  PROCEDURES  IN
+       PARAGRAPH 3.A(1) THROUGH 3.A(12) UNDER 'RELEASING TAPES'.
+                                                                        Page 14
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 15
+OPER/TAPLIB DOCUMENTATION
+
+
+                            ALLFILES STATUS REPORT
+                            ----------------------
+
+       THIS IS A PRINTED REPORT  INDICATING  THE  STATUS  OF  ALL  THE  SYSTEMS
+       ALL-FILES,  SET  NUMBERS, DATES WRITTEN ON AND DATES TO BE WRITTEN OVER.
+       (SEE APPENDIX V ON HOW TO COMPILE AND SPOOL THIS REPORT).
+
+       THIS REPORT IS RUN ON A MONDAY ONCE EVERY 3  MONTHS,  UNLESS  THERE  ARE
+       SUBSTANTIAL CHANGES CAUSING THE NEED OF A NEW STATUS REPORT.
+
+       THIS REPORT ENABLES YOU TO SEE WHAT SETS FOR A SPECIFIC SYSTEM ARE TO BE
+       USED  ON  A  SPECIFIED  DATE.   WHEN THE ALL-FILES HAVE BEEN RUN AND THE
+       MICROFICHE RETURNED FROM MICROMEDIA, MARK OFF THAT SET AS  HAVING  BEING
+       COMPLETED.
+
+       KEEP AN EYE ON THE ALL-FILES LOG BOOK, MAKING SURE THAT THE RECORDS  ARE
+       BEING  KEPT  UP-TO-DATE AND CORRECT SETS ARE BEING OVER WRITTEN.  WHEN A
+       SET IS WRITTEN OVER AND A NEW RECORD IS PLACED IN THE ALL-FILES LOG BOOK
+       (LOCATED IN BATCH ROOM) THE OLD FORM IS TO BE PULLED AND DESTROYED.
+
+       WHEN A CURRENT ALL-FILE SET IS SKIPPED, MARK  IT  AS  "SKIPPED"  ON  THE
+       ALL-FILE  STATUS  REPORT  AND  MAKE SURE THE MAG BOARD HAS 'SKIP' E
+       CORRECT SYSTEM.  DO NOT USE THIS SET WHEN ALL-FILES ARE DUE  AGAIN,  USE
+       THE NEXT SET NUMBER.
+
+       WHEN A NEW ALL-FILES STATUS REPORT IS PRINTED, MAKE SURE  YOU  MARK  ALL
+       COPIES WITH AN "*" ALL SETS FOR ALL SYSTEMS SKIPPED, FOR WHATEVER REASON
+       BEFORE POSTING.
+                                                                        Page 16
+OPER/TAPLIB DOCUMENTATION
+
+
+                                   ALLFILES
+                                   --------
+
+       ALLFILES  ARE  DONE  FOR  EACH  SYSTEM  EVERY  2  WEEKS.   IT   IS   THE
+       RESPONSIBILITY OF THE "OPERATORS", OR TAPE LIBRARIAN IF TIME PERMITS, TO
+       SET THE CORRECT SET OF ALLFILES FOR EACH SYSTEM OUT ON THE RACK  ON  THE
+       COMPUTER  ROOM FLOOR.  AFTER THEY HAVE BEEN WRITTEN ON THEY ARE RETURNED
+       TO THE RACK IN THE TAPE LIBRARY.
+
+       ALL FILE TAPES SHOULD BE CYCLED OUT AFTER  THEY  HAVE  BEEN  WRITTEN  ON
+       EVERY FOURTH (4) TIME.
+
+       THERE IS TO BE AN ALLFILES RECORD PUT IN THE LOGBOOK FOR  ALLFILES  EACH
+       TIME A SET IS WRITTEN.
+
+       THE ALLFILE LOG BOOK IS IN A WHITE BINDER IN THE TAPE LIBRARY.
+
+       THERE ARE 06 SETS OF ALLFILES FOR EACH SYSTEM.  THE  ALLFILE  TAPES  ARE
+       LOCATED  IN  THE TAPE LIBRARY.  SYSTEM 34 HAS 40 SETS AND ARE LOCATED IN
+       THE OLD 'SCHEDULARS' AREA.
+
+                               ALLFILE SCHEDULE
+                               ----------------
+
+       SUN     MON     TUES    WED     THURS           FRI     SAT
+
+               23      26      30      33              34
+
+               37      56                              38
+
+                                                       74
+                                                                        Page 17
+OPER/TAPLIB DOCUMENTATION
+
+
+                              ALLFILE MICROFICHE
+                              ------------------
+
+       ALLFILE TAPES WILL BE MICROFICHE INSTEAD OF MAKING A DIRECTORY  OF  EACH
+       TAPE.  THIS METHOD SAVES PAPER AND SPACE.  BELOW ARE THE PROCEDURES:
+
+           1.  RUN THE ALLFILES AS USUAL.
+
+           2.  CREATE A "DISC FILE DIRECTORY" OF THE ALLFILE TAPES.
+
+           3.  RUN THE PROGRAM '(UTIL)MICRO' TO CREATE A 'HEADER'  FILE  NAMING
+           THE FILE 'HEADER'.
+
+           4.  OBTAIN THE DESIGNATED SYSTEM TAPE FROM THE 'FICHE TAPE POOL'  IN
+           THE  TAPE LIBRARY.  USING 'MAGCON' FIRST STORE THE 'HEADER' AND THEN
+           STORE THE 'DISC DIRECTORY FILE'.  THERE IS  NO  NEED  TO  STORE  THE
+           FILES  TO TAPE MORE THAN ONCE.  USE THE FOLLOWING 'MAGCON' SPECS:  9
+           TRACK, 1600 BPI, EBCDIC, RECL = 132, BLOCK =10.
+
+           5.  AFTER THE 'MAGCON' SESSION, MARK THE 'DATE' LABEL  ON  THE  TAPE
+           WITH  THE  'DATE OF THE ALLFILES';  MARK THE SET LABEL WITH THE 'SET
+           NUMBER OF THE ALL FILES'.
+
+           6.  WRITE THE 'DISC DIRECTORY FILE' OUT TO  'USERNAME  (HOLD)'  WITH
+           FILENAME:    'SSAFMM.DD';   WHERE  'SS=SYSTEM  NUMBER,  MM=MONTH  OF
+           ALLFILES,' AND 'DD=DAY OF ALLFILES.' FOR  EXAMPLE:   '74AF06.06  FOR
+           F74 ALLFILES RUN ON 06/06.
+
+           7.  AFTER THE 'DISC  TO  TAPE',  'TAPE  TO  DISC'  SECTION  AND  THE
+           'MICRO-FICHE SECTION' IS COMPLETED AND INITIALED BY THE OPERATOR AND
+           QA'D BY THE SYSTEM QUALITY CONTROLLER, THE FORM WILL BE FILED IN THE
+           "ALL-FILES" RECORD BINDER.
+
+           THE 'HARDCOPY' OF THE RUN WILL HAVE THE SYSTEM NUMBER, DATE AND  SET
+           NUMBER  WRITTEN ON IT AND FILED IN THE APPROPRIATE BASKET LOCATED IN
+           THE ROOM OFF OF THE SYSTEM QUALITY  CONTROL  OFFICE.   THE  "OLDEST"
+           HARDCOPY FOR THE SYSTEM SHOULD BE THROWN OUT.
+
+           THE MICRO-FICHE TAPE SHOULD BE TAKEN TO DISTRIBUTION TO BE  SENT  TO
+           MICROMEDIA.
+
+           8.  WHEN MICROFICHE SLIDES ARE  RETURNED  BY  MICROMEDIA,  THE  TAPE
+           LIBRARIAN  WILL  CROSS  OFF  THE  SET  NUMBER  ON THE ALLFILE STATUS
+           REPORT;  INITIAL, AND DATE THE ALLFILES RECORD BINDER, AND THEN FILE
+           THE  SLIDES  IN  THE  MICROFICHE  HOLDER.  THE OLD SET OF MICROFICHE
+           SLIDES ARE THROWN AWAY.
+
+           9.  IF FOR ANY REASON YOU CAN'T READ THE  SLIDES,  THEY  ARE  TO  BE
+           RETURNED,  WITH  THE PROPER TAPE TO MICROMEDIA FOR A 'RE-D0'.  THERE
+           IS NO CHARGE.
+
+                                                                        Page 18
+OPER/TAPLIB DOCUMENTATION
+
+
+                          ALLFILE MICRO/MAGCON SAMPLE
+                          ---------------------------
+
+       '.R' (UTIL)MICRO(CR)                   CALL PROGRAM TO CREATE HEADER.
+       'VERSION NO.'
+       'OUTPUT FILE NAME:' HEADER (CR)         OUTPUT DISC FILE NAME
+       'SET NUMBER:' 3 (CR)                    INPUT THE ALLFILE SET NO.
+       'SYSTEM NUMBER:' 74                     INPUT THE SYSTEM NUMBER.
+       'SET  3 F74 05-29-81'                   CONTENTS OF FILE PRINTED
+                                               FOR VERIFICATION.
+       'O.K. ?' YES (CR)                       INPUT 'YES' OR 'NO'
+       'E.O.J.'                                HEADER FILE NOW CREATED.
+
+       '.'R (UTIL)MAGCON (CR)
+       'MAGCON VERSION, TIME AND DATE OUTPUTS HERE'
+       '***INPUT SPECIFICATION***'
+       '1. FILE:' HEADER (CR)                  FIRST STORE THE HEADER FILE.
+       '2. MODE:' ASCII (CR)
+       '3. VARIABLE LENGTH RECORDS?' Y (CR)
+       '4.  CRLF'S IN ASCII FILE?' Y (CR)
+       '5A.  MAXIMUM RECORD LENGTH:' 132 (CR)
+       '8. STOP ON ERRORS?' Y (CR)
+       '22. MULTIPLE OUTPUT FILE FOR THIS INPUT FILE?' N (CR)
+       'ALL INPUT ENTRIES CORRECT?' Y (CR)
+
+       '***OUTPUT SPECIFICATIONS***'
+       '1. FILE:' FTA2: (CR)
+       '2. MODE:' EBCDIC (CR)
+       '5. RECORD SIZE:' 132 (CR)
+       '6. BLOCKING FACTOR:' 10 (CR)
+       '8. STOP ON ERRORS?' Y (CR)
+       '11. DENSITY:' 1600 (CR)
+       '13. ADVANCE FILES:' 0 (CR)
+       '    BACKSPACE:' 0 (CR)
+       '15. REWIND:' OMIT (CR)
+       '16. LABEL:' N (CR)
+       '20. UNLOAD TAPE?' N (CR)
+       'ALL OUTPUT ENTRIES CORRECT?' Y (CR)
+       'MAGCON TIME AND DATE'                  REPRESENT PROGRAM OUTPUT.
+
+       'REPEAT SPECIFICATIONS?' Y (CR)
+       'ALL INPUT ENTRIES CORRECT?' N (CR)
+       'ITEM TO CHANGE:' 1 (CR)
+       '1.  FILE:' F74AF.DIR                   STORE ALLFILES DIRECTORY FILE.
+       'ALL INPUT ENTRIES CORRECT?' Y (CR)
+       'ALL OUTPUT ENTRIES CORRECT?' Y (CR)
+       'MAGCON TIME AND DATE'
+       'XXXXXXXXXXXXXXXXXXXXXXX'               SECOND FILE STORES TO TAPE.
+                                               NO NEED TO STORE TWICE.
+       ETC., 'END OF JOB.'
+                                                                        Page 19
+OPER/TAPLIB DOCUMENTATION
+
+
+                            OFF-SITE STORAGE SYSTEM
+                            -------- ------- ------
+
+            THE COMPUTER CENTER IS THE CENTRALIZED CONTROL AREA  FOR  THE  DATA
+       SERVICES  OFFERED  BY  BT  TYMNET:   IT  IS  ON  THE COMPUTERS WHERE ALL
+       PROGRAMS APPLICATIONS AND INFORMATION FILES ARE  PROCESSED;   WHERE  ALL
+       THE  USER'S  WORK  EFFORTS ARE CREATED, MAINTAINED, UPDATED, DISTRIBUTED
+       AND SO ON.  THIS TREMENDOUS  IMPORTANCE  BRINGS  WITH  IT  A  TREMENDOUS
+       REQUIREMENT FOR SECURITY.  
+
+            PROGRAMS AND APPLICATIONS ARE PRODUCTS WHICH MUST BE SAFEGUARDED SO
+       THEY  ARE  AVAILABLE TO THE USER AS ADVERTISED.  ALL WORK EFFORTS BY THE
+       USER MUST BE SECURED SINCE MUCH OF THE  DATA  IS  VITAL  TO  THE  USER'S
+       COMPANY,  IT'S  CASH  FLOW,  PAYROLL,  INVENTORY,  ETC.  AS ONE LEVEL OF
+       PRECAUTION,  OPERATIONS  MAINTAINS  DUPLICATE  BACKUP  STORAGE  OF   THE
+       COMPUTER'S  FILES  ON  MAGNETIC  TAPES.   THESE  ARE  KEPT 'OFF-LINE' AS
+       INSURANCE AGAINST LOSS OF ON-LINE DATA.
+
+            BUT THE COMPUTER CENTER ITSELF IS VULNERABLE.  BECAUSE OF THE VITAL
+       IMPORTANCE  OF DATA GENERATED IN THE COMPUTER CENTER AN ADDITIONAL LEVEL
+       OF BACKUP SECURITY HAS BEEN ESTABLISHED:   THE  ARCUS  'OFF-SITE'  VITAL
+       RECORDS  PROTECTION  SYSTEM.   PERIODICALLY,  RECENT COPIES OF PROGRAMS,
+       APPLICATIONS AND USER DATA IN THE FORM OF TAPES, WILL BE PLACED IN METAL
+       CONTAINERS.   THESE  MEDIA  CONTAINERS  WILL  BE  LOCKED AND STORED IN A
+       SECURE ENVIRONMENT LOCATED SOME DISTANCE FROM THE COMPUTER CENTER.  THIS
+       PROVIDES  INSURANCE  AGAINST  LOSS  OF  DATA DUE TO A NATURAL OR PLANNED
+       DISASTER TO THE COMPUTER CENTER ITSELF.
+
+            FOR BAY AREA  COMPUTER  CENTERS,  THIS  OFF  LINE  BACKUP  WILL  BE
+       MAINTAINED  IN VAULTS IN UNION CITY.  THIS SECTION OUTLINES THE ROTATION
+       SCHEDULE TO AND FROM ARCUS, AND DESCRIBE THE PROCEDURES THAT ARE  TO  BE
+       USED FOR ACCESSING DATA SHOULD IMMEDIATE RETURN BE NECESSARY.
+                                                                        Page 20
+OPER/TAPLIB DOCUMENTATION
+
+
+                               ASP TAPE ROTATION
+
+
+                                         NOTE
+
+           DO NOT MIX ASP TAPES WITH OTHER SYSTEM TAPES.
+
+
+       1) FREMONT COMPUTER  CENTER  OFF-SITE  STORAGE  IS  IN  CONTAINERS  EACH
+       CONTAINING HOWEVER MANY TAPES THERE ARE FOR ONE TYMCOM-X ASP SET.
+
+       2) FOR FREMONT THIS IS THE SET BEFORE THE SET WE WRITE ON.  THIS SET  IS
+       THE EQUIVALENT TO A PACKCOPY SET AND SHOULD ONLY BE USED FOR FILE SYSTEM
+       REBUILDS  UNLESS  OTHERWISE  AUTHORIZED  BY  THE  SHIFT  SUPERVISOR   OR
+       OPERATIONS MANAGER.
+
+
+                                         NOTE
+
+           IF THE 'ASP DUMP' IS STARTED, AND THEN FOR SOME REASON IT HAD TO
+           BE CANCELLED, THIS SET STAYS AT THE CENTER AND IS USED AGAIN FOR
+           THE NEXT SCHEDULED DUMP.  YOU "NEVER" WRITE  OVER  THE  "OLDEST"
+           SET  UNTIL  YOU  HAVE  A GOOD DUMP.  THIS SET WOULD BE USED IF A
+           'REBUILD' SHOULD OCCUR.
+
+
+       3) ARCUS WILL SEND A DELIVERY TRUCK EVERY TUESDAY AND THURSDAY RETURNING
+       THE  CONTAINERS DUE BACK AT THE CENTER AND PICK UP THE CONTAINERS DUE TO
+       GO OUT.  THESE MUST BE READY BY 0800 THE DAY THEY ARE TO BE RETURNED.
+
+       4) A KEY FOR THE CANNISTERS WILL BE KEPT ON THE KEY RING  IN  THE  BATCH
+       OFFICE.  EVERY SUPERVISOR ALSO HAS A KEY.
+
+       5) THE APPROPRIATE AUTHORIZATION FORM MUST BE FILLED OUT BY SOMEONE WITH
+       AN ARCUS I.D.  CARD.
+
+       6) THE CUSTOMER COPY SHOULD BE FILED IN THE ARCUS BOOK LOCATED  ON  TAPE
+       LIBRARIAN'S  DESK.   ON DELIVERY YOU'LL RECEIVE A RECEIPT WHICH IS FILED
+       WITH THE PICKUP FORM.
+
+                          UNSCHEDULED ASP TAPE RETURN
+
+       1) IF DATA IS NEEDED FROM ARCUS STORAGE (IN OTHER WORDS  YOU  NEED  THIS
+       SET  OF  TAPES TO DO A FILE SYSTEM REBUILD) THEN CHECK THE ARCUS BOOK TO
+       DETERMINE THE CONTAINER NUMBER WHICH STORES THE DATA.  WHEN YOU'VE FOUND
+       THE APPROPRIATE SHEET NOTE THE CONTAINER NUMBER AND THE SCHEDULED RETURN
+       DATE.
+
+       2) CALL ARCUS AT:  *** 9-489-5100 ***
+
+       3) GIVE YOUR ARCUS I.D.  NUMBER AND BT  TYMNET'S  ACCOUNT  NUMBER:   ***
+       1630 ***
+
+       4) GIVE THE CONTAINER NUMBERS YOU NEED AND  THE  SCHEDULED  RETURN  DATE
+       FROM THE PICKUP AUTHORIZATION FORM.
+                                                                        Page 21
+OPER/TAPLIB DOCUMENTATION
+
+
+       5) RECORD THE TIME THE CALL TO ARCUS WAS INITIATED TO KEEP TRACK OF  THE
+       TURNAROUND TIME.
+
+       6) DETERMINE FROM  THE  SHIFT  SUPERVISOR  THE  NECESSITY  OF  RETAINING
+       CANISTERS  FURTHER  INHOUSE.  IF NO LONGER NEEDED, THEY WILL BE RETURNED
+       TO ARCUS WITH  THE  NEXT  PICKUP  TO  FULFILL  THE  ORIGINAL  RETENTION.
+       REMEMBER  THAT  ONLY  ENTIRE  CONTAINER(S) WILL BE RETURNED.  ARCUS WILL
+       NEVER OPEN A CONTAINER AND RETURN  ONLY  PART  OF  IT'S  CONTENTS.   THE
+       REQUESTED CANISTER(S) SHOULD ARRIVE IN APPROXIMATELY 2 HOURS.
+                                                                        Page 22
+OPER/TAPLIB DOCUMENTATION
+
+
+                         PREPARING TAPES FOR SHIPMENT
+                         ----------------------------
+
+       ARCUS PROVIDES  LOCKING  METAL  CONTAINERS  TO  HOUSE  THE  TAPES.   OUR
+       CONTRACT  WITH  THEM  SPECIFIES  DAILY PICKUP, TUESDAY AND THURSDAY, AND
+       STORAGE OF THESE CONTAINERS.
+
+       ASP TAPES ARE TO BE COLLECTED  FOR  TRANSFER  TO  ARCUS  BY  THE  PDP-10
+       GRAVESHIFT  OPERATOR DESIGNATED BY SHIFT SUPERVISOR.  CONTAINERS MUST BE
+       AT THE LOADING DOCK BY 0800 MONDAY (FOLLOWING DUMP), PER OUR  AGREEMENT.
+       AN  "ARCUS PICKUP AUTHORIZATION FORM" MUST BE COMPLETED TO ACCOMPANY THE
+       CONTAINERS FOR EACH PICKUP.
+
+       OUTLINED BELOW IS THE PROCEDURE FOR FILLING OUT THE FORM.
+
+           I.  FORM HEADING.
+
+               A.  ACCOUNT NO. - BT TYMNET ACCOUNT NO:  1630.
+
+               B.  CUSTOMER NAME:  YOUR "ARCUS" ID NO.
+
+               C.  DATE:  CURRENT DATE A MM/DD/YY.
+
+               D.  TIME:  TIME OF PICKUP IN MILITARY NOTATION TO BE RECORDED
+                          IN THE PRESENCE OF THE "ARCUS" MESSENGER BY THE
+                          PDP-10 OPERATOR DESIGNATED OR LOADING DOCK CLERK.
+
+               E.  RECEIVED BY:  SIGNATURE OF "ARCUS" MESSENGER.
+
+               F.  RECEIVED FROM:  SIGNATURE OF PDP-10 OPERATOR OR CLERK
+                                   PRESENT AT PICKUP TIME.
+
+               G.  RECORD (AS A HEADING):  BI-WEEKLY, OR WEEKLY, ABOVE THE
+                                           DESCRIPTION AREA FOR TAPES SENT.
+
+           II.  FORM CONTENTS
+
+               A.  NUMBER:  "ARCUS" CONTAINER NUMBER(S).
+
+               B.  RETURN DATE:  DATE AS MM/DD/YY TAPES ARE TO BE DELIVERED
+                                 BACK TO FREMONT OPERATIONS.
+
+               C.  DESCRIPTION:  CANISTER NUMBER AND CORRESPONDING TAPE
+                                 NUMBER(S) OF ALL (9) NINE TAPES INSIDE THE
+                                 CONTAINER.
+                                                                        Page 23
+OPER/TAPLIB DOCUMENTATION
+
+
+       USE THE ASP STATUS REPORT AND THE ASP RECORD LOG TO FIND THE CORRECT SET
+       OF TAPES TO SEND TO "ARCUS".  CHECK WITH SHIFT SUPERVIISOR ABOUT ANY ASP
+       DUMPS NOT RUN.
+
+       AFTER PLACING ALL TAPES IN THE CONTAINERS, LOCK EACH  ONE.   TAKE  THEM,
+       TOGETHER  WITH  THE  COMPLETED "ARCUS PICKUP AUTHORIZATION FORM", TO THE
+       LOADING DOCK.  BOTH THE ORGINAL AND THE COPY OF  THE  FORM  MUST  REMAIN
+       WITH  THE  CONTAINERS  UNTIL  THE  "ARCUS"  MESSENGER HAS SIGNED FOR AND
+       RECEIVED THEM.  HE WILL RETAIN THE COPY;  THE ORIGINAL WILL BE  RETAINED
+       FOR  PCKUP BY THE OPERATOR DESIGNATED, WHO WILL INSERT IT IN THE "ARCUS"
+       BINDER ON THE TAPE LIBRARIANS DESK.  IT WILL REMAIN THERE WITH ANY OTHER
+       FORMS SHOWING OUTSTANDING CONTAINERS.
+
+       IF ALL CANNISTERS DUE BACK ARE NOT RECEIVED, NOTIFY ARCUS IMMEDIATELY OF
+       CANNISTER  NUMBERS  THAT  NEED  TO  BE  RETURNED.   ENTIRE  SETS MUST BE
+       RETURNED.
+
+       SERIAL NUMBERS OF BOXES MUST BE CHECKED AGAINST RECEIPT  LOG  WHEN  THEY
+       FIRST ARRIVE.  IF A DISCREPANCY SHOULD ARISE - LET DRIVER KNOW BEFORE HE
+       LEAVES THE CENTER.
+                                                                        Page 24
+OPER/TAPLIB DOCUMENTATION
+
+
+                                MAGNETIC BOARD
+                                --------------
+       THE PURPOSE OF THE MAGBOARD IS  TO  KEEP  ALL  SHIFTS  INFORMED  OF  THE
+       ROUTINES TO BE PERFORMED DURING A 24 HOUR DAY ON CERTAIN SYSTEMS.
+
+       THE DAYSHIFT SUPERVISOR, OR HIS DESIGNATED REPRESENTATIVE,  WILL  UPDATE
+       THE  BOARD  ON  A  DAILY  BASIS.   NO  ONE  ELSE IS AUTHORIZED TO CHANGE
+       ANYTHING ONCE IT IS SCHEDULED, UNLESS DIRECTED TO DO SO BY  ONE  OF  THE
+       ABOVE.
+
+       IT IS EACH OPERATORS RESPONSIBILITY TO CHECK THIS BOARD AT THE BEGINNING
+       OF HIS/HER SHIFT TO FIND OUT WHAT IS TO BE PERFORMED ON THE SYSTEMS.
+
+       A "BLACK DOT" SHOULD BE PLACED NEXT TO  THE  EVENT  AFTER  IT  HAS  BEEN
+       COMPLETED BY THE OPERATOR WHO IS THE SYSTEM QUALITY CONTROLLER.
+                                                                        Page 25
+OPER/TAPLIB DOCUMENTATION
+
+
+                PROCEDURES FOR CLEANING AND RECERTIFYING TAPES
+                ----------------------------------------------
+
+              1.  GATHER TAPES TO BE SCRATCHED AND PLACE ON CART.
+
+              2.  GO OVER TO MVS AND VM AREA.
+
+              3.  OBSERVE AREA, IF THERE ARE IBM TAPES LYING AROUND CHECK  WITH
+              MVS AND VM LIBRARIAN ON THE STATUS.  START OUT WITH ORDERLY AREA.
+
+              4.  CLEAN MACHINE BEFORE USE AND AFTER EVERY FOURTH TAPE AND ALSO
+              AT THE END OF COMPLETE USE.
+
+              5.  LOAD TAPE.
+
+              6.  AFTER TAPE IS FINISHED, PLACE RELIABILITY LABEL ON BACK  WITH
+              INFORMATION FILLED IN.
+
+              7.  IF TAPE HAS ANY PHYSICAL DAMAGE THROW IT  AWAY  ONLY  IF  THE
+              DAMAGE IS MORE THAN 400' FROM EITHER END.  IF TAPE HAS 35 OR MORE
+              WRITE CHECK ERRORS BOX UP AND SEND OFF-SITE FOR CERTIFICATION.
+
+              8.  TAPES TO BE KEPT:
+
+                  A.  PLACE GROMMET ON TAPE.
+
+                  B.  ONLY USE STRAPS THAT SAY 'WRIGHT LINE' ON THEM.
+
+                  C.  CLEAN OFF ALL EVIDENCE OF PREVIOUS LABELS OR ANY  WRITING
+                  ON TAPE STRAP.
+
+                                UPON COMPLETION
+                                ---------------
+
+              1.  THROW OUT ANY TAPES  WITH  PHYSICAL  ERRORS  IN  DUMPSTER  IN
+              LOADING DOCK AREA.
+
+              2.  PLACE THE GOOD TAPES ON  RACK  WHERE  SPECIFIED  FOR  SCRATCH
+              TAPES IN PDP-10 TAPE LIBRARY.
+
+              3.  BE SURE YOU HAVE NOT LEFT ANY PDP-10 TAPES OR STRAPS  IN  THE
+              MVS AND VM AREA.
+                                                                        Page 26
+OPER/TAPLIB DOCUMENTATION
+
+
+              
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 27
+OPER/TAPLIB DOCUMENTATION
+
+
+                                  APPENDIX I
+                                  ----------
+
+                COMPILING AND SPOOLING 'TID' AND 'TRP' REPORTS
+                ----------------------------------------------
+
+       LOG INTO 'OPER' ON SYSTEM 74 AND AFTER  SETTING  STATUS,  TYPE  IN  ".RU
+       (UTIL)TAPELIB.
+
+       "."RU (UTIL)TAPELIB
+
+       "TAPE LIBRARY"
+
+       "ENTER YOUR NAME:"
+       "PASSWORD:"
+       "VERSION 1.18"
+
+       "YOU HAVE OPER STATUS"
+
+       (IF TAPES ARE BEING TRANSFERRED TO OUR  SITE,  THE  NUMBER  WILL  APPEAR
+       HERE)
+
+       ":"REPORT TID
+       "  TID:" ALL
+       "  ALL OR ACTIVE?" ACTIVE
+       "SORTING"
+       "857 RECORDS"
+       "  OUTPUT TO:" FREMON.TID
+
+       "FILE CREATED UNDER 'TAPEDIR' ON SYS 74"
+
+       ":" REPORT CENTER
+       "   CENTER:" FRE
+       "SORTING"
+       "857 RECORDS"
+       "  OUTPUT TO:" FREMON.TRP
+
+       "FILE CREATED UNDER 'TAPEDIR' ON SYS 74"
+
+       ":"Q
+
+       "EXIT"
+                                                                        Page 28
+OPER/TAPLIB DOCUMENTATION
+
+
+       "."R TELECO
+
+       ":" (TAPEDIR:74)FREMON.TID,(OPER:74)FREMON.TID
+
+       "COPY STARTING"
+
+       "(TAPEDIR:74)FREMON.TID COPIED TO (OPER:74)FREMON.TID
+
+       "146880 (69847) CHARS. TRANSMITTED"
+
+       ":"(TAPEDIR:74)FREMON.TRP,(OPER:74)FREMON.TRP
+
+       "COPY STARTING"
+
+       "(TAPEDIR:74)FREMON.TRP COPIED TO (OPER:74)FREMON.TRP"
+
+       "146880 (69755) CHARS. TRANSMITTED"
+
+       ":"Q
+
+       "."
+                                                                        Page 29
+OPER/TAPLIB DOCUMENTATION
+
+
+       "."R SPOOL
+
+       "SPOOL 6.2"
+
+       "***UPDATING SPOOL DIRECTORY"
+       "UPDATE COMPLETE"
+
+       ":"SPOOL
+       "BILL TO CUSTOMER?" N
+       "REQUESTED BY:" OPER OR TAPE LIBRARIAN
+       "PROJECT CODE:" TAPELIST
+       "TELEPHONE NUMBER:" 2509
+       "FORMS:" LARGE
+       "PARTS:" 1
+       "OPTIONS:" LINES=60,COPIES=1,CENTER
+       "DELIVER BY:" PICKUP
+
+       "PICKUP ADDRESS:"
+       "BT TYMNET,INC"
+       (OUR ADDRESS IS PRINTED HERE)
+
+       "ADDITIONAL DELIVERY INST. TO CONT-D:" HOLD FOR TAPE LIBRARIAN.
+
+       THANKS (YOUR NAME)
+
+       "ENTER FILES:"
+       FREMON.TID
+       FREMON.TRP
+
+       "## PAGES         FREMON.TID"
+       "## PAGES         FREMON.TRP"
+
+       "ANY QUESTIONS CONCERNING THIS REQUEST,"
+       "PLEASE CALL (415)498-2588"
+       (DATE AND TIME OUTPUTS)
+       " #  FILES SPOOLED"
+       "##  PAGES"
+       "SPOOL REQUEST NUMBER #####"
+
+       ":"Q
+
+       "."
+
+
+                                         NOTE
+
+           AFTER THE TWO (2) FILES HAVE BEEN SPOOLED, YOU CAN  DELETE  THEM
+           FROM 'OPER'.  DON'T FORGET TO DELETE THE FILES FROM (TAPEDIR) ON
+           SYSTEM 74.
+
+
+                                                                        Page 30
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 31
+OPER/TAPLIB DOCUMENTATION
+
+
+                                  APPENDIX II
+                                  -----------
+
+                 COMPILING AND SPOOLING "MAGTAPE LOGOUT" FORM
+                 --------------------------------------------
+
+       LOG INTO "OPER" ON  SYSTEM  F74  AND  ENTER  .RU  (FREMONTDOC)WRKSCH  TO
+       COMPILE REPORT.
+
+       "."RU (FREMONTDOC)WRKSCH
+
+       "VERSION NOVEMBER 1981"
+
+       "DO YOU WANT INSTRUCTIONS? Y OR N?" NO
+
+       "FORM:"     6
+       "COPIES:"   (ENTER NUMBER OF COPIES TO COMPILE)
+
+       "FORM:"     0
+
+       "MOUNT TTY PAPER ON LPT."
+
+       "USE THE COMMAND:"
+
+       ".PRINT WRKSCH.TMP"
+
+       "TO OBTAIN WORK SCHEDULE FORMS."
+                                                                        Page 32
+OPER/TAPLIB DOCUMENTATION
+
+
+       "."R SPOOL
+
+       "SPOOL 6.2"
+
+       "***UPDATING SPOOL DIRECTORY"
+       "UPDATE COMPLETE"
+
+       ":"SPOOL
+       "BILL TO CUSTOMER?" N
+       "REQUESTED BY:" OPER OR TAPE LIBRARIAN
+       "PROJECT CODE:" WRKSCH.TMP
+       "TELEPHONE NUMBER:" 2509
+       "FORMS:" TTY
+       "PARTS:" 1
+       "OPTIONS:" LINES=60,COPIES=1,CENTER
+       "DELIVER BY:" PICKUP
+
+       "PICKUP ADDRESS:"
+       "BT TYMNET,INC"
+       (OUR ADDRESS IS PRINTED HERE)
+
+       "ADDITIONAL DELIVERY INST. TO CONT-D:" HOLD FOR TAPE LIBRARIAN.
+
+       THANKS (YOUR NAME)
+
+       "ENTER FILES:"
+       WRKSCH.TMP
+
+       "##             WRKSCH.TMP
+
+       "ANY QUESTIONS CONCERNING THIS REQUEST,"
+       "PLEASE CALL (415)498-2588"
+       (DATE AND TIME OUTPUTS)
+       " #  FILES SPOOLED"
+       "##  PAGES
+       "SPOOL REQUEST NUMBER #####"
+
+       ":"Q
+
+       "."
+                                                                        Page 33
+OPER/TAPLIB DOCUMENTATION
+
+
+                             MAGTAPE LOGOUT SHEET
+
+       :================================================================:
+       :   :   :         :                  :NO. OF TAPES USED:         :
+       :MTH:DAY:REQUEST  :     USERNAME     : NEW :FILE :SHORT:INITIALS :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+       :   :   :         :                  :     :     :     :         :
+       :   :   :         :                  :     :     :     :         :
+       :===:===:=========:==================:=====:=====:=====:=========:
+                                                                        Page 34
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 35
+OPER/TAPLIB DOCUMENTATION
+
+
+                                 APPENDIX III
+
+                COMPILING AND SPOOLING "RELEASED TAPE LOG" FORM
+                -----------------------------------------------
+
+       USE THE FOLLOWING PROGRAM TO COMPILE COPIES OF THE "RELEASED  TAPE  LOG"
+       FORM.  PROGRAM IS UNDER FREMONTDOC:74.
+
+       "."O OP RF
+       (YOUR NAME)
+
+       "."
+       "."RU (FREMONTDOC)TAPREL
+
+       "VERSION 1.0"
+
+       "RELEASED TAPE LOG FORM BUILDER"
+
+       "NO. OF COPIES:"    (TYPE IN NUMBER OF COPIES DESIRED)
+
+       "MOUNT TTY PAPER ON LPT."
+
+       "USE THE COMAND:"
+
+       "PRINT TAPREL.TMP/SIZE 60"
+
+       "TO OBTAIN FORMS."
+                                                                        Page 36
+OPER/TAPLIB DOCUMENTATION
+
+
+       AFTER COMPILING THE "TAPE RELEASED" FORM, CALL THE "SPOOL" PROGRAM.
+
+       "."R SPOOL
+
+       "SPOOL 6.2"
+
+       "*** UPDATING SPOOL DIRECTORY"
+       "UPDATE COMPLETE"
+
+       ":"SP
+       "BILL TO CUSTOMER?" N
+       "REQUESTED BY:" TAPE LIBRARIAN OR OPER
+       "PROJECT CODE:" TAPREL.FRM
+       "TELEPHONE NUMBER:" 2509
+       "FORMS:" TTY
+       "PARTS:" 1
+       "OPTIONS:" LINES=60,COPIES=1,INDENT=3,CENTER
+       "DELIVER BY:" PICKUP
+
+       "PICKUP ADDRESS:"
+       "BT TYMNET, INC."
+       "FREMONT COMPUTER OPERATONS"
+       "4340 SOLAR WAY"
+       "FREMONT, CA"
+
+       "ADDITIONAL DELIVERY INST. TO CONT-D:" HOLD FOR TAPE LIBRARIAN.
+
+       THANKS (YOUR NAME)
+
+       "ENTER FILES:"
+       TAPREL.TMP
+
+       "##  PAGES          TAPREL.TMP"
+
+       "ANY QUESTIONS CONCERNING THIS REQUEST,"
+       "PLEASE CALL (415)498-2588"
+       "12/02/81    06:47"
+       " #  FILES SPOOLED"
+       "##  PAGES"
+       "SPOOL REQUEST NUMBER #####"
+
+       ":"Q
+
+       "."
+                                                                        Page 37
+OPER/TAPLIB DOCUMENTATION
+
+
+                               TAPE RELEASED LOG
+
+   :==========================================================================:
+   :REQUEST: TID :  DATE  :COMPANY NAME:METHOD:CITY AND STATE:INIT:DESTINATION:
+   :  NO.  :     :        :            :      :              :    :           :
+   :==========================================================================:
+   :       :     :        :            :      :              :    :           :
+   :38801  :00001:12-7-81 :BT TYMNET    :  -   :       -      :RD  :SCRATCHED 
+   :
+   :==========================================================================:
+   :       :     :        :            :      :              :    :REL'D RET'D:
+   :38802  :77777:12-7-81 :BT TYMNET    :B & K :CUPERTINO, CAL:RD  :TO USER   
+   :
+   :==========================================================================:
+   :       :     :        :            :      :              :    :TRANS TO   :
+   :38803  :99999:2-2-82  :BT TYMNET    :UPS   :DALLAS, TX    :RD  :SYSTEM 56 
+   :
+   :==========================================================================:
+   :       :     :        :            :      :              :    :           :
+   :       :     :        :            :      :              :    :           :
+   :==========================================================================:
+   :       :     :        :            :      :              :    :           :
+   :       :     :        :            :      :              :    :           :
+   :==========================================================================:
+                                                                        Page 38
+OPER/TAPLIB DOCUMENTATION
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 39
+OPER/TAPLIB DOCUMENTATION
+
+
+                                  APPENDIX IV
+                                  -----------
+
+                            DAILY TAPE LOGOUT FORM
+                            ----------------------
+
+       WHENEVER TAPES ARE "RELEASED" OR "TRANSFERRED", THEY ARE LOGGED  OUT  ON
+       THIS FORM AND STAMPED ACCORDINGLY.
+
+       :============================================================:
+       :C:A:B:   TAPE    :DATE AND TIME:   SIGNOFF   :T:T:T:R:T:SEE :
+       :U:L:A:DESCRIPTION:======:======:======:======:O:O:U:E:R:    :
+       :S:L:C:           :      :      :      :      : : :R:L:A:BACK:
+       :T:F:K: S (STORE) :      :      :      :      :R:C:N:E:N:    :
+       :A:I:U:           :      :      :      :      :A:U:O:A:S:NO. :
+       :P:L:P:R (RESTORE):      :      :      :      :C:P:V:S:F:    :
+       :E:E: :           :      :      :      :      :K:C:E:E:E:    :
+       : : : :           :OUT   :IN    :OUT   :IN    : : :R:D:R:    :
+       :=:=:=:===========:======:======:======:======:=:=:=:=:=:====:
+       : : : :R123       :1200  :      :      :      :RELEASED FROM :
+       :X: : :TID 0001   :12-7  :      :RD    :      :BT TYMNET      :
+       :=:=:=:===========:======:======:======:======:==============:
+       : : : :R999       :1300  :      :      :      :              :
+       :X: : :TID 9999   :12-12 :      :RD    :      :TRANSFERRED   :
+       :=:=:=:===========:======:======:======:======:==============:
+       : : : :           :      :      :      :      :              :
+       : : : :           :      :      :      :      :              :
+       :=:=:=:===========:======:======:======:======:==============:
+       : : : :           :      :      :      :      :              :
+       : : : :           :      :      :      :      :              :
+       :=:=:=:===========:======:======:======:======:==============:
+       : : : :           :      :      :      :      :              :
+       : : : :           :      :      :      :      :              :
+       :=:=:=:===========:======:======:======:======:==============:
+                                                                        Page 40
+OPER/TAPLIB DOCUMENTATION
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONALLY LEFT BLANK
+                                                                        Page 41
+OPER/TAPLIB DOCUMENTATION
+
+
+                                  APPENDIX V
+
+                 COMPILING AND SPOOLING ALLFILE STATUS REPORT
+                 --------------------------------------------
+
+       TO COMPILE THE "ALLFILE" STATUS REPORT, LOG INTO  FREMONTDOC  ON  SYSTEM
+       F74.  AFTER LOGGING IN, TYPE "MAGNUM" AND FOLLOW THE EXAMPLE BELOW.
+
+       "."MAGNUM
+       (DATE AND TIME OUTPUTS)
+
+       "=:SCHEMA AF"
+       "LOADING ALLFILES"
+       "EXECUTION"
+
+       "CURRENT CENTERS ARE:"
+       "FRMT"
+
+       "ENTER THE CENTER ID:"  FRMT
+
+       "CURRENT SYSTEMS ARE:"
+       (LISTED HERE ARE THE SYSTEMS THAT ARE RUNNING AT FREMONT)
+
+       ">"REP
+
+       "DATE OF REPORT?"  (ENTER TODAYS DATE)
+
+       "ENTER WIDTH OF REPORT IN CHARS:"  130
+       "ENTER THE FILE NAME FOR THE REPORT ALLFILES.RPT:"  ALFILE.FRE
+        "EXISTING FILE - OK?" Y
+
+       ">"Q
+
+       "EXECUTION COMPLETED"
+
+       :Q
+       (DATE AND TIME OUTPUTS)
+
+       "EXIT"
+                                                                        Page 42
+OPER/TAPLIB DOCUMENTATION
+
+
+       AFTER THE REPORT HAS BEEN COMPILED, CALL THE SPOOL PROGRAM.
+
+       "."SP
+
+       "SPOOL 6.2"
+
+       ":"SP
+       "BILL TO CUSTOMER?" N
+       "REQUESTED BY:" TAPE LIBRARIAN
+       "PROJECT CODE:"ALFILE.FRE
+       "TELEPHONE NUMBER:" 2509
+       "FORMS:" LARGE
+       "PARTS:" 1
+       "OPTIONS:" LINES=60,COPIES=6,CENTER
+       "DELIVER BY:" PICKUP
+
+       "PICKUP ADDRESS"
+       "BT TYMNET, INC."
+       "FREMONT COMPUTER OPERATIONS"
+       "4340 SOLAR WAY"
+       "FREMONT, CA"
+
+       "ADDITIONAL DELIVERY INST. TO CONT-D:" HOLD FOR TAPE LIBRARIAN.
+
+       GIVE A COPY OF THIS REPORT TO:  BATCH OFFICE, ALL SUPERVISORS (3), MIKE
+       BELLOPATRICK, AND RICK DANIELS.
+
+       THANKS (YOUR NAME)
+
+       "ENTER FILES:"
+       ALFILE.FRE
+
+       "  # PAGES          ALFILE.FRE"
+
+       "ANY QUESTIONS CONCERNING THE REQUEST,"
+       "PLEASE CALL (415)498-2588"
+       (TIME AND DATE OUTPUTS)
+       "  #  FILES SPOOLED"
+       "  # PAGES"
+       "SPOOL REQUEST NUMBER #####"
+
+       ":"Q
+
+       "."
+                                                                        Page 43
+OPER/TAPLIB DOCUMENTATION
+
+
+                                     INDEX
+                                     -----
+
+       Add tape check-off list . . . . . .  8
+       Adding tapes  . . . . . . . . . . .  7
+       Allfile MICRO/MAGCON sample . . . .  18
+       Allfile MICROFICHE  . . . . . . . .  17
+       Allfile schedule  . . . . . . . . .  16
+       Allfile status report . . . . . . .  15
+       Allfiles  . . . . . . . . . . . . .  16
+       Appendix I  . . . . . . . . . . . .  27
+       Appendix II . . . . . . . . . . . .  31
+       Appendix III  . . . . . . . . . . .  35
+       Appendix IV . . . . . . . . . . . .  39
+       Appendix V  . . . . . . . . . . . .  41
+       ASP file rotation . . . . . . . . .  20
+
+       Cleaning tapes  . . . . . . . . . .  25
+
+       File tapes  . . . . . . . . . . . .  5
+
+       Index . . . . . . . . . . . . . . .  43
+
+       Magnetic board  . . . . . . . . . .  24
+
+       Off-site storage  . . . . . . . . .  19
+
+       Preparing tapes for shipment  . . .  22
+
+       Records . . . . . . . . . . . . . .  5
+       Released and scratched  . . . . . .  10
+       Released/returned to user . . . . .  9
+       Releasing tape check-off list . . .  11
+       Releasing tapes . . . . . . . . . .  9
+
+       Scratch tapes . . . . . . . . . . .  5
+       Spooling allfile status report  . .  42
+       Spooling tape release form  . . . .  36
+
+       Table of contents . . . . . . . . .  3
+       Tape labels . . . . . . . . . . . .  5
+       Transferring tapes  . . . . . . . .  13
+
+       Unscheduled ASP tape return . . . .  20
+
+  +
+X
