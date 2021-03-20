@@ -1,0 +1,793 @@
+************************************************************************
+
+**                     PROPRIETARY INFORMATION                        **
+
+**                                                                    **
+
+**  MCI Telecommunications Corp' s proprietary rights are included    **
+
+**  in the information disclosed herein. The recipient, by receiving  **
+
+**  this document, agrees that neither this document nor the          **
+
+**  information disclosed herein nor any part thereof shall be        **
+
+**  reproduced or transferred to other documents or used or disclosed **
+
+**  to others for manufacturing or for any other purpose except as    **
+
+**  specifically authorized in writing by MCI Telecommunications      **
+    
+**  Corp.                                                             **
+
+************************************************************************
+
+=====================================================================
+
+MCI  DEVELOPMENT
+
+SOFTWARE RELEASE 
+
+=====================================================================
+
+A.  ReleaseFile header
+
+A.1  Release type:
+
+BETATEST
+
+A.2  ReleaseFile location: ~/t2e/05.37/doc/t2e05.x37
+
+A.3  Product identifier:
+
+T2e(38)
+
+A.4  Product name:
+
+T-II Gateway,
+
+T-II NodeCode
+
+A.5  Development product manager:
+
+Joy Yu, x6130, UNIX mail ID jwyu@spiff
+
+A.6  Release ID:
+
+NodeCode Release 5.37
+
+Within BT Development, source set known as control number 19.
+
+A.7  Developer(s) responsible for release:
+
+Scott Wedel
+
+A.8  Release date: 
+
+February 03, 1994
+
+
+
+------------------------------------------------------------------------------
+
+B.  Approvals
+
+B.1  Date of betatest release: 2-22-94
+
+B.2  Approved by: Joy Yu, Pam Keller, Bob Beckett, and Jim McWalters
+
+B.3  Date of limited release:
+
+B.4  Approved by:
+
+B.5  Date of full release:
+
+B.6  Approved by:
+
+------------------------------------------------------------------------------
+
+C.  Release features
+
+MCI Development has taken ownership of this software product which has been developed and 
+supported by CS&S - and then by Operations Support - for about five years.  It is running in the 
+Tymnet Global Network in a majority of the "switcher" nodes at this time, and is known as "5.36 
+NodeCode" although it has never been formally released. By agreement between the development 
+group, management and Test&Measurement, we consider the code running in the public net to be 
+a "baseline". This release file contains descriptions of changes made to that baseline to produce 
+the software being released.
+
+C.1  New Features
+
+C.1.1.  Supervisor NodeCode Base Support Changes:
+
+o  Added split supervisor NodeCode Base support of the sio rings. 
+This includes changes in I file to get ring address.
+
+o  Added support for ISIS ring connect svc 62 in which NodeCode port must match SIS port 
+or ISIS rejects the kio connection. If it is rejected by ISIS then the reject reason and a 
+descriptive error message is returned to user.
+
+o  Changed SUPIN service logic (checking of bit arrays) to service each port only once and 
+to resume the search where it left off. The old logic would search the whole array each 
+time and after completing would see if any ports should be serviced again (even though 
+the conditions to allow that were extremely rare). New implementation is at least an order 
+of magnitude faster than previous logic.
+
+o  If NodeCode Supervisor Base then after each message from the supervisor,the code calls 
+lep and immediately processes the message if it was for NodeCode. This should prevent 
+supervisor base from ever buffering more than one message and thus the supervisor base 
+should never backpressure the supervisor.
+
+o  Created TYMEND macro which needs to be at end of nc tymfile if using new macros and 
+a supervisor. This macro kills tymfile macros which will otherwise create assembly 
+errors. 
+
+o  Added XRAY SR R or SR S to display sup backpressure rings. Also have option of 
+ST.GMT which saves GMT and FASTC of exactly when a msg appeared or was written 
+in the sup backpressure rings.
+
+o  Changed NodeCode crash logic to dismiss for 30 seconds before restarting if Split Super-
+visor Base, to prevent the supervisor from not noticing that NodeCode died-crashed then 
+restarted.
+
+o  Added SUPWAT network monitoring to sup base code. The display and search options 
+are now in decimal. The display will use 9 or 10 digits instead of the standard 8 digits if 
+the number is a 9 or 10 digit number.
+
+C.1.2.  XRAY Changes:
+
+o  New Commands
+
+ BF - Added XRAY BF command which displays the ports buffering more than the 
+given threshhold.
+
+BP - Added XRAY BP command which displays the channels that are backpressured.
+
+CR - Added CR channel mapping command.
+
+DC - Added DC I command to display ISIS's crash table.
+
+FS - BP XRAY command is replaced by FS command. This command is used to add 
+or delete destination nodes from the list of those given  4* tclass cps.
+
+HE - Added Xray .Help. to give info on commands. Many syntax errors now give 
+`Usage: xxxxxx' instead of `??'. Also the XRAY HE command only lists com-
+mands available to the user.
+
+KW - Added XRAY KW command to display cps stats for each kenrel port.
+
+LR - Added XRAY LR command which displays last transmitted and received resets 
+for the line.
+
+MM - Added MM display of segment usage.
+
+NL - Added XRAY NL command which displays various static link info for every 
+link (each link is one line of the display).
+
+SN - Added SN command to crash node. This is a cmd that existed in the Solo node 
+and was not made available for NC under ISIS. It is SUPERPRIV and AUDIT-
+TED. It crashes the node with crash type A863 and lets the crash logic decide 
+what happens next. The point of this command is to recover a node that some-
+how got badly messed up without having to restart the entire node via ISIS. the 
+slots should not have to be restarted just because nc had to be restarted. I do not 
+see this cmd as any sort of security/operational problem as SUPERPRIV XRAY 
+can easily crash the node via other commands. The crash logic only makes a 
+summary table entry and does not make a detail table entry for this crash (ie; 
+only save time, crash code and address into the summary table list of crashes, 
+but does not save the registers).
+
+SR - Added XRAY SR R or SR S to display supervisor backpressure rings. also added 
+option ST.GMT which saves GMT and FASTC of exactly when a message 
+appeared or was written in the supervisor backpressure rings.
+
+TS - Added XRAY TS command to allow tracing of sup ports when sup base.
+
+ZP - Added a new XRAY ZP <chn> command. It zaps the selected circuit. The cmd 
+is superpriv and auditted. This command allows any network circuit to be 
+cleared without having to also zap other circuits. This should be a nice help to 
+support when some interface needs to have a circuit cleared. The current choice 
+is between which interface has to be restarted and clear all circuits and thus is 
+not pleasant. The ZP command accepts either chn of the circuit, but for it to zap 
+the circuit, one end of the circuit must be to a link (ie not in login mode or wait-
+ing for rebuild). Those should be transient states and are much trickier to zap 
+from xray.
+
+o  Major changes to the XRAY parser to allow backspacing (including over the command) 
+and strict verification of number of arguments.
+
+o  Made some internal changes to the xray parser to save the index to the command being 
+executed which allowed simplifying the audit logic.
+
+o  Changed size of address table entry (used for xray) to 10 bytes and changed alignment of 
+the address in that table to be on even byte boundary. Old size was 12 bytes. This also 
+caused changing the SYAD macro and simplifying the XRAY RS/WS/SY commands.
+
+C.1.3.  Crypto Log Changes:
+
+o   Changed crypto log logic to no longer require the log size be a powerof 2.
+
+o   Added CRYPTO Messages:
+		 3C - SIO RING WENT DOWN
+		 3D - SUPERVISOR GONE TO SLEEP.
+		 3E - SUPERVISOR COMMUNICATING AGAIN.
+		 3F - GATEWAY HOST UNACCEPTABLE (in Inet).
+		 4C - LINK REJECTED DUE TO BAD GUY LIST.
+		 4F - ISIS KERNEL DID NOT SEND ZAPACK ON KIO
+			 CIRCUIT.
+		 55 - SOFTWARE CHECKSUM ERROR ON GOOD HDLC FRAME
+	 	 56 - KIO CONNECT FAILED (for new connect SVC 62)
+		 57 - ADDITIONAL INFORMATION ON WHY KIO CONNECT FAILED
+		 78 - SIO RING CONNECT FAILED
+
+o  Expanded the range of scales available in the BS command as MAC V means some con-
+figurations have more buffer space than previously possible.
+
+o  Added username LOCAL XRAY for audit log and crypto log auditted command message 
+instead of previous DLOAD. This name cannot be matched by a name in the needle as it 
+not part of the goodguy table.
+
+o  Changed the delay circuit logic to not crash if it gets escaped data and the sending of time 
+logic does not care if the time is sent with escaped bytes.
+
+o  Removed NXRM from KD display as that is an unused field that I finally deleted. Instead 
+KD displays SUSC (number of suspended chn left over from last bubble on the link 
+(which is used to delay bubbling if reason for bubble is due to lack of free channel that 
+are not suspended).
+
+o  Changed XRAY's determination of size of segment F to match that of ISIS which varies 
+for different versions of ISIS. This affects attempts for users to read segment F. Previ-
+ously, if ISIS was v14 then user could not read all of segment F presented by ISIS.
+
+o  Changed QC display of second line rebuild information to put more descriptive header 
+over the information and to display the data in proper radix.
+
+o  The XRAY NS command now displays time of peak logical and phsycial cps.
+
+o  Added REASON field to crypto message 3d Sup Gone To Sleep so it can be determined 
+if reason is sup didn't put anything in control ring for 8 secs or if sup send port 0 msg with 
+high bit set (going to sleep).
+
+o  Got QC when rebuild to display rebuild information (which is information on the other 
+end of the circuit) correctly if querying from the link channel or dispatcher channel. Also, 
+no longer displays the second line if circuit is a passthrough.
+
+o  Added performance log. The switch PL.NUM specifies how many entries and enables 
+the functionality. Switch Pl.All is defaulted to be true if a switcher and false otherwise. It 
+determines whether all cps statistics are kept or just averages, and min and max exec.
+
+C.1.4.  Debugging Code Changes:
+
+o  Switch DBGQUT which allows writeout of a bad gen (in case of debugging). Currently 
+set true and should be set to false before release.
+
+o  Force DB.DEB to 0 as it enables too much code that will crash in legal situations. The 
+code under that switch is left in the code as it shows how the programmers thought certain 
+bugs in those areas might be caught.
+
+C.1.5.  Applied Backpressure Enhancement:
+
+o  Added support for apply backpressure. This code causes NC to send a backpressure mes-
+sage if it wants the other end to stop sending data. The sending end can keep sending 
+limited by tclass until it gets an apply backpressure message. This function is enabled by 
+use of the TIILNK tymfile macro by puttng A.BP in the satellite field. Example:
+		 TIILNK(2030,,16,a.BP,MS)
+If enable(aplybp) is in the tymfile then the node will not request apply bp when bringing 
+up a link unless the other end requests it first.
+
+o  Changed apply backpressure logic in yakyak so that if FSTDAT is enabled (default) then 
+apply backpressure is checked 8 times a sec instead of twice. Basically, to support fast 
+speeds better requires relieving backpressure more often and might as well also check to 
+apply more often to reduce possible problems with excessive buffering due not slow 
+applicaton of backpressure.. Also, no longer put empty apply and release backpressure 
+logical records in packet. if set is empty then it puts nothing in the packet and if apply is 
+empty then it puts C0 (empty backpressure relief record). Both cannot be empty as oth-
+erwise no packets would be made on idle links. Empty BP relief is used since it is one 
+byte and thus completed packet is 8 bytes while empty apply requires two bytes and 
+forces packet to take 16 bytes. Thus, using C0 saves overhead and thus bandwidth which 
+could be factor on lower speed lines.
+
+C.1.6.  General Code Changes:
+
+o  Added changes for Control Number.
+
+o  Added MACV switch and NAD -V option verification to make sure the switch correctly 
+matches the option.
+
+o  Moved DMA data to segment 3. If more DMA memory is specified than used then still 
+that extra memory is used for bufferlets. Made the changes to the SIO logic to have a HW 
+mask of the address when stored in commands since MACV address shifted by 4 (stan-
+dard for SIO) wraps in command type field.
+
+o  Modified Code to allow code segment (previously seg 1) to have more than 64K of code. 
+If ISIS machine then code is in segment 0B and maybe 0C. If switcher then code is only 
+in segment 0C (so much code is turned off it will easily fit into one segment). If supervi-
+sor base then code starts in segment 0A and continues to segment 0B since segment 0C 
+is used for shared memory of the supervisor rings. The segment 2 data is now stored at 
+the end of what was segment 00 data.
+
+o  Expanded overall node as well as kernel statistics from a halfword to a word. Changed 
+the node logical cps and physical cps calculation to use fullword divides instead of half-
+word divides as more than 65kcps is possible.
+
+o  Modified code for gateway so that it now crashes if the gateway host is rejected by INET.
+
+o  Code now crashes if gateway host is rejected by INET.
+
+o  If switcher with no dispatcher logic and if v14.03 ISIS then use SVC to tell ISIS the cor-
+rect GMT when node is taken over.
+
+o  Added all the new host Product IDs.
+
+o  Changed HNPORT to a halfword from an array of size NHOSTS as a counter for the 
+number of active kio, sup and dispatcher ports.
+
+o  Added SETHEX macro to i file and changed SET macro to be in decimal radix.
+
+o  A crash has been added to the PCIS/PCI/NCI (different entries to one routine) if R3 is 0. 
+This basically means an attempt was made to peek at an empty bufferlet or well beyond 
+the point of valid data.
+
+o  New crashes have been added to WHWI0 and GHWI0 (read and write hws to buffer 0 
+and 4) if they are called for buffers other than 0 or 4. Also, WHWI0 and GHWI0 no 
+longer write escaped data to those buffers, that simplified some code a little.
+
+o  Added crash to DSIZAP logic. If going to put zapper to dispatcher ring then make sure 
+other channel number is cleared. This will be checked a bit later on when ISIS returns the 
+ZAP ACK so checking in DSIZAP makes the crash happen a few moments earlier when 
+more data is around. 
+
+o  Changed internals of goodguy macro (GG) to allow more than 254 xray usernames.
+
+C.1.7.  Null Compression Enhancement
+
+o  Added the logic to compress null (if other end agrees) and to use RTD/RMK to move data 
+from/to the dispatcher ring if in full null compression mode. Thus, a major performance 
+improvement as well as preventing escaping for null or 04-07 chars from eating up line 
+bandwidth.
+
+o  Added a fix to the null compression logic at DSOLD2 by fixing JNFS to JEFS. Bug 
+caused sending 012x signals when should have been sending 04-07 signals and sending 
+04-07 signals when should have been sending 012x signals.
+
+o  Fixed a compress null bug which at initialization caused it to reset bit 60hex bits too far 
+away. Unclear as to the effects of the bug, but could be quite nasty.
+
+C.1.8.  Accounting Changes:
+
+o  Added support for 32 bit invoice number in both node code and gateway. The new 
+accounting messages are used only if the invoice number is bigger than 32 bits. (note: 
+someone should run a testnet with 32 bit invoice numbers enabled and collect/verify 
+accounting. As far as I know all tests of 32 bit invoice number in any version of isis or nc 
+have been by programmer writing to memory and seeing if the results look okay). 
+
+o  Simplified some gateway accounting logic by correcting instruction usage. Also moved 
+a two line routine into a macro (aamkpt).
+
+C.1.9.  KIO CHANGES:
+
+o  Added logic to not release a KIO port until ISIS returns a ZAPACK. Also added a timeout 
+on this to unilaterally release the port if ISIS did not respond within 30 secs (if not by then 
+it is unlikely it ever will). 
+
+o  Added support for ISIS ring connect SVC 62 in which the NodeCode port must match 
+ISIS port or ISIS rejects the KIO connection. If it is rejected by ISIS then the reject reason 
+and a descriptive error message is returned to the user.
+
+o  Added macro dummy macro DSCSWT and have macro DSCSLT set the highest slot 
+number in the node. This is for dynamic ISIS configuration. NodeCode uses highest slot 
+number to determine how many KIO ports and thus there is no harm in having more KIO 
+ports than current number of slots as ISIS will just clear the kio connection if there is no 
+room.
+
+C.1.10.  Link Related Changes:
+
+o  Added new link snip types:
+	19 - apply bp msg with chn out of range,
+	20 - release bp msg with chn out of range,
+	21 - unexpected apply bp msg (would have been illegal link control msg),
+	22 - unexpected release bp msg (likewise also a bad link control message),
+	23 - chn number out of range (a bubble and not a needle which used to be one reason
+		 under type 5 so now type 5 is only `attempt to bubble more than 1 page'
+		 instead of both).
+
+o  Modified many of the link statistics field one minute accumlators to a word instead of a 
+halfword. They could wrap in a lightly loaded PXL II pretty easily.
+
+o  Did some rearranging of modules by putting xhosts before yakyak this allows link stuff 
+to always be close to service routines. Also, some rearranging of code within yakyak.
+
+o  Added no_shrink support for NAIMA. This also changes reporting of freepassthroughs 
+so as to prevent a bubble if there is a lack link channels to handle the bubble.
+
+o  Renumbered the MTRFIC routine (it had 3 distinct numbering schemes)o  Moved calculating of hw/sw delay from the NS command to the MTRFIC routine as they 
+are needed for the perf log.
+
+C.1.11.  Security:
+
+o  Changed the internal channel map so that XRAY circuits can be traced and usaged 
+returned if queried via PROBE PSTAT. (still needs to be tested). This was requested by 
+security.
+
+o  Added logic so that privilege of 6 is needed for usernames to change goodguy list. If no 
+username has that privilege then the XRAY code to modify the goodguy list is not even 
+assembled. The goodguy list cannot be modified to give another user privilege of 6, but 
+can remove that privilege.
+
+o  Changed TA/TD/TC to suppress displaying of password data if displaying command cir-
+cuit passthroughs or if sup base monitoring a network node. The passthrough case works, 
+the sup base case is untested.
+
+o  Added audit log with the AL XRAY command. AUDSIZ is the size of the ring (default 
+= 1K).
+
+C.1.12.  Line Speed Related Changes:
+
+o  Added code to allow specifying SIO lines to be optimized to service 256kb line. It is 
+declared via LU(SIO,mboard,ports,256) ex LU(SIO,0,0,256). That requires no changes 
+to ISIS as it used an otherwise unused field in the existing macro. This causes that line to 
+have an input area 4 times bigger than normal SIO lines as a 256kb line could wrap the 
+previous 1k input area between line getting serviced. The SIO input area of 4k for 256kb 
+line is big enough that code should always be able to service line input before it wraps. 
+The 256kb line also gets an SIO output queue of length 4 which should allow code to send 
+at 265kbs when EXEC count is in the 80s (when internal code overhead is near minimal). 
+
+o  In addition, the code now recoqnizes TIILNK speeds of 64, 72, 128 and 256. The SIO 
+line speed, if declared is used over calculated line speed for link speed if link speed is not 
+declared in the TIILNK macro. So new link speed determination is:
+1) if declared in tiilnk macro
+2) otherwise sum of line speeds
+	2.A) Line speed declared via LUDEF macro. <= NEW step
+	2.B) Line speed calculated during reset period.
+The ND command still shows link speed. The NS L command displays line speed (ie 
+LUDEF speed if declared). The NL command displays line speed calculated during the 
+reset process. Note that transit packet serialization time (XMIT delay) and bandwidth uti-
+lization use the new expanded entries to be accurately determined for 64, 72, 128, 192 
+and 256 kb lines. Also, the pseudo line speed of a MS is now 80kb instead of the previous 
+100kb. 80kb is closer to actual line speed of most ocl lines.
+
+o  If NCPRIO is set then all circuits originating on this Node have TClass of 8,192 CPS.
+
+o  Changed PRIORITY bit array to be for all channels. 
+
+o  Changed dispatcher backpressure limits to allow priority circuits to buffer twice as much 
+data before sending backpressure message to ISIS. This opens up the timing window a 
+bit for high speed circuits as some hosts are slow to start sending after being backpres-
+sured. 
+
+o  Call DISBPS (send release backpressure to dispatcher) in 1/8th sec logic instead of 1/4th 
+sec logic. Previously, for a host to do 8kcps it would have to send the data very smoothly 
+over each one sec period as getting backpressured would likely result in NodeCode emp-
+tying the buffer before sending backpressure relief. With this and the above change, a 
+host can burst data to node code and still do 8kcps. Verified with tput hosts.
+
+o  Changed RMKBPP scheduling in YAKYAK to cancel priority backpressure service 
+when doing normal backpressure service (in case not being able to make a packet allowed 
+both to get sent). Normal runs before priority and servicing normal also services priority 
+so the priority backpressure service is always going to find nothing to do when both are 
+scheduled.
+
+o  Changed NCPRIO switch to set priority bit in all needles originating from this node. As 
+this removes selective setting of priority bit, the FSTHOST and FSTNODE macros are 
+changed to say they are obsolete. Also, the xray FC command which modified/displayed 
+those lists has also been removed. The code that supported recognizing CCT 29 or control 
+and setting priority bit if either preset was also removed as priority is set regardless when 
+getting a needle from sup. Note that all of this change applies to when NCPRIO is true.
+
+C.2  Fault corrections
+
+o  Removed the need for the NCV530 symbol when genning a ISIS supervisor base. This 
+was needed a few versions ago to tell ISIS to put the supervisor shared memory in seg-
+ment 0C instead of segment 05.
+
+o  Deleted obsolete code for SOLO split sup sio rings and the massive SOLO SPLIT Super-
+visor Base special trace routines.
+
+o  Remove crash display text msgs that could only be displayed if SOLO.
+
+o  Fixed MA command to work in mac v machines.
+
+o  Fixed bug of not grabbing channel that will be used in the delay circuit logic. Also fixed 
+bug that caused delay circuits to think they were rebuildable.
+
+o  Fixed LT <num> Z to not be a syntax error.
+
+o  Changed size of address table entry (used for xray) to 10 bytes and changed alignment of 
+the address in that table to be on even byte boundary. The old size was 12 bytes. This also 
+caused changing the SYAD macro and simplifying the XRAY RS/WS/SY commands.
+
+o  Fixed XRAY command defintion for DS command. It was missing a comma which 
+allowed DS followed by numeric arguments (DS 1 2) to not be flagged as an syntax error.
+
+o  Fixed clearing of crypto log and other crash data. This was caused by the combining of 
+the data segments and S0SIZE ended up including the crash information.
+
+o  Removed incorrect reference to a nonzero alfred block in the CTA table.
+
+o  Removed many GL statements as they are no longer needed (used to be needed when 
+assembling the code as small individual files (ie when under development).
+
+o  Removed last NAD68 switches as NAD68 is not supported and is always 0.
+
+o  In many parts of the code lines with labels followed by HS 0 have been editted to delete 
+the HS 0 and put the next line of code on the same line.
+
+o  Cleaned up KIO port logic to use GCI routine instead of doing that via inline code. 
+Cleaned up other parts of data moving code as previous logic was needlessly obscure.
+
+o  Changed APPEND logic to only copy forwards via the RTD microcode and to not used 
+GCD/WCD to attempt to copy backwards.
+
+o  Fixed trace of internal ports. The value to be loaded was "10+(nku+7)/8" when it should 
+have been "(10+nku+7)/8". Difference of 14 bytes.
+
+o  Possibly fixed reset bug found by Telematics of slave sending out a 33A2 in response to 
+a 33A1. Bug was if first reset seen from neighbor was a 33A1 then the logic which copies 
+first received reset header to the xmitted reset header would start things off at 1 instead 
+of 0. Fix is to change a jump at ATTL01 from ATTA5 to ATTA6. This should be done 
+in all versions. For v6.05 the jump at ATTL30 to ATTL40 should instead be to ATTA6. 
+
+o  In control number 7 is the NodeCode dispi logic checking of aux circuit license has been 
+removed. Dynamic ISIS configuration means NodeCode cannot be sure of a slot's 
+license. This also means that if there is old ISIS out there that does not check aux circuit 
+license then slots in those machines could build aux circuits without having the license.
+
+o  Fixed bug in goodguy name search that would have prevented any 9 to 12 character name 
+from working. Bug was introduced in v5.35 by CS&S after my departure.
+
+o  Fixed KSPEED to put tiilnk speed in correct reg so that correct value is stored in KSPD 
+and so if TIILNK has speed declared (ie MS) then a speed of 0 (frozen) is no longer 
+reported. This bug was introduced in the 256kb line code.
+
+o  Added fix in xray TN cmd definition as per Sandra Nilluka. The minimum number of 
+arguments was missing in the DFXCM macro and thus no arguments was no longer 
+accepted as valid.
+
+o  Minor fix at start of xray PL command to fix PL 5 which should have displayed 5 entries, 
+but had the number in the wrong register. The PL 5 h (5 hours of entries) and PL 5 D (5 
+days of entries) worked fine.
+
+o  Fixed bug where XNDSAV which is part of xray user block was referenced without XD 
+as the index register (it had no index reg). This caused a halfword write to location 150 
+or so when person issued ND command. In gateway 5.37 this location was orig host num-
+ber in the pseudo needle request.
+
+o  Fix bug introduced some place up above when I cleaned up some gateway code calling 
+accounting routines. AASWAP converts CHN to dispatcher CHN and uses it for sending 
+dispatcher msg. That routine was used to subtlety convert CHN to dispatcher port as 
+AASWAP did not restore CHN to original value. Instead of relying upon AASWAP to 
+convert to CHN, AASWAP has been changed to expect CHN to have dispatcher port and
+
+o  thus not alter it. The lep call to AASWAP was changed to call it with CHN have dis-
+patcher chn.
+
+o  Removed all the unused LOGII code under the T2GATE switch as gateway does not sup-
+port log 2. If some time in the future the LOG II gateway has to be made to work then this 
+code could be restored from archives.
+
+o  Fixed bug in PL command which had it save PORTs two bits off from correct so PORTs 
+would display as 0, but passthroughs would have an outrageously large number. bug in 
+plca80 routine which had a shift 2 bits short of correct.
+
+o  Fixed minor display bug in ND command which caused GMT field of last link status 
+change to be indented one space if the line was once up, but is presently DOWN.
+
+D.  Installation information
+
+D.1  Installation instructions:
+
+There is now a makefile (Makefile) and product confiuration file (make.t2e.image) that 
+replaces the command file. Also there is a new set of sample configuration files; 
+t2emac3.gateway.cfg, t2emac3.interface.cfg, t2emac3.switcher.cfg, t2emac5.gateway.cfg, 
+t2emac5.interface.cfg.
+
+E.  Compatibility information
+
+E.1  Hardware compatibility
+
+Certified for: Compact-XL, Mini-Engine, Micro-Engine, Pico-Engine, Engine, PXL-I, PXL-II
+
+E.1.1.  Memory Requirements and Allocation
+
+Methodology: A minimum configuration was generated ( it wasn't absolutely minimum: it 
+included Log-II, line tester, and a large goodguy list ). Each feature was added to see how it 
+changed the code size. 
+
+o  The first sync line requires extra memory: it forces the assembly of the sync code ( in 
+5.35 and subsequent versions, the sync code is under a switch so that it does not assemble 
+if no sync lines are in use). 
+
+o  The memory required to support rebuild is highly dependent upon the number of dis-
+patcher ports. 
+
+o  Debuggers are of questionable value as they collect info only of interest to support when 
+trying to track down a problem. System configurators are advised against including 
+debuggers unless they are known to be needed to collect specific data.
+
+
+
+Minimum basic requirements:
+
+
+
+	 	ISIS - 156 KB (with 1 other slot, 64 dispatcher ports,
+
+			 64 passthrus, 1 SIO line, and 1 network link)
+
+
+
+	 Additional requirements to the above:
+
+
+
+	First Sync line -			3 KB
+
+	Additional Sync line -			0.5 KB
+
+	Network link (WSIZE 8) - 			3 KB
+
+	Additional SIO line - 			1.5 KB
+
+	64 dispatcher ports without rebuild -			7 KB
+
+	64 passthroughs - 			7 KB
+
+	Debugger on -			18 KB (??? All options???)
+
+	Rebuild on with 64 dports - 			21 KB
+
+	Rebuild on with 128 dports - 			30 KB
+
+	
+
+Discussion is appropriate regarding the size of the DMA area on Mac-V nodes. 
+Recommendations are 64K for an interface node and 250K for a switcher. Any extra memory 
+in the DMA segment is used for bufferlets, so the overall code size and amount of buffer space 
+is not affected by having the DMA segment bigger than required. The DMA segment is limited 
+on how much bigger it can be than minimum required. There cannot be more extra memory in 
+the DMA seg than NodeCode has room for bufferlets: that means that the non-DMA code and 
+data will not fit in the non-DMA memory. An assembly error message is displayed when this 
+happens.
+
+E.1.2.  Firmware Configurations:
+
+o  Microcode 18.0 or up
+
+E.2  Co-configuration compatibility:
+
+E.2.1.  Compatible Software Configurations
+
+o  ISIS 11 or up.  Compatible with all types of ISIS which are the equate style
+for ISIS 11 and older, the macro tymfiles of ISIS 13, and the simplified
+tymfiles of ISIS 14 and 16.
+
+E.3  Network/Application products compatibility:
+
+o  SCLP capability is not provided in this product.
+
+E.4  Tools dependencies:
+
+        HOST OPERATING SYSTEM:	Sun UNIX 4.2 Release 3.5
+
+        HOST UTILITIES/TOOLS:	NAD 3.10  (S/N 45)
+
+	BITS 5.04  (C/N 51)
+
+
+
+PDP10 Host operating systems require the use of NAD 1.10 for proper assembly of the 
+TARGET directive.  Do not try to assemble this code on a PDP10 without NAD 1.10. 
+
+F.  Known faults for this release
+
+G.  Release package
+
+G.1  Source files:
+
+	File Names
+
+	-------------------------------------------
+
+	~/t2e/05.37/src/t2e05.h37
+
+	~/t2e/05.37/src/t2e05.i37
+
+	~/t2e/05.37/src/t2e05.p37
+
+	~/t2e/05.37/src/t2e05.q37
+
+	~/t2e/05.37/src/t2e05.r37
+
+G.2  Source include files /inc:
+
+G.3  Object files /obj:
+
+G.4  Library files /lib:
+
+G.5  Binary files /bin:
+
+G.6  Maintenance management patch files /pat: 
+
+G.7  Unix "man" pages /man:
+
+G.8  Reference files /ref:
+
+	Makefiles and Sample Product Configuration files are provided:
+
+
+
+	~/t2e/05.37/bin/Makefile
+
+	~/t2e/05.37/bin/make.t2e.image
+
+	~/t2e/05.37/bin/t2e05.c37.MACV.GNS
+
+	~/t2e/05.37/bin/t2e05.c37.engine.GNS
+
+	Sample Configuration files (Tymfiles) are provided:
+
+
+
+	~/t2e/05.37/cfg/t2emac3.gateway.cfg
+
+	~/t2e/05.37/cfg/t2emac3.interface.cfg
+
+	~/t2e/05.37/cfg/t2emac3.switcher.cfg
+
+	~/t2e/05.37/cfg/t2emac5.gateway.cfg
+
+	~/t2e/05.37/cfg/t2emac5.interface.cfg
+
+G.9  ReleaseFile and any installation instructions files /doc:
+
+This release file is provided in three forms: 
+
+o  release.file.frm is Framemaker format, which should be used if Framemaker is available 
+
+o  release.file.ps is postscript, in case Framemaker is not available but a postscript-capable 
+printer is available, and 
+
+o  release.file.asc is ASCII, which is not attractive and should be used only if the above 
+options are not available.
+
+The paths are:
+
+
+
+	~/t2e/05.37/doc/t2e05.x37
+
+
+G.10  Checksum file:
+
+A file containing checksums for all files - including this document - is provided:
+
+        ~/t2e/05.37/cksum.cus
+
+
+G.11  Linecounts
+
+The linecounts of the released files are...
+
+
+
+	FILE	TOTAL	SOURCE
+
+	tii05.h37	9	3
+
+	tii5.i37 	3240 	2079
+
+	tii05.p37 	12 	10
+
+	tii05.q37 	12 	10
+
+	tii05.r37 	55576 	37573
+
+	---------	--------	--------
+
+	Totals	 	58849 	39675
+
+
+
+TOTAL => All source lines
+
+SOURCE => All-comment lines not counted
+@d
