@@ -1,0 +1,2187 @@
+xxxxxxxxxxxx
+111111111
+22222222
+	
+
+PICO ENGINE INCOMING INSPECTION AND INSTALLATION	       24 OCT  1990
+---- ------ -------- ---------- --- ------------
+
+The following document is intended to assist field service personnel in the
+inspection and  installation of the  PICO Engine.  The following steps must
+be followed for each  installation, and  although time  consuming will help
+reduce the amount of installed failures.  This document is not intended  to
+replace the PICO Engine Maintenance Manual, but simply to supplement it.
+
+This  document can  be found online on all PDP-10's under (NTS)PICO.INS and
+on the PUBLIC net SUN system GEMINI in the following path:
+
+        /home/gemini/nts/bruces/pico.ins
+
+
+This document is broken down into two (2) main sections:
+
+   o  inspection and installation
+   o  troubleshooting hints
+
+The first section, inspection and installation, outlines the steps required
+to  successfully bring up the PICO  engine from  scratch.   This section is
+targeted  primarily for  the field  service personnel  involved in the PICO
+installation.
+
+The  second section,  troubleshooting  hints,  covers  areas  of   interest
+involving  bring-up failures  and general  information.   This  section  is
+targeted for field service personnel and technical support personnel.
+
+
+REFERENCE DOCUMENTATION:
+
+    NPD-603     PICO Engine Maintenance Manual
+    PICO.DOC    PICO Engine Field Service Manual
+    
+    TERMIT.DOC	TERMITE Communications Program User Guide
+    PROLIT.DOC	TI ProLite PC to Engine Communications Procedures
+
+The PICO Engine Maintenance Manual (NPD-603) is available through BT-TYMNET
+Technical  Publications,  while  the  Field  Service  Manual  (PICO.DOC) is 
+available on-line in the NTS username on all PDP-10's.
+
+The TERMITE and ProLite PC communications documentation files are available
+in the NTS username on all PDP-10's.
+
+For  a quick  check of  the version  of firmware  installed in the PICO the
+following part numbers should appear on the IOC EPROMS:
+
+     Part Number	Version        Checksum     Release Date
+     ---- ------        -------        --------     ------- ----
+
+     790278-010         2.00 (Even)      408173       19-SEP-90
+     790279-010         2.00 (Odd)       513EAA       19-SEP-90
+
+     790278-009         1.11 (Even)      408634       17-MAY-90
+     790279-009         1.11 (Odd)       5112B8       17-MAY-90
+
+     790278-xxx         1.10 (Even)      40B375       30-MAR-90
+     790279-xxx         1.10 (Odd)       513C74       30-MAR-90
+
+     790278-008	        1.9  (Even)      40A247       16-JAN-90
+     790279-008         1.9  (Odd)       512879       16-JAN-90
+
+     790278-007		1.8  (Even)      408E4D       11-NOV-89
+     790279-007         1.8  (Odd)       5112BD       11-NOV-89
+
+     790278-006	        1.7  (Even)       56B8        07-DEC-88
+     790279-006         1.7  (Odd)        61AE        07-DEC-88
+
+
+NOTE:  Version 1.9   was a  very  limited  release and  not fully deployed.
+       Version 1.10  was a  very  limited  release and  not fully deployed.
+       Version 1.11  was a  very  limited  release and  not fully deployed.
+       Version 1.12  was a  very  limited  release and  not fully deployed.
+
+       Version 2.00  is NOW in  a  very  limited release  and will be fully
+       deployed once the field test has been completed.
+
+       The EVEN EPROM is located at IOC IC location 5H.
+       The ODD  EPROM is located at IOC IC location 5L.
+
+
+
+PHASE 1  -  INSPECTION:
+----- -     ----------
+
+1.  Visually inspect the shipping container, noting any damage to it.
+
+2.  Remove the  PICO engine  from the  shipping container.   Remove the top
+cover and visually inspect all components, noting any damage to it.
+
+
+
+PHASE 2  -  PRELIMINARY CHECKOUT:
+----- -     ----------- --------
+
+1.  Remove the  IOC and  EP boards  from the chassis.   Seat all components
+on both boards.  Note the serial numbers on the IOC, SCC and EP boards, and
+revisions levels on each.
+
+2.  Re-install the EP and IOC boards and all related interconnect cabling.
+
+3.  Power checkout:
+
+    o  Verify that the power supply jumper (W1) is connected to the correct
+       stake for the intended AC power source (110 or 220 volts).
+
+    o  Verify that the strap on the power supply  at W4 is connected to the
+       +12v DC post.    
+	
+    o  Verify  that the configurable fuse box in the lower left  corner  on
+       the  rear panel  is set  to the  appropriate  AC power supply source
+       (110 or 220 volts).
+
+    o  Verify that the  power  switch  on  the  back  panel  is  in the OFF 
+       position.
+
+    o  Verify that the variable resistor on the component side of the power
+       supply  (located adjacent  to the  DC  out  TB2  terminal  block) is
+       adjusted for +5 VDC.    With the  AC power cord DISCONNECTED measure
+       the resistance across R50 and adjust it to 392 ohms.   This step  is
+       necessary to insure that the +5 VDC adjustment  is reasonably  close
+       to nominal so that the IC chips will not  be damaged if the unit  is
+       powered on and the +5 VDC is set too high.
+
+    o  Connect the AC power cord to the receptacle on the back panel.
+
+    o  Power on the unit.
+
+    o  Verify  that the power  supply voltage is set to 5.10 VDC.  If it is
+       not adjust it by doing the following:
+       
+         A convenient GROUND post is provided on the PICO  IOC board by IC
+	 location 10K.   Measuring the  DC output  at TB2  PIN 1 and PIN 2
+	 with  the  voltmeter  ground referenced on the IOC,  set the trim
+	 pot to provide +5.10 VDC out.  This will provide +5.05 VDC across
+	 the  EP board installed below the IOC.   Use  a light  touch when
+	 adjusting  the  pot!   The voltage  must be adjusted and measured
+	 while under load which means that  the IOC and EP boards  will be
+	 installed.    Do  not  turn  the  pot  radically  or  excessively
+	 high DC  levels could be presented to the PICO board components!!
+	 Rotating  the pot  clockwise will  increase the +5 VDC level out,
+	 reduction is achieved by counterclockwise rotation.
+
+    o  Verify that both fans are operational.
+    
+    o  Verify that the  DIAGNOSTIC  STOP LED (Red) on the front of the unit
+       flashes one (1) time at  power on to indicate the unit is attempting
+       to execute the boot  program.  If it  does  not,  check the watchdog
+       timer jumper on the IOC is enabled by a jumper connecting E42-E43.
+
+    o  Verify that the RUN LED (green) is illuminated and remains so.
+
+
+
+5.  BBU Module Setup.
+
+If  the BBU module is already installed in the PICO engine, Step 5 below is
+all  that is necessary.   Step 5 involves  adjusting  the  Battery Charging
+circuit card and MUST be done before the PICO goes into production.
+
+To  install the  battery backup   option  in  the  PICO  Engine perform the
+following steps:
+
+  1.  On the  Battery Charging PCB (P/N 470303-001),  check that  the  heat
+  sink  located  at the  lower right  hand corner is mounted in a  vertical
+  manner.   If  it  is  NOT (meaning that  the  heat  sink is  mounted in a
+  horizontal manner),  the following  steps must  be performed to bring the
+  Battery  Charging PCB to Rev Level E.  These steps  are necessary because
+  the  transistor at  location Q3 was running too hot  and burning the PCB.
+  The steps necessary for this rework are as follows:
+      
+        o  Remove the  transistor at  location  Q3  by removing  the
+	   screw from the  mounting plate and de-soldering the three 
+	   transistor legs.
+	
+	o  Install a  new  2N6121  transistor VERTICALLY at location
+	   Q3 (transistor P/N  350033-001).  This transistor MUST BE
+	   mounted in a  vertical position in order to install  the
+	   heat sink properly.
+
+        o  Install  the  heat sink (P/N 580008-001) and mounting kit
+	   (P/N  580113-001)  to  the  back  of  the  transistor  at
+	   location Q3. 
+  
+      NOTE:  Some battery charging circuit PCB's  were  silkscreened
+             with P/N 470505-001.  This is not correct, the  correct
+	     P/N is 470303-001.
+
+  2.  Install the  Threshold Detector  circuit board (P/N 470311-001)  onto
+  the PICO Engine backplane.   The components  will  face the backplane and
+  the 74HC74 I.C. will be upwards.   Carefully plug the PCB onto  the  pins
+  of  the  backplane  making sure both  sets of pins mate properly with the
+  connectors  on  the  PCB.   Then  secure the PCB to the standoff with the
+  washer and screw provided.  
+
+  3.  Locate the BBU jumper on the PICO backplane.  This  jumper should  be
+  moved to the  lefthand  two pins  for battery backup operation.
+
+  4.  Locate the 3-wire BBU  cable tie  wrapped  to  the  battery hold-down
+  brackets on  the floor  of  the PICO chassis.  It is tie-wrapped there to
+  keep it  out of the way  when the BBU option is not installed.  Clip  off
+  the tie wraps to allow the 3-wire  cable to  be extended fully.   At this
+  point you must  determine whether  one, two, or three battery modules are
+  to be installed  with your  PICO. 
+
+  5.  The next  step is  to  adjust  the  battery  charging  circuit  board
+  on each battery module  that will  go  into  the  PICO.  A battery module
+  consists  of a  nicad  battery,  sheetmetal  cover  and  battery charging
+  circuit PCB  attached to the sheetmetal cover.   A  PICO  fitted with one
+  battery module can hold   memory for 12 hours.  A  PICO  fitted  with two
+  battery modules  daisy-chained  can  hold memory  for 24  hours.   A PICO
+  fitted  with  three battery  modules  daisy-chained  can  hold memory for
+  36 hours.)
+
+  The adjustment  must be  performed on each  battery  module  individually
+  (NOT daisy-chained) as follows: 
+     
+	o  Remove the  battery connector  from J2   on  the  battery
+	   charging circuit PCB.  
+
+	o  Place  a  blue  jumper  at  location  E1 (on  the Battery
+	   Charging PCB [470303-001 PCB]). 
+
+	o  Plug the PICO  BBU  3-wire connector into J1 on the  PCB.
+	
+	   NOTE:  DO  NOT POWER  ON THE  PICO ENGINE  IF ANY  OF THE
+	          CONNECTORS ARE  UNPLUGGED  FROM THE  BACKPLANE  AS
+		  THIS WILL  WILL RESULT  IN A BLOWN POWER SUPPLY.
+
+        o  Turn on the PICO and make sure it is running bootstrap by
+   	   observing the CRT display plugged  into  the CONSOLE port 
+	   on the back panel.
+
+        o  Use  a digital voltmeter  to measure  between ground  and
+           the anode side of  the diode  D2  and adjust  pot  R8 for
+	   5.25 volts D.C.   
+	   
+	      REMEMBER:  This adjustment  is performed  with  a blue
+	      jumper  installed  at E1 on the  Battery Charging PCB,
+	      the  battery  plug   disconnected   from  J2  and  the
+	      daisy-chain   disconnected  from J3.  The  PICO 3-wire
+	      BBU cable  is connected to J1.  A very simplified view
+	      of the Battery Charging PCB is as follows:
+
+	      
+	                                    **  Adjustment pot R8
+	                                   *
+	                                   v
+	             +--------------------+==+---------+
+		     |  |                 +==+     |   |
+		     | +-+                        +-+  |
+	             | | |      J2     |          | |  |
+		     | | |            +-+         +-+  |
+                     | | |    J    J  |D|          |   |
+		     | | |    1    3  |2|              |
+		     | +-+            +-+              | 
+		     |  |         E1   | <*   +======= |
+		     |                    *   =  ===== |
+		     |                    *   ======== |
+		     +---------------------------------+
+		                          *
+					  *
+					   ***  Test point for volt
+					        adjustment
+						
+		     
+           This   adjustment  must  be  performed  on  EACH  battery
+	   charging PCB individually (with the blue jumper installed
+	   during the adjustment).  Once the adjustment is performed
+	   the blue jumper is left installed on E1 only on the first
+	   Battery Charging PCB  (if there are more than one:  i.e .
+	   the  one connected to  the  3-wire  cable  from the  PICO
+	   wiring  harness).  
+
+	o  Connect  the  3-wire  cable to J1  of the  first  battery
+  	   module  PCB.  In the case of more than one battery  being
+	   installed connect  the daisy  chain cable  from J3 of the
+	   first  battery module PCB to J1 of the second.   If there
+	   are three battery  modules,  connect another  daisy chain
+	   cable from J3 of the second to  J1 of  the third  battery
+	   module.
+
+	o  Connect the single wire lead of the Battery  Module cable
+	   to TP1 on the IOC card (part number 470298-001).   TP1 is
+	   located at  approximately 9H on the component side of the
+	   IOC card.  The single wire lead can be routed up from the
+	   BBU across the face of the  IOC  and EP cards,  or routed
+	   through the chassis PCB mounting rails between the ON/OFF
+	   switch  and  the  DC  fan  then,  across  the top  of the
+	   IOC card.  
+
+  If the trickle charge circuit is  already installed  on the  PICO,  CHECK
+  THAT THE CHARGING  CIRCUIT IS  ENABLED BY INSURING  THAT THE  SINGLE WIRE
+  LEAD OF THE BATTERY MODULE CABLE  IS CONNECTED TO TP1  ON THE IOC.   This
+  cable may be  mistakenly connected to a ground  post,  which disables the
+  entire trickle charging mechanism.
+  
+  NOTE:  IF  THE  TRICKLE CHARGE  CIRCUIT IS  MISADJUSTED IT  CAN  HAVE  AN
+         ADVERSE AFFECT ON THE PICO MEMORY OPERATION.
+
+  The  following steps are only necessary on BBU modules  that do not  have
+  the  trickle  charge circuit  already installed.   Older  models  of  BBU
+  module did  not have this  circuit and need  to be  upgraded,  while  the
+  newer models  already have this in  place.   These steps are:
+
+        o  Insert the Battery Module cable (part  number 160389-001)
+	   into the J2  keyed connector on the  Battery Charging PCB
+	   (part number 470303-001).
+
+        o  Connect the RED wire of the Battery  Module cable to  the
+           positive lead on the battery (usually designated by a red
+	   label).
+
+        o  Connect the  BLUE wire  of the  Battery Module  cable  to 
+	   the  negative lead  on the battery (usually designated by
+	   a blue label).
+
+        o  Connect the GREEN wire of the Battery Module cable to the
+	   PCB  to  Battery  cable  (part  number 160455-001).   The
+	   connection can be  to  any  point of the 4 lead connector
+	   as the 4 leads are soldered together.
+
+	o  Connect the single wire lead of the Battery  Module cable
+	   to TP1 on the IOC card (part number 470298-001).   TP1 is
+	   located at  approximately 9H on the component side of the
+	   IOC card.  The single wire lead can be routed up from the
+	   BBU across the face of the  IOC  and EP cards,  or routed
+	   through the chassis PCB mounting rails between the ON/OFF
+	   switch  and  the  DC  fan  then,  across  the top  of the
+	   IOC card.  
+
+
+     NOTE:  If more than one BBU is installed on the PICO, each 
+            subsequent BBU will follow steps 1 through 4 above.
+
+
+PHASE 3  -  DIAGNOSTIC CHECKOUT:
+----- -     ---------- --------
+
+1.  Connect a  standard 1200 baud async terminal to the CONSOLE PORT on the
+rear  panel of  the unit.  The console  port is  the 9-pin connector on the
+rear panel.   This connection  requires a  DB-9 to DB-25 cable (part number
+160319-001), if one is not available the pin-outs for the  console port are
+in the TROUBLESHOOTING HINTS at the end of this document.
+
+2.  PICO Engine On-board Diagnostic checks. 
+ 
+    o  From the console port, enter two (2) CONTROL-N's  to move from  the
+       ENGBug mode to the IOCBug.  This is signified by a console terminal
+       display prompt of "IOCBUG>".
+    
+    o  To perform  the default  tests  type  "ST *" followed by a carriage
+       return.  This will run self tests 1-8.   The self tests  will print
+       some garbage on the terminal  during execution, then  return to the
+       ENGBug mode when completed.   The garbage printed during  execution
+       is  a banner that is sent out at 4800 baud as a means of indicating
+       the tests  are  still  running.    These  default tests  will  take
+       approximately 10 SECONDS to complete.   If any anomalies are found,
+       the self  test  will  print a  4 character  status  message  before
+       returning to the ENGBug mode.  This 4 character  error code  can be
+       found in the TROUBLESHOOTING HINTS sections of this document.
+    
+    o  To perform the extended EP RAM test (self Test number 9), return to
+       IOCBug  same as  the above.    At the  IOCBug  prompt  type  "ST 9" 
+       followed  by a  carriage return.    Upon completion  of  this  test
+       control  will  be  returned  to   ENGBug.    Self Test 9 will  take
+       approximately 25 MINUTES to complete.   If any anomalies are found,
+       the self   test  will  print a  4  character status  message before
+       returning to the ENGBug mode.  This 4 character  error code  can be
+       found in the TROUBLESHOOTING HINTS sections of this document.
+
+
+3.  Standalone PICO Engine Diagnostic checks.
+
+If  a PC is available  with the diagnostic NIB files and TERMITE on it, use
+the  PC to  load the diagnostics via the PICO engine console port.  This is 
+done by the TBOOT  command in ENGbug.   If no  PC is available, connect the
+network connection line and have NETCON,  NSSC or the NCC downline load the
+diagnostics across the network line.
+
+See  (NTS)TERMIT.DOC and (NTS)PROLIT.DOC for reference on doing TTY loading
+of diagnostics.
+
+The  following diagnostics  can be found in (BETADIAG) on all PDP-10's, and
+should be executed in the following order:
+    
+    o  DCPU version 4.01.  Filename DCPU41.NIB  -  25 passes.
+
+    o  DMAC version 7.01.  Filename DMAC71.NIB  -  25 passes.
+
+    o  DSIO version 4.01.  Filename DSIO41.NIB  -  50 passes.
+    
+       Remember  to note  the channel  strapping  BEFORE  loading the DSIO
+       diagnostic.   The DSIO  diagnostic requires  manual modification to
+       SCC templates for channels 0 and 1 to provide OUTPUT clocks.   This
+       is  necessary   because  channels  0  and  1  (DMA nels)   are
+       pre-configured for INPUT  clocks  and require that the templates be
+       changed or the default clocking strategy will result in errors.  In
+       addition this also  requires  that the  hardware straps  be changed
+       on all channels pre-configured for INPUT clocks be changed to allow
+       OUTPUTTING of clocks.   Modifying  of  the  SCC  templates  is done
+       through the console  port in the  ENGBug mode.   An example of this
+       can  be found  in the  TROUBLESHOOTING HINTS  section at the end of
+       this document.  Upon completion of the DSIO diagnostic, insure that
+       the hardware I/O  straps are set  back to their original positions,
+       or that they are set according to the  configuration intended to be
+       run on the PICO.
+
+
+PHASE 3  -  NETWORK INSTALLATION:
+----- -     ------- ------------
+
+1.  Power OFF unit.
+
+2.  Connect  cables for all network channels.  Double check the appropriate
+hardware  strap setting  for  each  channel.    Verify  that   the  TYMFILE
+configuration  for  each  channel (the  NAM.M macro) is compatible with the
+hardware  strapping  for  the  channel.    Any  discrepancies  between  the
+production configuration (hardware) and the software configuration needs to
+be resolved before the PICO is loaded.
+
+3.  Connect cables  for all application slot  channels.   Double check  the
+appropriate  hardware strap  setting for  each channel.   Verify  that  the
+TYMFILE configuration  for  each  channel  (the  NAM.M macro) is compatible
+with the hardware strapping  for the channel.   Any  discrepancies  between 
+the  production configuration  (hardware)  and  the software  configuration
+needs to be resolved before the slot is loaded.
+
+4.  Power ON unit.
+
+5.  Load production code into machine.  The successful downline load can be
+noted  on the front  console display in ENGBug (on the console port).    If
+the  downline  load  is not  successful,  check  the  TROUBLESHOOTING HINTS
+section at the end of this document.
+
+6.  From the console port, enter a CONTROL-N to move  from the ENGBug  mode
+to  the TTY  mode and at  the  LOGON  prompt  log into DDT in slot FF (ISIS 
+kernel).   Enter the  following DDT  commands  to  look  at  the  state  of
+the node:
+
+    [ Note:  Terminate EACH command with a carriage return ]
+
+    o  ?DIAG
+    o  ?HIST
+    o  ?MEM
+
+The  ?DIAG  and  ?HIST commands will display any  activity relating to ISIS
+that may have occurred on the node since it was loaded.  The ?MEM will show
+any memory parity error that have occurred.
+
+Now move to the  node code  and check the crypto log for any problem areas.
+This is done by the following DDT and XRAY commands:
+
+    o  ^0
+    o  ?STAT
+
+    o  CL
+    o  ND
+    o  HS
+
+The  CL,  ND and HS commands are XRAY commands to print the crypto log, the
+node state and host status of all hosts on the node.  Look for any abnormal
+message reports in the crypto log such as HDLC checksum errors, bad BORI's,
+line outages, etc.  The ND display will show if the nodes link(s) have come
+up and if any crashes have occurred.  The HS command will display the state
+of  all hosts  on the  node and these states should be verified by the NCC,
+NSSC or NETCON.
+
+7.  Exit from  the console port by typing a  CONTROL-C in XRAY, and two (2)
+CONTROL-N's to move back to the ENGBug mode.
+
+8.  Remove the console cable.
+
+9.  Replace the cover.  DO NOT stack PICO engines.
+
+10.  Leave TYMFILE copy with PICO engine.
+
+
+TROUBLESHOOTING HINTS:
+--------------- -----
+
+1.  NO RESPONSE ON CONSOLE PORT.
+
+The  Console port on  the PICO engine is designed to run at 1200 baud ONLY.
+Check  that the  async terminal  connected is  set to  this speed.  
+
+If the terminal is set to 1200 baud, check if the DIAGNOSTIC STOP (red) LED
+on the  front  of  the unit  is illuminated.    If the  LED is  illuminated,
+recheck all of the cabling connecting the IOC and EP boards.
+
+If  the DIAGNOSTIC STOP LED is  NOT illuminated or is  flashing the unit has
+encountered  an error condition  before the start-up mechanism can complete.
+The following can be double checked:
+       
+    o  Backplane jumpered for BBU when none is present, or vice versa.
+
+    o  BBU module battery not charged.
+    
+    o  BBU Threshold Detector PCB (on backplane) is bad.
+
+    o  BBU Battery Charging PCB (on BBU) is  bad, misadjusted, or the
+       1/4 amp fuze on right edge is blown.
+    
+    o  Check cabling between the IOC and EP boards.
+    
+    o  Reseat all socketed IC's on the IOC and EP, checking as you go
+       for any IC's that may have bent legs.
+
+If  all steps  in the in  PRELIMINARY CHECKOUT section have been re-checked
+and  the  unit still  will not  bring up  the ENGBug prompt,  the  unit  is
+quite possibly  DEAD.   At this  point a  call to your Technical Support is
+definitely in order.
+
+2.  CONTINUOUS RE-BOOT.
+
+The  most  common cause of  this type  of failure  is a  bad  BBU Threshold
+Detector  card.   This can be verified  by removing the BBU and powering on
+the  unit.   If the unit boots  normally,  some component  of  the  BBU  is
+defective, probably the Threshold Detector card.
+
+3.  FAILS SELF TEST.
+
+There  is little than  can be done in the field should the Self Test result
+in  a failure  of any kind.   There are several  things that can be checked
+before the unit is declared DEAD:
+
+    o  Check the +5 VDC adjustment.
+
+    o  Find the error code description from the SELF TEST ERROR  CODE 
+       section in the TROUBLESHOOTING HINTS section of this document.
+       This may give  you some  indication of where to  begin looking
+       for a possible fix (EP or IOC).
+       
+    o  Check cabling between the IOC and EP boards.
+    
+    o  Reseat all socketed IC's on the IOC and EP, checking as you go
+       for any IC's that may have bent legs.
+    
+
+
+4.  STANDALONE DIAGNOSTIC ENCOUNTERS "RECEIVE ERROR: 41" MESSAGE.
+
+This  message may appear  when a  standalone  diagnostic (DCPU, DMAC, DSIO)
+has been loaded into a PICO engine and a terminal has been connected to the
+console  port in  the TTY I/O  mode.   If this message  appears,  check the
+version of the PICO engine firmware and the version of the  diagnostic that
+has been loaded into the PICO.  The version restrictions are as follows:
+
+
+     PICO firmware 1.7 or LOWER:
+     
+         DCPU version 4.00
+	 DMAC version 7.00
+	 DSIO version 4.00
+
+
+     PICO firmware 1.8 or HIGHER:
+     
+         DCPU version 4.01
+	 DMAC version 7.01
+	 DSIO version 4.01
+
+The  changes necessary in  the interrupt  structure (firmware version  1.8)
+eliminated an interrupt throttle PAL, and without changes to the diagnostic
+code, the PICO is simply overrun with interrupts.  The diagnostics for PICO
+1.8 or higher can be found in the BETADIAG username on all systems.
+
+
+
+5.  DSIO DIAGNOSTIC ENCOUNTERS ERRORS.
+
+If  the error count is very small  (1 in 1000  passes), the error is caused 
+by a very obscure bug in the  diagnostic timing that has continually evaded
+detection  by the diagnostic development group.  This is NOT a problem, and
+therefore can be ignored.
+
+If the error count is very high, or continuously rising, check the clocking
+strategy for both the hardware and software.  The default clocking strategy
+is defined in the  Section  5 (Fails to Downline Load), while the templates
+for the clocking strategy can be modified from the Console port (in  ENGBug 
+mode) as outlined  in the Console SCC Template Modification section.  It is
+important that when  the diagnostic is  running the  PICO  engine be set to
+provide clocks from the SCC template (software)  and hardware  (jumpered on
+the IOC) sides.
+
+In  addition to  the  clocking  strategy  (hardware jumper and software SCC
+template modification for channels 0 and 1), check that DSR is jumpered for
+ALL channels or the DSIO diagnostic will report errors in Test 1.
+
+
+
+6.  FAILS TO BOOT.
+
+Several items may result in the PICO engine firmware not executing the BOOT
+when required:
+
+    o  Power-on reset FCO missing.
+    o  Watchdog timer not enabled.
+    o  Console Mailbox errors.
+
+The first  item, power-on reset FCO, involves  a visual check of the IOC IC
+at location 7A.   If the IC at  that location  is manufactured  by National
+Semiconductor there should be a 3.3 uF capacitor installed between location
+7A-3(+) and 7A-8(-).   If the IC at 7A is manufactured by Motorola or Texas
+Instruments the capacitor  should NOT  be present.  For further information
+on this refer to FCO 89-366.
+
+The second item, watchdog timer not enabled, is self explanatory.
+
+Should  the CONSOLE  MAILBOX error condition occur, check that the firmware
+EPROMs do not  have  any damaged legs, also paying special attention to the
+IC's at the following IOC PCB locations:
+
+     o  11H  (Interrupt mechanism)
+     o   8K  (ITACK)
+     o   2M  (YD control decode)
+
+If  after checking/seating the IC on the IOC and the EP-to-IOC interconnect
+cables the CONSOLE MAILBOX errors  still occur,  this  unit may be declared
+DEAD, but not before consulting with your Technical Support first.
+
+
+
+7.  FAILS TO DOWNLINE LOAD.
+
+This  is the  most common  problem  experienced  when  bringing  up a  PICO
+engine.   The PICO  engine has  a default boot strategy resident in IOC ROM
+in  regards to  the channel  configurations.   This  boot configuration  is
+loaded  into IOC RAM during the power on reset sequence to provide a set of
+SCC templates for each channel.  This default SCC template is as follows:
+
+			  PORTS 0 - 7
+
+    ASYNC:       Baud Rate          = 9600
+                 TX Clock Source    = Baud Rate Generator
+                 RX Clock Source    = Baud Rate Generator
+                 TX Clock Direction = INPUT
+                 RX Clock Direction = INPUT
+
+    TYMSYNC:     Baud Rate          = 9600
+                 TX Clock Source    = TX Clock Pin
+                 RX Clock Source    = RX Clock Pin
+                 TX Clock Direction = INPUT
+                 RX Clock Direction = INPUT
+
+                          PORTS 2 - 7
+
+    HDLC/INT:    Baud Rate          = 9600
+                 TX Clock Source    = Baud Rate Generator
+                 RX Clock Source    = RX Clock Pin
+                 TX Clock Direction = OUTPUT
+                 RX Clock Direction = INPUT
+
+                          PORTS 0 - 1
+
+    HDLC/DMA:    Baud Rate          = 9600
+
+                 RX Clock Source    = Baud Rate Generator
+                 TX Clock Direction = INPUT
+                 RX Clock Direction = INPUT
+
+Check  that the  channel the  downline load  is being attempted on conforms
+to  this  above  strategy.   This  can  be done  by  checking  the  channel
+information from a terminal connected  to the  console port  in the  ENGBug
+mode  and typing   "SD <channel number+8>", followed by  a carriage return.
+The  channel number must be a HEX value, and to simply view the status of a
+particular channel enter the channel number plus 8 (channel numbers  0 to 7
+are used to change the SCC template values, while  channels 8 to F are used
+to  verify  the SCC templates for  channels 0 to 7).    Additionally verify
+that the hardware  strapping matches the intended configuration in terms of
+clock directions.
+
+The  clocking  strategy  is  the  most  common  overlooked item in the PICO
+configuration.
+
+
+
+8.  LOADS FINE, BUT LINE WILL NOT COME UP.
+ 
+The  second most common problem during  the initial  installation of a PICO
+engine.   The first items  to check are that the hardware straps on the IOC
+match  those  configured in the  TYMFILE.   Configuration of  the  ISIS SCC
+templates is done  via the  NAN.M  macro in  the TYMFILE, and  the hardware
+straps  MUST match these.  Using the terminal attached to the console port,
+verify  that each  channel is  configured according  to the intended target
+code, noting in particular the following items:
+
+    o  protocol
+    o  channel speed
+    o  clocking strategy
+
+If these are all correct, use the console port to access local XRAY through
+the  TTY MODE (use CONTROL-N's to get to TTY I/O prompt) and check the XRAY
+crypto log for any line related messages.
+
+
+
+9.  BBU MODULE FAILS TO RETAIN MEMORY.
+
+There  are several  factors that could lead  to the situation where the BBU
+fails to function in the prescribed manner:
+
+   o  Bad Threshold Detector PCB (on backplane).
+   o  Misadjustment of the Battery Charging PCB (on BBU).
+   o  Trickle Charge mechanism not installed.
+   o  Dead nicad battery.
+
+Refer  to PHASE 2 (PRELIMINARY  CHECKOUT), Step 5 (BBU Module) for insuring
+that  the Threshold  Detector PCB  is properly  adjusted,   and the trickle 
+charging scheme is implemented.
+
+The  battery used in the PICO BBU module is a 6 volt 3 amp/hour nicad type.
+It  must be  charged at  a rate  of  300 mA for 14 hours.   These batteries
+have  a lifespan  of approximately 10 years, with a non-charging shelf life
+of about 12 months.
+
+If the voltages  on the  BBU module  itself are  within range, yet the PICO
+will  not  retain  the  memory  image, the  Threshold Detector  PCB on  the
+backplane may be bad and should be replaced.
+
+
+10.  CODE GENERATION NOTES.
+
+There  are several items of interest in the PICO engine tymfile that should
+be  noted in this  document.  A sample  TYMFILE can  be found at the end of
+this  document, along with  the associated commands files for ISIS and node
+code.  The points to be noted are as follows:
+
+
+   o  MEMORY ALLOCATION
+
+      The PICO engine memory is broken down as follows:
+
+           000000x -  1FFFFx  ROM
+	   400000x - 41FFFEx  PICO RAM
+	   800000x - 8FFFFEx  Engine RAM
+
+      To  manually clear  the PICO  engine memory  via  the  console port
+      move  over to  IOCBug (using  CONTROL-N's to  switch  contexts) and
+      issue the byte fill command as follows:
+
+           BF 400000 41FFFE 0
+
+      The last 64K bytes of memory are reserved and can NOT be configured
+      for use  in any interface.   This memory  range  is  from F0000x to
+      FFFFEx.   These  areas of  memory were  originally reserved for the
+      S-Bus window  in the TSI product.   A portion of this  area is  now
+      used  for  the  PICO  to  "talk"  to  the  SCC devices (I/O control
+      block 0).  A breakdown of  the memory usage is as follows:
+      
+           F0000x - F001Ex  Message block
+	   F0020x - F003Ex  I/O control block 0
+	   F0040x - F201Ex  I/O control blocks 1-255
+	   F2020x - FFFFEx  S-Bus window
+
+
+
+   o  MERLIN
+   
+      Version  4.00 or  greater  MUST  be used and the assembly option /T
+      must  be  included  in the command line in order to assure that the
+      memory  byte boundaries are set to  1024 and not  256.   The  68010
+      IOC's   require  the 1024 byte  boundaries, unlike the engine which
+      requires a 256 byte  boundary.   Failure  to include the /T options
+      can and  will result in illegal  memory references  or instructions
+      in code being executed on the PICO.
+
+
+   o  BITS
+
+      To  load a  PICO engine  via the  BITS program  on UNIX, the second
+      prompt  (HARDWARE TYPE) MUST be  "U"  for PICO  engine.  If this is
+      not entered,  the PICO  will perform  the same  as described in the
+      MERLIN section above.
+
+
+   o  INTERFACES
+
+        o  The GATEWAY slot TYMFILE must include the same options  as the
+	   ISIS tymfile in regards to machine type.
+
+        o  X.25
+
+           o  X.25 must  have the following  patch to avoid the  infamous
+	      E0 crash during initialization:
+
+	         (XCOMPAT)E0NEW.vrr
+
+		 where  v = version number
+		       rr = revision number
+
+              This  patch  allows  the  HDLC  (SIO)  line  initialization
+	      adequate time to complete before the SIO status is polled.
+
+	o  SDLC
+
+	   o  SDLC must have the following Slot TYMFILE parameter:
+
+	         PICO   EQ   1
+
+	   o  SDLC must have the following Slot commands parameter:
+
+	         1[NEWSIO:
+
+	      This will  change by  2 bytes the amount of buffer space
+	      available  to  the SIO  table  and  prevent  CCW a error
+	      crashes.
+
+	   o  SDLC must have the following patches
+
+                 (SNAPAT)INCW.vvv
+		 (SNAPAT)XMTCLK.vvv
+
+		 where  vvv = version number/revision number
+
+              These patches will prevent corruption  of the  input and
+	      transmit channel command word programs (CCW's).
+
+
+	o  CONSAT
+
+	   o  CONSAT must have the following patch:
+
+	        (ASYNCPAT)PICO.603
+
+              This  patch is  used to  correct the SIO hang/answer bit
+	      DSR/CD checking for dial-ups.
+
+
+	o  TYMCOM
+
+	   o  TYMCOM must have the following patch:
+
+	        (ASYNCPAT)PICO.vvv
+
+		 where  vvv = version number/revision number
+
+	      This  patch is  used to  correct the SIO hang/answer bit
+	      DSR/CD checking for dial-ups.
+
+
+     
+
+
+   o  ISIS
+
+      Version 11.01 or greater of ISIS is  required to  support  the PICO
+      8 channel configurations.
+
+      o PATCHES
+
+        o  CONSOL.PAT    (ISISPAT)
+	
+	   This  is a  simple patch  that  disables  CIO  display of  the
+	   simulated engine  front console display on the PICO.  If there
+	   is no console terminal  connected to  the console port, or the
+	   PICO  is at  a remote  site with  no customer local access via
+	   the console port, this patch will disable the simulated engine
+	   front console  display at  the PICO  console port.  This patch
+	   has no  impact on ANY of the console modes (ENGBug,  IOCBug or
+	   TTY I/O mode), it simply prevents the constant console display
+	   from increasing the CPU and I/O overhead.
+
+        o  INTR69.PAT    (ISISPAT)
+
+	   This  is a  simple patch that will log an unexpected interrupt
+	   at address 69 in the DDT history log instead of causing a hard
+	   ISIS crash.  The unexpected interrupt at address 69 is  a PICO
+	   failure  caused  by  a  write  to  a  specific  address in the
+	   last 64K  of memory   which  is  reserved  for  communications
+	   between  the  TSI (Tymshare  Spirit Interface)  and  MicroData
+	   Spirit host.  This feature is not used in the PICO engine, but
+	   a  write to  an address  reserved for  this TSI communications
+	   will generate an interrupt from the Spirit Bus.  
+	   
+
+      o  TYMFILE statements
+
+         o  EE.BP   EQ    1
+	
+	    This statement is necessary for ALL protocols that use the old
+	    ISIS  method of backpressuring  via bit arrays.  Version 11.01
+	    of  ISIS changes the default from using bit array to  the ISIS
+	    B1 message  for backpressuring,  and not  all interfaces  have
+	    been  modified  to  accommodate this change.  Specifically, if
+	    any 32XX or CMT applications are  configured on  the PICO this
+	    equate statement MUST be included.
+
+	 o  SIOINC   EQ    1
+	
+	    This equate statement  insures that during  initialization all
+	    channels are polled during a single foreground cycle. 
+	
+	 o  NOSEG    EQ    0
+	
+	    This equate statement insures that the  node code will not use
+	    segmentation optimization during assembly.  With the NOSEG set
+	    to zero (0),  it  forces certain  node code  data to  specific
+	    segments.
+
+         o  NAN.M macro options:
+	
+	    The NAN.M macro is used to set the SCC configurations for each
+	    channel in the PICO engine.   There  are several  items in the
+	    channels configuration that are somewhat confusing:
+	    
+	 
+				   |
+				   |  Tx clock line (TTL)
+                                   |
+		           +---------------+
+	                   | 8530 SCC chip |
+		           +---------------+
+ 	                         |   |
+				 |   |
+                      Rx clock   |   |   Tx clock
+		      (RS-232)   |   |   (RS-232)
+	                      Ch A   Ch B
+
+             o  TX_CLK_LINE versus TX_CLK and RX_CLK:
+	        
+		The Tx clock line is the TTL portion of the 8530 SCC chip
+		and provides the internal clocking of the device.
+		
+		The Tx and Rx  clock are  the RS-232  portion of the 8530
+		SCC chip and provides the actual line speed.
+
+             o  EXAMPLE Options:
+
+	        NOTE:  In the following  examples channel  2 has  been
+		       selected for the  hardware strapping options as
+		       a reference  point.  The   strapping  for  each
+		       option will be the same  for all channels, with
+		       only the jumper or switch locations changing.
+
+	     
+	        o  EXTERNAL Clocking:
+		
+		     NAN.M(2,DMA,9600,RTC,TRC,IN,TRC)
+
+		     Hardware strapping:
+		        Jumpers INSTALLED:  E85-E86
+			Jumpers REMOVED:    E91-E92, E93-E94
+
+		o  PICO providing BOTH clocks INTERNALLY:
+
+		     NAN.M(2,HDL,9600,RTC,BRG,OUT,TRC)
+
+		     Hardware strapping:
+		        Jumpers INSTALLED:  E91-E92, E93-E94
+			Jumpers REMOVED:    E85-E86
+
+                     NOTE:  When  the  PICO  is  providing BOTH clocks
+		            only  the TX  side is  specified as BRG as
+			    the RX  is bridged  from the TX on the IOC
+			    by  the  jumper  E91-E92,    therefore  in
+			    essence  the BRG  for the TX  is providing
+			    the clocking for the RX side also.
+
+		o  PICO providing TX clock INTERNALLY:
+
+		     NAN.M(2,ESY,9600,RTC,BRG,OUT,TRC)
+
+		     Hardware strapping:
+		        Jumpers INSTALLED:  E93-E94
+			Jumpers REMOVED:    E85-E86, E91-E92
+
+
+		o  PICO providing RX clock INTERNALLY:
+
+		     NAN.M(2,ESY,9600,BRG,TRC,OUT,TRC)
+
+		     Hardware strapping:
+		        Jumpers INSTALLED:  E85-E86, E91-E92
+			Jumpers REMOVED:    E93-E94
+
+
+   o  HARDWARE Clocking Limitations:
+
+      o  At  the present  time the  PICO  engine  can  provide  BOTH  V.24
+         transmit  and receive clocks  on  channels 1-7.   Channel  0  can
+	 ONLY provide a  V.24 transmit clock as there is no driver for the
+	 receive clock.   In addition, the PICO engine can NOT provide the
+	 V.35 clocks on the DMA channels (channels 0 and 1).
+
+	 It is  possible to  jumper the  channel 0  transmit clock  to the
+	 channel  0 receive  clock, but  is NOT recommended.  To force the
+	 PICO  to provide  both V.24 TC  and RC,  a  3-way blue jumper  is
+	 needed  (same  kind used  for engine  sync board clocks) and  the
+	 jumper should be installed as follows:
+
+                E95-E80-E81
+
+         This method  of clocking  channel 0 is NOT recommended, nor is it
+	 supported.
+
+      o  When  running boot  on the PICO with firmware 1.8 or greater, the
+         boot  strategy  for   SCC   channel 3  will  cause the the clocks
+	 to  appear  to  "pulse"  in and  out.  This  is  due  to the boot
+	 strategy for channel 3 being the following:
+
+               HDLC    - output clocks
+	       TYMSYNC - input  clocks
+
+
+         As  the firmware  cycles between  HDLC and TYMSYNC  polling for a
+	 downline  load the  clocks will  alternate  between  being active
+	 (HDLC) or inactive (TYMSYNC).
+
+
+REMOTE ACCESS VIA THE CONSOLE PORT
+------ ------ --- --- ------- ----
+
+The  PICO  engine console port  can be connected up to a modem or an  ASYNC
+port on a  neighbor machine,  but  there are some things  to remember  when
+attempting to do this:
+
+
+    o  The ISIS kernel  must be genned  with the patch (ISISPAT)CONSOL.PAT
+       to insure  that the PICO engine  front console emulation display is
+       disabled.
+
+    o  The console port  only provides two  EIA signals (TD - pin 2 and RD
+       pin 3), so the cable  connecting  to the  PICO must be  modified to
+       bridge the signals  necessary for the CONSAT to recognize the port.
+       The console port needs no signals to function, but  the CONSAT does
+       require DCD and DTR from the device assigned to it. The CONSAT will
+       generate the signal DSR (pin 6) and therefore this signal needs  to
+       be bridged to DTR (pin 20) and DCD (pin 8) so that the CONSAT  sees
+       all of  the necessary  signals to  respond  to the  port.  The will
+       look something like the following:
+ 
+
+	   +-----------+                           +--------+
+	   |           |                           |        |
+           |  CONSAT   | -------- DSR ------------ |  PICO  |
+	   |           | ------/ DTR               |        |
+	   |           | -----/ DCD                |        |
+	   |           |                           |        |
+	   +-----------+                           +--------+
+
+
+    o  The CONSAT slot will need to have the host assigned to  the console
+       defined as an addressable port with the following options:
+
+           AID,TID15,NOALO,NOPCO,NOTXT,NONPI,NOHNG,NODSC,RBP,RCV
+
+       These options are defined in the CONSAT reference manual.
+
+
+
+
+CONSOLE SCC TEMPLATE MODIFICATION
+------- --- -------- ------------
+
+The following section will show the output channel descriptions for each of
+the  3 primary protocols  (HDLC, TYMSYNC and ASYNC), in addition to showing
+how to change the the SCC templates for any channel.  
+
+From the  console port terminal, in the ENGBug mode, the SD command is used
+to change  or  display  channel configurations.   The  context for  the  SD
+command is  SD <channel>, followed by a carriage return.  The channel value
+follows this guideline:
+
+     Channel 0 to Channel 7 - Changes the SCC template values
+     Channel 8 to Channel F - Display the current SCC template values
+ 
+
+100000070 > [CONTROL-N]
+TTY I/O : [CONTROL-N]
+
+IOCbug  : [CONTROL-N]
+
+ENGbug  : [CARRIAGE RETURN]
+
+100000070 > 
+
+                                   NOTE:  Each entry is terminated with
+				          a CARRIAGE RETURN.
+
+100000070>SD E<CARRIAGE RETURN>
+
+SCC CHAN 6 STATUS: available, MODE: SIO Emulation, PROTOCOL: ASYNC
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: TRxC, TX_CLK: BRG, RX_CLK: BRG
+BAUD RATE: 300, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_CCW_PTR-> LAST: 00000, NEXT: 00000, RX_STATE: IDLE
+TX_CCW_PTR-> LAST: 00000, NEXT: 00000, TX_STATE: IDLE
+TX->BFR: 00000, RECORD: 00000, RECORD_SIZE: 0, XON: FF, XOFF: FF, XOFFed 0
+RX-> LAST_BUFFERLET: 00000, BUFFERLET: 00000, BYTE_CNT: 0, TIMER: 0
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+44 07 00 00 00 FE 01 00   00 13 B0 C1 44 68 00 00 09 00 51 FE 01 83 80
+                          00 00 B0 C1 44 68 00 00 09 00 51 FE 01 83 00
+100000070 > SD B
+
+SCC CHAN 3 STATUS: available, MODE: SIO Emulation, PROTOCOL: TYMSYNC
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: TRxC, TX_CLK: TRxC, RX_CLK: RTxC
+BAUD RATE: 4800, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_CCW_PTR-> LAST: 01E30, NEXT: 01E34, RX_STATE: ACTIVE
+TX_CCW_PTR-> LAST: 01E28, NEXT: 00000, TX_STATE: ACTIVE
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+40 07 96 00 00 FE 01 40   00 12 90 D1 10 E8 FF FF 09 00 09 FE 01 03 40
+                          00 12 90 D1 10 E8 FF FF 09 00 09 FE 01 03 40
+100000070 > SD A
+
+SCC CHAN 2 STATUS: attention, MODE: SIO Emulation, PROTOCOL: TYMSYNC
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: TRxC, TX_CLK: TRxC, RX_CLK: RTxC
+BAUD RATE: 9600, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_CCW_PTR-> LAST: 01E30, NEXT: 01E34, RX_STATE: ACTIVE
+TX_CCW_PTR-> LAST: 01E28, NEXT: 00000, TX_STATE: ACTIVE
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+50 07 90 00 00 FE 00 40   00 12 90 D1 10 EA FF FF 09 00 09 FE 00 03 40
+                          00 12 90 D1 10 EA FF FF 09 00 09 FE 00 03 40
+100000070 > SD 8
+
+SCC CHAN 0 STATUS: available, MODE: SIO Emulation, PROTOCOL: HDLC W/DMA
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: TRxC, TX_CLK: TRxC, RX_CLK: RTxC
+BAUD RATE: 19.2k, RELOCATION: 1F000, LOWER LIMIT: 06100, WINDOW: 0CA0
+RX_PKT_CNT: 3181949, RX_CCW_PTR-> LAST: 25170, NEXT: 25178, RX_STATE: ACTIVE
+TX_PKT_CNT: 2999619, TX_CCW_PTR-> LAST: 25144, NEXT: 00000, TX_STATE: STOPPED
+TX-> RECORD: 253C2, RECORD_SIZE: 4
+TX-> DAR: FFFFC7, MAR: 0253C6, MTC: 0000, CSR: 01, CER: 00, ERR_CNT: 0
+RX-> DAR: FFFFC7, MAR: 0258E4, MTC: 009C, CSR: 09, CER: 00, ERR_CNT: 1
+RX-> BFR: 25570, BFR_SIZE: 410, FRAME: 258EE, RECORD: 258F2, RECORD_SIZE: 80
+RX_OVERRUN_CNT: 0, RX_CRC_ERR_CNT: 68, RX_ABORT_CNT: 44113, TX_ABORT_CNT: 1
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+6C 07 80 00 00 7E 00 C0   00 79 80 D9 20 EB 00 7E 09 80 09 7E 00 07 C0
+                          00 F9 80 D9 20 EB 00 7E 09 80 09 7E 00 07 C0
+100000070 > SD 6
+
+SCC Channel 6 ASYNC Baud Rate Generator: 300, WR11: 51.
+Receiver clock source: BRG, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+SCC Channel 6 TYMSYNC Baud Rate Generator: 9600, WR11: 15.
+Receiver clock source: RTxC, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_output sourced by TRxC.
+
+SCC Channel 6 HDLC Baud Rate Generator: 9600, WR11: 15.
+Receiver clock source: RTxC, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_output sourced by TRxC.
+
+SCC Channel 6 HDLC W/DMA Baud Rate Generator: 9600, WR11: 09.
+Receiver clock source: RTxC, Transmitter Clock source: TRxC.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+Present active channel protocol is ASYNC.
+Which protocol are you interested in?
+    (A) ASYNC
+    (B) TYMSYNC
+    (C) HDLC
+    (D) HDLC With DMA Data Transfers
+    (E) Bail-Out with no changes
+Enter desired selection: C
+
+Baud Rates available are:
+    (A) 50 (Not valid for Sync Modes)
+    (B) 75 (Not valid for Sync Modes)
+    (C) 110 (Not valid for Sync Modes)
+    (D) 150 (Not valid for Sync Modes)
+    (E) 300 (Not valid for Sync Modes)
+    (F) 600 (Not valid for Sync Modes)
+    (G) 1200
+    (H) 2400
+    (I) 4800
+    (J) 9600
+    (K) 14.4k
+    (L) 19.2k
+    (M) 38.4k
+    (N) 48k (Not valid for Async Mode
+    (O) 56k (Not valid for Async Mode)
+    (P) 64k (Not valid for Async Mode)
+    (Q) 72k (Not valid for Async Mode)
+    (R) 128k (Not valid for Async Mode)
+    (S) 256k (Not valid for Async Mode)
+Enter desired selection: J
+
+Note: Transmit Clock direction change also requires IOC jumpering correction.
+"Transmit Clock Line" and "Transmitter Clock" usually are from the same source.
+
+Possiblities for Transmit Clock Line:
+    (A) Transmit Clock interface line is an input
+    (B) Transmit Clock interface line is an output
+Enter desired selection: A
+
+Possible Sources for SCC Transmit (TX) Clock:
+    (A) RTxC - Receive Clock line clocks SCC Transmitter
+    (B) TRxC - Transmit Clock line clocks SCC Transmitter
+    (C) BRG  - Baud Rate Generator clocks SCC Transmitter
+    (D) DPLL - Digital Phase Locked Loop clocks SCC Transmitter
+Enter desired selection: B
+
+Possible Sources for SCC Receiver (RX) Clock:
+    (A) RTxC - Receive Clock line clocks SCC Receiver
+    (B) TRxC - Transmit Clock line clocks SCC Receiver
+    (C) BRG  - Baud Rate Generator clocks SCC Receiver
+    (D) DPLL - Digital Phase Locked Loop Clocks SCC Receiver
+Enter desired selection: A
+New Channel 6 BRG Time Constant (WR12/WR13): 00FE, New WR11: 08
+100000070 > SD E
+
+SCC CHAN 6 STATUS: available, MODE: SIO Emulation, PROTOCOL: HDLC
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: RTxC, TX_CLK: TRxC, RX_CLK: RTxC
+BAUD RATE: 9600, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_PKT_CNT: 0, RX_CCW_PTR-> LAST: 00000, NEXT: 00000, RX_STATE: IDLE
+TX_PKT_CNT: 0, TX_CCW_PTR-> LAST: 00000, NEXT: 00000, TX_STATE: IDLE
+TX-> RECORD: 00000, RECORD_SIZE: 0
+RX-> BFR: 00000, BFR_SIZE: 0, FRAME: 00000, RECORD: 00000, RECORD_SIZE: 0
+RX_OVERRUN_CNT: 0, RX_CRC_ERR_CNT: 0, RX_ABORT_CNT: 0, TX_ABORT_CNT: 0
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+44 07 B0 00 00 FE 00 00   00 13 B0 C1 44 68 00 00 09 00 08 FE 00 83 80
+                          00 00 B0 C1 44 68 00 00 09 00 08 FE 00 83 00
+100000070 > SD 6
+
+SCC Channel 6 ASYNC Baud Rate Generator: 300, WR11: 51.
+Receiver clock source: BRG, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+SCC Channel 6 TYMSYNC Baud Rate Generator: 9600, WR11: 15.
+Receiver clock source: RTxC, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_output sourced by TRxC.
+
+SCC Channel 6 HDLC Baud Rate Generator: 9600, WR11: 08.
+Receiver clock source: RTxC, Transmitter Clock source: TRxC.
+Transmit Clock Line TRxC_input sourced by EXTERNAL SOURCE.
+
+SCC Channel 6 HDLC W/DMA Baud Rate Generator: 9600, WR11: 09.
+Receiver clock source: RTxC, Transmitter Clock source: TRxC.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+Present active channel protocol is HDLC.
+Which protocol are you interested in?
+    (A) ASYNC
+    (B) TYMSYNC
+    (C) HDLC
+    (D) HDLC With DMA Data Transfers
+    (E) Bail-Out with no changes
+Enter desired selection: B
+
+Baud Rates available are:
+    (A) 50 (Not valid for Sync Modes)
+    (B) 75 (Not valid for Sync Modes)
+    (C) 110 (Not valid for Sync Modes)
+    (D) 150 (Not valid for Sync Modes)
+    (E) 300 (Not valid for Sync Modes)
+    (F) 600 (Not valid for Sync Modes)
+    (G) 1200
+    (H) 2400
+    (I) 4800
+    (J) 9600
+    (K) 14.4k
+    (L) 19.2k
+    (M) 38.4k
+    (N) 48k (Not valid for Async Mode
+    (O) 56k (Not valid for Async Mode)
+    (P) 64k (Not valid for Async Mode)
+    (Q) 72k (Not valid for Async Mode)
+    (R) 128k (Not valid for Async Mode)
+    (S) 256k (Not valid for Async Mode)
+Enter desired selection: J
+
+Note: Transmit Clock direction change also requires IOC jumpering correction.
+"Transmit Clock Line" and "Transmitter Clock" usually are from the same source.
+
+Possiblities for Transmit Clock Line:
+    (A) Transmit Clock interface line is an input
+    (B) Transmit Clock interface line is an output
+Enter desired selection: B
+
+Possible Sources for V.24/V.35 TX Clock Line:
+    (A) XTAL_OUTPUT - Crystal Oscillator drives Transmit Clock line
+    (B) TRxC - Transmit Clock line drives Transmit Clock line
+    (C) BRG  - Baud Rate Generator drives Transmit Clock line
+    (D) DPLL - Digital Phase Locked Loop drives Transmit Clock line
+Enter desired selection: C
+
+Possible Sources for SCC Transmit (TX) Clock:
+    (A) RTxC - Receive Clock line clocks SCC Transmitter
+    (B) TRxC - Transmit Clock line clocks SCC Transmitter
+    (C) BRG  - Baud Rate Generator clocks SCC Transmitter
+    (D) DPLL - Digital Phase Locked Loop clocks SCC Transmitter
+Enter desired selection: C
+
+Possible Sources for SCC Receiver (RX) Clock:
+    (A) RTxC - Receive Clock line clocks SCC Receiver
+    (B) TRxC - Transmit Clock line clocks SCC Receiver
+    (C) BRG  - Baud Rate Generator clocks SCC Receiver
+    (D) DPLL - Digital Phase Locked Loop Clocks SCC Receiver
+Enter desired selection: C
+New Channel 6 BRG Time Constant (WR12/WR13): 00FE, New WR11: 56
+100000070 > SD E
+
+SCC CHAN 6 STATUS: available, MODE: SIO Emulation, PROTOCOL: TYMSYNC
+TX_CLK_DIRECTION: TRxC_output, TX_CLK_LINE: BRG, TX_CLK: BRG, RX_CLK: BRG
+BAUD RATE: 9600, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_CCW_PTR-> LAST: 00000, NEXT: 00000, RX_STATE: IDLE
+TX_CCW_PTR-> LAST: 00000, NEXT: 00000, TX_STATE: IDLE
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+44 07 B0 00 00 FE 00 00   00 13 B0 C1 44 68 00 00 09 00 56 FE 00 83 80
+                          00 00 B0 C1 44 68 00 00 09 00 56 FE 00 83 00
+100000070 > SD 6
+
+SCC Channel 6 ASYNC Baud Rate Generator: 300, WR11: 51.
+Receiver clock source: BRG, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+SCC Channel 6 TYMSYNC Baud Rate Generator: 9600, WR11: 56.
+Receiver clock source: BRG, Transmitter Clock source: BRG.
+Transmit Clock Line TRxC_output sourced by BRG.
+
+SCC Channel 6 HDLC Baud Rate Generator: 9600, WR11: 08.
+Receiver clock source: RTxC, Transmitter Clock source: TRxC.
+Transmit Clock Line TRxC_input sourced by EXTERNAL SOURCE.
+
+SCC Channel 6 HDLC W/DMA Baud Rate Generator: 9600, WR11: 09.
+Receiver clock source: RTxC, Transmitter Clock source: TRxC.
+Transmit Clock Line TRxC_input sourced by TRxC.
+
+Present active channel protocol is TYMSYNC.
+Which protocol are you interested in?
+    (A) ASYNC
+    (B) TYMSYNC
+    (C) HDLC
+    (D) HDLC With DMA Data Transfers
+    (E) Bail-Out with no changes
+Enter desired selection: A
+
+Baud Rates available are:
+    (A) 50 (Not valid for Sync Modes)
+    (B) 75 (Not valid for Sync Modes)
+    (C) 110 (Not valid for Sync Modes)
+    (D) 150 (Not valid for Sync Modes)
+    (E) 300 (Not valid for Sync Modes)
+    (F) 600 (Not valid for Sync Modes)
+    (G) 1200
+    (H) 2400
+    (I) 4800
+    (J) 9600
+    (K) 14.4k
+    (L) 19.2k
+    (M) 38.4k
+    (N) 48k (Not valid for Async Mode
+    (O) 56k (Not valid for Async Mode)
+    (P) 64k (Not valid for Async Mode)
+    (Q) 72k (Not valid for Async Mode)
+    (R) 128k (Not valid for Async Mode)
+    (S) 256k (Not valid for Async Mode)
+Enter desired selection: J
+New Channel 6 BRG Time Constant (WR12/WR13): 000E, New WR11: 51
+100000070 > SD E
+
+SCC CHAN 6 STATUS: available, MODE: SIO Emulation, PROTOCOL: ASYNC
+TX_CLK_DIRECTION: TRxC_input, TX_CLK_LINE: TRxC, TX_CLK: BRG, RX_CLK: BRG
+BAUD RATE: 9600, RELOCATION: 00000, LOWER LIMIT: 00000, WINDOW: 10000
+RX_CCW_PTR-> LAST: 00000, NEXT: 00000, RX_STATE: IDLE
+TX_CCW_PTR-> LAST: 00000, NEXT: 00000, TX_STATE: IDLE
+TX->BFR: 00000, RECORD: 00000, RECORD_SIZE: 0, XON: FF, XOFF: FF, XOFFed 0
+RX-> LAST_BUFFERLET: 00000, BUFFERLET: 00000, BYTE_CNT: 0, TIMER: 0
+|--- Read Registers ---|  |------------- Write Registers -------------|
+00 01 02 03 10 12 13 15   00 01 02 03 04 05 06 07 09 10 11 12 13 14 15
+44 07 B0 00 00 0E 00 00   00 13 B0 C1 44 68 00 00 09 00 51 0E 00 83 80
+                          00 00 B0 C1 44 68 00 00 09 00 51 0E 00 83 00
+100000070 > 
+
+CHANNEL WEIGHTING FACTORS:
+------- --------- -------
+
+The following guide should be used for allocating PICO channels and speeds.
+DO  NOT EXCEED  100% of the accumulated weighting factor  or the  PICO will
+react in an unpredictable manner.   These weighting values are based on the
+PICO IOC  and  DO NOT  take  into  account  any  engine  (ISIS,  interface)
+overhead.   Care  should be  take to balance  the  IOC weighting and engine 
+CPU utilization when configuring a PICO engine.
+
+
+     CHANNEL | SPEED | PROTOCOL | Wt per PORT
+    -----------------------------------------
+       0-1   | 64.0K | HDLC/DMA | 32.0 each
+    ---------------------------------------
+       0-1   | 56.0K | HDLC/DMA | 24.0 each
+    ---------------------------------------
+       0-1   | 19.2K | HDLC/DMA | 08.0 each
+    ---------------------------------------
+       0-1   |  9.6K | HDLC/DMA | 04.0 each
+    ---------------------------------------
+       0-1   |  4.8K | HDLC/DMA | 02.0 each
+    ---------------------------------------
+       0-1   |  2.4K | HDLC/DMA | 01.0 each
+    ---------------------------------------
+       0-1   |  1.2K | HDLC/DMA | 00.5 each
+    ---------------------------------------
+       0-7   | 19.2K | TYMSYNC  | 96.0 each
+    ---------------------------------------
+       0-7   |  9.6K | TYMSYNC  | 48.0 each
+    ---------------------------------------
+       0-7   |  4.8K | TYMSYNC  | 24.0 each
+    ---------------------------------------
+       0-7   |  2.4K | TYMSYNC  | 12.0 each
+    ---------------------------------------
+       0-7   |  1.2K | TYMSYNC  |  6.0 each
+    ---------------------------------------
+       0-7   |  9.6K | ASYNC    | 32.0 each
+    ---------------------------------------
+       0-7   |  4.8K | ASYNC    | 16.0 each
+    ---------------------------------------
+       0-7   |  2.4K | ASYNC    |  8.0 each
+    ---------------------------------------
+       0-7   |  1.2K | ASYNC    |  4.0 each
+    ---------------------------------------
+       0-7   |  600  | ASYNC    |  2.0 each
+    ---------------------------------------
+       0-7   |  300  | ASYNC    |  1.0 each
+
+
+
+     CHANNEL | SPEED | PROTOCOL | Wt per PORT
+    -----------------------------------------
+       2-7   | 19.2K | HDLC/INT | 40.0 each
+    ---------------------------------------
+       2-7   |  9.6K | HDLC/INT | 20.0 each
+    ---------------------------------------
+       2-7   |  4.8K | HDLC/INT | 10.0 each
+    ---------------------------------------
+       2-7   |  2.4K | HDLC/INT | 05.0 each
+    ---------------------------------------
+       2-7   |  1.2K | HDLC/INT | 02.5 each
+
+
+CONSOLE PORT PIN-OUTS
+------- ---- --------
+
+The  following is  the pin-outs  for the DB-9 to DB-25  console  port cable
+(part number 160319-001):
+          
+	  Console Port			Terminal
+  	  DB-9  Female	Description	DB-25 Male
+	  ------------  -----------     ----------
+	  
+	       1	    DCD		    8
+	       2	    TD              2
+	       3            RC              3
+	       4            DSR             6
+	       5            S.GND	    7
+	       6            DTR             20
+	       7            CTS             5
+	       8            CRS             5 
+	       9            Unused
+
+
+
+
+MAXIMUM CABLE LENGTHS
+------- ----- -------
+
+The  following  information  outlines  the  maximum cable  lengths  at  the
+different speeds supported by the PICO engine.
+
+
+
+                                 Guaranteed Maximum
+                                Length of Cable (ft)
+              Data  Rate           (40 pF/ft 6 mA)
+	      ----  ----        --------------------
+
+		19,200 and up             10.0
+                 9,600                    22.6
+                 7,200                    31.3
+                 4,800                    48.6
+                 3,600                    66.0
+                 2,400                   100.7
+                 1,200                   204.8
+                   300                   829.9
+                   150                  1663.3
+                   135                  1848.4
+                   110                  2269.3
+                    75                  3329.9
+                    50                  4996.6
+
+To  insure proper  operation,  cable  length  must  not exceed  the maximum
+length listed  above to maintain  that the RS-232C  specified slew  rate is
+equal to or  less than 4% of  the bit frame time  of any given baud  rate B
+[(.04)1/B)].  The dV  used to determine  these cable lengths  presumes PICO
+operates on EIA levels of +/- 12VDC  which it in fact, does.  Should longer
+cable runs be  necessary simply use lower  capacitance cables.  20  pF/ft @
+6mA will double the cable run.   10 pF/ft @ 6mA will quadruple  the length.
+Actual laboratory testing detected no errors on 19.2K bps lines equal to or
+less than 15 Ft and 9.6K bps lines equal to or less than 25 Ft.
+
+CHANNEL STATES:
+------- ------
+
+When viewing the channel states in the ENGBug SD snap, the following is
+a generalization of the states that may be encountered:
+
+  o  IDLE
+
+     Channel  has not  been initialized  by  the application software yet.
+     This will occur during start up.
+
+
+
+  o  ACTIVE
+
+     The IOC is currently processing data.
+
+
+
+  o  CHAINING
+
+     The IOC has sent an interrupt up to the ENGINE and is waiting for the
+     ORING index  (indicating more  data to  ship) to  be  updated  before
+     continuing.  This is a NORMAL occurrence in the HDLC mode.
+
+
+
+  o  ENDING
+
+     In TYMSYNC mode, this will occur when the IOC has expired 2 character
+     times without the ORING index being updated and therefore has no more
+     data to ship.  This is a FATAL  occurrence  in the  TYMSYNC mode,  as
+     only a restart of the ISIS kernel will start the channel up again.
+
+     IN HDLC mode  this will occur when the IOC has completed shipping the
+     data and is in  transition to either  CHAINING or STOPPED.  This is a
+     NORMAL occurrence in the HDLC mode.
+
+     In ASYNC mode this will occur when the IOC has completed transmitting
+     all characters  and  is  awaiting  the  next  transmit  CCW  from the 
+     application.
+
+
+  o  STOPPED
+
+     The IOC has completed the last  command (CCW) and is waiting for the
+     next one to come from the ENGINE.   This is  a  NORMAL occurrence in
+     the HDLC mode.
+
+
+SAMPLE TYMFILE AND COMMAND FILES:
+------ ------- --- ------- -----
+
+:**************************************************************************
+:  SAMPLE PICO TYMFILE
+:      LOCATION:  NTSNET
+:          FILE:  ISIS TYMFILE
+:   NODE NUMBER:  2401
+:   KERNEL HOST:  1401
+:       VERSION:  11.01 (KERNEL CODE)
+:              :   5.22 (NODE   CODE)
+:          CORE:  1024K
+:          DATE:  11 JAN 90
+:      INITIALS:  
+:**************************************************************************
+
+:               Hardware Configuration
+
+	if	\patact	: TYMNET PICO (Node code reference)
+MACHIN  EQ      3       : 4 port PICO
+	else		: TYMNET PICO (ISIS reference)
+MACHIN	EQ	4	: 8 port PICO
+	ei
+
+ZITEL	EQ	1	:  MAC III equivalent
+NSYNC   EQ      1       :  No. of ESYNC lines                   
+M.NCARD EQ      1       :  Number of SIO mother-boards
+M.DA0   EQ      80      :  Device address for motherboard 0
+M.NP0   EQ      $A 7    :  Number of ports for motherboard 0  
+
+:               ISIS Configuration Constraints
+NSLOT   EQ      2       :  Number of application/interface slots
+NLU     EQ      $A 7    :  Max. number of logical units per slot
+EE.BP	EQ	1	:  Enable end-to-end backpressuring
+SIOINC	EQ	1	:  Ensure that all channels are polled during a single
+			:  foreground cycle at initialization
+LBOOT   EQ      1       :  Reserve 4K of memory for bootstrap
+IKNRNG  EQ      1       :  Uses negative kernel ring ptrs (ISIS 6.00 or above)
+SUP     EQ      0       :  1 if a SUPERVISOR resides on node
+TII     EQ      1       :  1 if using TYMNET-II on this node
+
+:               Node Configuration
+MACHNM  EQ      $8 2401 :  Node number
+HST0    EQ      $A 1401 :  ISIS Kernel host number
+NETID   EQ      $A   56 :  Network Identifier (NTS Net)
+SILINS  EQ      0       :  SIO Node Code V.35 or V.24 lines
+NLINES  EQ      1       :  SYNC lines for Node Code              
+NOSEG   EQ      0	:  Do NOT use segment optimization
+PTHRU   EQ      0       :  1 if passthroughs inhibitted
+NPTHR   EQ      $A  256 :  Number of passthroughs (default 256)
+
+:       Network Configuration - Neighbor, groups, window size
+
+TIILNK(2144,16,8)	:  2144-3 
+XLINKS  EQ      1       :  Number of wild card neighbors (must be WS8)
+
+:	Miscellaneous
+
+MEMRMK	EQ	3	:  Display memory usages of each module during assy
+
+P1SIZE  EQ      800	:  Increase number of bytes in Segment 1 for patches
+PHSIZE  EQ      $0 400  :  Increase number of bytes  reserved for the author
+			:  and creation time of patches
+
+
+	if	1-\patact	: ISIS definitions (ignored by Node Code)
+	
+:***********************************************************************
+:*************************  PICO SCC VALUES  ***************************
+:***********************************************************************
+
+:  NON-default SCC values (overrides the default SCC values).
+:
+:  NAN.M(a,b,c,d,e,f,g)
+:        | | | | | | |
+:        | | | | | |  -- Transmit clock line source (TRC)
+:        | | | | |  ---- Transmit clock line [input or output] (IN,OUT)
+:        | | | |  ------ Transmit clock source (TRC, BRG)
+:        | | |  -------- Receive clock source (RTC, BRG)
+:        | |  ---------- Channel baud rate (2400,4800,9600,14K,19K,64K)
+:        |  ------------ Channel type (DMA,HDL,ASY,ESY)
+:         -------------- Channel # (0-7)
+
+	
+	NAN.M(0,DMA,9600,RTC,TRC,IN,TRC)	: X.25      channel
+	NAN.M(1,DMA,9600,RTC,TRC,IN,TRC)	: X.25      channel
+	NAN.M(2,HDL,9600,RTC,TRC,IN,TRC)	: X.25      channel
+	NAN.M(3,ESY,9600,RTC,TRC,IN,TRC)	: Node Code channel
+	NAN.M(4,ASY,1200)			: CONSAT    channel
+	NAN.M(5,ASY,300)			: Unused    channel
+	NAN.M(6,ASY,300)			: Unused    channel
+	NAN.M(7,ASY,300)			: Unused    channel
+
+:
+:  Current channel weighting factor:
+:
+:      Channel  Weighting
+:      -------  ---------
+:
+:         0  	   4.0
+:         1        4.0
+:         2       20.0
+:         3       48.0
+:         4        4.0
+:         5        1.0
+:         6        1.0
+:         7        1.0
+:               ---------
+:       TOTAL     83.0 %
+:
+
+:
+:  Hardware straps (jumpers and switches) for ports are:
+:
+:    Port 0	= Jumpers at  E24-E25, E13-E14, E81-E82, E16-E17, E10-E11
+:		  Removed at  E95-E96  
+:
+:    Port 1	= Jumpers at  E29-30, E35-E36, E78-E79, E38-E39, E26-E27
+:		  Removed at  E97-E98
+:
+:    Port 2	= Jumpers at  E8-E9, E85-E86
+:		  Removed at  E91-E92, E93-E94
+:
+:    Port 3	= Jumpers at  E4-E5, E83-E84
+:		  Removed at  E87-E88, E89-E90
+:
+:    Port 4	= Jumpers at  E2-E3
+:                 Switches:   OPEN:   4A-2, 2B-1, 2B-2, 2D-4
+:                             CLOSED: 4A-1
+:
+:    Port 5	= Jumpers at  E5-E6
+:                 Switches:   OPEN:   2D-5, 2B-3, 2B-4, 4A-4
+:                             CLOSED: 4A-3
+:
+:    Port 6	= Jumpers at  E8-E9
+:                 Switches:   OPEN:   2D-6, 2B-5, 2B-6, 4A-6
+:                             CLOSED: 4A-5
+:
+:    Port 7	= Jumpers at  E10-E11
+:                 Switches:   OPEN:   2D-7, 2B-7, 2B-8, 4A-8
+:                             CLOSED: 4A-7
+:
+
+	ei
+
+
+:       SLOT 0 --- NODE CODE
+S0CORE  EQ      $A 230
+NLUS0   EQ      $A NLINES+SILINS
+S0L0    S.REF(3)
+
+:       SLOT 1 --- CONSAT  ---  ACCOUNTING HOST 12667
+S1CORE  EQ      $A 48
+NLUS1   EQ      1
+S1L0    M.REF(0,4)
+
+:       SLOT 2 --- X.25	  ---  HOST 588
+S2CORE  EQ      $A 200    
+NLUS2   EQ      3
+S2L0    M.REF(0,0)
+S2L1    M.REF(0,1)                                        
+S2L2    M.REF(0,2)                           
+
+        END
+
+;;**********************************************************************
+;;  SAMPLE ISIS COMMANDS FILE
+;;      LOCATION:  NTSNET
+;;          FILE:  ISIS CODE CMD FILE
+;;   NODE NUMBER:  2401
+;;   KERNEL HOST:  1401
+;;       VERSION:  11.01
+;;          DATE:  11 JAN 90
+;;      INITIALS:  
+;;**********************************************************************
+;; ISIS Version 11.01 Command File
+;@(SOURCE)I2IS11.I01
+;@NT2401.TYM
+;@(NTSNET)GOODGY.NTS
+;@(SOURCE)I2IS11.R01
+;X(SOURCE)I2IS11.P01
+;@(ISISPAT)INTR69.PAT
+;@(ISISPAT)CONSOL.PAT
+1;FNT2401.NIB
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%Q
+
+
+
+
+
+
+;;*************************************************************************
+;;  SAMPLE NODE CODE COMMANDS FILE
+;;      LOCATION:  NTSNET
+;;          FILE:  NODE CODE COMMAND FILE
+;;   NODE NUMBER:  2401
+;;   KERNEL HOST:  1401
+;;       VERSION:  5.22
+;;          DATE:  11 JAN 89
+;;      INITIALS:  
+;;***************************************************************************
+;; T-II VERSION 5.22 NODE CODE COMMANDS FILE
+;A(SOURCE)TII05.I22
+;ANT2401.TYM
+;A(NTSNET)GOODGY.NTS
+;A(SOURCE)TII05.R22
+;A(SOURCE)TII05.F22
+;A(SOURCE)TII05.P22
+1;FNT2401.N00
+SEG0,RSEG0;PSEG1,S1SIZE;PSEGD,SDSIZE;PSEGF,SFSIZE;PCTA,CTASIZ;P%P%Q
+
+
+
+SELF TEST ERROR CODES
+---- ---- ----- -----
+
+The following section will outline the IOCBug Self  Test errors that may be
+encountered during the execution of the Self Tests:
+
+     
+   o  UNEXPECTED ENGINE INTERRUPT ERROR CODES
+	
+	Error Code	Description
+	----- ----	-----------
+
+	   01		Illegal second decode of instruction
+	   02		Power-down interrupt
+	   03		Unused interrupt (0) active
+	   04		Unknown interrupt source
+	 
+
+
+   o  IOC ERROR CODES
+	
+	Error Code	Description
+	----- ----	-----------
+	
+	   0001		Initial IRQ4 interrupt not set
+	   0101		IOC RAM test
+
+	   0201		SCC port 0 registers
+	   0202		SCC port 1 registers
+	   0203		SCC port 2 registers
+	   0204		SCC port 3 registers		
+	   0205		SCC port 4 registers
+	   0206		SCC port 5 registers
+	   0207		SCC port 6 registers 
+	   0208		SCC port 7 registers
+	   
+	   0301		SCC port 0 loopback data
+	   0302		SCC port 1 loopback data
+	   0303		SCC port 2 loopback data
+	   0304		SCC port 3 loopback data
+	   0305		SCC port 4 loopback data
+	   0306		SCC port 5 loopback data
+	   0307		SCC port 6 loopback data
+	   0308		SCC port 7 loopback data
+	   
+	   0401		SCC port 0 interrupt
+	   0402		SCC port 1 interrupt
+	   0403		SCC port 2 interrupt
+	   0404		SCC port 3 interrupt
+	   0405		SCC port 4 interrupt
+	   0406		SCC port 5 interrupt
+	   0407		SCC port 6 interrupt
+	   0408		SCC port 7 interrupt
+	   
+	   0501		DMA channel 0 MAR register
+	   0502		DMA channel 0 DAR register
+	   0503		DMA channel 0 BAR register
+	   0504		DMA channel 0 MTC register
+	   0505		DMA channel 1 MAR register
+	   0506		DMA channel 1 DAR register
+	   0507		DMA channel 1 BAR register
+	   0508		DMA channel 1 MTC register
+	   0509		DMA channel 2 MAR register
+	   050A		DMA channel 2 DAR register
+	   050B		DMA channel 2 BAR register
+	   050C		DMA channel 2 MTC register
+	   050D		DMA channel 3 MAR register
+	   050E		DMA channel 3 DAR register
+	   050F		DMA channel 3 BAR register
+	   0510		DMA channel 3 MTC register
+	   
+	   0601		DMA channel 0 Op complete
+	   0602		DMA channel 0 error status
+	   0603		DMA channel 0 data transfer
+	   0604		DMA channel 1 Op complete
+	   0605		DMA channel 1 error status
+	   0606		DMA channel 1 data transfer
+	   0607		DMA channel 2 Op complete
+	   0608		DMA channel 2 error status
+	   0609		DMA channel 2 data transfer
+	   060A		DMA channel 3 Op complete
+	   060B		DMA channel 3 error status
+	   060C		DMA channel 3 data transfer
+	   
+	   0701		DMA error interrupt
+	   0702		DMA error interrupt status
+	   0703		DMA MTC register not zero
+	   0704		DMA normal interrupt
+	   0705		DMA normal interrupt status
+	   0706		DMA transfer verification
+	   
+	   0801		DMA/SCC 0 interrupt
+	   0802		DMA/SCC 1 interrupt
+	   0803		DMA 0/SCC 0 receive status
+	   0804		DMA 0/SCC 0 receive terminal count
+	   0805		DMA 1/SCC 0 transmit status
+	   0806		DMA 1/SCC 0 transmit terminal count
+	   0807		DMA 2/SCC 1 receive status
+	   0808		DMA 2/SCC 1 receive terminal count
+	   0809		DMA 3/SCC 1 transmit status
+	   080A		DMA 3/SCC 1 transmit terminal count
+	   080B		DMA/SCC 0 data transfer verification
+	   080C		DMA/SCC 1 data transfer verification
+	   
+	   0901		MFP register read/write
+	   
+	   0A01		MFP timer A
+	   0A02		MFP timer B
+	   0A03		MFP timer C
+	   0A04		MFP timer D
+	   
+	   0B01		MFP timer A interrupt
+	   
+	   0C01		MFP USART transmit status
+	   0C02		MFP USART receive status
+	   0C03		MFP USART data transfer
+	   0C04		MFP USART data transfer length
+
+
+
+
+   o  ENGINE ERROR CODES
+	 					
+	Error Code	Description
+	----- ----	-----------
+
+	   0D01		Basic engine RAM read/write
+	   
+	   0E01		Front panel interface
+	   
+	   0F01		Engine register read/write
+	   
+	   1001		Engine PSW read/write
+	   
+	   1101		Engine program counter read/write
+	   
+	   1201		Instruction single step
+	   
+	   1301		MAC status register read/write
+	   1302		Context register read/write
+	   
+	   1401		Segment register set 0 read/write
+	   1402		Segment register set 1 read/write
+	   1403		Segment register set 2 read/write
+	   1404		Segment register set 3 read/write
+	   1405		Segment register set 4 read/write
+	   1406		Segment register set 5 read/write
+	   1407		Segment register set 6 read/write
+	   1408		Segment register set 7 read/write
+	   1409		Segment register set 8 read/write
+	   140A		Segment register set 9 read/write
+	   140B		Segment register set A read/write
+	   140C		Segment register set B read/write
+	   140D		Segment register set C read/write
+	   140E		Segment register set D read/write
+	   140F		Segment register set E read/write
+	   1410		Segment register set F read/write
+	   
+	   1501		Engine RAM parity check
+	   1502		MAC status register error
+	   
+	   1601		RR instruction
+	   1701		SF instruction
+	   1801		RI1 instruction
+	   1901		RI2 instruction
+	   1A01		RX1 instruction
+	   1B01		RX2 instruction
+	   1C01		RX3 instruction
+	   
+	   1D01		Multiple RR instruction
+	   1E01		Multiple SF instruction
+	   2001		RX2 + Index instruction
+	   2101		RX3 + Index instruction
+	   2200		Jump back short instruction
+	   2301		Bit type instruction
+	   2401		Store multiple instruction
+	   2501		Multiply instruction
+	   2601		Divide instruction
+	   
+	   2701		MAC presence interrupt
+	   2801		MAC write protect interrupt
+	   2901		MAC write interrupt
+	   2A01		MAC segment length interrupt
+	   2B01		MAC execution protect interrupt
+	   
+	   2C01		ATN0 interrupt
+	   2D01		ATN1 interrupt
+	   2E01		ATN2 interrupt
+	   
+	   2F01		Main memory bus lock
+	   
+	   3001		Engine RAM SCC/DMA test
+	   
+	   3101		Extended engine RAM test
+	   
+	   C000		Invalid self test command code
+
+
+
+PICO ENGINE ECO/FCO QUICK CHECK LIST
+---- ------ ------- ----- ----- ----
+
+
+EP CARD [470302-001]
+
+Rev Levels  ECO/FCO #	Quick Check Item
+--- ------  ---------  	----- ----- ----
+
+  N to O     90-156     Check that IC location 6F pin 7 is lifted.
+
+  K to L     89-216     Creates a -002  version  to be  used in the  SPIRIT.
+                        DOES NOT RELATE TO THE PICO ENGINE.
+
+  F to H     89-122	Check  for  grommet  installed  on  board  stiffener 
+                        directly behind connectors J3, J4, and J5.
+
+  E to F     88-184	Check  for  1000  pf  100v  10%  capacitor  at  C101
+                        (approximate board location H2).
+
+  C to D     88-154	Check for jumper on component side from IC  location
+                        7F pin 13 to IC location 7M pin 20.   [REV B ONLY]
+
+  A to B     88-061     Check if IC  at locations  8L and 8M  are 74Ls374's.
+                        [REV A ONLY]
+
+
+
+
+
+
+IOC CARD [470298-001]
+
+Rev Levels  ECO/FCO #	Quick Check Item
+--- -----  ---------  	------ ---- ----
+
+ AV to AW    90-233	Check  if  firmware prom at  location  5H is labeled
+                        790278-010  and firmware  prom  at  location  5L  is
+			labeled 790297-010.
+
+ AT to AV    90-156	Check  if  firmware prom at  location  5H is labeled
+                        790278-009  and firmware  prom  at  location  5L  is
+			labeled 790297-009.
+
+ AK to AN    89-366     Check if 1K  ohm resistor   is installed  between IC
+                        location 11H pin 23 and location C58 +5 volt.
+  
+ AG to AJ    89-348     Check  if  firmware prom at  location  5H is labeled
+                        790278-007 and  firmware  prom  at  location  5L  is
+			labeled 790297-007.
+
+ AE to AF    89-216     Creates a -002  version  to be  used in the  SPIRIT.
+                        DOES NOT RELATE TO THE PICO ENGINE.
+
+ AC to AD    89-140     Check for jumper from resistor pack  RP8 pin 5 to IC
+                        location 8M pin 14.    [REV A & B ONLY]
+
+ AB to AC    89-123     Check  if the  IOC  front  panel is  connected  with
+                        SCREWS not RIVETS.
+
+  Y to Z     89-096     Check if a 3.3 uf capacitor is installed between  IC
+                        location 7A pin 3 and IC location 7A pin 8.
+
+  V to W     89-038	Check  if  firmware prom at  location  5H is labeled
+                        790278-6F  and  firmware  prom  at  location  5L  is
+			labeled 790297-6F.
+
+  R to S     88-327     Check for a jumper  (on the  component side) between
+                        resistor PAD RP5 pin 4 to IC location 6E pin 3.
+			[REV B ONLY]
+
+  P to R     88-270     Check  if  IC  at location  8K  has pins  20 and  21 
+          	        LIFTED.  Check if IC at location 2F is a 74LS74  and
+			IC at  location  2H is a 74LS241.  Check if firmware
+			prom  at  location  5H  is  labeled  790278-005  and
+			firmware prom  is location 5L is labeled 790279-005.
+			[REV A ONLY]
+			
+  O to P     88-149     Check for a jumper  (on the  component side) between
+                        IC location 6CA pin 4 and IC at location 11C pin 20.
+  
+
+
+
+
+
+
+
+
+SCC DAUGHTERCARD [470296-001]
+
+Rev Levels  ECO/FCO #	Quick Check Item
+--- ------  ---------  	----- ----- ----
+
+  L to M     89-140	Check  if  a  4.7k  Ohm  resistor  pack  ( RPACK) at
+                        location 5D (RPACK is designated RP1). 
+			[REV A & B ONLY]
+
+  G to H     88-204     Check  if a 8 position dip switch  has been added to
+                        location 4A.
+
+
+
+
+
+
+
+THRESHOLD DETECTOR CARD [470311-001]
+
+Rev Levels  ECO/FCO #	Quick Check Item
+--- ------  ---------  	----- ----- ----
+
+  G to H     89-034     Check that resistor pack RP1 pin 8 has been removed.
+                        This FCO is for 470311-011 Rev A artwork ONLY.
+
+  C to D     88-185     Check for jumper on solder side from IC location  U2
+                        pin 2 to IC location U2 pin 9.
+
+BATTERY CHARGER CARD [470303-001]
+
+Rev Levels  ECO/FCO #	Quick Check Item
+--- ------  ---------  	----- ----- ----
+
+  D to E     87-166     Check  if  transistor/heatsink  at  location  Q3  is
+                        mounted HORIZONTALLY not VERTICALLY.
+
+
+
+
+
+
+BBU MODULE
+--- ------
+
+ECO/FCO #	Quick Check Item
+---------  	----- ----- ----
+
+ 88-222		Check  if a  cable  assembly  is  installed  connecting  the 
+                BBU modules to the IOC PCB at TP1.
+
+ECO/FCO IDENTIFICATION:
+
+
+FCO/ECO#   Reason
+--------   ------
+
+90-xxx     Upgrade kit for PICO 1.6 to PICO 2.0.
+
+90-233     Firmware 2.00 release which  corrects a bug in IOCBug that caused
+           channel 3  to be  redeclared as  ASYNC 4800  if the  console port
+	   was deemed unavailable.
+
+90-156     Firmware  1.11 release which  corrects  TYMSYNC problems (channel
+           ending   state  and idle line pad characters)  and bug  in  ASYNC
+	   that  caused channels  to  intermittently lock up.  Additionally,
+	   makes  change to  eliminate  unexpected  I/O interruptd  from the
+	   Spirit Bus  by disabling the electrical line on the EP board.
+
+89-366     To eliminate intermittent trap errors and clean up power-on reset
+           circuitry.
+
+89-348     Firmware  1.08 release  and   related   hardware   modifications.
+           Changes interrupt  structure to correct TYMSYNC problems (channel
+	   transmit ending state,  DCD/CTS incorrectly reported), CRC errors
+	   on HDLC channels,  handling of  oversized records, ASYNC XON/XOFF
+	   character handling and allows receipt of 1 byte packets.
+
+89-216     Creates  a  -002  version  to be  used in the  SPIRIT.   DOES NOT
+           RELATE TO THE PICO ENGINE.
+
+89-140	   To eliminate noise on the transmit clock lines at power up.
+
+89-123     To prevent the  IOC card from bowing in the  center and  shorting
+           out on the EP card.
+
+89-122     To prevent  the IOC  card from shorting  on the EP card stiffener
+           bar.
+
+89-096     IOC  reset not  operating reliably on power up. 
+
+89-038     Firmware version 1.07 release.  Corrects  interrupt handling  for
+           receive  errors.    Provides  new  queueing  mechanism   for  all
+	   channels.   Corrects  a  false error  encountered  intermittently
+	   when running DSIO diagnostic.  
+
+89-034     Corrects an improper fit of an  8 pin RPACK into a 7 pad location
+           on the  Threshold  Detector PCB.   This FCO  is a  companion  FCO
+	   to FCO 88-181 and incorporates ECO's 88-194 and 88-185.
+
+88-327     Removes  double  termination from  the -IRQ6 signal, adds jumpers 
+           for a missing trace between  -IRQ6 and IC location 6E pin 3, adds
+	   a 4.7K  pullup to  fix floating  output  at IC  location 9C pin 8
+	   during self test.
+
+88-270     Firmware  version  1.06  release.   To  correct DMA  arbitration,
+           incorrectly wired channel 0 transmit circuitry.
+
+88-222     Enable BBU trickle charging circuitry.
+
+88-204     Add split speed async capability.
+
+88-194	   Re-issue of ECO 88-185  to correct ABC rev levels on ECO.  No FCO
+           issued for this ECO.
+
+88-185     Design  modifications to  BBU Voltage  Detector card.   This is a
+           re-issue of ECO 88-151.  No FCO issued for this ECO.
+
+88-184     To improve signal timing tolerance.
+
+88-154     Circuit improvements.
+
+88-151     Threshold Detector pilot level changes.
+
+88-149	   Corrects problems found during systems integration.
+
+88-061     To correct artwork errors and circuit improvements.   Pilot level
+           change.
+
+88-049     To improve grounding, prevent  bus contention  and pull-up unused
+           signals.  Pilot level change.
+
+87-166     BBU.
+
+
+
+  @ E¢
