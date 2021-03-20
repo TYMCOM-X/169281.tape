@@ -1,0 +1,81 @@
+: ***************************************************************************
+:         FILE:  KERNEL TYMFILE
+: COMPANY NAME:  TRW                       LOCATION:  ANAHEIM, CA
+:  NODE NUMBER:  2132                   ENGINE TYPE:  FULL ENGINE (2mb)
+:  KERNEL HOST:  2132
+:  SLOT NUMBER:  FF
+: S/W VERSIONS:  ISIS - 07.03      T-II NODE CODE - 05.31
+:     INITIALS:  ROBERT NOWELL                 DATE:  07/21/89
+: ***************************************************************************
+: >>>>>>>>>>>>>>>>>>>>>>>>>>>  REVISION HISTORY  <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+: ***************************************************************************
+
+:               PATCH AREAS SIZES
+
+PHSIZE  EQ      $0 0300         : PATCH HISTORY AREA SIZE
+P1SIZE  EQ      $0 0600         : PATCH AREA 1 SIZE
+
+:               HARDWARE CONFIGURATION
+
+MACHIN  EQ      1               : 1 = ENGINE, 2 = HDLC MICRO, 3 = TSI 
+ZITEL   EQ      1               : 0 = MICROENGINE, 1 = MAC-II/MAC-III
+MSCDSK  EQ      1               : # OF 160 MB DRIVES
+M.NCARD EQ      $A 1            : # MOTHERBOARDS
+M.DA0   EQ      $0 80           : DEVICE ADDRING OF MOTHERBOARD 0
+M.NP0   EQ      $A 4            : # PORTS ON MOTHERBOARD 0
+NLINES  EQ      $A 2            : # NODE CODE SYNC LINES
+
+:               ISIS CONFIGURATION CONSTRAINTS
+
+NSLOT   EQ      $A 1            : # SLOTS TO CONNECT
+NLU     EQ      $A 4            : MAX. # LOGICAL UNITS/SLOT
+
+:               NODE CONFIGURATION
+
+IKNRNG  EQ      1               : KERNAL RING INDEXING (VER. 6.XX OR LATER)
+MEMRMK  EQ      2               : ASSEMBLY REMARKS
+TII     EQ      1               : 1 = ISIS NODE
+TIINEW	EQ	1		: 1 IF ISIS VERS 4.00 OR ABOVE
+PTHRU   EQ      0               : PASSTHROUGHS  0 = ALLOW, 1 = PREVENT
+NPTHR   EQ      $A 64           : # PASSTHROUGHS ALLOWED
+NDP     EQ      $A 160          : # DISPATCHER PORTS
+NETID   EQ      $A 3            : NETWORK ID
+MACHNM  EQ      $8 2132         : NODE NUMBER
+HST0    EQ      $A 2132         : ISIS KERNEL HOST NUMBER
+REBTST  EQ      1               : INVOKE IMPROVED REBUILD LOGIC
+EFFEXC  EQ      1
+OPTION(REBLD)                   : AUTOMATIC CIRCUIT REBUILDING
+
+:               XRAY CONFIGURATION
+
+PRIMSG  EQ      1               : PRIORITY CRYPTO LOG, 1 = ENABLE
+TIINEW  EQ      1               : ACTIVATE NS CMD EFFICIENCY FIELD
+
+:               NETWORK CONFIGURATION
+:      (NOTE - THE NODE LOCATION OF UNCOMMENTED TIILNK'S IS ANAHEIM, CA)
+
+        TIILNK(2001,8,16,,MS)   :
+        TIILNK(2135,8,16,,MS)   :
+
+:
+:       ALL XLINKS
+:
+
+XLINKS  EQ      $A 2            : WILD CARD LINKS
+
+:       SLOT 0 - T-II NODE CODE
+
+S0CORE  EQ      $A 230          : SLOT 0 CORE SIZE IN KB'S
+NLUS0   EQ      $A 4            : # L.U.'S FOR NODE CODE
+S0L0    S.REF(00) 
+S0L1    S.REF(01)
+S0L2    M.REF(0,00)             : OCL MS
+S0L3    M.REF(0,01)             : OCL MS
+           
+:       SLOT 1 - TMCS - HOST 978
+
+S1CORE  EQ      $A 710          : SLOT 1 CORE SIZE IN KB'S
+NLUS1   EQ      0               : # L.U.'S FOR SLOT 1
+S1LIC   EQ      TL.AUX
+	DEFEXT(1,3,1000,1000,3) : DEFINE 2ND MB OF MEMORY
+
