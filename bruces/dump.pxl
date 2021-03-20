@@ -1,0 +1,207 @@
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+<><><><><><>             T E C H   A L E R T                    <><><><><><>
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+
+TechAlert Number: NTS-008    [28 March 1992]
+
+Product Code    : PXL  (PXL-100x-0x)
+
+Version         : PXL-I
+
+Author          : Bruce Shepherd
+
+OnTyme ID       : NSC.B/SHEPHERD
+Dialcom ID      : shepherd@dialcom 98
+Unix ID         : bruces@gemini
+
+Subject         : PXL/MACV Full Engine and Slot Dumping
+
+
+****************************************************************************
+****						          	        ****
+****    This TECH ALERT refers to the PXL product.                      ****
+****						  	                ****
+****************************************************************************
+
+
+It  has come to our  attention that there has been some confusion concerning
+the method  for obtaining  full engine dumps on the PXL and other MACV based
+hardware.   This Tech Alert is intended to help the field in order to insure
+the  PXL  (or other  MACV  hardware) dumps are accurate  and  contain  valid
+information.
+
+All  on-line documentation has  been changed to correct the hardware  option
+prompt  from BITS,  but the PXL  Maintenance  Manual (DEMM0066.01A) does not
+contain this change  at this time.    The  current   PXL on-line   reference
+material is as follows:
+
+       PDN Servers path: ~nts/docs
+
+         file: pxl.cfb              -  CFB 193 Revision 4
+         file: pxl.tech.alert       -  Initial PXL Tech Alert
+         file: pxl.tech.alert.2     -  Second  PXL Tech Alert
+	 file: pxl.v35.tech.alert   -  V35 Board Strapping Tech Alert
+	 file: pxl.dump.tech.alert  -  PXL Full Engine Dump Tech Alert
+         file: pxl.power.reset.fco  -  FCO on PXL Power Reset  hardware
+         file: pxl.power.backup.fco -  FCO on PXL Power Backup hardware
+
+       PDP username NTS:
+
+         file: pxl.cfb              -  CFB 193 Revision 4
+         file: talert.pxl           -  Initial PXL Tech Alert
+         file: talrt2.pxl           -  Second  PXL Tech Alert
+	 file: v35.pxl		    -  V35 Board Strapping Tech Alert
+	 file: dump.pxl             -  PXL Full Engine Dump Tech Alert
+         file: reset.pxl            -  FCO on PXL Power Reset hardware
+         file: backup.pxl           -  FCO on PXL Power Backup hardware
+
+
+When  loading a PXL  or other MACV hardware, there is no need to specify the
+hardware  type  at the BITS hardware type prompt, as BITS will determine the
+type via the ISIS nib file.
+
+All MACV based products (PXL-I,  CPU IV and  the soon to be released PXL-II)
+must  be dumped using BITS on  an a Sun-based system (PDN servers, CMF/CMS).
+To insure that the  dump is  formatted into  24-bit addressing the user MUST
+enter  a  "v" at  the BITS  hardware prompt,  otherwise  the  dump  will  be
+formatted as  a  non-MACV  dump  (20-bit addressing),  resulting in  invalid
+information.
+
+A sample of the full engine dump is as follows:
+
+  gemini% bits
+  BITS-5.04 (C/N 51) (SunOS 4.1.1)
+  Thu Mar 12 07:52:47 1992
+
+
+   bits command: ed
+     Enter hardware type. [(?),u,v,e=return] : v
+     Enter login for target's neighbor, [nuname]:nkhost!line : dload:4331!5
+     Enter password for neighbor:
+     Enter dump file name : 4331.dump
+     Enter low address (hex digits). [return=0] :
+     Enter high address (hex digits). [return=0af000] : 0fefff
+     Circuit built
+     The load/dump request has been acknowledged
+     Link number is 0
+     logical channel number is:  63
+      packet is received address:  0
+      packet is received address:  56
+      packet is received address:  112
+      packet is received address:  168
+      packet is received address:  224
+      packet is received address:  280
+      ......
+      ......
+      packet is received address:  1208984
+      packet is received address:  1209040
+      packet is received address:  1209096
+      Time used to dump (in second):  2175
+      Number of bytes dumped:  1209152
+      Starting address:  0
+      Ending address:  1209151
+      bits command: q
+      gemini%
+
+
+
+There  is no  change  to  dumping  of interface slots, and the standard BITS
+slot  dump (sd) command is used.   Appending the  symbol tables  to  a  dump
+(be  it a full  engine  or  interface  slot dump  file)  is addressed  in  a
+previous Tech Alert by Ken Stone sent out in 1990 (see Tech Alert 092).    A
+sample of the BITS slot  dump  command  (in addition  to appending  the slot
+symbol tables) is as follows:
+
+      gemini% bits
+      BITS-5.04 (C/N 51) (SunOS 4.1.1)
+      Wed Mar 18 16:34:56 1992
+
+
+      bits command: nc gateway:4331
+
+        Enter password  for target: 
+      Connecting to network...
+      Link number is 0
+      Logical channel number is 61
+
+      node: 4331
+      host: 4331
+
+
+      bits command: sd
+        Enter two digit hexidecimal slot number [none = return] : 06
+        Enter slot 06's dump file name : n06.dump
+        reading from address   e00000 number of bytes      256
+        reading from address        0 number of bytes    19802
+      segment   0    number of bytes     19802 
+        reading from address   100000 number of bytes    32000
+        reading from address   107d00 number of bytes    32000
+        reading from address   10fa00 number of bytes     5108
+      segment   1    number of bytes     69108 
+        reading from address   200000 number of bytes      128
+      segment   2    number of bytes       128 
+        reading from address   500000 number of bytes     6002
+      segment   5    number of bytes      6002 
+        reading from address   600000 number of bytes    10506
+      segment   6    number of bytes     10506 
+        reading from address   700000 number of bytes    32000
+        reading from address   707d00 number of bytes    25890
+      segment   7    number of bytes     57890 
+        reading from address   e00000 number of bytes      256
+      segment  14    number of bytes       256 
+
+      bits command: q
+      bits091> Circuit zapped..
+      gemini% nad -v
+      NAD-3.01 (S/N 41)  (SunOS 4.x)
+      Wed Mar 18 16:39:14 1992
+
+      %f n06                        
+      %g
+      Data ranges read 0 - e00100
+      1%f n06.dump
+      %p
+      %q
+      EXIT
+      gemini%
+
+
+
+For  those not familiar  with  the  symobl  appending  sequence  above,  the 
+commands are denoted below:
+
+      gemini% nad -v
+      NAD-3.01 (S/N 41)  (SunOS 4.x)
+      Wed Mar 18 16:39:14 1992
+
+      %f n06                        <====  %f  opens  the   n06  file  for
+                                           read only access.
+      %g                            <====  %g gets  the state  information
+                                           and  symbols  (except  opcodes)
+					   from the n06 file.
+      Data ranges read 0 - e00100
+      1%f n06.dump                  <====  1%f opens the file n06.dump for
+                                           reading and appending.
+      %p                            <====  %p   appends  the  symbols  and
+                                           state   information    to   the
+					   n06.dump file.
+      %q                            <====  % closes the  n06.dump file and
+                                           exits nad.
+      EXIT
+      gemini%
+
+
+
+
+
+*****************************************************************************
+****								         ****
+****   This  TECHALERT  will   be  available  in  NTS:38   with  the     ****
+****   TECHALERT  number as  the filename.  A  list of all available     ****
+****   TECHALERTS can be found in the same directory  and is labeled     ****
+****   INDEX.NTS.                                                        ****
+****								         ****
+*****************************************************************************
+   
