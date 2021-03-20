@@ -1,0 +1,410 @@
+procedure SALES.ORDER.INP.FANCY
+
+%
+***************************************************************************
+
+Name: SALES.ORDER.INP.CONV    Author: Mike Mueller    Date: 6/82
+
+Purpose: This is a demonstration procedure for conversational screens.
+         It inputs a new sales order for a customer and accepts line
+         items (up to 9) for the sales order. As the line items are input
+         the extended price is computed and the total price is updated.
+         NOTE: this procedure is a version of SALES.ORDER.INP.CONV using
+         reverse video.
+
+Input: From the interactive screen
+
+Output: none
+
+Relations affected: SALES.ORDER
+                    SO.LINE.ITEM
+
+***************************************************************************
+%
+
+begin
+
+fields
+ INP.ORDER.DATE        as date 'ZM/ZD/YB',
+ PROD.NO.01            same as PROD.NO,
+ PROD.DESC.01          as '32C',
+ PROD.LIST.PRICE.01    same as PROD.LIST.PRICE,
+ PROD.QTY.01           same as PROD.QTY,
+ EXT.PRICE.01          same as TOTAL.PRICE,
+ PROD.NO.02            same as PROD.NO,
+ PROD.DESC.02          same as PROD.DESC.01,
+ PROD.LIST.PRICE.02    same as PROD.LIST.PRICE,
+ PROD.QTY.02           same as PROD.QTY,
+ EXT.PRICE.02          same as TOTAL.PRICE,
+ PROD.NO.03            same as PROD.NO,
+ PROD.DESC.03          same as PROD.DESC.01,
+ PROD.LIST.PRICE.03    same as PROD.LIST.PRICE,
+ PROD.QTY.03           same as PROD.QTY,
+ EXT.PRICE.03          same as TOTAL.PRICE,
+ PROD.NO.04            same as PROD.NO,
+ PROD.DESC.04          same as PROD.DESC.01,
+ PROD.LIST.PRICE.04    same as PROD.LIST.PRICE,
+ PROD.QTY.04           same as PROD.QTY,
+ EXT.PRICE.04          same as TOTAL.PRICE,
+ PROD.NO.05            same as PROD.NO,
+ PROD.DESC.05          same as PROD.DESC.01,
+ PROD.LIST.PRICE.05    same as PROD.LIST.PRICE,
+ PROD.QTY.05           same as PROD.QTY,
+ EXT.PRICE.05          same as TOTAL.PRICE,
+ PROD.NO.06            same as PROD.NO,
+ PROD.DESC.06          same as PROD.DESC.01,
+ PROD.LIST.PRICE.06    same as PROD.LIST.PRICE,
+ PROD.QTY.06           same as PROD.QTY,
+ EXT.PRICE.06          same as TOTAL.PRICE,
+ PROD.NO.07            same as PROD.NO,
+ PROD.DESC.07          same as PROD.DESC.01,
+ PROD.LIST.PRICE.07    same as PROD.LIST.PRICE,
+ PROD.QTY.07           same as PROD.QTY,
+ EXT.PRICE.07          same as TOTAL.PRICE,
+ PROD.NO.08            same as PROD.NO,
+ PROD.DESC.08          same as PROD.DESC.01,
+ PROD.LIST.PRICE.08    same as PROD.LIST.PRICE,
+ PROD.QTY.08           same as PROD.QTY,
+ EXT.PRICE.08          same as TOTAL.PRICE,
+ PROD.NO.09            same as PROD.NO,
+ PROD.DESC.09          same as PROD.DESC.01,
+ PROD.LIST.PRICE.09    same as PROD.LIST.PRICE,
+ PROD.QTY.09           same as PROD.QTY,
+ EXT.PRICE.09          same as TOTAL.PRICE,
+ KOUNTER               as 'NN'
+
+procedure SCREEN.TO.PROC(PROD.NO.X,PROD.QTY.X)
+ begin
+ move PROD.NO.X to PROD.NO
+ move PROD.QTY.X to PROD.QTY
+ end
+
+  % Screen displays and formats for SCREEN: SOLINE.INP %
+
+  frame.format SOLINE.INP.MASK
+  "                             XYZ Corporation"
+  "                               Sales Order"
+  ""
+  "Cust. No:"+@27+"G4@@@@@"+@27+"G0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+  "                  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+  "                  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@@@@@@@@   @@@@@"
+  ""
+  "Order No: @@@@@@                  Date:"+@27+"G4@@@@@@@@"+@27+
+  "G0        Salesman:"+@27+"G4@@@@@"+@27+"G0"
+  ""
+  "                                                   Unit     Order      Extended"
+  "  Product    Description                           Price     Qty.        Price"
+  "*******************************************************************************"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  @27+"G4@@@@@@@@"+@27+
+  "G0   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@   "+@27+"G4@@@@"+@27+
+  "G0   @@@@@@@@@"
+  "                                                                    ========="
+  "                                                      Total Price:  @@@@@@@@@"
+
+  frame SOLINE.INP from SOLINE.INP.MASK
+  frame.area 01 to 23
+  data "@"
+  data.names
+  CUST.NO,CUST.NAME,CUST.ADDR,
+  CUST.CITY,CUST.STATE,CUST.ZIP,
+  SALES.ORD.NO,INP.ORDER.DATE,SLSMAN.NO,
+  PROD.NO.01,PROD.DESC.01,PROD.LIST.PRICE.01,
+  PROD.QTY.01,EXT.PRICE.01,PROD.NO.02,
+  PROD.DESC.02,PROD.LIST.PRICE.02,PROD.QTY.02,
+  EXT.PRICE.02,PROD.NO.03,PROD.DESC.03,
+  PROD.LIST.PRICE.03,PROD.QTY.03,EXT.PRICE.03,
+  PROD.NO.04,PROD.DESC.04,PROD.LIST.PRICE.04,
+  PROD.QTY.04,EXT.PRICE.04,PROD.NO.05,
+  PROD.DESC.05,PROD.LIST.PRICE.05,PROD.QTY.05,
+  EXT.PRICE.05,PROD.NO.06,PROD.DESC.06,
+  PROD.LIST.PRICE.06,PROD.QTY.06,EXT.PRICE.06,
+  PROD.NO.07,PROD.DESC.07,PROD.LIST.PRICE.07,
+  PROD.QTY.07,EXT.PRICE.07,PROD.NO.08,
+  PROD.DESC.08,PROD.LIST.PRICE.08,PROD.QTY.08,
+  EXT.PRICE.08,PROD.NO.09,PROD.DESC.09,
+  PROD.LIST.PRICE.09,PROD.QTY.09,EXT.PRICE.09,
+  TOTAL.PRICE
+  field.control CUST.NO minimum.length 00
+                help 'Enter Customer No.(try 1235) or FUNCT "Q" to quit'
+  field.control CUST.NAME low.intensity protected
+  field.control CUST.ADDR low.intensity protected
+  field.control CUST.CITY low.intensity protected
+  field.control CUST.STATE low.intensity protected
+  field.control CUST.ZIP low.intensity protected
+  field.control SALES.ORD.NO low.intensity protected
+  field.control INP.ORDER.DATE minimum.length 00
+                help 'Input Order Date as "MM/DD/YY"'
+  field.control SLSMAN.NO minimum.length 00
+  field.control PROD.NO.01 minimum.length 00
+  field.control PROD.DESC.01 low.intensity protected
+  field.control PROD.LIST.PRICE.01 low.intensity protected
+  field.control PROD.QTY.01 minimum.length 00
+  field.control EXT.PRICE.01 low.intensity protected
+  field.control PROD.NO.02 minimum.length 00
+  field.control PROD.DESC.02 low.intensity protected
+  field.control PROD.LIST.PRICE.02 low.intensity protected
+  field.control PROD.QTY.02 minimum.length 00
+  field.control EXT.PRICE.02 low.intensity protected
+  field.control PROD.NO.03 minimum.length 00
+  field.control PROD.DESC.03 low.intensity protected
+  field.control PROD.LIST.PRICE.03 low.intensity protected
+  field.control PROD.QTY.03 minimum.length 00
+  field.control EXT.PRICE.03 low.intensity protected
+  field.control PROD.NO.04 minimum.length 00
+  field.control PROD.DESC.04 low.intensity protected
+  field.control PROD.LIST.PRICE.04 low.intensity protected
+  field.control PROD.QTY.04 minimum.length 00
+  field.control EXT.PRICE.04 low.intensity protected
+  field.control PROD.NO.05 minimum.length 00
+  field.control PROD.DESC.05 low.intensity protected
+  field.control PROD.LIST.PRICE.05 low.intensity protected
+  field.control PROD.QTY.05 minimum.length 00
+  field.control EXT.PRICE.05 low.intensity protected
+  field.control PROD.NO.06 minimum.length 00
+  field.control PROD.DESC.06 low.intensity protected
+  field.control PROD.LIST.PRICE.06 low.intensity protected
+  field.control PROD.QTY.06 minimum.length 00
+  field.control EXT.PRICE.06 low.intensity protected
+  field.control PROD.NO.07 minimum.length 00
+  field.control PROD.DESC.07 low.intensity protected
+  field.control PROD.LIST.PRICE.07 low.intensity protected
+  field.control PROD.QTY.07 minimum.length 00
+  field.control EXT.PRICE.07 low.intensity protected
+  field.control PROD.NO.08 minimum.length 00
+  field.control PROD.DESC.08 low.intensity protected
+  field.control PROD.LIST.PRICE.08 low.intensity protected
+  field.control PROD.QTY.08 minimum.length 00
+  field.control EXT.PRICE.08 low.intensity protected
+  field.control PROD.NO.09 minimum.length 00
+  field.control PROD.DESC.09 low.intensity protected
+  field.control PROD.LIST.PRICE.09 low.intensity protected
+  field.control PROD.QTY.09 minimum.length 00
+  field.control EXT.PRICE.09 low.intensity protected
+  field.control TOTAL.PRICE low.intensity protected
+
+  function.key FIN.INPUT is '/'+@cr
+   finish input.loop
+
+  function.key ACCEPT.SO is 'A'+@cr
+   begin
+   insert into SALES.ORDER
+   move 1 to KOUNTER
+   while KOUNTER le 9
+    do begin
+       conditional on KOUNTER
+        begin
+        1: apply screen.to.proc(PROD.NO.01,PROD.QTY.01)
+        2: apply screen.to.proc(PROD.NO.02,PROD.QTY.02)
+        3: apply screen.to.proc(PROD.NO.03,PROD.QTY.03)
+        4: apply screen.to.proc(PROD.NO.04,PROD.QTY.04)
+        5: apply screen.to.proc(PROD.NO.05,PROD.QTY.05)
+        6: apply screen.to.proc(PROD.NO.06,PROD.QTY.06)
+        7: apply screen.to.proc(PROD.NO.07,PROD.QTY.07)
+        8: apply screen.to.proc(PROD.NO.08,PROD.QTY.08)
+        9: apply screen.to.proc(PROD.NO.09,PROD.QTY.09)
+        end
+       insert into SO.LINE.ITEM using (KOUNTER for LINE.NO)
+       add 1 to KOUNTER
+       end
+  type to message.area 'Order Accepted'
+  move default to CUST.NO,CUST.NAME,CUST.ADDR,CUST.CITY,CUST.STATE,CUST.ZIP,
+          SALES.ORD.NO,INP.ORDER.DATE,SLSMAN.NO,
+          PROD.NO.01,PROD.DESC.01,PROD.LIST.PRICE.01,PROD.QTY.01,EXT.PRICE.01,
+          PROD.NO.02,PROD.DESC.02,PROD.LIST.PRICE.02,PROD.QTY.02,EXT.PRICE.02,
+          PROD.NO.03,PROD.DESC.03,PROD.LIST.PRICE.03,PROD.QTY.03,EXT.PRICE.03,
+          PROD.NO.04,PROD.DESC.04,PROD.LIST.PRICE.04,PROD.QTY.04,EXT.PRICE.04,
+          PROD.NO.05,PROD.DESC.05,PROD.LIST.PRICE.05,PROD.QTY.05,EXT.PRICE.05,
+          PROD.NO.06,PROD.DESC.06,PROD.LIST.PRICE.06,PROD.QTY.06,EXT.PRICE.06,
+          PROD.NO.07,PROD.DESC.07,PROD.LIST.PRICE.07,PROD.QTY.07,EXT.PRICE.07,
+          PROD.NO.08,PROD.DESC.08,PROD.LIST.PRICE.08,PROD.QTY.08,EXT.PRICE.08,
+          PROD.NO.09,PROD.DESC.09,PROD.LIST.PRICE.09,PROD.QTY.09,EXT.PRICE.09,
+          TOTAL.PRICE echo
+  pause 5
+  type to message.area ' '
+  end        %  function key ACCEPT.SO  %
+
+ function.key REJECT.SO is 'R'+@cr
+  begin
+  move default to CUST.NO,CUST.NAME,CUST.ADDR,CUST.CITY,CUST.STATE,CUST.ZIP,
+          SALES.ORD.NO,INP.ORDER.DATE,SLSMAN.NO,
+          PROD.NO.01,PROD.DESC.01,PROD.LIST.PRICE.01,PROD.QTY.01,EXT.PRICE.01,
+          PROD.NO.02,PROD.DESC.02,PROD.LIST.PRICE.02,PROD.QTY.02,EXT.PRICE.02,
+          PROD.NO.03,PROD.DESC.03,PROD.LIST.PRICE.03,PROD.QTY.03,EXT.PRICE.03,
+          PROD.NO.04,PROD.DESC.04,PROD.LIST.PRICE.04,PROD.QTY.04,EXT.PRICE.04,
+          PROD.NO.05,PROD.DESC.05,PROD.LIST.PRICE.05,PROD.QTY.05,EXT.PRICE.05,
+          PROD.NO.06,PROD.DESC.06,PROD.LIST.PRICE.06,PROD.QTY.06,EXT.PRICE.06,
+          PROD.NO.07,PROD.DESC.07,PROD.LIST.PRICE.07,PROD.QTY.07,EXT.PRICE.07,
+          PROD.NO.08,PROD.DESC.08,PROD.LIST.PRICE.08,PROD.QTY.08,EXT.PRICE.08,
+          PROD.NO.09,PROD.DESC.09,PROD.LIST.PRICE.09,PROD.QTY.09,EXT.PRICE.09,
+          TOTAL.PRICE echo
+   wait 'Sales Order Rejected - type <cr> to continue'
+   type to message.area ' '
+   end    %  function key REJECT.SO  %
+
+  function.key END.PROC is 'Q'+@cr
+   finish disp.loop
+
+ procedure enter.line(PROD.NO.Y,PROD.DESC.Y,PROD.LIST.PRICE.Y,PROD.QTY.Y,
+                      EXT.PRICE.Y)
+  inp.line.loop:
+   begin
+   input PROD.NO.Y using FIN.INPUT,END.PROC 
+   if entered flag.of PROD.NO.Y
+    then select PRODUCT via (PROD.NO=PROD.NO.Y)
+          then begin
+               move PROD.DESC to PROD.DESC.Y echo
+               move PROD.LIST.PRICE to PROD.LIST.PRICE.Y echo
+               qty.loop:
+                begin
+                input PROD.QTY.Y
+                if entered flag.of PROD.QTY.Y
+                 then move PROD.QTY.Y*PROD.LIST.PRICE.Y to EXT.PRICE.Y echo
+                 else begin
+                      wait 'You MUST enter a quantity - type <cr> to continue'
+                      type to message.area ' '
+                      repeat qty.loop
+                      end
+                end      %  qty.loop  %
+               end       %  product no. o.k.  %
+          else begin
+               wait 'Invalid Product No. - type <cr> to continue'
+               type to message.area ' '
+               repeat inp.line.loop
+               end
+    else begin
+         type to message.area 'Please enter a Product No. or FUNCT "/"'
+         pause 5
+         repeat inp.line.loop
+         end
+   end       %  inp.line.loop  %
+
+  
+ display protected SOLINE.INP
+ disp.loop:
+  begin
+
+   input.loop:
+    begin
+    
+    cust.loop:    % enter and validate CUST.NO  %
+     begin
+     input CUST.NO using FIN.INPUT,END.PROC
+     type to message.area ' '                % erase help msg. if any  %
+     if entered flag.of CUST.NO
+      then select CUSTOMER via key
+            then begin
+                 move CUST.NO to CUST.NO of SOLINE.INP echo
+                 move CUST.NAME to CUST.NAME of SOLINE.INP echo
+                 move CUST.ADDR to CUST.ADDR of SOLINE.INP echo
+                 move CUST.CITY to CUST.CITY of SOLINE.INP echo
+                 move CUST.STATE to CUST.STATE of SOLINE.INP echo
+                 move CUST.ZIP to CUST.ZIP of SOLINE.INP echo
+                 end
+            else begin
+                 wait 'Invalid Customer No. - type <cr> to continue'
+                 type to message.area ' '
+                 repeat cust.loop
+                 end
+      else begin
+           wait 'This is a required field - type <cr> to continue'
+           type to message.area ' '
+           repeat cust.loop
+           end
+     end       %  cust.loop  %
+
+    select largest SALES.ORDER
+     then move SALES.ORD.NO+1 to SALES.ORD.NO of SOLINE.INP echo
+
+    date.loop:
+     begin
+     input INP.ORDER.DATE using FIN.INPUT,END.PROC
+     type to message.area ' '                % erase help msg. if any  %
+     if entered flag.of INP.ORDER.DATE
+      then nothing
+      else begin
+           wait 'This is a REQUIRED field - type <cr> to continue'
+           type to message.area ' '
+           repeat date.loop
+           end
+     end     %  date.loop  %
+
+    slsman.loop:
+     begin
+     input SLSMAN.NO using FIN.INPUT,END.PROC
+     if entered flag.of SLSMAN.NO
+      then select SALESMAN via key
+            then nothing
+            else begin
+                 wait 'Invalid Salesman No. - type <cr> to continue'
+                 type to message.area ' '
+                 repeat slsman.loop
+                 end
+      else begin
+           wait 'This is a REQUIRED field - type <cr> to continue'
+           type to message.area ' '
+           repeat slsman.loop
+           end
+     end       %  slsman.loop  %
+
+    move 1 to KOUNTER
+    line.loop:
+     while KOUNTER le 9
+      do begin
+         conditional on KOUNTER
+          begin
+          1: apply enter.line(PROD.NO.01,PROD.DESC.01,PROD.LIST.PRICE.01,
+                              PROD.QTY.01,EXT.PRICE.01)
+          2: apply enter.line(PROD.NO.02,PROD.DESC.02,PROD.LIST.PRICE.02,
+                              PROD.QTY.02,EXT.PRICE.02)
+          3: apply enter.line(PROD.NO.03,PROD.DESC.03,PROD.LIST.PRICE.03,
+                              PROD.QTY.03,EXT.PRICE.03)
+          4: apply enter.line(PROD.NO.04,PROD.DESC.04,PROD.LIST.PRICE.04,
+                              PROD.QTY.04,EXT.PRICE.04)
+          5: apply enter.line(PROD.NO.05,PROD.DESC.05,PROD.LIST.PRICE.05,
+                              PROD.QTY.05,EXT.PRICE.05)
+          6: apply enter.line(PROD.NO.06,PROD.DESC.06,PROD.LIST.PRICE.06,
+                              PROD.QTY.06,EXT.PRICE.06)
+          7: apply enter.line(PROD.NO.07,PROD.DESC.07,PROD.LIST.PRICE.07,
+                              PROD.QTY.07,EXT.PRICE.07)
+          8: apply enter.line(PROD.NO.08,PROD.DESC.08,PROD.LIST.PRICE.08,
+                              PROD.QTY.08,EXT.PRICE.08)
+          9: apply enter.line(PROD.NO.09,PROD.DESC.09,PROD.LIST.PRICE.09,
+                              PROD.QTY.09,EXT.PRICE.09)
+          end
+         add 1 to KOUNTER
+         end
+   end      %  input.loop  %
+
+ move EXT.PRICE.01+EXT.PRICE.02+EXT.PRICE.03+EXT.PRICE.04+EXT.PRICE.05+
+      EXT.PRICE.06+EXT.PRICE.07+EXT.PRICE.08+EXT.PRICE.09 to TOTAL.PRICE echo
+ type to message.area 'Input Funct A to accept or Funct R to reject ',
+                      'Sales Order'
+ input function.key using ACCEPT.SO,REJECT.SO
+ repeat disp.loop
+ end             %  disp.loop  %
+
+end    %  Procedure  %
