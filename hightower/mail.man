@@ -1,0 +1,1321 @@
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+NAME
+     mail, Mail - read or send mail messages
+
+SYNOPSIS
+     Mail [ -deHinNUv ] [ -f [ _f_i_l_e_n_a_m_e | +_f_o_l_d_e_r ] ] [ -T _f_i_l_e ]
+          [ -u _u_s_e_r ]
+
+     Mail [ -dFinUv ] [ -h _n_u_m_b_e_r ] [ -r _a_d_d_r_e_s_s ] [ -s _s_u_b_j_e_c_t ]
+          _r_e_c_i_p_i_e_n_t ...
+
+     /usr/ucb/mail ...
+
+DESCRIPTION
+     mail is a comfortable,  flexible,  interactive  program  for
+     composing, sending and receiving electronic messages.  While
+     reading messages, mail provides you with commands to browse,
+     display, save, delete, and respond to messages.  While send-
+     ing mail, mail allows  editing  and  reviewing  of  messages
+     being  composed,  and  the  inclusion  of text from files or
+     other messages.
+
+     Incoming mail is stored in the _s_y_s_t_e_m _m_a_i_l_b_o_x for each user.
+     This  is  a  file  named  after the user in /var/spool/mail.
+     mail normally looks in this file for incoming messages,  but
+     you can use the MAIL environment variable to have it look in
+     a different file.  When you read a message, it is marked  to
+     be  moved  to  a  secondary file for storage. This secondary
+     file, called the _m_b_o_x, is normally the  file  mbox  in  your
+     home directory. This file can also be changed by setting the
+     MBOX environment variable.  Messages remain in the _m_b_o_x file
+     until deliberately removed.
+
+OPTIONS
+     If no _r_e_c_i_p_i_e_n_t is specified, mail attempts to read messages
+     from the system mailbox.
+
+     -d            Turn on debugging  output.  (Neither  particu-
+                   larly interesting nor recommended.)
+
+     -e            Test for presence of mail.   If  there  is  no
+                   mail,  mail  prints  nothing and exits (with a
+                   successful return code).
+
+     -F            Record the message in a file named  after  the
+                   first  recipient.   Override  the record vari-
+                   able, if set.
+
+     -H            Print header summary only.
+
+     -i            Ignore interrupts (as with  the  ignore  vari-
+                   able).
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 1
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     -n            Do not  initialize  from  the  system  default
+                   Mail.rc file.
+
+     -N            Do not print initial header summary.
+
+     -U            Convert uucp style addresses to Internet stan-
+                   dards.   Overrides  the conv environment vari-
+                   able.
+
+     -v            Pass the -v flag to sendmail(8).
+
+     -f [_f_i_l_e_n_a_m_e] Read messages from _f_i_l_e_n_a_m_e instead of  system
+                   mailbox.   If  no  _f_i_l_e_n_a_m_e  is specified, the
+                   _m_b_o_x is used.
+
+     -f +_f_o_l_d_e_r    Use the file _f_o_l_d_e_r in  the  folder  directory
+                   (same  as  the  folder  command).  The name of
+                   this directory is listed in the  folder  vari-
+                   able.
+
+     -h _n_u_m_b_e_r     The number of  network  "hops"  made  so  far.
+                   This is provided for network software to avoid
+                   infinite delivery loops.
+
+     -r _a_d_d_r_e_s_s    Pass _a_d_d_r_e_s_s  to  network  delivery  software.
+                   All tilde (~) commands are disabled.
+
+     -s _s_u_b_j_e_c_t    Set the Subject header field to _s_u_b_j_e_c_t.
+
+     -T _f_i_l_e       Print the contents of the _a_r_t_i_c_l_e-_i_d fields of
+                   all messages that were read or deleted on _f_i_l_e
+                   (for the  use  of  network  news  programs  if
+                   available).
+
+     -u _u_s_e_r       Read _u_s_e_r's  system  mailbox.   This  is  only
+                   effective if _u_s_e_r's system mailbox is not read
+                   protected.
+
+USAGE
+     Refer to _G_e_t_t_i_n_g  _S_t_a_r_t_e_d  for  tutorial  information  about
+     mail.
+
+  Starting Mail
+     As it starts, mail reads commands from  a  system-wide  file
+     (/usr/lib/Mail.rc)  to initialize certain variables, then it
+     reads from a private start-up file called the  ._m_a_i_l_r_c  file
+     (it is normally the file .mailrc in your home directory, but
+     can be changed by setting the MAILRC  environment  variable)
+     for  your personal commands and variable settings. Most mail
+     commands are legal inside start-up files.  The  most  common
+     uses for this file are to set up initial display options and
+     alias lists.  The following commands are _n_o_t  legal  in  the
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 2
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     start-up  file:  !,  Copy,  edit,  followup, Followup, hold,
+     mail, preserve, reply, Reply, replyall, replysender,  shell,
+     and  visual.   Any  errors  in  the  start-up file cause the
+     remaining lines in that file to be ignored.
+
+     You can use the mail command to send a message  directly  by
+     including  names  of  recipients as arguments on the command
+     line.  When no recipients appear on the mail  command  line,
+     it  enters  command  mode,  from which you can read messages
+     sent to you.  If you list no recipients  and  have  no  mes-
+     sages,  mail  prints the message: `No mail for _u_s_e_r_n_a_m_e' and
+     exits.
+
+     When in command mode (while reading messages), you can  send
+     messages using the mail command.
+
+  Sending Mail
+     While you are composing a message to send, mail is in  _i_n_p_u_t
+     mode.  If no subject is specified as an argument to the com-
+     mand a prompt for the subject is printed. After entering the
+     subject  line,  mail enters _i_n_p_u_t mode to accept the text of
+     your message to send.
+
+     As you type in the message, mail stores it  in  a  temporary
+     file.   To review or modify the message, enter the appropri-
+     ate _t_i_l_d_e _e_s_c_a_p_e_s, listed below,  at  the  beginning  of  an
+     input line.
+
+     To indicate that the message is ready to send,  type  a  dot
+     (or  EOF  character,  normally CTRL-D ) on a line by itself.
+     mail submits the message to sendmail(8) for routing to  each
+     _r_e_c_i_p_i_e_n_t.
+
+     Recipients can be;
+
+     o+    local usernames
+
+     o+    Internet addresses of the form:
+
+               _n_a_m_e@_d_o_m_a_i_n
+
+     o+    uucp(1C) addresses of the form:
+
+               [_h_o_s_t!..._h_o_s_t!]_h_o_s_t!_u_s_e_r_n_a_m_e
+
+     o+    filenames for which you have write permission
+
+     o+    alias groups
+
+     If the name of the _r_e_c_i_p_i_e_n_t begins with a pipe symbol  (|),
+     the  remainder  of  the  name is taken as a shell command to
+     pipe  the  message  through.   This  provides  an  automatic
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 3
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     interface  with  any  program that reads the standard input,
+     such as lpr(1) to record outgoing mail on paper.   An  alias
+     group is the name of a list of recipients that is set by the
+     alias command, taken from the host's /etc/aliases  file,  or
+     taken  from  the  Network  Information Service (NIS) aliases
+     domain.  See aliases(5)  for  more  information  about  mail
+     addresses and aliases.
+
+  Tilde Escapes
+     The following _t_i_l_d_e _e_s_c_a_p_e commands can be used when compos-
+     ing  messages  to send. Each must appear at the beginning of
+     an input line.  The escape character (~), can be changed  by
+     setting  a  new  value  for the escape variable.  The escape
+     character can be entered as text by typing it twice.
+
+     ~! [_s_h_e_l_l-_c_o_m_m_a_n_d]
+          Escape to the shell.  If present, run _s_h_e_l_l-_c_o_m_m_a_n_d.
+
+     ~.   Simulate EOF (terminate message input).
+
+     ~: _m_a_i_l-_c_o_m_m_a_n_d
+     ~_ _m_a_i_l-_c_o_m_m_a_n_d
+          Perform the indicated mail command.   Valid  only  when
+          sending a message while reading mail.
+
+     ~?   Print a summary of tilde escapes.
+
+     ~A   Insert the autograph string Sign into the message.
+
+     ~a   Insert the autograph string sign into the message.
+
+     ~b _n_a_m_e ...
+          Add the _n_a_m_es to the  blind  carbon  copy  (Bcc)  list.
+          This is like the carbon copy (Cc) list, except that the
+          names in the Bcc list are not shown in  the  header  of
+          the mail message.
+
+     ~c _n_a_m_e ...
+          Add the _n_a_m_es to the carbon copy (Cc) list.
+
+     ~d   Read in the _d_e_a_d._l_e_t_t_e_r file.  The name of this file is
+          listed in the variable DEAD.
+
+     ~e   Invoke the editor to edit the message. The name of  the
+          editor  is  listed in the EDITOR variable.  The default
+          editor is ex(1).
+
+     ~f [_m_e_s_s_a_g_e-_l_i_s_t]
+          Forward the listed messages,  or  the  current  message
+          being  read.   Valid  only when sending a message while
+          reading mail; the messages are inserted without altera-
+          tion (as opposed to the ~m escape).
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 4
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     ~h   Prompt for the message header lines: Subject,  To,  Cc,
+          and  Bcc.   If  the  header line contains text, you can
+          edit the text by backspacing over it and retyping.
+
+     ~i _v_a_r_i_a_b_l_e
+          Insert the value of the named _v_a_r_i_a_b_l_e  into  the  mes-
+          sage.
+
+     ~m [_m_e_s_s_a_g_e-_l_i_s_t]
+          Insert text from the specified messages, or the current
+          message,  into  the  letter.  Valid only when sending a
+          message while reading mail; the  text  the  message  is
+          shifted  to  the right, and the string contained in the
+          indentprefix variable is inserted as the leftmost char-
+          acters of each line.  If indentprefix is not set, a TAB
+          character is inserted into each line.
+
+     ~p   Print the message being entered.
+
+     ~q   Quit from input mode by simulating  an  interrupt.   If
+          the  body of the message is not empty, the partial mes-
+          sage is saved in the _d_e_a_d._l_e_t_t_e_r file.
+
+     ~r _f_i_l_e_n_a_m_e
+     ~< _f_i_l_e_n_a_m_e
+     ~<! _s_h_e_l_l-_c_o_m_m_a_n_d
+          Read in text from the specified file  or  the  standard
+          output of the specified _s_h_e_l_l-_c_o_m_m_a_n_d.
+
+     ~s _s_u_b_j_e_c_t
+          Set the subject line to _s_u_b_j_e_c_t.
+
+     ~t _n_a_m_e ...
+          Add each _n_a_m_e to the list of recipients.
+
+     ~v   Invoke a visual editor to edit the message.   The  name
+          of  the  editor  is listed in the VISUAL variable.  The
+          default visual editor is vi(1).
+
+     ~w _f_i_l_e_n_a_m_e
+          Write the message text onto the given file, without the
+          header.
+
+     ~x   Exit as with ~q but do not  save  the  message  in  the
+          _d_e_a_d._l_e_t_t_e_r file.
+
+     ~| _s_h_e_l_l-_c_o_m_m_a_n_d
+          Pipe the body of the message through the  given  _s_h_e_l_l-
+          _c_o_m_m_a_n_d.   If  _s_h_e_l_l-_c_o_m_m_a_n_d  returns a successful exit
+          status, the output of the command replaces the message.
+
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 5
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+  Reading Mail
+     When you enter _c_o_m_m_a_n_d mode in order to read your  messages,
+     mail  displays  a  header  summary of the first several mes-
+     sages, followed by a prompt for one of the  commands  listed
+     below.  The default prompt is the & (ampersand character).
+
+     Message are listed and referred to by number.  There is,  at
+     any  time,  a current message, which is marked by a > in the
+     header summary. For commands that take an optional  list  of
+     messages,  if  you omit a message number as an argument, the
+     command applies to the current message.
+
+     A  _m_e_s_s_a_g_e-_l_i_s_t  is  a  list  of   message   specifications,
+     separated by SPACE characters, which may include:
+
+          .    The current message.
+          _n    Message number _n.
+          ^    The first undeleted message.
+          $    The last message.
+          +    The next undeleted message.
+          -    The previous undeleted message.
+          *    All messages.
+          _n-_m  An inclusive range of message numbers.
+          _u_s_e_r All messages from _u_s_e_r.
+          /_s_t_r_i_n_g
+               All messages with _s_t_r_i_n_g in the subject line (case
+               ignored).
+          :_c   All messages of type _c, where _c is one of:
+
+                    d    deleted messages
+                    n    new messages
+                    o    old messages
+                    r    read messages
+                    u    unread messages
+               Note:  the  context  of  the  command   determines
+               whether  this  type of message specification makes
+               sense.
+
+     Additional arguments are  treated  as  strings  whose  usage
+     depends on the command involved.  Filenames, where expected,
+     are expanded using the  normal  shell  filename-substitution
+     mechanism.
+
+     Special characters,  recognized  by  certain  commands,  are
+     documented with those commands.
+
+  Commands
+     While in command mode, if you type in an empty command  line
+     (a  RETURN  or  NEWLINE only), the print command is assumed.
+     The following is a complete list of mail commands:
+
+     ! _s_h_e_l_l-_c_o_m_m_a_n_d   Escape to the  shell.   The  name  of  the
+                       shell  to  use  is  listed  in  the  SHELL
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 6
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                       variable.
+
+     # _a_r_g_u_m_e_n_t_s       Null command.  This may be used as  if  it
+                       were  a comment in ._m_a_i_l_r_c files, but note
+                       that it must be separated from  its  argu-
+                       ments (commentary) by white space.
+
+     =                 Print the current message number.
+
+     ?                 Print a summary of commands.
+
+     alias [_a_l_i_a_s _r_e_c_i_p_i_e_n_t...]
+     group [_a_l_i_a_s _r_e_c_i_p_i_e_n_t...]
+                       Declare an alias for  the  given  list  of
+                       recipients.  The  list will be substituted
+                       when the _a_l_i_a_s  is  used  as  a  recipient
+                       while  sending  mail.   When  put  in  the
+                       ._m_a_i_l_r_c file, this  command  provides  you
+                       with a record of the alias.  With no argu-
+                       ments, the command displays  the  list  of
+                       defined aliases.
+
+     alternates _n_a_m_e ...
+                       Declare a list of alternate names for your
+                       login.   When  responding  to  a  message,
+                       these names are removed from the  list  of
+                       recipients  for  the  response.   With  no
+                       arguments, alternates prints  the  current
+                       list of alternate names.
+
+     cd[ _d_i_r_e_c_t_o_r_y]
+     chdir [_d_i_r_e_c_t_o_r_y] Change directory.   If  _d_i_r_e_c_t_o_r_y  is  not
+                       specified, $HOME is used.
+
+     copy [_m_e_s_s_a_g_e-_l_i_s_t] [_f_i_l_e_n_a_m_e]
+                       Copy messages to the file without  marking
+                       the    messages   as   saved.    Otherwise
+                       equivalent to the save command.
+
+     Copy [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Save the  specified  messages  in  a  file
+                       whose  name  is derived from the author of
+                       the message to be saved,  without  marking
+                       the    messages   as   saved.    Otherwise
+                       equivalent to the Save command.
+
+     delete [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Delete messages from the  system  mailbox.
+                       If  the  variable  autoprint is set, print
+                       the message  following  the  last  message
+                       deleted.
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 7
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     discard [_h_e_a_d_e_r-_f_i_e_l_d...]
+     ignore [_h_e_a_d_e_r-_f_i_e_l_d...]
+                       Suppress printing of the specified  header
+                       fields  when  displaying  messages  on the
+                       screen, such as "Status"  and  "Received".
+                       The  fields  are included when the message
+                       is saved unless the variable  alwaysignore
+                       is  set.   The  Print  and  Type  commands
+                       display all header fields, ignored or not.
+
+     dp [_m_e_s_s_a_g_e-_l_i_]
+     dt [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Delete the  specified  messages  from  the
+                       system  mailbox,  and  print  the  message
+                       after the last one deleted.  Equivalent to
+                       a  delete command followed by a print com-
+                       mand.
+
+     echo [_s_t_r_i_n_g ...] Echo the given strings (like echo(1V)).
+
+     edit [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Edit the given messages.  The messages are
+                       placed  in a temporary file and the EDITOR
+                       variable is used to get the  name  of  the
+                       editor.  The default editor is ex(1).
+
+     exit
+     xit               Exit from mail without changing the system
+                       mailbox.   No  messages  are  saved in the
+                       _m_b_o_x (see also quit).
+
+     file [_f_i_l_e_n_a_m_e]
+     folder [_f_i_l_e_n_a_m_e] Quit from the  current  mailbox  file  and
+                       read  in  the named mailbox file.  Several
+                       special  characters  are  recognized  when
+                       used as file names:
+
+                            %         Your system mailbox.
+                            %_u_s_e_r     The  system   mailbox   for
+                                      _u_s_e_r.
+                            #         The previous mail file.
+                            &         Your _m_b_o_x file (of messages
+                                      previously read).
+                            +_f_i_l_e_n_a_m_e The  named  file   in   the
+                                      _f_o_l_d_e_r directory (listed in
+                                      the folder variable).
+
+                       With no arguments, file prints the name of
+                       the  current  mail file, and the number of
+                       messages and characters it contains.
+
+     folders           Print the name of each mail  file  in  the
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 8
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                       _f_o_l_d_e_r  directory  (listed  in  the folder
+                       variable).
+
+     followup [_m_e_s_s_a_g_e]
+                       Respond  to  a  message,   recording   the
+                       response  in  a  file,  name  of  which is
+                       derived from the  author  of  the  message
+                       (overrides  the  record variable, if set).
+                       See also the Followup, Save, and Copy com-
+                       mands and the outfolder variable.
+
+     Followup [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Respond to the first message in  the  mes-
+                       sage  list,  sending  the  message  to the
+                       author of each message in the  list.   The
+                       subject  line is taken from the first mes-
+                       sage, and the response is  recorded  in  a
+                       file,  the  name  of which is derived from
+                       the author of the first message (overrides
+                       the  record  variable,  if set).  See also
+                       the followup, Save, and Copy commands  and
+                       the outfolder variable.
+
+     from [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Print the header summary for the indicated
+                       messages or the current message.
+
+     group _a_l_i_a_s _n_a_m_e ...
+                       Same as the alias command.
+
+     headers [_m_e_s_s_a_g_e] Print the page of  headers  that  includes
+                       the message specified, or the current mes-
+                       sage.  The screen variable sets the number
+                       of  headers per page.  See also the z com-
+                       mand.
+
+     help              Print a summary of commands.
+
+     hold [_m_e_s_s_a_g_e-_l_i_s_t]
+     preserve [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Hold the specified messages in the  system
+                       mailbox.
+
+     if _s|_r|_t
+     _m_a_i_l-_c_o_m_m_a_n_d
+     ...
+     else
+     _m_a_i_l-_c_o_m_m_a_n_d
+     ...
+     endif             Conditional execution, where _s  will  exe-
+                       cute  following _m_a_i_l-_c_o_m_m_a_n_d up to an else
+                       or endif, if the program is in _s_e_n_d  mode,
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                 9
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                       _r   executes   the  _m_a_i_l-_c_o_m_m_a_n_d  only  in
+                       _r_e_c_e_i_v_e mode, and  _t  executes  the  _m_a_i_l-
+                       _c_o_m_m_a_n_d  only  if mail is being run from a
+                       terminal.  Useful primarily in the ._m_a_i_l_r_c
+                       file.
+
+     ignore [_h_e_a_d_e_r-_f_i_e_l_d...]
+                       Same as the discard command.
+
+     inc               Incorporate messages that arrive while you
+                       are  reading  the system mailbox.  The new
+                       messages are added to the message list  in
+                       the  current  mail  session.  This command
+                       does not commit changes  made  during  the
+                       session, and prior messages are not renum-
+                       bered.
+
+     list              Prints all commands available.  No  expla-
+                       nation is given.
+
+     load [_m_e_s_s_a_g_e] _f_i_l_e_n_a_m_e
+                       Load the specified message from  the  name
+                       file.   _f_i_l_e_n_a_m_e  should  contain a single
+                       mail message including  mail  headers  (as
+                       saved by the save command).
+
+     mail _r_e_c_i_p_i_e_n_t ...
+                       Mail a  message  to  the  specified  reci-
+                       pients.
+
+     mbox [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Arrange for the given messages to  end  up
+                       in  the  standard _m_b_o_x file when mail ter-
+                       minates normally.  See also the  exit  and
+                       quit commands.
+
+     new [_m_e_s_s_a_g_e-_l_i_s_t]
+                       New [_m_e_s_s_a_g_e-_l_i_s_t]
+                       unread [_m_e_s_s_a_g_e-_l_i_s_t]
+     Unread [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Take a message list and mark each  message
+                       as _n_o_t having been read.
+
+     next _m_e_s_s_a_g_e      Go to next message  matching  _m_e_s_s_a_g_e.   A
+                       _m_e_s_s_a_g_e-_l_i_s_t  can be given instead of _m_e_s_-
+                       _s_a_g_e, but only first valid message in  the
+                       list  is  used.   (This  can  be used, for
+                       instance, to jump to the next message from
+                       a specific user.)
+
+     pipe [_m_e_s_s_a_g_e-_l_i_s_t] [_s_h_e_l_l-_c_o_m_m_a_n_d]
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                10
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     | [_m_e_s_s_a_g_e-_l_i_s_t] [_s_h_e_l_l-_c_o_m_m_a_n_d]
+                       Pipe the  message  through  _s_h_e_l_l-_c_o_m_m_a_n_d.
+                       The message is treated marked as read (and
+                       normally saved to the _m_b_o_x file when  mail
+                       exits).   If  no  arguments are given, the
+                       current message is piped through the  com-
+                       mand  specified  by  the  value of the cmd
+                       variable.  If the page variable is set,  a
+                       form feed character is inserted after each
+                       message.
+
+     preserve [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Same as the hold command.
+
+     print [_m_e_s_s_a_g_e-_l_i_s_t]
+     type [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Print the specified messages.  If the  crt
+                       variable  is set, messages longer than the
+                       number of lines it indicates paged through
+                       the  command  specified by the PAGER vari-
+                       able.   The  default  paging  command   is
+                       more(1).
+
+     Print [_m_e_s_s_a_g_e-_l_i_s_t]
+     Type [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Print  the  specified  messages   on   the
+                       screen,   including   all  header  fields.
+                       Overrides suppression  of  fields  by  the
+                       ignore and retain commands.
+
+     quit              Exit from mail storing messages that  were
+                       read  in the _m_b_o_x file and unread messages
+                       in the system mailbox.  Messages that have
+                       been   explicitly  saved  in  a  file  are
+                       deleted unless the  variable  keepsave  is
+                       set.
+
+     reply [_m_e_s_s_a_g_e-_l_i_s_t]
+     respond [_m_e_s_s_a_g_e-_l_i_s_t]
+     replysender [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Send a response to the author of each mes-
+                       sage  in  the  _m_e_s_s_a_g_e-_l_i_s_t.   The subject
+                       line is taken from the first message.   If
+                       record is set to a filename, a copy of the
+                       reply is  added  to  that  file.   If  the
+                       replyall  variable  is set, the actions of
+                       Reply/Respond   and   reply/respond    are
+                       reversed.   The replysender command is not
+                       affected by  the  replyall  variable,  but
+                       sends  each  reply  only  to the sender of
+                       each message.
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                11
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     Reply [_m_e_s_s_a_g_e]
+     Respond [_m_e_s_s_a_g_e]
+     replyall [_m_e_s_s_a_g_e]
+                       Reply to the specified message,  including
+                       all  other recipients of that message.  If
+                       the variable record is set to a  filename,
+                       a  copy  of  the reply added to that file.
+                       If  the  replyall  variable  is  set,  the
+                       actions of Reply/Respond and reply/respond
+                       are reversed.  The replyall command is not
+                       affected  by  the  replyall  variable, but
+                       always sends the reply to  all  recipients
+                       of the message.
+
+     retain            Add the list of header fields named to the
+                       _r_e_t_a_i_n_e_d  _l_i_s_t.  Only the header fields in
+                       the retain list are shown on your terminal
+                       when  you  print  a  message.   All  other
+                       header fields are suppressed.  The set  of
+                       retained  fields  specified  by the retain
+                       command  overrides  any  list  of  ignored
+                       fields  specified  by  the ignore command.
+                       The Type and Print commands can be used to
+                       print  a  message  in  its  entirety.   If
+                       retain is executed with no  arguments,  it
+                       lists the current set of retained fields.
+
+     save [_m_e_s_s_a_g_e-_l_i_s_t] [_f_i_l_e_n_a_m_e]
+                       Save the specified messages in  the  named
+                       file.   The file is created if it does not
+                       exist.  If no _f_i_l_e_n_a_m_e is  specified,  the
+                       file  named  in the MBOX variable is used,
+                       mbox in your home  directory  by  default.
+                       Each  saved  message  is  deleted from the
+                       system mailbox when mail terminates unless
+                       the  keepsave  variable  is set.  See also
+                       the exit and quit commands.
+
+     Save [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Save the  specified  messages  in  a  file
+                       whose  name  is derived from the author of
+                       the first message.  The name of  the  file
+                       is  taken from the author's name, with all
+                       network addressing stripped off.  See also
+                       the  Copy, followup, and Followup commands
+                       and the outfolder variables.
+
+     set [_v_a_r_i_a_b_l_e[=_v_a_l_u_e]]
+                       Define a _v_a_r_i_a_b_l_e.  To assign a  _v_a_l_u_e  to
+                       _v_a_r_i_a_b_l_e,  separate the variable name from
+                       the value by an  `='  (there  must  be  no
+                       space   before   or  after  the  `=').   A
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                12
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                       variable may be given a null,  string,  or
+                       numeric  _v_a_l_u_e.  To embed SPACE characters
+                       within a _v_a_l_u_e enclose it in quotes.
+
+                       With  no  arguments,  set   displays   all
+                       defined  variables  and  any  values  they
+                       might have.  See Variables for a  descrip-
+                       tion of all predefined mail variables.
+
+     shell             Invoke the interactive shell listed in the
+                       SHELL variable.
+
+     size [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Print the size in characters of the speci-
+                       fied messages.
+
+     source _f_i_l_e_n_a_m_e   Read commands  from  the  given  file  and
+                       return to command mode.
+
+     top [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Print the top few lines of  the  specified
+                       messages.   If  the  toplines  variable is
+                       set, it is taken as the number of lines to
+                       print.  The default number is 5.
+
+     touch [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Touch the specified messages.  If any mes-
+                       sage  in  _m_e_s_s_a_g_e-_l_i_s_t is not specifically
+                       saved in a file, it will be placed in  the
+                       _m_b_o_x  upon  normal  termination.  See also
+                       the exit and quit commands.
+
+     type [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Same as the print command.
+
+     Type [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Same as the Print command.
+
+     undelete [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Restore deleted  messages.   This  command
+                       only  restores  messages  _d_e_l_e_t_e_d  _i_n  _t_h_e
+                       _c_u_r_r_e_n_t _m_a_i_l _s_e_s_s_i_o_n.   If  the  autoprint
+                       variable is set, the last message restored
+                       is printed.
+
+     unread [_m_e_s_s_a_g_e-_l_i_s_t]
+     Unread [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Same as the new command.
+     unset _v_a_r_i_a_b_l_e ...
+                       Erase the  specified  variables.   If  the
+                       variable was imported from the environment
+                       (that  is,  an  environment  variable   or
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                13
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                       exported  shell  variable),  it  cannot be
+                       unset from within mail.
+
+     version           Print the current version and release date
+                       of the mail utility.
+
+     visual [_m_e_s_s_a_g_e-_l_i_s_t]
+                       Edit the given messages  with  the  screen
+                       editor listed in the VISUAL variable.  The
+                       default screen editor is vi(1).  Each mes-
+                       sage  is  placed  in  a temporary file for
+                       editing.
+
+     write [_m_e_s_s_a_g_e-_l_i_s_t] [_f_i_l_e_n_a_m_e]
+                       Write the given messages onto  the  speci-
+                       fied  file,  but  without  the  header and
+                       trailing blank line.  Otherwise,  this  is
+                       equivalent to the save command.
+
+     xit               Same as the exit command.
+
+     z[+|-]            Scroll the header display forward  (+)  or
+                       backward  (-)  one screenfull.  The number
+                       of headers displayed is set by the  screen
+                       variable.
+
+  Forwarding Messages
+     To forward a specific message, include it in  a  message  to
+     the  desired  recipients with the ~f or ~m tilde escapes. To
+     forward mail automatically, add a  comma-separated  list  of
+     addresses  for additional recipients to the .forward file in
+     your home directory.  This is different from the  format  of
+     the  alias  command,  which  takes  a  space-separated  list
+     instead.  Note:  forwarding  addresses  must  be  valid  (as
+     described  in  aliases(5)),  or  the messages will "bounce."
+     You cannot, for instance, reroute your mail to a new host by
+     forwarding it to your new address if it is not yet listed in
+     the NIS aliases domain.
+
+  Variables
+     The behavior of mail is governed  by  a  set  of  predefined
+     variables  that  are set and cleared using the set and unset
+     commands.
+
+  _E_n_v_i_r_o_n_m_e_n_t _V_a_r_i_a_b_l_e_s
+     Values for the following variables are read in automatically
+     from  the  environment;  they  cannot be altered from within
+     mail:
+
+     HOME=_d_i_r_e_c_t_o_r_y
+                   The user's home directory.
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                14
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     MAIL=_f_i_l_e_n_a_m_e
+                   The name of the initial mailbox file  to  read
+                   (in lieu of the standard system mailbox).  The
+                   default is /var/spool/mail/_u_s_e_r_n_a_m_e.
+
+     MAILRC=_f_i_l_e_n_a_m_e
+                   The name of the personal start-up  file.   The
+                   default is $HOME/.mailrc.
+
+  _M_a_i_l _V_a_r_i_a_b_l_e_s
+     The  following  variables  can  be  initialized  within  the
+     ._m_a_i_l_r_c file, or set and altered interactively using the set
+     command. They can also be imported from the environment  (in
+     which case their values cannot be changed within mail).  The
+     unset command clears variables. The set command can also  be
+     used  to  clear  a  variable by prefixing the word no to the
+     name of the variable to clear.
+
+     Variables for which values are normally supplied  are  indi-
+     cated with an equal-sign (=).  The equal-sign is required by
+     the set command, and there can  be  no  spaces  between  the
+     variable-name,  equal-sign, and value, using set to assign a
+     value.
+
+     allnet        All network names whose last component  (login
+                   name)  match  are  treated as identical.  This
+                   causes  the  message  list  specifications  to
+                   behave  similarly.   Default is noallnet.  See
+                   also the  alternates  command  and  the  metoo
+                   variable.
+
+     alwaysignore  Ignore header fields with  ignore  everywhere,
+                   not  just  during  print or type.  Affects the
+                   save, Save, copy, Copy, top, pipe,  and  write
+                   commands, and the ~m and ~f tilde escapes.
+
+     append        Upon termination, append messages to  the  end
+                   of  the  _m_b_o_x file instead of prepending them.
+                   Default is noappend but append is set  in  the
+                   global  start-up file (which can be suppressed
+                   with the -n command line option).
+
+     askcc         Prompt  for  the  Cc  list  after  message  is
+                   entered.  Default is noaskcc.
+
+     asksub        Prompt for subject if it is not  specified  on
+                   the  command line with the -s option.  Enabled
+                   by default.
+
+     autoprint     Enable automatic printing  of  messages  after
+                   delete  and  undelete  commands.   Default  is
+                   noautoprint.
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                15
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     bang          Enable  the  special-casing   of   exclamation
+                   points (!) in shell escape command lines as in
+                   vi(1).  Default is nobang.
+
+     cmd=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   Set the default command for the pipe  command.
+                   No default value.
+
+     conv=_c_o_n_v_e_r_s_i_o_n
+                   Convert uucp addresses to  the  address  style
+                   specified by _c_o_n_v_e_r_s_i_o_n, which can be either:
+
+                   internet
+                        This requires  a  mail  delivery  program
+                        conforming  to  the  RFC822  standard for
+                        electronic mail addressing.
+
+                   optimize
+                        Remove loops in  uucp(1C)  address  paths
+                        (typically  generated  by  the reply com-
+                        mand).  No rerouting is  performed;  mail
+                        has  no  knowledge of UUCP routes or con-
+                        nections.
+
+                   Conversion is disabled by default.   See  also
+                   sendmail(8) and the -U command line option.
+
+     crt=_n_u_m_b_e_r    Pipe messages having more  than  _n_u_m_b_e_r  lines
+                   through  the command specified by the value of
+                   the PAGER variable (_m_o_r_e  by  default).   Dis-
+                   abled by default.
+
+     DEAD=_f_i_l_e_n_a_m_e
+                   The name of the file in which to save  partial
+                   letters  in  case  of  untimely  interrupt  or
+                   delivery  errors.    Default   is   the   file
+                   dead.letter in your home directory.
+
+     debug         Enable  verbose  diagnostics  for   debugging.
+                   Messages  are not delivered.  Default is node-
+                   bug.
+
+     dot           Take a period on a line by itself during input
+                   from  a  terminal as EOF. Default is nodot but
+                   dot is set in the global start-up file  (which
+                   can  be  suppressed  with  the -n command line
+                   option).
+
+     editheaders   Include message headers  in  the  text  to  be
+                   edited by the ~e and ~v commands.
+
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                16
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     EDITOR=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   The command to run when the edit or ~e command
+                   is used.  Default is ex(1).
+
+     escape=_c      Substitute _c for the ~ escape character.
+
+     folder=_d_i_r_e_c_t_o_r_y
+                   The directory for saving standard mail  files.
+                   User  specified  file  names  beginning with a
+                   plus  (+)  are  expanded  by   preceding   the
+                   filename  with  this  directory name to obtain
+                   the real  filename.   If  _d_i_r_e_c_t_o_r_y  does  not
+                   start  with  a slash (/), the value of HOME is
+                   prepended to it.  There is no default for  the
+                   folder variable.  See also outfolder below.
+
+     header        Enable printing of  the  header  summary  when
+                   entering mail.  Enabled by default.
+
+     hold          Preserve all messages that  are  read  in  the
+                   system  mailbox instead of putting them in the
+                   standard _m_b_o_x save file.   Default  is  nohold
+                   for mail and hold for mailtool(1).
+
+     ignore        Ignore  interrupts  while  entering  messages.
+                   Handy  for  noisy  dial-up  lines.  Default is
+                   noignore.
+
+     ignoreeof     Ignore EOF during message input.   Input  must
+                   be  terminated  by a period (`.') on a line by
+                   itself or by the  `~.'  command.   Default  is
+                   noignoreeof.  See also dot above.
+
+     indentprefix=_s_t_r_i_n_g
+                   When indentprefix is set, _s_t_r_i_n_g  is  used  to
+                   mark  indented  lines  from  messages included
+                   with ~m.  The default is a TAB character.
+
+     keep          When the system mailbox is empty, truncate  it
+                   to  zero  length instead of removing it.  Dis-
+                   abled by default.
+
+     keepsave      Keep messages that have been  saved  in  other
+                   files  in the system mailbox instead of delet-
+                   ing them.  Default is nokeepsave.
+
+     LISTER=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   The command (and options) to use when  listing
+                   the   files  in  the  folder  directory.   The
+                   default is ls(1V).
+
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                17
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+     MBOX=_f_i_l_e_n_a_m_e
+                   The name of the file to  save  messages  which
+                   have  been  read.   The  xit command overrides
+                   this variable,  as  does  saving  the  message
+                   explicitly  to  another  file.  Default is the
+                   file mbox in your home directory.
+
+     metoo         If your login appears as a recipient,  do  not
+                   delete it from the list.  Default is nometoo.
+
+     no            When used as a prefix to a variable name,  has
+                   the effect of unsetting the variable.
+
+     onehop        When responding to a message that  was  origi-
+                   nally  sent  to  several recipients, the other
+                   recipient addresses are normally forced to  be
+                   relative  to  the originating author's machine
+                   for the response.  This flag disables  altera-
+                   tion  of  the recipients' addresses, improving
+                   efficiency in a network where all machines can
+                   send  directly to all other machines (that is,
+                   one "hop" away).
+
+     outfolder     Locate the files used to record outgoing  mes-
+                   sages in the directory specified by the folder
+                   variable  unless  the  pathname  is  absolute.
+                   Default  is nooutfolder.  See folder above and
+                   the Save, Copy, followup,  and  Followup  com-
+                   mands.
+
+     page          Used with the pipe command to  insert  a  form
+                   feed after each message sent through the pipe.
+                   Default is nopage.
+
+     PAGER=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   The command to use as a filter for  paginating
+                   output,  along  with  any  options to be used.
+                   Default is more(1).
+
+     prompt=_s_t_r_i_n_g Set  the  _c_o_m_m_a_n_d  _m_o_d_e  prompt   to   _s_t_r_i_n_g.
+                   Default is `&'.
+
+     quiet         Refrain from printing the opening message  and
+                   version   when   entering  mail.   Default  is
+                   noquiet.
+
+     record=_f_i_l_e_n_a_m_e
+                   Record all outgoing mail  in  _f_i_l_e_n_a_m_e.   Dis-
+                   abled  by default.  See also the variable out-
+                   folder.
+
+     replyall      Reverse the effect  of  the  reply  and  Reply
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                18
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+                   commands.
+
+     save          Enable saving of messages in  the  _d_e_a_d._l_e_t_t_e_r
+                   file on interrupt or delivery error.  See DEAD
+                   for a description of this  file.   Enabled  by
+                   default.
+
+     screen=_n_u_m_b_e_r Set the number of lines in  a  screen-full  of
+                   headers for the headers command.
+
+     sendmail=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   Alternate  command  for  delivering  messages.
+                   Note:  in  addition  to  the  expected list of
+                   recipients, mail also passes the  -i  and  -m,
+                   flags  to  the command.  Since these flags are
+                   not appropriate to  other  commands,  you  may
+                   have  to  use  a shell script that strips them
+                   from the arguments list  before  invoking  the
+                   desired command.
+
+     sendwait      Wait for background mailer  to  finish  before
+                   returning.  Default is nosendwait.
+
+     SHELL=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   The name of a preferred  command  interpreter.
+                   Typically  inherited from the environment, the
+                   shell is normally  the  one  you  always  use.
+                   Otherwise defaults to sh(1).
+
+     showto        When displaying the  header  summary  and  the
+                   message  is  from  you,  print the recipient's
+                   name instead of the author's name.
+
+     sign=_a_u_t_o_g_r_a_p_h
+                   The _a_u_t_o_g_r_a_p_h text inserted into  the  message
+                   when  the ~a (autograph) command is given.  No
+                   default (see also the ~i tilde escape).
+
+     Sign=_a_u_t_o_g_r_a_p_h
+                   The _a_u_t_o_g_r_a_p_h text inserted into  the  message
+                   when the ~A command is given.  No default (see
+                   also the ~i tilde escape).
+
+     toplines=_n_u_m_b_e_r
+                   The number of lines of header  to  print  with
+                   the top command.  Default is 5.
+
+     verbose       Invoke sendmail with the -v flag.
+
+     VISUAL=_s_h_e_l_l-_c_o_m_m_a_n_d
+                   The  name  of  a  preferred   screen   editor.
+                   Default is vi.
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                19
+
+
+
+
+
+
+MAIL(1)                  USER COMMANDS                    MAIL(1)
+
+
+
+FILES
+     $HOME/._m_a_i_l_r_c       personal start-up file
+     $HOME/._f_o_r_w_a_r_d      list of recipients  for  automatic  for-
+                         warding of messages
+     $HOME/_m_b_o_x          secondary storage file
+     $HOME/_d_e_a_d._l_e_t_t_e_r   undeliverable messages file
+     /var/spool/mail     directory for system mailboxes
+     /usr/lib/Mail.help* help message files
+     /usr/lib/Mail.rc    global start-up file
+     /tmp/R[emqsx]*      temporary files
+
+SEE ALSO
+     biff(1), bin-mail(1), echo(1V), ex(1), fmt(1), ls(1V), mail-
+     tool(1),   more(1),  sh(1),  uucp(1C),  vacation(1),  vi(1),
+     aliases(5), newaliases(8), sendmail(8)
+
+     _G_e_t_t_i_n_g _S_t_a_r_t_e_d
+
+     mail is found in /usr/ucb/Mail, as a link to  /usr/ucb/mail.
+     If  you  wish to use the original (version 7) UNIX mail pro-
+     gram, you can find it in /usr/bin/mail.   Its  man  page  is
+     named bin-mail(1).
+
+BUGS
+     Where _s_h_e_l_l-_c_o_m_m_a_n_d is shown as  valid,  arguments  are  not
+     always allowed.  Experimentation is recommended.
+
+     Internal variables imported from the  execution  environment
+     cannot be unset.
+
+     Replies do not always  generate  correct  return  addresses.
+     Try resending the errant reply with onehop set.
+
+     mail does not lock your record  file.   So,  if  you  use  a
+     record  file  and  send two or more messages simultaneously,
+     lines from the messages may be  interleaved  in  the  record
+     file.
+
+     The format for the alias command is a  space-separated  list
+     of  recipients,  while the format for an alias in either the
+     .forward or /etc/aliases is a comma-separated list.
+
+NOTES
+     The Network Information Service (NIS) was formerly known  as
+     Sun  Yellow Pages (YP). The functionality of the two remains
+     the same; only the name has changed.
+
+
+
+
+
+
+
+
+
+Sun Release 4.1   Last change: 19 December 1988                20
+
+
+
+=$dx“
