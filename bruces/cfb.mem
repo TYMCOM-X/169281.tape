@@ -1,0 +1,234 @@
+:top
+:erase
+
+                        M  E  M  O  R  A  N  D  U  M
+
+                         BRITISH TELECOMMUNICATIONS
+                                TYMNET, INC.
+
+Date:     15 October 1990
+
+To:       Joe Magnan      	                     Copies:  See CC List
+
+From:     Bruce Shepherd                              
+
+Subject:  SIO Configuration Guidelines
+
+------------------------------------------------------------------------
+
+The PXL will follow the below SIO motherboard guidelines unless we find
+a significant difference in the throughput:
+
+SUBJECT:  CONFIGURATION LIMITS FOR THE SIO MOTHERBOARD
+
+
+     SIO Mother boards should be numbered based on daughter requirements.
+This means that certain mother board configurations should be a higher
+priority (lower address number and higher up in the card cage) than other
+configurations.
+
+     SIO 19.2KB and MS lines are each done in pairs.  You can NOT
+trade 1 MS for 1 19.2KB, but you trade 2 for 2.  This is because the
+hardware must be allocated in pairs and even if you are not using 1 line
+of the pair we must still count it.
+
+     V.24 lines can be any speed up to 19200(some examples: 4800,9600,
+14400,19200).  However, the configurations below treat all speeds the same!
+(Example: You can NOT trade 1 19.2 for 2 9.6 lines.)
+
+     ASYNC lines can be run at any selectable speed (50-9600).
+
+     Valid Mother board configurations are listed below in order of
+priority.
+
+     Pick one configuration for each SIO Mother board.  Assign SIO Mother
+boards in order of priority.  NO OTHER CONFIGURATIONS WILL BE SUPPORTED!
+
+  #1  4x56KB (V.35)
+
+  #2  2x56KB (V.35) + 4xV.24
+
+  #3  2x56KB (V.35) + 2xV.24 + 2 MS (OCL),  or
+      2x56KB (V.35) + 2xV.24
+
+  #4  2x56KB (V.35) + 4 MS (OCL),  or
+      2x56KB (V.35) + 2 MS (OCL)
+
+  #5  12xV.24,  or
+      10xV.24,  or
+       8xV.24
+
+  #6  10xV.24 +  2xASYNC,  or
+       8xV.24 +  4xASYNC,  or
+       6xV.24 +  6xASYNC,  or
+       4xV.24 +  8xASYNC,  or
+       2xV.24 + 10xASYNC
+
+  #7  6xV.24,  or
+      4xV.24,  or
+      2xV.24
+
+  #8  6xV.24 + 2 MS (OCL)
+
+  #9  4xV.24 + 4 MS (OCL)
+
+ #10  2xV.24 + 6 MS (OCL)
+
+ #11  4xV.24 + 2 MS (OCL) + 2xASYNC,  or
+      2xV.24 + 4 MS (OCL) + 2xASYNC,  or
+      2xV.24 + 2 MS (OCL) + 4xASYNC
+
+ #12  8 MS (OCL),  or
+      6 MS (OCL),  or
+      4 MS (OCL),  or
+      2 MS (OCL)
+
+ #13  6 MS (OCL) + 2xASYNC,  or
+      4 MS (OCL) + 4xASYNC,  or
+      2 MS (OCL) + 6xASYNC
+
+ #14  16xASYNC,  or
+      14xASYNC,  or
+      12xASYNC,  or
+      10xASYNC,  or
+       8xASYNC,  or
+       6xASYNC,  or
+       4xASYNC,  or
+       2xASYNC,  or
+
+     Note: Currently engines with the PSM hardware are limited to a max
+of  2 SIO Mother boards while engines with non-PSM hardware are limited
+to a max of 4 SIO Mother boards.
+
+
+
+
+Here is some additional information I answered on the PXL this morning
+for another office you might be interested in:
+
+
+1.  Is the PXL based on CPU IV technology?
+
+NO,  the PXL is based on CPU III and MAC V.  The CPU is set at 10 MHz, but
+and the MAC V structure.  It was originally intented to be CPU II  and MAC
+III but it was decided that we should proceed with MAC V architecture.
+
+2.  Will (or when will) the PXL support 2 Meg?
+
+PXL-1  will support only  a single meg of memory.  PXL-1 is probably going
+to  be available  sometime in the 1st quarter of 1991.   PXL-2 is targeted
+for 2 meg of memory, but will  probably not be  available until the 3rd or
+4th quarter of 1991.
+
+3.  Configuration guidelines.
+
+The SIO guidelines for the standard SIO motherboard will be in  effect for
+the  PXL unless  we find  anything different.   This means  that  we  will
+support  a maximum of  12 V.24 total.   The bus slots on the PXL look like
+this:
+
+      +___+___+___+___+___+___+___+___+___+___+____+
+      | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+      +___+___+___+___+___+___+___+___+___+___+____+
+      
+        |   |  |__________________||_______________|
+	|   |           |                  |
+	|   |           |                  |
+	|   |           |                   ------  NON-DMA expansion
+	|   |            -------------------------  DMA expansion
+	|    -------------------------------------  Reserved for TTY/V.24
+	 -----------------------------------------  Reserverd for SIO MB
+
+
+    Slot 0:  PXL-1 Rev A requires  that slot  0 be  reserved  for the SIO 
+             Motherboard card.  PXL-2 Rev B will  have the  functionality
+	     of the SIO motherboard rolled down  to the main  motherboard
+	     of the PXL.
+
+    Slot 1:  Reserved for the SCV24 card which contains the multifunction
+             logic and two (2) V.24 ports.  These  V.24 ports can be used
+	     for any application (node code, X.25, SDLC, etc).
+
+    Slot 2 - Slot 6:
+             Are the ONLY  DMA capable  expansion  slots.   These can run
+	     any combination of OCL, V.24, V.35 or SIO ASYNC  cards.  The
+	     restriction is the current SIO motherboard  guidelines.   In
+	     addition, the non-SIO async cards can run in these slots.
+
+    Slot 7 - Slot 10: 
+             Are NON-DMA capable  expansion slots.   These  slots can  be
+	     configured for ASYNC or a MAXIMUM of 8 sync ports.  The sync
+	     ports can ONLY be configured to run in these four slots.
+
+The rule of thumb for configurations (at this time) are as follows:
+
+   SIO:   Use published SIO configuration guidelines.
+   SYNC:  Maximum of 8 ports (4 on sync primary card, 4 on sync expansion
+          card).  Must be installed in  slots 7-10.  This is the standard
+	  sync available on the engine.
+   AYSNC: Maximum of 32 ports  (configurable as 4 per primary card, 4 per
+          expansion card).  Can be installed  in ANY  slots (2-10).  This
+	  is the standard async available on the engine.
+
+
+4.  Do we have any performance figures for PXL yet?
+
+NO ... we have only had a version of ISIS and Node Code that runs together
+for  7 days.   Due to the MAC V addressing incorporated in the PXL, we are
+forced to go with new version  of all interface codes.  ISIS version 13.00
+will be the standard and we have  encountered several problems in the past
+week  of initial testing.  The status of the "NEW" code is tentatively  as
+follows:
+
+     I2IS 13.00  -  Currently released to QA (NTS), with the ONLY support
+        NTD development  person on  vacation of the next 3 weeks.   As is
+	typical, the developer went on a 4  week vacation  the day  after
+	the code  was released  to QA  ...   We have  encountered several
+	minor and major problems with the code in a week of  very limited
+	testing.
+
+     TII 5.61  -  Currently in a  pre-QA  release state.   We are working 
+        with a development version.
+
+     XCOM 4.04   -  Currently  released to QA.  Testing to this point has
+        been done with  a DCE/DTE configuration  (HDLC,  not SYNC)  and a
+	through-put host.  Testing can be classified as minimal to date.
+
+     ISCS 11.00  -  Currently  in  a  pre-QA  release  state.  We haven't
+        seen this one yet.
+
+     SNA  xx.xx  -  Currently  in  a  pre-QA  release  state.  We haven't
+        seen this one yet.
+
+
+These  are the initial software packages to be released with the PXL.  All
+remaining  application codes will  be released EVENTUALLY.  As you can see
+we are in the very rudimentary stages of QA.  
+
+The status of the overall PXL project can be summarized as follows:
+
+  o  HARDWARE:  untested at this point.
+  o  SOFTWARE:  untested at this point.
+
+
+The  hardware is  in a continual state of revision, so that with the PXL-1
+there  are two  rev levels: A and B.  PXL-1 Rev A is the pilot unit, Rev B
+is the next level  with the SIO  MB rolled  into the  main motherboard via
+gate array logic.  How many of each is unclear at this point.
+
+We have ONE (1) Rev A PXL in the NTS lab .. the first 15 PILOT units (also
+Rev A)  were supposed  to be  available last month, and now look to become
+available  sometime in  the next 2-3 weeks.  We have yet to see  any Rev B
+specifications or design rework.
+
+
+
+If  you have  any additional  questions concerning  the PXL feel  free  to
+drop me at note  via  OnTyme (NSC.B/SHEPHERD),  DIALCOM 198:SHEPHERD  or I
+can be reached at 408-922-7585.
+
+
+:send cc b/shepherd nscms.j/magnan
+SIO Configuration Guidelines
+:out
+   
