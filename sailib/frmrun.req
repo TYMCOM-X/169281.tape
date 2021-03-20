@@ -1,0 +1,48 @@
+
+  ReDefine ! = "Comment";
+
+  External Integer Procedure FRMRUN(
+
+    String  ProgramName;		! Program to RUN ;
+
+    Integer ProgramFlags;		! Flag bits (see below) ;
+    Reference Integer ProgramCode;	! Code from Frame-Halt/Exit ;
+
+    String  TempFileName( Null );	! Name of TEMP file ;
+    String  TempFileData( Null )	! Data for TEMP file ;
+
+       );
+
+  !   FRMRUN FLAG BIT VALUES  ;
+
+  Define
+    F.CCL  =  1		! start program at start+1 ;
+,   F.NTTY =  2		! do not pass TTY: to child ;
+,   F.NWAI =  4		! do not wait for child to terminate ;
+,   F.NEOL =  8		! do not add CRLF at end of tmpcor data ;
+,   F.NLIC = 16		! do not pass user license to child frame ;
+;
+  !    FRMRUN ERROR CODES AND ERROR PREFIXES ;
+
+  Define
+    E.NOER =  0		! no errors detected (EXIT or F.NWAI+started) ;
+,   E.HNHS =  1		! child halted with no halt status ( ? ^C) ;
+,   E.OPN  =  2		! open failure for device DSK: ;
+,   E.ENT  =  3		! enter failure for temp file (on disk) ;
+,   E.OUT  =  4		! output error for temp file (on disk) ;
+,   E.GTAB =  5		! gettab failed (frame probably vanished) ;
+,   E.HIBR =  6		! HIBER failed, should never happen ;
+,   E.IFS  =  7		! Illegal program-name specification ;
+
+,   E.HS   = 10000	! Unexpected halt status ( code 1CCTT ) ;
+,   E.FO   = 20000	! FRMOP error ( code is 2XXXX ) ;
+,   E.RT   = 30000	! RETACH error ( code is 3XXXX ) ;
+;
+
+IFCR (compiler!version lsh -18 = '102400) or
+   (compiler!version lsh -18 = '202400)
+ THENC require "(SAILIB)FRMRUN" library;
+ ELSEC require "(SAILIB)FRNRNN" library;
+ENDC
+
+
