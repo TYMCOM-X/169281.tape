@@ -1,0 +1,2143 @@
+
+
+
+
+
+
+
+
+
+
+                                          ISIS
+
+                                       VALIDATION
+
+                                        PROGRAM
+
+                            *         *  *      *
+                             *       *  * *     *
+                              *     *  *   *    *
+                               *   *  *******   *
+                                * *  *       *  *
+                                 *  *         * *******
+
+
+
+
+                                      User's Guide
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     Tymshare, Inc.
+                                 Data Networks Division
+
+
+
+
+                                      Version 3.03
+                                   September 26, 1980
+
+
+
+
+
+
+
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+                                        CONTENTS                                        ________
+
+
+          1.0 OVERVIEW ..................................................... 1
+
+             1.1 Login ..................................................... 1
+
+             1.2 CUD Entries ............................................... 1
+
+             1.3 Format and Syntax ......................................... 4
+
+                1.3.1 Format ............................................... 4
+
+                1.3.2 Syntax ............................................... 4
+
+          2.0 INSTRUCTIONS ................................................. 5
+
+             2.1 NETVAL (Unprivileged) Instructions ........................ 5
+
+                2.1.1 Attach Instruction ................................... 5
+
+                2.1.2 Change Class Instruction ............................. 6
+
+                2.1.3 Change Control Instruction ........................... 6
+
+                2.1.4 Change District Instruction .......................... 7
+
+                2.1.5 Change GAN Instruction ............................... 7
+
+                2.1.6 Change Home Instruction .............................. 8
+
+                2.1.7 Change IRC Instruction ............................... 8
+
+                2.1.8 Change Name Instruction .............................. 9
+
+                2.1.9 Change Password Instruction .......................... 9
+
+                2.1.10 Check Instruction .................................. 10
+
+                2.1.11 Detach Instruction ................................. 10
+
+                2.1.12 Delete Class Instruction ........................... 11
+
+                2.1.13 Delete User Instruction ............................ 11
+
+                2.1.14 Help Instruction ................................... 11
+
+                2.1.15 ID Instruction ..................................... 13
+
+                2.1.16 New Class Instruction .............................. 13
+
+                2.1.17 New User Instruction ............................... 14
+
+                2.1.18 Restore Instruction ................................ 16
+
+
+                                                                        Page i
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+                2.1.19 Rewind Instruction ................................. 17
+
+                2.1.20 Store Instruction .................................. 17
+
+                2.1.21 Type All Instruction ............................... 18
+
+                2.1.22 Type User Instruction .............................. 18
+
+                2.1.23 Quit Instruction ................................... 19
+
+             2.2 NETPRIV (Privileged) Instructions ........................ 19
+
+                2.2.1 Get Instruction ..................................... 19
+
+                2.2.2 Reset Command ....................................... 19
+
+                2.2.3 Read CUD Instruction ................................ 20
+
+                2.2.4 Type CUD Instruction ................................ 20
+
+                2.2.5 Compare Instruction ................................. 21
+
+                2.2.6 PJ Instruction ...................................... 21
+
+                2.2.7 Read MUD Instruction ................................ 22
+
+                2.2.8 Type MUD Instruction ................................ 22
+
+                2.2.9 Write Instruction ................................... 22
+
+                2.2.10 MUD Consistency Command ............................ 23
+
+          3.0 USER PASSWORD CHANGING ...................................... 24
+
+          4.0 FRONT PANEL DISPLAY ......................................... 25
+
+          5.0 INITIALIZING THE CUD ........................................ 26
+
+          Appendix A, ERROR MESSAGES ...................................... 27
+
+          Index ........................................................... 30
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                       Page ii
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 1.0 OVERVIEW          ____________________
+
+          VAL runs in a TYMNET Engine ISIS job slot and allows users to update
+          the Controlling User Directory (CUD) on disk.  VAL also has instruc-
+          tions to back up the CUD to  magnetic tape and  to  restore the  CUD
+          from tape.  If there is more than one supervisor in a network, there
+          will be  copies of  the CUD  on   all  supervisor   systems.   These
+          copies  are  called  Master User  Directories, or MUDs.  In addition
+          to  the instructions  described below,  if  there are  MUDs  to   be
+          updated,  VAL records  all   changes  made  to  the  CUD   to a spe-
+          cial disk area.
+
+          VAL also provides an optional facility for users to change their own
+          passwords.
+
+
+          SECTION 1.1 Login          _________________
+
+          VAL runs in an ISIS job slot and  may be accessed by either a privi-
+          leged or  unprivileged username.   To log into  VAL the  user should
+          enter:
+
+                                   NETVAL;password
+
+                                        or
+
+                                   NETPRIV;password
+
+          NETVAL is  the unprivileged username  and NETPRIV is  the privileged
+          username.
+
+          When a user  is successfully logged into VAL,  the following message
+          will be output:
+
+                    ISIS Network Validation System Version 3.03
+
+          Only one  user at a time  may be running  in VAL.  If a  second user
+          tries to log in, the following message will be output:
+
+                    VAL ALREADY RUNNING
+
+          and the circuit will be zapped.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                            OVERVIEW    Page 1
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+
+
+          SECTION 1.2 CUD Entries          _______________________
+
+          Optional CUD entries will  be included unless VAL  has been specifi-
+          cally set to ignore options.  The  Home System and Class Information
+          options  are mutually  exclusive and  the choice  between these  two
+          options must be made at system  generation time.  The account repre-
+          sentative must be  contacted to have any of the  options changed.  A
+          CUD entry may consist of:
+
+          1. USERNAME
+             A username may be up  to 20 alphanumeric characters.  Semicolons,
+             colons, and all control characters  are not acceptable characters
+             for usernames.
+
+          2. PASSWORD CIPHER
+             The password cipher  is  computed  from  a  password   of  up  to
+             30  characters.  Any  ASCII  character  other than  a  semicolon,
+             Escape, or carriage return may be  used within a password.  Pass-
+             words are not  echoed to the terminal, and are  entered twice for
+             verification.
+
+          3. PASSWORD CHANGE DATE
+             The change date is the date that the password was last changed.
+
+          4. GLOBAL ACCOUNT NUMBER (GAN) - OPTIONAL
+             The GAN is  an octal number between 0 and   37777777777  and  may
+             be used to group users together.
+
+          5. UNIVERSAL USER NUMBER (UUN)
+             The  UUN is  an octal  number between  0 and  37777777777 and  is
+             unique for each user.
+
+          6. CONTROL INFORMATION:
+
+             IGNORE COLON OPTION (OPTIONAL)
+             If the ignore colon option is set,  the user may  only  log  into
+             his home system.
+
+             LOGIN OVER SHUT (OPTIONAL)
+             Login over shut allows users to access  a  host  even  if  it  is
+             shut.
+
+             NO PASSWORD (OPTIONAL)
+             If the no password option is  set,  users  are  not  required  to
+             input  a  password   when they login and the user  may only login
+             to his home system.  (This command implies ignore colon option.)
+
+             TRANSPARENT GATEWAY LOGON (OPTIONAL)
+             If the  transparent gateway logon option  is set, the  user logon
+             will take him through a gateway into another network.  (This com-
+             mand implies ignore colon option.)
+
+
+
+                                                            OVERVIEW    Page 2
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          7. DISTRICT (OPTIONAL)
+             The  district is  a  decimal number  between 0  and  4095 and  is
+             another way to group users together.
+
+          8. IRC (OPTIONAL)
+             The International  Record Carrier is  a decimal number  between 0
+             and 127.   IRC tables must  be present  for any value  other than
+             zero to be significant.  The  IRC tables designate unique numbers
+             that have been  assigned to IRC links  and this CUD entry  may be
+             used to limit  a user's circuit building to links  of a specified
+             IRC.
+
+          THE NEXT TWO OPTIONS ARE MUTUALLY  EXCLUSIVE AND ARE CHOSEN WHEN VAL
+          IS INSTALLED IN THE NETWORK.  THE INSTRUCTIONS FOR CLASS INFORMATION
+          WILL ONLY WORK IF THAT OPTION WAS CHOSEN.
+
+          9. HOME SYSTEM (OPTIONAL)
+             The CUD  must include either  class definitions or  home systems.
+             Home systems entries in the CUD do not restrict user access.
+
+          10. CLASS INFORMATION (OPTIONAL)
+
+             The class  information option may be  used to establish  a closed
+             user group within the network.  A  closed user group is a segment
+             of the total  user population having more  restrictions placed on
+             their activities within the network than those put on the general
+             category of users.
+
+             CLASS
+             The class  for a user  represents the  set of node  numbers  from
+             which  the  user may access the  network.  Each class is followed
+             by up to six groups or hosts  describing which hosts the user may
+             access.  Each class must have either a  home host or a home group
+             defined.  Class 0 is the universal class.
+
+             GROUP
+             A group represents a set of host numbers.  Group 0 is the univer-
+             sal group.
+
+             HOST
+             A host is a host number in the network.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                            OVERVIEW    Page 3
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 1.3 Format and Syntax          _____________________________
+
+
+
+          1.3.1 Format                ______
+
+          Val issues an asterisk, "*", to prompt the user to enter an instruc-
+          tion.  After  an instruction has been  entered, VAL may  then prompt
+          the user for  parameters.  The prompts may be  questions or requests
+          and all require some form of response.
+
+          A '?' response to any yes/no question  or prompt for a numeric value
+          will  cause the   program  to   return  to   the  instruction   dis-
+          patcher.  The  Control-A character  may be used  to delete  the last
+          character typed when entering information.
+
+          On two word instructions, such as CHANGE or TYPE, if the second word
+          is not   entered,  VAL   will  output  the   options  to   the user.
+          For example, if the user types NEW <CR>, VAL will output:
+
+                    USER, OR CLASS:
+
+          The user only needs to input 'USER'  or  'CLASS'  to  continue exec-
+          ution of this instruction.
+
+          On instructions  that change the  CUD, after  all   the  information
+          is entered, the program prompts:
+
+                    ALL ENTRIES CORRECT?
+
+          If all the entered  information is as it should be,  the user should
+          answer 'Y' and the instruction will be carried out.
+
+                    ENTRY COMPLETED
+
+          will then print  to the user when the operation  has been  completed
+          sucessfully.   If some  entered information is in  error, answer 'N'
+          and the program  will  return  to  the   instruction  dispatcher  to
+          allow  the user to reenter the instruction.
+
+
+          1.3.2 Syntax                ______
+
+          The following  notation is used  in the instruction  descriptions to
+          describe the syntax of the instructions:
+
+          uppercase           Letters  or words  are entered  exactly as  they
+                              appear in the syntax description.
+
+          lowercase           Letters are optional entries as  VAL will recog-
+                              nize instructions abbreviated  to their shortest
+                              unique  length.   For  example,   CHEck  may  be
+                              entered as  CHE, CHAnge may  be entered  as CHA,
+                              and PASSword may be entered as PASS.
+
+
+                                                            OVERVIEW    Page 4
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 2.0 INSTRUCTIONS          ________________________
+
+          Instructions to VAL  are divided into  two logical  groups, unprivi-
+          leged  and privileged.   A  NETPRIV user  may  enter  any valid  VAL
+          instruction.  NETVAL users  may only  execute unprivileged  instruc-
+          tions.  The instructions  enable the user to add,  change, or delete
+          CUD entries.  NETPRIV instructions have  additional inquiry and com-
+          pare capabilities on the CUD entries and read and write capabilities
+          on the MUD blocks.   Instructions in each section  are listed alpha-
+          betically.  Each instruction description is  followed by an example.
+          Instructions exclusively related to the Class Information option are
+          so noted.
+
+          Note:  The examples of entries and responses  will be shown with the
+                 user input in lower case and  VAL prompts in uppercase.  Com-
+                 ments (not  entries or prompts)  are in parentheses.   If you
+                 receive responses  that are  not like the  ones shown  in the
+                 examples, check Appendix A to  determine whether they are VAL
+                 error messages.  If the response is still unique you may have
+                 a system error.
+
+
+
+          SECTION 2.1 NETVAL (Unprivileged) Instructions          ______________________________________________
+
+
+
+          2.1.1 Attach Instruction                __________________
+
+          Syntax:  Attach
+
+          Description:  The attach instruction assigns a magnetic tape unit to
+               the user's  slot.   This   must  be   done  before   any  other
+               tape instructions  can be  executed.  The  user must  enter the
+               tape unit number.
+
+               Example:
+
+                  * attach
+
+                  TAPE UNIT: 1
+
+                  TAPE ATTACHED
+
+                  *
+
+
+
+
+
+
+
+
+
+
+
+                                                        INSTRUCTIONS    Page 5
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.1.2 Change Class Instruction                ________________________
+
+          Syntax:  CHAnge CLass
+
+          Description:  The change class instruction changes the definition of
+               a class already  assigned  to  a user.  The user must enter the
+               username, class position, and class  information (see New Class
+               Instruction  subsection 2.1.16).   Class  position  refers   to
+               the  relative position of the class the user wants to change in
+               the list of classes  for the user.  The first class  for a user
+               is position 1, the second is position 2, etc.  The user will be
+               requested to redefine the class completely.
+
+               Note:  This instruction  only applies if the  Class Information
+                      option is in effect.
+
+               Example:
+
+                  * change class
+                  USERNAME: marcinjill
+                  CLASS POSITION: 1     (enter relative position of class
+                                        in entry)
+                  CLASS: 5
+                  GROUP? y
+                  GROUP: 5
+                  HOME GROUP? y
+                  ANOTHER GROUP OR HOST FOR THIS CLASS? n
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.3 Change Control Instruction                __________________________
+
+          Syntax:  CHAnge COntrol
+
+          Description:   The change  control  instruction  resets the  control
+               information for a user.   The   user  must  enter  username and
+               the settings for the following os:
+
+                    IGNORE COLON
+                    LOGIN OVER SHUT
+                    NO PASSWORD
+
+
+
+
+
+
+
+
+
+                                                        INSTRUCTIONS    Page 6
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Example:
+
+                  * change control
+                  USERNAME: marcinjill
+                  LOGIN OVER SHUT? y
+                  PASSWORD REQUIRED? n
+                  TRANSPARENT GATEWAY LOGON? n
+                  IGNORE COLON OPTION? n
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.4 Change District Instruction                ___________________________
+
+          Syntax:  CHAnge District
+
+          Description:  The  change district instruction changes  the district
+               for a user.  The user must enter username and district.
+
+               Example:
+
+                  * change district
+                  USERNAME: marcinjill
+                  DISTRICT: 1
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.5 Change GAN Instruction                ______________________
+
+          Syntax:  CHAnge Gan
+
+          Description:   The change  GAN  instruction moves  a  user from  one
+               global account to another.   The  user  is asked to enter USER-
+               NAME and GAN.   The new GAN must  be one that has  already been
+               assigned.
+
+
+
+
+
+
+
+
+
+
+                                                        INSTRUCTIONS    Page 7
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Example:
+
+                  * change gan
+                  USERNAME: dopler
+                  GAN: 123
+                  THAT GAN IS UNASSIGNED     (unassigned gan cannot be
+                                             used)
+                  GAN: 9
+                  ILLEGAL CHARACTER ENTERED, TRY AGAIN: 10     (GAN must
+                                                               be octal)
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+          2.1.6 Change Home Instruction                _______________________
+
+          Syntax:  CHAnge Home
+
+          Description:  The  change home instruction  changes the  home system
+               for a user.   The user must enter the username  and home system
+               number.
+
+               Note:  This instruction  only applies if the  Class Information
+                      option is not in effect.
+
+               Example:
+
+                  * change home
+                  USERNAME: dopler
+                  HOME:  6
+
+                  ALL ENTRIES CORRECT?
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.7 Change IRC Instruction                ______________________
+
+          Syntax:  CHAnge Irc
+
+          Description:  The  change IRC instruction changes  the international
+               record carrier  assignment  for  a user.   The user  must enter
+               USERNAME and the new IRC assignment.  Zero (0) is entered if no
+               IRC is desired.
+
+
+
+
+
+                                                        INSTRUCTIONS    Page 8
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Example:
+
+                  * change irc
+                  USERNAME: marcinjill
+                  IRC: 5
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.8 Change Name Instruction                _______________________
+
+          Syntax:  CHAnge Name
+
+          Description:  The change  name instruction changes an old  name to a
+               new name.  The user  will  be  asked  to enter new username and
+               (old) username.  The new username must not be currently valid.
+
+               Example:
+
+                  * change name
+                  NEW USERNAME: marcinjill     (enter invalid user)
+                  USER ALREADY THERE           (user is already valid)
+                  NEW USERNAME: marcinj
+                  USERNAME: marcinjill         (enter old username)
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.9 Change Password Instruction                ___________________________
+
+          Syntax:  CHAnge Password
+
+          Description:  The change password instruction assigns a new password
+               to a user  name.   The  user must enter  username and password.
+               The password change date will be updated to reflect the change.
+
+
+
+
+
+
+
+
+
+
+
+                                                        INSTRUCTIONS    Page 9
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Example:
+
+                  * change password
+                  USERNAME: marcinjill
+                  PASSWORD:
+                  ENTER IT AGAIN:
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.10 Check Instruction                 _________________
+
+          Syntax:  CHEck
+
+          Description:  The check instruction determines whether or not a user
+               is  already  valid in  the  CUD.   Only  the username  must  be
+               entered.
+
+               Example:
+
+                  * check
+                  USERNAME: marcinj
+                  USER NOT FOUND           (user 'MARCINJ' is not in CUD)
+                  *
+                  * check
+                  USERNAME: flame
+                  USER ALREADY THERE       (user 'FLAME' is valid in CUD)
+                  *
+
+
+
+
+          2.1.11 Detach Instruction                 __________________
+
+          Syntax:  DETach
+
+          Description:   The detach  instruction deassigns  the magnetic  tape
+               unit previously assigned to the slot so that it is available to
+               other  slots.  The  quit instruction  automatically performs  a
+               detach.
+
+               Example:
+
+                  * detach
+
+                  TAPE DETACHED
+
+                  *
+
+
+
+                                                       INSTRUCTIONS    Page 10
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.1.12 Delete Class Instruction                 ________________________
+
+          Syntax:  DELete CLass
+
+          Description:  The delete class  instruction removes a class descrip-
+               tion from a  user's  entry.   The user must  enter username and
+               class position.  At least one class  definition for a user must
+               always remain.
+
+               Note:  This instruction  only applies if the  Class Information
+                      option is in effect.
+               Example:
+
+                  * delete class
+                  USERNAME: testname
+                  CLASS POSITION: 0
+                  CLASS NOT FOUND     (no class position zero)
+                  CLASS POSITION: 3
+                  CLASS NOT FOUND     (no class in position 3)
+                  CLASS POSITION: 1
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.13 Delete User Instruction                 _______________________
+
+          Syntax:  DELete User
+
+          Description:  The  delete user instruction  removes a  username from
+               the CUD.  The user must only enter the USERNAME.
+
+               Example:
+
+                  * delete user
+                  USERNAME: marcinjill
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 11
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+
+
+          2.1.14 Help Instruction                 ________________
+
+          Syntax:  Help
+
+          Description:  The  help instruction lists all  possible instructions
+               and a short description of each.
+
+               Example:
+
+                  * help
+
+                  VALID COMMANDS ARE:
+                  HELP               TYPES THIS LIST
+                  CHECK              REPORTS IF A USER IS VALID OR NOT
+                  NEW USER           VALIDATES A NEW USER
+                  NEW CLASS          ADDS A CLASS TO AN EXISTING
+                                     USER ENTRY
+                  CHANGE CLASS       CHANGES THE DEFINITION OF A
+                                     CLASS ENTRY
+                  CHANGE NAME        CHANGES A USER'S NAME
+                  CHANGE PASSWORD    CHANGES A USER'S PASSWORD
+                  CHANGE GAN         CHANGES A USER'S GLOBAL ACCOUNT
+                                     NUMBER
+                  CHANGE CONTROL     CHANGES A USER'S CONTROL PARAMETERS
+                  CHANGE DISTRICT    CHANGES A USER'S DISTRICT
+                  CHANGE IRC         CHANGES A USER'S IRC
+                  DELETE USER        INVALIDATES A USER'S ENTRY
+                  DELETE CLASS       REMOVES A CLASS FROM A USER'S ENTRY
+                  TYPE USER          TYPES A USER'S ENTRY
+                  TYPE ALL           TYPES ALL USERNAMES IN THE CUD
+                  ATTACH             ASSIGNS TAPE UNIT TO JOB
+                  DETACH             DEASSIGNS TAPE UNIT FROM JOB
+                  ID                 READS TAPE HEADER AND TYPES OUT
+                                     CREATION DATE
+                  STORE              STORES CUD FROM DISK TO TAPE
+                  RESTORE            RESTORES CUD TO DISK FROM TAPE
+                  REWIND             REWINDS TAPE
+                  QUIT               EXITS FROM SYSTEM
+
+          Note:   The ATTACH, DETACH,  ID, STORE, RESTORE and  REWIND commands
+                  are present only if the system is configured with tape.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 12
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+                  A '?' ANSWER TO ANY QUESTION WILL RETURN TO THE COMMAND DIS-
+                  PATCHER.  CONTROL-A MAY BE USED  FOR AN EDITING CHARACTER TO
+                  DELETE THE LAST CHARACTER TYPED.
+
+                  THE FOLLOWING COMMANDS ARE FOR PRIVILEGED USERS ONLY:
+                  GET                RETURNS THE CUD BLOCK NUMBER FOR A
+                                     USER
+                  RESET              RESETS THE BLOCK CHECKSUMS IN CUD
+                  READ CUD           READS A BLOCK FROM THE CUD
+                  TYPE CUD           TYPES THE PREVIOUSLY READ CUD BLOCK
+                  READ MUD           READS A BLOCK FROM A MUD
+                  TYPE MUD           TYPES THE PREVIOUSLY READ MUD BLOCK
+                  WRITE              WRITES THE CUD BLOCK TO AMUD
+                  COMPARE            COMPARES THE CUD AND MUD BLOCKS JUST
+                                     READ
+                  PJ                 TYPES INFO FROM PJ'S FILE
+                  CONSISTENCY        MUD CONSISTENCY
+
+          Note:   The READ MUD, TYPE MUD,  WRITE, COMPARE, PJ, and Consistancy
+                  commands are  present only if  the system is  configured for
+                  multiple supervisors.
+
+
+          2.1.15 ID Instruction                 ______________
+
+          Syntax:  ID
+
+          Description:  The ID  instruction rewinds the tape  previously atta-
+               ched, identifies the  tape  as  a   CUD  backup tape, and types
+               the creation date of the tape.
+
+               Example:
+
+                  * id
+
+                  MTA IS NOT A CUD TAPE   (tape read is not identified as
+                                          a CUD tape)
+
+                  * id
+
+                  CUD TAPE RECORDED ON: 06/08/79    1729 GMT
+
+                  *
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 13
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+
+
+          2.1.16 New Class Instruction                 _____________________
+
+          Syntax:  New CLass
+
+          Description:  The new  class instruction enters an  additional class
+               for already  existing username.   The user  must enter  a valid
+               username and the class information.  The class information con-
+               sists of:
+
+               CLASS: - enter class number
+               GROUP? - enter 'Y' to add a group, 'N' to add a host
+               GROUP: - enter group number
+               HOME GROUP? - enter 'Y' to denote the GROUP as home
+               HOST: - enter a host number
+               HOME HOST? - enter 'Y' to denote the HOST as home
+               ANOTHER GROUP  OR HOST  FOR THIS  CLASS? -  enter 'Y'   to  add
+               additional group or host information for the class
+
+               Note:  This instruction  only applies if the  Class Information
+                      option is in effect.
+
+               Example:
+
+                  * new class
+                  USERNAME: marcinjill
+                  CLASS: 0
+                  GROUP? n
+                  HOST: 1
+                  HOME HOST? n
+                  NO HOME FOR THIS CLASS     (each class must have a home
+                                             described)
+                  CLASS: 0
+                  GROUP? n
+                  HOST: 1
+                  HOME HOST? y
+                  ANOTHER GROUP OR HOST FOR THIS CLASS? n
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 14
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+
+
+          2.1.17 New User Instruction                 ____________________
+
+          Syntax:  New User
+
+          Description:  The new user instruction enters  a brand new name into
+               the  CUD.  The  user must  first  decide whether  the new  name
+               should be validated in a  global account that  already  exists,
+               or   if  the   name   should  be  validated   in  a new  global
+               account.   If the  name is  to be  validated in  an old  global
+               account,  the user  will be  prompted  for a   user  name  that
+               already  exists   in  that  account.    The  user will  then be
+               prompted for  username, control  information, password  (twice,
+               not  echoed), district,  IRC,  and  class or  home  information
+               (depending on which VAL option was chosen).
+
+               The new name is  assigned  the   next  sequential  UUN  availa-
+               ble.  UUN's  are  not reused, even  after a username is invali-
+               dated.  If the new name is  validated in an old global account,
+               it  will   be  assigned  the  same   GAN  as   the  name   that
+               already  exists  in that account.   Otherwise, the next sequen-
+               tial GAN will be assigned to the user.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 15
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Example:
+
+                  * new user
+                  DOES THIS USER BELONG TO A NEW ACCOUNT? n
+                  ENTER VALID USER IN ACCOUNT: flame     (not asked if
+                                                         new account)
+                  USERNAME: abc:123                     (':' is illegal
+                                                         character)
+                  ILLEGAL CHARACTER ENTERED, TRY AGAIN: abc123
+                  ALLOW LOGIN OVER SHUT? n
+                  PASSWORD REQUIRED? y     (if 'n', user is not prompted
+                                           for password)
+                  TRANSPARENT GATEWAY LOGON? n
+                  IGNORE COLON OPTION? y
+                  PASSWORD:                (password not echoed)
+                  ILLEGAL CHARACTER,       (user tried to use a semi-
+                                           colon in password)
+                  PASSWORD:
+                  ENTER IT AGAIN:
+                  PASSWORDS DO NOT MATCH, REENTER
+                  PASSWORD:                (2 entries of passwords
+                                           differed)
+                  ENTER IT AGAIN:
+                  DISTRICT: 1              (password entered success-
+                                           fully)
+                  IRC: 0                   (no IRC restriction)
+                  CLASS: 2
+                  GROUP? y                 (add a group for this class?)
+                  GROUP: 1                 (enter group number)
+                  HOME GROUP? n            (should the group be a home
+                                           group?)
+                  ANOTHER GROUP OR HOST FOR THIS CLASS? y
+                  GROUP? n
+                  HOST: 6
+                  HOME HOST? q
+                  ANSWER 'Y' OR 'N': y
+                  ANOTHER GROUP OR HOST FOR THIS CLASS? n
+
+                  ALL ENTRIES CORRECT? y
+
+                  ENTRY COMPLETED
+                  *
+
+
+
+
+          2.1.18 Restore Instruction                 ___________________
+
+          Syntax:  RESTore
+
+          Description:  The  restore instruction  rewinds the  tape previously
+               attached, identifies  the   tape  as  a  CUD  backup tape, asks
+               the user if he  wants to continue, and if so  writes the CUD to
+               disk from tape.
+
+
+                                                       INSTRUCTIONS    Page 16
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+               Note:  This  is a  very  time consuming  action  and cannot  be
+                      interrupted.
+
+               Example:
+
+                  * restore
+
+                  CUD TAPE RECORDED ON: 06/08/79    1729 GMT
+
+                  DO YOU WANT TO CONTINUE? y
+
+                  CUD RESTORED
+
+                  *
+
+
+
+
+          2.1.19 Rewind Instruction                 __________________
+
+          Syntax:  REWind
+
+          Description:   The rewind  instruction rewinds  the tape  previously
+               attached.
+
+               Example:
+
+                  * rewind
+
+                  TAPE REWOUND
+
+                  *
+
+
+
+
+          2.1.20 Store Instruction                 _________________
+
+          Syntax:  Store
+
+          Description:   The store  instruction  rewinds  the tape  previously
+               attached, and writes  the entire contents of the  CUD from disk
+               on to the tape.
+
+               Note:   This is  a very  time  consuming action  and cannot  be
+               interrupted.
+
+               Example:
+
+                  * store
+
+                  CUD STORED
+
+                  *
+
+
+                                                       INSTRUCTIONS    Page 17
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.1.21 Type All Instruction                 ____________________
+
+          Syntax:  Type ALl
+
+          Description:  The type all instruction lists the next GAN and UUN to
+               be assigned and   all users in the CUD.   VAL outputs username,
+               GAN and UUN for all valid users.
+
+               Note:   This is  a very  time  consuming action  and cannot  be
+               interrupted.
+
+               Example:
+
+                  * type all
+
+                  NEXT GAN = 3
+                  NEXT UUN = 5
+
+                  BLOCK      USERNAME           GAN     UUN
+                     3       FLAME                1       1
+                   127       U273RCO              1       2
+                   431       DOPLER               2       3
+                  1012       MARCINJILL           2       4
+
+                  *
+
+
+
+
+          2.1.22 Type User Instruction                 _____________________
+
+          Syntax:  Type User
+
+          Description:  The  type user instruction  types out  all information
+               about a user in the  CUD.   The  user only enters the username,
+               and VAL  types GAN,  UUN, control  information, district,  IRC,
+               password change date, and class or home information.
+
+               Example:
+
+                  * type user
+                  USERNAME: marcinjill
+
+                  GAN: 2
+                  UUN: 4
+                  LOGIN OVER SHUT
+                  NO PASSWORD REQUIRED
+                  DISTRICT: 4
+                  IRC: 0
+                  CLASS: 5
+                  HOME GROUP: 2
+                  *
+
+
+
+
+                                                       INSTRUCTIONS    Page 18
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.1.23 Quit Instruction                 ________________
+
+          Syntax:  Quit
+
+          Description:  The quit instruction logs the user out.
+
+               Example:
+
+                  * quit
+
+                  PLEASE LOG IN:
+
+
+
+          SECTION 2.2 NETPRIV (Privileged) Instructions          _____________________________________________
+
+
+
+          2.2.1 Get Instruction                _______________
+
+          Syntax:  Get
+
+          Description:  The get instruction types the  CUD block number that a
+               username hashes  into.   The  user must enter the username, and
+               the system returns a block number.
+
+               Example:
+
+                  * get
+                  USERNAME: marcinj
+
+                  BLOCK NUMBER: 400  (username marcinj is in block 400
+                                     in CUD)
+                  *
+
+
+
+          2.2.2 Reset Command                _____________
+
+          Syntax:  RESEt
+
+          Description:  The reset instruction causes the checksums on each CUD
+               block to be recalculated and CUD blocks rewritten to the disk.
+
+               Note:  This is a  time consuming  action and  cannot be  inter-
+                      rupted.
+
+               Example:
+
+                  * reset
+
+                  CUD CHECKSUMS HAVE BEEN RESET
+
+                  *
+
+
+                                                       INSTRUCTIONS    Page 19
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.2.3 Read CUD Instruction                ____________________
+
+          Syntax:  REAd Cud
+
+          Description:  The read  CUD instruction reads any block  of the CUD.
+               The user must input the block number.
+
+               Example:
+
+                  * read
+
+                  BLOCK NUMBER: 400
+
+                  BLOCK READ
+                  *
+
+
+
+
+          2.2.4 Type CUD Instruction                ____________________
+
+          Syntax:  Type Cud
+
+          Description:  The type CUD instruction types  out the CUD block just
+               read by  the read   CUD instruction.   The information  that is
+               output includes username,  GAN, UUN, control  information, dis-
+               trict, IRC,  password change date, and  home  or class informa-
+               tion.  An index is also typed,  which is the user's location in
+               the block.
+
+               Example:
+
+                 * type cud
+
+                 USERNAME  GAN  UUN  CNTRL       DIST IRC PSW DATE INDEX
+
+                 DOPLER      1    3   NOPW   TG    3    1  06/08/79   0
+                 CLASS:  2 HOME HOST:     1
+                 U273RCO     3    5   L>S IC       1    2  06/07/79   44
+                 CLASS:  3 HOME GROUP:    6
+                 *
+
+               NOPW = no password required
+               L>S = login over shut
+               IC = ignore colon option
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 20
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          THE FOLLOWING COMMANDS  APPLY  ONLY   TO  NETWORKS  WITH  MORE  THAN
+          1 SUPERVISOR SYSTEM:
+
+
+
+
+          2.2.5 Compare Instruction                ___________________
+
+          Syntax:  COmpare
+
+          Description:  The compare instruction compares a CUD block and a MUD
+               block.  The operator   must  have  already  read   in  the  CUD
+               and MUD blocks to be compared.  VAL will output all differences
+               between the two blocks.
+
+               Example:
+
+                   * compare
+
+                    WD          CUD          MUD
+                   0004      0484F4L4D    04C54594D
+                   0008      0C2455247    0C5530000
+                   000C      026136B50    09A44E79F
+
+                   *
+
+
+          2.2.6 PJ Instruction                ______________
+
+          Syntax:  PJ
+
+          Description:  The PJ  instruction reports information about  the CUD
+               change records recorded on disk, and the progress of the updat-
+               ing of the MUDS.
+
+               Example:
+
+                   * PJ
+
+                   SUP     PTR          DATE
+                   121      4     02/07/79    341 GMT
+                   122      4     02/07/79    341 GMT
+                   124      4     02/07/79    341 GMT
+                   125      4     02/07/79    341 GMT
+                   126      4     02/07/79    341 GMT
+                   127      4     02/07/79    341 GMT
+
+                        EOF = 4
+
+                   *
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 21
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.2.7 Read MUD Instruction                ____________________
+
+          Syntax:  REAd Mud
+
+          Description:  The read  MUD instruction allows the user  to read any
+               block of a  MUD.   The  operator  must  input  the block number
+               and the sup number.  VAL will build  a circuit through the net-
+               work if necessary  and retrieve the information  desired by the
+               operator.
+
+                   Example:
+
+                   * read mud
+
+                   BLOCK NUMBER:  1668
+
+                   ENTER SUP NUMBER:  123
+
+                   BLOCK READ
+
+                   *
+
+
+          2.2.8 Type MUD Instruction                ____________________
+
+          Syntax:  TYPE MUD
+
+          Description:  The type MUD instruction types  out the MUD block just
+               read by  the read MUD instruction.   The output is the  same as
+               for type CUD.
+
+
+
+
+          2.2.9 Write Instruction                _________________
+
+          Syntax:  WRITE
+
+          Description:  The write instruction is  used ***VERY carefully*** to
+               overwrite MUD blocks with CUD information.  THIS IS A DANGEROUS
+               COMMAND.
+
+               Example:
+
+               *WRITE
+
+               ENTER SUP NUMBER:  124
+
+               BLOCK WRITTEN
+
+               *
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 22
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          2.2.10 MUD Consistency Command                 _______________________
+
+
+          Syntax:  CONsistency
+
+          Description:  This command used to cause  the MUD on a Supervisor to
+               become identical with the CUD.
+
+               Note:  This  command  requires considerable  time  to  complete
+                      (sometimes 15 minutes or more).  The only way to stop it
+                      once it  has begun is  to forcibly disconnect  from VAL.
+                      It should be noted that the MUD will have been partially
+                      updated at  that point.  As  the computer  processes the
+                      blocks of information, a dot is  displayed on the termi-
+                      nal after every  32 blocks of  the total 2040  are proc-
+                      essed.
+
+               Example:
+
+               * CONSISTENCY
+
+               ENTER SUP NO: 123
+
+               .......................................................
+
+               MUD CONSISTENCY COMPLETE
+
+               *
+
+               Note:  An optional terminal  message which may be  given to the
+                      user in addition to MUD CONSISTENCY COMPLETE is
+
+                      THERE WERE NO DIFFERENCES ENCOUNTERED.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       INSTRUCTIONS    Page 23
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 3.0 USER PASSWORD CHANGING          __________________________________
+
+          VAL may be  configured to permit any  user with the colon  option to
+          change his own password.  To log into VAL for this purpose, the user
+          should enter his username  followed by a colon and  the change pass-
+          word host number (a  configuration parameter), and a  semicolon fol-
+          lowed by password.
+
+               Example:
+                                 marcinjill:83;password
+
+          VAL will then inquire if the user  wishes to change his password and
+          if so will request the password twice.  When the change is complete,
+          the user will be logged off.
+
+               Example:
+
+               DO YOU WISH TO CHANGE YOUR PASSWORD? y
+
+               PASSWORD:
+               ENTER IT AGAIN:
+
+               CHANGE COMPLETE
+               PLEASE LOG IN:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             USER PASSWORD CHANGING    Page 24
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 4.0 FRONT PANEL DISPLAY          _______________________________
+
+          While VAL is running, the Engine Front  Panel display may be used to
+          display the  CUD block  number currently  in use.   This display  is
+          selected by unlocking the Engine Front Panel, entering the slot num-
+          ber in which  VAL is running and  then depressing the RUN  key.  The
+          rightmost four digits are the current  CUD block number in hexadeci-
+          mal.  This display is useful to monitor the progress of the consist-
+          ency operation.  (CUD block numbers are between 0 and 7F8.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                FRONT PANEL DISPLAY    Page 25
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          SECTION 5.0 INITIALIZING THE CUD          ________________________________
+
+          When a  network is initially brought  up, there are no  usernames in
+          the CUD.  Thus, it  is not possible to use the network  to log in to
+          VAL and  validate usernames.   It is, however,  possible to  use the
+          ISIS console TTY port to log in to an ISIS slot.  The following pro-
+          cedure should be  used to initialize the CUD and  validate the first
+          username.
+
+               Connect a terminal  to the console TTY  port and log in  to the
+               slot in which VAL is loaded.
+
+               Example:
+
+                  LOGON: mike
+                  NODE:  2001
+                  HOST:  121
+
+                  SLOT #: 5
+                  *
+
+               Enter the  ?STAT command to start  up the procedure  and answer
+               "YES" to the question.
+
+               Example:
+
+                  *?STAT
+
+                  ISIS NETWORK VALIDATION SYSTEM VERSION 3.03
+
+                  DO YOU WISH TO INITIALIZE THE CUD? y
+
+               After a  few minutes  the program  will print  some message  to
+               indicate completion.
+
+               Example:
+
+                  CUD HAS BEEN CLEARED INITIALIZING PJ AREA.
+                  INITIALIZATION COMPLETE AND NETPRIV VALIDATED.
+                  *
+
+          At this point, the CUD has been cleared and the username NETPRIV has
+          been validated.  With the initial password  of PRIVILEGE, it is then
+          possible to use the network to log in to VAL to validate other user-
+          names.
+
+          To maintain network security, the  password for the NETPRIV username
+          should be changed to another value  after CUD initialization is com-
+          plete.
+
+
+
+
+
+
+
+                                               INITIALIZING THE CUD    Page 26
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          The following error messages are produced by VAL in response to var-
+          ious erroneous  entries made  by a user.   Other error  messages may
+          appear when running  VAL if there are system problems.   Most of the
+          error messages are self-explanatory.  Those that are not self-expla-
+          natory will have a brief explanation under the message.  The message
+          is shown in uppercase  letters and the messages  are arranged alpha-
+          betically.
+
+          ALREADY ATTACHED
+
+               A tape unit is already attached to this user's slot.
+
+          BAD CHECKSUM - BLOCK 213
+
+               A CUD block from the tape has an incorrect checksum.  The block
+               is skipped in the restore operation.
+
+          BAD PF AREA
+
+               The PJ area on the disk is not properly set up.
+
+          BYTE COUNT FROM ISIS DOES NOT MATCH RECORD BYTE COUNT
+
+               A tape  record block count does  not match the  internal record
+               count.
+
+          CIRCUIT LOST
+
+               The circuit to the other supervisor was lost.
+
+          CIRCUIT NOT BUILT
+
+               Unable to build a circuit to user UN2 on the supervisor.
+
+          CANNOT DELETE LAST CLASS FOR A USER
+
+               This only appears if the Class Information option has been cho-
+               sen.
+
+          CLASS NOT FOUND
+
+               This only appears if the Class Information option has been cho-
+               sen.
+
+          CUD BUFFER EMPTY
+
+               The CUD block read  has no data in it or no  CUD block has been
+               read.
+
+
+
+
+
+
+
+
+                                                                       Page 27
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          CUD OVERFLOW!
+
+               There is no room for more CUD entries.
+
+          ERROR DETECTED IN BLOCK NUMBER 1329
+
+               The CUD block has a checksum error.
+
+          EXPECTED BLOCK 1234 RECEIVED BLOCK 1235
+
+               A CUD block is missing from the CUD tape.
+
+          FAILED TRANSFERRING BLOCK - CHECKSUMS DO NOT MATCH
+
+               A CUD block could not be transferred to the other supervisor.
+
+          ILLEGAL CHARACTER ENTERED, TRY AGAIN
+
+               A semicolon, escape, or carriage return was included in a pass-
+               word, or a nonnumeric was included in a numeric input.
+
+          ILLEGAL CIPHER, REENTER
+
+               Try a new password, this one is not acceptable.
+
+          ILLEGAL COMMAND
+
+               A valid VAL instruction was not entered.
+
+          MTA IS NOT A CUD TAPE
+
+               The tape descriptor specifying a CUD  tape was not found on the
+               tape.
+
+          MUD BUFFER EMPTY
+
+               The MUD block read  has no data in it or no  MUD block has been
+               read.
+
+          NO HOME FOR THIS CLASS
+
+               This only appears if the Class Information option has been cho-
+               sen.  A home host or group must be specified for every class.
+
+          NO TAPE UNIT ATTACHED
+
+          OVERFLOW POINTER FOUND
+
+               A CUD  block is full  and indicates that  the next block  is an
+               overflow block.
+
+
+
+
+
+
+                                                                       Page 28
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          PASSWORDS DO NOT MATCH REENTER
+
+               When VAL prompts  the user to repeat a password,  it must match
+               the previous entry.
+
+          PRIVILEGED COMMAND
+
+               The user is logged in to  an unprivileged username and is being
+               denied access to a privileged command.
+
+          SETTING UP PJ DISK AREA
+
+               The PJ disk area was uninitialized and is being set up.
+
+          TAPE ERROR - error message
+          DISK ERROR - error message
+
+               A disk  or tape error  has occurred  as described by  the error
+               message.
+
+          THAT GAN IS UNASSIGNED
+
+               A GAN  must already exist  in order  to be used  or referenced.
+               This is for the Change GAN instruction.
+
+          TIME OUT OR OUT OF SNCH ON CIRCUIT
+
+               Improper or no data was received from the other supervisor.
+
+          TOO MANY CLASSES FOR THIS USER
+
+               This will only appear if the user has chosen the Class Informa-
+               tion option,  and is  attempting to  add a  twelfth class  to a
+               user.
+
+          UNAUTHORIZED USER
+
+               This error message will  appear at login and  exclude unauthor-
+               ized users from accessing VAL.
+
+          USERNAME DOES NOT HAVE A PASSWORD
+
+          USERNAME MAY ONLY BE 20 CHARACTERS IN LENGTH
+
+          USER NOT FOUND
+
+               User name not found in the CUD.
+
+          VAL ALREADY RUNNING
+
+               Only one user at  a time may be logged into  VAL.  This message
+               is given to all users subsequently attempting to log in.
+
+
+
+
+                                                                       Page 29
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+                                         INDEX                                         _____
+
+
+          ATTACH ................................................. 5
+
+          CHANGE CLASS ........................................... 6
+          CHANGE CONTROL ......................................... 6
+          CHANGE DISTRICT ........................................ 7
+          CHANGE GAN ............................................. 7
+          CHANGE HOME ............................................ 8
+          CHANGE IRC ............................................. 8
+          CHANGE NAME ............................................ 9
+          CHANGE PASSWORD ........................................ 9
+          CHECK .................................................. 10
+          CLASS .................................................. 3
+          CUD Entries ............................................ 1
+
+          DELETE CLASS ........................................... 11
+          DELETE USER ............................................ 11
+          DETACH ................................................. 10
+          DISTRICT ............................................... 2
+
+          Error Messages ......................................... 27
+
+          Format and Syntax ...................................... 4
+          FRONT PANEL DISPLAY .................................... 25
+
+          GAN .................................................... 2
+          GET .................................................... 19
+          GROUP .................................................. 3
+
+          HELP ................................................... 11
+          HOME ................................................... 3
+          HOST ................................................... 3
+
+          ID ..................................................... 13
+          IGNORE COLON OPTION .................................... 2
+          IRC .................................................... 3
+
+          Login .................................................. 1
+          LOGIN OVER SHUT ........................................ 2
+
+          NETPRIV ................................................ 19
+          NETVAL Instructions .................................... 5
+          NEW CLASS .............................................. 13
+          NEW USER ............................................... 14
+          NO PASSWORD ............................................ 2
+
+          PASSWORD CHANGE DATE ................................... 2
+
+
+
+
+
+
+
+                                                                       Page 30
+
+
+          VAL Users Guide                                   September 26, 1980
+
+
+
+          PASSWORD CIPHER ........................................ 2
+
+          QUIT ................................................... 19
+
+          READ CUD ............................................... 20
+          RESET .................................................. 19
+          RESTORE ................................................ 16
+          REWIND ................................................. 17
+
+          STORE .................................................. 17
+
+          TRANSPARENT GATEWAY LOGON .............................. 2
+          TYPE ALL ............................................... 18
+          TYPE CUD ............................................... 20
+          TYPE USER .............................................. 18
+
+          USERNAME ............................................... 1
+          UUN .................................................... 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                       Page 31
+
+N |’
