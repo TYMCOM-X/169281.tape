@@ -1,0 +1,2047 @@
+ SUBTTL	ICL C03 Host interface initialisation	- C03H03.I00
+
+:
+:|--------------------------------------------------------------|
+:|				H I S T O R Y			| 
+:|--------------------------------------------------------------|
+:| NSR NUMBER | INIT | VERSION | DATE     |	REASON		|
+:|------------|------|---------|----------|---------------------|
+:|	      | RT   | V01     | 21 Aug 85|	Original	|
+:|--------------------------------------------------------------|
+:
+:
+:	Symbols defined elsewhere which are used in this module
+:
+	 GL		HMASK,RTMOUT
+:	MO	.,INIT			:Delimit module
+:
+: This is the initialisation module which is assembled before the user
+: TYM file. It initialises certain variables and sets up symbols required
+: by the TYM file and by the library routines.
+:
+:
+: The following general macros are defined:
+:
+:	DEFGEQ	- Define an equated symbol and make global
+:	PRINT	- Turns on a switch to give listing
+:	NOPRINT	- Turns off this switch
+:	DEFVAR	- Supplies a default value if one not supplied
+:	EXPND2	- Expands a 2 digit value
+:	ERROR	- Handles error count and header
+:	ERRLIN	- Generates more error information
+:	ERREND	- Ends error text
+:	MCRNUM	- Sets macro number
+:	WARNING	- Generates warning message
+:	WARLIN	- Generates further warning information
+:	WAREND	- Ends warning text
+:	DSPNUM	- Displays the value of a symbol
+:	RNGWAR	- Checks the range of an argument
+:	RNGERR	- As above, but generates error rather than warning
+:	PRMERR	- Checks to see if parameter was supplied
+:	LVLERR	- Verifies that a macro is called in correct context
+:	DSPLVL	- Displays level error, used by DSPLVL
+:	BEGINTYM - Denotes beginning of TYM file
+:	ENDTYM	- Denotes end of TYM file
+:	LETDEF	- Defines a character table
+:
+:
+: The following macros are also defined for use in the TYM file:
+:
+:	SYSTEM	- To specify that TYMNT2 is to be supported
+:	FREEZE	- To specify whether slot is to proceed after crash
+:	ISISRING - Specifies the Irsize and Orsize of the rings
+:	BUFSIZE	- Specifies the size of the internal big bufferlets
+:	LINE	- Defines the existence of an active host line
+:	LN.LOGOFF- Specifies a signoff message 
+:	SPEED	- Specifies the speed for the line
+:	DTRDSR	- Specifies whether DTR/DSR is to be used on the line
+:	RTSCTS	- Specifies whether RTS/CTS is to be used on the line
+:	REPLYTO	- Specifies the hang timer expiry time
+:	AGROUP	- Specifies the existence of a group on the line
+:	GCSBNA	- To allow a group BNA to  be sent when congested
+:	SUBBNA	- To allow individual subs to issue BNA status
+:	ASUB	- Defines a subsidiary on the group
+:	ARESV	- Defines special reserved subs on group
+:	STRNG	- Assigns a name and a string to the parameter
+:	AC.INT	- Used to define a string to be sent to host to log off
+:	INT.STRING- Used to call AC.INT
+:	AC.SGN	- Used to define a logoff string expected from host
+:	SGN.STRING- Used to call AC.SGN
+:	CK.STR	- Used to check the string set up correctly
+:	OFM.STRINGS- Used to create 3 strings - ACn.OFM
+:	ACn.OFM	- Used to set up default strings
+:	ORLNBT	- Used to set hang timers for the lines
+:
+:
+: ----------------------------------------------------------------------
+:
+: Macro		DEFGEQ
+:
+: Description	Define equate and make global
+:
+: Parameters	SYMB Symbol of equate
+:		 Value to be applied
+:
+DEFGEQ	MACRO(SYMB,VX) [
+	 GL	SYMB
+SYMB	EQ	VX
+]
+
+:***************************************************************:
+:								:
+:	MACRO:	PRINT						:
+:		 Turn on the configuration display switch.	:
+:								:
+:	ARGUMENTS:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+
+PRINT	MACRO[
+	 NOLIST
+
+	 KILL	DSPGEN
+DSPGEN	EQ	1				:TURN ON THE DISPLAY SWITCH
+
+	 LIST
+]
+
+
+:***************************************************************:
+:								:
+:	MACRO:	NOPRINT						:
+:		 Turn off the configuration display switch	:
+:								:
+:	ARGUMENTS:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+
+NOPRINT MACRO[
+	 NOLIST
+
+	 KILL	DSPGEN
+DSPGEN	EQ	0				:TURN OFF THE DISPLAY SWITCH
+
+	 LIST
+	 ]
+:
+:=============================================================================
+:
+: DEFVAR MACRO
+
+DEFVAR	MACRO(LABEL,VALUE)[
+	 RA	0
+	 GL	LABEL
+	 IF	\LABEL
+	 ELSE
+LABEL	EQ	VALUE
+	 EI
+]
+:
+: EXPND2 MACRO
+
+EXPND2	MACRO(P,P1,P2)[
+	 NOLIST
+P1	EQ	(P&0F0)^-4
+P2	EQ	P&0F
+]
+
+: EXPND3 MACRO
+
+EXPND3	MACRO(P,P1,P2,P3)[
+P1	EQ	(P&0F00)^-8
+P2	EQ	(P&0F0)^-4
+P3	EQ	P&0F
+]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ERROR						:
+:		 INCREMENT ERROR COUNT AND DISPLAY STANDARD	:
+:		 ERROR MESSAGE HEADER				:
+:	ARGUMENTS:						:
+:		 TEXT, CONTINUATION FLAG			:
+:								:
+:***************************************************************:
+:
+FATCNT	EQ	0				:INITIALIZE ERROR COUNT
+:
+ERROR	MACRO(TXT,CONT,CODQ)[
+	 NOLIST
+
+FATCNT	EQ	FATCNT+1			:BUMP FATAL ERROR COUNT
+ERRFLG	EQ	1				:SET SYSGEN ERROR FLAG
+	 REMARK %
+	 REMARK	%!!!!		TXT - ERROR 
+ERRCDE	EQ	$A CODQ
+	 IF	ERRCDE
+	 NUMBER $A ERRCDE
+	 IF ERRCDE-$A99
+			REMARK	, Tymfile Line 
+	 ELSE
+			IF ERRCDE-$A9
+			REMARK		Source Line = 
+			ELSE
+			REMARK		Source Line = 
+			EI	
+	 EI	
+	 ELSE
+	 ERRLIN(Source Line: ,1)
+	 EI	
+QLNENO	LINENO
+	 NUMBER $A QLNENO
+
+	 IF	CONT -1
+	 ELSE
+	 ERREND
+	 EI	
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ERROR LINE					:
+:		 GENERATES HEADER FOR ADDITIONAL LINES OF INFO	:
+:		 IN STANDARD FORMAT				:
+:	ARGUMENTS:						:
+:		 CONTINUATION FLAG				:
+:								:
+:***************************************************************:
+
+ERRLIN	MACRO(TEXT,CONT)[
+	 NOLIST
+	 REMARK %!!!!		TEXT%
+	 LIST
+	 ]
+
+:***************************************************************:
+:								:
+:	MACRO:	ERROR END					:
+:		 ENDS A LINE OF ERROR TEXT IN STANDARD FORMAT	:
+:	ARGUMENTS:						:
+:		 TEXT						:
+:								:
+:***************************************************************:
+
+ERREND	MACRO(TEXT)[
+	 NOLIST
+	 REMARK	TEXT		!!!!%
+	 LIST
+	 ]
+
+:***************************************************************:
+:								:
+:	MACRO:	MCRNUM						:
+:		 Clear error flags and set macro number		:
+:								:
+:	ARGUMENTS:						:
+:		 Macro number					:
+:								:
+:***************************************************************:
+
+MCRNUM	MACRO(VALUE)[
+	 NOLIST
+
+ERRFLG	EQ	0
+WARFLG	EQ	0
+MACNUM	EQ	$A VALUE
+
+	 LIST
+]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO: WARNING						:
+:		 GENERATES WARNING MESSAGE AND INCREMENT COUNTER:
+:	ARGUMENTS:						:
+:		 TEXT, CONTINUATION FLAG			:
+:								:
+:***************************************************************:
+:
+WARCNT	EQ	0				:INITIALIZE WARNING COUNTER
+WARFLG	EQ	0
+:
+WARNING MACRO(TEXT,CONT,CODQ)[
+	 NOLIST
+
+WARCNT	EQ	WARCNT+1
+WARFLG	EQ	1
+	 REMARK %
+	 REMARK	%>>>> WARNING **** TEXT
+ERRCDE	EQ	$A CODQ
+	 IF ERRCDE
+	 REMARK %>>>>	
+	 NUMBER $A ERRCDE
+	 IF ERRCDE-$A99
+			REMARK	Source Line:
+	 ELSE
+			IF ERRCDE-$A9
+			REMARK		Source Line:
+			ELSE
+			REMARK		Source Line:
+			EI	
+	 EI	
+	 ELSE
+	 WARLIN(Source Line: ,1)
+	 EI	
+QLNENO	LINENO
+	 NUMBER $A QLNENO
+	 IF CONT -1
+	 ELSE
+	 WAREND
+	 EI	
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO: WARNING LINE					:
+:		 DISPLAYS WARNING MESSAGE AFTER STANDARD HEADER	:
+:	ARGUMENTS:						:
+:		 TEXT, CONTINUATION FLAG			:
+:								:
+:***************************************************************:
+:
+WARLIN	MACRO(TEXT,CONT)[
+	 NOLIST
+
+	 REMARK	%>>>>		TEXT
+	 IF CONT -1
+	 ELSE
+	 WAREND
+	 EI	
+
+	 LIST
+	 ]
+
+
+:***************************************************************:
+:								:
+:	MACRO:	WARNING END					:
+:		 TERMINATE END OF WARNING MESSAGE		:
+:	ARGUMENTS:						:
+:		 TEXT						:
+:								:
+:***************************************************************:
+:
+WAREND	MACRO(TEXT)[
+	 NOLIST
+
+	 REMARK	TEXT ****%
+
+	 LIST
+	 ]
+:***************************************************************:
+:								:
+:	MACRO: RANGE CHECK					:
+:		 CHECK RANGE OF ARGUMENT VALUES			:
+:		 CANNOT HANDLE MIN, MAX, AND ARG ALL NEGATIVE!	:
+:	ARGUMENTS:						:
+:		 LABEL - A LABEL FOR DIAGNOSTICS		:
+:		 RX	- RADIX OF NUMBER ARG			:
+:		 MX	- MAXIMUM VALUE OF ARG (IN RADIX RX)	:
+:		 MI	- MINIMUM VALUE OF ARG (IN RADIX RX)	:
+:		 ARG	- NUMBER TO BE CHECKED			:
+:		 DFLT	- STRING TO OUTPUT INDICATING DFLT VALUE:
+:		 PARAM - STRING IDENTIFYING SPECIFIC PARAM	:
+:								:
+:***************************************************************:
+
+MACNUM	EQ	0
+
+.35.	EQ	$A 35
+.GT.	MACRO(P1,P2)[((P2)-(P1))^-.35.]
+.LT.	MACRO(P1,P2)[((P1)-(P2))^-.35.]
+.EQ.	MACRO(P1,P2)[((((P1)-(P2))!((P2)-(P1)))%(1^.35.))^-.35.]
+
+DSPNUM	MACRO(RDX,VAL)[
+	 IF VAL
+	 NUMBER $`RDX VAL
+	 ELSE
+	 IF .EQ.(VAL,0)
+			NUMBER $`RDX VAL
+	 ELSE
+			REMARK -
+TQ	EQ	-VAL
+	 NUMBER $`RDX TQ
+	 EI	
+	 EI	
+	 ]
+
+
+RNGWAR	MACRO(RX,MI,MX,ARG,LABEL,DFLT,PARAM)[
+	 NOLIST
+
+QE	ERRCNT
+QQ	EQ $`RX ARG
+QMI	EQ $`RX MI
+QMA	EQ $`RX MX
+QQQ	ERRCNT
+:
+	 IF QQQ-QE
+	 WARNING(LABEL,1,MACNUM+3)	:RADIX ERROR
+	 IF PARAM
+			WARLIN(Parameter: ,1)
+			REMARK PARAM
+			WARLIN(Value: ,1)
+	 ELSE
+			WARLIN(Parameter value ,1)
+	 EI	
+	 WARLIN(incorrect radix)
+	 ELSE
+	 IF .LT.(QQ,QMI)
+			WARNING(LABEL,1,MACNUM+4)
+			IF PARAM
+			WARLIN(Parameter: ,1)
+			REMARK PARAM
+			WARLIN(Value: ,1)
+			ELSE
+			WARLIN(Parameter value ,1)
+			EI	
+			DSPNUM(RX,QQ)
+			REMARK	< 
+			DSPNUM(RX,QMI)
+			REMARK	minimum
+			WARLIN(Default value of ,1)
+			REMARK DFLT
+			WAREND( assumed)
+	 ELSE
+			IF .GT.(QQ,QMA)
+			WARNING(LABEL,1,MACNUM+4)
+			IF PARAM
+			WARLIN(Parameter: ,1)
+			REMARK PARAM
+			WARLIN(Value: ,1)
+			ELSE
+			WARLIN(Parameter value ,1)
+			EI	
+			DSPNUM(RX,QQ)
+			REMARK	> 
+			DSPNUM(RX,QMA)
+			REMARK	maximum
+			WARLIN(Default value of ,1)
+			REMARK DFLT
+			WAREND( assumed)
+			EI	
+	 EI	
+	 EI	
+	 KILL	Q,QQ
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO: RANGE CHECK					:
+:		 CHECK RANGE OF ARGUMENT VALUES			:
+:	ARGUMENTS:						:
+:		 LABEL - A LABEL FOR DIAGNOSTICS		:
+:		 RX	- RADIX OF NUMBER P			:
+:		 MX	- MAXIMUM VALUE OF P (IN RADIX RX)	:
+:		 P	- NUMBER				:
+:								:
+:***************************************************************:
+:
+MACNUM	EQ	0
+:
+RNGERR	MACRO(RX,MI,MX,ARG,LABEL,PARAM)[
+	 NOLIST
+
+QE	ERRCNT
+QQ	EQ $`RX ARG
+QMI	EQ $`RX MI
+QMA	EQ $`RX MX
+QQQ	ERRCNT
+:
+	 IF QQQ-QE
+	 ERROR(LABEL,1,MACNUM+3) :RADIX ERROR
+	 IF PARAM
+			ERRLIN(Parameter: ,1)
+			REMARK PARAM
+			ERRLIN(Value: ,1)
+	 ELSE
+			ERRLIN(Parameter value ,1)
+	 EI	
+	 ERRLIN(incorrect radix)
+	 ELSE
+	 IF .LT.(QQ,QMI)
+			ERROR(LABEL,1,MACNUM+4)
+			IF PARAM
+			ERRLIN(Parameter: ,1)
+			REMARK PARAM
+			ERRLIN(Value: ,1)
+			ELSE
+			ERRLIN(Parameter value ,1)
+			EI	
+			DSPNUM(RX,ARG)
+			REMARK	< 
+			DSPNUM(RX,MI)
+			REMARK	minimum
+			ERREND
+	 ELSE
+			IF .GT.(QQ,QMA)
+			ERROR(LABEL,1,MACNUM+4)
+			IF PARAM
+			ERRLIN(Parameter: ,1)
+			REMARK PARAM
+			ERRLIN(Value: ,1)
+			ELSE
+			ERRLIN(Parameter value ,1)
+			EI	
+			DSPNUM(RX,ARG)
+			REMARK	> 
+			DSPNUM(RX,MX)
+			REMARK	maximum
+			ERREND
+			EI	
+	 EI	
+	 EI	
+	 KILL	Q,QQ
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	PARAMETER ERROR CHECK				:
+:		 CHECKS TO SEE IF PARAMETER EXISTS OR NOT,	:
+:		 ISSUES WARNING IF NOT				:
+:	ARGUMENT:						:
+:		 VALUE TO CHECK					:
+:		 TEXT MESSAGE TO PRINT IF NONEXISTENT		:
+:								:
+:***************************************************************:
+:
+PRMERR	MACRO(PARAM,TEXT)[
+	 NOLIST
+
+	 ORG	0
+	 AC	/PARAM/
+IZ	EQ	.
+	 ORG	0
+	 IF	1-IZ
+	 ERROR(TEXT,1,MACNUM+2)
+	 ERRLIN(Parameter missing)
+	 EI	
+
+	 LIST
+	 ]
+
+
+:***************************************************************:
+:								:
+:	MACRO:	LEVEL CHECK					:
+:		 TESTS LEVEL OF MACRO AGAINST CURRENT LEVEL	:
+:	ARGUMENT:						:
+:		 MACRO LEVEL					:
+:		 MACRO NAME					:
+:								:
+:***************************************************************:
+:
+SLTLVL	EQ	1		 :DEFINE TYMFILE LEVELS
+LINLVL	EQ	2
+GRPLVL	EQ	3
+SUBLVL	EQ	4
+MENLVL	EQ	5
+ENTLVL	EQ	6
+:
+CURLVL	EQ	SLTLVL	:INIT CURRENT LEVEL
+:
+LVLERR	MACRO(MACLVL,MACLAB)[
+	 NOLIST
+
+	 IF CURLVL-MACLVL
+	 DSPLVL(MACLVL,MACLAB)
+	 ELSE
+	 IF MACLVL-CURLVL
+			DSPLVL(MACLVL,MACLAB)
+	 EI	
+	 EI	
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	DISPLAY LEVEL ERROR				:
+:		 INVOKED BY LVLERR TO DISPLAY LEVEL ERROR	:
+:	ARGUMENT:						:
+:		 MACRO LEVEL					:
+:		 MACRO LABEL					:
+:								:
+:***************************************************************:
+:
+DSPLVL	MACRO(MACLVL,MACLAB)[
+	 NOLIST
+
+	 ERROR(MACLAB,1,MACNUM)
+	 IF (MACLVL+1)-SUBLVL
+			ERRLIN(SUB Level Macro at ,1)
+	 ELSE
+			IF (MACLVL+1)-LINLVL
+			ERRLIN(Line Level Macro at ,1)
+			ELSE
+			ERRLIN(Slot Level Macro at ,1)
+			EI	
+	 EI	
+	 IF (CURLVL+1)-SUBLVL
+			REMARK SUB Level
+	 ELSE
+			IF (CURLVL+1)-LINLVL
+			REMARK Line Level
+			ELSE
+			REMARK Slot Level
+			EI	
+	 EI	
+	 ERREND
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	BEGINTYM					:
+:		 TO DENOTES THE BEGINING OF A TYMFILE, AND PRINT:
+:		 THE TITLE OF THE CONFIGURATION LISTING.	:
+:	ARGUMENTS:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+:
+	 NOPRINT
+
+BEGINTYM	 MACRO[
+	 NOLIST
+
+	 REMARK	%%%
+	 REMARK	% ***********************************************************
+	 REMARK %% ******* I C L  C 0 3  H O S T  I N T E R F A C E **********
+	 REMARK %
+	 REMARK %			Version	
+	 NUMBER VERSION	
+	 REMARK	.....Revlev	
+	 NUMBER REVLEV
+	 REMARK	%%			 September 1, 1985
+	 REMARK %%%
+	 REMARK	% ***********************************************************
+	 REMARK	%
+
+	 REMARK	% Default parameters for this interface are as follows -
+	 REMARK	%
+	 REMARK	% 1) Network and ISIS level statements
+	 REMARK	%	System(Tymnt2), Freeze(yes),
+	 REMARK	%	Isisring(4092,4092), Bufsize(128)
+	 REMARK	%
+	 REMARK	% 2) Line level statements
+	 REMARK	%	Line(ln), Speed(9600), Dtrdsr(yes), Rtscts(no)
+	 REMARK	%
+	 REMARK	% 3) Poll group Statements
+	 REMARK	%
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ENDTYM						:
+:		 TO DENOTE THE END OF A TYMFILE, AND PRINT THE	:
+:		 SECTION OF THE CONFIGURATION LISTING.		:
+:	ARGUMENTS:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+	 NOLIST
+:
+ENDTYM	MACRO[
+
+	 IF	DSPGEN
+	 REMARK %ENDTYM
+	 REMARK	%%**********************************************************
+	 REMARK	%%%
+
+Q	EQ	0
+	 RE	NSLINE
+	 EXPND2(QQ,QQ1,QQ2)
+QQ	EQ	0
+	 RE	NSUB|Q| : Not yet written !!! *** !!!
+
+QQ	EQ	QQ+1
+	 ER		:(NSUB|Q|)
+
+Q	EQ	Q+1
+	 ER		:(NSLINE)
+
+	 EI	:(DSPGEN)
+
+	 GL	DISPLY
+DISPLY	EQ	DSPGEN
+
+	 LIST
+	 ]
+
+
+
+:
+: ----------------------------------------------------------------------
+:
+: Macro		LETDEF
+:
+: Description	Define symbols for all the letters in ASCII and ICL
+:		 codes and make global
+:
+: Parameters	SYM - Symbolic name of character
+:
+: ----------------------------------------------------------------------
+:
+LETDEF	MACRO(SYM) [
+	 GL	SYM
+SYM	EQ	VAL
+VAL	EQ	VAL+1
+]
+
+
+:
+: ICL symbol table
+:
+
+VAL	EQ	0
+	 LETDEF(I.NUL);	LETDEF(I.SOH);	LETDEF(I.STX);	LETDEF(I.ETX);
+	 LETDEF(I.EOT);	LETDEF(I.ENQ);	LETDEF(I.ACK);	LETDEF(I.BEL);
+	 LETDEF(I.BS);	LETDEF(I.HT);	LETDEF(I.LFED); LETDEF(I.VT);
+	 LETDEF(I.FF);	LETDEF(I.CR);	LETDEF(I.SO);	LETDEF(I.SI);
+	 LETDEF(I.DLE);	LETDEF(I.DC1);	LETDEF(I.DC2);	LETDEF(I.DC3);
+	 LETDEF(I.DC4);	LETDEF(I.NAK);	LETDEF(I.SYN);	LETDEF(I.ETB);
+	 LETDEF(I.CAN);	LETDEF(I.EM);	LETDEF(I.SUB);	LETDEF(I.ESC);
+	 LETDEF(I.FS);	LETDEF(I.GS);	LETDEF(I.RS);	LETDEF(I.US);
+
+
+
+	 SUBTTL	ICL C03 Initialisation - Tymfile macros
+
+:***************************************************************:
+:								:
+:	MACRO:	SYSTEM						:
+:		 TO SPECIFY THE INTERNAL NETWORK TECHNOLOGY	:
+:		 EMPLOYED IN THE HANDLING OF NETWORK SERVICE.	:
+:	ARGUMENTS:						:
+:		 MTYPE	- SYSTEM TYPE, 'TYMNT1' OR 'TYMNT2'	:
+:				IS SUPPORTED.			:
+:								:
+:***************************************************************:
+:
+ENGINE	EQ	1		 :ONLY RUN ON 'ENGINE'S
+	 GL	TYM1
+TYM1	EQ	0		 :NOT TYMNET1, IT'S TYMNET2
+TYMNT1	EQ	1
+TYMNT2	EQ	0
+:
+SYSTEM	MACRO(MTYPE)[
+	 NOLIST
+
+	 MCRNUM(100)
+	 LVLERR(SLTLVL,SYSTEM)
+	 PRMERR(MTYPE,SYSTEM)
+
+	 IF 1-ERRFLG
+	 RNGWAR(A,0,1,MTYPE,SYSTEM,TYMNT2)
+	 IF WARFLG
+TYM1	EQ	TYMNT2	:DEFAULT TYMNT2
+	 ELSE
+TYM1	EQ	MTYPE
+	 EI	:(WARFLG)
+
+	 IF	DSPGEN
+			REMARK	% This is a 
+			IF MTYPE
+			REMARK	TYMNET-I 
+			ELSE
+			REMARK	TYMNET-II 
+			EI	:(MTYPE)
+			REMARK	Interface.
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	FREEZE						:
+:								:
+:		 TO ASSIGN CTSTOP TO 1, THIS WILL FREEZE THE	:
+:		 SLOTWHEN SLOT CRASH.				:
+:	ARGUMENTS:						:
+:		 FRZARG	-YES/NO					:
+:								:
+:***************************************************************:
+:
+YES	EQ	1
+NO	EQ	0
+:
+FREEZE	MACRO(FRZARG)[
+	 NOLIST
+
+	 MCRNUM(110)
+	 LVLERR(SLTLVL,FREEZE)
+	 PRMERR(FRZARG,FREEZE)
+
+	 IF 1-ERRFLG
+	 RNGWAR(A,0,1,FRZARG,FREEZE,NO)
+	 IF WARFLG
+CRSTOP	EQ	0		:CONTINUE RUNNING
+	 ELSE
+CRSTOP	EQ	FRZARG	:SET PER PARAMETER
+	 EI	:(WARFLG)
+
+	 IF	DSPGEN
+			REMARK	% The ICL C03 Interface will 
+			IF	1-CRSTOP
+			REMARK	not 
+			EI	:(1-CRSTOP)
+			REMARK	be frozen on slot crash
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ISISRING					:
+:		 TO SPECIFY THE IRSIZE AND ORSIZE OF ISIS	:
+:		 DISPATCHER INPUT AND OUTPUT RINGS.		:
+:		 THE VALUES SPECIFIED SHOULD BE A MULTIPLE OF 4	:
+:	ARGUMENTS:						:
+:		 VALUE1	-IRSIZE OF INPUT RING			:
+:		 VALUE2	-ORSIZE OF OUETUT RING			:
+:								:
+:***************************************************************:
+:
+IRSIZE	EQ	$A4092		:DEFAULT SIZE
+ORSIZE	EQ	$A4:DEFAULT SIZE
+:
+ISISRING	 MACRO(VALUE1,VALUE2)[
+	 NOLIST
+	 KILL	IRSIZE,ORSIZE
+
+	 MCRNUM(130)
+	 LVLERR(SLTLVL,ISISRING)
+	 PRMERR(VALUE1,ISISRING)
+	 PRMERR(VALUE2,ISISRING)
+
+	 IF 1-ERRFLG
+	 RNGWAR(A,512,4092,VALUE1,ISISRING,4092,IRING)
+	 IF WARFLG
+IRSIZE	EQ	$A 4092
+WARFLG	EQ	0
+	 ELSE
+IRSIZE	EQ	$A VALUE1
+IRSIZE	EQ	IRSIZE&0FFFC
+	 EI	:(WARFLG)
+
+	 RNGWAR(A,512,4092,VALUE2,ISISRING,4092,ORING)
+	 IF WARFLG
+ORSIZE	EQ	$A 4092
+	 ELSE
+ORSIZE	EQ	$A VALUE2
+ORSIZE	EQ	ORSIZE&0FFFC
+	 EI	:(WARFLG)
+
+	 IF	DSPGEN
+			REMARK	% IRSIZE of Input Ring			= 
+			NUMBER	$A IRSIZE
+			REMARK	d Bytes
+			REMARK	% ORSIZE of Output Ring			= 
+			NUMBER	$A ORSIZE
+			REMARK	d Bytes
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	BUFSIZE						:
+:		TO SPECIFY THE BUFFER SIZE FOR THE INTERNAL BIG :
+:		BUFFERLETS. THE SIZE OF THE BIG-BUFFERLET SHOULD:
+:		BE SET TO BE ABLE TO BEST UTILIZE THE SPACES.	:
+:	ARGUMENTS:						:
+:		 BVALUE	- BIG-BUFFLERLET SIZE			:
+:								:
+:***************************************************************:
+:
+	 DEFGEQ(BBFLSZ,$A 128)		:DEFAULT IS 128 BYTES
+:
+BUFSIZE MACRO(BVALUE)[
+	 NOLIST
+
+	 KILL	BBFLSZ
+
+	 MCRNUM(140)
+	 LVLERR(SLTLVL,BUFSIZE)
+	 PRMERR(BVALUE,BUFSIZE)
+
+	 IF 1-ERRFLG
+	 RNGWAR(A,64,512,BVALUE,BUFSIZE,128)
+	 IF WARFLG
+BBFLSZ	EQ	$A 128	:DEFAULT
+	 ELSE
+	 GL	BBFLSZ
+BBFLSZ	EQ	$A BVALUE
+	 EI	:(WARFLG)
+
+	 IF	DSPGEN
+			REMARK	% Size of Big-Bufferlet			= 
+			NUMBER	$A BBFLSZ
+			REMARK	d Bytes
+	 EI	:(DSPGEN)
+
+	 EI	:(1-ERRFLG)
+
+	 LIST
+	 ]
+
+
+:***************************************************************:
+:								:
+:	MACRO:	WAITALP						:
+:		 To specify whether we will wait for an entire	:
+:		 ALP to be recieved from the line before we 	:
+:		 start sending ALP fragments to the network.	:
+:		 This would give us more security in the event	:
+:		 of the host issuing Resets in mid alp, but 	:
+:		 at the expense of impairing response time at	:
+:		 the cmt of around 15 % on a 4800 line.		:
+:	ARGUMENT:						:
+:		 ARG - yes or no				:
+:								:
+:***************************************************************:
+
+WAITALP	MACRO(BPARG)[
+	NOLIST
+	MCRNUM(145)
+	PRMERR(BPARG,WAITALP)
+
+	IF	1-ERRFLG
+	RNGWAR(A,0,1,BPARG,WAITALP,YES)
+WTALPON	EQ	BPARG
+	EI	: (1-ERRFLG)
+
+	LIST
+	]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	BPTONW						:
+:		 TO ALLOW B.P. to be applied to ISIS if the 	:
+:		 inbound count  exceeds a limit. The B.P. is 	:
+:		 released when sufficient buffers have been 	:
+:		 released for the subsiiary.			:
+:	ARGUMENT:						:
+:		 BPARG - yes or no				:
+:								:
+:***************************************************************:
+
+BPTONW	MACRO(BPARG)[
+	NOLIST
+	MCRNUM(150)
+	PRMERR(BPARG,BPTONW)
+
+	IF	1-ERRFLG
+	RNGWAR(A,0,1,BPARG,BPTONW,YES)
+BPNWON	EQ	BPARG
+	EI	: (1-ERRFLG)
+
+	LIST
+	]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	 SUBTTL	ICL C03 Initialisation - LINE LEVEL STATEMENTS
+
+:***************************************************************:
+:								:
+:	MACRO:	LINE						:
+:		 TO SPECIFY THE BEGINNING OF THE DEFINITION OF	:
+:		 HIF CHARACTERISTICS FOR AN ICL C03 LINE.	:
+:		 THE ARGUMENT IS THE BSC LOGICAL UNIT NUMBER.	:
+:	ARGUMENT:						:
+:		 BSCLIN	- LOGICAL LINE NUMBER			:
+:								:
+:***************************************************************:
+
+	 KILL	NSLINE
+NSLINE	EQ	0				: 0 lines defined
+NGRPS	EQ	0				: 0 GRPs
+NSUBS	EQ	0				: 0 SUBs
+MAXHST	EQ	0				: first host will be 0
+
+LINE	MACRO(BSCLIN)[
+	 NOLIST
+
+	 MCRNUM(300)
+	 PRMERR(BSCLIN,LINE)
+
+	 KILL	LNE
+	 IF	1-ERRFLG
+	 RNGERR(A,0,15,BSCLIN,LINE(BSCLIN))
+	 IF	1-ERRFLG
+LNE	EQ	$A BSCLIN
+			IF	\LINE|LNE|
+			ERROR(LINE(BSCLIN),1,MACNUM+5)
+			ERRLIN(Line already specified)
+			EI
+	 EI	
+	 EI	
+
+	 IF 1-ERRFLG
+NSLINE	EQ	NSLINE+1			: increment number of lines
+
+	 KILL	SUB,NSUB|LNE|,NGRP|LNE|
+GRP	EQ	-1
+SUB	EQ	-1
+
+NGRP|LNE|	EQ	0
+NSUB|LNE|	EQ	0
+
+SPED|LNE|	EQ	9600			:DEFAULT SPEED IS 9600
+SDTR|LNE|	EQ	1			:DEFAULT DTR/DSR REQUIRED
+SRTS|LNE|	EQ	0			:DEFAULT RTS/CTS REQUIRED
+TMOT|LNE|	EQ	10			:DEFAULT REPLY TIMEOUT 10 SEC.
+
+	 KILL	LMACRO,GRPMAC,SUBMAC
+LMACRO	EQ	1				: Turn on LINE defined flag
+CURLVL	EQ	LINLVL				: Set LINE level
+GRPMAC	EQ	0				: Turn off GRP defined flag
+SUBMAC	EQ	0				: Turn off SUB defined flag
+
+	 IF	DSPGEN
+			REMARK	%%
+			REMARK	%*********************************************
+			REMARK	******************************
+			REMARK	%%	Line 
+			NUMBER	$A LNE
+	 EI	:(DSPGEN)
+
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	LN.LOGOFF					:
+:		 TO SPECIFY THE ICL C03 LINE-HOST LOGOFF TYPE	:
+:	ARGUMENT:						:
+:		 OFFMSG	- KEYWORDS: 'SIGNOF', 'TERM	'	:
+:								:
+:***************************************************************:
+
+OFFMAP	EQ	2
+SIGNOF	EQ	1
+TERM	EQ	0
+NONE	EQ	-1
+
+LN.LOGOFF	MACRO(OFFMSG)[
+	 NOLIST
+
+	 MCRNUM(380)
+	 LVLERR(LINLVL,LN.LOGOFF)
+	 PRMERR(OFFMSG,LN.LOGOFF)
+
+	 IF	LMACRO
+	 KILL	LGOF|LNE|
+LGOF|LNE|	EQ	$A OFFMSG	SIGNOF
+
+QRS	EQ	$A (SIGNOF-OFFMSG)
+	 IF	QRS*QRS
+	 ELSE
+RQ.SGN	EQ	1
+	 EI	
+
+QRS	EQ	$A (OFFMAP-OFFMSG)
+	 IF	QRS*QRS
+	 ELSE
+RQ.OFM	EQ	1
+	 EI	
+
+	 EI	:(LMACRO)
+
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	SPEED						:
+:		 TO SPECIFY THE LINE TRANSMISSION SPEED		:
+:		 FOR THE LINE .					:
+:	ARGUMENT:						:
+:		 GSPEED	- LINE SPEED				:
+:								:
+:***************************************************************:
+:
+SPD1	EQ	$A 1200
+SPD2	EQ	$A 2400
+SPD3	EQ	$A 4800
+SPD4	EQ	$A 9600
+:
+SP|SPD1|	 EQ	1
+SP|SPD2|	 EQ	1
+SP|SPD3|	 EQ	1
+SP|SPD4|	 EQ	1
+:
+SPEED	MACRO(GSPEED)[
+	 NOLIST
+
+	 MCRNUM(330)
+	 LVLERR(LINLVL,SPEED)
+	 PRMERR(GSPEED,SPEED)
+
+	 IF 1-ERRFLG
+	 KILL SPED|LNE|
+GSPARG	EQ	$A GSPEED
+	 IF	\SP|GSPARG|
+SPED|LNE|	EQ $A GSPEED
+	 ELSE
+			WARNING(SPEED,1,MACNUM)
+			WARLIN(Invalid rate specified)
+			WARLIN(Default value of 9600 assumed)
+SPED|LNE|	EQ $A 9600
+	 EI	:(\SP|GSPARG|)
+
+	 IF	DSPGEN
+			REMARK	%	Transmission speed		= 
+			NUMBER	$A GSPEED 
+			REMARK	Bits/Sec.
+	 EI	:(DSPGEN)
+
+	 EI	:(1-ERRFLG)
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	DTRDSR						:
+:		 TO SPECIFY THE	LINE'S ELECTRICAL SIGNAL	:
+:		 CHARACTERISTICS. THIS FUNCTION WILL SPECIFY	:
+:		 THE DTR/DSR HANDSHAKING REQUIREMENT.		:
+:	ARGUMENT:						:
+:		 GSDTR	- KEYWORD 'YES' OR 'NO'			:
+:								:
+:***************************************************************:
+:
+:
+DTRDSR	MACRO(GSDTR)[
+	 NOLIST
+
+	 MCRNUM(340)
+	 LVLERR(LINLVL,DTRDSR)
+	 PRMERR(GSDTR,DTRDSR)
+
+	 IF 1-ERRFLG
+	 KILL	SDTR|LNE|
+SDTR|LNE|	EQ	$A GSDTR	 :YES
+
+	 IF	DSPGEN
+	 REMARK	%	DTR/DSR Signals for this 
+	 REMARK	Line	= 
+	 IF	GSDTR
+	 REMARK	Required
+	 ELSE
+	 REMARK	Not Required
+	EI	:(GSDTR)
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	RTSCTS						:
+:		 TO SPECIFY THE	LINE'S ELECTRICAL SIGNAL	:
+:		 CHARACTERISTICS. THIS FUNCTION WILL SPECIFY	:
+:		 THE RTS/CTS HANDSHAKING REQUIREMENT PRIOR TO	:
+:		 THE TRANSMISSION OF A FRAME.			:
+:	ARGUMENT:						:
+:		 GSRTS	- KEYWORD 'YES' OR 'NO'			:
+:								:
+:***************************************************************:
+:
+:
+RTSCTS	MACRO(GSRTS)[
+	 NOLIST
+
+	 MCRNUM(360)
+	 LVLERR(LINLVL,RTSCTS)
+	 PRMERR(GSRTS,RTSCTS)
+
+	 IF 1-ERRFLG
+	 KILL	SRTS|LNE|
+SRTS|LNE|	EQ	$A GSRTS	 :NO
+
+	 IF	DSPGEN
+	 REMARK	%	RTS/CTS Signals for this 
+	 REMARK	Line	= 
+	 IF	GSRTS
+	 REMARK	Required
+	 ELSE
+	 REMARK	Not Required
+	 EI	:(GSRTS)
+	 EI	:(DSPGEN)
+
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	REPLYTO						:
+:		 TO SPECIFY THE REPLY TIMOUT VALUE,(IN SECONDS)	:
+:		 FOR THE CURRENT LINE.				:
+:	ARGUMENT:						:
+:		 GTMOT	- TIMEOUT VALUE, IN SECONDS		:
+:								:
+:***************************************************************:
+:
+:
+REPLYTO MACRO(GTMOT)[
+	 NOLIST
+
+	 MCRNUM(370)
+	 LVLERR(LINLVL,REPLYTO)
+	 PRMERR(GTMOT,REPLYTO)
+
+	 IF 1-ERRFLG
+	 KILL TMOT|LNE|
+	 RNGWAR(A,0,255,GTMOT,REPLYTO,10)
+	 IF WARCNT
+TMOT|LNE|	EQ $A 10
+	 ELSE
+TMOT|LNE|	EQ $A GTMOT
+	 EI	:(WARCNT)
+
+	 IF	DSPGEN
+			REMARK	%	Reply Timeout for this 
+			REMARK	Line	= 
+			NUMBER	$A GTMOT
+			REMARK	Sec.
+	 EI	:(DSPGEN)
+
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+
+	 SUBTTL	ICL C03 Initialisation - POLL GROUP LEVEL STATEMENTS
+
+:***************************************************************:
+:								:
+:	MACRO:	AGROUP						:
+:		 Specify the Group address for a poll group.	:
+:		 The value must be coded in hex and must	:
+:		 be unique within the current line.		:
+:								:
+:	ARGUMENT:						:
+:		 LAGRP - Group address in hex.			:
+:								:
+:***************************************************************:
+
+AGROUP	MACRO(LAGRP)[
+	 NOLIST
+
+	 MCRNUM(390)
+	 IF	\SUBMAC
+	 IF	SUBMAC
+			LVLERR(SUBLVL,AGROUP)
+	 ELSE
+			LVLERR(LINLVL,AGROUP)
+	 EI
+	 EI
+	 PRMERR(LAGRP,AGROUP)
+
+	 IF	1-ERRFLG
+NGRP|LNE|	EQ	NGRP|LNE|+1
+GRP	EQ	GRP+1
+
+	 EXPND2(GRP,GRP1,GRP2)
+GAD|LNE||GRP1||GRP2|	EQ	LAGRP
+	 IF	GRP		: not the first group for the line
+Q	EQ	0
+	 RE	GRP
+	 EXPND2(Q,Q1,Q2)
+	 IF	GAD|LNE||GRP1||GRP2|-GAD|LNE||Q1||Q2|
+	 ELSE
+	 IF	GAD|LNE||Q1||Q2|-GAD|LNE||GRP1||GRP2|
+	 ELSE
+			ERROR(AGROUP(LAGRP),1,MACNUM+6)
+			ERRLIN(Group Address has already been specified)
+	 EI
+	 EI
+Q	EQ	Q+1
+	 ER	: (GRP)
+	 EI	(GRP >0)
+
+	 RNGERR(0,020,07C,LAGRP,AGROUP)
+
+Q	EQ (LAGRP&3)
+	 IF Q
+	 ERROR(AGROUP(LAGRP),1,MACNUM+7)
+	 ERRLIN(Group address must be multiple of 4)
+	 EI
+
+	 IF 1-ERRFLG
+GRPMAC	EQ	1			: Set Group defined flag
+SUBMAC	EQ	0			: Turn off SUB defined flag
+CURLVL	EQ	GRPLVL
+NGRPS	EQ	NGRPS+1
+NSU|LNE||GRP1||GRP2|	EQ	0	 : Reset GRP SUB count
+
+Q	EQ	0
+	 RE	3
+DI|LNE||GRP1||GRP2||Q|	EQ	0
+Q	EQ	Q+1
+	 ER
+
+PSUB	EQ	-1
+
+	 IF	DSPGEN
+	 REMARK	%%	Remote ID			= 
+		REMARK	Hex 
+	 NUMBER $0 LAGRP
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+	 EI	:(1-ERRFLG)
+
+ARESV(020)
+ARESV(021)
+ARESV(022)
+ARESV(023)
+
+
+	 LIST
+]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	GCSBNA						:
+:		 Allows a Group BNA to be sent when the total	:
+:		 number of buffers left in a group falls	:
+:		 below a preset limit. This option can only be	:
+:		 used when dealing with hosts which support	:
+:		 ICLC-03 Freeze level 6, Variant V1 or later.	:
+:		 						:
+:	ARGUMENTS:						:
+:		 GCSARG	- On or Off				:
+:								:
+:***************************************************************:
+
+GCSBNA	MACRO(GCSARG)[
+	NOLIST
+	MCRNUM(396)
+	LVLERR(GRPLVL,GCSBNA)
+	PRMERR(GCSARG,GCSBNA)
+	IF	1-ERRFLG
+	RNGWAR(A,0,1,GCSARG,GCSBNA,YES)
+
+GCSBON	EQ	GCSARG
+
+	EI		: (1-ERRFLG)
+
+	LIST
+	]
+
+
+:***************************************************************:
+:								:
+:	MACRO:	SUBBNA						:
+:		 Allows a subsidiary to indicate BNA status	:
+:		 if the total number of buffers used for the	:
+:		 outbound data to that subsidiary reaches a 	:
+:		 preset limit - OBMAX.				:
+:		 						:
+:	ARGUMENTS:						:
+:		 SUBARG	- On or Off				:
+:								:
+:***************************************************************:
+
+SUBBNA	MACRO(SUBARG)[
+	NOLIST
+	MCRNUM(397)
+	LVLERR(GRPLVL,SUBBNA)
+	PRMERR(SUBARG,SUBBNA)
+	IF	1-ERRFLG
+	RNGWAR(A,0,1,SUBARG,SUBBNA,YES)
+
+SUBBON	EQ	SUBARG
+
+	EI		: (1-ERRFLG)
+
+	LIST
+	]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ASUB						:
+:		 Specify a single subsidiary on the current	:
+:		 group. The address must be specified in hex	:
+:		 and must be unique within the poll group.	:
+:		 Also specified are the Host number which this	:
+:		 subsidiary belongs to, and an indication of	:
+:		 whether the subsidiary will use a PVC or not.	:
+:								:
+:	ARGUMENTS:						:
+:		 LASUB	- The subsidiary address.		:
+:		 LAHOST	- Its network host number in decimal.	:
+:								:
+:***************************************************************:
+
+
+ASUB	MACRO(LASUB,LAHOST)[
+	 NOLIST
+	 MCRNUM(400)
+	 IF \SUBMAC
+	 IF SUBMAC
+			LVLERR(SUBLVL,ASUB)
+	 ELSE
+			LVLERR(GRPLVL,ASUB)
+	 EI	
+	 EI	:(\SUBMAC)
+	 PRMERR(LASUB,ASUB)
+	 RNGERR(0,024,07E,LASUB,ASUB)
+	 PRMERR(LAHOST,ASUB)
+
+	 IF	1-ERRFLG
+NSU|LNE||GRP1||GRP2|	EQ	NSU|LNE||GRP1||GRP2|+1
+
+	 EXPND2(LASUB,SUB1,SUB2)
+
+
+	 IF	\S|LNE||GRP1||GRP2||SUB1||SUB2	: Error if already defined
+			ERROR(ASUB(LASUB),1,MACNUM+6)
+			ERRLIN(SUB Address has already been specified)
+	 ELSE
+S|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	LASUB	: Remember this SUB....
+	 EI	:(\S|LNE||GRP1||GRP2||SUB1||SUB2|)
+	EI	: (1-errflg)
+
+	 IF 1-ERRFLG
+
+SUB	EQ	SUB+1
+	 EXPND2(SUB,SUB1,SUB2)		
+
+R|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	LASUB	: Keep a rel sub no.
+H|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	LAHOST	: Also keep the host no.
+
+
+NSUB|LNE|	EQ	NSUB|LNE|+1		: inc. # SUBs for this line
+NSUBS	EQ	NSUBS+1				: inc. # SUBs for interface
+
+
+THISH	EQ	$A	LAHOST
+	 IF \XHS|THISH|			:Now deal with host number
+Q	EQ	XHS|THISH|			:Get rel host no
+	 EXPND3(Q,Q1,Q2,Q3)
+
+NHS|Q1||Q2||Q3|	 EQ	NHS|Q1||Q2||Q3|+1 :Already exists, inc count
+	 ELSE
+XHS|THISH|	EQ	MAXHST			:First time for this host
+	 EXPND3(MAXHST,RH1,RH2,RH3)
+HOS|RH1||RH2||RH3|	EQ	THISH		:Declare rel host 
+NHS|RH1||RH2||RH3|	EQ	1		:& initialise sub count
+
+MAXHST	EQ	MAXHST+1				:inc host number
+	 EI
+
+
+SUBMAC	EQ	1				: Turn on SUB defined flag
+CURLVL	EQ	SUBLVL				: Set SUB level
+
+	 IF	DSPGEN
+	 REMARK	%		 Station  ID		= 
+	 REMARK	Hex 
+ 
+	 NUMBER $0 LASUB
+	 EI	:(DSPGEN)
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+
+:***************************************************************:
+:								:
+:	MACRO:	ARESV						:
+:		 Specify one of the special reserved 		:
+:		 subsidiaries. These have addresses 20 - 23.	:
+:		 They possess a Subtab entry, and have AL 	:
+:		 status, etc but they are set initially to be	:
+:		 unavailable as far as the network is concerned.:
+:		 This macro is essentially the same as ASUb,	:
+:		 but without bothering with host numbers.	:
+:								:
+:	ARGUMENTS:						:
+:		 LASUB	- The subsidiary address.		:
+:								:
+:***************************************************************:
+
+
+ARESV	MACRO(LASUB)[
+	 NOLIST
+	 MCRNUM(401)
+	 IF \SUBMAC
+	 IF SUBMAC
+			LVLERR(SUBLVL,ASUB)
+	 ELSE
+			LVLERR(GRPLVL,ASUB)
+	 EI	
+	 EI	:(\SUBMAC)
+	 PRMERR(LASUB,ASUB)
+	 RNGERR(0,020,023,LASUB,ASUB)
+
+	 IF	1-ERRFLG
+NSU|LNE||GRP1||GRP2|	EQ	NSU|LNE||GRP1||GRP2|+1
+
+	 EXPND2(LASUB,SUB1,SUB2)
+
+
+	 IF	\S|LNE||GRP1||GRP2||SUB1||SUB2	: Error if already defined
+			ERROR(ASUB(LASUB),1,MACNUM+6)
+			ERRLIN(SUB Address has already been specified)
+	 ELSE
+S|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	LASUB	: Remember this SUB....
+	 EI	:(\S|LNE||GRP1||GRP2||SUB1||SUB2|)
+	EI	: (1-errflg)
+
+	 IF 1-ERRFLG
+
+SUB	EQ	SUB+1
+	 EXPND2(SUB,SUB1,SUB2)		
+
+R|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	LASUB	: Keep a rel sub no.
+H|LNE||GRP1||GRP2||SUB1||SUB2|	EQ	0	: also keep a host no.
+
+
+NSUB|LNE|	EQ	NSUB|LNE|+1		: inc. # SUBs for this line
+NSUBS	EQ	NSUBS+1				: inc. # SUBs for interface
+
+SUBMAC	EQ	1				: Turn on SUB defined flag
+CURLVL	EQ	SUBLVL				: Set SUB level
+
+	 EI	:(1-ERRFLG)
+	 LIST
+	 ]
+
+
+:***************************************************************:
+: 600								:
+:	MACRO:	STRNG(A,B)					:
+:		 ASSIGN NAME (A) TO THE MACRO GENERATED. WHEN	:
+:		 USED, MACRO (A) WILL GENERATE STRING (B) IN	:
+:		 AN AC-TYPE CONSTANT.	KILLS OLD (A) - AND NOT	:
+:		 FOR NULL IN EITHER (A) OR (B).			:
+:	ARGUMENT:						:
+:		 A(NAME)	-ANY VALID SYMBOL NAME		:
+:		 B(VSTRNG)-LITERAL ASCII STRING PER NAD RULES	:
+:								:
+:***************************************************************:
+
+STRNG	MACRO(MNAME,VSTRNG)[
+	 KILL	MNAME
+MNAME	MACRO[
+	 AC	/VSTRNG/
+	 ]
+	 ]
+
+
+:***************************************************************:
+: 610								:
+:	MACRO:	AC.INT						:
+:		 INITIALLY A ERROR/DEFAULT MACRO, THIS DEFINE	:
+:		 REDEFINED IN NORMAL USE. USED TO GET ONE OR	:
+:		 MORE OCCURS OF THE OUTPUT INTERRUPT STRING.	:
+:		 THIS STRING IS USED TO COMPARE AGAINST		:
+:		 THE VALUE THE HOST SENDS.			:
+:	ARGUMENT:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+
+AC.INT	MACRO[
+:	NORMALLY THIS MACRO IS REDEFINED BEFORE USE
+	 MCRNUM(610)
+	 WARNING(AC.INT,1)
+	 WARLINE(output interrupt string undefined )
+	 WARLINE(default is AC /OUTPUT INTERRUPT/)
+	 AC	/OUTPUT INTERRUPT/
+	 ]
+FL.INT	EQ	0			:SIGNAL UNDEFINED OTP.INT. STRING
+
+
+
+:***************************************************************:
+: 620								:
+:	MACRO:	INT.STRING(A)					:
+:		 CREATE THE OUTPUT INTERRUPT STRING IN TYMFILE.	:
+:		 REDEFINE THE MACRO NAMED AC.INT TO CALL	:
+:		 THE STRING (A). OLD AC.INT IS KILLED AND	:
+:		 ERROR MESSAGES OCCUR. SLOT LEVEL MACRO.	:
+:	ARGUMENT:						:
+:		 A(STRNGF) -ANY NAD/ASCII STRING WITHOUT COMMAS :
+:								:
+:***************************************************************:
+
+INT.STRING	MACRO(STRNGF)[
+	 MCRNUM(620)
+	 LVLERR(SLTLVL,INT.STRING)
+QRS	EQ	.
+	 PRMERR(STRNGF,output interrupt string)
+	 ORG	QRS
+	 IF	1-ERRFLG
+	 IF	FL.INT
+	 WARNING(INT.STRING,1)
+	 WARLINE(redefining output interrupt string)
+	 ELSE
+FL.INT	EQ	1
+	 IF	DSPGEN
+	 REMARK	%%TRANSACTION related string -%
+	 REMARK	STRNGF
+	 EI
+	 EI	
+
+	 STRNG(AC.INT,STRNGF)
+	 EI	
+	 ]
+
+
+
+:***************************************************************:
+: 630								:
+:	MACRO:	AC.SGN						:
+:		 INITIALLY A ERROR/DEFAULT MACRO, THIS DEFINE	:
+:		 REDEFINED IN NORMAL USE.USED TO GET ONE OR	:
+:		 MORE OCCURS OF THE SIGNOFF STRING. USE IN HIF	:
+:		 IS INDICATED IF ANY LINE HAS TO SPECIFY LN.LOG	:
+:		 (SIGNOF).					:
+:	ARGUMENT:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+
+AC.SGN	MACRO[
+:	NORMALLY THIS MACRO IS REDEFINED BEFORE USE
+	 MCRNUM(630)
+	 WARNING(AC.SGN,1)
+	 WARLINE(signoff string undefined )
+	 WARLINE(default is AC /SIGNING OFF - BYE FOR NOW/)
+	 AC	/SIGNING OFF - BYE FOR NOW/
+	 ]
+FL.SGN	EQ	0			:SIGNAL UNDEFINED SIGNOFF STRING
+RQ.SGN	EQ	0			:NEEDED ONLY IF LN.LOG (SIGNOF) OCCURS
+
+
+
+:***************************************************************:
+: 640								:
+:	MACRO:	SGN.STRING(A)					:
+:		 MAKE THE SIGNOFF STRING AVAILABLE VIA TYMFILE.	:
+:		 REDEFINE THE MACRO NAMED AC.SGN TO CALL	:
+:		 THE STRING (A). OLD AC.SGN IS KILLED AND	:
+:		 ERROR MESSAGES OCCUR. SLOT LEVEL MACRO.	:
+:	ARGUMENT:						:
+:		 A(STRNGF)-ANY NAD/ASCII STRING WITHOUT COMMAS	:
+:								:
+:***************************************************************:
+
+SGN.STRING	MACRO(STRNGF)[
+	 MCRNUM(640)
+	 LVLERR(SLTLVL,SGN.STRING)
+QRS	EQ	.
+	 PRMERR(STRNGF,signoff string)
+	 ORG	QRS
+	 IF	1-ERRFLG
+	 IF	FL.SGN
+	 WARNING(SGN.STRING,1)
+	 WARLINE(redefining signoff string)
+	 ELSE
+FL.SGN	EQ	1
+	 IF	DSPGEN
+	 REMARK	%%DEMAND related string -%
+	 REMARK	STRNGF
+	 EI
+	 EI	
+
+	 STRNG(AC.SGN,STRNGF)
+	 EI	
+	 ]
+
+
+
+:***************************************************************:
+: 650								:
+:	MACRO:	CK.STR						:
+:		 FOR USE IN C03SGN TO CHECK ON THE STATUS OF	:
+:		 LV0 STRING MACROS.				:
+:	ARGUMENTS:						:
+:		 NONE						:
+:	SWITCHES:						:
+:		 FL.INT, RQ.SGN, FL.SGN ARE ASSUMED, NOW!	:
+:		 (THEY ARE SET UP @INT.STRING AND @SGN.STRING.)	:
+:		 FL.INT/SGN TRUE IF INT/SGN.STRING ISSUED BELOW	:
+:		 RQ.SGN TRUE IF LN.LOG (SIGNOF) OCCURS /TYMFILE	:
+:								:
+:***************************************************************:
+
+CK.STR	MACRO[
+Q9Z	EQ	CURLVL
+CURLVL	EQ	SLTLVL
+
+	 IF	FL.INT
+	 ELSE
+		MCRNUM(620)
+		WARNING(INT.STRING,1)
+		WARLINE(output interrupt string undefined)
+		WARLINE(default is AC /OUTPUT INTERRUPT/)
+		INT.STRING(OUTPUT INTERRUPT)
+	 EI	
+
+	 IF	RQ.SGN
+		IF	FL.SGN
+		ELSE
+			MCRNUM(640)
+			WARNING(SGN.STRING,1)
+			WARLINE(signoff string undefined)
+			WARLINE(default is AC /SIGNING OFF - BYE FOR NOW/)
+			SGN.STRING(SIGNING OFF - BYE FOR NOW)
+		EI	
+	 EI	
+
+	 IF	RQ.OFM
+		IF	FL.OFM
+		ELSE
+			MCRNUM(660)
+			WARNING(OFM.STRINGS,1)
+			WARLINE(offmap string(s) undefined)
+			WARLINE(default values are in use)
+	OFM.STRINGS(ILLEGAL CHARACTER IN THE DATA, YOU ABORTED THE JOB,X)
+			EI	
+	 EI	
+
+	 IF	FL.SGN
+	 ELSE
+			SGN.STRING(UNUSED)
+	 EI	
+
+	 IF	FL.OFM
+	 ELSE
+			OFM.STRINGS(1UNUSED,2UNUSED,3UNUSED)
+	 EI	
+
+CURLVL	EQ	Q9Z
+	 ]
+
+
+
+:***************************************************************:
+: 660								:
+:	MACRO:	OFM.STRINGS(A,B,C)				:
+:		 CREATE TWO STRINGS NAMED AC1.OFM AND AC2.OFM	:
+:		 WHICH ARE THE HOST RESPONSE TO MSG.WAIT IN SOME:
+:		 CASES.	THE REPLY BY HIF IF /B/ APPEARS IF TO	:
+:		 BE JUST /C/. THIS MACRO MUST APPEAR IF ANY USE :
+:		 OF LN.LOGOFF(OFFMAP) OCCURS IN THE HIF.	:
+:								:
+:	ARGUMENT:						:
+:		 A(STRNG1) -ANY NAD/ASCII STRING WITHOUT COMMAS	:
+:		 B(STRNG2) -ANY NAD/ASCII STRING WITHOUT COMMAS	:
+:								:
+:***************************************************************:
+
+OFM.STRINGS	MACRO(STRNG1,STRNG2,STRNG3)[
+	 MCRNUM(660)
+	 LVLERR(SLTLVL,OFM.STRINGS)
+QRS	EQ	.
+	 PRMERR(STRNG1,1st offmap string)
+	 PRMERR(STRNG2,2nd offmap string)
+	 PRMERR(STRNG3,3rd offmap string)
+	 ORG	QRS
+	 IF	1-ERRFLG
+	 IF	FL.OFM
+	 WARNING(OFM.STRINGS,1)
+	 WARLINE(redefining offmap strings)
+	 ELSE
+FL.OFM	EQ	1
+	 IF	DSPGEN
+	 REMARK	%%MAPPER related string(s) -%
+	 REMARK	STRNG1
+	 REMARK	%
+	 REMARK	STRNG2
+	 REMARK	%
+	 REMARK	STRNG3
+	 REMARK	%
+	 EI
+	 EI	
+
+	 STRNG(AC1.OFM,STRNG1)
+	 STRNG(AC2.OFM,STRNG2)
+	 STRNG(AC3.OFM,STRNG3)
+	 EI	
+	 ]
+
+
+
+:***************************************************************:
+: 670								:
+:	MACRO:	AC|Q|.OFM (AC1.OFM AND AC2.OFM)			:
+:		 INITIALLY DEFAULT MACROS, THE DEFINED ARE	:
+:		 REDEFINED IN NORMAL USE.THESE WILL CREATE	:
+:		 AC-TYPE CONSTANTS (NO LNG BYTE) ENTERED VIA	:
+:		 THE OFM.STRINGS(X,Y,Z) MACRO EQUAL /X/,/Y/,/Z/.:
+:		 THE INIT.DEF IS AN ERROR CASE SHOULD THE CHECK	:
+:		 IN C03SGN BE OMITTED AND THESE USED UNDF'ED.	:
+:		 (SEE CK.STR, A MACRO)				:
+:	ARGUMENT:						:
+:		 NONE						:
+:								:
+:***************************************************************:
+
+:NORMALLY THIS MACRO IS REDEFINED BEFORE USE
+
+AC3.OFM MACRO[
+	 MCRNUM(670)
+			WARNING(AC3.OFM,1)
+			WARLINE(3rd offmap string undefined)
+			WARLINE(default is AC /X/)
+			AC	/X/
+	 ]
+
+AC2.OFM MACRO[
+	 MCRNUM(670)
+			WARNING(AC2.OFM,1)
+			WARLINE(2nd offmap string undefined)
+			WARLINE(default is AC /YOU ABORTED THE JOB/)
+			AC	/YOU ABORTED THE JOB/
+	 ]
+
+AC1.OFM MACRO[
+	 MCRNUM(670)
+			WARNING(AC1.OFM,1)
+			WARLINE(1st offmap string undefined)
+			WARLINE(default is AC /ILLEGAL CHARACTER IN THE DATA/)
+			AC	/ILLEGAL CHARACTER IN THE DATA/
+	 ]
+
+
+
+FL.OFM	EQ	0
+RQ.OFM	EQ	0
+
+
+
+:	:(MISC.) MACROs 900-999
+:	-----------------------
+
+:	:CREATE A MACRO FOR TYMFILE TO SPECIFY LINES WITH HANG TIMERS
+:	-------------------------------------------------------------
+
+:	INNER (WORK) MACRO = #900
+ORLNBT	MACRO(EQMASK,LINE)[
+	 IF	-1+1`LINE
+QQ	EQ	$A LINE		:ASSUME UNSIGNED DECIMAL
+	 IF	(QQ+1)*(10-QQ)
+Q	EQ	EQMASK
+EQMASK	EQ	EQMASK!(1^(0F-QQ))
+	 IF	(Q-EQMASK)*(EQMASK-Q)+1
+	 WARNING(HNGTIME,1)
+	 WARLINE(A duplicate line is selected for hang timing)
+	 EI
+	 ELSE
+	 ERROR(HNGTIME,1)
+	 ERRLIN(A line not decimal 0-15 has been selected for hang timing)
+	 EI
+	 EI
+	 ]
+
+	 GL	UHNGBT
+UHNGBT	EQ	0
+
+:AN INSTRUCTION LATER ON IS TO BE
+:DHNGBT HC	UHNGBT
+
+:OUTER (USER) MACRO = #900
+HNGTIME MACRO(X00,X01,X02,X03,X04,X05,X06,X07,X08,X09,X10,X11,X12,X13,X14,X15)[
+
+	 MCRNUM(900)
+
+	 ORLNBT(UHNGBT,X00)	:UNSIGNED DECIMAL IF PRESENT
+	 ORLNBT(UHNGBT,X01)	:		"
+	 ORLNBT(UHNGBT,X02)	:		"
+	 ORLNBT(UHNGBT,X03)	:		"
+	 ORLNBT(UHNGBT,X04)	:		"
+	 ORLNBT(UHNGBT,X05)	:		"
+	 ORLNBT(UHNGBT,X06)	:		"
+	 ORLNBT(UHNGBT,X07)	:		"
+	 ORLNBT(UHNGBT,X08)	:		"
+	 ORLNBT(UHNGBT,X09)	:		"
+	 ORLNBT(UHNGBT,X10)	:		"
+	 ORLNBT(UHNGBT,X11)	:		"
+	 ORLNBT(UHNGBT,X12)	:		"
+	 ORLNBT(UHNGBT,X13)	:		"
+	 ORLNBT(UHNGBT,X14)	:		"
+	 ORLNBT(UHNGBT,X15)	:		"
+	 ]
+
+
+
+
+:
+: End of the macro definitions
+:
+
+
+
+:
+: **********************************************************************
+: * 
+: *	S T A R T	O F	S Y M B O L	D E F I N I T I O N S
+: *     -------------------------------------------------------------
+: **********************************************************************
+:
+:
+: ----------------------------------------------------------------------
+:
+: Product identification
+:
+	DEFGEQ(PRODID,89)			:Product identification code
+	DEFGEQ(VERSION,01)			:Version number
+	DEFGEQ(REVLEV,01)			:Revision level
+:
+: ----------------------------------------------------------------------
+:
+: Standard Tymnet parameter definitions
+:
+:	
+: Required by START.LIB
+:
+	DEFGEQ(ENGINE,1)			:Only use Engine
+	DEFGEQ(IRSIZE,1000)			:Use about 1K per line at 9600
+	DEFGEQ(ORSIZE,1000)			:for Iring and Oring
+:
+: Required by TIMOUT.LIB
+:
+	DEFGEQ(NTOUT,5)				:No. of timeouts that can be
+						:active concurrently
+:
+: Required by CRASH.LIB 
+:
+	DEFGEQ(CRSTOP,0)			:Default do not stop on crash
+:
+: Required by FRNTND.LIB
+:
+	DEFGEQ(ECHO,0)				:Echoing done by Consat
+	DEFGEQ(AUTOBP,0)			:Auto backpressure not required
+	DEFGEQ(PTIMEO,0)			:Port timeouts not required
+	DEFGEQ(OUTPROC,0)			:FRNTND output not required
+	DEFGEQ(WAITZA,0)			:Zapper ack not reqd
+	DEFGEQ(FWPTAB,1)			:Using FW port table
+	DEFGEQ(ACTIVT,0)			:Not used but needed by FRNTND
+:
+: Required by PATCH.LIB
+:
+	DEFGEQ(P0SIZE,40)			:No. of halfwords for PATCH0
+	DEFGEQ(P1SIZE,120)			:No. of halfwords for PATCH1
+:
+: Internal memory layout
+:
+	DEFGEQ(A.DATA,0)		:Default data segment
+	DEFGEQ(A.CODE,1)		:Default code segment
+	DEFGEQ(A.RING,2)		:Ring segment
+	DEFGEQ(A.BDAT,3)		:Area for based data allocations
+	DEFGEQ(A.DCB,4)
+	DEFGEQ(A.MON,5)
+	DEFGEQ(A.BUFF,6)
+:
+: C03 constants
+:
+	DEFGEQ(MAXGRP,20)		:Max number of groups per line
+	DEFGEQ(MAXSUB,05F)		:Max number of subs per group
+	DEFGEQ(BGRPAD,20)		:Lowest group address
+	DEFGEQ(BSUBAD,20)		:Lowest Sub address
+	DEFGEQ(ALPSIZ,$A 255)		:Max size of a fragment
+	DEFGEQ(RTMOUT,$A 100)		:Receive block timeout
+:
+: Test switches
+:
+					:Check for overflow and underflow of stack
+	 DEFGEQ(TSSTCK,1)		:Stack checks on
+
+
+
+
+	 RA	0		 	:RADIX IS HEX
+
+:END INIT FILE
+
+	 BEGINTYM
+
+
+
+
+   Uz½
