@@ -1,0 +1,97 @@
+C**********************************************************************
+C
+C                          FLMFRS.FTF
+C
+C          LISTS TNUM FOR FLM ONLY AND FLM/FRSPT FR TICKETS HANDLED
+C          DURING A SPECIFIED PERIOD                        3/15/95
+C                                                            JHP
+C
+C***********************************************************************
+C
+C
+        INTEGER START,END,TNUM,STDAT,CLDAT,COC(2),SM,SD,SY,EM,ED,EY
+        INTEGER IERT,IERC,NUMBER,I,ONUM,SDAT,CDAT,B1,OM,OD,OY
+        INTEGER CM,CD,CY,HOST,RE(2),LOCAL(3),SVER,CNAM(3),PROD
+        INTEGER CNUM,COUNT
+        REAL ELM    
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+        B1=0
+        TYPE 20
+20      FORMAT(/5X,'ENTER THE STARTING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 21,SM,SD,SY
+21      FORMAT(I2,1X,I2,1X,I2)
+        SY=SY+1900
+        CALL DBDATN(START,SM,SD,SY)
+        TYPE 30
+30      FORMAT(/5X,'ENTER THE ENDING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 31,EM,ED,EY
+31      FORMAT(I2,1X,I2,1X,I2)
+        EY=EY+1900
+        CALL DBDATN(END,EM,ED,EY)
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     CALL DBOPEN('(TNT)BASE7','(TNT)BASE4')
+        CALL DBFIND(2,4,END,1,2,6,START,1,8,1,'FLMTC')
+        CALL DBMAP(2,1,1)
+        CALL DBFIND('LAST',1,9,1,'FRAMERELAY')
+        CALL DBMAP(1,1,1)
+        CALL DBFIND('LAST',1,8,2,'FRSPT')
+        CALL DBMAP(2,1,1)
+        CALL DBSAVE('FLMFRS')
+        TYPE 110
+110     FORMAT(/1X,'FR TICKETS WORKED BY FLM ONLY',/1X)
+        CALL DBNREC(NUMBER)
+        IF(NUMBER.EQ.0) GOTO 200
+        DO 130 I=1,NUMBER
+        CALL DBSET(2)
+        CALL DBFIND('FILE','FLMFRS')
+        CALL DBGREC($9000,I)
+        CALL DBVAL(1,TNUM)
+115     CALL DBSET(1)
+        CALL DBFIND(2,4,END,1,2,6,START,1,8,1,'FLMTC')
+        CALL DBMAP(2,1,1)
+        CALL DBFIND('LAST',1,9,1,'FRAMERELAY')
+        CALL DBMAP(1,1,1)
+        CALL DBFIND('LAST',1,8,1,'FRSPT')
+        CALL DBMAP(2,1,1)
+        CALL DBNREC(COUNT)
+        DO 119 J=1,COUNT
+        CALL DBGREC($9000,J)
+        CALL DBVAL(1,CNUM)
+        IF (TNUM.EQ.CNUM) GOTO 130
+119     CONTINUE
+        TYPE 120,TNUM
+120     FORMAT(I8)
+130     CONTINUE
+
+200     CALL DBSET(1)
+        CALL DBFIND(2,4,END,1,2,6,START,1,8,1,'FLMTC')
+        CALL DBMAP(2,1,1)
+        CALL DBFIND('LAST',1,9,1,'FRAMERELAY')
+        CALL DBMAP(1,1,1)
+        CALL DBFIND('LAST',1,8,1,'FRSPT')
+        CALL DBMAP(2,1,1)
+        TYPE 210
+210     FORMAT(/1X,'FR TICKETS WORKED BY BOTH FLM AND FRSPT',/1X)
+        CALL DBNREC(NUMBER)
+        IF(NUMBER.EQ.0) GOTO 300
+        DO 230 I=1,NUMBER
+        CALL DBGREC($9000,I)
+        CALL DBVAL(1,TNUM)
+        TYPE 120,TNUM
+230     CONTINUE
+
+300     GOTO 9990
+
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO JIM PARKER/FLM!')
+9990    CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
+
