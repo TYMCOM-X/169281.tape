@@ -1,0 +1,106 @@
+C**********************************************************************
+C
+C                          CSURCH.FTF
+C
+C                                                          2/7/95
+C                                                            JHP
+C
+C***********************************************************************
+C
+C
+        INTEGER START,END,TNUM,STDAT,CLDAT,COC(2),SM,SD,SY,EM,ED,EY
+        INTEGER IERT,IERC,NUMBER,I,CNAM(3),CUNAM(3),K
+        INTEGER REPROB(2),PROD,CUSNAM
+        REAL ELM,TOTIM,AVTIM,COUNT
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+        TYPE 20
+20      FORMAT(/5X,'ENTER THE STARTING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 21,SM,SD,SY
+21      FORMAT(I2,1X,I2,1X,I2)
+        SY=SY+1900
+        CALL DBDATN(START,SM,SD,SY)
+        TYPE 30
+30      FORMAT(/5X,'ENTER THE ENDING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 31,EM,ED,EY
+31      FORMAT(I2,1X,I2,1X,I2)
+        EY=EY+1900
+        CALL DBDATN(END,EM,ED,EY)
+        EY=EY-1900
+        SY=SY-1900
+
+        TYPE 39
+39      FORMAT(/1X,'ENTER UP TO 15 CHARACTERS FOR THE CUSTOMER ',
+     1  'NAME',/1X,'ONLY THE FIRST 5 WILL BE USED IN THE SEARCH ',
+     2  'BUT ALL 15 WILL',/1X,'APPEAR IN THE REPORT HEADER.')
+        TYPE 40
+40      FORMAT(/1X,'ENTER THE CUSTOMER NAME:  ',$)
+        ACCEPT 41,CNAM
+41      FORMAT(3A5)
+        CUSNAM=CNAM(1)
+
+        ELM=0
+        NUMBER=0
+        TOTTIM=0
+        AVTIM=0
+
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     CALL DBOPEN('(TNT)BASE4')
+
+        TYPE 110,CNAM,SM,SD,SY,EM,ED,EY
+110     FORMAT(/1X,'CONCERT PACKET SERVICE NETWORK',/1X,
+     1  'CUSTOMER NAME, ',3A5,/1X,
+     2  'MEAN TIME TO REPAIR REPORT FOR PERIOD ',I2,'/',I2,'/',
+     3  I2,' TO ',I2,'/',I2,'/',I2,/1X,'--------------------',
+     4  '--------------------------------------')
+
+        DO 150 K=1,4
+        CALL DBFIND(26,6,START,1,26,4,END,1,52,1,K)
+        CALL DBNREC(NUMBER)
+        IF (NUMBER.EQ.0) GOTO 219
+        CALL DBSRCH(31,'CT',CUSNAM)
+        CALL DBNREC(NUMBER)
+
+219     TYPE 220,K
+220     FORMAT(/1X,'SEVERITY ',I1,/1X,'TICKET #',T11,'CUSTOMER ',
+     1  T28,'PRODUCT',T42,'RPRTD PROBLEM',T57,'CAUSE',T73,'E.T.',/)
+        IF (NUMBER.EQ.0) TYPE 8991
+        IF (NUMBER.EQ.0) GOTO 150
+        DO 200 I=1,NUMBER
+        CALL DBGREC($9000,I)
+        CALL DBVAL(1,TNUM,14,PROD,31,CUNAM,55,COC,57,REPROB,54,ELM)
+        TOTIM=TOTIM+ELM
+        ELM=ELM/60
+        TYPE 250,TNUM,CUNAM,PROD,REPROB,COC,ELM
+250     FORMAT(1X,I6,T11,3A5,T28,A5,T42,2A5,T57,2A5,T70,F7.1)
+200     CONTINUE
+        COUNT=NUMBER
+        TOTIM=TOTIM/60
+        AVTIM=TOTIM/COUNT
+        TYPE 260,AVTIM
+260     FORMAT(/1X,'MEAN',T10,F6.1)
+        TYPE 8992
+
+150     CONTINUE
+
+        GOTO 9990
+
+8990    TYPE 8991
+8991    FORMAT(/1X,T30,'NONE FOUND')
+        TYPE 8992
+8992    FORMAT(/1X,'----------------------------------------',
+     1  '------------------------------------')
+
+        GOTO 9990
+
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO JIM PARKER AT NSSC!')
+9990    CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
