@@ -1,0 +1,77 @@
+
+Entry
+	LUDWLD
+;
+Begin "LudWld"
+
+require "(SAILIB)SAIL.DEF" source!file;
+
+define
+	LUD!PPN   = 0			! PPN  = Gan,,Uun ;
+,	LUD!DIST  = 1			! DIST = Tymshare district ;
+,	LUD!SIZE  = 2			! SIZE = Lud entry size ;
+,	LUD!PRIV  = 3			! PRIV = User Privilages ;
+,	LUD!HASH  = 4			! HASH = Hashed user name ;
+;
+
+define	LUDMAX = 16;			! Enough? for large entries ;
+
+Own Integer Array E[1:128];		! One disk block = 1/4 page ;
+Own Integer Array L[0:LUDMAX];		! lots of room for LUD entry ;
+Own Integer L.Eof, L.Chan, L.Block;	! internal file variables ;
+Own Integer L.PPN, L.Ptr, L.Size;	! internal variables ;
+
+Internal Procedure LudWld( Integer PPN, Mask; Procedure UserProc );
+begin
+
+    Open( L.Chan_ GetChan, "SYS", '10, 1,0, 512, 0, L.Eof_ -1 );
+    If L.Eof
+     then Usererr(0,0,"Cannot init SYS, try again later...","X");
+    Lookup( L.Chan, "LUD.SYS", L.Eof_ -1 );
+    If L.Eof
+     then Usererr(0,0,"Cannot read LUD," & Crlf &
+		      "Please contact your Tymshare representative","X");
+
+
+    L.Block_ 0;				! Initialize block counter ;
+    L.PPN_ PPN lor Mask;		! Setup PPN Mask ;
+
+    While not L.Eof			! While data is readable ;
+     do begin "read file"
+	Arryin( L.Chan, E[1], 128 );	! Read a block ;
+	If L.Eof and !Rh( L.EoF ) = 0	! If e-o-f and nothing read ;
+	 then done;			!  then we are done ;
+	L.Block_ L.Block + (L.Ptr_ 1);	! Init pointer and count blocks ;
+	While L.Ptr leq 128   and	! While pointer is in range ;
+	     E[ L.Ptr ] > 0		!   and data is positive, non-zero ;
+	 do begin "scan block"
+
+	    if ( E[ L.Ptr+LUD!PPN ] < '1000001 ) then
+	      outstr( "%LUD has bad PPN @"&cvos( ((L.Block-1)*128)+L.Ptr-1 )&
+		    " ppn="&cvos( E[ L.Ptr+LUD!PPN ] )&crlf );
+	    if L.PPN = ( E[ L.Ptr ] lor Mask )
+	     then begin "found entry"
+		ArrClr( L );
+		if ( L.Size_ E[ L.Ptr+LUD!SIZE ] land '177 )
+		 then begin "do entry"
+		    ArrBlt( L[ 0 ], E[ L.Ptr ], L.Size min LUDMAX );
+		    UserProc( E[ L.Ptr ], L.Size min LUDMAX, L )
+		 end "do entry"
+		 else
+		    outstr( "%LUD error @"&cvos( ((L.Block-1)*128)+L.Ptr-1 )&
+			    " ppn="&cvos( E[ L.Ptr ] )&crlf );
+	     end "found entry";
+	    L.Ptr_ L.Ptr + L.Size;
+	    if ( L.Size = 0 )
+	     then done;
+	 end "scan block";
+	 if ( E[ L.Ptr ] < 0 ) then
+	    outstr( "[LUD overflow @"&cvos( ((L.Block-1)*128)+L.Ptr-1 )&
+			    " pointer="&cvos( E[ L.Ptr ] )&"]"&crlf );
+     end "read file";
+    Release( L.Chan );
+end;
+
+
+end "LudWld";
+
