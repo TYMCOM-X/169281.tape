@@ -1,0 +1,391 @@
+!SYSNO
+TYMSHARE F34-P035/E01-1 1-25-91
+!PJOB
+Frame 13  TTY203  JMS[3,431116](EBUS[3,317016]) at F34
+
+!DAYTIME
+18-APR-1995 19:51:09 PDT
+
+!; This CTL file rebuilds the BND file for an EBUS gateway.
+!; The following files must exist:
+!DIR (EBUS)EBUS02.O02
+
+EBUS02  O02       9   9-MAY-88 1336    ALL RD  NO      4096          
+
+!DIR ND6720.TYM,ND6720.T01,ND6720.CMD,ND6720.C00,ND6720.C01,ND6720.T03,ND6720.C03
+
+ND6720  C03       2  18-APR-95 1918    ALL RD  NO        37          
+ND6720  C00       2  18-APR-95 1918    ALL RD  NO        35          
+ND6720  CMD       2  18-APR-95 1918    ALL RD  NO        36          
+ND6720  TYM       3  11-APR-95 1057    ALL RD  NO       777          
+ND6720  C01       2  11-APR-95   32    ALL RD  NO        33          
+ND6720  T01       2  27-MAR-92 2231    ALL RD  NO        53          
+ND6720  T03       2  27-MAR-92 1807    ALL RD  NO       310          
+
+!DIR GGISIS.LTD,GGXRAY.LTD
+
+GGXRAY  LTD       2  10-JUL-91 1611    ALL RD  NO        18          
+GGISIS  LTD       2  10-JUL-91 1608    ALL RD  NO        37          
+
+!
+!; Create the ISIS Kernel from NDxxxx.TYM
+!R (SYS)NONAD
+1.5
+;X   ND6720.CMD
+
+;; ISIS-II Version 13.03 for host 34 (and its gateway)
+;@   I2IS13.I03
+
+End of assembly
+;@   ND6720.TYM
+
+End of assembly
+;@   GGISIS.LTD
+
+End of assembly
+;@   I2IS13.R03
+
+DISPAT 0 0
+SYNC 1D5A 22F8
+CLOCKS 22F8 24B2
+MBOARD 24B2 272C
+IPI 272C 298A
+FLASH 298A 37AE
+KCAREA 37AE 3A04
+TTY 3A04 3D00
+KERNEL 3D00 97D8
+DDT 97D8 0D600
+   1676d (16d-byte) bufferlets allocated to dispatcher
+DISPAT 0D600 1D400
+.............................................
+
+
+
+    ***  ISIS-II System Configuration  ***
+      		Version 13.03d
+
+Total ISIS system memory used - 118dK Byte(s) 
+Memory used by ISIS operating system itself - 117dK Byte(s)
+Misc. data area used by ISIS operating system - 1dK Byte(s)
+
+
+TYMNET-II Node 6720, Kernel Host 4481
+
+Maximum slot number is 3
+
+
+       >>> HARDWARE CONFIGURATION <<<
+
+Expects enhanced sync microcode
+Expects enhanced async microcode
+Expects MAC II
+Expects maximum baud rate of 1200
+Expects 1 sync board(s)
+Expects 1 SIO mother-board processor(s)
+   Board 0 has 2 channel(s), device address 80
+Expects 1 IPI processor(s)
+   IPI device 0 has device address 88
+
+       >>> SLOT CONFIGURATIONS <<<
+
+SLOT 0, NODE CODE, has 350 K-bytes of core, from 1D700 to 74EFF (Physical address)
+
+   3 logical unit(s)
+   L.U. 0 is sync line 0
+   L.U. 1 is mboard 80 channel 0
+   L.U. 2 is mboard 80 channel 1
+
+SLOT 1 has 266 K-bytes of core, from 74F00 to 0B76FF (Physical address)
+
+   1 logical unit(s)
+   L.U. 0 is IPI device 
+
+SLOT 2 has 100 K-bytes of core, from 0B7700 to 0D06FF (Physical address)
+
+   no logical units
+
+SLOT 3 has 160 K-bytes of core, from 0D0700 to 0F86FF (Physical address)
+
+   1 logical unit(s)
+   L.U. 0 is sync line 1
+
+***Highest location used in this configuration is 0F8700
+
+Requires 998d k-bytes of core memory
+
+
+.............................................
+
+
+Code Generated:  04/19/95  02:53:15 GMT
+
+.............................................
+
+End of assembly
+1;F   ND6720.NIB
+
+70;T
+0,SUMTBL;P
+INTLEN,IEND-INTLEN;P
+%P
+SEGF,SFSIZE;P
+%Q
+EXIT
+
+!
+!; Create the node code for slot 0 from NDxxxx.TYM
+!R (SYS)NONAD
+1.5
+;X   ND6720.C00
+
+;; Node code 5.37 for host 34 (and its gateway)
+;@   T2E05.I37
+
+End of assembly
+;@   ND6720.TYM
+
+End of assembly
+;@   GGXRAY.LTD
+
+End of assembly
+;@   T2E05.R37
+
+ERROR -- Node cannot downline load neighbor unless an Xray
+    goodguy entry is targeted to T.DLOAD.  Please correct the
+    goodguy list.
+
+SECURE NODE: Goodguy List cannot be modified since no Goodguy Name
+has P.GG privilege.
+
+Assembly killed due to fatal error in XRAY
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! FATAL ERROR !!! FATAL ERROR !!!
+!!! ASSEMBLY HAS BEEN KILLED !!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+EXIT
+
+!
+!; Create the Engine code that runs in Slot 1 from NDxxxx.T01
+!; Note that the 68K code in slot 2 is the same in all bases.
+!R (SYS)NONAD
+1.5
+;X   ND6720.C01
+
+;;      EBUS INTERFACE COMMAND FILE - HOST 38
+;@   EBUS02.I00
+
+End of assembly
+;@   ND6720.T01
+
+End of assembly
+;@   EBUS02.R00
+
+Start.Lib Version 0.05
+SEG 2 SIZE = 1100
+
+RING 0E0000 101BA 
+CRASH.LIB    11-15-84 AWT
+THIS VERSION HAS AN OPTION FOR EXTENDED CRASH PROCESSING.
+CRASH 101BA 103B8
+STATUS 103B8 105EE
+EBUS 105EE 10CA4
+DEFAULT AREA PROTECTIONS ASSUMED.
+
+SEGMENT 0-length 404d, requires 200x bytes of core.
+SEGMENT 1-length 3364d, requires 0E00x bytes of core.
+SEGMENT 2-length 4480d, requires 1200x bytes of core.
+SEGMENT 3-length 65536d, requires 10000x bytes of core.
+SEGMENT 4-length 65536d, requires 10000x bytes of core.
+SEGMENT 5-length 65536d, requires 10000x bytes of core.
+SEGMENT 6-length 65536d, requires 10000x bytes of core.
+SEGMENT 0E-length 476d, requires 200x bytes of core.
+       265d K-bytes of core
+End of assembly
+1;F   ND6720.N01
+
+CTA,CTASIZ;P
+SEG0,S0SIZE;P
+SEG1,S1SIZE;P
+SEG2,S2SIZE;P
+%P
+%Q
+EXIT
+
+!
+!; Create the gateway code for slot 3.
+!R (SYS)NONAD
+1.5
+;X   ND6720.C03
+
+;; Node code 5.37 for gateway for host 34
+;@   T2E05.I37
+
+End of assembly
+;@   ND6720.T03
+
+End of assembly
+;@   GGXRAY.LTD
+
+End of assembly
+;@   T2E05.R37
+
+
+       NETID is 1d.  This is a TYMNET network node.
+
+
+
+
+TYMNET-II Node Code, Version 5.37, GATEWAY Node
+
+Node: 12011  H-Net Host (Kernel):15369   I-Net Host:15371
+
+Ports:		Lines:		Links:
+     0d Pthru	     1d Sync	     1d TIILNK
+     3d Xray	     0d SIO	     0d XLNK
+		     1d Total	     1d Total
+    64d Disp
+     0d Krnl
+
+Maximum number of circuits =  106d 
+
+
+Bufferlet storage space:
+
+  6E22x bytes (  28d KB) for  106d total circuits  (265d bytes per circuit)
+
+
+Memory used by this configuration = 28000x, 160d KB.
+
+Optimal amount of memory for this configuration =   159d  KB.
+
+Neighor  Window  Link   Link              Neighor  Window  Link   Link
+Number    Size   Speed  Type              Number    Size   Speed  Type
+ 6720        8           TII      
+
+
+PATCH added on 930714 is number 19 and is called Control nm.
+	<<< Put Control Number in PQ display >>>
+End of assembly
+GNEAUX+0A[   0CE   00D3
+1;F   ND6720.N03
+
+SEG0,RSEG0;P
+SEG1,S1SIZE;P
+SEGD,SDSIZE;P
+CTA,CTASIZ;P
+%P
+%Q
+EXIT
+
+!
+!; Build BND file.
+!R (SYS)MERLIN
+MERGE AND LINK ISIS SLOTS OR SPLIT KERNEL
+VERSION  4.00
+* ND6720.BND=ND6720.NIB,ND6720.N00,ND6720.N01,(EBUS)EBUS02.O02/S,ND6720.N03
+
+
+
+
+         SLOT MAP
+
+SLOT BEGINS ENDS
+ 0   1D700  74EFF
+ 1   74F00  B76FF
+ 2   B7700  D06FF
+ 3   D0700  F86FF
+
+
+
+
+    MAP OF SLOT  0
+
+SEG  BEGINS ENDS
+ 0   1DB00  2DAFF
+ 1   2DB00  3DAFF
+ 2   3DB00  4DAFF
+ 3   4DB00  5CEFF
+11   5CF00  6A5FF
+13   6A600  74EFF
+14   1D700  1DAFF
+
+
+
+
+    MAP OF SLOT  1
+
+SEG  BEGINS ENDS
+ 0   75100  75293
+ 1   75300  76023
+ 2   76100  7727F
+ 3   77300  872FF
+ 4   87300  972FF
+ 5   97300  A72FF
+ 6   A7300  B72FF
+14   74F00  750DB
+
+
+
+
+    MAP OF SLOT  2   (S-RECORD)
+
+BEGINS ENDS
+B7700  B99AC
+
+
+
+
+    MAP OF SLOT  3
+
+SEG  BEGINS ENDS
+ 0   D0900  E03FF
+11   E0400  ECBFF
+13   ECC00  F86FF
+14   D0700  D08FF
+
+EXIT
+
+!
+!; The NIB files are not needed and can be deleted.
+!DIR ND6720.NIB,ND6720.N00,ND6720.N01,ND6720.N03
+
+ND6720  N03      97  18-APR-95 1958    ALL RD  NO     48896          
+ND6720  N01       7  18-APR-95 1956    ALL RD  NO      2816          
+ND6720  NIB      62  18-APR-95 1953    ALL RD  NO     31232          
+ND6720  N00     101  11-APR-95 1239    ALL RD  NO     51200          
+
+!R (SYS)CKSUM
+INPUT: ND6720.*
+SAWHOD ND6720.T01
+BOKREF ND6720.T03
+ZITMEK ND6720.C01
+QUBJUP ND6720.TYM
+DIPVEB ND6720.LOG
+BEMKEN ND6720.NIB
+TAPKAR ND6720.N00
+GUDPOY ND6720.N01
+WELYUQ ND6720.N03
+YEQMOW ND6720.CMD
+KOSRES ND6720.BAK
+XOSWUY ND6720.C00
+JAFLOV ND6720.C03
+PUTTUS ND6720.BND
+INPUT: 
+
+!; End of EBUSGW.CTL
+!DIR ND6720.BND
+
+ND6720  BND     128  18-APR-95 1959    ALL RD  NO     65024          
+
+!LOGOUT
+2156.16 tru
+terminal time: 0:09:45
+  
