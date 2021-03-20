@@ -1,0 +1,3297 @@
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+     1					TITLE ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM
+     2					SUBTTL E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+     3					LALL
+     4			000007			ASPVER==7
+     5			000000			ASPMIN==0
+     6			000110			ASPEDT==110
+     7			000000			ASPWHO==0
+     8
+     9	000137					LOC 137
+    10	000137	0 007 00 000110 		BYTE (3) ASPWHO (9) ASPVER (6) ASPMIN (18) ASPEDT
+    11	000000'					RELOC
+    12
+    13						SALL	;CLEAN LISTINGS PLEASE
+    14
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 2
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+    15					;REVISION HISTORY
+    16
+    17					comment \
+    18
+    19					7(110)	Remove the range check for the START command to allow VERIFY of
+    20						tapes on any system regardless of size.
+    21
+    22					7(107)	Print the position to be used at the beginning of the next tape.
+    23
+    24					7(106)	Make VERIFY use the CMP buffer and be less different.
+    25
+    26					7(105)	Fix MAPVER code for VERIFY command.  CNT was not setup.  Use the
+    27						value in BUFPAG instead.  For VCREAT use right accumulator [T1].
+    28
+    29					7(104)	Revamp revision history to match major version change from the
+    30						released version 6 ASP to version 7.  Remainder of the code is
+    31						unchanged.
+    32
+    33					(103)	Cosmetic changes to verbose output.  Fix off-by-one index number.
+    34
+    35					(102)	Add code to print verbose page differences when compare finds a
+    36						mis-match.  Add NOISY command which toggles VERBOSE flag.
+    37						Fix "adjusted" message at startup to check DP instead of RESTDP.
+    38
+    39					(101)	Fix missing -^D9 on words to page LSH at STSxxx plus a few.
+    40
+    41					(100)	Set DEC standard version number, edits starting now at 100.  The
+    42						tape header and print routines reflect this change and can cope
+    43						with either the old or current version formats.
+    44
+    45						Changed command SETRES to START, PRTRES to WHERE and modified the
+    46						HELP command to be more presentable.  START falls into WHERE to
+    47						tell you what you've just said to do.  START format is changed to
+    48						START <structure-name> <page-number> <tape-name>
+    49						the tape device is read to obtain a header and the tape number to
+    50						use is calculated at that time.  If <page-number> is not an exact
+    51						multiple of BUFPAG it is rounded down to a buffer-record boundary.
+    52
+    53						Disk page numbers are now printed as structure absolute and then
+    54						broken down to unit components for pattern analysis (on errors).
+    55
+    56						Routines STSRED and STSWRT have been added to track disk errors
+    57						during supermap.  Currently only read checking is performed both
+    58						on save and restore of tape data.
+    59
+    60					(12)	Modify buffer size constants to use variables, to work around bug
+    61						if F3TSER.  F3 bug will be fixed, but since work was done already
+    62						added command BUFSIZE to set nonstandard buffer sizes for all of
+    63						the tape-io operations.  (This allows F3 to work NOW.)  /Carl
+    64
+    65						Modified or reformatted many messages to be more meaningful.  /Carl
+    66
+    67						Allow "NO" in response to "next tape" in GETTAP to abort the current
+    68						command, reset the stack and reenter the command loop.  This ONLY
+    69						happens if the open for device "NO" fails!  If the user is stupid
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 2-1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+    70						enough to type a command such as "OPEN NO" he gets what he deserves.
+    71
+    72					(11)	Added COMPARE command to actually compare the data on the tapes
+    73						with the data on disk.  Must be done on the system that the SAVE
+    74						was performed, otherwise everything will mis-match.  Should be
+    75						done just after the save.  Any attempt to bring the system up
+    76						before the COMPARE will cause the COMPARE to fail  since the disk
+    77						system will have been changed.  /Carl
+    78
+    79						Changed messages to lowercase.  /Carl
+    80
+    81						Changed SAVE/RESTORE/COMPARE to accept a structure name and a tape
+    82						drive name (in that order).  /Carl
+    83
+    84						For all flavor of SAVE/RESTORE/COMPARE/VERIFY commands unload the
+    85						current tape whenever we switch to a new tape unit.  /Carl
+    86
+    87					(10)	Removed <ADDI T1,1> @ NXTSAV+5 so that when a tape is replaced
+    88						in a SAVE operation the 1st record on the tape will be rewritten.
+    89						Also added <MTAPE TAPE,.MTEOF> @ UNLTAP to write a tape mark on
+    90						the bad tape.  /SUTTOND
+    91
+    92					(7)	Code modified @ INOK+6 to type record sequence numbers when
+    93						verify detects an error.  Change made by Darren Price but
+    94						not distributed.  /DARREN  (comment by SUTTOND)
+    95
+    96					6	Fixed problem with SETRES which caused current date and time to
+    97						be written onto a restarted tape instead of date and time of
+    98						ASP save set. format for SETRES is now SETRES <tape unit name>.
+    99						Operator must mount last fully successful tape saved, restored,
+   100						or checked, and ASP gets the tape number and date and time from
+   101						the header of that tape. Then operator mounts tape to restart
+   102						(fresh tape for save, next tape to restore or verify for
+   103						RESTORE and VERIFY operations) and ASP operation continues
+   104						from there. PRTRES changed to print out date and time
+   105						of ASP save/restore.
+   106						Routine CHKHED changed so that in verify mode ASP doesn't
+   107						demand that structure of the system the verify is being done
+   108						on is the same as structure that the ASP dump is for.
+   109
+   110					5	Put in SETRES command to set tape number, unit number
+   111						and page number to do a restart of an ASP SAVE or RESTOR,
+   112						and a PRTRES command to print out current status of
+   113						SETRES. The CHECK command will now print out the first
+   114						page written on the tape to facilitate restarting saves
+   115						or restores. Since only certain disk pages are legal to
+   116						start saves or restores on, there is some built in
+   117						consistency checking.
+   118
+   119					4	VERIFY command - allows tape drive speed verification of an ASP
+   120						tape set. Does everything for a restore short of actually writing
+   121						the data onto the disk. Doesn't require stand alone system to perform,
+   122						can be performed under timesharing. After a set of ASP tapes has
+   123						been verified with no significant read back problems, it is far more
+   124						likely that the restore if it is necessary will proceed successfully.
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 2-2
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   125
+   126						New output error recovery: If a write error is encountered,
+   127						a section of blank tape enough to cover the size of the failed record
+   128						is written onto the tape, and the record is re-written. If the
+   129						retry is unsuccessful, the another section of blank tape is written,
+   130						and the record is tried once again. If this cycle finally succeeds
+   131						in successfully writing the record before OECMAX tries (currently
+   132						20 is the default) then the save will proceed normally. Otherwise,
+   133						the operator is asked to set the tape aside and mount a new tape,
+   134						at which point the save is restarted from there.
+   135
+   136						The header record for each tape is actually read back after it is
+   137						written to ensure that it made it out to the tape successfully.
+   138
+   139						New input error recovery:
+   140						On input, if an I/O error or consistency error (bad record sequencen
+   141						number, bad prologue code) is encountered, the tape is searched backwards
+   142						for the last good record. If it is not found, the tape is searched
+   143						forwards for the first good record that can be found. If it is found,
+   144						a message stating what the last disk page restored or verified
+   145						is is printed. The tape is then searched for the next good record.
+   146						If it is not found on the remainer of the tape, the operator
+   147						is asked to mount the next tape if it exists. Otherwise,
+   148						the restore continues from the record that was found.
+   149
+   150						New Prologue Record format:
+   151						The format of an ASP tape consists of a header, followed by
+   152						<data record><prologue record> pairs. The prologue record used
+   153						to contain SIXBIT/ASP/, but now has been changed to contain
+   154						the GMT time of day that was written into the header. This
+   155						ensures that during read recovery old ASP data is not mistaken
+   156						for new ASP data. However, this format also makes tapes written
+   157						by this version of ASP unreadable by previous ASP versions.
+   158
+   159						OECMAX and SRCLEN commands: These commands set the number of
+   160						times an output record is tried to be written out before asking
+   161						for a new tape, and the number of records to search in input
+   162						error recovery for a good record in the forward direction.
+   163						Under normal circumstances, these commands should not be used.
+   164
+   165						A more explicit error message is now given on a fatal tape output
+   166						error. The operator is now specifically instructed that the tape
+   167						is no longer part of the ASP tape save set and that it should be
+   168						put aside.
+   169
+   170						A bug was fixed which was introduced in ASP version 3 which caused
+   171						the code instead of the record sequence number to be stored
+   172						in the prologue record, causing the tapes to be unuseable on
+   173						restore - would have gotten record sequence error.  However, data on
+   174						the tapes written by version 3 was still good, and if it becomes necessary
+   175						to use that data, a special version of ASP V3 can be created which
+   176						will restore those tapes.
+   177
+   178					3	Put blank line in output after printing out STR unit
+   179						and DP as per operations request.
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 2-3
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   180						Fixed bug where could overwrite ASP tape of the same set
+   181						after a fatal output error.
+   182						Fixed bug where record sequence number got zeroed instead
+   183						of reset after fatal tape output error.
+   184						Fixed bug where you could type I DONT and it would overwrite
+   185						tape because it stopped scanning.
+   186						Tape is now always rewound before writing header onto it.
+   187
+   188					2	*Prints out recording density with header and tape change
+   189						messages. /EVS
+   190						*Prints out unit within structure and page within unit
+   191						being saved for each tape written or restored (i.e.
+   192						DSKB2, PAGE 11111 (OCTAL) . Installed for debugging./EVS
+   193						*ASP will no longer allow a tape to be overwritten during
+   194						a given ASP SAVE run if the header on that tape indicates
+   195						that it has been written during that run (to save people
+   196						from typing return accidentally when ASP asks for new
+   197						tape unit. /EVS
+   198
+   199					1	FIRST VERSION OF ASP, ABSOLUTE STRUCTURESAVINGANDRESTORING PROGRAM
+   200
+   201					\;end comment
+   202
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 3
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   203					;AC DEFINITIONS
+   204
+   205			000000			S=0
+   206			000001			T1=1		;TEMPORARIES
+   207			000002			T2=2		;  MAY BE CLOBBERED
+   208			000003			T3=3		;  BY JUST ABOUT
+   209			000004			T4=4		;  ANY ROUTINE
+   210			000005			DP=5		;DISK PAGE NUMBER
+   211			000006			CNT=6		;COUNT OF PAGES IN BUFFER
+   212			000007			CMP=7		;POINTER INTO COMPARE BUFFER
+   213			000010			BUF=10		;POINTER INTO BUFFER
+   214			000011			IOW=11		;IOWD FOR DUMP MODE TAPE TRANFERS
+   215			000012			IOW1=12		;MUST BE IOW+1
+   216			000013			IOW2=13		;MUST BE IOW+2
+   217			000014			CH=14		;CHARACTER
+   218			000017			P=17		;STACK
+   219
+   220					;MTAPE FUNCTION CODES
+   221
+   222			000001		.MTREW==1		; REWIND TAPE
+   223			000003		.MTEOF==3		; WRITE EOF/EOT
+   224			000006		.MTSKR==6		; SKIP RECORD
+   225			000007		.MTBSR==7		; BACKSPACE RECORD
+   226			000013		.MTBLK==13		; WRITE BLANK TAPE
+   227			000011		.MTUNL==11		; UNLOAD TAPE
+   228
+   229
+   230					;PARAMETERS
+   231
+   232
+   233					;  *** MAXREC will be on a page boundary ***
+   234
+   235					IFNDEF MAXREC,<MAXREC==30000>	;MAXIMUM RECORD SIZE (24 PAGES)
+   236					IFN <MAXREC&777>,<PRINTX MAXREC not an integrel page size>
+   237			000012		BUFNUM==^D10		;HOW MANY BUFFERS AT FIRST
+   238
+   239			000024		STDSRC==^D20		;DEFAULT FORWARD SEARCH LENGTH IN RESYNC
+   240			000003		INCHPG==^D3		;BLANK TAPE IN INCHES FOR .MTBLK
+   241			000012		STDOEC==^D10		;TIMES WILL TRY TO WRITE SAME REC OUT TO TAPE.
+   242
+   243					;I/O CHANNELS
+   244
+   245			000000		DISK==0			; CHANNEL FOR SUPER MAP
+   246			000001		TAPE==1			; CHANNEL FOR DUMP TO/FROM TAPE
+   247
+   248
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 4
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   249					;MACRO DEFINITIONS
+   250
+   251					DEFINE ERROR(MSG),<PUSHJ P, [OUTSTR [ASCIZ\MSG
+   252					\]
+   253							EXIT 1,
+   254							JRST .-1]>;END ERROR MACRO DEFINITION
+   255					DEFINE	ERRPOP(MESS) <
+   256					JRST	[OUTSTR [ASCIZ \'MESS
+   257					\]
+   258						 POPJ	P,]
+   259					>;END ERRPOP
+   260
+   261					DEFINE MSG(MESS,CRLF)<IFB <CRLF> <OUTSTR [ASCIZ\'MESS\]>
+   262					IFNB <CRLF> <OUTSTR [ASCIZ \'MESS
+   263					\]>
+   264					>;END MSG MACRO DEFINITION
+   265
+   266			000050		PDLLEN==^D40
+   267
+   268
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 5
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   269					;DEFINITIONS
+   270
+   271			000043		.CHSMP==43
+   272			000020		IO.UWC==1B31
+   273			000001		.WSRNG==1
+   274
+   275					;UGETF SYMBOLS
+   276
+   277			000000		.UGCNT==0		;GET LAST RECORD SIZE
+   278			000002		.UGSTS==2		;GET STATUS
+   279			400000		  UG.HWP==(1B0)
+   280			200000		  UG.RDY==(1B1)		;READY
+   281			040000		  UG.LDP==(1B3)		;LOAD POINT
+   282			000020		  UG.D62==(1B13)	;DENSITY 6250
+   283			000010		  UG.D16==(1B14)	;DENSITY 1600
+   284			000004		  UG.D8==(1B15)		;DENSITY 800
+   285			000002		  UG.D5==(1B16)		;DENSITY 500
+   286			000001		  UG.D2==(1B17)		;DENSITY 200
+   287			000037		  UG.DNM==UG.D62!UG.D16!UG.D8!UG.D5!UG.D2
+   288
+   289					;*;	OPDEF VCLEAR [CALLI -66]
+   290					;*;	OPDEF VREMOV [CALLI -65]
+   291					;*;	OPDEF VCREAT [CALLI -67]
+   292					;*;	OPDEF VPROT  [CALLI -70]
+   293					;*;	OPDEF WSCTL  [CALLI -74]
+   294					;*;	OPDEF PREREF [CALLI -75]
+   295					;*;	OPDEF PERSET [CALLI -72]
+   296
+   297					;*;	OPDEF PAGSTS [CALLI -71]
+   298		400000	000000		PS.UWS==1B0		; in user working set
+   299		200000	000000		PS.REF==1B1		; has been referenced
+   300		100000	000000		PS.MXW==1B2		; can be protected read/write
+   301		040000	000000		PS.SUP==1B3		; super mapped
+   302		020000	000000		PS.DER==1B4		; device page I/O error occurred
+   303		010000	000000		PS.DTE==1B5		; data page I/O error occurred
+   304		030000	000000		 PS.DDE==3B5		; page I/O error occurred
+   305		004000	000000		PS.DRT==1B6		; not dirty or swapping out
+   306		002000	000000		PS.NEW==1B7		; ignoring errors
+   307		001000	000000		PS.OER==1B8		; output error
+   308		000400	000000		PS.PAR==1B9		; parity error
+   309			000010		PS.FIL==1B32		; originally mapped from a file
+   310			000007		PS.CPR==7B35		; current protection
+   311			000000		 PS.CP0==0		; non-existent
+   312			000001		 PS.CP1==1		; read only
+   313			000002		 PS.CP2==2		; copy on write
+   314			000003		 PS.CP3==3		; read/write
+   315
+   316		254000	000000		OPDEF PJRST  [JRST]
+   317
+   318			000011		.GTCNF==11
+   319			000011		  .CNDAT==11
+   320			000010		  .CNTIM==10
+   321			000005		SYSNSZ==5		;NUMBER OF WORDS IN SYSTEM NAME
+   322
+   323			002000		IOTEND==2000		;END OF TAPE
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 5-1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+   324			020000		IODEND==20000		;END OF FILE
+   325			740000		IOEMSK==740000		;ERROR MASK
+   326			200000		IODERR==200000
+   327			100000		IODTER==100000
+   328			400000		IOIMPM==400000		;WRITE LOCK
+   329
+   330					IFNDEF FTDEBG,<FTDEBG==0>
+   331
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 6
+ASP	MAC	22-Feb-83 21:20		COMMAND TABLES
+
+   332					SUBTTL	COMMAND TABLES
+   333
+   334					DEFINE COMMAC <
+   335					X <Save   >,SAVE,<Save a file structure image to tape>
+   336					X <Check  >,CHECK,<Read and check the ID record from an ASP tape>
+   337					X <Restore>,RESTOR,<Rebuild a disk structure from an ASP tape>
+   338					X <Verify >,VERIFY,<Verify a set of ASP tapes to ensure their readability>
+   339					X <Compare>,COMPAR,<Compare the data from a set of ASP tapes with the disk>
+   340					X <Help   >,HELP,<Type this message>
+   341					X <Status >,STATUS,<Print current tape status and available densities>
+   342					X <Density>,SETDEN,<Set Nondard tape density>
+   343					X <Rewind >,REWIND,<Rewind current tape unit>
+   344					X <Unload >,UNLOAD,<Unload current tape unit>
+   345					X <Open   >,TAPOPN,<Select tape unit for future operation>
+   346					X <Daytime>,DAYTIM,<Print current date and time>
+   347					X <OECMAX >,MAXOEC,<Set maximum tape output retry count>
+   348					X <SRCLEN >,SETSRC,<Set maximum tape records to search during resynch>
+   349					X <Start  >,SETRES,<Set structure start page and read tape number from tape>
+   350					X <Where  >,PRTRES,<Print out start page and tape number>
+   351					X <Bufsize>,SETBUF,<Set Non-Standard tape record size (use with caution)>
+   352					X <Noisy  >,NOISES,<Set or clear verbose output mode during compare>
+   353					X <Quit   >,COPBYE,<Exit from ASP>
+   354					>
+   355
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 7
+ASP	MAC	22-Feb-83 21:20		COMMAND TABLES
+
+   356
+   357					DEFINE X(A,B,C)<<SIXBIT /'A'/>>
+   358	000000'	634166	450000		COMNAM:	COMMAC
+   359	000001'	435045	435300
+   360	000002'	624563	645762
+   361	000003'	664562	514671
+   362	000004'	435755	604162
+   363	000005'	504554	600000
+   364	000006'	636441	646563
+   365	000007'	444556	635164
+   366	000010'	624567	515644
+   367	000011'	655654	574144
+   368	000012'	576045	560000
+   369	000013'	444171	645155
+   370	000014'	574543	554170
+   371	000015'	636243	544556
+   372	000016'	636441	626400
+   373	000017'	675045	624500
+   374	000020'	426546	635172
+   375	000021'	565751	637100
+   376	000022'	616551	640000
+   377			000023			COMLEN==.-COMNAM
+   378					DEFINE X(A,B,C)<EXP 'B>
+   379	000023'	000000	000413'		COMADR:	COMMAC
+   380	000024'	000000	000151'
+   381	000025'	000000	001103'
+   382	000026'	000000	001074'
+   383	000027'	000000	001077'
+   384	000030'	000000	000124'
+   385	000031'	000000	000265'
+   386	000032'	000000	002571'
+   387	000033'	000000	000220'
+   388	000034'	000000	000224'
+   389	000035'	000000	000243'
+   390	000036'	000000	000744'
+   391	000037'	000000	000761'
+   392	000040'	000000	000771'
+   393	000041'	000000	001001'
+   394	000042'	000000	001033'
+   395	000043'	000000	000046'
+   396	000044'	000000	000231'
+   397	000045'	000000	000237'
+   398
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 8
+ASP	MAC	22-Feb-83 21:20		SETBUF - Setup buffer size and pointers
+
+   399					SUBTTL	SETBUF - Setup buffer size and pointers
+   400
+   401	000046'	260 17 0 00 002676'	SETBUF:	PUSHJ	P,DECIN		; READ A NUMBER
+   402	000047'	201 01 0 00 000030 		  MOVEI	T1,MAXREC/1000	; USE DEFAULT IF NONE GIVEN
+   403	000050'	303 01 0 00 000030 		CAILE	T1,MAXREC/1000	; ALLOW ANYTHING UP TO MAXIMUM SIZE
+   404	000051'	254 00 0 00 003247'		  ERRPOP <Specified buffer size is too large>
+   405	000052'	242 01 0 00 000011 	SETBF0:	LSH	T1,^D9		; CONVERT TO WORDS
+   406	000053'	202 01 0 00 003153'	SETBF1:	MOVEM	T1,BUFSIZ	; SAVE IT
+   407	000054'	242 01 0 00 777767 		LSH	T1,-^D9		; CONVERT TO PAGES
+   408	000055'	202 01 0 00 003154'		MOVEM	T1,BUFPAG	; SAVE IT
+   409
+   410	000056'	200 01 0 00 003153'		MOVE	T1,BUFSIZ	; GET BUFFER SIZE IN WORDS
+   411	000057'	221 01 0 00 000012 		IMULI	T1,BUFNUM	; MULTIPLY BY INITIAL BUFFER CACHE
+   412	000060'	202 01 0 00 000007 		MOVEM	T1,CMP		; SAVE SIZE OF PAGE BUFFER AREA
+   413	000061'	550 01 0 00 000000*		HRRZ	T1,.JBFF##	; GET FIRST FREE LOC
+   414	000062'	660 01 0 00 000777 		TRO	T1,777		; ROUNDED TO PAGE BOUNDARY
+   415	000063'	272 01 0 00 000007 		ADDM	T1,CMP		; ADD TO GET LAST WORD OF BUFFER
+   416	000064'	505 01 0 00 777766 		HRLI	T1,-BUFNUM	; GET -BUFS,,ADDR-1
+   417	000065'	202 01 0 00 003136'		MOVEM	T1,PTRBUF	; SAVE FOR WRAP AROUND
+   418	000066'	263 17 0 00 000000 		POPJ	P,
+   419
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 9
+ASP	MAC	22-Feb-83 21:20		Starting and reentry points
+
+   420					SUBTTL	Starting and reentry points
+   421
+   422	000067'	071 00 0 00 000000 	NOSTOP:	RELEAS	DISK,		;FREE ANY DISK CHANNEL IN USE
+   423	000070'	071 01 0 00 000000 		RELEAS	TAPE,		;FREE ANY TAPE CHANNEL IN USE
+   424	000071'	051 03 0 00 003251'		MSG	<>,CRLF		;GIVE A LITTLE MESSAGE
+   425	000072'	051 03 0 00 003252'		MSG	<Command aborted.>,CRLF
+   426	000073'	254 00 0 00 000104'		JRST	ST1		;RESTART PROGRAM
+   427
+   428	000074'	255 00 0 00 000000 	ST:	JFCL			;NO DIFFERENCE IF CCL ENTRY
+   429	000075'	047 00 0 00 000000 		RESET
+   430	000076'	201 01 0 00 000012 		MOVEI	T1,STDOEC
+   431	000077'	202 01 0 00 003142'		MOVEM	T1,OECMAX	;SETUP STD RETRY COUNT
+   432	000100'	201 01 0 00 000024 		MOVEI	T1,STDSRC	;AND FORWARD RESYNC SEARCH COUNT
+   433	000101'	202 01 0 00 003143'		MOVEM	T1,SRCLEN
+   434	000102'	402 00 0 00 003225'		SETZM	OPNTNM		;SAY NO TAPE IS OPENED.
+   435	000103'	402 00 0 00 003236'		SETZM	DEBCNT#		;CLEAR DEBUG COUNT
+   436
+   437	000104'	200 17 0 00 003256'	ST1:	MOVE	P,[IOWD PDLLEN,PDL]
+   438	000105'	201 01 0 00 030000 		MOVEI	T1,MAXREC	;GET DEFAULT BUFFER SIZE
+   439	000106'	260 17 0 00 000053'		PUSHJ	P,SETBF1	;SETUP POINTERS
+   440	000107'	200 10 0 00 003136'		MOVE	BUF,PTRBUF	;GET BUFFER POINTER
+   441
+   442					;GET COMMAND AND PROCESS.
+   443
+   444	000110'	051 03 0 00 003251'	GETCOM:	MSG	,CRLF
+   445	000111'	201 14 0 00 777777 		MOVEI	CH,-1		;SO SCANNERS
+   446	000112'	051 03 0 00 003257'		OUTSTR	[ASCIZ \ASP>\]	;PROMPT FOR COMMAND
+   447	000113'	260 17 0 00 003017'		PUSHJ	P,SIXIN		;GET IT
+   448	000114'	254 00 0 00 000110'		  JRST	GETCOM		;BLANK.
+   449	000115'	200 04 0 00 003260'		MOVE	T4,[-COMLEN,,COMNAM] ;SCAN THE TABLE
+   450	000116'	260 17 0 00 002627'		PUSHJ	P,COMMAN
+   451	000117'	254 00 0 00 000110'		  JRST	GETCOM		;GET A COMMAND
+   452	000120'	260 17 1 04 000023'		PUSHJ	P,@COMADR(T4)	;DO IT
+   453	000121'	255 00 0 00 000000 		  JFCL			;IN CASE OF ERROR RETURNS
+   454	000122'	260 17 0 00 002740'		PUSHJ	P,BRKEAT	;EAT UP UNUSED CHARS.
+   455	000123'	254 00 0 00 000110'		JRST	GETCOM		;AND GET ANOTHER COMMAND
+   456
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 10
+ASP	MAC	22-Feb-83 21:20		HELP MESSAGE
+
+   457					SUBTTL HELP MESSAGE
+   458
+   459	000124'	051 03 0 00 003261'	HELP:	MSG	<Valid ASP commands>,CRLF
+   460
+   461					DEFINE X(A,B,C),<
+   462					MSG <  'A'    'C'.>,CRLF
+   463					>
+   464	000125'	051 03 0 00 003266'		COMMAC			;;PRINT OUT TEXT FOR ALL COMMANDS
+   465	000126'	051 03 0 00 003301'
+   466	000127'	051 03 0 00 003316'
+   467	000130'	051 03 0 00 003332'
+   468	000131'	051 03 0 00 003350'
+   469	000132'	051 03 0 00 003367'
+   470	000133'	051 03 0 00 003376'
+   471	000134'	051 03 0 00 003414'
+   472	000135'	051 03 0 00 003426'
+   473	000136'	051 03 0 00 003437'
+   474	000137'	051 03 0 00 003450'
+   475	000140'	051 03 0 00 003463'
+   476	000141'	051 03 0 00 003474'
+   477	000142'	051 03 0 00 003507'
+   478	000143'	051 03 0 00 003525'
+   479	000144'	051 03 0 00 003544'
+   480	000145'	051 03 0 00 003557'
+   481	000146'	051 03 0 00 003575'
+   482	000147'	051 03 0 00 003612'
+   483	000150'	263 17 0 00 000000 		POPJ	P,
+   484
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 11
+ASP	MAC	22-Feb-83 21:20		CHECK
+
+   485					SUBTTL CHECK
+   486
+   487	000151'	260 17 0 00 002607'	CHECK:	PUSHJ	P,GETTAP	;GET TAPE
+   488	000152'	254 00 0 00 002617'		  JRST	NOTAPO
+   489	000153'	260 17 0 00 000170'		PUSHJ	P,CHECK0
+   490	000154'	263 17 0 00 000000 		  POPJ	P,		;NO GOOD.
+   491						IN	TAPE,[IOWD 1,HEDBF1
+   492								IOWD PROLEN,PROBUF
+   493	000155'	056 01 0 00 003620'				0] ;GET FIRST DP ON TAPE.
+   494	000156'	254 00 0 00 000160'		JRST	.+2	;OK
+   495						JRST	[GETSTS TAPE,S
+   496							 ERRPOP <Cannot read first data record on tape>
+   497	000157'	254 00 0 00 003635'			 JRST TPINER]
+   498	000160'	200 01 0 00 002500'		MOVE	T1,HEDBUF+HEDTIM	;MAKE SURE CODE MATCHES
+   499	000161'	312 01 0 00 003222'		CAME	T1,PROBUF+PROCOD
+   500	000162'	254 00 0 00 003651'		  ERRPOP <Bad prologue code found in first record>
+   501	000163'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT
+   502	000164'	220 04 0 00 003154'		IMUL	T4,BUFPAG		;CONVERT TO RELATIVE PAGE
+   503	000165'	051 03 0 00 003653'		MSG	<First page on tape is >
+   504	000166'	350 00 0 17 000000 		AOS	(P)
+   505	000167'	254 00 0 00 002207'		PJRST	PRTDP
+   506
+   507	000170'	072 01 0 00 000001 	CHECK0:	MTAPE	TAPE,.MTREW		;REWIND
+   508	000171'	402 00 0 00 002466'		SETZM	HEDBUF			;CLEAR OUT THE BUFFER
+   509	000172'	200 01 0 00 003660'		MOVE	T1,[HEDBUF,,HEDBUF+1]
+   510	000173'	251 01 0 00 002504'		BLT	T1,HEDBUF+SIZHED-1
+   511						IN	TAPE,[IOWD SIZHED,HEDBUF
+   512	000174'	056 01 0 00 003661'				0]
+   513	000175'	254 00 0 00 000200'		  JRST	CHECK1
+   514	000176'	062 01 0 00 000000 		GETSTS	TAPE,S			;GET STATUS IN S FOR TPINER
+   515						JRST	[MSG <Cannot read header record: >
+   516	000177'	254 00 0 00 003671'			 JRST TPINER]
+   517	000200'	200 01 0 00 002467'	CHECK1:	MOVE	T1,HEDBUF+HEDNAM	;MAKE SURE ITS OK
+   518	000201'	312 01 0 00 003216'		CAME	T1,CODNAM		;OK?
+   519	000202'	254 00 0 00 003704'		  ERRPOP <Not in ASP format, bad header code name>
+   520	000203'	550 02 0 00 002466'		HRRZ	T2,HEDBUF+HEDSIZ
+   521	000204'	303 02 0 00 000017 		CAILE	T2,SIZHED		;PROPER SIZE? (or less)
+   522	000205'	254 00 0 00 003717'		  ERRPOP <Unknown ASP format, header size too large>
+   523	000206'	302 02 0 00 000017 		CAIE	T2,SIZHED		;PROPER SIZE? (or less)
+   524	000207'	051 03 0 00 003721'		  MSG	<Tape header record is smaller than standard.>,CRLF
+   525	000210'	554 01 0 00 002466'		HLRZ	T1,HEDBUF+HEDSIZ	;GET BUFFER PAGE COUNT
+   526	000211'	332 00 0 00 000001 		SKIPE	T1			;  IF SPECIFIED
+   527	000212'	260 17 0 00 000052'		  PUSHJ	P,SETBF0		;  RESET ALL BUFFER POINTERS
+   528	000213'	201 04 0 00 002466'		MOVEI	T4,HEDBUF		;GET HEADER ADDRESS
+   529	000214'	051 03 0 00 003251'		MSG	<>,CRLF			;  AND PRINT FOR ALL TO SEE
+   530	000215'	051 03 0 00 003733'		MSG	<Recorded by >
+   531	000216'	350 00 0 17 000000 		AOS	(P)
+   532	000217'	254 00 0 00 002112'		PJRST	PRTHED
+   533
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 12
+ASP	MAC	22-Feb-83 21:20		REWIND UNLOAD NOISY and QUIT commands
+
+   534					SUBTTL	REWIND UNLOAD NOISY and QUIT commands
+   535
+   536	000220'	260 17 0 00 002607'	REWIND:	PUSHJ	P,GETTAP		;GET TAPE OPEN
+   537	000221'	254 00 0 00 002617'		  JRST	NOTAPO
+   538	000222'	072 01 0 00 000001 		MTAPE	TAPE,.MTREW		;YES, REWIND IT
+   539	000223'	263 17 0 00 000000 		POPJ	P,			;AND RETURN.
+   540
+   541	000224'	260 17 0 00 002607'	UNLOAD:	PUSHJ	P,GETTAP		;GET A TAPE OPEN
+   542	000225'	254 00 0 00 002617'		  JRST	NOTAPO
+   543	000226'	072 01 0 00 000011 		MTAPE	TAPE,.MTUNL		;REWIND AND UNLOAD.
+   544	000227'	071 01 0 00 000000 		RELEAS	TAPE,			;GIVE UP DEVICE
+   545	000230'	254 00 0 00 002660'		JRST	CPOPJ1			;OK RETURN.
+   546
+   547	000231'	210 01 0 00 003155'	NOISES:	MOVN	T1,VERBOSE		;GET VERBOSE FLAG
+   548	000232'	340 01 0 00 000000 		AOJ	T1,			; FLIP/FLOP (0=1, 1=0)
+   549	000233'	202 01 0 00 003155'		MOVEM	T1,VERBOSE		;REMEMBER FOR LATER
+   550						OUTSTR	@[[ASCIZ \Brief\]
+   551	000234'	051 03 1 01 003742'			  [ASCIZ \Verbose\]](T1)
+   552	000235'	051 03 0 00 003744'		MSG	< messages during compare.>,CRLF
+   553	000236'	254 00 0 00 002660'		JRST	CPOPJ1			;ALL DONE
+   554
+   555	000237'	071 00 0 00 000000 	COPBYE:	RELEAS	DISK,
+   556	000240'	071 01 0 00 000000 		RELEAS	TAPE,
+   557	000241'	047 01 0 00 000012 		EXIT	1,
+   558	000242'	254 00 0 00 000241'		JRST	.-1
+   559
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 13
+ASP	MAC	22-Feb-83 21:20		MAIN COMMAND ROUTINES
+
+   560					SUBTTL MAIN COMMAND ROUTINES
+   561
+   562	000243'	260 17 0 00 003017'	TAPOPN:	PUSHJ	P,SIXIN
+   563	000244'	254 00 0 00 003756'		  ERRPOP <No tape specified>
+   564	000245'	260 17 0 00 000250'		PUSHJ	P,TAPOP1	;OPEN IT
+   565	000246'	254 00 0 00 000261'		  JRST	NOOPEN		;NO OPEN HERE
+   566	000247'	254 00 0 00 002660'		JRST	CPOPJ1
+   567
+   568	000250'	202 01 0 00 003225'	TAPOP1:	MOVEM	T1,OPNTNM	;PUT INTO TAPE OPEN BLOCK
+   569	000251'	050 01 0 00 003224'	TAPOP2:	OPEN	TAPE,OPNTAP
+   570						  JRST	[SETZM OPNTNM	;NOTHING IS REALLY OPEN
+   571	000252'	254 00 0 00 003760'			 POPJ P,]	;RETURN.
+   572	000253'	200 00 0 00 003224'		MOVE	S,OPNTAP	;GET INITIAL STATUS SETUP IN S.
+   573	000254'	350 00 0 17 000000 		AOS	(P)		;IT WILL WORK.
+   574	000255'	254 00 0 00 000327'		PJRST	SETDTB		;SETUP DENSITY BLOCK ADDRESS AND RETURN.
+   575
+   576
+   577	000256'	56 57 00 00 00 00 	NONONO:	SIXBIT	\NO\		;A NEGATIVE RESPONSE
+   578	000257'	316 01 0 00 000256'	NOTDEV:	CAMN	T1,NONONO	;IS THERE A MATCH?
+   579	000260'	254 00 0 00 000067'		  JRST	NOSTOP		;YES, DO SOME RESTART
+   580	000261'	051 03 0 00 003762'	NOOPEN:	MSG	<Device >	;  PRINT TEXT
+   581	000262'	260 17 0 00 003044'		PUSHJ	P,SIXOUT	;  SHOWING DEVICE NAME
+   582	000263'	051 03 0 00 003764'		MSG	< not available>,CRLF
+   583	000264'	263 17 0 00 000000 		POPJ	P,		;RETURN
+   584
+   585
+   586
+   587					;STATUS COMMAND, PRINTS MISCELLANEOUS STATUS.
+   588					; ENTER AT CURDEN TO PRINT CURRENT DENSITY ON OPEN TAPE UNIT
+   589
+   590	000265'	260 17 0 00 002607'	STATUS:	PUSHJ	P,GETTAP	;OPEN TAPE UNIT
+   591	000266'	254 00 0 00 002617'		  JRST	NOTAPO
+   592	000267'	200 01 0 00 003225'		MOVE	T1,OPNTNM	;GET NAME IN T1 FOR PRINTOUT
+   593	000270'	260 17 0 00 003044'		PUSHJ	P,SIXOUT	;PRINT IT OUT
+   594	000271'	051 03 0 00 003770'		MSG	<:>,CRLF
+   595	000272'	201 01 0 00 000002 		MOVEI	T1,.UGSTS	;GET CONDENSED DEVICE INDEPENDENT TAPE STATUS
+   596	000273'	073 01 0 00 000001 		UGETF	TAPE,T1		;ANSWER IN T2
+   597	000274'	603 02 0 00 400000 		TLNE	T2,UG.HWP	;WRITE PROTECTED?
+   598	000275'	051 03 0 00 003771'		MSG	(<Unit is write protected>,CRLF)
+   599	000276'	607 02 0 00 040000 		TLNN	T2,UG.LDP	;UNIT AT LOAD POINT?
+   600	000277'	051 03 0 00 003777'		MSG	(<Unit not at load point>,CRLF)
+   601	000300'	260 17 0 00 000313'		PUSHJ	P,PRTDEN	;PRINT AVAILABLE DENSITIES
+   602	000301'	051 03 0 00 004004'		MSG	<, current = >
+   603	000302'	135 01 0 00 004007'	CURDEN:	LDB	T1,[POINT 2,OPNTAP,28] ;GET CURRENT
+   604	000303'	322 01 0 00 000306'		JUMPE	T1,STAT0
+   605	000304'	275 01 0 00 000003 		SUBI	T1,3
+   606	000305'	217 00 0 00 000001 		MOVMS	T1		;GET INDEX INTO DENSITY TABLE
+   607	000306'	270 01 0 00 003215'	STAT0:	ADD	T1,TAPDTB
+   608	000307'	550 01 0 01 000000 		HRRZ	T1,(T1)		;GET THE DECIMAL NUMBER
+   609	000310'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT IT AND
+   610	000311'	051 03 0 00 004010'		MSG	< BPI>,CRLF
+   611	000312'	263 17 0 00 000000 		POPJ	P,		;RETURN.
+   612
+   613
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 14
+ASP	MAC	22-Feb-83 21:20		MAIN COMMAND ROUTINES
+
+   614					;ROUTINE TO PRINT DENSITIES AVAILABLE. TAPE DENSITY TABLE IN TAPDTB.
+   615
+   616	000313'	051 03 0 00 004012'	PRTDEN:	MSG	(<Density(>)
+   617	000314'	200 03 0 00 003215'		MOVE	T3,TAPDTB	;GET DENSITY TABLE ADDRESS
+   618	000315'	550 01 0 03 000000 		HRRZ	T1,(T3)		;MUST BE AT LEAST ONE
+   619	000316'	254 00 0 00 000322'		JRST	DENLP0		;DON'T PRINT COMMA FIRST TIME.
+   620	000317'	336 01 0 03 000000 	DENLUP:	SKIPN	T1,(T3)		;GET NEXT ONE
+   621	000320'	254 00 0 00 000325'		JRST	DENDON		;RETURN.
+   622	000321'	051 03 0 00 004014'		MSG	(<,>)		;SEPARATE
+   623	000322'	553 00 0 00 000001 	DENLP0:	HRRZS	T1
+   624	000323'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT OUT IN DECIMAL
+   625	000324'	344 03 0 00 000317'		AOJA	T3,DENLUP	;AND PRINT NEXT IF ANY.
+   626
+   627	000325'	051 03 0 00 004015'	DENDON:	MSG	(<)>)
+   628	000326'	263 17 0 00 000000 		POPJ	P,		;AND RETURN.
+   629
+   630
+   631	000327'	201 01 0 00 000002 	SETDTB:	MOVEI	T1,.UGSTS	;GET UGETF WORD	
+   632	000330'	073 01 0 00 000001 		UGETF	TAPE,T1		;IN T2
+   633	000331'	630 02 0 00 004016'		TDZ	T2,[<-UG.DNM-1>,,-1]
+   634	000332'	400 03 0 00 000000 		SETZ	T3,		;FOR INDEXING
+   635	000333'	510 01 0 03 002620'	FNDDTB:	HLLZ	T1,DENSTB(T3)	;GET BITS
+   636	000334'	336 00 0 00 000001 		SKIPN	T1
+   637	000335'	254 00 0 00 004030'		  ERRPOP <Unit has unknown combination of densities>
+   638	000336'	312 01 0 00 000002 		CAME	T1,T2		;MATCH
+   639	000337'	344 03 0 00 000333'		  AOJA	T3,FNDDTB	;NO, GO FOR NEXT
+   640	000340'	200 04 0 03 002620'		MOVE	T4,DENSTB(T3)	;GET ADDRESS OF TABLE.
+   641	000341'	202 04 0 00 003215'		MOVEM	T4,TAPDTB	;SAVE IT FOR LATER.
+   642	000342'	263 17 0 00 000000 		POPJ	P,		;AND RETURN.
+   643
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 15
+ASP	MAC	22-Feb-83 21:20		PAGE STATUS CODE
+
+   644					SUBTTL PAGE STATUS CODE
+   645
+   646	000343'	634 01 0 00 000001 	STSRED:	TDZA	T1,T1		; Zero entry: Reading
+   647	000344'	201 01 0 00 000001 	STSWRT:	MOVEI	T1,1		; One entry:  Writing
+   648	000345'	202 01 0 00 003157'		MOVEM	T1,STSTYP	; Remember which!
+   649	000346'	261 17 0 00 000007 		PUSH	P,CMP		; Save a pointer
+   650	000347'	550 07 0 00 000010 		HRRZ	CMP,BUF		; Get buffer address
+   651	000350'	340 07 0 00 000000 		AOJ	CMP,		; Increment to next page
+   652	000351'	242 07 0 00 777767 		LSH	CMP,-^D9	; Convert to page number
+   653	000352'	210 01 0 00 003154'		MOVN	T1,BUFPAG	; Get count of pages
+   654	000353'	316 10 0 00 003137'		CAMN	BUF,LASBUF	; If last buffer
+   655	000354'	210 01 0 00 000006 		  MOVN	T1,CNT		; Use current count
+   656	000355'	504 07 0 00 000001 		HRL	CMP,T1		; Setup AOBJN pointer
+   657	000356'	550 01 0 00 000007 	STSPAG:	HRRZ	T1,CMP		; Get page number
+   658	000357'	047 01 0 00 777707 		PAGSTS	T1,		; Read status
+   659	000360'	254 00 0 00 004041'		  ERRPOP <Unexpected bad page from PAGSTS>
+   660	000361'	332 00 0 00 000001 		SKIPE	T1		; Non-existent page?
+   661	000362'	603 01 0 00 030000 		TLNE	T1,(PS.DER!PS.DTE)
+   662	000363'	260 17 0 00 000367'		  PUSHJ	P,STSERR	; or Device/Data error detected
+   663	000364'	253 07 0 00 000356'		AOBJN	CMP,STSPAG	; 
+   664	000365'	262 17 0 00 000007 		POP	P,CMP		; Restore
+   665	000366'	263 17 0 00 000000 		POPJ	P,		; Return
+   666
+   667
+   668					;*;
+   669					;*;  %Warning: device/data read or write error for DSKBx unit y page z
+   670					;*;  This page will most likely be bad on disk after the restore.
+   671					;*;
+   672
+   673	000367'	603 01 0 00 020000 	STSERR:	TLNE	T1,(PS.DER)	; Device error?
+   674	000370'	051 03 0 00 003762'		  MSG	<Device >
+   675	000371'	603 01 0 00 010000 		TLNE	T1,(PS.DTE)	; Data error?
+   676	000372'	051 03 0 00 004043'		  MSG	<Data >
+   677	000373'	336 00 0 00 000001 		SKIPN	T1		; or non-existent
+   678	000374'	051 03 0 00 004045'		  MSG	<Non-existent page >
+   679	000375'	051 03 0 00 004051'		MSG	<error >
+   680	000376'	200 01 0 00 003157'		MOVE	T1,STSTYP	; Reading or writing?
+   681						OUTSTR	@[[ASCIZ \reading \]
+   682	000377'	051 03 1 01 004057'			  [ASCIZ \writing \]](T1)
+   683	000400'	574 01 0 00 000007 		HLRE	T1,CMP		; Get count left
+   684	000401'	200 04 0 00 003154'		MOVE	T4,BUFPAG	; + full = page
+   685	000402'	316 10 0 00 003137'		CAMN	BUF,LASBUF	; (on last buffer)
+   686	000403'	200 04 0 00 000006 		  MOVE	T4,CNT		; + count = page
+   687	000404'	270 01 0 00 000004 		ADD	T1,T4		; Current page
+   688	000405'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT ;Last record saved/restored
+   689	000406'	336 00 0 00 003157'		SKIPN	STSTYP		; Reading or writing?
+   690	000407'	200 04 0 00 003223'		  MOVE	T4,PROBUF+PROCNT ;Last record saved/restored
+   691	000410'	220 04 0 00 003154'		IMUL	T4,BUFPAG	; Turn into page number
+   692	000411'	270 04 0 00 000001 		ADD	T4,T1		; Add in current set.
+   693	000412'	254 00 0 00 002207'		PJRST	PRTDP		; And give the page number.
+   694
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 16
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   695					SUBTTL SAVE CODE
+   696
+   697	000413'	402 00 0 00 003152'	SAVE:	SETZM	VERFLG		;THIS IS NOT A VERIFY, DO NORMAL MAPPING.
+   698	000414'	402 00 0 00 003150'		SETZM	CMPFLG		;THIS IS NOT A COMPARE, USE NORMAL RANGE.
+   699	000415'	260 17 0 00 002524'		PUSHJ	P,GETSTR	;GET A STRUCTURE
+   700	000416'	254 00 0 00 002570'		  JRST	NOSTRS		;OOPS, MSG ALREADY PRINTED
+   701	000417'	260 17 0 00 002607'		PUSHJ	P,GETTAP	;OPEN TAPE UNIT
+   702	000420'	254 00 0 00 002617'		  JRST	NOTAPO
+   703
+   704	000421'	260 17 0 00 001520'		PUSHJ	P,ALONE		;I WANT TO BE ALONE
+   705	000422'	263 17 0 00 000000 		  POPJ	P,		;SORRY.
+   706
+   707	000423'	400 05 0 00 000000 		SETZ	DP,		;CLEAR OUT AND GET VALUE OF
+   708	000424'	250 05 0 00 003144'		EXCH	DP,RESTDP	;WHERE TO START
+   709	000425'	313 05 0 00 003160'		CAMLE	DP,STRMXP	;[110] Make sure its in range
+   710	000426'	254 00 0 00 004074'		  ERRPOP <Start page number too large for specified structure>
+   711	000427'	200 01 0 00 000005 		MOVE	T1,DP		; Copy start page
+   712	000430'	230 01 0 00 003154'		IDIV	T1,BUFPAG	; See if it needs adjusting
+   713	000431'	202 01 0 00 003220'		MOVEM	T1,TAPBAS	; Save record number for tape
+   714	000432'	220 01 0 00 003154'		IMUL	T1,BUFPAG	; Back to page number for
+   715	000433'	312 01 0 00 000005 		CAME	T1,DP		;   adjustment check
+   716	000434'	051 03 0 00 004076'		  MSG	<Start page adjusted.>,CRLF
+   717	000435'	200 05 0 00 000001 		MOVE	DP,T1		; Set DP properly
+   718
+   719	000436'	402 00 0 00 003137'		SETZM	LASBUF		; Clear last buffer counter
+   720	000437'	072 01 0 00 000001 		MTAPE	TAPE,.MTREW	;REWIND THE TAPE
+   721	000440'	400 01 0 00 000000 		SETZ	T1,
+   722	000441'	250 01 0 00 003145'		EXCH	T1,RESTTP	;GET TAPE NUMBER TO RESTART AT
+   723	000442'	336 00 0 00 000001 		SKIPN	T1
+   724	000443'	201 01 0 00 000001 		MOVEI	T1,1		;IF NO RESTART, START AT TAPE 1
+   725	000444'	202 01 0 00 003217'		MOVEM	T1,TAPNUM
+   726
+   727	000445'	260 17 0 00 002015'		PUSHJ	P,INIHED	;INIT THE HEADER TO GO OUT
+   728	000446'	263 17 0 00 000000 		  POPJ	P,		;BAD DATE OR SOMETHING
+   729
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 17
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   730
+   731					;HERE TO RESTART THE WRITE OF A TAPE REEL
+   732					; DP HAS DISK PAGE ADDRESS TO START WITH.
+   733
+   734	000447'	260 17 0 00 002067'	SAVRST:	PUSHJ	P,WRTHED	;WRITE IT OUT
+   735	000450'	263 17 0 00 000000 		  POPJ	P,		;SORRY, DIDN'T WORK.
+   736	000451'	201 04 0 00 002466'		MOVEI	T4,HEDBUF	;ADDRESS OF THE HEADER
+   737	000452'	260 17 0 00 002112'		PUSHJ	P,PRTHED	;PRINT IT OUT FOR USER
+   738
+   739	000453'	210 11 0 00 003153'		MOVN	IOW,BUFSIZ	;START OUT WITH THIS BIG OF A TRANSFER
+   740	000454'	514 11 0 00 000011 		HRLZ	IOW,IOW		;SETUP IOWD COUNT
+   741	000455'	200 12 0 00 003621'		MOVE	IOW+1,[IOWD PROLEN,PROBUF] ;PROLOGUE BUFFER
+   742	000456'	400 13 0 00 000000 		SETZ	IOW+2,		;END OF LIST
+   743	000457'	200 05 0 00 003220'		MOVE	DP,TAPBAS	;GET DP SETUP TO BEGINNING OF REEL
+   744	000460'	220 05 0 00 003154'		IMUL	DP,BUFPAG	;TURN FROM REC PAIR NO TO DP NO
+   745
+   746					;HERE AFTER A WRITE ERROR RECOVERY TO WRITE OUT THE TAPE FROM LAST KNOWN GOOD POINT.
+   747
+   748	000461'	200 10 0 00 003136'	WRTRST:	MOVE	BUF,PTRBUF	;GET PAGE BUFFER POINTER SETUP
+   749	000462'	402 00 0 00 003137'		SETZM	LASBUF		;INDICATOR FOR LAST BUFFER. ??? * ???
+   750	000463'	200 01 0 00 003235'		MOVE	T1,FIRTIM	;CODE IS THE TIME SET STARTED.
+   751									;THIS KEEPS OVERLAPPING ASP DATA FROM
+   752									;APPEARING OK ON RESTORE.
+   753	000464'	202 01 0 00 003222'		MOVEM	T1,PROBUF+PROCOD
+   754	000465'	200 01 0 00 000005 		MOVE	T1,DP		;GET FIRST RECORD THAT GOES ONTO THIS TAPE.
+   755	000466'	230 01 0 00 003154'		IDIV	T1,BUFPAG	;TURN INTO REC PAIR NUMBER
+   756	000467'	202 01 0 00 003223'		MOVEM	T1,PROBUF+PROCNT ;THIS IS FIRST REC NUMBER THAT GOES INTO PROLOGUE RECORD.
+   757	000470'	051 03 0 00 004103'		MSG	<Saving >
+   758	000471'	200 04 0 00 003161'		MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+   759	000472'	051 03 1 04 003162'		OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+   760	000473'	200 04 0 00 000005 		MOVE	T4,DP		;GET DP TO PRINT OUT
+   761	000474'	260 17 0 00 002207'		PUSHJ	P,PRTDP		;NOW PRINT WHAT WE ARE SAVING.
+   762	000475'	051 03 0 00 003251'		MSG	,CRLF
+   763
+   764					;NOW START IN THE WHOLE BUFFER AREA
+   765					IF2,<PRINTX [Need to fix initial read on a restart if too near end of STR]>
+   766
+   767	000476'	200 06 0 00 003154'		MOVE	CNT,BUFPAG	;MAP IN EVERYTHING
+   768	000477'	221 06 0 00 000012 		IMULI	CNT,BUFNUM	;  ALL GROUPS OF BUFFERS
+   769	000500'	260 17 0 00 001742'		PUSHJ	P,MAPRD
+   770	000501'	263 17 0 00 000000 		  POPJ	P,		;SOMETHING WENT VERY WRONG
+   771	000502'	270 05 0 00 000006 		ADD	DP,CNT		;ADVANCE DISK ADDRESS.
+   772	000503'	200 06 0 00 003154'		MOVE	CNT,BUFPAG	;FROM NOW ON, DO ONE BUFFER AT A TIME.
+   773
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 18
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   774
+   775					;NOW START OUT A BUFFER TO TAPE, THEN START NEXT XFER INTO IT.
+   776					; DP HAS NEXT DISK PAGE TO MAP.  PROBUF+PROCNT HAS LAST RECORD NUMBER.
+   777
+   778	000504'	540 11 0 00 000010 	COPLUP:	HRR	IOW,BUF		;GET NEXT ADDRESS INTO IOW
+   779	000505'	312 10 0 00 003137'		CAME	BUF,LASBUF	;IS THIS THE LAST BUFFER?
+   780	000506'	254 00 0 00 000512'		  JRST	COPRTY		;NO.
+   781	000507'	210 01 0 00 000006 		MOVN	T1,CNT		;YES, GET -VE PAGES TO DO
+   782	000510'	240 01 0 00 000011 		ASH	T1,^D9		;TURN INTO WORDS
+   783	000511'	504 11 0 00 000001 		HRL	IOW,T1		;PUT INTO IOW
+   784	000512'	602 00 0 00 002000 	COPRTY:	TRNE	S,IOTEND	;IS END OF TAPE LEFT OVER FROM LAST WRITE?
+   785	000513'	254 00 0 00 000525'		  JRST	NXTSAV		;YES, MUST SWITCH TAPES.
+   786	000514'	260 17 0 00 000343'		PUSHJ	P,STSRED	; Check the read status on the current range
+   787	000515'	057 01 0 00 000011 		OUT	TAPE,IOW	;START IT OUT TO TAPE
+   788	000516'	254 00 0 00 000667'		  JRST	OUTOK		;ALL IS OK.
+   789	000517'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET TAPE STATUS
+   790	000520'	602 00 0 00 740000 		TRNE	S,IOEMSK	;MAKE SURE NO ERRORS
+   791	000521'	254 00 0 00 000574'		JRST	TPOERR		;TAPE OUTPUT ERROR, TRY TO RECOVER
+   792	000522'	606 00 0 00 002000 		TRNN	S,IOTEND	;END OF TAPE?
+   793	000523'	254 00 0 00 004115'		  ERRPOP <Unknown TAPE output error condition>
+   794						JRST	OUTOK		;YES, WE WILL CATCH IT ABOVE IF WE HAVE TO WRITE ANOTHER REC
+   795	000524'	254 00 0 00 000667'	ORD OUT
+   796
+   797	000525'	062 01 0 00 000000 	NXTSAV:	GETSTS	TAPE,S		;SEE IF CAN WRITE IT
+   798	000526'	602 00 0 00 740000 		TRNE	S,IOEMSK	;MAKE SURE NO FATAL ERRORS
+   799	000527'	254 00 0 00 000650'		  JRST	BADTAP		;NO GOOD, REWRITE THE TAPE (WILL BE CLOSED)
+   800	000530'	070 01 0 00 000000 		CLOSE	TAPE,		;WRITE EOT (CLOSE FILE)
+   801	000531'	072 01 0 00 000011 		MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+   802	000532'	071 01 0 00 000000 		RELEAS	TAPE,		; RELEASE DRIVE
+   803	000533'	200 01 0 00 003223'		MOVE	T1,PROBUF+PROCNT ;GET NEXT RECORD NUMBER
+   804	000534'	202 01 0 00 003220'		MOVEM	T1,TAPBAS	;STORE IN CASE HAVE TO RESTART
+   805	000535'	350 00 0 00 002471'		AOS	HEDBUF+HEDTPN	;SETUP NEXT TAPE NUMBER
+   806	000536'	350 00 0 00 003217'		AOS	TAPNUM		;INCREMENT TO NEXT TAPE
+   807	000537'	051 03 0 00 004117'	NXTSV1:	MSG	<Tape >
+   808	000540'	200 01 0 00 003217'		MOVE	T1,TAPNUM	;GET TAPE NUMBER
+   809	000541'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT IT OUT
+   810	000542'	051 03 0 00 004121'		MSG	< will begin with >
+   811	000543'	200 04 0 00 003161'		MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+   812	000544'	051 03 1 04 003162'		OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+   813	000545'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT ;RECORD NUMBER WE ARE SAVING.
+   814	000546'	220 04 0 00 003154'		IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+   815	000547'	260 17 0 00 002207'		PUSHJ	P,PRTDP
+   816	000550'	051 03 0 00 003251'		MSG	<>,CRLF
+   817	000551'	051 03 0 00 004125'		MSG	<Next tape unit:>
+   818	000552'	201 14 0 00 777777 		MOVEI	CH,-1		;NEW LINE TO INPUT
+   819	000553'	260 17 0 00 002607'		PUSHJ	P,GETTAP	;GET NEXT ONE
+   820	000554'	254 00 0 00 000537'		  JRST	NXTSV1		;HE HAS TO SPECIFY ONE.
+   821	000555'	072 01 0 00 000001 		MTAPE	TAPE,.MTREW	;REWIND IT
+   822	000556'	260 17 0 00 002316'		PUSHJ	P,NOTHED	;MAKE SURE NOT FROM CURRENT SET BEING RECORDED
+   823	000557'	254 00 0 00 000537'		  JRST	NXTSV1		;NO GOOD, ASK AGAIN.
+   824	000560'	260 17 0 00 002067'		PUSHJ	P,WRTHED	;WRITE OUT HEADER
+   825	000561'	254 00 0 00 000537'		  JRST	NXTSV1		;WRITE ERROR OR SOMETHING, ASK FOR ANOTHER UNIT
+   826	000562'	201 04 0 00 002466'		MOVEI	T4,HEDBUF	;AND PRINT OUT THE INFO FOR USER'S INFO
+   827	000563'	260 17 0 00 002112'		PUSHJ	P,PRTHED	;PRINT OUT THE INFO FOR HIM
+   828	000564'	051 03 0 00 004103'		MSG	<Saving >
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 18-1
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   829	000565'	200 04 0 00 003161'		MOVE	T4,STRTYP	;GET STRUCTURE TYPE
+   830	000566'	051 03 1 04 003162'		OUTSTR	@STRMSG(T4)	;LET THEM KNOW WHAT KIND
+   831	000567'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT ;RECORD NUMBER WE ARE SAVING.
+   832	000570'	220 04 0 00 003154'		IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+   833	000571'	260 17 0 00 002207'		PUSHJ	P,PRTDP
+   834	000572'	051 03 0 00 003251'		MSG	<>,CRLF
+   835	000573'	254 00 0 00 000512'		JRST	COPRTY		;AND GO REJOIN THE CODE.
+   836
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 19
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   837	000574'	602 00 0 00 200000 	TPOERR:	TRNE	S,IODERR		;DEVICE?
+   838	000575'	051 03 0 00 003762'		  MSG	<Device >
+   839	000576'	602 00 0 00 100000 		TRNE	S,IODTER		;DATA?
+   840	000577'	051 03 0 00 004043'		  MSG	<Data >
+   841	000600'	051 03 0 00 004131'		MSG	<write error, attempting recovery>,CRLF
+   842	000601'	200 01 0 00 003223'		MOVE	T1,PROBUF+PROCNT	;GET REC NUMBER OF THIS ERROR
+   843	000602'	250 01 0 00 003140'		EXCH	T1,LASOER		;THIS IS NOW LAST ERROR
+   844	000603'	312 01 0 00 003140'		CAME	T1,LASOER		;SAME AS LAST TIME?
+   845						  JRST	[SETZM LASOEC		;NO, RESET COUNT
+   846	000604'	254 00 0 00 004140'			  JRST TPOER1]		;AND DO FIRST RETRY FOR THIS REC
+   847	000605'	350 01 0 00 003141'		AOS	T1,LASOEC		;INCREMENT COUNT, GET IT
+   848	000606'	313 01 0 00 003142'		CAMLE	T1,OECMAX		;STILL IN RANGE?
+   849	000607'	254 00 0 00 000645'		  JRST	BADTP0			;NO, ASK FOR NEW TAPE.
+   850	000610'	476 00 0 00 000004 	TPOER1:	SETOM	T4			;INDICATE BACKWARD SEARCH
+   851	000611'	260 17 0 00 001700'		PUSHJ	P,RESYNC		;FIND PLACE ON TAPE AGAIN.
+   852	000612'	254 00 0 00 000645'		  JRST	BADTP0			;CANNOT RESYNC, TRY ANOTHER TAPE
+   853	000613'	311 04 0 00 003223'		CAML	T4,PROBUF+PROCNT	;MUST NOT BE ONE WE JUST FAILED ON
+   854						JRST	[MTAPE	TAPE,.MTBSR	;IT WAS, BACKSPACE
+   855							 MSG	<Trying...>
+   856	000614'	254 00 0 00 004144'			 JRST	TPOER1]
+   857	000615'	135 02 0 00 004007'		LDB	T2,[POINT 2,OPNTAP,28]	;GET DENSITY
+   858	000616'	322 02 0 00 000621'		JUMPE	T2,TPOSTD		;STD DENSITY IF ZERO
+   859	000617'	275 02 0 00 000003 		SUBI	T2,3
+   860	000620'	217 00 0 00 000002 		MOVMS	T2
+   861	000621'	270 02 0 00 003215'	TPOSTD:	ADD	T2,TAPDTB
+   862	000622'	550 02 0 02 000000 		HRRZ	T2,(T2)			;GET THE  DENSITY
+   863	000623'	221 02 0 00 000010 		IMULI	T2,^D8			;TIMES MAX NUMBER OF TRACKS GIVES BITS PER INCH
+   864	000624'	231 02 0 00 000044 		IDIVI	T2,^D36			;GET WORDS PER INCH
+   865	000625'	200 01 0 00 003153'		MOVE	T1,BUFSIZ		;GET BUFFER SIZE
+   866	000626'	271 01 0 00 000002 		ADDI	T1,PROLEN		;NUMBER OF WORDS PER RECORD PAIR
+   867	000627'	271 01 0 02 777777 		ADDI	T1,-1(T2)		;ROUND UP
+   868	000630'	230 01 0 00 000002 		IDIV	T1,T2			;GET NUMBER OF INCHES TO WRITE
+   869	000631'	231 01 0 00 000003 		IDIVI	T1,INCHPG		;GET NUMBER OF GAPS TO WRITE
+   870	000632'	201 02 0 00 000001 		MOVEI	T2,1			;GET 1 PLUS COUNT
+   871	000633'	270 02 0 00 003141'		ADD	T2,LASOEC		; OF ERROR ON SAME RECORD
+   872	000634'	220 01 0 00 000002 		IMUL	T1,T2			;DO THIS MANY TIMES RETRY COUNT
+   873	000635'	072 01 0 00 000013 		MTAPE	TAPE,.MTBLK
+   874	000636'	365 01 0 00 000635'		SOJGE	T1,.-1			;AND WRITE ONE EXTRA FOR THE RECORD GAPS
+   875						AOS	DP,T4			;OK, GET REC NUMBER WE FOUND, LAST GOOD + 1 = WHERE 
+   876	000637'	350 05 0 00 000004 	TO START.
+   877	000640'	220 05 0 00 003154'		IMUL	DP,BUFPAG		;GET DP TO START OVER WITH
+   878	000641'	063 01 0 00 742000 		STATZ	TAPE,IOEMSK+IOTEND	;ANY PROBLEMS?
+   879	000642'	254 00 0 00 000645'		  JRST	BADTP0			;YES, TRY ANOTHER TAPE
+   880	000643'	051 03 0 00 004147'		MSG	<Recovery successful>,CRLF
+   881	000644'	254 00 0 00 000461'		JRST	WRTRST			;AND GO RESTART TAPE FROM C(DP) POINT.
+   882
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 20
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   883
+   884					;HERE IF NO HOPE OR GOT ERROR IN SOME PAIN IN THE NECK SPOT
+   885
+   886	000645'	051 03 0 00 004154'	BADTP0:	MSG	<Recovery unsuccessful, fatal write error>,CRLF
+   887	000646'	051 03 0 00 003251'		MSG	<>,CRLF
+   888	000647'	254 00 0 00 000651'		JRST	BADT1A
+   889	000650'	260 17 0 00 001507'	BADTAP:	PUSHJ	P,TPOUER	;COMPLAIN ABOUT THE ERROR (DEVICE OR DATA)
+   890	000651'	200 05 0 00 003220'	BADT1A:	MOVE	DP,TAPBAS	;GET RECORD NUMBER THIS TAPE STARTED WITH
+   891	000652'	220 05 0 00 003154'		IMUL	DP,BUFPAG	;COMPUTE STARTING DP ADDRESS
+   892	000653'	070 01 0 00 000000 		CLOSE	TAPE,		;WRITE TAPE MARK ON BAD TAPE
+   893	000654'	072 01 0 00 000011 		MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+   894	000655'	071 01 0 00 000000 		RELEAS	TAPE,		; RELEASE DRIVE - TELL OPR WE DON'T LIKE IT
+   895	000656'	051 03 0 00 004165'	BADTP1:	MSG	<Please mount a new TAPE and put this one aside,>,CRLF
+   896	000657'	051 03 0 00 004177'		MSG	< it is no longer part of this ASP save set.>,CRLF
+   897	000660'	051 03 0 00 004125'		MSG	<Next tape unit:>
+   898	000661'	201 14 0 00 777777 		MOVEI	CH,-1		;SCANNING A NEW LINE
+   899	000662'	260 17 0 00 002607'		PUSHJ	P,GETTAP	;OPEN UP NEW TAPE
+   900	000663'	254 00 0 00 000656'		  JRST	BADTP1		;SOME PROBLEM, ASK AGAIN
+   901	000664'	260 17 0 00 002316'		PUSHJ	P,NOTHED	;REWIND, MAKE SURE NOT OF SAME SET.
+   902	000665'	254 00 0 00 000656'		  JRST	BADTP1		;NO, ASK AGAIN.
+   903	000666'	254 00 0 00 000447'		JRST	SAVRST		;AND GO RESTART THE TAPE.
+   904
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 21
+ASP	MAC	22-Feb-83 21:20		SAVE CODE
+
+   905					;HERE IF NO ERROR.
+   906
+   907	000667'	350 00 0 00 003223'	OUTOK:	AOS	PROBUF+PROCNT	;NEXT RECORD NUMBER
+   908	000670'	336 01 0 00 003137'		SKIPN	T1,LASBUF	;SKIP IF WE'RE DONE MAPPING IN STUFF
+   909	000671'	254 00 0 00 000675'		  JRST	OUTOK1		;NOT DONE MAPPING YET.
+   910	000672'	316 01 0 00 000010 		CAMN	T1,BUF		;HAVE WE JUST XFERRED THE LAST BUFFER?
+   911	000673'	254 00 0 00 000713'		  JRST	SAVDON		;YES.
+   912	000674'	254 00 0 00 000706'		JRST	NOMAPR		;NO, JUST OUTPUT REMAINING ONES TO TAPE
+   913
+   914	000675'	200 01 0 00 003160'	OUTOK1:	MOVE	T1,STRMXP	;GET PAGE PER STRUCTURE
+   915	000676'	274 01 0 00 000005 		SUB	T1,DP		;GET PAGES LEFT TO GO
+   916	000677'	313 01 0 00 003154'		CAMLE	T1,BUFPAG	;SKIP IF THIS IS LAST RECORD
+   917	000700'	254 00 0 00 000703'		  JRST	COPROK		;NOT LAST RECORD
+   918	000701'	202 10 0 00 003137'		MOVEM	BUF,LASBUF	;FLAG THAT THIS IS LAST BUFFER TO COPY
+   919									;(MAYBE 1 PAST LAST IF COUNT IS ZERO)
+   920	000702'	200 06 0 00 000001 		MOVE	CNT,T1		;GET LAST PAGE COUNT IN CNT
+   921	000703'	260 17 0 00 001742'	COPROK:	PUSHJ	P,MAPRD
+   922	000704'	263 17 0 00 000000 		  POPJ	P,		;SOMETHING WENT WRONG
+   923	000705'	270 05 0 00 000006 		ADD	DP,CNT		;NEXT DISK ADDRESS TO DO.
+   924	000706'	270 10 0 00 003153'	NOMAPR:	ADD	BUF,BUFSIZ	;INCREMENT BY BUFFER SIZE
+   925	000707'	360 10 0 00 000000 		SOJ	BUF,		; MINUS 1
+   926	000710'	253 10 0 00 000504'		AOBJN	BUF,COPLUP
+   927	000711'	200 10 0 00 003136'		MOVE	BUF,PTRBUF	;WRAP AROUND
+   928	000712'	254 00 0 00 000504'		JRST	COPLUP
+   929
+   930	000713'	070 01 0 00 000000 	SAVDON:	CLOSE	TAPE,		;WRITE EOT (CLOSE FILE)
+   931	000714'	062 01 0 00 000000 		GETSTS	TAPE,S		;MAKE SURE ALL IS OK
+   932	000715'	602 00 0 00 740000 		TRNE	S,IOEMSK	;MAKE SURE NO PROBLEMS.
+   933	000716'	254 00 0 00 004217'		  ERRPOP <Cannot write logical EOT>
+   934	000717'	051 03 0 00 004221'		MSG	<ASP save of >
+   935	000720'	072 01 0 00 000011 	XXXDON:	MTAPE	TAPE,.MTUNL	; REWIND AND UNLOAD CURRENT TAPE
+   936	000721'	071 01 0 00 000000 		RELEAS	TAPE,		; RELEASE DRIVE
+   937	000722'	200 01 0 00 003161'		MOVE	T1,STRTYP	;GET STRUCTURE TYPE
+   938	000723'	051 03 1 01 003162'		OUTSTR	@STRMSG(T1)	;LET THEM KNOW WHAT KIND
+   939	000724'	200 01 0 00 003230'		MOVE	T1,STRNAM
+   940	000725'	260 17 0 00 003044'		PUSHJ	P,SIXOUT	;AND "STRUCTURE"
+   941	000726'	051 03 0 00 003251'		MSG	<>,CRLF
+   942	000727'	051 03 0 00 004224'		MSG	<Completed on >
+   943	000730'	260 17 0 00 000747'		PUSHJ	P,CURDAT
+   944	000731'	263 17 0 00 000000 		  POPJ	P,		;DATE NOT YET RECEIVED (SHOULD NEVER HAPPEN, CHECKED ABOVE)
+   945	000732'	051 03 0 00 003251'		MSG	,CRLF
+   946	000733'	550 01 0 00 003136'		HRRZ	T1,PTRBUF	;GET RESET BUFFER AOBJN POINTER
+   947	000734'	340 01 0 00 000000 		AOJ	T1,		;MAKE AN EVEN PAGE ADDRESS
+   948	000735'	242 01 0 00 777767 		LSH	T1,-^D9		;CONVERT TO PAGE NUMBER
+   949	000736'	201 02 0 00 001000 		MOVEI	T2,1000		;MAXIMUM PAGE COUNT
+   950	000737'	274 02 0 00 000001 		SUB	T2,T1		;GET DIFFERENCE
+   951	000740'	504 01 0 00 000002 		HRL	T1,T2		;SETUP COUNT,,PAGE
+   952	000741'	047 01 0 00 777712 		VCLEAR	T1,		;REMOVE REMAINDER OF MEMORY
+   953	000742'	255 00 0 00 000000 		  JFCL			;NEVER ANY ERROR
+   954	000743'	254 00 0 00 002660'		JRST	CPOPJ1		;ALL DONE
+   955
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 22
+ASP	MAC	22-Feb-83 21:20		DATE and TIME type out routines
+
+   956					SUBTTL	DATE and TIME type out routines
+   957
+   958	000744'	260 17 0 00 000747'	DAYTIM:	PUSHJ	P,CURDAT
+   959	000745'	051 03 0 00 003251'		MSG	,CRLF
+   960	000746'	254 00 0 00 002660'		JRST	CPOPJ1
+   961
+   962	000747'	200 01 0 00 004227'	CURDAT:	MOVE	T1,[.CNDAT,,.GTCNF]
+   963	000750'	047 01 0 00 000041 		GETTAB	T1,
+   964	000751'	254 00 0 00 004234'		  ERRPOP <Can't GETTAB date>
+   965	000752'	335 00 0 00 000001 		SKIPGE	T1		;MAKE SURE SYSTEM KNOWS
+   966	000753'	254 00 0 00 004245'		ERRPOP	<Date not yet received, aborting>
+   967	000754'	200 02 0 00 004247'		MOVE	T2,[.CNTIM,,.GTCNF]
+   968	000755'	047 02 0 00 000041 		GETTAB	T2,
+   969	000756'	254 00 0 00 004254'		  ERRPOP <Can't GETTAB time>
+   970	000757'	350 00 0 17 000000 		AOS	(P)		;GIVE SKIP RETURN NOW
+   971	000760'	254 00 0 00 002405'		PJRST	PRTDAT		;AND PRINT DATE, CALER DOES CRLF
+   972
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 23
+ASP	MAC	22-Feb-83 21:20		MAXOEC and SETSRC commands
+
+   973					SUBTTL	MAXOEC and SETSRC commands
+   974
+   975	000761'	200 01 0 00 003142'	MAXOEC:	MOVE	T1,OECMAX	;PRINT OLD VALUE
+   976	000762'	051 03 0 00 004256'		MSG	<Old OECMAX was >
+   977	000763'	260 17 0 00 002667'		PUSHJ	P,DECOUT
+   978	000764'	051 03 0 00 003251'		MSG	<>,CRLF
+   979	000765'	260 17 0 00 002676'		PUSHJ	P,DECIN		;GET NUMBER
+   980						  JRST	[MSG <setting to default value >
+   981							  MOVEI T1,STDOEC
+   982							   PUSHJ P,DECOUT
+   983							 MOVEI T1,STDOEC
+   984	000766'	254 00 0 00 004270'			 JRST .+1]
+   985	000767'	202 01 0 00 003142'		MOVEM	T1,OECMAX
+   986	000770'	254 00 0 00 002660'		JRST	CPOPJ1
+   987
+   988	000771'	200 01 0 00 003143'	SETSRC:	MOVE	T1,SRCLEN	;GET OLD VALUE
+   989	000772'	051 03 0 00 004275'		MSG	<Old SRCLEN was >
+   990	000773'	260 17 0 00 002667'		PUSHJ	P,DECOUT
+   991	000774'	051 03 0 00 003251'		MSG	<>,CRLF
+   992	000775'	260 17 0 00 002676'		PUSHJ	P,DECIN		;GET NUMBER TYPED
+   993						  JRST	[MSG <setting to default value >
+   994							 MOVEI T1,STDSRC
+   995							 PUSHJ P,DECOUT
+   996							 MOVEI T1,STDSRC
+   997	000776'	254 00 0 00 004301'			 JRST .+1]
+   998	000777'	202 01 0 00 003143'		MOVEM	T1,SRCLEN
+   999	001000'	254 00 0 00 002660'		JRST	CPOPJ1
+  1000
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 24
+ASP	MAC	22-Feb-83 21:20		START and WHERE commands
+
+  1001					SUBTTL	START and WHERE commands
+  1002
+  1003	001001'	402 00 0 00 003144'	SETRES:	SETZM	RESTDP			; Clear previous page
+  1004	001002'	402 00 0 00 003145'		SETZM	RESTTP			;  and tape number
+  1005	001003'	260 17 0 00 002524'	SETRE1:	PUSHJ	P,GETSTR		; Get a structure name
+  1006	001004'	254 00 0 00 001057'		  JRST	SETRE4			; None?  Check below
+  1007	001005'	260 17 0 00 002717'	SETRE2:	PUSHJ	P,OCTIN			; Get start page number
+  1008	001006'	254 00 0 00 001064'		  JRST	SETRE5			; Not specified, ask
+  1009					;[110]	CAML	T1,STRMXP		; Make sure its in range
+  1010					;[110]	  ERRPOP <Page number too large for specified structure>
+  1011	001007'	202 01 0 00 003144'		MOVEM	T1,RESTDP		; Save for later
+  1012	001010'	230 01 0 00 003154'		IDIV	T1,BUFPAG		; Number of records
+  1013	001011'	220 01 0 00 003154'		IMUL	T1,BUFPAG		; Number of pages
+  1014	001012'	312 01 0 00 003144'		CAME	T1,RESTDP		; See if adjusted
+  1015	001013'	051 03 0 00 004306'		  MSG	<Start page will be adjusted.>,CRLF
+  1016
+  1017	001014'	260 17 0 00 002607'	SETRE3:	PUSHJ	P,GETTAP		; Open up tape unit (if not open)
+  1018	001015'	254 00 0 00 001067'		  JRST	SETRE6			; Not available - go ask
+  1019	001016'	260 17 0 00 000170'		PUSHJ	P,CHECK0		; Check header
+  1020	001017'	263 17 0 00 000000 		  POPJ	P,			; No good, bad header
+  1021	001020'	200 01 0 00 002471'		MOVE	T1,HEDBUF+HEDTPN	; Get current tape number
+  1022	001021'	271 01 0 00 000001 		ADDI	T1,1			; Next is the one to use
+  1023	001022'	202 01 0 00 003145'		MOVEM	T1,RESTTP		; Save it
+  1024	001023'	200 01 0 00 002477'		MOVE	T1,HEDBUF+HEDDAT	; Get save-set date
+  1025	001024'	202 01 0 00 003146'		MOVEM	T1,RESDAT		; Store it
+  1026	001025'	200 01 0 00 002500'		MOVE	T1,HEDBUF+HEDTIM	; Get save-set time
+  1027	001026'	202 01 0 00 003147'		MOVEM	T1,RESTIM		; Store it
+  1028
+  1029	001027'	072 01 0 00 000011 		MTAPE	TAPE,.MTUNL		; REWIND THE GOOD TAPE
+  1030	001030'	071 01 0 00 000000 		RELEAS	TAPE,			; GIVE DEVICE BACK TO POOL
+  1031	001031'	051 03 0 00 004315'		MSG	<Unloading restart tape.>,CRLF
+  1032	001032'	051 03 0 00 004323'		MSG	<Now mount the tape you wish to continue on.>,CRLF
+  1033
+  1034	001033'	051 03 0 00 004335'	PRTRES:	MSG	<ASP will start on tape >
+  1035	001034'	336 01 0 00 003145'		SKIPN	T1,RESTTP		; Get tape number
+  1036	001035'	201 01 0 00 000001 		  MOVEI	T1,1			; If none, set to 1
+  1037	001036'	260 17 0 00 002667'		PUSHJ	P,DECOUT		; Print value
+  1038	001037'	051 03 0 00 003251'		MSG	<>,CRLF			; Use next line
+  1039	001040'	051 03 0 00 004342'		MSG	<Using >
+  1040	001041'	200 01 0 00 003144'		MOVE	T1,RESTDP		; Get disk page
+  1041	001042'	230 01 0 00 003154'		IDIV	T1,BUFPAG		; See if it needs
+  1042	001043'	220 01 0 00 003154'		IMUL	T1,BUFPAG		;  to be adjusted
+  1043	001044'	312 01 0 00 003144'		CAME	T1,RESTDP		; due to record size
+  1044	001045'	051 03 0 00 004344'		  MSG	<adjusted >		; Yes, print adjusted
+  1045	001046'	200 04 0 00 000001 		MOVE	T4,T1			; but leave old DP
+  1046	001047'	260 17 0 00 002207'		PUSHJ	P,PRTDP			; Print page number
+  1047	001050'	200 01 0 00 003146'		MOVE	T1,RESDAT		; Get date
+  1048	001051'	200 02 0 00 003147'		MOVE	T2,RESTIM		;   and time
+  1049	001052'	322 01 0 00 002660'		JUMPE	T1,CPOPJ1		; If zero, no date-time
+  1050	001053'	051 03 0 00 004346'		MSG	<Identifying date for this ASP tape set is >
+  1051	001054'	260 17 0 00 002405'		PUSHJ	P,PRTDAT		; Print date info
+  1052	001055'	051 03 0 00 003251'		MSG	<>,CRLF
+  1053	001056'	254 00 0 00 002660'		JRST	CPOPJ1			; and return
+  1054
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 25
+ASP	MAC	22-Feb-83 21:20		START and WHERE commands
+
+  1055
+  1056	001057'	316 01 0 00 000256'	SETRE4:	CAMN	T1,NONONO	; Did they say NO?
+  1057	001060'	263 17 0 00 000000 		  POPJ	P,		; Yes, just leave
+  1058	001061'	260 17 0 00 002744'		PUSHJ	P,BRKEA1	;EAT TO BREAK
+  1059	001062'	051 03 0 00 004357'		MSG	<Type structure name, disk page and tape name: >
+  1060	001063'	254 00 0 00 001003'		JRST	SETRE1		;TRY AGAIN
+  1061
+  1062	001064'	260 17 0 00 002744'	SETRE5:	PUSHJ	P,BRKEA1	;EAT TO BREAK
+  1063	001065'	051 03 0 00 004371'		MSG	<Type disk page number and tape name: >
+  1064	001066'	254 00 0 00 001005'		JRST	SETRE2		;CONTINUE
+  1065
+  1066	001067'	316 01 0 00 000256'	SETRE6:	CAMN	T1,NONONO	; Did they say NO?
+  1067	001070'	263 17 0 00 000000 		  POPJ	P,		; Yes, just leave
+  1068	001071'	260 17 0 00 002744'		PUSHJ	P,BRKEA1	;EAT TO BREAK
+  1069	001072'	051 03 0 00 004401'		MSG	<Type tape device name: >
+  1070	001073'	254 00 0 00 001014'		JRST	SETRE3		;TRY AGAIN
+  1071
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 26
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1072					SUBTTL RESTORE, VERIFY and COMPARE
+  1073
+  1074	001074'	402 00 0 00 003150'	VERIFY:	SETZM	CMPFLG		;NOT COMPARING
+  1075	001075'	350 00 0 00 003152'		AOS	VERFLG		;FLAG THAT WE ARE VERIFYING.
+  1076	001076'	254 00 0 00 001107'		JRST	VERCMN		;JUMP INTO COMMON CODE
+  1077
+  1078	001077'	402 00 0 00 003151'	COMPAR:	SETZM	CMPCNT		;COUNT BAD PAGES
+  1079	001100'	350 00 0 00 003150'		AOS	CMPFLG		;WE ARE COMPARING
+  1080	001101'	350 00 0 00 003152'		AOS	VERFLG		; SIMILAR TO VERIFY
+  1081	001102'	254 00 0 00 001105'		PJRST	RESCMN		;JUMP INTO COMMON CODE
+  1082
+  1083	001103'	402 00 0 00 003152'	RESTOR:	SETZM	VERFLG		;NOT VERIFYING.
+  1084	001104'	402 00 0 00 003150'		SETZM	CMPFLG		;NOT COMPARING
+  1085	001105'	260 17 0 00 002524'	RESCMN:	PUSHJ	P,GETSTR	;NEED A STRUCTURE FOR RESTORE/COMPARE
+  1086	001106'	254 00 0 00 002570'		  JRST	NOSTRS		;SORRY, NONE AVAILABLE?
+  1087	001107'	260 17 0 00 002607'	VERCMN:	PUSHJ	P,GETTAP	;GET TAPE DRIVE SETUP
+  1088	001110'	254 00 0 00 002617'		  JRST	NOTAPO		;NO DICE.
+  1089
+  1090	001111'	260 17 0 00 001520'		PUSHJ	P,ALONE		;I WANT TO BE ALONE
+  1091	001112'	263 17 0 00 000000 		  POPJ	P,		;SORRY, WE'RE NOT ALONE
+  1092
+  1093					;OK, NOW ALL STUFF IN FILE SYSTEM IS WRITTEN OUT TO DISK.
+  1094
+  1095	001113'	400 05 0 00 000000 		SETZ	DP,		;CLEAR OUT AND GET VALUE OF
+  1096	001114'	250 05 0 00 003144'		EXCH	DP,RESTDP	;WHERE TO START
+  1097	001115'	336 00 0 00 003152'		SKIPN	VERFLG		;[110] VERIFY or COMPARE?
+  1098	001116'	254 00 0 00 001121'		  JRST	ALLCMN		;[110] No, any start is allowed
+  1099	001117'	336 00 0 00 003150'		SKIPN	CMPFLG		;[110] COMPARE?
+  1100	001120'	254 00 0 00 001123'		  JRST	VERCHK		;[110] No, VERIFY - allow any range
+  1101	001121'	313 05 0 00 003160'	ALLCMN:	CAMLE	DP,STRMXP	;[110] Make sure its in range
+  1102	001122'	254 00 0 00 004074'		  ERRPOP <Start page number too large for specified structure>
+  1103	001123'	200 01 0 00 000005 	VERCHK:	MOVE	T1,DP		; Copy start page
+  1104	001124'	230 01 0 00 003154'		IDIV	T1,BUFPAG	; See if it needs adjusting
+  1105	001125'	202 01 0 00 003221'		MOVEM	T1,CNTPRO	; Save sequence number for tape search
+  1106	001126'	220 01 0 00 003154'		IMUL	T1,BUFPAG	; Back to page number for
+  1107	001127'	312 01 0 00 000005 		CAME	T1,DP		;   adjustment check
+  1108	001130'	051 03 0 00 004076'		  MSG	<Start page adjusted.>,CRLF
+  1109	001131'	200 05 0 00 000001 		MOVE	DP,T1		; Set DP properly
+  1110
+  1111	001132'	402 00 0 00 003137'		SETZM	LASBUF		;CLEAR LAST BUFFER FLAG
+  1112	001133'	400 01 0 00 000000 		SETZ	T1,
+  1113	001134'	250 01 0 00 003145'		EXCH	T1,RESTTP
+  1114	001135'	336 00 0 00 000001 		SKIPN	T1
+  1115	001136'	201 01 0 00 000001 		  MOVEI	T1,1
+  1116	001137'	202 01 0 00 003217'		MOVEM	T1,TAPNUM
+  1117	001140'	260 17 0 00 002242'		PUSHJ	P,CHKFIR	;READ IN FIRST HEADER AND CHECK IT OUT FOR RESTORING
+  1118	001141'	263 17 0 00 000000 		  POPJ	P,		;IT DIDN'T CHECK OUT SOMEHOW
+  1119
+  1120	001142'	260 17 0 00 002233'		PUSHJ	P,RESVER	;SAY RESTORING OR VERIFYING
+  1121	001143'	200 04 0 00 000005 		MOVE	T4,DP		;THIS IS WHERE TO SAY WE ARE RESTORING FROM
+  1122	001144'	260 17 0 00 002207'		PUSHJ	P,PRTDP		;SAY WHERE WE ARE RESTORING FROM PROCNT
+  1123	001145'	051 03 0 00 003251'		MSG	<>,CRLF
+  1124
+  1125	001146'	332 00 0 00 003152'		SKIPE	VERFLG		;IF VERIFY OR COMPARE
+  1126						  JRST	[
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 26-1
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1127							 PUSHJ	P,MAPVER	;SETUP CACHE OF PAGES
+  1128							   POPJ	P,		;OOPS!
+  1129	001147'	254 00 0 00 004406'			 JRST	.+1]		;ALL DONE
+  1130
+  1131	001150'	210 11 0 00 003153'		MOVN	IOW,BUFSIZ	;GET WORDS FOR TRANSFER
+  1132	001151'	514 11 0 00 000011 		HRLZ	IOW,IOW		;SETUP COMMAND LIST
+  1133	001152'	200 12 0 00 003621'		MOVE	IOW+1,[IOWD PROLEN,PROBUF] ;PROLOGUE IOWD
+  1134	001153'	400 13 0 00 000000 		SETZ	IOW+2,		;END OF IOWD LIST
+  1135
+  1136					;NOW MAP IN THE FIRST BUFFERS
+  1137
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 27
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1138
+  1139					;HERE TO RESTART A RESTORE AFTER A TAPE INPUT ERROR.
+  1140
+  1141	001154'	200 10 0 00 003136'	RESRES:	MOVE	BUF,PTRBUF	;RESET BUFFER POINTERS.
+  1142	001155'	200 06 0 00 003154'		MOVE	CNT,BUFPAG	;SIZE OF BUFFERS
+  1143	001156'	221 06 0 00 000012 		IMULI	CNT,BUFNUM	;  FOR ALL BUFFERS
+  1144	001157'	260 17 0 00 001744'		PUSHJ	P,MAPWT		;WRITE MAP THEM IN
+  1145	001160'	263 17 0 00 000000 		  POPJ	P,		;SOMETHING WENT WRONG
+  1146	001161'	270 05 0 00 000006 		ADD	DP,CNT	 	;THIS WILL BE NEXT DP TO MAP.
+  1147	001162'	200 06 0 00 003154'		MOVE	CNT,BUFPAG	;DO IT THIS WAY
+  1148
+  1149	001163'	540 11 0 00 000010 	RESLUP:	HRR	IOW,BUF		;GET CURRENT BUFFER
+  1150	001164'	312 10 0 00 003137'		CAME	BUF,LASBUF	;LAST BUFFER? IF SO, NEED DIFFERENT COUNT
+  1151	001165'	254 00 0 00 001171'		  JRST	RESLU1		;NOT LAST.
+  1152	001166'	210 01 0 00 000006 		MOVN	T1,CNT		;GET -VE COUNT
+  1153	001167'	240 01 0 00 000011 		ASH	T1,^D9		;GET COUNT IN -VE WORDS
+  1154	001170'	504 11 0 00 000001 		HRL	IOW,T1		;PUT INTO IOW
+  1155	001171'	602 00 0 00 002000 	RESLU1:	TRNE	S,IOTEND	;DID WE SEE PHYSICAL EOT LAST RECORD?
+  1156	001172'	254 00 0 00 001212'		  JRST	NXTRS0		;YES, MAKE SURE LOGICAL EOT IS NEXT.
+  1157	001173'	336 00 0 00 003150'		SKIPN	CMPFLG		;IF COMPARING, WE MUST CHECK
+  1158	001174'	336 00 0 00 003152'		  SKIPN	VERFLG		; IF NOT, SKIP IF WE ARE VERIFYING
+  1159	001175'	260 17 0 00 000343'		 PUSHJ	P,STSRED	;CHECK READ STATUS FROM DISK
+  1160	001176'	332 00 0 00 003152'		SKIPE	VERFLG		;ARE WE COMPARING (OR VERIFYING)?
+  1161	001177'	540 11 0 00 000007 		  HRR	IOW,CMP		;YES, USE COMPARE BUFFER
+  1162	001200'	056 01 0 00 000011 		IN	TAPE,IOW
+  1163	001201'	254 00 0 00 001411'		  JRST	INOK		;OK
+  1164	001202'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET STATUS
+  1165	001203'	602 00 0 00 740000 		TRNE	S,IOEMSK	;MAKE SURE NO INPUT ERRORS
+  1166	001204'	254 00 0 00 001241'		JRST	TINERR		;SOME FATAL ERROR.
+  1167	001205'	602 00 0 00 020000 		TRNE	S,IODEND	;END OF FILE?
+  1168	001206'	254 00 0 00 001221'		JRST	NXTRES		;YES, GET NEXT TAPE.
+  1169	001207'	606 00 0 00 002000 		TRNN	S,IOTEND	;END OF TAPE?
+  1170	001210'	254 00 0 00 004421'		ERRPOP	<Unknown tape input error condition>
+  1171	001211'	254 00 0 00 001411'		JRST	INOK		;JUST PHYSICAL EOT, HANDLE IT IF HAVE TO READ ANOTHER TAPE.
+  1172
+  1173					NXTRS0:	IN	TAPE,[IOWD 1,PROBUF
+  1174	001212'	056 01 0 00 004423'				0]
+  1175	001213'	254 00 0 00 004437'		ERRPOP	<Logical EOT missing at physical end of tape>
+  1176	001214'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET TAPE STATUS
+  1177	001215'	602 00 0 00 740000 		TRNE	S,IOEMSK	;MAKE SURE NO ERRORS
+  1178	001216'	254 00 0 00 001505'		JRST	TPINER		;INPUT ERRORS, GO PRINT
+  1179	001217'	606 00 0 00 020000 		TRNN	S,IODEND	;OK, MAKE SURE LOGICAL EOT
+  1180	001220'	254 00 0 00 004421'		ERRPOP	<Unknown tape input error condition>
+  1181	001221'	072 01 0 00 000011 	NXTRES:	MTAPE	TAPE,.MTUNL	;REWIND AND UNLOAD CURRENT TAPE
+  1182	001222'	071 01 0 00 000000 		RELEAS	TAPE,		;FINISH DEVICE
+  1183	001223'	350 00 0 00 003217'		AOS	TAPNUM		;NEXT TAPE NUMBER
+  1184	001224'	051 03 0 00 004125'	NXTRS1:	MSG	<Next tape unit:>
+  1185	001225'	201 14 0 00 777777 		MOVEI	CH,-1		;FORCE READ OF NEW LINE
+  1186	001226'	260 17 0 00 002607'		PUSHJ	P,GETTAP	;GET NEXT TAPE UNIT NAME
+  1187	001227'	254 00 0 00 001224'		  JRST	NXTRS1		;KEEP TRYING
+  1188	001230'	260 17 0 00 002251'		PUSHJ	P,CHKHED	;REWIND TAPE, READ IN AND CHECK THE HEADER
+  1189	001231'	254 00 0 00 001224'		  JRST	NXTRS1		;HEADER NO GOOD, ASK FOR ANOTHER TAPE UNIT
+  1190	001232'	260 17 0 00 002233'		PUSHJ	P,RESVER
+  1191	001233'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT ;LAST RECORD RESTORED
+  1192	001234'	271 04 0 00 000001 		ADDI	T4,1		;THIS IS WHAT WE WILL RESTORE NEXT
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 27-1
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1193	001235'	220 04 0 00 003154'		IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER
+  1194	001236'	260 17 0 00 002207'		PUSHJ	P,PRTDP		;PRINT DISK ADDRESS FROM PROCNT
+  1195	001237'	051 03 0 00 003251'		MSG	<>,CRLF
+  1196	001240'	254 00 0 00 001163'		JRST	RESLUP		;THE RESTORE.
+  1197
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 28
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1198
+  1199					;HERE ON INPUT ERROR FROM TAPE. BACKUP TO FIND LAST RECORD RESTORED,
+  1200					; THEN SPACE FORWARD TO NEXT RECORD AND RESTART THE RESTORE,
+  1201					; AND TELL OPERATOR WHICH DISK PAGES DIDN'T MAKE IT OFF THE TAPE.
+  1202
+  1203	001241'	602 00 0 00 200000 	TINERR:	TRNE	S,IODERR
+  1204	001242'	051 03 0 00 004441'		MSG	<Device read error>
+  1205	001243'	602 00 0 00 100000 		TRNE	S,IODTER
+  1206	001244'	051 03 0 00 004445'		MSG	<Data read error>
+  1207	001245'	051 03 0 00 004451'	TBDERR:	MSG	<, attempting recovery...>,CRLF
+  1208	001246'	474 04 0 00 000000 	TINER1:	SETO	T4,		;SEARCH BACKWARDS
+  1209	001247'	260 17 0 00 001700'		PUSHJ	P,RESYNC	;FOR THE RECORD
+  1210						  JRST	[MSG <Cannot find last good record, searching for next good record>,CRLF
+  1211	001250'	254 00 0 00 004474'			  JRST TINER2]
+  1212	001251'	311 04 0 00 003221'		CAML	T4,CNTPRO	;MAKE SURE ITS LESS THAN ONE WERE WERE TRYING TO RESTORE
+  1213	001252'	254 00 0 00 001246'		JRST	TINER1		;NOT, SEARCH BACKWARDS SOME MORE
+  1214	001253'	051 03 0 00 004476'	TINCSB:	MSG	<Last page read successfully was >
+  1215	001254'	340 04 0 00 000000 		AOJ	T4,		;COUNT FOR NEXT RECORD
+  1216	001255'	220 04 0 00 003154'		IMUL	T4,BUFPAG	;FIRST PAGE IN NEXT RECORD
+  1217	001256'	360 04 0 00 000000 		SOJ	T4,		;LAST PAGE DONE
+  1218	001257'	260 17 0 00 002207'		PUSHJ	P,PRTDP
+  1219	001260'	051 03 0 00 003251'		MSG	<>,CRLF
+  1220	001261'	400 04 0 00 000000 	TINER2:	SETZ	T4,		;NOW SEARCH FORWARD FOR A GOOD RECORD
+  1221	001262'	260 17 0 00 001700'		PUSHJ	P,RESYNC	;TRY IT
+  1222	001263'	254 00 0 00 001303'		JRST	TINNXT		;SORRY, TRY ANOTHER TAPE.
+  1223	001264'	317 04 0 00 003221'		CAMG	T4,CNTPRO	;DON'T MESS WITH ONE WE COULDN'T RESTORE
+  1224	001265'	254 00 0 00 001261'		JRST	TINER2		;KEEP GOING
+  1225	001266'	202 04 0 00 003221'		MOVEM	T4,CNTPRO	;OK, THIS IS NEXT RECORD WE WILL BE RESTORING.
+  1226	001267'	220 04 0 00 003154'		IMUL	T4,BUFPAG	;TURN INTO PAGE NUMBER FOR PRTDP
+  1227	001270'	200 05 0 00 000004 		MOVE	DP,T4		;GET INTO DP FOR MAPPING ROUTINE
+  1228	001271'	260 17 0 00 001730'		PUSHJ	P,RESBSR	;NOW BACKSPACE BEHIND PROLOG RECORD
+  1229	001272'	254 00 0 00 004522'		  ERRPOP <Cannot backspace past next good record in input error recovery>
+  1230	001273'	260 17 0 00 001730'		PUSHJ	P,RESBSR	;NOW SPACE BACK OVER THE DATA RECORD
+  1231	001274'	254 00 0 00 004536'		  ERRPOP <Cannot backspace past next good data record>
+  1232	001275'	051 03 0 00 004540'		MSG	<Continuing at disk page >
+  1233	001276'	260 17 0 00 002207'		PUSHJ	P,PRTDP		;PRINT OUT
+  1234	001277'	051 03 0 00 003251'		MSG	<>,CRLF
+  1235	001300'	336 00 0 00 003152'		SKIPN	VERFLG		;DONT BOTHER US ABOUT VERIFIES.
+  1236	001301'	051 03 0 00 004545'		  MSG	<Notify operating systems of the missing pages.  Save this output.>,CRLF
+  1237	001302'	254 00 0 00 001154'		JRST	RESRES		;AND GO REDO THE BUFFERS, ETC.
+  1238
+  1239					;HERE IF NO HOPE, PRINT OUT MESSAGE.
+  1240
+  1241	001303'	051 03 0 00 001305'	TINNXT:	OUTSTR	TINMSG		;PRINT MESSAGE
+  1242	001304'	254 00 0 00 001221'		JRST	NXTRES		;TRY TO RESTORE FROM NEXT TAPE.
+  1243
+  1244	001305'				TINMSG:	ASCIZ	\
+  1245	001305'	015 012 103 141 156 	Cannot read the remainder of this tape. If there is another tape,
+  1246	001306'	156 157 164 040 162 
+  1247	001307'	145 141 144 040 164 
+  1248	001310'	150 145 040 162 145 
+  1249	001311'	155 141 151 156 144 
+  1250	001312'	145 162 040 157 146 
+  1251	001313'	040 164 150 151 163 
+  1252	001314'	040 164 141 160 145 
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 28-1
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1253	001315'	056 040 111 146 040 
+  1254	001316'	164 150 145 162 145 
+  1255	001317'	040 151 163 040 141 
+  1256	001320'	156 157 164 150 145 
+  1257	001321'	162 040 164 141 160 
+  1258	001322'	145 054 015 012 160 	please mount it and the operation will be continued from there.
+  1259	001323'	154 145 141 163 145 
+  1260	001324'	040 155 157 165 156 
+  1261	001325'	164 040 151 164 040 
+  1262	001326'	141 156 144 040 164 
+  1263	001327'	150 145 040 157 160 
+  1264	001330'	145 162 141 164 151 
+  1265	001331'	157 156 040 167 151 
+  1266	001332'	154 154 040 142 145 
+  1267	001333'	040 143 157 156 164 
+  1268	001334'	151 156 165 145 144 
+  1269	001335'	040 146 162 157 155 
+  1270	001336'	040 164 150 145 162 
+  1271	001337'	145 056 015 012 111 	If there is no other tape, all pages on the structure after the last
+  1272	001340'	146 040 164 150 145 
+  1273	001341'	162 145 040 151 163 
+  1274	001342'	040 156 157 040 157 
+  1275	001343'	164 150 145 162 040 
+  1276	001344'	164 141 160 145 054 
+  1277	001345'	040 141 154 154 040 
+  1278	001346'	160 141 147 145 163 
+  1279	001347'	040 157 156 040 164 
+  1280	001350'	150 145 040 163 164 
+  1281	001351'	162 165 143 164 165 
+  1282	001352'	162 145 040 141 146 
+  1283	001353'	164 145 162 040 164 
+  1284	001354'	150 145 040 154 141 
+  1285	001355'	163 164 015 012 162 	reported one have been lost.
+  1286	001356'	145 160 157 162 164 
+  1287	001357'	145 144 040 157 156 
+  1288	001360'	145 040 150 141 166 
+  1289	001361'	145 040 142 145 145 
+  1290	001362'	156 040 154 157 163 
+  1291	001363'	164 056 015 012 015 
+  1292	001364'	012 117 156 040 141 	On a RESTORE this is a serious error and you should not bring up the
+  1293	001365'	040 122 105 123 124 
+  1294	001366'	117 122 105 040 164 
+  1295	001367'	150 151 163 040 151 
+  1296	001370'	163 040 141 040 163 
+  1297	001371'	145 162 151 157 165 
+  1298	001372'	163 040 145 162 162 
+  1299	001373'	157 162 040 141 156 
+  1300	001374'	144 040 171 157 165 
+  1301	001375'	040 163 150 157 165 
+  1302	001376'	154 144 040 156 157 
+  1303	001377'	164 040 142 162 151 
+  1304	001400'	156 147 040 165 160 
+  1305	001401'	040 164 150 145 015 
+  1306	001402'	012 163 171 163 164 	system for general timesharing.
+  1307	001403'	145 155 040 146 157 
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 28-2
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1308	001404'	162 040 147 145 156 
+  1309	001405'	145 162 141 154 040 
+  1310	001406'	164 151 155 145 163 
+  1311	001407'	150 141 162 151 156 
+  1312	001410'	147 056 015 012 000 	\
+  1313
+  1314
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 29
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1315					;HERE IF ALL IS OK
+  1316
+  1317	001411'	200 01 0 00 003222'	INOK:	MOVE	T1,PROBUF+PROCOD	;GET MAGIC CODE
+  1318	001412'	312 01 0 00 003235'		CAME	T1,FIRTIM		;SEE IF ITS CORRECT
+  1319						  JRST	[MSG <Bad data record prologue code >
+  1320	001413'	254 00 0 00 004572'			 JRST TBDERR]		;TRY TO RECOVER
+  1321	001414'	200 01 0 00 003223'		MOVE	T1,PROBUF+PROCNT	;GET RECORD NUMBER
+  1322	001415'	316 01 0 00 003221'		CAMN	T1,CNTPRO		;OK?
+  1323	001416'	254 00 0 00 001426'		  JRST	INOK0			;Yes
+  1324	001417'	051 03 0 00 004574'		MSG	(<Bad record sequence number found in data record >,CRLF)
+  1325	001420'	051 03 0 00 004607'		MSG	<Found >
+  1326	001421'	260 17 0 00 002746'		PUSHJ	P,OCTOUT		;Type out T1 (PROBUF+PROCNT)
+  1327	001422'	051 03 0 00 004611'		MSG	<, expecting >
+  1328	001423'	200 01 0 00 003221'		MOVE	T1,CNTPRO
+  1329	001424'	260 17 0 00 002746'		PUSHJ	P,OCTOUT
+  1330	001425'	254 00 0 00 001245'		JRST	TBDERR			;TRY TO RECOVER
+  1331
+  1332	001426'	350 00 0 00 003221'	INOK0:	AOS	CNTPRO			;GO TO NEXT ONE.
+  1333	001427'	336 01 0 00 003137'		SKIPN	T1,LASBUF	;IF THROUGH MAPPING STUF,
+  1334	001430'	254 00 0 00 001443'		  JRST	INOK1		;NOT THRU
+  1335	001431'	312 01 0 00 000010 		CAME	T1,BUF		;DID WE JUST INPUT TO THE LAST BUFFER?
+  1336	001432'	254 00 0 00 001456'		  JRST	NOMAPW		;OK,SKIP AROUND MAPPING.
+  1337						IN	TAPE,[IOWD 1,PROBUF
+  1338	001433'	056 01 0 00 004423'				0]	;MAKE SURE WE SEE EOT
+  1339	001434'	254 00 0 00 004624'	NOEOT:	 ERRPOP <Logical EOT expected and not seen>
+  1340	001435'	062 01 0 00 000000 		GETSTS	TAPE,S
+  1341	001436'	602 00 0 00 020000 		TRNE	S,IODEND	;IF END OF FILE,
+  1342	001437'	254 00 0 00 001463'		  JRST	RESDON		;THEN END OF RESTORE.
+  1343	001440'	606 00 0 00 740000 		TRNN	S,IOEMSK	;ANY IO ERROR? IF SO, PRINT.
+  1344	001441'	254 00 0 00 004636'		  ERRPOP <Expecting logical EOT but received >
+  1345	001442'	254 00 0 00 001505'		JRST	TPINER		;SAY WHAT WENT WRONG.
+  1346
+  1347	001443'	200 01 0 00 003160'	INOK1:	MOVE	T1,STRMXP	;GET MAX PAGE NUMBER ON THIS STR
+  1348	001444'	274 01 0 00 000005 		SUB	T1,DP		;T1 GETS HOW MANY LEFT
+  1349	001445'	313 01 0 00 003154'		CAMLE	T1,BUFPAG	;SKIP IF THIS IS LAST RECORD
+  1350	001446'	254 00 0 00 001451'		  JRST	INOK2		;NO, JUST MAP IN NEXT BUFFER
+  1351	001447'	202 10 0 00 003137'		MOVEM	BUF,LASBUF	;THIS WILL BE LAST BUFFER WE RESTORE TO
+  1352	001450'	200 06 0 00 000001 		MOVE	CNT,T1
+  1353	001451'	332 00 0 00 003150'	INOK2:	SKIPE	CMPFLG		;IF COMPARING TAPE TO DISK
+  1354	001452'	260 17 0 00 001534'		  PUSHJ	P,CMPDSK	;COMPARE DISK PAGES WITH TAPE RECORD
+  1355	001453'	260 17 0 00 001744'		PUSHJ	P,MAPWT		;GET NEXT BUFFER IN
+  1356	001454'	263 17 0 00 000000 		  POPJ	P,		;NO GOOD
+  1357	001455'	270 05 0 00 000006 		ADD	DP,CNT		;ADVANCE TO NEXT ADDRESS TO MAP
+  1358	001456'	270 10 0 00 003153'	NOMAPW:	ADD	BUF,BUFSIZ	;ADVANCE BUFFER ADDRESS
+  1359	001457'	360 10 0 00 000000 		SOJ	BUF,		;  MINUS 1
+  1360	001460'	253 10 0 00 001163'		AOBJN	BUF,RESLUP	;AND INPUT TO NEXT BUFFER
+  1361	001461'	200 10 0 00 003136'		MOVE	BUF,PTRBUF	;WRAP AROUND
+  1362	001462'	254 00 0 00 001163'		JRST	RESLUP		;AND LOOP
+  1363
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 30
+ASP	MAC	22-Feb-83 21:20		RESTORE, VERIFY and COMPARE
+
+  1364
+  1365					;HERE IF FIND END OF FILE. MAKE SURE EVERYTHING HAS BEEN RESTORED
+  1366
+  1367	001463'	312 10 0 00 003137'	RESDON:	CAME	BUF,LASBUF	;MAKE SURE WE JUST RESTORED LAST BUFFER
+  1368	001464'	254 00 0 00 004653'		  ERRPOP <Not enough data on tapes to fill entire structure>
+  1369	001465'	336 00 0 00 003150'		SKIPN	CMPFLG		;WERE WE COMPARING?
+  1370	001466'	254 00 0 00 001502'		  JRST	RESDO2		;NO, JUST RETURN
+  1371	001467'	200 01 0 00 003151'		MOVE	T1,CMPCNT	;GET ERROR COUNT
+  1372	001470'	326 01 0 00 001473'		JUMPN	T1,RESDO1	;NON-ZERO, PRINT COUNT
+  1373	001471'	051 03 0 00 004655'		MSG	<No>		;ELSE PRINT NONE
+  1374	001472'	304 00 0 00 000000 		CAIA			;  SKIP
+  1375	001473'	260 17 0 00 002667'	RESDO1:	  PUSHJ	P,DECOUT	; PRINT # OF ERRORS
+  1376	001474'	051 03 0 00 004656'		MSG	< page>		; CONCERNING PAGE(S)
+  1377	001475'	200 01 0 00 003151'		MOVE	T1,CMPCNT	; SEE HOW MANY
+  1378	001476'	302 01 0 00 000001 		CAIE	T1,1		;  ONLY ONE?
+  1379	001477'	051 16 0 00 000163 		 OUTCHI	"s"		;  NO, SAY PLURAL
+  1380	001500'	051 03 0 00 004660'		MSG	< are different.>,CRLF
+  1381	001501'	051 03 0 00 003251'		MSG	<>,CRLF
+  1382
+  1383	001502'	051 03 0 00 004664'	RESDO2:	MSG	<ASP >
+  1384	001503'	260 17 0 00 002233'		PUSHJ	P,RESVER
+  1385	001504'	254 00 0 00 000720'		PJRST	XXXDON		;PRINT COMPLETED ON AND GIVE SKIP RETURN
+  1386									;WHAT ABOUT IF A FEW PAGES MISSING FROM
+  1387									;THE LAST RECORD?
+  1388
+  1389
+  1390					;HERE WITH CHANNEL STATUS IN S TO PRINT MESSAGE AND POPJ
+  1391
+  1392	001505'	051 03 0 00 004665'	TPINER:	MSG <Fatal input tape >
+  1393	001506'	254 00 0 00 001510'		JRST	TPXXER		;COMMON PLACE
+  1394	001507'	051 03 0 00 004671'	TPOUER:	MSG	<Fatal output tape >
+  1395	001510'	602 00 0 00 200000 	TPXXER:	TRNE S,IODERR
+  1396	001511'	051 03 0 00 004675'		  MSG	<device >
+  1397	001512'	602 00 0 00 100000 		TRNE S,IODTER
+  1398	001513'	051 03 0 00 004677'		  MSG	<data >
+  1399	001514'	602 00 0 00 400000 		TRNE	S,IOIMPM	;WRITE LOCK?
+  1400	001515'	051 03 0 00 004701'		  MSG	<write lock >
+  1401	001516'	051 03 0 00 004447'		MSG	<error>
+  1402	001517'	263 17 0 00 000000 		POPJ	P,
+  1403
+  1404	001520'	332 00 0 00 000000*	ALONE:	SKIPE	.JBDDT##	;IF DDT IS LOADED
+  1405	001521'	254 00 0 00 001533'		  JRST	ALONE2		; ALLOW ANYTIME
+  1406	001522'	332 00 0 00 003150'		SKIPE	CMPFLG		;IF COMPARING
+  1407	001523'	254 00 0 00 001526'		  JRST	ALONE1		; MUST BE SINGLE ACCESS
+  1408	001524'	332 00 0 00 003152'		SKIPE	VERFLG		;IF VERIFYING,
+  1409	001525'	254 00 0 00 002660'		  JRST	CPOPJ1		;THEN OK.
+  1410	001526'	047 00 0 00 777760 	ALONE1:	ONEJOB			;SEE IF OK TO RESTORE
+  1411	001527'	254 00 0 00 004716'		  ERRPOP <Not only job or system not super shut, aborted>
+  1412	001530'	047 00 0 00 777756 		DSKCLR	0,		;OK, TRY TO DUMP OUT PCBS
+  1413	001531'	254 00 0 00 001530'		  JRST	.-1		;PCB IO IN PROGRESS, TRY AGAIN
+  1414	001532'	254 00 0 00 004727'		  ERRPOP <Cannot perform DSKCLR, aborting>
+  1415
+  1416	001533'	254 00 0 00 002660'	ALONE2:	JRST	CPOPJ1		;OK, FINISHED.
+  1417
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 31
+ASP	MAC	22-Feb-83 21:20		CMPDSK - Compare disk to tape output
+
+  1418					SUBTTL	CMPDSK - Compare disk to tape output
+  1419
+  1420	001534'	540 11 0 00 000010 	CMPDSK:	HRR	IOW,BUF		; Get disk buffer address
+  1421	001535'	210 01 0 00 003154'		MOVN	T1,BUFPAG	; Use full buffer count
+  1422	001536'	316 10 0 00 003137'		CAMN	BUF,LASBUF	; Unless this is last buffer
+  1423	001537'	210 01 0 00 000006 		  MOVN	T1,CNT		; Get current count of pages
+  1424	001540'	240 01 0 00 000011 		ASH	T1,^D9		; Convert to words
+  1425	001541'	261 17 0 00 000007 		PUSH	P,CMP		; Save compare buffer address
+  1426	001542'	504 07 0 00 000001 		HRL	CMP,T1		; Get -wordcount AOBJN pointer
+  1427	001543'	200 01 0 11 000001 	CMPLOP:	MOVE	T1,1(IOW)	; Get disk word
+  1428	001544'	312 01 0 07 000001 		CAME	T1,1(CMP)	; Compare with tape word
+  1429	001545'	254 00 0 00 001552'		  JRST	CMPFAL		; Failed!
+  1430	001546'	340 11 0 00 000000 		AOJ	IOW,		; Increment pointer
+  1431	001547'	253 07 0 00 001543'	CMPEND:	AOBJN	CMP,CMPLOP	; Try next
+  1432	001550'	262 17 0 00 000007 		POP	P,CMP		; Restore compare buffer address
+  1433	001551'	263 17 0 00 000000 		POPJ	P,		; All done, return
+  1434
+  1435	001552'	350 00 0 00 003151'	CMPFAL:	AOS	CMPCNT		; count failures
+  1436	001553'	332 00 0 00 003155'		SKIPE	VERBOSE		; are we verbose?  (yes --vvv-- 68 spaces)
+  1437	001554'	051 03 0 00 004731'		  MSG	<                                                                    >
+  1438	001555'	051 03 0 00 004747'		MSG	<Disk modified at >
+  1439	001556'	574 01 0 00 000007 		HLRE	T1,CMP		;  - word count left
+  1440	001557'	240 01 0 00 777767 		ASH	T1,-^D9		;  - pages left
+  1441	001560'	200 04 0 00 003154'		MOVE	T4,BUFPAG	;  + full buffer
+  1442	001561'	316 10 0 00 003137'		CAMN	BUF,LASBUF	;  (except last buffer)
+  1443	001562'	200 04 0 00 000006 		  MOVE	T4,CNT		;  use current count
+  1444	001563'	270 01 0 00 000004 		ADD	T1,T4		;  + total = page #
+  1445	001564'	200 04 0 00 003223'		MOVE	T4,PROBUF+PROCNT ;Last record restored
+  1446	001565'	220 04 0 00 003154'		IMUL	T4,BUFPAG	; Turn into page number
+  1447	001566'	270 04 0 00 000001 		ADD	T4,T1		; Add in current set.
+  1448	001567'	260 17 0 00 002207'		PUSHJ	P,PRTDP		; And give the page number.
+  1449					;*;	PUSHJ	P,CMPWNO	; Print the word/page number
+  1450
+  1451	001570'	336 00 0 00 003155'		SKIPN	VERBOSE		; Want verbose?
+  1452	001571'	254 00 0 00 001670'		  JRST	CMPDFX		; No, just go to end
+  1453	001572'	261 17 0 00 000007 		PUSH	P,CMP		; don't wipe these
+  1454	001573'	261 17 0 00 000011 		PUSH	P,IOW		; just yet
+  1455
+  1456	001574'	505 11 0 00 777600 		HRLI	IOW,-1000/4	; fixup for AOBJN
+  1457	001575'	275 11 0 00 000777 		SUBI	IOW,777		; decrement for this page	[DISK]
+  1458	001576'	660 11 0 00 000777 		TRO	IOW,777		; reset word address
+  1459	001577'	275 07 0 00 000777 		SUBI	CMP,777		; decrement for this page	[TAPE]
+  1460	001600'	660 07 0 00 000777 		TRO	CMP,777		; reset word address
+  1461	001601'	402 00 0 00 003156'		SETZM	OSTARS		; don't print stars
+  1462
+  1463	001602'	200 01 0 11 000001 	CMPDF1:	MOVE	T1,1(IOW)	; first on a line
+  1464	001603'	312 01 0 07 000001 		CAME	T1,1(CMP)	; match?
+  1465	001604'	254 00 0 00 001616'		  JRST	CMPDF2		; no - must print then
+  1466	001605'	200 01 0 11 000002 		MOVE	T1,2(IOW)	; first on a line
+  1467	001606'	312 01 0 07 000002 		CAME	T1,2(CMP)	; match?
+  1468	001607'	254 00 0 00 001616'		  JRST	CMPDF2		; no - must print then
+  1469	001610'	200 01 0 11 000003 		MOVE	T1,3(IOW)	; first on a line
+  1470	001611'	312 01 0 07 000003 		CAME	T1,3(CMP)	; match?
+  1471	001612'	254 00 0 00 001616'		  JRST	CMPDF2		; no - must print then
+  1472	001613'	200 01 0 11 000004 		MOVE	T1,4(IOW)	; first on a line
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 31-1
+ASP	MAC	22-Feb-83 21:20		CMPDSK - Compare disk to tape output
+
+  1473	001614'	316 01 0 07 000004 		CAMN	T1,4(CMP)	; match? -*-
+  1474	001615'	254 00 0 00 001662'		  JRST	CMPDF4		; yes, no need to print
+  1475
+  1476	001616'	551 01 0 11 000001 	CMPDF2:	HRRZI	T1,1(IOW)	; get address part
+  1477	001617'	405 01 0 00 000777 		ANDI	T1,777		; only want to see word
+  1478	001620'	260 17 0 00 003007'		PUSHJ	P,OCTWNO	; print word number
+  1479	001621'	051 03 0 00 004753'		MSG	</  >		; line header
+  1480	001622'	200 01 0 07 000001 		MOVE	T1,1(CMP)	; first on a line
+  1481	001623'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1482	001624'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1483	001625'	200 01 0 07 000002 		MOVE	T1,2(CMP)	; first on a line
+  1484	001626'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1485	001627'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1486	001630'	200 01 0 07 000003 		MOVE	T1,3(CMP)	; first on a line
+  1487	001631'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1488	001632'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1489	001633'	200 01 0 07 000004 		MOVE	T1,4(CMP)	; first on a line
+  1490	001634'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1491	001635'	051 03 0 00 004755'		MSG	<    |    >	; spacing --------------------------------
+  1492	001636'	200 01 0 11 000001 		MOVE	T1,1(IOW)	; first on a line
+  1493	001637'	312 01 0 07 000001 		CAME	T1,1(CMP)	; same as tape?
+  1494	001640'	476 00 0 00 003156'		  SETOM	OSTARS		; no, output a star
+  1495	001641'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1496	001642'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1497	001643'	200 01 0 11 000002 		MOVE	T1,2(IOW)	; first on a line
+  1498	001644'	312 01 0 07 000002 		CAME	T1,2(CMP)	; same as tape?
+  1499	001645'	476 00 0 00 003156'		  SETOM	OSTARS		; no, output a star
+  1500	001646'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1501	001647'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1502	001650'	200 01 0 11 000003 		MOVE	T1,3(IOW)	; first on a line
+  1503	001651'	312 01 0 07 000003 		CAME	T1,3(CMP)	; same as tape?
+  1504	001652'	476 00 0 00 003156'		  SETOM	OSTARS		; no, output a star
+  1505	001653'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1506	001654'	051 03 0 00 004754'		MSG	<  >		; spacing
+  1507	001655'	200 01 0 11 000004 		MOVE	T1,4(IOW)	; first on a line
+  1508	001656'	312 01 0 07 000004 		CAME	T1,4(CMP)	; same as tape?
+  1509	001657'	476 00 0 00 003156'		  SETOM	OSTARS		; no, output a star
+  1510	001660'	260 17 0 00 002765'		PUSHJ	P,OCTSIX	; print it
+  1511	001661'	051 03 0 00 003251'		MSG	<>,CRLF		; spacing
+  1512	001662'	271 07 0 00 000004 	CMPDF4:	ADDI	CMP,4		; add next offset
+  1513	001663'	271 11 0 00 000003 		ADDI	IOW,3		; add next offset
+  1514	001664'	253 11 0 00 001602'		AOBJN	IOW,CMPDF1	; loop through page
+  1515	001665'	051 03 0 00 003251'		MSG	<>,CRLF		; final crlf
+  1516	001666'	262 17 0 00 000011 		POP	P,IOW		; we are done with
+  1517	001667'	262 17 0 00 000007 		POP	P,CMP		; these for now
+  1518
+  1519	001670'	340 11 0 00 000000 	CMPDFX:	AOJ	IOW,		; Setup current page
+  1520	001671'	660 11 0 00 000777 		TRO	IOW,777		; Set to page boundary
+  1521
+  1522	001672'	621 07 0 00 000777 		TLZ	CMP,777		; Beginning of page
+  1523	001673'	340 07 0 00 000000 		AOJ	CMP,		; Into the right page
+  1524	001674'	660 07 0 00 000777 		TRO	CMP,777		; Round to next page
+  1525	001675'	270 07 0 00 004757'		ADD	CMP,[1000,,0]	; Count is set properly
+  1526	001676'	274 07 0 00 004760'		SUB	CMP,[1,,1]	; Backup one for jump
+  1527	001677'	254 00 0 00 001547'		JRST	CMPEND		; And look for more
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 31-2
+ASP	MAC	22-Feb-83 21:20		CMPDSK - Compare disk to tape output
+
+  1528
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 32
+ASP	MAC	22-Feb-83 21:20		CMPDSK - Compare disk to tape output
+
+  1529					COMMENT \RESYNC - ROUTINE TO FIND A GOOD RECORD ON TAPE
+  1530					ENTER WITH T4/0 IF SEARCH FORWARD, 1 IF SEARCH BACKWARD
+  1531					RETURNS CPOPJ IF CANNOT FIND ANY GOOD RECORDS
+  1532					RETURNS CPOPJ1 WITH RECORD PAIR NUMBER IN T4 IF FIND A GOOD RECORD.
+  1533
+  1534					\
+  1535
+  1536	001700'	210 03 0 00 003143'	RESYNC:	MOVN	T3,SRCLEN	;HOW MANY PAIRS TO SEARCH
+  1537	001701'	517 00 0 00 000003 		HRLZS	T3		;GET -COUNT,,0
+  1538	001702'	060 01 1 00 003224'		SETSTS	TAPE,@OPNTAP	;CLEAR ANY ERROR STATUS
+  1539
+  1540	001703'	322 04 0 00 001706'	RESYN1:	JUMPE	T4,RESYN2	;GO IF GOING FORWARD.
+  1541	001704'	260 17 0 00 001730'		PUSHJ	P,RESBSR	;TRY IT
+  1542	001705'	263 17 0 00 000000 		  POPJ	P,		;DIDNT WORK.
+  1543					RESYN2:	IN	TAPE,[IOWD PROLEN,HEDBF1
+  1544	001706'	056 01 0 00 004761'			      0]	;READ DATA IN
+  1545	001707'	254 00 0 00 001714'		  JRST	RESYN3		;OK, SEE WHAT WE'VE GOT FOR DATA
+  1546	001710'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET IO STATUS
+  1547	001711'	606 00 0 00 022000 		TRNN	S,IOTEND+IODEND	;BEG OR END OF TAPE?
+  1548	001712'	254 00 0 00 001721'		JRST	RESYN4		;NO, SOME OTHER ERROR, JUST IGNORE
+  1549	001713'	254 00 0 00 001734'		JRST	RESERR		;PRINT OUT AND CPOPJ RETURN.
+  1550
+  1551	001714'	200 01 0 00 002505'	RESYN3:	MOVE	T1,HEDBF1+PROCOD ;IS IT A PROLOGUE RECORD?
+  1552	001715'	312 01 0 00 003235'		CAME	T1,FIRTIM
+  1553	001716'	254 00 0 00 001721'		  JRST	RESYN4		;NO, KEEP GOING
+  1554	001717'	200 04 0 00 002506'		MOVE	T4,HEDBF1+PROCNT	;GET NUMBER AND
+  1555	001720'	254 00 0 00 002660'		JRST	CPOPJ1		;RETURN, POSITIONED AFTER THE RECORD FOUND.
+  1556	001721'	602 00 0 00 740000 	RESYN4:	TRNE	S,IOEMSK	;ANY ERRORS?
+  1557	001722'	060 01 1 00 003224'		 SETSTS	TAPE,@OPNTAP	;YES, CLEAR THE STATUS SO CAN DO A NEW INPUT.
+  1558	001723'	322 04 0 00 001726'		JUMPE	T4,RESYN5	;GO IF NOT BACKAPCE
+  1559	001724'	260 17 0 00 001730'		PUSHJ	P,RESBSR	;TRY TO BACKSPACE
+  1560	001725'	263 17 0 00 000000 		  POPJ	P,		;NO GO
+  1561	001726'	253 03 0 00 001703'	RESYN5:	AOBJN	T3,RESYN1	;GO FOR MORE
+  1562	001727'	254 00 0 00 005002'		ERRPOP	<Cannot find a good prologue record while attempting to resynchronize.>
+  1563
+  1564					;ROUTINE TO TRY TO BACKSPACE A RECORD.
+  1565
+  1566	001730'	072 01 0 00 000007 	RESBSR:	MTAPE	TAPE,.MTBSR	;THEN BACKSPACE PAST REC WE JUST READ.
+  1567	001731'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET STATUS AFTER BACKSPACE.
+  1568	001732'	606 00 0 00 762000 		TRNN	S,IOEMSK+IOTEND+IODEND ;ANY PROBLEMS?
+  1569	001733'	254 00 0 00 002660'		JRST	CPOPJ1		;OK.
+  1570
+  1571	001734'	602 00 0 00 002000 	RESERR:	TRNE	S,IOTEND
+  1572	001735'	254 00 0 00 005023'		  ERRPOP <Physical end or beginning of tape while attempting to resynchronize.>
+  1573	001736'	602 00 0 00 020000 		TRNE	S,IODEND
+  1574	001737'	254 00 0 00 005042'		  ERRPOP <Logical EOT encountered while attempting to resynchronize.>
+  1575	001740'	051 03 0 00 005044'		MSG	<Unknown error while attempting to resynchronize.>
+  1576	001741'	263 17 0 00 000000 		POPJ	P,
+  1577
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 33
+ASP	MAC	22-Feb-83 21:20		CMPDSK - Compare disk to tape output
+
+  1578					;ROUTINE TO MAP A NUMBER OF PAGES INTO THE BUFFER AREA.
+  1579					; BUF/ADDR-1 OF PLACE TO START MAPPING
+  1580					; CNT/NUMBER OF PAGES TO MAP.
+  1581					; DP/DISK ADDRESS TO START MAPPING.
+  1582
+  1583	001742'	205 04 0 06 002000 	MAPRD:	MOVSI	T4,2000(CNT)	;GET WORD FOR MAPPING (READ-ONLY)
+  1584	001743'	254 00 0 00 001751'		  JRST	MAPIT
+  1585	001744'	205 04 0 06 006000 	MAPWT:	MOVSI	T4,6000(CNT)	;FOR WRITING (COPY ON WRITE FOR TESTING)
+  1586	001745'	336 00 0 00 003150'		SKIPN	CMPFLG		;IF NOT COMPARING
+  1587	001746'	254 00 0 00 001751'		  JRST	MAPIT		;CONTINUE
+  1588	001747'	205 04 0 06 002000 		MOVSI	T4,2000(CNT)	; MAP AS READ-ONLY
+  1589	001750'	254 00 0 00 001753'		JRST	MAPCMP		; AND GO
+  1590
+  1591	001751'	332 00 0 00 003152'	MAPIT:	SKIPE	VERFLG		;IF VERIFY,
+  1592	001752'	254 00 0 00 002660'		  JRST	CPOPJ1		; WE ALREADY DID THIS
+  1593	001753'	201 01 0 10 000001 	MAPCMP:	MOVEI	T1,1(BUF)	;GET ADDR OF BUFFER
+  1594	001754'	242 01 0 00 777767 		LSH	T1,-^D9		;PAGE NUMBER
+  1595	001755'	504 01 0 00 000006 		HRL	T1,CNT		;COUNT,,FIRST PAGE TO REMOVE
+  1596	001756'	047 01 0 00 777712 		VCLEAR	T1,		;REMOVE THE PAGE
+  1597						  JRST	[HRRZS	T1	;JUST CODE
+  1598							 CAIE	T1,4	;MAKE SURE JUST BECAUSE PAGE WASN'T THERE
+  1599							   ERRPOP <Unexpected VCLEAR error code>
+  1600	001757'	254 00 0 00 005067'			 JRST	.+1]
+  1601	001760'	200 03 0 00 005073'		MOVE	T3,[.CHSMP,,DISK] ;THE FUNCTION
+  1602	001761'	200 02 0 00 000005 		MOVE	T2,DP		;GET DP TO MAP
+  1603	001762'	500 01 0 00 000004 		HLL	T1,T4		;GET PROPER BITS+COUNT,,PAGE IN T1
+  1604	001763'				PATMAP:
+  1605	001763'	043 03 0 00 000001 	IFE FTDEBG,<CHANIO T3,T1>
+  1606					IFN FTDEBG,<VCREAT T1,>
+  1607	001764'	254 00 0 00 005100'		  ERRPOP <Can't super map>
+  1608	001765'				PATMP1:
+  1609					IFN FTDEBG,<TLNN T4,4000	;IF READING,
+  1610						JRST	[MOVE T2,T1
+  1611							 TLO T2,4000
+  1612							 VPROT T2,	;READ ENABLE
+  1613							  ERRPOP <VPROT failed>
+  1614							 MOVEM DP,1(BUF) ;SET DP IN THIS PAGE
+  1615							 TLZ T2,4000
+  1616							 VPROT T2,
+  1617							  ERRPOP <VPROT failed>
+  1618							 JRST .+1]>;END IFN FTDEBG
+  1619	001765'	200 02 0 00 004760'		MOVE	T2,[.WSRNG,,T1]	;PUT THEM INTO WS
+  1620	001766'	047 02 0 00 777704 		WSCTL	T2,
+  1621	001767'	254 00 0 00 005111'		  ERRPOP <Can't put pages into working set>
+  1622	001770'	047 01 0 00 777703 		PREREF	T1,		;PREREF THE FIRST PAGE, REST WILL COME IN WITH IT.
+  1623	001771'	254 00 0 00 005122'		  ERRPOP <Can't pre-reference buffer pages>
+  1624	001772'	505 01 0 06 002000 		HRLI	T1,2000(CNT)	;NOW SET IGNORE ERRORS
+  1625	001773'	047 01 0 00 777706 		PERSET	T1,
+  1626	001774'	254 00 0 00 005135'		  ERRPOP <Can't set ignore error for buffer pages>
+  1627	001775'	254 00 0 00 002660'		JRST	CPOPJ1		;GOOD RETURN
+  1628
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 34
+ASP	MAC	22-Feb-83 21:20		MAPVER  CMPCLR
+
+  1629					SUBTTL	MAPVER  CMPCLR
+  1630
+  1631	001776'	260 17 0 00 002007'	MAPVER:	PUSHJ	P,CMPCLR	; UNMAP PREVIOUS PAGES
+  1632	001777'	263 17 0 00 000000 		  POPJ	P,		;  OOPS!
+  1633	002000'	201 01 0 07 000001 		MOVEI	T1,1(CMP)	; GET ADDRESS OF COMPARE BUFFER
+  1634	002001'	242 01 0 00 777767 		LSH	T1,-^D9		; CONVERT TO PAGES
+  1635	002002'	504 01 0 00 003154'		HRL	T1,BUFPAG	;  COUNT = #PAGES IN BUFFER
+  1636	002003'	661 01 0 00 006000 		TLO	T1,6000		;  .PRRW = read/write
+  1637	002004'	047 01 0 00 777711 		VCREAT	T1,		; CREATE NEW PAGES
+  1638	002005'	254 00 0 00 005147'		  ERRPOP <Unexpected VCREAT error in COMPARE>
+  1639	002006'	254 00 0 00 002660'		JRST	CPOPJ1		; RETURN
+  1640
+  1641
+  1642	002007'	201 01 0 07 000001 	CMPCLR:	MOVEI	T1,1(CMP)	;GET ADDRESS OF COMPARE BUFFER
+  1643	002010'	242 01 0 00 777767 		LSH	T1,-^D9		;CONVERT TO PAGES
+  1644	002011'	504 01 0 00 003154'		HRL	T1,BUFPAG	; COUNT = #PAGES IN BUFFER
+  1645	002012'	047 01 0 00 777712 		VCLEAR	T1,		;REMOVE THE PAGES
+  1646						  JRST	[HRRZS	T1	;  GET ERROR CODE
+  1647							 CAIE	T1,4	;  NOT IF PAGE NOT THERE
+  1648							   ERRPOP <Unexpected VCLEAR error in COMPARE>
+  1649	002013'	254 00 0 00 005163'			 JRST	.+1]	;  (or CPOPJ1)
+  1650	002014'	254 00 0 00 002660'		JRST	CPOPJ1		;RETURN
+  1651
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 35
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1652					SUBTTL HEADER STUFF
+  1653
+  1654					COMMENT #THE FIRST RECORD ON A ASP TAPE CONTAINS THE FOLLOWING
+  1655					INFORMATION
+  1656
+  1657					SIZE OF RECORD
+  1658					CODE NAME
+  1659					VERSION OF ASP
+  1660					TAPE NUMBER
+  1661					SYSTEM NAME
+  1662					DATE ASP STARTED
+  1663					TIME ASP STARTED (GMT)
+  1664					STRUCTURE NAME
+  1665					SIZE OF STRUCTURE
+  1666					NUMBER OF UNITS IN STRUCTURE
+  1667
+  1668					#
+  1669
+  1670
+  1671	002015'	201 01 0 00 000017 	INIHED:	MOVEI	T1,SIZHED		; Size of header record
+  1672	002016'	504 01 0 00 003154'		HRL	T1,BUFPAG		; Page size of tape record
+  1673	002017'	202 01 0 00 002466'		MOVEM	T1,HEDBUF+HEDSIZ
+  1674	002020'	200 01 0 00 003216'		MOVE	T1,CODNAM		; Unlikely code 'ASP'
+  1675	002021'	202 01 0 00 002467'		MOVEM	T1,HEDBUF+HEDNAM
+  1676	002022'	200 01 0 00 000000*		MOVE	T1,.JBVER##		; Version number
+  1677	002023'	202 01 0 00 002470'		MOVEM	T1,HEDBUF+HEDVER
+  1678	002024'	200 01 0 00 003217'		MOVE	T1,TAPNUM		; CURRENT TAPE NUMBER
+  1679	002025'	202 01 0 00 002471'		MOVEM	T1,HEDBUF+HEDTPN	; STORE IT
+  1680	002026'	200 01 0 00 003233'		MOVE	T1,STRNMU		; GET NUMBER OF UNITS
+  1681	002027'	202 01 0 00 002504'		MOVEM	T1,HEDBUF+HEDNMU
+  1682	002030'	200 01 0 00 003232'		MOVE	T1,STRHID		; HOME BLOCK ID OF STR
+  1683	002031'	202 01 0 00 002503'		MOVEM	T1,HEDBUF+HEDHID
+  1684	002032'	200 01 0 00 003160'		MOVE	T1,STRMXP		;GET STR SIZE
+  1685	002033'	202 01 0 00 002502'		MOVEM	T1,HEDBUF+HEDMXP	;SET IN HEADER
+  1686	002034'	205 02 0 00 777773 		MOVSI	T2,-SYSNSZ		;AOBJN POINTER
+  1687	002035'	201 01 0 00 000011 	SYNLUP:	MOVEI	T1,.GTCNF		;TABLE NUMBER
+  1688	002036'	504 01 0 00 000002 		HRL	T1,T2			;GET WORD NUMBER
+  1689	002037'	047 01 0 00 000041 		GETTAB	T1,			;GET THE NAME
+  1690	002040'	254 00 0 00 005174'		  ERRPOP <Cannot get system name>
+  1691	002041'	202 01 0 02 002472'		MOVEM	T1,HEDBUF+HEDSYN(T2)	;STORE INTO HEADER
+  1692	002042'	253 02 0 00 002035'		AOBJN	T2,SYNLUP
+  1693	002043'	400 01 0 00 000000 		SETZ	T1,		;GET POSSIBLE RESTART DATE
+  1694	002044'	250 01 0 00 003146'		EXCH	T1,RESDAT	;AND CLEAR
+  1695	002045'	326 01 0 00 002053'		JUMPN	T1,INISRD	;SET RESTART DATE
+  1696	002046'	200 01 0 00 004227'		MOVE	T1,[.CNDAT,,.GTCNF]
+  1697	002047'	047 01 0 00 000041 		GETTAB	T1,
+  1698	002050'	254 00 0 00 005202'		  ERRPOP <Cannot get date>
+  1699	002051'	335 00 0 00 000001 		SKIPGE	T1		;MAKE SURE SYSTEM HAS A DATE
+  1700	002052'	254 00 0 00 005214'		ERRPOP	<Date not yet received, save aborted>
+  1701	002053'	202 01 0 00 002477'	INISRD:	MOVEM	T1,HEDBUF+HEDDAT
+  1702	002054'	400 01 0 00 000000 		SETZ	T1,		;GET POSSIBLE RESTART TIME
+  1703	002055'	250 01 0 00 003147'		EXCH	T1,RESTIM
+  1704	002056'	326 01 0 00 002062'		JUMPN	T1,INISRT	;SET RESTART TIME
+  1705	002057'	200 01 0 00 004247'		MOVE	T1,[.CNTIM,,.GTCNF]
+  1706	002060'	047 01 0 00 000041 		GETTAB	T1,
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 35-1
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1707	002061'	254 00 0 00 005223'		  ERRPOP <Cannot GETTAB time>
+  1708	002062'	202 01 0 00 002500'	INISRT:	MOVEM	T1,HEDBUF+HEDTIM
+  1709	002063'	202 01 0 00 003235'		MOVEM	T1,FIRTIM	;ALSO SAVE HERE TO WRITE IN PROLOG RECORDS.
+  1710	002064'	200 01 0 00 003230'		MOVE	T1,STRNAM	;GET NAME OF STR WE'RE DOING
+  1711	002065'	202 01 0 00 002501'		MOVEM	T1,HEDBUF+HEDSTR
+  1712	002066'	254 00 0 00 002660'		JRST	CPOPJ1		;AND GIVE GOOD RETURN
+  1713
+  1714					WRTHED:	OUT	TAPE,[IOWD SIZHED,HEDBUF
+  1715	002067'	057 01 0 00 003661'				0]
+  1716	002070'	254 00 0 00 002074'		  JRST	WRTHD1		;GO MAKE SURE IT GOT OUT
+  1717	002071'	051 03 0 00 005225'		MSG	<Can't write header record: >
+  1718	002072'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET STATUS IN S FOR PRINTING
+  1719	002073'	254 00 0 00 001507'		JRST	TPOUER
+  1720	002074'	072 01 0 00 000001 	WRTHD1:	MTAPE	TAPE,.MTREW	;REWIND NOW
+  1721						IN	TAPE,[IOWD SIZHED,HEDBF1
+  1722	002075'	056 01 0 00 005233'			      0] ;AND SEE IF DATA GOT OUT
+  1723	002076'	254 00 0 00 002102'		  JRST	WRTHD2		;OK, GO CHECK DATA
+  1724	002077'	062 01 0 00 000000 		GETSTS	TAPE,S		;GET STATUS
+  1725	002100'	051 03 0 00 005235'		MSG	<Can't read header record just written: >
+  1726	002101'	254 00 0 00 001505'		JRST	TPINER
+  1727
+  1728	002102'	205 01 0 00 777761 	WRTHD2:	MOVSI	T1,-SIZHED
+  1729	002103'	200 02 0 01 002466'	WRTHD3:	MOVE	T2,HEDBUF(T1)
+  1730	002104'	316 02 0 01 002505'		CAMN	T2,HEDBF1(T1)
+  1731	002105'	253 01 0 00 002103'		  AOBJN	T1,WRTHD3
+  1732	002106'	325 01 0 00 002660'		JUMPGE	T1,CPOPJ1
+  1733	002107'	051 03 0 00 005245'		MSG	<Read back check of header record failed>
+  1734	002110'	263 17 0 00 000000 		POPJ	P,
+  1735
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 36
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1736					;PRINT OUT A HEADER, ADDRESS OF BLOCK IN T4
+  1737
+  1738	002111'	200 01 0 04 000002 		MOVE	T1,HEDVER(T4)
+  1739	002112'	051 03 0 00 005255'	PRTHED:	MSG	<ASP version >
+  1740	002113'	135 01 0 00 005260'		LDB	T1,[POINT 9,HEDVER(T4),11]
+  1741	002114'	336 00 0 00 000001 		SKIPN	T1		; New or old format?
+  1742	002115'	550 01 0 04 000002 		  HRRZ	T1,HEDVER(T4)	; Old - get version
+  1743	002116'	260 17 0 00 002746'		PUSHJ	P,OCTOUT	; Major version
+  1744	002117'	135 01 0 00 005260'		LDB	T1,[POINT 9,HEDVER(T4),11]
+  1745	002120'	322 01 0 00 002131'		JUMPE	T1,PRTHD1	; Old format, skip this rot
+  1746	002121'	135 01 0 00 005261'		LDB	T1,[POINT 6,HEDVER(T4),17]
+  1747	002122'	332 00 0 00 000001 		SKIPE	T1		; Non-zero?
+  1748	002123'	051 16 0 01 000100 		 OUTCHI	"@"(T1)		; Minor version
+  1749	002124'	550 01 0 04 000002 		HRRZ	T1,HEDVER(T4)	; Edits
+  1750	002125'	322 01 0 00 002131'		JUMPE	T1,PRTHD1	; No edits?
+  1751	002126'	051 16 0 00 000050 		OUTCHI	"("		; Yes, in parenthesis
+  1752	002127'	260 17 0 00 002746'		PUSHJ	P,OCTOUT
+  1753	002130'	051 16 0 00 000051 		OUTCHI	")"
+  1754	002131'	135 01 0 00 005262'	PRTHD1:	LDB	T1,[POINT 3,HEDVER(T4),2]
+  1755	002132'	322 01 0 00 002135'		JUMPE	T1,PRTHD2	; Who field
+  1756	002133'	051 16 0 00 000055 		OUTCHI	"-"
+  1757	002134'	260 17 0 00 002746'		PUSHJ	P,OCTOUT
+  1758	002135'	554 01 0 04 000000 	PRTHD2:	HLRZ	T1,HEDSIZ(T4)	; Read buffer length
+  1759	002136'	322 01 0 00 002144'		JUMPE	T1,PRTHE1	; Non-zero ?
+  1760	002137'	306 01 0 00 000030 		CAIN	T1,MAXREC/1000	; Standard size?
+  1761	002140'	254 00 0 00 002144'		  JRST	PRTHE1		; Yes, don't bother with details
+  1762	002141'	051 03 0 00 005263'		MSG	<, using >
+  1763	002142'	260 17 0 00 002667'		PUSHJ	P,DECOUT	; Print buffer size
+  1764	002143'	051 03 0 00 005265'		MSG	< page records>
+  1765	002144'	051 03 0 00 003251'	PRTHE1:	MSG	,CRLF
+  1766	002145'	051 03 0 00 005270'		MSG	<Unit >
+  1767	002146'	200 01 0 00 003225'		MOVE	T1,OPNTNM	;GET TAPE  NAME
+  1768	002147'	260 17 0 00 003044'		PUSHJ	P,SIXOUT
+  1769	002150'	051 03 0 00 005272'		MSG	<  at density >
+  1770	002151'	260 17 0 00 000302'		PUSHJ	P,CURDEN
+  1771	002152'	051 03 0 00 005275'		MSG	<Tape number >
+  1772	002153'	200 01 0 04 000003 		MOVE	T1,HEDTPN(T4)
+  1773	002154'	260 17 0 00 002667'		PUSHJ	P,DECOUT
+  1774	002155'	051 03 0 00 005300'		MSG	< on >
+  1775	002156'	200 01 0 04 000011 		MOVE	T1,HEDDAT(T4)
+  1776	002157'	200 02 0 04 000012 		MOVE	T2,HEDTIM(T4)
+  1777	002160'	261 17 0 00 000004 		PUSH	P,T4
+  1778	002161'	260 17 0 00 002405'		PUSHJ	P,PRTDAT
+  1779	002162'	262 17 0 00 000004 		POP	P,T4
+  1780	002163'	051 03 0 00 003251'		MSG	<>,CRLF
+  1781	002164'	051 03 0 04 000004 		OUTSTR	HEDSYN(T4)
+  1782	002165'	051 03 0 00 004052'		MSG	< >
+  1783	002166'	200 01 0 00 003161'		MOVE	T1,STRTYP
+  1784	002167'	336 00 0 00 003150'		SKIPN	CMPFLG
+  1785	002170'	336 00 0 00 003152'		 SKIPN	VERFLG
+  1786	002171'	051 03 1 01 003162'		  OUTSTR @STRMSG(T1)
+  1787	002172'	336 00 0 00 003150'		SKIPN	CMPFLG
+  1788	002173'	336 00 0 00 003152'		 SKIPN	VERFLG
+  1789	002174'	304 00 0 00 000000 		  CAIA
+  1790	002175'	051 03 0 00 005301'		 MSG	<structure >
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 36-1
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1791	002176'	200 01 0 04 000013 		MOVE	T1,HEDSTR(T4)
+  1792	002177'	260 17 0 00 003044'		PUSHJ	P,SIXOUT
+  1793	002200'	051 16 0 00 000050 		OUTCHI	"("
+  1794	002201'	200 01 0 04 000015 		MOVE	T1,HEDHID(T4)	;ID FOR STRUCURE
+  1795	002202'	260 17 0 00 003044'		PUSHJ	P,SIXOUT
+  1796	002203'	051 16 0 00 000051 		OUTCHI	")"
+  1797	002204'	051 03 0 00 003251'		MSG	,CRLF
+  1798	002205'	051 03 0 00 003251'		MSG	,CRLF
+  1799	002206'	263 17 0 00 000000 		POPJ	P,
+  1800
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 37
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1801
+  1802					;ROUTINE TO PRINT DISK UNIT NUMBER AND PAGE FROM T4
+  1803
+  1804	002207'	200 01 0 00 003230'	PRTDP:	MOVE	T1,STRNAM	;GET STR NAME
+  1805	002210'	260 17 0 00 003044'		PUSHJ	P,SIXOUT	;PRINT STR NAME
+  1806	002211'	051 03 0 00 005304'		MSG	< page >
+  1807	002212'	200 01 0 00 000004 		MOVE	T1,T4		;GET PAGE NUMBER
+  1808	002213'	260 17 0 00 002746'		PUSHJ	P,OCTOUT	;PRINT IT
+  1809	002214'	332 00 0 00 003233'		SKIPE	STRNMU		;Any units specified?
+  1810	002215'	332 00 0 00 003161'		SKIPE	STRTYP		;Yes, single unit?
+  1811	002216'	254 00 0 00 002231'		  JRST	PRTDP1		;Yes, finish line
+  1812	002217'	051 03 0 00 005306'		MSG	<, on unit >
+  1813	002220'	200 01 0 00 000004 		MOVE	T1,T4		;GET PAGE NUMBER IN T1
+  1814	002221'	200 02 0 00 003160'		MOVE	T2,STRMXP	;GET SIZE OF STR
+  1815	002222'	230 02 0 00 003233'		IDIV	T2,STRNMU	;GET PAGES PER UNIT
+  1816	002223'	230 01 0 00 000002 		IDIV	T1,T2		;GET UNIT NO IN T1, PAGE IN T2
+  1817	002224'	261 17 0 00 000002 		PUSH	P,T2
+  1818	002225'	260 17 0 00 002746'		PUSHJ	P,OCTOUT	;PRINT "0", ETC
+  1819	002226'	051 03 0 00 005304'		MSG	< page >
+  1820	002227'	262 17 0 00 000001 		POP	P,T1		;GET INTO T1
+  1821	002230'	260 17 0 00 002746'		PUSHJ	P,OCTOUT	;PRINT IT
+  1822	002231'	051 03 0 00 003251'	PRTDP1:	MSG	<>,CRLF
+  1823	002232'	263 17 0 00 000000 		POPJ	P,		;AND RETURN.
+  1824
+  1825
+  1826	002233'	201 04 0 00 005311'	RESVER:	MOVEI	T4,[ASCIZ \Restoring \]
+  1827	002234'	332 00 0 00 003152'		SKIPE	VERFLG
+  1828	002235'	201 04 0 00 005314'		  MOVEI	T4,[ASCIZ \Verifying \]
+  1829	002236'	332 00 0 00 003150'		SKIPE	CMPFLG
+  1830	002237'	201 04 0 00 005317'		  MOVEI	T4,[ASCIZ \Comparing \]
+  1831	002240'	051 03 0 04 000000 		OUTSTR	(T4)
+  1832	002241'	263 17 0 00 000000 		POPJ	P,		;Return
+  1833
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 38
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1834					;CHKFIR - CHECK FIRST HEADER.
+  1835
+  1836	002242'	260 17 0 00 000170'	CHKFIR:	PUSHJ	P,CHECK0	;READ IT IN AND MAKE SURE ITS REASONABLE
+  1837	002243'	263 17 0 00 000000 		  POPJ	P,		;NO
+  1838	002244'	200 01 0 00 002477'		MOVE	T1,HEDBUF+HEDDAT
+  1839	002245'	202 01 0 00 003234'		MOVEM	T1,FIRDAT
+  1840	002246'	200 01 0 00 002500'		MOVE	T1,HEDBUF+HEDTIM
+  1841	002247'	202 01 0 00 003235'		MOVEM	T1,FIRTIM	;SETUP FIRST DATE AND TIME FOR LATER TAPES
+  1842	002250'	254 00 0 00 002253'		JRST	CHKHD0		;AND FINISH UP.
+  1843
+  1844					;CHKHED - CHECK HEADER FOR TAPE OUT. TAPE NUMBER MUST BE INCREMENTED BEFORE CALLING
+  1845
+  1846	002251'	260 17 0 00 000170'	CHKHED:	PUSHJ	P,CHECK0	;REWIND TAPE, READ IN HEADER AND CHECK GENERALLY
+  1847	002252'	263 17 0 00 000000 		  POPJ	P,		;NO GOOD.
+  1848	002253'	200 01 0 00 003217'	CHKHD0:	MOVE	T1,TAPNUM	;GET TAPE NUMBER
+  1849	002254'	312 01 0 00 002471'		CAME	T1,HEDBUF+HEDTPN	;GET TAPE NUMBER
+  1850						  JRST	[MSG <Wrong tape number mounted, please mount tape number >
+  1851							 PUSHJ P,DECOUT
+  1852	002255'	254 00 0 00 005337'			 ERRPOP ()]
+  1853	002256'	200 01 0 00 002477'		MOVE	T1,HEDBUF+HEDDAT	;DATE AND TIME HAD BETTER MATCH
+  1854	002257'	312 01 0 00 003234'		CAME	T1,FIRDAT
+  1855	002260'	254 00 0 00 005356'		  ERRPOP <Date on this tape doesn't match previous tape or tapes>
+  1856	002261'	200 01 0 00 002500'		MOVE	T1,HEDBUF+HEDTIM
+  1857	002262'	312 01 0 00 003235'		CAME	T1,FIRTIM
+  1858	002263'	254 00 0 00 005374'		  ERRPOP <Time on this tape doesn't match previous tape or tapes>
+  1859
+  1860	002264'	336 00 0 00 003150'		SKIPN	CMPFLG			;IF NOT COMPARING
+  1861	002265'	336 00 0 00 003152'		 SKIPN	VERFLG			;JUST VERIFYING, DON'T CHECK SYSTEM
+  1862	002266'	304 00 0 00 000000 		  CAIA				;SPECIFIC STUFF
+  1863	002267'	254 00 0 00 002305'		 JRST	CHKHD1			;FAKE THEM OUT BELOW
+  1864	002270'	200 01 0 00 002501'		MOVE	T1,HEDBUF+HEDSTR	;MAKE SURE SAME STR
+  1865	002271'	312 01 0 00 003230'		CAME	T1,STRNAM
+  1866	002272'	254 00 0 00 005410'		  ERRPOP <Tape is not for same structure being restored>
+  1867	002273'	200 01 0 00 002503'		MOVE	T1,HEDBUF+HEDHID	;GET UNIT ID
+  1868	002274'	312 01 0 00 003232'		CAME	T1,STRHID		;FOR SAME HID?
+  1869	002275'	254 00 0 00 005422'		  ERRPOP <Tape not for same system-pack set>
+  1870	002276'	200 01 0 00 002502'		MOVE	T1,HEDBUF+HEDMXP	;GET SIZE OF STRUCUTRE
+  1871	002277'	312 01 0 00 003160'		CAME	T1,STRMXP		;SAME SIZE?
+  1872	002300'	254 00 0 00 005430'		  ERRPOP <Bad strucure size>
+  1873	002301'	200 01 0 00 002504'		MOVE	T1,HEDBUF+HEDNMU	;GET NUMBER OF UNITS IN STR
+  1874	002302'	312 01 0 00 003233'		CAME	T1,STRNMU		;BETTER BE THE SAME
+  1875						  ERRPOP <Number of units in STR on tape doesn't match number of units in STR on dis
+  1876	002303'	254 00 0 00 005452'	k>
+  1877	002304'	254 00 0 00 002660'		JRST	CPOPJ1
+  1878
+  1879	002305'	200 01 0 00 002501'	CHKHD1:	MOVE	T1,HEDBUF+HEDSTR	;MAKE SURE SAME STR
+  1880	002306'	202 01 0 00 003230'		MOVEM	T1,STRNAM
+  1881	002307'	200 01 0 00 002503'		MOVE	T1,HEDBUF+HEDHID	;SET UNIT ID
+  1882	002310'	202 01 0 00 003232'		MOVEM	T1,STRHID
+  1883	002311'	200 01 0 00 002502'		MOVE	T1,HEDBUF+HEDMXP	;SET SIZE OF STRUCUTRE
+  1884	002312'	202 01 0 00 003160'		MOVEM	T1,STRMXP
+  1885	002313'	200 01 0 00 002504'		MOVE	T1,HEDBUF+HEDNMU	;SET NUMBER OF UNITS IN STR
+  1886	002314'	202 01 0 00 003233'		MOVEM	T1,STRNMU
+  1887	002315'	254 00 0 00 002660'		JRST	CPOPJ1			;THEN WE ARE DONE
+  1888
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 39
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1889					;ROUTINE NOTHED - MAKE SURE TAPE CURRENTLY MOUNTED DOES NOT
+  1890					; BELONG TO THE SET WE ARE CURRENTLY WRITING.
+  1891					; CALLED AFTER INIHED AND BEFORE WRTHED.
+  1892					; TAPE UNIT IS OPEN AND READY TO BE WRITTEN ON.
+  1893					; TAPE IS AT LOAD POINT, SO NOTHED WILL PUT IT BACK THERE BEFORE EXITING.
+  1894					; RETURNS SKIP IF OK TO OVERWRITE TAPE, NON-SKIP IF NOT.
+  1895					; ASKS OPERATOR WHETHER OR NOT TO OVERWRITE TAPE IF HEADER LOOKS LIKE
+  1896					; ITS FROM THIS SET.
+  1897
+  1898	002316'	072 01 0 00 000001 	NOTHED:	MTAPE	TAPE,.MTREW		;REWIND SO CAN SEE THE HEADER.
+  1899	002317'	402 00 0 00 002505'		SETZM	HEDBF1
+  1900	002320'	200 01 0 00 005454'		MOVE	T1,[HEDBF1,,HEDBF1+1]
+  1901	002321'	251 01 0 00 002523'		BLT	T1,HEDBF1+SIZHED-1	;CLEAR OUT AREA
+  1902						IN	TAPE,[IOWD SIZHED,HEDBF1
+  1903	002322'	056 01 0 00 005233'				 0]
+  1904	002323'	254 00 0 00 002326'		  JRST	NOTHD1			;OK
+  1905	002324'	060 01 1 00 003224'		SETSTS	TAPE,@OPNTAP		;CLEAR STATUS AND IF ERROR, ASSUME BAD
+  1906	002325'	254 00 0 00 002403'		JRST	NOTREW			; DATA ON TAPE, LET WRITE ERROR RECOVERY
+  1907										; WORRY IF ITS THE TAPE.  NO HEADER.
+  1908
+  1909	002326'	200 01 0 00 002506'	NOTHD1:	MOVE	T1,HEDBF1+HEDNAM	;IS NAME OK?
+  1910	002327'	312 01 0 00 003216'		CAME	T1,CODNAM		;WELL?
+  1911	002330'	254 00 0 00 002403'		  JRST	NOTREW			; NO ASP TAPE, OK TO WRITE ON IT.
+  1912	002331'	550 01 0 00 002505'		HRRZ	T1,HEDBF1+HEDSIZ	;RIGHT SIZE?  (BUF PAGES,,HEADER)
+  1913	002332'	302 01 0 00 000017 		CAIE	T1,SIZHED
+  1914	002333'	254 00 0 00 002403'		  JRST	NOTREW			;OK
+  1915
+  1916					;MACRO TO SAVE OURSELVES FROM TYPING AND TYPOS
+  1917
+  1918					DEFINE HEDCMP(THING)<
+  1919					IRP THING,<
+  1920						MOVE	T1,HEDBF1+HED'THING
+  1921						CAME	T1,HEDBUF+HED'THING
+  1922						  JRST	NOTREW		;;OK, DOESN'T COMPARE. DO REWIND AND RETURN.
+  1923					>;END IRP THING
+  1924					>;END HEDCMP MACRO
+  1925
+  1926	002334'	200 01 0 00 002520'	HEDCMP(<STR,HID,MXP,NMU,DAT,TIM>)
+  1927	002335'	312 01 0 00 002501'
+  1928	002336'	254 00 0 00 002403'
+  1929	002337'	200 01 0 00 002522'
+  1930	002340'	312 01 0 00 002503'
+  1931	002341'	254 00 0 00 002403'
+  1932	002342'	200 01 0 00 002521'
+  1933	002343'	312 01 0 00 002502'
+  1934	002344'	254 00 0 00 002403'
+  1935	002345'	200 01 0 00 002523'
+  1936	002346'	312 01 0 00 002504'
+  1937	002347'	254 00 0 00 002403'
+  1938	002350'	200 01 0 00 002516'
+  1939	002351'	312 01 0 00 002477'
+  1940	002352'	254 00 0 00 002403'
+  1941	002353'	200 01 0 00 002517'
+  1942	002354'	312 01 0 00 002500'
+  1943	002355'	254 00 0 00 002403'
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 39-1
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1944
+  1945					;HERE IF ALMOST EVERYTHING MATCHES. WE DON'T CHECK ASP VERSION
+  1946					; OR SYSTEM NAME OR TAPE NUMBER, IF ITS THE SAME EXACT STRUCTURE AND
+  1947					; TIME, ITS SUSPICIOUS ENOUGH. ASK OPERATOR IF HE WANTS TO CONTINUE.
+  1948
+  1949						MSG	<You are about to overwrite an ASP tape from the same
+  1950	002356'	051 03 0 00 005455'	set as you are currently recording:>,CRLF
+  1951	002357'	201 04 0 00 002505'		MOVEI	T4,HEDBF1	;TELL PRTHED WHERE ITS AT.
+  1952	002360'	260 17 0 00 002112'		PUSHJ	P,PRTHED
+  1953	002361'	051 03 0 00 003251'		MSG	,CRLF
+  1954						MSG	<Do you wish to continue?  Type "I DO" followed by a return if you do.>,CRLF
+  1955	002362'	051 03 0 00 005500'
+  1956	002363'	051 03 0 00 005517'		MSG	<?>
+  1957
+  1958					DEFINE STRCMP(STRING),<
+  1959					IRPC STRING,<
+  1960						PUSHJ	P,GTCHR
+  1961						CAIE	CH,"'STRING"
+  1962						PJRST	BRKEAT
+  1963					>;END IRPC STRING
+  1964					>;END STRCMP MACRO
+  1965
+  1966	002364'	260 17 0 00 003057'	STRCMP(I DO)
+  1967	002365'	302 14 0 00 000111 
+  1968	002366'	254 00 0 00 002740'
+  1969	002367'	260 17 0 00 003057'
+  1970	002370'	302 14 0 00 000040 
+  1971	002371'	254 00 0 00 002740'
+  1972	002372'	260 17 0 00 003057'
+  1973	002373'	302 14 0 00 000104 
+  1974	002374'	254 00 0 00 002740'
+  1975	002375'	260 17 0 00 003057'
+  1976	002376'	302 14 0 00 000117 
+  1977	002377'	254 00 0 00 002740'
+  1978	002400'	260 17 0 00 003057'		PUSHJ	P,GTCHR
+  1979	002401'	302 14 0 00 000012 		CAIE	CH,12		;BETTER NOT BE ANYTHING PAS THIS
+  1980	002402'	254 00 0 00 002740'		JRST	BRKEAT		;IS, FORGET IT.
+  1981	
+  1982	002403'	072 01 0 00 000001 	NOTREW:	MTAPE	TAPE,.MTREW	;REWIND TO GET BACK TO HEADER PLACE
+  1983	002404'	254 00 0 00 002660'		JRST	CPOPJ1
+  1984
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 40
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  1985
+  1986					;PRINT DATE - DAYS SINCE JAN 1,1964 IN T1
+  1987					; TIME IN JIFFIES SINCE MIDNITE (GMT) IN T2
+  1988
+  1989	002405'	205 03 0 00 400020 	PRTDAT:	MOVSI	T3,400020	;FROM GMT TO CURRENT USERS ZONE, DEC FORMAT
+  1990	002406'	201 04 0 00 000001 		MOVEI	T4,T1
+  1991	002407'	047 04 0 00 777723 		DATUUO	T4,
+  1992	002410'	260 17 0 00 005531'		  ERROR <DATUUO error return - should never happen>
+  1993	002411'	261 17 0 00 000002 		PUSH	P,T2		;SAVE THE TIME
+  1994	002412'	231 01 0 00 000037 		IDIVI	T1,^D31		;GET DAY OF MONTH
+  1995	002413'	261 17 0 00 000001 		PUSH	P,T1		;SAVE T1 FROM GETTING SMASHED
+  1996	002414'	201 01 0 02 000001 		MOVEI	T1,1(T2)	;GET DAY NUMBER IN T1
+  1997	002415'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT IT
+  1998	002416'	262 17 0 00 000001 		POP	P,T1		;GET # MONTHS IN T1
+  1999	002417'	231 01 0 00 000014 		IDIVI	T1,^D12		;GET MONTH IN T2
+  2000	002420'	200 02 0 02 002452'		MOVE	T2,MONTAB(T2)
+  2001	002421'	400 03 0 00 000000 		SETZ	T3,
+  2002	002422'	051 03 0 00 000002 		OUTSTR	T2
+  2003	002423'	201 01 0 01 003654 		MOVEI	T1,^D1964(T1)	;YEAR
+  2004	002424'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT YEAR
+  2005	002425'	051 16 0 00 000040 		OUTCHI	" "		;SEPERATE DATE AND TIME
+  2006	002426'	262 17 0 00 000001 		POP	P,T1		;GET TIME BACK
+  2007	002427'	231 01 0 00 007020 		IDIVI	T1,^D60*^D60	;GET MINUTES
+  2008	002430'	261 17 0 00 000002 		PUSH	P,T2		;SAVE JIFFY REMAINDER
+  2009	002431'	231 01 0 00 000074 		IDIVI	T1,^D60		;GET HOUR IN T1, MINUTE IN T2
+  2010	002432'	261 17 0 00 000002 		PUSH	P,T2
+  2011	002433'	305 01 0 00 000012 		CAIGE	T1,^D10		;IF LESS THAN 10,
+  2012	002434'	051 16 0 00 000060 		OUTCHI	"0"		;PRINT A ZERO
+  2013	002435'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT HH
+  2014	002436'	262 17 0 00 000001 		POP	P,T1
+  2015	002437'	305 01 0 00 000012 		CAIGE	T1,^D10
+  2016	002440'	051 16 0 00 000060 		OUTCHI	"0"
+  2017	002441'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;AND MM
+  2018	002442'	262 17 0 00 000001 		POP	P,T1		;GET JIFFIES
+  2019	002443'	231 01 0 00 000074 		IDIVI	T1,^D60		;GET SECONDS IN T1
+  2020	002444'	051 03 0 00 005534'		MSG	<.>
+  2021	002445'	305 01 0 00 000012 		CAIGE	T1,^D10
+  2022	002446'	051 16 0 00 000060 		OUTCHI	"0"
+  2023	002447'	260 17 0 00 002667'		PUSHJ	P,DECOUT	;PRINT FRACTIONS OF A SECOND
+  2024	002450'	051 03 0 00 005535'		MSG	< (local time)>
+  2025	002451'	263 17 0 00 000000 		POPJ	P,
+  2026
+  2027	002452'	055 112 101 116 055 	MONTAB:	ASCII /-JAN-/
+  2028	002453'	055 106 105 102 055 		ASCII /-FEB-/
+  2029	002454'	055 115 101 122 055 		ASCII /-MAR-/
+  2030	002455'	055 101 120 122 055 		ASCII /-APR-/
+  2031	002456'	055 115 101 131 055 		ASCII /-MAY-/
+  2032	002457'	055 112 125 116 055 		ASCII /-JUN-/
+  2033	002460'	055 112 125 114 055 		ASCII /-JUL-/
+  2034	002461'	055 101 125 107 055 		ASCII /-AUG-/
+  2035	002462'	055 123 105 120 055 		ASCII /-SEP-/
+  2036	002463'	055 117 103 124 055 		ASCII /-OCT-/
+  2037	002464'	055 116 117 126 055 		ASCII /-NOV-/
+  2038	002465'	055 104 105 103 055 		ASCII /-DEC-/
+  2039
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 41
+ASP	MAC	22-Feb-83 21:20		HEADER STUFF
+
+  2040	002466'				HEDBUF:
+  2041	000000					PHASE 0
+  2042	000000	000000	000000		HEDSIZ:!	0		;SIZE OF BUFFER(PAGES),,HEADER RECORD(WORDS)
+  2043	000001	000000	000000		HEDNAM:!	0		;MAGIC CODE
+  2044	000002	000000	000000		HEDVER:!	0		;VERSION OF ASP
+  2045	000003	000000	000000		HEDTPN:!	0		;TAPE NUMBER
+  2046	000004				HEDSYN:! BLOCK SYSNSZ		;SYSTEM NAME TAPE WAS RECORDED ON
+  2047					HEDDAT:!	0		;DATE FIRST TAPE WAS STARTED (APPEARS ON ALL TAPES TO GROUPT
+  2048	000011	000000	000000		HEM TOGETHER)
+  2049	000012	000000	000000		HEDTIM:!	0		;TIME FIRST TAPE WAS STARTED
+  2050	000013	000000	000000		HEDSTR:!	0		;STRUCTURE NAME
+  2051	000014	000000	000000		HEDMXP:!	0		;SIZE OF STRUCTURE
+  2052	000015	000000	000000		HEDHID:!	0		;XXYY IN SIXBIT - SYS NUMBER AND PACK SET ID
+  2053	000016	000000	000000		HEDNMU:!	0		;NUMBER OF UNITS IN STR
+  2054	002505'					DEPHASE
+  2055			000017		SIZHED==.-HEDBUF
+  2056
+  2057	002505'				HEDBF1:	BLOCK	SIZHED
+  2058
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 42
+ASP	MAC	22-Feb-83 21:20		GETSTR - Routine to get a structure or device
+
+  2059					SUBTTL	GETSTR - Routine to get a structure or device
+  2060
+  2061	002524'	260 17 0 00 003017'	GETSTR:	PUSHJ	P,SIXIN		;GET STRUCTURE NAME
+  2062	002525'	254 00 0 00 005545'		  ERRPOP <No structure specified>
+  2063
+  2064	002526'	202 01 0 00 003230'		MOVEM	T1,STRNAM	;STORE IT
+  2065	002527'	050 00 0 00 003227'		OPEN	DISK,OPNSTR	;OPEN THE STRUCTURE
+  2066						  JRST	[MSG	<Cannot open >
+  2067							 PUSHJ	P,SIXOUT	; Cannot open STRNAM
+  2068							 MSG	<>,CRLF
+  2069	002530'	254 00 0 00 005552'			 POPJ	P,]	;OR GIVE UP TRYING
+  2070
+  2071	002531'	403 04 0 00 003160'		SETZB	T4,STRMXP	;START WITH FIRST SYSTEM UNIT, CLEAR MAX PAGES PER STR
+  2072	002532'	402 00 0 00 003233'		SETZM	STRNMU		;CLEAR NUMBER OF UNITS WORD.
+  2073	002533'	047 04 0 00 000051 	UNILUP:	SYSPHY	T4,
+  2074	002534'	254 00 0 00 005563'		  ERRPOP <Error from SYSPHY uuo>
+  2075	002535'	322 04 0 00 002564'		JUMPE	T4,UNIDON	;IF RETURNED ZERO, WE'RE DONE.
+  2076	002536'	202 04 0 00 003165'		MOVEM	T4,DSKCHB	;PUT INTO DSKCHR BLOCK
+  2077	002537'	200 01 0 00 005565'		MOVE	T1,[DSKCHS,,DSKCHB]
+  2078	002540'	047 01 0 00 000045 		DSKCHR	T1,
+  2079	002541'	254 00 0 00 005577'		  ERRPOP <DSKCHR error for unit name from SYSPHY>
+  2080	002542'	400 02 0 00 000000 		SETZ	T2,		;"STRUCTURE"
+  2081	002543'	200 01 0 00 003230'		MOVE	T1,STRNAM	;GET STRUCTURE NAME
+  2082	002544'	316 01 0 00 003171'		CAMN	T1,DSKCHB+4	;IS IT OUR STRUCTURE?
+  2083	002545'	254 00 0 00 002554'		  JRST	UNIFND		;YES, GO ON
+  2084	002546'	340 02 0 00 000000 		AOJ	T2,		;"LOGICAL UNIT"
+  2085	002547'	316 01 0 00 003201'		CAMN	T1,DSKCHB+14	;IS IT A SPECIFIC UNIT?
+  2086	002550'	254 00 0 00 002554'		  JRST	UNIFND		;YES, GO ON
+  2087	002551'	340 02 0 00 000000 		AOJ	T2,		;"PHYSICAL UNIT"
+  2088	002552'	312 01 0 00 003202'		CAME	T1,DSKCHB+15	;IS IT A SPECIFIC DRIVE?
+  2089	002553'	254 00 0 00 002533'		  JRST	UNILUP		;NO, TRY NEXT UNIT
+  2090	002554'	350 00 0 00 003233'	UNIFND:	AOS	STRNMU		;COUNT ANOTHER UNIT
+  2091	002555'	202 02 0 00 003161'		MOVEM	T2,STRTYP	;SET STRUCTURE TYPE INDEX
+  2092	002556'	200 01 0 00 003173'		MOVE	T1,DSKCHB+6	;GET UNIT CAPACITY IN PAGES
+  2093	002557'	272 01 0 00 003160'		ADDM	T1,STRMXP	;ADD TO STRMXP
+  2094	002560'	200 01 0 00 003203'		MOVE	T1,DSKCHB+16	;GET HOM BLOCK UNIT ID
+  2095	002561'	620 01 0 00 007777 		TRZ	T1,7777		;MASK OFF UNIT NAME
+  2096	002562'	202 01 0 00 003232'		MOVEM	T1,STRHID	;PUT INTO HERE FOR REFERENCE.
+  2097	002563'	254 00 0 00 002533'		JRST	UNILUP		;AND CONTINUE.
+  2098	002564'				UNIDON:
+  2099	002564'	332 00 0 00 003233'		SKIPE	STRNMU		;ANY UNITS
+  2100	002565'	254 00 0 00 002660'		  JRST	CPOPJ1		;YES, WE ARE DONE
+  2101	002566'	071 00 0 00 000000 		RELEAS	DISK,		;DROP DEVICE
+  2102	002567'	051 03 0 00 005601'		MSG	<Device not an available structure, disk unit, or disk drive>,CRLF
+  2103
+  2104	002570'	263 17 0 00 000000 	NOSTRS:	POPJ	P,		;NO STRUCTURE NAME GIVEN
+  2105
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 43
+ASP	MAC	22-Feb-83 21:20		GETSTR - Routine to get a structure or device
+
+  2106
+  2107					;ROUTINE TO SET DENSITIES, POINTER TO PROPER DENSITY TABLE IN T4.
+  2108
+  2109	002571'	260 17 0 00 002614'	SETDEN:	PUSHJ	P,GETCTP	;GET CURRENT TAPE OR NOTHING
+  2110	002572'	263 17 0 00 000000 		  POPJ	P,		;NOTHING.
+  2111	002573'	260 17 0 00 002676'		PUSHJ	P,DECIN		;GET ANSWER IN T1
+  2112	002574'	254 00 0 00 000313'		  PJRST	PRTDEN		;NOTHING TYPED, JUST PRINT
+  2113	002575'	200 03 0 00 003215'		MOVE	T3,TAPDTB	;GET DENSITY TABLE ADDRESS
+  2114	002576'	336 02 0 03 000000 	DENCHK:	SKIPN	T2,(T3)		;GET VALUE
+  2115	002577'	254 00 0 00 005623'		ERRPOP	<Density not available>
+  2116	002600'	430 02 0 00 000001 		XOR	T2,T1		;RH OF T2 ZERO IF MATCH
+  2117	002601'	602 02 0 00 777777 		TRNE	T2,-1		;SKIP IF GOT IT
+  2118	002602'	344 03 0 00 002576'		AOJA	T3,DENCHK	;NO, GET NEXT ONE
+  2119	002603'	554 01 0 03 000000 		HLRZ	T1,(T3)		;GET FILE STATUS
+  2120	002604'	202 01 0 00 003224'		MOVEM	T1,OPNTAP	;PUT IN STATUS WORD
+  2121	002605'	060 01 0 01 000000 		SETSTS	TAPE,(T1)	;SET IT.
+  2122	002606'	263 17 0 00 000000 		POPJ	P,		;AND NOW WE'RE DONE.
+  2123
+  2124
+  2125	002607'	260 17 0 00 003017'	GETTAP:	PUSHJ	P,SIXIN		;SPECIFIED TAPE?
+  2126	002610'	254 00 0 00 002614'		  JRST	GETCTP		;SEE IF THERE'S A CURRENT UNIT
+  2127	002611'	260 17 0 00 000250'		PUSHJ	P,TAPOP1	;OPEN IT
+  2128	002612'	254 00 0 00 000257'		  JRST	NOTDEV		;CAN'T, CHECK FOR 'NO'
+  2129	002613'	254 00 0 00 002660'		JRST	CPOPJ1
+  2130
+  2131	002614'	336 00 0 00 003225'	GETCTP:	SKIPN	OPNTNM		;ANYTHING THERE?
+  2132	002615'	254 00 0 00 005631'		  ERRPOP <No tape unit open>
+  2133	002616'	254 00 0 00 000251'		JRST	TAPOP2		;OPEN IT FRESH, AND RETURN.
+  2134
+  2135	002617'	263 17 0 00 000000 	NOTAPO:	POPJ	P,
+  2136
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 44
+ASP	MAC	22-Feb-83 21:20		GETSTR - Routine to get a structure or device
+
+  2137					DEFINE DENMAC <
+  2138					X(<6250>)
+  2139					X(<6250,1600>)
+  2140					X(<1600>)
+  2141					X(<1600,800>)
+  2142					X(<800,556>)
+  2143					X(<800,556,200>)
+  2144					>;END DENMAC
+  2145
+  2146
+  2147					DEFINE X(DENS)<
+  2148					ZZ==3
+  2149					DENBIT(<'DENS>)
+  2150					XWD ZZ1,[
+  2151					IRP DENS,<<ZZ>B<28>+17,,^D<'DENS>
+  2152					ZZ==ZZ-1
+  2153					>;END IRP DENS
+  2154						0];;END TABLE WITH A ZERO
+  2155					>;END X MACRO DEFINITION
+  2156
+  2157
+  2158					DEFINE DENBIT(DENS)<
+  2159					ZZ1==0
+  2160					IRP DENS,<
+  2161					IFIDN <DENS> <6250> <ZZ1==ZZ1!UG.D62>
+  2162					IFIDN <DENS> <1600> <ZZ1==ZZ1!UG.D16>
+  2163					IFIDN <DENS> <800> <ZZ1==ZZ1!UG.D8>
+  2164					IFIDN <DENS> <556> <ZZ1==ZZ1!UG.D5>
+  2165					IFIDN <DENS> <200> <ZZ1==ZZ1!UG.D2>
+  2166					>;END IRP
+  2167					>;END DENBIT
+  2168
+  2169	002620'	000020	005633'		DENSTB:	DENMAC		;GENERATE TABLE
+  2170	002621'	000030	005635'
+  2171	002622'	000010	005640'
+  2172	002623'	000014	005642'
+  2173	002624'	000006	005645'
+  2174	002625'	000007	005650'
+  2175	002626'	000000	000000			0		;ENDS WITH ZERO.
+  2176
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 45
+ASP	MAC	22-Feb-83 21:20		COMMAND SCANNER
+
+  2177					SUBTTL COMMAND SCANNER
+  2178
+  2179					;ENTER WITH COMMAND NAME IN T1, AOBJN TO TABLE IN T4
+  2180					;SMASHES T2-T4, S
+  2181					;NON-SKIP IF BAD COMMAND OR AMBIGUOUS COMMAND, MESSAGE PRINTED ON TERMINAL
+  2182					;SKIP IF COMMAND FOUND, INDEX INTO TABLE GIVEN IN C(T4) RETURNED IN T4
+  2183
+  2184	002627'	261 17 0 00 000004 	COMMAN:	PUSH	P,T4		;SAVE SO CAN CALCULATE OFFSET IF COMMAND IS FOUND
+  2185	002630'	200 03 0 00 000001 		MOVE	T3,T1		;COPY COMMAND IN T3
+  2186	002631'	474 02 0 00 000000 		SETO	T2,		;MASK
+  2187	002632'	400 00 0 00 000000 		SETZ	S,		;CLEAR FLAG
+  2188	002633'	242 02 0 00 777772 		LSH	T2,-6		;AT LEAST 1 CHAR MUST BE PRESENT
+  2189	002634'	242 03 0 00 000006 		LSH	T3,6		;MAKE A TDZ MASK
+  2190	002635'	326 03 0 00 002633'		JUMPN	T3,.-2
+  2191	002636'	200 03 0 04 000000 	COM1:	MOVE	T3,(T4)		;GET NEXT COMMAND NAME
+  2192	002637'	316 01 0 00 000003 		CAMN	T1,T3		;MATCH?
+  2193	002640'	254 00 0 00 002655'		  JRST	COMFND		;YES, RETURN INDEX
+  2194	002641'	630 03 0 00 000002 		TDZ	T3,T2		;MASK TABLE ENTRY DOWN TO NUMBER OF CHARS IN TYPED COMMAND
+  2195	002642'	312 01 0 00 000003 		CAME	T1,T3		;MATCHES NOW?
+  2196	002643'	254 00 0 00 002647'		  JRST	NXTCOM		;NO, GO FOR NEXT ENTRY
+  2197	002644'	662 00 0 00 000001 		TROE	S,1		;FLAG SEEN 1. IF ALREADY SEEN ONE,
+  2198	002645'	660 00 0 00 000002 		  TRO	S,2		;MARK IT.
+  2199	002646'	504 00 0 00 000004 		HRL	S,T4		;AND SAVE ADDRESS
+  2200	002647'	253 04 0 00 002636'	NXTCOM:	AOBJN	T4,COM1		;CONTINUE
+  2201	002650'	602 00 0 00 000002 		TRNE	S,2		;IF SAW TWO OR MORE,
+  2202						  JRST	[MSG (<Ambiguous command >)
+  2203	002651'	254 00 0 00 005660'			 JRST NOCOM]
+  2204	002652'	606 00 0 00 000001 		TRNN	S,1		;OK, SKIP IF HAVE A COMMAND
+  2205						  JRST	[MSG (<Unknown command >)
+  2206	002653'	254 00 0 00 005666'			 JRST NOCOM]
+  2207	002654'	554 04 0 00 000000 		HLRZ	T4,S		;RESTORE PROPER TABLE ADDRESS
+  2208	002655'	262 17 0 00 000003 	COMFND:	POP	P,T3		;GET ORIGINAL AOBJN POINTER
+  2209	002656'	621 04 0 00 777777 		TLZ	T4,-1		;CLEAR OUT COUNT
+  2210	002657'	275 04 0 03 000000 		SUBI	T4,(T3)		;GET COMMAND NUMBER
+  2211	002660'	350 00 0 17 000000 	CPOPJ1:	AOS	(P)		;AND SKIP RETURN
+  2212	002661'	263 17 0 00 000000 	CPOPJ:	POPJ	P,		;BYE.
+  2213
+  2214	002662'	260 17 0 00 003044'	NOCOM:	PUSHJ	P,SIXOUT	;PRINT COMMAND
+  2215	002663'	051 03 0 00 003251'		MSG	<>,CRLF
+  2216	002664'	260 17 0 00 002740'		PUSHJ	P,BRKEAT	;EAT REST OF LINE
+  2217	002665'	262 17 0 17 000000 		POP	P,(P)		;GET SAVED AOBJN POINTER OFF STACK
+  2218	002666'	263 17 0 00 000000 		POPJ	P,		;AND RETURN.
+  2219
+  2220
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 46
+ASP	MAC	22-Feb-83 21:20		DECIMAL I/O
+
+  2221					SUBTTL	DECIMAL I/O
+  2222
+  2223	002667'	231 01 0 00 000012 	DECOUT:	IDIVI	T1,^D10
+  2224	002670'	506 02 0 17 000000 		HRLM	T2,(P)
+  2225	002671'	332 00 0 00 000001 		SKIPE	T1
+  2226	002672'	260 17 0 00 002667'		PUSHJ	P,DECOUT
+  2227	002673'	554 01 0 17 000000 		HLRZ	T1,(P)
+  2228	002674'	051 16 0 01 000060 		OUTCHI	"0"(T1)		;OUTPUT AS ASCII.
+  2229	002675'	263 17 0 00 000000 		POPJ	P,
+  2230
+  2231	002676'	400 01 0 00 000000 	DECIN:	SETZ	T1,		;CLEAR RESULT
+  2232	002677'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+  2233	002700'	263 17 0 00 000000 		  POPJ	P,		;YES, FIELD IS BLANK
+  2234	002701'	260 17 0 00 003057'	DECIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+  2235	002702'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;IS IT BLANK?
+  2236	002703'	263 17 0 00 000000 		  POPJ	P,		;YES, ERROR
+  2237	002704'	301 14 0 00 000060 		CAIL	CH,"0"		;IS IT NUMERIC
+  2238	002705'	303 14 0 00 000071 		CAILE	CH,"9"
+  2239	002706'	254 00 0 00 002701'		JRST	DECIN0		;NO, SKIP THE NUMBERS
+  2240	002707'	334 00 0 00 000000 		SKIPA			;OK, HAVE FIRST ONE.
+  2241	002710'	260 17 0 00 003057'	DECIN1:	PUSHJ	P,GTCHR		;GET CHAR
+  2242	002711'	301 14 0 00 000060 		CAIL	CH,"0"		;MUST BE NUMBER
+  2243	002712'	303 14 0 00 000071 		CAILE	CH,"9"
+  2244	002713'	254 00 0 00 002660'		JRST	CPOPJ1
+  2245	002714'	221 01 0 00 000012 		IMULI	T1,^D10
+  2246	002715'	271 01 0 14 777720 		ADDI	T1,-"0"(CH)	;GET IT IN
+  2247	002716'	254 00 0 00 002710'		JRST	DECIN1		;AND GO FOR MORE
+  2248
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 47
+ASP	MAC	22-Feb-83 21:20		OCTAL I/O
+
+  2249					SUBTTL	OCTAL I/O
+  2250
+  2251	002717'	400 01 0 00 000000 	OCTIN:	SETZ	T1,		;CLEAR RESULT
+  2252	002720'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;WAS LAST SEP CHAR A BREAK?
+  2253	002721'	263 17 0 00 000000 		  POPJ	P,		;YES, FIELD IS BLANK
+  2254	002722'	260 17 0 00 003057'	OCTIN0:	PUSHJ	P,GTCHR		;SCAN TO FIRST DIGIT IF ANY
+  2255	002723'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;IS IT BLANK?
+  2256	002724'	263 17 0 00 000000 		  POPJ	P,		;YES, ERROR
+  2257	002725'	301 14 0 00 000060 		CAIL	CH,"0"		;IS IT NUMERIC
+  2258	002726'	303 14 0 00 000067 		CAILE	CH,"7"
+  2259	002727'	254 00 0 00 002722'		JRST	OCTIN0		;NO, SKIP THE NUMBERS
+  2260	002730'	334 00 0 00 000000 		SKIPA			;OK, HAVE FIRST ONE.
+  2261	002731'	260 17 0 00 003057'	OCTIN1:	PUSHJ	P,GTCHR		;GET CHAR
+  2262	002732'	301 14 0 00 000060 		CAIL	CH,"0"		;MUST BE NUMBER
+  2263	002733'	303 14 0 00 000067 		CAILE	CH,"7"
+  2264	002734'	254 00 0 00 002660'		JRST	CPOPJ1
+  2265	002735'	242 01 0 00 000003 		LSH	T1,3		;SLIDE WORD OVER
+  2266	002736'	271 01 0 14 777720 		ADDI	T1,-"0"(CH)	;GET IT IN
+  2267	002737'	254 00 0 00 002731'		JRST	OCTIN1		;AND GO FOR MORE
+  2268
+  2269
+  2270	002740'	260 17 0 00 003053'	BRKEAT:	PUSHJ	P,ISBRK		;IS IT BREAK TIME YET?
+  2271	002741'	254 00 0 00 002744'		  JRST	BRKEA1		;GO CLEAR CH AND RETURN
+  2272	002742'	260 17 0 00 003057'		PUSHJ	P,GTCHR
+  2273	002743'	254 00 0 00 002740'		JRST	BRKEAT
+  2274	002744'	201 14 0 00 777777 	BRKEA1:	MOVEI	CH,-1		;SO SCANNERS DONT GIVE ERROR NEXT TIME
+  2275	002745'	263 17 0 00 000000 		POPJ	P,		;AND RETURN.
+  2276
+  2277	002746'	322 01 0 00 002763'	OCTOUT:	JUMPE	T1,OCTOU1	;Zero, so skip this
+  2278	002747'	327 01 0 00 002756'		JUMPG	T1,OCTOU0	;Positive, so go on
+  2279	002750'	261 17 0 00 000001 	OCTHWO:	PUSH	P,T1		;Negative or half-word, save number
+  2280	002751'	554 01 0 17 000000 		HLRZ	T1,(P)		;Get left half
+  2281	002752'	260 17 0 00 002756'		PUSHJ	P,OCTOU0	;  and print it
+  2282	002753'	051 03 0 00 005670'		MSG	<,,>		;  use half-word designation
+  2283	002754'	262 17 0 00 000001 		POP	P,T1		;Get right half
+  2284	002755'	621 01 0 00 777777 		TLZ	T1,-1		;Clear left
+  2285	002756'	231 01 0 00 000010 	OCTOU0:	IDIVI	T1,10		;Print number
+  2286	002757'	506 02 0 17 000000 		HRLM	T2,(P)		;  using established
+  2287	002760'	332 00 0 00 000001 		SKIPE	T1		;  routine from the
+  2288	002761'	260 17 0 00 002756'		PUSHJ	P,OCTOU0	;  software notebooks
+  2289	002762'	554 01 0 17 000000 		HLRZ	T1,(P)		;  examples.
+  2290	002763'	051 16 0 01 000060 	OCTOU1:	OUTCHI	"0"(T1)		; Immediate mode outchr
+  2291	002764'	263 17 0 00 000000 		POPJ	P,		; Return
+  2292
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 48
+ASP	MAC	22-Feb-83 21:20		Sepcial purpose octal output routines
+
+  2293					SUBTTL	Sepcial purpose octal output routines
+  2294
+  2295	002765'	261 17 0 00 000004 	OCTSIX:	PUSH	P,T4		;Working register
+  2296	002766'	201 04 0 00 000006 		MOVEI	T4,6		;Halfword
+  2297	002767'	241 01 0 00 000003 	OCTSI0:	ROT	T1,3		;Shift around
+  2298	002770'	135 02 0 00 005671'		LDB	T2,[Point 3,T1,35]
+  2299	002771'	051 16 0 02 000060 		OUTCHI	"0"(T2)		;Print
+  2300	002772'	367 04 0 00 002767'		SOJG	T4,OCTSI0	;Loop
+  2301	002773'	201 04 0 00 000040 		MOVEI	T4," "		;Add spacing
+  2302	002774'	332 00 0 00 003156'		SKIPE	OSTARS		;Is a star wanted?
+  2303	002775'	201 04 0 00 000052 		  MOVEI	T4,"*"		;Yes, use that
+  2304	002776'	051 01 0 00 000004 		OUTCHR	T4		;Print spacing
+  2305	002777'	402 00 0 00 003156'		SETZM	OSTARS		;And clear for later
+  2306	003000'	201 04 0 00 000006 		MOVEI	T4,6		;Halfword
+  2307	003001'	241 01 0 00 000003 	OCTSI1:	ROT	T1,3		;Shift around
+  2308	003002'	135 02 0 00 005671'		LDB	T2,[Point 3,T1,35]
+  2309	003003'	051 16 0 02 000060 		OUTCHI	"0"(T2)		;Print
+  2310	003004'	367 04 0 00 003001'		SOJG	T4,OCTSI1	;Loop
+  2311	003005'	262 17 0 00 000004 		POP	P,T4		;Restore
+  2312	003006'	263 17 0 00 000000 		POPJ	P,		;Return
+  2313
+  2314	003007'	231 01 0 00 000010 	OCTWNO:	IDIVI	T1,10		;One digit
+  2315	003010'	261 17 0 00 000002 		PUSH	P,T2		;Save it
+  2316	003011'	231 01 0 00 000010 		IDIVI	T1,10		;Second digit
+  2317	003012'	051 16 0 01 000060 		OUTCHI	"0"(T1)		;First digit printing
+  2318	003013'	051 16 0 02 000060 		OUTCHI	"0"(T2)		;Second digit printing
+  2319	003014'	262 17 0 00 000002 		POP	P,T2		;Get digit
+  2320	003015'	051 16 0 02 000060 		OUTCHI	"0"(T2)		;Last digit printing
+  2321	003016'	263 17 0 00 000000 		POPJ	P,		;Done
+  2322
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 49
+ASP	MAC	22-Feb-83 21:20		SIXBIT I/O
+
+  2323					SUBTTL	SIXBIT I/O
+  2324
+  2325					;RETURN NEXT SIXBIT TOKEN IN T1, BREAK CHAR IN CH
+  2326					; SCANS PAST BLANKS AND CONTROL CHARS FIRST.
+  2327	003017'	200 03 0 00 005672'	SIXIN:	MOVE	T3,[POINT 6,T1]
+  2328	003020'	400 01 0 00 000000 		SETZ	T1,
+  2329	003021'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;WAS LAST CHAR A BREAK?
+  2330	003022'	263 17 0 00 000000 		  POPJ	P,		;GIVE ERROR RETURN.
+  2331	003023'	260 17 0 00 003057'	SIXIN1:	PUSHJ	P,GTCHR
+  2332	003024'	303 14 0 00 000040 		CAILE	CH," "		;IF BLANK OR CONTROL,
+  2333	003025'	260 17 0 00 003053'		PUSHJ	P,ISBRK		;BREAK?
+  2334	003026'	254 00 0 00 003040'		  JRST	SIXIN3		;SEE IF COLLECTED ANYTHING
+  2335	003027'	607 03 0 00 770000 	SIXIN2:	TLNN	T3,770000	;ANY MORE ROOM?
+  2336	003030'	254 00 0 00 003023'		JRST	SIXIN1		;NO, JUST IGNORE THE REST
+  2337	003031'	301 14 0 00 000141 		CAIL	CH,"a"		;CONVERT LOWER TO UPPER CASE
+  2338	003032'	303 14 0 00 000172 		CAILE	CH,"z"		;
+  2339	003033'	254 00 0 00 003035'		JRST	.+2
+  2340	003034'	275 14 0 00 000040 		SUBI	CH,"a"-"A"
+  2341	003035'	275 14 0 00 000040 		SUBI	CH," "
+  2342	003036'	136 14 0 00 000003 		IDPB	CH,T3
+  2343	003037'	254 00 0 00 003023'		JRST	SIXIN1		;NO, CONTINUE
+  2344	003040'	326 01 0 00 002660'	SIXIN3:	JUMPN	T1,CPOPJ1	;IF COLLECTED ANYTHING, RETURN SKIP
+  2345	003041'	306 14 0 00 000040 		CAIN	CH," "		; ELSE IF SPACE
+  2346	003042'	254 00 0 00 003023'		  JRST	SIXIN1		;       LOOK FOR MORE
+  2347	003043'	263 17 0 00 000000 		POPJ	P,		;ELSE ERROR RETURN.
+  2348
+  2349	003044'	200 02 0 00 005672'	SIXOUT:	MOVE	T2,[POINT 6,T1]
+  2350	003045'	134 03 0 00 000002 	SIXOU1:	ILDB	T3,T2
+  2351	003046'	322 03 0 00 002661'		JUMPE	T3,CPOPJ
+  2352	003047'	051 16 0 03 000040 		OUTCHI	"0"-'0'(T3)
+  2353	003050'	603 02 0 00 770000 		TLNE	T2,770000
+  2354	003051'	254 00 0 00 003045'		JRST	SIXOU1
+  2355	003052'	263 17 0 00 000000 		POPJ	P,
+  2356
+  2357	003053'	302 14 0 00 000176 	ISBRK:	CAIE	CH,176
+  2358	003054'	307 14 0 00 000037 		CAIG	CH,37
+  2359	003055'	263 17 0 00 000000 		POPJ	P,
+  2360	003056'	254 00 0 00 002660'		JRST	CPOPJ1
+  2361
+  2362	003057'	051 04 0 00 000014 	GTCHR:	INCHWL	CH		;GET IT
+  2363	003060'	306 14 0 00 000015 		CAIN	CH,15		;IGNORE CR
+  2364	003061'	254 00 0 00 003057'		JRST	GTCHR
+  2365	003062'	263 17 0 00 000000 		POPJ	P,		;AND RETURN WITH IT IN CH
+  2366
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 50
+ASP	MAC	22-Feb-83 21:20		SIXBIT I/O
+
+  2367	003063'				OBUF:	BLOCK	3
+  2368	003066'				PDL:	BLOCK	PDLLEN
+  2369	003136'				PTRBUF:	BLOCK	1		;AOBJN POINTER TO WRAP AROUND TO FIRST BUFFER
+  2370	003137'				LASBUF:	BLOCK	1		;AOBJN POINTER TO LAST BUFFER ON SAVE AND RESTORE.
+  2371	003140'	000000	000000		LASOER:	0			;LAST REC NUMBER OF OUTPUT ERROR
+  2372	003141'				LASOEC:	BLOCK	1		;NUMBER OF TIMES TRIED TO OUTPUT SAME REC
+  2373	003142'				OECMAX:	BLOCK	1		;MAX TIMES TO TRY SET HERE.
+  2374	003143'				SRCLEN:	BLOCK	1		;NUMBER OF TIMES TO TRY TO FIND GOOD RECORD ON RESTORE RESYN
+  2375					C
+  2376	003144'				RESTDP:	BLOCK	1		;IF NON-ZERO, SAYS WHERE TO START A SAVE.
+  2377	003145'				RESTTP:	BLOCK	1		;IF NON-ZERO, SAYS WHICH TAPE NUMBER TO CALL IT.
+  2378	003146'				RESDAT:	BLOCK	1		;WHERE TO GET DATE ON A RESTART
+  2379	003147'				RESTIM:	BLOCK	1		;WHERE TO GET TIME ON A RESTART
+  2380	003150'				CMPFLG:	BLOCK	1		;COMPARE FLAG.
+  2381	003151'				CMPCNT:	BLOCK	1		;COUNT OF COMPARE ERRORS.
+  2382	003152'				VERFLG:	BLOCK	1		;VERIFY FLAG.
+  2383	003153'				BUFSIZ:	BLOCK	1		;SIZE OF BUFFER IN WORDS
+  2384	003154'				BUFPAG:	BLOCK	1		;SIZE OF BUFFER IN PAGES
+  2385	003155'				VERBOSE:BLOCK	1		;TYPE OF COMPARE MESSAGES.
+  2386	003156'				OSTARS:	BLOCK	1		;PRINT XXXXXX*XXXXXX FOR OCTSIX FLAG
+  2387	003157'				STSTYP:	BLOCK	1		;TYPE OF STATUS BEING CHECKED
+  2388	003160'				STRMXP:	BLOCK	1		;MAX PAGES PER STR STORED HERE.
+  2389	003161'				STRTYP:	BLOCK	1		;TYPE OF REQUEST 0=STR, 1=LOG, 2=PHY
+  2390	003162'	000000	005301'		STRMSG:	[ASCIZ	\structure \]	;MESSAGE TO PRINT FOR EACH TYPE
+  2391	003163'	000000	005673'			[ASCIZ	\logical unit \]
+  2392	003164'	000000	005676'			[ASCIZ	\physical unit \]
+  2393
+  2394			000024		    DSKCHS==24
+  2395	003165'				DSKCHB:	BLOCK	DSKCHS		;DSKCHR BLOCK
+  2396	003211'	000000	000003		DEBNAM:	3
+  2397	003212'	000000	000000			0
+  2398	003213'	64 41 60 45 00 00 		SIXBIT	/TAPE/
+  2399	003214'	44 55 60 00 00 00 		SIXBIT	/DMP/
+  2400
+  2401	003215'	000000	000000		TAPDTB:	0			;ADDRESS OF DENSITY BLOCK FOR TAPE UNIT
+  2402	003216'	41 63 60 00 00 00 	CODNAM:	SIXBIT	/ASP/
+  2403	003217'				TAPNUM:	BLOCK	1		;CURRENT TAPE NUMBER
+  2404	003220'				TAPBAS:	BLOCK	1		;RECORD NUMBER THIS TAPE STARTED WITH
+  2405	003221'	000000	000000		CNTPRO:	0			;PLACE TO KEEP RECORD COUNT WE EXPECT ON RESTORE
+  2406
+  2407	000000				PROBUF:	PHASE	0
+  2408	000000	000000	000000		PROCOD:!0			;READ OR WRITE CODE HERE
+  2409	000001	000000	000000		PROCNT:!0			;COUNT GOES HERE
+  2410	003224'					DEPHASE
+  2411			000002			PROLEN==.-PROBUF
+  2412	003224'	000000	000017		OPNTAP:	EXP 17
+  2413	003225'	000000	000000		OPNTNM:	0
+  2414	003226'	000000	000000			0
+  2415	003227'	000000	000017		OPNSTR:	17
+  2416	003230'	44 63 53 42 00 00 	STRNAM:	SIXBIT	/DSKB/
+  2417	003231'	000000	000000			0			;THIS IS AN OPEN BLOCK
+  2418	003232'				STRHID:	BLOCK	1		;HOME BLOCK ID
+  2419	003233'				STRNMU:	BLOCK	1		;NUMBER OF UNITS IN STRUCTURE
+  2420
+  2421	003234'				FIRDAT:	BLOCK	1		;FIRST DATE SEEN ON RESTORE
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 50-1
+ASP	MAC	22-Feb-83 21:20		SIXBIT I/O
+
+  2422	003235'				FIRTIM:	BLOCK	1		;FIRST TIME SEEN ON RESTORE
+  2423			000074'			END	ST
+
+NO ERRORS DETECTED
+
+PROGRAM BREAK IS 005701
+CPU TIME USED 16:02.650
+
+22P CORE USED
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page S-1
+ASP	MAC	22-Feb-83 21:20		SYMBOL TABLE
+
+ALLCMN		001121'		CURDEN		000302'		IODEND		020000	spd	OPNSTR		003227'		
+ALONE		001520'		DATUUO	047000	777723		IODERR		200000	spd	OPNTAP		003224'		
+ALONE1		001526'		DAYTIM		000744'		IODTER		100000	spd	OPNTNM		003225'		
+ALONE2		001533'		DEBCNT		003236'		IOEMSK		740000	spd	OSTARS		003156'		
+ASPEDT		000110	spd	DEBNAM		003211'		IOIMPM		400000	spd	OUTCHI	051700	000000		
+ASPMIN		000000	spd	DECIN		002676'		IOTEND		002000	spd	OUTCHR	051040	000000		
+ASPVER		000007	spd	DECIN0		002701'		IOW		000011		OUTOK		000667'		
+ASPWHO		000000	spd	DECIN1		002710'		IOW1		000012		OUTOK1		000675'		
+BADT1A		000651'		DECOUT		002667'		IOW2		000013		OUTSTR	051140	000000		
+BADTAP		000650'		DENCHK		002576'		ISBRK		003053'		P		000017		
+BADTP0		000645'		DENDON		000325'		LASBUF		003137'		PAGSTS	047000	777707		
+BADTP1		000656'		DENLP0		000322'		LASOEC		003141'		PATMAP		001763'		
+BRKEA1		002744'		DENLUP		000317'		LASOER		003140'		PATMP1		001765'		
+BRKEAT		002740'		DENSTB		002620'		MAPCMP		001753'		PDL		003066'		
+BUF		000010		DISK		000000	spd	MAPIT		001751'		PDLLEN		000050	spd	
+BUFNUM		000012	spd	DP		000005		MAPRD		001742'		PERSET	047000	777706		
+BUFPAG		003154'		DSKCHB		003165'		MAPVER		001776'		PJRST	254000	000000		
+BUFSIZ		003153'		DSKCHR	047000	000045		MAPWT		001744'		PREREF	047000	777703		
+CH		000014		DSKCHS		000024	spd	MAXOEC		000761'		PROBUF		003222'		
+CHECK		000151'		DSKCLR	047000	777756		MAXREC		030000	spd	PROCNT		000001	spd	
+CHECK0		000170'		EXIT	047000	000012		MONTAB		002452'		PROCOD		000000	spd	
+CHECK1		000200'		FIRDAT		003234'		NOCOM		002662'		PROLEN		000002	spd	
+CHKFIR		002242'		FIRTIM		003235'		NOEOT		001434'		PRTDAT		002405'		
+CHKHD0		002253'		FNDDTB		000333'		NOISES		000231'		PRTDEN		000313'		
+CHKHD1		002305'		FTDEBG		000000	spd	NOMAPR		000706'		PRTDP		002207'		
+CHKHED		002251'		GETCOM		000110'		NOMAPW		001456'		PRTDP1		002231'		
+CMP		000007		GETCTP		002614'		NONONO		000256'		PRTHD1		002131'		
+CMPCLR		002007'		GETSTR		002524'		NOOPEN		000261'		PRTHD2		002135'		
+CMPCNT		003151'		GETTAB	047000	000041		NOSTOP		000067'		PRTHE1		002144'		
+CMPDF1		001602'		GETTAP		002607'		NOSTRS		002570'		PRTHED		002112'		
+CMPDF2		001616'		GTCHR		003057'		NOTAPO		002617'		PRTRES		001033'		
+CMPDF4		001662'		HEDBF1		002505'		NOTDEV		000257'		PS.CP0		000000	spd	
+CMPDFX		001670'		HEDBUF		002466'		NOTHD1		002326'		PS.CP1		000001	spd	
+CMPDSK		001534'		HEDDAT		000011	spd	NOTHED		002316'		PS.CP2		000002	spd	
+CMPEND		001547'		HEDHID		000015	spd	NOTREW		002403'		PS.CP3		000003	spd	
+CMPFAL		001552'		HEDMXP		000014	spd	NXTCOM		002647'		PS.CPR		000007	spd	
+CMPFLG		003150'		HEDNAM		000001	spd	NXTRES		001221'		PS.DDE	030000	000000	spd	
+CMPLOP		001543'		HEDNMU		000016	spd	NXTRS0		001212'		PS.DER	020000	000000	spd	
+CNT		000006		HEDSIZ		000000	spd	NXTRS1		001224'		PS.DRT	004000	000000	spd	
+CNTPRO		003221'		HEDSTR		000013	spd	NXTSAV		000525'		PS.DTE	010000	000000	spd	
+CODNAM		003216'		HEDSYN		000004	spd	NXTSV1		000537'		PS.FIL		000010	spd	
+COM1		002636'		HEDTIM		000012	spd	OBUF		003063'		PS.MXW	100000	000000	spd	
+COMADR		000023'		HEDTPN		000003	spd	OCTHWO		002750'		PS.NEW	002000	000000	spd	
+COMFND		002655'		HEDVER		000002	spd	OCTIN		002717'		PS.OER	001000	000000	spd	
+COMLEN		000023	spd	HELP		000124'		OCTIN0		002722'		PS.PAR	000400	000000	spd	
+COMMAN		002627'		INCHPG		000003	spd	OCTIN1		002731'		PS.REF	200000	000000	spd	
+COMNAM		000000'		INCHWL	051200	000000		OCTOU0		002756'		PS.SUP	040000	000000	spd	
+COMPAR		001077'		INIHED		002015'		OCTOU1		002763'		PS.UWS	400000	000000	spd	
+COPBYE		000237'		INISRD		002053'		OCTOUT		002746'		PTRBUF		003136'		
+COPLUP		000504'		INISRT		002062'		OCTSI0		002767'		RESBSR		001730'		
+COPROK		000703'		INOK		001411'		OCTSI1		003001'		RESCMN		001105'		
+COPRTY		000512'		INOK0		001426'		OCTSIX		002765'		RESDAT		003146'		
+CPOPJ		002661'		INOK1		001443'		OCTWNO		003007'		RESDO1		001473'		
+CPOPJ1		002660'		INOK2		001451'		OECMAX		003142'		RESDO2		001502'		
+CURDAT		000747'		IO.UWC		000020	spd	ONEJOB	047000	777760		RESDON		001463'		
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page S-2
+ASP	MAC	22-Feb-83 21:20		SYMBOL TABLE
+
+RESERR		001734'		STSPAG		000356'		WRTRST		000461'		
+RESET	047000	000000		STSRED		000343'		WSCTL	047000	777704		
+RESLU1		001171'		STSTYP		003157'		XXXDON		000720'		
+RESLUP		001163'		STSWRT		000344'		ZZ		000000	spd	
+RESRES		001154'		SYNLUP		002035'		ZZ1		000007	spd	
+RESTDP		003144'		SYSNSZ		000005	spd	.CHSMP		000043	spd	
+RESTIM		003147'		SYSPHY	047000	000051		.CNDAT		000011	spd	
+RESTOR		001103'		T1		000001		.CNTIM		000010	spd	
+RESTTP		003145'		T2		000002		.GTCNF		000011	spd	
+RESVER		002233'		T3		000003		.JBDDT		001520'	ext	
+RESYN1		001703'		T4		000004		.JBFF		000061'	ext	
+RESYN2		001706'		TAPBAS		003220'		.JBVER		002022'	ext	
+RESYN3		001714'		TAPDTB		003215'		.MTBLK		000013	spd	
+RESYN4		001721'		TAPE		000001	spd	.MTBSR		000007	spd	
+RESYN5		001726'		TAPNUM		003217'		.MTEOF		000003	spd	
+RESYNC		001700'		TAPOP1		000250'		.MTREW		000001	spd	
+REWIND		000220'		TAPOP2		000251'		.MTSKR		000006	spd	
+S		000000		TAPOPN		000243'		.MTUNL		000011	spd	
+SAVDON		000713'		TBDERR		001245'		.UGCNT		000000	spd	
+SAVE		000413'		TINCSB		001253'		.UGSTS		000002	spd	
+SAVRST		000447'		TINER1		001246'		.WSRNG		000001	spd	
+SETBF0		000052'		TINER2		001261'		
+SETBF1		000053'		TINERR		001241'		
+SETBUF		000046'		TINMSG		001305'		
+SETDEN		002571'		TINNXT		001303'		
+SETDTB		000327'		TPINER		001505'		
+SETRE1		001003'		TPOER1		000610'		
+SETRE2		001005'		TPOERR		000574'		
+SETRE3		001014'		TPOSTD		000621'		
+SETRE4		001057'		TPOUER		001507'		
+SETRE5		001064'		TPXXER		001510'		
+SETRE6		001067'		UG.D16		000010	spd	
+SETRES		001001'		UG.D2		000001	spd	
+SETSRC		000771'		UG.D5		000002	spd	
+SIXIN		003017'		UG.D62		000020	spd	
+SIXIN1		003023'		UG.D8		000004	spd	
+SIXIN2		003027'		UG.DNM		000037	spd	
+SIXIN3		003040'		UG.HWP		400000	spd	
+SIXOU1		003045'		UG.LDP		040000	spd	
+SIXOUT		003044'		UG.RDY		200000	spd	
+SIZHED		000017	spd	UNIDON		002564'		
+SRCLEN		003143'		UNIFND		002554'		
+ST		000074'		UNILUP		002533'		
+ST1		000104'		UNLOAD		000224'		
+STAT0		000306'		VCLEAR	047000	777712		
+STATUS		000265'		VCREAT	047000	777711		
+STDOEC		000012	spd	VERBOS		003155'		
+STDSRC		000024	spd	VERCHK		001123'		
+STRHID		003232'		VERCMN		001107'		
+STRMSG		003162'		VERFLG		003152'		
+STRMXP		003160'		VERIFY		001074'		
+STRNAM		003230'		WRTHD1		002074'		
+STRNMU		003233'		WRTHD2		002102'		
+STRTYP		003161'		WRTHD3		002103'		
+STSERR		000367'		WRTHED		002067'		
+
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+ALLCMN	  1098	  1101#
+ALONE	   704	  1090	  1404#
+ALONE1	  1407	  1410#
+ALONE2	  1405	  1416#
+ASPEDT	     6#	    10
+ASPMIN	     5#	    10
+ASPVER	     4#	    10
+ASPWHO	     7#	    10
+BADT1A	   888	   890#
+BADTAP	   799	   889#
+BADTP0	   849	   852	   879	   886#
+BADTP1	   895#	   900	   902
+BRKEA1	  1058	  1062	  1068	  2271	  2274#
+BRKEAT	   454	  1968	  1971	  1974	  1977	  1980	  2216	  2270#	  2273
+BUF	   213#	   440	   650	   654	   685	   748	   778	   779	   910	   918	   924	   925	   926	   927
+	  1141	  1149	  1150	  1335	  1351	  1358	  1359	  1360	  1361	  1367	  1420	  1422	  1442	  1593
+BUFNUM	   237#	   411	   416	   768	  1143
+BUFPAG	   408	   502	   653	   684	   691	   712	   714	   744	   755	   767	   772	   814	   832	   877
+	   891	   916	  1012	  1013	  1041	  1042	  1104	  1106	  1142	  1147	  1193	  1216	  1226	  1349
+	  1421	  1441	  1446	  1635	  1644	  1672	  2384#
+BUFSIZ	   406	   410	   739	   865	   924	  1131	  1358	  2383#
+CH	   217#	   445	   818	   898	  1185	  1967	  1970	  1973	  1976	  1979	  2237	  2238	  2242	  2243
+	  2246	  2257	  2258	  2262	  2263	  2266	  2274	  2332	  2337	  2338	  2340	  2341	  2342	  2345
+	  2357	  2358	  2362	  2363
+CHECK	   380	   487#
+CHECK0	   489	   507#	  1019	  1836	  1846
+CHECK1	   513	   517#
+CHKFIR	  1117	  1836#
+CHKHD0	  1842	  1848#
+CHKHD1	  1863	  1879#
+CHKHED	  1188	  1846#
+CMP	   212#	   412	   415	   649	   650	   651	   652	   656	   657	   663	   664	   683	  1161	  1425
+	  1426	  1428	  1431	  1432	  1439	  1453	  1459	  1460	  1464	  1467	  1470	  1473	  1480	  1483
+	  1486	  1489	  1493	  1498	  1503	  1508	  1512	  1517	  1522	  1523	  1524	  1525	  1526	  1633
+	  1642
+CMPCLR	  1631	  1642#
+CMPCNT	  1078	  1371	  1377	  1435	  2381#
+CMPDF1	  1463#	  1514
+CMPDF2	  1465	  1468	  1471	  1476#
+CMPDF4	  1474	  1512#
+CMPDFX	  1452	  1519#
+CMPDSK	  1354	  1420#
+CMPEND	  1431#	  1527
+CMPFAL	  1429	  1435#
+CMPFLG	   698	  1074	  1079	  1084	  1099	  1157	  1353	  1369	  1406	  1586	  1784	  1787	  1829	  1860
+	  2380#
+CMPLOP	  1427#	  1431
+CNT	   211#	   655	   686	   767	   768	   771	   772	   781	   920	   923	  1142	  1143	  1146	  1147
+	  1152	  1352	  1357	  1423	  1443	  1583	  1585	  1588	  1595	  1624
+CNTPRO	  1105	  1212	  1223	  1225	  1322	  1328	  1332	  2405#
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+CODNAM	   518	  1674	  1910	  2402#
+COM1	  2191#	  2200
+COMADR	   379#	   452
+COMFND	  2193	  2208#
+COMLEN	   377#	   449
+COMMAN	   450	  2184#
+COMNAM	   358#	   377	   449
+COMPAR	   383	  1078#
+COPBYE	   397	   555#
+COPLUP	   778#	   926	   928
+COPROK	   917	   921#
+COPRTY	   780	   784#	   835
+CPOPJ	  2212#	  2351
+CPOPJ1	   545	   553	   566	   954	   960	   986	   999	  1049	  1053	  1409	  1416	  1555	  1569	  1592
+	  1627	  1639	  1650	  1712	  1732	  1877	  1887	  1983	  2100	  2129	  2211#	  2244	  2264	  2344
+	  2360
+CURDAT	   943	   958	   962#
+CURDEN	   603#	  1770
+DAYTIM	   390	   958#
+DEBCNT	   435#	   435
+DEBNAM	  2396#
+DECIN	   401	   979	   992	  2111	  2231#
+DECIN0	  2234#	  2239
+DECIN1	  2241#	  2247
+DECOUT	   609	   624	   809	   977	   982	   990	   995	  1037	  1375	  1763	  1773	  1851	  1997	  2004
+	  2013	  2017	  2023	  2223#	  2226
+DENCHK	  2114#	  2118
+DENDON	   621	   627#
+DENLP0	   619	   623#
+DENLUP	   620#	   625
+DENSTB	   635	   640	  2169#
+DISK	   245#	   422	   555	  1601	  2065	  2101
+DP	   210#	   707	   708	   709	   711	   715	   717	   743	   744	   754	   760	   771	   875	   877
+	   890	   891	   915	   923	  1095	  1096	  1101	  1103	  1107	  1109	  1121	  1146	  1227	  1348
+	  1357	  1602
+DSKCHB	  2076	  2077	  2082	  2085	  2088	  2092	  2094	  2395#
+DSKCHS	  2077	  2394#	  2395
+FIRDAT	  1839	  1854	  2421#
+FIRTIM	   750	  1318	  1552	  1709	  1841	  1857	  2422#
+FNDDTB	   635#	   639
+FTDEBG	   330	  1605	  1606	  1609
+GETCOM	   444#	   448	   451	   455
+GETCTP	  2109	  2126	  2131#
+GETSTR	   699	  1005	  1085	  2061#
+GETTAP	   487	   536	   541	   590	   701	   819	   899	  1017	  1087	  1186	  2125#
+GTCHR	  1966	  1969	  1972	  1975	  1978	  2234	  2241	  2254	  2261	  2272	  2331	  2362#	  2364
+HEDBF1	   491	  1543	  1551	  1554	  1721	  1730	  1899	  1900	  1901	  1902	  1909	  1912	  1926	  1929
+	  1932	  1935	  1938	  1941	  1951	  2057#
+HEDBUF	   498	   508	   509	   510	   511	   517	   520	   525	   528	   736	   805	   826	  1021	  1024
+	  1026	  1673	  1675	  1677	  1679	  1681	  1683	  1685	  1691	  1701	  1708	  1711	  1714	  1729
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+	  1838	  1840	  1849	  1853	  1856	  1864	  1867	  1870	  1873	  1879	  1881	  1883	  1885	  1927	  1930
+	  1933	  1936	  1939	  1942	  2040#	  2055
+HEDDAT	  1024	  1701	  1775	  1838	  1853	  1938	  1939	  2047#
+HEDHID	  1683	  1794	  1867	  1881	  1929	  1930	  2052#
+HEDMXP	  1685	  1870	  1883	  1932	  1933	  2051#
+HEDNAM	   517	  1675	  1909	  2043#
+HEDNMU	  1681	  1873	  1885	  1935	  1936	  2053#
+HEDSIZ	   520	   525	  1673	  1758	  1912	  2042#
+HEDSTR	  1711	  1791	  1864	  1879	  1926	  1927	  2050#
+HEDSYN	  1691	  1781	  2046#
+HEDTIM	   498	  1026	  1708	  1776	  1840	  1856	  1941	  1942	  2049#
+HEDTPN	   805	  1021	  1679	  1772	  1849	  2045#
+HEDVER	  1677	  1738	  1740	  1742	  1744	  1746	  1749	  1754	  2044#
+HELP	   384	   459#
+INCHPG	   240#	   869
+INIHED	   727	  1671#
+INISRD	  1695	  1701#
+INISRT	  1704	  1708#
+INOK	  1163	  1171	  1317#
+INOK0	  1323	  1332#
+INOK1	  1334	  1347#
+INOK2	  1350	  1353#
+IO.UWC	   272#
+IODEND	   324#	  1167	  1179	  1341	  1547	  1568	  1573
+IODERR	   326#	   837	  1203	  1395
+IODTER	   327#	   839	  1205	  1397
+IOEMSK	   325#	   790	   798	   878	   932	  1165	  1177	  1343	  1556	  1568
+IOIMPM	   328#	  1399
+IOTEND	   323#	   784	   792	   878	  1155	  1169	  1547	  1568	  1571
+IOW	   214#	   739	   740	   741	   742	   778	   783	   787	  1131	  1132	  1133	  1134	  1149	  1154
+	  1161	  1162	  1420	  1427	  1430	  1454	  1456	  1457	  1458	  1463	  1466	  1469	  1472	  1476
+	  1492	  1497	  1502	  1507	  1513	  1514	  1516	  1519	  1520
+IOW1	   215#
+IOW2	   216#
+ISBRK	  2232	  2235	  2252	  2255	  2270	  2329	  2333	  2357#
+LASBUF	   654	   685	   719	   749	   779	   908	   918	  1111	  1150	  1333	  1351	  1367	  1422	  1442
+	  2370#
+LASOEC	   845	   847	   871	  2372#
+LASOER	   843	   844	  2371#
+MAPCMP	  1589	  1593#
+MAPIT	  1584	  1587	  1591#
+MAPRD	   769	   921	  1583#
+MAPVER	  1127	  1631#
+MAPWT	  1144	  1355	  1585#
+MAXOEC	   391	   975#
+MAXREC	   235	   236	   402	   403	   438	  1760
+MONTAB	  2000	  2027#
+NOCOM	  2203	  2206	  2214#
+NOEOT	  1339#
+NOISES	   396	   547#
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+NOMAPR	   912	   924#
+NOMAPW	  1336	  1358#
+NONONO	   577#	   578	  1056	  1066
+NOOPEN	   565	   580#
+NOSTOP	   422#	   579
+NOSTRS	   700	  1086	  2104#
+NOTAPO	   488	   537	   542	   591	   702	  1088	  2135#
+NOTDEV	   578#	  2128
+NOTHD1	  1904	  1909#
+NOTHED	   822	   901	  1898#
+NOTREW	  1906	  1911	  1914	  1928	  1931	  1934	  1937	  1940	  1943	  1982#
+NXTCOM	  2196	  2200#
+NXTRES	  1168	  1181#	  1242
+NXTRS0	  1156	  1173#
+NXTRS1	  1184#	  1187	  1189
+NXTSAV	   785	   797#
+NXTSV1	   807#	   820	   823	   825
+OBUF	  2367#
+OCTHWO	  2279#
+OCTIN	  1007	  2251#
+OCTIN0	  2254#	  2259
+OCTIN1	  2261#	  2267
+OCTOU0	  2278	  2281	  2285#	  2288
+OCTOU1	  2277	  2290#
+OCTOUT	  1326	  1329	  1743	  1752	  1757	  1808	  1818	  1821	  2277#
+OCTSI0	  2297#	  2300
+OCTSI1	  2307#	  2310
+OCTSIX	  1481	  1484	  1487	  1490	  1495	  1500	  1505	  1510	  2295#
+OCTWNO	  1478	  2314#
+OECMAX	   431	   848	   975	   985	  2373#
+OPNSTR	  2065	  2415#
+OPNTAP	   569	   572	   603	   857	  1538	  1557	  1905	  2120	  2412#
+OPNTNM	   434	   568	   570	   592	  1767	  2131	  2413#
+OSTARS	  1461	  1494	  1499	  1504	  1509	  2302	  2305	  2386#
+OUTOK	   788	   794	   907#
+OUTOK1	   909	   914#
+P	   218#	   401	   404	   418	   437	   439	   447	   450	   452	   454	   483	   487	   489	   490
+	   496	   500	   504	   519	   522	   527	   531	   536	   539	   541	   562	   563	   564	   571
+	   573	   581	   583	   590	   593	   601	   609	   611	   624	   628	   637	   642	   649	   659
+	   662	   664	   665	   699	   701	   704	   705	   710	   727	   728	   734	   735	   737	   761
+	   769	   770	   786	   793	   809	   815	   819	   822	   824	   827	   833	   851	   889	   899
+	   901	   921	   922	   933	   940	   943	   944	   958	   964	   966	   969	   970	   977	   979
+	   982	   990	   992	   995	  1005	  1007	  1017	  1019	  1020	  1037	  1046	  1051	  1057	  1058
+	  1062	  1067	  1068	  1085	  1087	  1090	  1091	  1102	  1117	  1118	  1120	  1122	  1127	  1128
+	  1144	  1145	  1159	  1170	  1175	  1180	  1186	  1188	  1190	  1194	  1209	  1218	  1221	  1228
+	  1229	  1230	  1231	  1233	  1326	  1329	  1339	  1344	  1354	  1355	  1356	  1368	  1375	  1384
+	  1402	  1411	  1414	  1425	  1432	  1433	  1448	  1453	  1454	  1478	  1481	  1484	  1487	  1490
+	  1495	  1500	  1505	  1510	  1516	  1517	  1541	  1542	  1559	  1560	  1562	  1572	  1574	  1576
+	  1599	  1607	  1621	  1623	  1626	  1631	  1632	  1638	  1648	  1690	  1698	  1700	  1707	  1734
+	  1743	  1752	  1757	  1763	  1768	  1770	  1773	  1777	  1778	  1779	  1792	  1795	  1799	  1805
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+	  1808	  1817	  1818	  1820	  1821	  1823	  1832	  1836	  1837	  1846	  1847	  1851	  1852	  1855	  1858
+	  1866	  1869	  1872	  1876	  1952	  1966	  1969	  1972	  1975	  1978	  1992	  1993	  1995	  1997
+	  1998	  2004	  2006	  2008	  2010	  2013	  2014	  2017	  2018	  2023	  2025	  2061	  2062	  2067
+	  2069	  2074	  2079	  2104	  2109	  2110	  2111	  2115	  2122	  2125	  2127	  2132	  2135	  2184
+	  2208	  2211	  2212	  2214	  2216	  2217	  2218	  2224	  2226	  2227	  2229	  2232	  2233	  2234
+	  2235	  2236	  2241	  2252	  2253	  2254	  2255	  2256	  2261	  2270	  2272	  2275	  2279	  2280
+	  2281	  2283	  2286	  2288	  2289	  2291	  2295	  2311	  2312	  2315	  2319	  2321	  2329	  2330
+	  2331	  2333	  2347	  2355	  2359	  2365
+PATMAP	  1604#
+PATMP1	  1608#
+PDL	   437	  2368#
+PDLLEN	   266#	   437	  2368
+PROBUF	   492	   499	   501	   688	   690	   741	   753	   756	   803	   813	   831	   842	   853	   907
+	  1133	  1173	  1191	  1317	  1321	  1337	  1445	  2407#	  2411
+PROCNT	   501	   688	   690	   756	   803	   813	   831	   842	   853	   907	  1191	  1321	  1445	  1554
+	  2409#
+PROCOD	   499	   753	  1317	  1551	  2408#
+PROLEN	   492	   741	   866	  1133	  1543	  2411#
+PRTDAT	   971	  1051	  1778	  1989#
+PRTDEN	   601	   616#	  2112
+PRTDP	   505	   693	   761	   815	   833	  1046	  1122	  1194	  1218	  1233	  1448	  1804#
+PRTDP1	  1811	  1822#
+PRTHD1	  1745	  1750	  1754#
+PRTHD2	  1755	  1758#
+PRTHE1	  1759	  1761	  1765#
+PRTHED	   532	   737	   827	  1739#	  1952
+PRTRES	   394	  1034#
+PS.CP0	   311#
+PS.CP1	   312#
+PS.CP2	   313#
+PS.CP3	   314#
+PS.CPR	   310#
+PS.DDE	   304#
+PS.DER	   302#	   661	   673
+PS.DRT	   305#
+PS.DTE	   303#	   661	   675
+PS.FIL	   309#
+PS.MXW	   300#
+PS.NEW	   306#
+PS.OER	   307#
+PS.PAR	   308#
+PS.REF	   299#
+PS.SUP	   301#
+PS.UWS	   298#
+PTRBUF	   417	   440	   748	   927	   946	  1141	  1361	  2369#
+RESBSR	  1228	  1230	  1541	  1559	  1566#
+RESCMN	  1081	  1085#
+RESDAT	  1025	  1047	  1694	  2378#
+RESDO1	  1372	  1375#
+RESDO2	  1370	  1383#
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+RESDON	  1342	  1367#
+RESERR	  1549	  1571#
+RESLU1	  1151	  1155#
+RESLUP	  1149#	  1196	  1360	  1362
+RESRES	  1141#	  1237
+RESTDP	   708	  1003	  1011	  1014	  1040	  1043	  1096	  2376#
+RESTIM	  1027	  1048	  1703	  2379#
+RESTOR	   381	  1083#
+RESTTP	   722	  1004	  1023	  1035	  1113	  2377#
+RESVER	  1120	  1190	  1384	  1826#
+RESYN1	  1540#	  1561
+RESYN2	  1540	  1543#
+RESYN3	  1545	  1551#
+RESYN4	  1548	  1553	  1556#
+RESYN5	  1558	  1561#
+RESYNC	   851	  1209	  1221	  1536#
+REWIND	   387	   536#
+S	   205#	   495	   514	   572	   784	   789	   790	   792	   797	   798	   837	   839	   931	   932
+	  1155	  1164	  1165	  1167	  1169	  1176	  1177	  1179	  1203	  1205	  1340	  1341	  1343	  1395
+	  1397	  1399	  1546	  1547	  1556	  1567	  1568	  1571	  1573	  1718	  1724	  2187	  2197	  2198
+	  2199	  2201	  2204	  2207
+SAVDON	   911	   930#
+SAVE	   379	   697#
+SAVRST	   734#	   903
+SETBF0	   405#	   527
+SETBF1	   406#	   439
+SETBUF	   395	   401#
+SETDEN	   386	  2109#
+SETDTB	   574	   631#
+SETRE1	  1005#	  1060
+SETRE2	  1007#	  1064
+SETRE3	  1017#	  1070
+SETRE4	  1006	  1056#
+SETRE5	  1008	  1062#
+SETRE6	  1018	  1066#
+SETRES	   393	  1003#
+SETSRC	   392	   988#
+SIXIN	   447	   562	  2061	  2125	  2327#
+SIXIN1	  2331#	  2336	  2343	  2346
+SIXIN2	  2335#
+SIXIN3	  2334	  2344#
+SIXOU1	  2350#	  2354
+SIXOUT	   581	   593	   940	  1768	  1792	  1795	  1805	  2067	  2214	  2349#
+SIZHED	   510	   511	   521	   523	  1671	  1714	  1721	  1728	  1901	  1902	  1913	  2055#	  2057
+SRCLEN	   433	   988	   998	  1536	  2374#
+ST	   428#	  2423
+ST1	   426	   437#
+STAT0	   604	   607#
+STATUS	   385	   590#
+STDOEC	   241#	   430	   981	   983
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+STDSRC	   239#	   432	   994	   996
+STRHID	  1682	  1868	  1882	  2096	  2418#
+STRMSG	   759	   812	   830	   938	  1786	  2390#
+STRMXP	   709	   914	  1101	  1347	  1684	  1814	  1871	  1884	  2071	  2093	  2388#
+STRNAM	   939	  1710	  1804	  1865	  1880	  2064	  2081	  2416#
+STRNMU	  1680	  1809	  1815	  1874	  1886	  2072	  2090	  2099	  2419#
+STRTYP	   758	   811	   829	   937	  1783	  1810	  2091	  2389#
+STSERR	   662	   673#
+STSPAG	   657#	   663
+STSRED	   646#	   786	  1159
+STSTYP	   648	   680	   689	  2387#
+STSWRT	   647#
+SYNLUP	  1687#	  1692
+SYSNSZ	   321#	  1686	  2046
+T1	   206#	   402	   403	   405	   406	   407	   408	   410	   411	   412	   413	   414	   415	   416
+	   417	   430	   431	   432	   433	   438	   498	   499	   509	   510	   517	   518	   525	   526
+	   547	   548	   549	   551	   568	   578	   592	   595	   596	   603	   604	   605	   606	   607
+	   608	   618	   620	   623	   631	   632	   635	   636	   638	   646	   647	   648	   653	   655
+	   656	   657	   658	   660	   661	   673	   675	   677	   680	   682	   683	   687	   692	   711
+	   712	   713	   714	   715	   717	   721	   722	   723	   724	   725	   750	   753	   754	   755
+	   756	   781	   782	   783	   803	   804	   808	   842	   843	   844	   847	   848	   865	   866
+	   867	   868	   869	   872	   874	   908	   910	   914	   915	   916	   920	   937	   938	   939
+	   946	   947	   948	   950	   951	   952	   962	   963	   965	   975	   981	   983	   985	   988
+	   994	   996	   998	  1011	  1012	  1013	  1014	  1021	  1022	  1023	  1024	  1025	  1026	  1027
+	  1035	  1036	  1040	  1041	  1042	  1043	  1045	  1047	  1049	  1056	  1066	  1103	  1104	  1105
+	  1106	  1107	  1109	  1112	  1113	  1114	  1115	  1116	  1152	  1153	  1154	  1317	  1318	  1321
+	  1322	  1328	  1333	  1335	  1347	  1348	  1349	  1352	  1371	  1372	  1377	  1378	  1421	  1423
+	  1424	  1426	  1427	  1428	  1439	  1440	  1444	  1447	  1463	  1464	  1466	  1467	  1469	  1470
+	  1472	  1473	  1476	  1477	  1480	  1483	  1486	  1489	  1492	  1493	  1497	  1498	  1502	  1503
+	  1507	  1508	  1551	  1552	  1593	  1594	  1595	  1596	  1597	  1598	  1603	  1605	  1619	  1622
+	  1624	  1625	  1633	  1634	  1635	  1636	  1637	  1642	  1643	  1644	  1645	  1646	  1647	  1671
+	  1672	  1673	  1674	  1675	  1676	  1677	  1678	  1679	  1680	  1681	  1682	  1683	  1684	  1685
+	  1687	  1688	  1689	  1691	  1693	  1694	  1695	  1696	  1697	  1699	  1701	  1702	  1703	  1704
+	  1705	  1706	  1708	  1709	  1710	  1711	  1728	  1729	  1730	  1731	  1732	  1738	  1740	  1741
+	  1742	  1744	  1745	  1746	  1747	  1748	  1749	  1750	  1754	  1755	  1758	  1759	  1760	  1767
+	  1772	  1775	  1783	  1786	  1791	  1794	  1804	  1807	  1813	  1816	  1820	  1838	  1839	  1840
+	  1841	  1848	  1849	  1853	  1854	  1856	  1857	  1864	  1865	  1867	  1868	  1870	  1871	  1873
+	  1874	  1879	  1880	  1881	  1882	  1883	  1884	  1885	  1886	  1900	  1901	  1909	  1910	  1912
+	  1913	  1926	  1927	  1929	  1930	  1932	  1933	  1935	  1936	  1938	  1939	  1941	  1942	  1990
+	  1994	  1995	  1996	  1998	  1999	  2003	  2006	  2007	  2009	  2011	  2014	  2015	  2018	  2019
+	  2021	  2064	  2077	  2078	  2081	  2082	  2085	  2088	  2092	  2093	  2094	  2095	  2096	  2116
+	  2119	  2120	  2121	  2185	  2192	  2195	  2223	  2225	  2227	  2228	  2231	  2245	  2246	  2251
+	  2265	  2266	  2277	  2278	  2279	  2280	  2283	  2284	  2285	  2287	  2289	  2290	  2297	  2298
+	  2307	  2308	  2314	  2316	  2317	  2327	  2328	  2344	  2349
+T2	   207#	   520	   521	   523	   597	   599	   633	   638	   857	   858	   859	   860	   861	   862
+	   863	   864	   867	   868	   870	   871	   872	   949	   950	   951	   967	   968	  1048	  1602
+	  1619	  1620	  1686	  1688	  1691	  1692	  1729	  1730	  1776	  1814	  1815	  1816	  1817	  1993
+	  1996	  2000	  2002	  2008	  2010	  2080	  2084	  2087	  2091	  2114	  2116	  2117	  2186	  2188
+	  2194	  2224	  2286	  2298	  2299	  2308	  2309	  2315	  2318	  2319	  2320	  2349	  2350	  2353
+T3	   208#	   617	   618	   620	   625	   634	   635	   639	   640	  1536	  1537	  1561	  1601	  1605
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+	  1989	  2001	  2113	  2114	  2118	  2119	  2185	  2189	  2190	  2191	  2192	  2194	  2195	  2208	  2210
+	  2327	  2335	  2342	  2350	  2351	  2352
+T4	   209#	   449	   452	   501	   502	   528	   640	   641	   684	   686	   687	   688	   690	   691
+	   692	   736	   758	   759	   760	   811	   812	   813	   814	   826	   829	   830	   831	   832
+	   850	   853	   875	  1045	  1121	  1191	  1192	  1193	  1208	  1212	  1215	  1216	  1217	  1220
+	  1223	  1225	  1226	  1227	  1441	  1443	  1444	  1445	  1446	  1447	  1540	  1554	  1558	  1583
+	  1585	  1588	  1603	  1738	  1740	  1742	  1744	  1746	  1749	  1754	  1758	  1772	  1775	  1776
+	  1777	  1779	  1781	  1791	  1794	  1807	  1813	  1826	  1828	  1830	  1831	  1951	  1990	  1991
+	  2071	  2073	  2075	  2076	  2184	  2191	  2199	  2200	  2207	  2209	  2210	  2295	  2296	  2300
+	  2301	  2303	  2304	  2306	  2310	  2311
+TAPBAS	   713	   743	   804	   890	  2404#
+TAPDTB	   607	   617	   641	   861	  2113	  2401#
+TAPE	   246#	   423	   491	   495	   507	   511	   514	   538	   543	   544	   556	   569	   596	   632
+	   720	   787	   789	   797	   800	   801	   802	   821	   854	   873	   878	   892	   893	   894
+	   930	   931	   935	   936	  1029	  1030	  1162	  1164	  1173	  1176	  1181	  1182	  1337	  1340
+	  1538	  1543	  1546	  1557	  1566	  1567	  1714	  1718	  1720	  1721	  1724	  1898	  1902	  1905
+	  1982	  2121
+TAPNUM	   725	   806	   808	  1116	  1183	  1678	  1848	  2403#
+TAPOP1	   564	   568#	  2127
+TAPOP2	   569#	  2133
+TAPOPN	   389	   562#
+TBDERR	  1207#	  1320	  1330
+TINCSB	  1214#
+TINER1	  1208#	  1213
+TINER2	  1211	  1220#	  1224
+TINERR	  1166	  1203#
+TINMSG	  1241	  1244#
+TINNXT	  1222	  1241#
+TPINER	   497	   516	  1178	  1345	  1392#	  1726
+TPOER1	   846	   850#	   856
+TPOERR	   791	   837#
+TPOSTD	   858	   861#
+TPOUER	   889	  1394#	  1719
+TPXXER	  1393	  1395#
+UG.D16	   283#	   287	  2170	  2171	  2172
+UG.D2	   286#	   287	  2174
+UG.D5	   285#	   287	  2173	  2174
+UG.D62	   282#	   287	  2169	  2170
+UG.D8	   284#	   287	  2172	  2173	  2174
+UG.DNM	   287#	   633
+UG.HWP	   279#	   597
+UG.LDP	   281#	   599
+UG.RDY	   280#
+UNIDON	  2075	  2098#
+UNIFND	  2083	  2086	  2090#
+UNILUP	  2073#	  2089	  2097
+UNLOAD	   388	   541#
+VERBOS	   547	   549	  1436	  1451	  2385#
+VERCHK	  1100	  1103#
+VERCMN	  1076	  1087#
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Symbol cross reference
+
+VERFLG	   697	  1075	  1080	  1083	  1097	  1125	  1158	  1160	  1235	  1408	  1591	  1785	  1788	  1827
+	  1861	  2382#
+VERIFY	   382	  1074#
+WRTHD1	  1716	  1720#
+WRTHD2	  1723	  1728#
+WRTHD3	  1729#	  1731
+WRTHED	   734	   824	  1714#
+WRTRST	   748#	   881
+XXXDON	   935#	  1385
+ZZ	  2169#	  2169	  2170#	  2170	  2171#	  2171	  2172#	  2172	  2173#	  2173	  2174#	  2174
+ZZ1	  2169#	  2169	  2170#	  2170	  2171#	  2171	  2172#	  2172	  2173#	  2173	  2174#	  2174
+.CHSMP	   271#	  1601
+.CNDAT	   319#	   962	  1696
+.CNTIM	   320#	   967	  1705
+.GTCNF	   318#	   962	   967	  1687	  1696	  1705
+.JBDDT	  1404
+.JBFF	   413
+.JBVER	  1676
+.MTBLK	   226#	   873
+.MTBSR	   225#	   854	  1566
+.MTEOF	   223#
+.MTREW	   222#	   507	   538	   720	   821	  1720	  1898	  1982
+.MTSKR	   224#
+.MTUNL	   227#	   543	   801	   893	   935	  1029	  1181
+.UGCNT	   277#
+.UGSTS	   278#	   595	   631
+.WSRNG	   273#	  1619
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Macro/Opdef cross reference
+
+COMMAC	   334#	   358	   379	   464
+DATUUO	  1991
+DENBIT	  2158#	  2169	  2170	  2171	  2172	  2173	  2174
+DENMAC	  2137#	  2169
+DSKCHR	  2078
+DSKCLR	  1412
+ERROR	   251#	  1992
+ERRPOP	   255#	   404	   496	   500	   519	   522	   563	   637	   659	   710	   793	   933	   964	   966
+	   969	  1102	  1170	  1175	  1180	  1229	  1231	  1339	  1344	  1368	  1411	  1414	  1562	  1572
+	  1574	  1599	  1607	  1621	  1623	  1626	  1638	  1648	  1690	  1698	  1700	  1707	  1852	  1855
+	  1858	  1866	  1869	  1872	  1875	  2062	  2074	  2079	  2115	  2132
+EXIT	   557	  1992
+GETTAB	   963	   968	  1689	  1697	  1706
+HEDCMP	  1918#	  1926
+INCHWL	  2362
+MSG	   261#	   424	   425	   444	   459	   464	   465	   466	   467	   468	   469	   470	   471	   472
+	   473	   474	   475	   476	   477	   478	   479	   480	   481	   482	   503	   515	   524	   529
+	   530	   552	   580	   582	   594	   598	   600	   602	   610	   616	   622	   627	   674	   676
+	   678	   679	   716	   757	   762	   807	   810	   816	   817	   828	   834	   838	   840	   841
+	   855	   880	   886	   887	   895	   896	   897	   934	   941	   942	   945	   959	   976	   978
+	   980	   989	   991	   993	  1015	  1031	  1032	  1034	  1038	  1039	  1044	  1050	  1052	  1059
+	  1063	  1069	  1108	  1123	  1184	  1195	  1204	  1206	  1207	  1210	  1214	  1219	  1232	  1234
+	  1236	  1319	  1324	  1325	  1327	  1373	  1376	  1380	  1381	  1383	  1392	  1394	  1396	  1398
+	  1400	  1401	  1437	  1438	  1479	  1482	  1485	  1488	  1491	  1496	  1501	  1506	  1511	  1515
+	  1575	  1717	  1725	  1733	  1739	  1762	  1764	  1765	  1766	  1769	  1771	  1774	  1780	  1782
+	  1790	  1797	  1798	  1806	  1812	  1819	  1822	  1850	  1949	  1953	  1954	  1956	  2020	  2024
+	  2066	  2068	  2102	  2202	  2205	  2215	  2282
+ONEJOB	  1410
+OUTCHI	  1379	  1748	  1751	  1753	  1756	  1793	  1796	  2005	  2012	  2016	  2022	  2228	  2290	  2299
+	  2309	  2317	  2318	  2320	  2352
+OUTCHR	  2304
+OUTSTR	   404	   424	   425	   444	   446	   459	   464	   465	   466	   467	   468	   469	   470	   471
+	   472	   473	   474	   475	   476	   477	   478	   479	   480	   481	   482	   496	   500	   503
+	   515	   519	   522	   524	   529	   530	   550	   552	   563	   580	   582	   594	   598	   600
+	   602	   610	   616	   622	   627	   637	   659	   674	   676	   678	   679	   681	   710	   716
+	   757	   759	   762	   793	   807	   810	   812	   816	   817	   828	   830	   834	   838	   840
+	   841	   855	   880	   886	   887	   895	   896	   897	   933	   934	   938	   941	   942	   945
+	   959	   964	   966	   969	   976	   978	   980	   989	   991	   993	  1015	  1031	  1032	  1034
+	  1038	  1039	  1044	  1050	  1052	  1059	  1063	  1069	  1102	  1108	  1123	  1170	  1175	  1180
+	  1184	  1195	  1204	  1206	  1207	  1210	  1214	  1219	  1229	  1231	  1232	  1234	  1236	  1241
+	  1319	  1324	  1325	  1327	  1339	  1344	  1368	  1373	  1376	  1380	  1381	  1383	  1392	  1394
+	  1396	  1398	  1400	  1401	  1411	  1414	  1437	  1438	  1479	  1482	  1485	  1488	  1491	  1496
+	  1501	  1506	  1511	  1515	  1562	  1572	  1574	  1575	  1599	  1607	  1621	  1623	  1626	  1638
+	  1648	  1690	  1698	  1700	  1707	  1717	  1725	  1733	  1739	  1762	  1764	  1765	  1766	  1769
+	  1771	  1774	  1780	  1781	  1782	  1786	  1790	  1797	  1798	  1806	  1812	  1819	  1822	  1831
+	  1850	  1852	  1855	  1858	  1866	  1869	  1872	  1876	  1950	  1953	  1955	  1956	  1992	  2002
+	  2020	  2024	  2062	  2066	  2068	  2074	  2079	  2102	  2115	  2132	  2202	  2205	  2215	  2282
+PAGSTS	   658
+PERSET	  1625
+PJRST	   316#	   505	   532	   574	   693	   971	  1081	  1385	  1968	  1971	  1974	  1977	  2112
+ASP ABSOLUTE STRUCTURE SAVE AND RESTORE PROGRAM	MACRO %53B(1156)-1 16:24 16-Sep-94 Page 1
+ASP	MAC	22-Feb-83 21:20		E. SOCCI 31-OCT-79/WRS/DARREN/SUTTOND/CARL
+
+
+Macro/Opdef cross reference
+
+PREREF	  1622
+RESET	   429
+STRCMP	  1958#	  1966
+SYSPHY	  2073
+VCLEAR	   952	  1596	  1645
+VCREAT	  1637
+WSCTL	  1620
+X	   357#	   358	   359	   360	   361	   362	   363	   364	   365	   366	   367	   368	   369	   370
+	   371	   372	   373	   374	   375	   376	   378#	   379	   380	   381	   382	   383	   384	   385
+	   386	   387	   388	   389	   390	   391	   392	   393	   394	   395	   396	   397	   461#	   464
+	   465	   466	   467	   468	   469	   470	   471	   472	   473	   474	   475	   476	   477	   478
+	   479	   480	   481	   482	  2147#	  2169	  2170	  2171	  2172	  2173	  2174   qMa
