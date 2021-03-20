@@ -1,0 +1,82 @@
+C**********************************************************************
+C
+C                          ANDERS.FTF
+C
+C          LISTS TNUM AND COC FOR ARTHUR ANDERSON TICKETS OPEN
+C          DURING A SPECIFIED PERIOD                        3/12/95
+C                                                            JHP
+C
+C***********************************************************************
+C
+C
+        INTEGER START,END,TNUM,STDAT,CLDAT,COC(2),SM,SD,SY,EM,ED,EY
+        INTEGER IERT,IERC,NUMBER,I,ONUM,SDAT,CDAT,B1,OM,OD,OY
+        INTEGER CM,CD,CY,HOST,RE(2),LOCAL(3),SVER,CNAM(3),PROD
+        REAL ELM    
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+        B1=0
+        TYPE 20
+20      FORMAT(/5X,'ENTER THE STARTING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 21,SM,SD,SY
+21      FORMAT(I2,1X,I2,1X,I2)
+        SY=SY+1900
+        CALL DBDATN(START,SM,SD,SY)
+        TYPE 30
+30      FORMAT(/5X,'ENTER THE ENDING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 31,EM,ED,EY
+31      FORMAT(I2,1X,I2,1X,I2)
+        EY=EY+1900
+        CALL DBDATN(END,EM,ED,EY)
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     CALL DBOPEN('(TNT)BASE4','(TNT)BASE1')
+        CALL DBFIND(49,4,END,1,49,6,START)
+        CALL DBSRCH(31,'CT','ANDERS')
+        CALL DBSORT('SDAT')
+        GOTO 500
+550     B1=1
+        CALL DBSET(2)
+        CALL DBFIND(49,4,END,1,49,6,START)
+        CALL DBSRCH(31,'CT','ANDERS')
+        CALL DBSORT('SDAT')
+        GOTO 501
+500     TYPE 110
+110     FORMAT(/1X,'TICKET #',3X,'OPENED',5X,'HRS ',2X,
+     1  'SVER',2X,'PRODUCT   ',8X,'CLOSEOUT CODE',2X,'LOCALE ',/1X)
+        TYPE 111
+111     FORMAT(/1X,'--------',3X,'-------',4X,'----',2X,
+     1  '----',2X,'-------',11X,'-------------',2X,'-------',/1X)
+
+501     CALL DBNREC(NUMBER)
+        IF(NUMBER.EQ.0) GOTO 9990
+
+        DO 130 I=1,NUMBER
+        CALL DBGREC(I)
+        CALL DBVAL(1,TNUM,55,COC,5,SDAT,54,ELM,52,SVER,22,LOCAL,14,PROD)
+        IF (SDAT.GT.0) CALL DBNDAT(SDAT,OM,OD,OY)
+        IF (OY.GT.0) OY=OY-1900
+        CM=0
+        CD=0
+        CY=0
+
+        IF (CDAT.GT.0) CALL DBNDAT(CDAT,CM,CD,CY)
+        IF (CY.GT.0) CY=CY-1900
+        ELM=ELM/60
+        
+        TYPE 120,TNUM,OM,OD,OY,ELM,SVER,PROD,COC,LOCAL
+120     FORMAT(/1X,I6,3X,I2,'/',I2,'/',I2,3X,F6.1,3X,I2,
+     1  3X,A5,13X,2A5,3X,3A5)
+130     CONTINUE
+        IF(B1.EQ.0) GOTO 550
+        GOTO 9990
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO JOE MILLER/CRC!')
+9990    CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
