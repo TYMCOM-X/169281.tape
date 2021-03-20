@@ -1,0 +1,2900 @@
+::	Updated 2-Jul-90 at 9:09 by Jerry Lucas
+:	*****************************************************
+:	*****		PATCH FILE FOR VERSION 04.03	*****
+:	*****************************************************
+
+:	Refer to (NETMID:39)PATCH.DOC for details on implemen-
+:	ting patches with PATCH.LIB.
+
+
+
+:	>>>>>     START PATCHES HERE     <<<<<
+
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	In version 4.03 a test was added to check that the length
+:	of the saved facilities in facbuf was consistant
+:	with the length byte in the facility buffer.  Without this check
+:	a GCI crash could occur because the length byte could
+:	erronously indicate that there was more data in the buffer 
+:	than there realy was.  The bug that was introduced occured
+:	because GCI will use register 2 when chaining packets.  The 
+:	patch replaces the usage of rigister 2 with 8.
+
+  IF	X.25
+PATCH(100887,1000,D/ERNST,ESP942+0E,,8)
+  ELSE	X.75
+PATCH(100887,1000,D/ERNST,ESP942+18,,8)
+  EI
+	CBCT(R8)			:COUNT THE DATA IN THE FACBUF :DRE 7-OCT-87
+	LR	R8,R8						:DRE 7-OCT-87
+  IF	X.25
+CONPATCH(ESP942+1E,,2)
+  ELSE	X.75
+CONPATCH(ESP942+28,,2)
+  EI
+	CR	R0,R8			:ENOUGH DATA IN FACBUF?	:DRE 1-JUL-87:DRE 7-OCT-87
+ENDPATCH(FIX OCASIONAL REGISTER SMASH IN ESCAPED MESSAGE LENGTH CHECK)
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	The conceptual model of LAP is that of two pairs of
+:	half-duplex stations sharing a full-duplex line.
+:	As the state of one pair changes, it may affect the other pair.
+:	The bug fixed here is the removal of an unnecessary state change.
+:	The state change contributes to the long time it takes
+:	LAP interfaces to come up.
+
+
+  IF	LAP
+PATCH(100887,1100,D/ERNST,SDSNAR,,4)
+:	DO NOT RESET THIS FLAG SINCE WE ARE IN THE DESIRED STATE :DRE 7-OCT-87
+:	RBT	RL,STARM		:TELL PRIMARY STATION TO ABORT SARM AND SEND DISC
+	NOP	0,0		
+ENDPATCH(FIX PROBLEM WHICH MAKES LAP INTERFACES SLOW TO COME UP)
+  EI
+
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	The sending of RR frames is not necessary if they can
+:	be piggy-backed on an I-frame.  The code makes this
+:	optimization by checking for queued data, and not sending
+:	the RR if data is queued.  This works fine unless our
+:	transmit window is full, in whick case, no frame
+:	will be sent to piggy-back the acknowledgement.  This
+:	patch adds a check to I-frame sending to see if a
+:	RR/RNR is necessary when we cannot send an I-frame
+:	because the window is closed or a RNR has been received.
+
+  IF	LAPB
+PATCH(100887,1130,D/ERNST,TPINFO+2A,,4)
+  ELSE	LAP
+PATCH(100887,1130,D/ERNST,TPINFO+32,,4)
+  EI
+	JE	TINF05			:IF SO
+  IF	LAPB
+CONPATCH(TPINFO+3A,,0C)
+  ELSE	LAP
+CONPATCH(TPINFO+42,,0C)
+  EI
+	J	PA1PTR,,
+TINF05	J	TINF0X,,
+CONPATCH(PA1PTR,,3C)
+	NH	R5,FMMSK
+	CLB	R5,XVS,RL		:SEE IF ANY FRAMES OUT
+	JE	TINF10,,		:NO, SEND ONE TO HAVE SOMETHING TO POOL WITH :DRE 7-OCT-87
+TINF0X	LB	R1,XVR,RL		:LOAD CURRENT N(R) VALUE :DRE 7-OCT-87
+	CLB	R1,XTNR,RL		:SAME AS LAST TRANSMITTED? :DRE 7-OCT-87
+	JE	TFG100,,		:YES, ALL DONE		:DRE 7-OCT-87
+	LHI	R1,CT.RR		:SET UP TO SEND RR	:DRE 7-OCT-87
+	TBT	RL,XSBUSY		:ARE WE BUSY		:DRE 7-OCT-87
+	JEFS	TINF07			:NO, SEND THE RR	:DRE 7-OCT-87
+	LHI	R1,CT.RNR		:YES, SEND A RNR	:DRE 7-OCT-87
+TINF07	LB	R5,SADRT,RL,		:SETUP RESPONSE ADDRESS	:DRE 20-NOV-87
+	JAL	R0,OUTFRM,,		:SEND THE RR/RNR	:DRE 7-OCT-87
+	J	TFG100,,		:FINISHED UP		:DRE 7-OCT-87
+ENDPATCH(PREVENT DELAY IN SENDING RR/RNR WHEN OUR WINDOW IS FULL)
+
+:***********************************************************************
+:
+:   Patch to module:	XCOMDD.F43
+:   Patch by:		Louisa Hsu
+:   Description:	When counting clear user data in the clear indication
+:			for fast select call, also counted facility
+:			field for accounting by mistake.  Make this
+:			change to only count clear user data.
+:   Related NSR:	1419
+:
+    IF	FSTSLT
+	PATCH(870819,1800,LOUISA,ESP177+22,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,36)
+	LR	R7,R0	:SAVE R0, REAL BYTE COUNT LEFT IN THE BUFFER
+	LHL	R1,DIBUF
+	JAL	R4,GCI,,:GET FACILITY LENGTH
+	LHL	R1,FACBUF
+	JAL	R4,WCI,,:WRITE FACILITY LENGTH INTO FACBUF
+	AIS	R0,1	:PLUS ONE FOR LENGTH ITSELF
+	SR	R7,R0	:SUBTRACT FROM THE REAL BYTE COUNT
+	JL	ESP17X,,:DISCARD ALL MSG. IF REAL COUNT IS NOT ENOUGH
+	JE	ESP178,,:NO CLEAR USER DATA
+	LHL	R4,DPORT	:RELOAD THE OLD CODE
+	STH	R7,RUFCNT,R4,R4	:COUNT OF CLEAR USER DATA FOR ROUTINE COP1SX
+	J	ESP177+2C,,
+	ENDPATCH(NSR #1419 fast select accounting for clear user data)
+    EI	:FSTSLT
+
+
+:***********************************************************************
+:
+:   Patch to module:	XCOMDD.F43, XCOMDP.F43
+:   Patch by:		Louisa Hsu
+:   Description:	Changes for fast select call accounting.  
+:			Call Request/Incoming Call  with 0-16 bytes of 
+:			CUD is counted as 1 segment.  Call Request/
+:			Incoming Call with 17-64 bytes of CUD is counted 
+:			as 2 segments.  Call Request/Incoming Call with
+:			65-128 bytes of CUD is counted as 3 segments.
+:   Related NSR:	1419
+
+	PATCH(871007,1500,LOUISA,ESP930+14,,2)	:correct for incoming call
+	CR	R7,R2
+    IF	FSTSLT
+	CONPATCH(ICP040+76,,2)		:correct for call request
+	CR	R0,R4		
+    EI	:FSTSLT
+	ENDPATCH(NSR #1419 fast select accounting for call user data)
+
+
+:****************************************************************
+:	Patch by:   Janet Soung 
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	In the XCOM packet window rotation logic, the send RR flag and
+:	send RNR falg were not properly set/reset when the interface
+:	should return a RR packet to a specific channel.  This caused
+:	the problem that the interface did not send the RR packet
+:	to a psecific channel when a Release Backpressure message 
+:	was received from the network.
+:	This patch is made to check the flow control packet in queue 
+:	flag after send RR flag is set and send RNR flag is reset.
+:	
+
+PATCH(871102,1100,JSOUNG,RW060,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+	SBT	R6,FLRR,,	:SET SEND RR FLAG
+	RBT	R6,FLRNR,,	:RESET SEND RNR FLAG
+	SBT	R6,FLFLOW,,	:ANY FLOW CONTROL PACKET IN QUEUE?
+	JN	RW020,,		:YES - GO CHECK NEXT PORT
+	J	RW060+10,,	:NO - QUEUE A RR PACKET INTO IEC BUFFER
+ENDPATCH(SENDING RR PACKET WHEN RELEASE BACKPRESSURE IS RECEIVED FROM NETWORK)
+:***********************************************************************
+:***************
+:*****
+:   Patch to module:	XCOMOM.F43
+:   Patch by:		Louisa Hsu
+:   Description:	Change XOM routine XMCSWI to accept the
+:			parameter value 'ffff' for switch options.
+:			When a XOM user enters the value 'ffff' for a 
+:			specific parameter, the internal value of this
+:			parameter (ON or OFF) will not be changed.
+:   Related NSR:	None
+:
+  IF  XOM
+PATCH(871125,1500,LOUISA,XMCSW2+6,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,22)
+	LHL	R2,XOMPAR,R5,
+	CI	R2,0FFFF
+	JE	XMCSW3+6,,
+	CLHI	R2,2
+	JL	XMCSW3,,
+	J	BREXOM,,
+ENDPATCH(FIX XOM TO ACCEPT FFFF PARAMETER VALUE FOR SWITCH OPTIONS)
+  EI
+:*****
+:***************
+:***********************************************************************
+:****************************************************************
+:	Patch by:   Aileen Ma
+:	NSR number: None, Internal testing (ESC 38730)
+:   	Patch to module:	XCOMBK.F43
+:	Version:    4.03
+:	Description:
+:	If the DTE did not answer by sending either a Restart request or a
+:	Restart confirmation packet, the network would retransmit the Restart
+:	indication packet with cause 00 diag 00 twice then cause 00 diag 52.
+:	Fixed so that the DCE remains in r3, signals a Restart indication with
+:	cause 01 diag 52, and restarts the T10 timer. (The fix is different 
+:	from CCITT 1984 standard).
+
+PATCH(871230,1100,AMA,T1S370+0E,,4)
+	J	T1S370+20
+CONPATCH(T1S380+16,,4)
+	LHI	R0,RSTCAU
+ENDPATCH(FIX DCE RESTART INDICATION CAUSE/DIAG)
+:***************************************
+:   Patch by:		Janet Soung
+:   NSR number:		ESC#39275 for Televerket 
+:   Version:		4.03
+:   Description:        
+:    The flow control parameter negotiation does not
+:   follow CCITT and X.25/X.75 Capabilities.  With the packet size and
+:   and window size negotiation options on, maximum packet size 1024,
+:   default packet size 128 and default window size 2, After a Call
+:   Request packet is received form the link with no packet size and 
+:   window size specified, XCOM returns a Call Connected with the 
+:   packet size 1024 which is the maximum packet size, and with the
+:   window size 7 which is the maximum window size for MOD 8.
+:   Patch to fix that the packet size in the Call Connected packet
+:   should be the default packet size and the window size in the Call
+:   Connected packet should be the default window size.
+:   Related Escalation: 39275
+:
+PATCH(871230,1500,JSOUNG,NST220+0A,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,14)
+	LIS	R12,0		
+	JAL	R7,SETTWP,,	:set throughput class, packet and window sizes
+	L	R0,LIMSAV,,	:get return address
+	J	NST220+12,,
+CONPATCH(PFAA20+40,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,0E)
+	LIS	R12,0
+	JAL	R7,SETTWP,,	:set throughput class, packet and window sizes
+	J	PFAA20+46,,
+CONPATCH(PCR400,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,0E)
+	LIS	R12,1		:indicate receiving Call Request from link
+	JAL	R7,SETTWP,,	:set throughput class, packet and window sizes
+	J	PCR400+6,,
+CONPATCH(PCA340+16,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,0E)
+	LIS	R12,0
+	JAL	R7,SETTWP,,	:set throughput class, packet and window sizes
+	J	PCA340+1C,,
+:
+:   ONLY ASSEMBLE THE FOLLOWING CODE IF TCPW OPTION IS NOT SET
+:   JL/JSOUNG   5/27/88
+:
+:   For the packet size sent to the link, this part has been modified as 
+:   follows:	ahm Feb-28-89
+:	if maxpsize > 128 then
+:	   use old logic (maxpsize is used as P(indicated)) 
+:	else
+:	   use 16 ( P(indicated) ) 
+:	ei
+:
+   IF   1-TCPW
+CONPATCH(TWP020+20,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,14)
+	LR	R12,R12		:receiving a Call Request packet from link
+	JN	TWP025,,	:yes - use default window size
+	TBT	RL,P128.F,,
+	J	TWP020+26,,
+CONPATCH(TWP025+16,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,14)
+	LR	R12,R12		:receiving a Call Request from link
+	JN	TWP030,,	:yes - use default window size
+	TBT	RL,P128.F,,
+	J	TWP025+24,,
+    EI
+:
+:
+:   ONLY ASSEMBLE FOLLOWING CODE IF TCPS OPTION IS NOT SET
+:   JL/JSOUNG   5/27/88
+:
+    IF   1-TCPS
+      IF   TCPW
+CONPATCH(TWP032+1A,,6)
+      ELSE
+CONPATCH(TWP030+1A,,6)
+      EI
+	J	PA1PTR,,
+   IF  \TLRATE
+CONPATCH(PA1PTR,,1C)
+   ELSE
+CONPATCH(PA1PTR,,0E)
+   EI
+	LR	R12,R12		:receiving a Call Request from link
+	JN	TWP045,,	:yes - use default packet size
+   IF  \TLRATE
+	CLHI	R3,$A128	:max. packet size greater than 128?	:ahm Feb-27-89
+	JG	TWP045,,	:yes - use max. packet size		:ahm Feb-27-89
+	LHI	R3,$A16		:no - use 16				:ahm Feb-27-89
+   EI
+	J	TWP045,,
+CONPATCH(TWP045+1A,,6)
+	J	PA1PTR,,
+   IF  \TLRATE
+CONPATCH(PA1PTR,,1C)
+   ELSE
+CONPATCH(PA1PTR,,0E)
+   EI
+	LR	R12,R12		:receiving a Call Request from link
+	JN	TWP050,,	:yes - use default packet size
+   IF  \TLRATE
+	CLHI	R4,$A128	:max. packet size greater than 128?	:ahm Feb-27-89
+	JG	TWP050,,	:yes - use max. packet size		:ahm Feb-27-89
+	LHI	R4,$A16		:no - use 16				:ahm Feb-27-89
+   EI
+	J	TWP050,,
+    EI
+:
+ENDPATCH(ESC#39275-PACKET SIZE & WINDOW SIZE NEGOTIATIONS DO NOT FOLLOW CCITT)
+:*****
+:***************
+:***********************************************************************
+:	Patch by:   Dennis Ernst
+:	NSR number: ESC 38729, Televerket
+:	Version:    4.03
+:	Description:
+:	When a bad I-frame is received the Poll bit should be returned
+:	in the FRMR as the F-bit.  A new label (RGF210) was introduced in
+:	version 4.03 to handle this.  All other command frame rejects us
+:	it, but the I-frame case was overlooked. This patch fixes the
+:	jump after frame reject.
+
+  IF	HDLC
+PATCH(120487,1130,D/ERNST,RIDISC-4,,4)
+	J	RFG210
+ENDPATCH(HANDLE I-FRAME POLL BIT CORRECTLY DURING FRAME REJECT CONDITION)
+  EI
+
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	During testing a number of incorrect frame level responses
+:	during error conditions were found.  They include
+:	responding to error frames during link-setup.  The
+:	inability to handle a FRMR with the F-bit set is corrected.
+
+  IF	LAPB
+PATCH(120387,1130,D/ERNST,SECDEC+STAT.L+4,,4)
+	HC	FMDSCD-SECDEC
+	HC	FMDSCD-SECDEC
+CONPATCH(SECDEC+STAT.L+10,,2)
+	HC	FMDSCD-SECDEC
+ENDPATCH(DISCARD CERTAIN INCORRECT FRAMES AT LINK SETUP)
+
+PATCH(120387,1130,D/ERNST,SDSDSC,,2)
+	LIS	R5,XMSDM		:QUEUE UP A DM
+ENDPATCH(RESPOND CORRECTLY TO DISC COLLISION IN LAPB)
+  EI
+
+PATCH(120387,1130,D/ERNST,XPRES+0C,,4)
+	NHI	R0,@(CT.1PF!CT.NIF)	:MASK OFF UNUSED BITS
+ENDPATCH(IGNORE FINAL BIT FOR FRMR CHECK)
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	During testing a number of incorrect packet level responses
+:	during restart were found.  They include
+:	the recognition of an illegal packet as legal, ignoring
+:	certain erroneous packets, and sending incorrect responses to
+:	errored packets.
+
+PATCH(010788,1130,D/ERNST,RTDFAN+22,,2)
+	HC	RTEILL-RTDFAN
+CONPATCH(RTGO+10,,8)
+	BC	ZDATA,0,ZDATA,ZCLRQ,ZDATA,0,ZDATA,ZCLRCN	:dre 8-jan-88
+CONPATCH(RTD140-4,,4)
+	JE	RTEDSC		:DON'T LOOK AT PACKETS
+CONPATCH(PA1PTR,,20)
+RSTSHT	LHI	R5,DIA038		:RESTART TOO LONG	:DRE 5-JAN-88
+	JFS	RSTLN1			:SEND A DIAGNOSTIC OR RESTART :DRE 5-JAN-88
+RSTLNG	LHI	R5,DIA039		:RESTART TOO LONG	:DRE 5-JAN-88
+RSTLN1	LIS	R13,PREADY		:LOAD UP READY STATE	:DRE 6-JAN-88
+	CLB	R13,PCKSTE,RL,		:CHECK FOR R1 STATE	:DRE 6-JAN-88
+	JE	RTD020,,		:ignore for now
+	LR	R13,R5			:COPY THE DIAGNOSTIC	:DRE 6-JAN-88
+	J	SNDRST,,		:INVOKE ERROR FOR R3 STATE :DRE 6-JAN-87
+CONPATCH(RTRSTI+0E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,32)
+	TBT	RL,LEVEL1		:CHECK FOR BAD GFI	:DRE 31-DEC-87
+	JN	RTEGFI,,		:IF Q BIT ON		:DRE 31-DEC-87
+	TBT	RL,SEEDBT					:DRE 31-DEC-87
+	JN	RTEGFI,,		:IF D BIT ON		:DRE 31-DEC-87
+	CLHI	R6,2
+	JG	RSTLNG			:IF PACKET TOO LONG	:DRE 5-JAN-88
+	LHL	R1,ELCI		
+	JN	RTD020,,		:IGNORE BAD LCN FOR NOW
+	LR	R6,R6			:CHECK LENGTH
+	JN	TRI010,,
+	J	RSTSHT			:HANDLE SHORT PACKET
+CONPATCH(RTRSTC+0E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,2A)
+	TBT	RL,LEVEL1		:CHECK FOR BAD GFI	:DRE 31-DEC-87
+	JN	RTEGFI,,		:IF Q BIT ON		:DRE 31-DEC-87
+	TBT	RL,SEEDBT					:DRE 31-DEC-87
+	JN	RTEGFI,,		:IF D BIT ON		:DRE 31-DEC-87
+	LR	R6,R6
+	JG	RSTLNG			:IF PACKET TOO LONG	:DRE 5-JAN-88
+	LHL	R1,ELCI						:DRE 4-JAN-88
+	JE	TRC015,,		:IF 0 LOGICAL CHANNEL
+	J	RTD020,,		:IGNORE BAD LCN FOR NOW
+CONPATCH(RACCPT,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,46)
+	LB	R2,IPACKT		:GET INTERNAL PACKET EQUIVALENT :DRE 4-JAN-88
+	LB	R1,PCKSTE,RL,		:CHECK LINE STATE	:DRE 4-JAN-88
+	CLHI	R1,PREADY		:COMPARE WITH READY	:DRE 4-JAN-88
+	JEFS	RACCP1			:READY STATE, CONTINUE	:DRE 4-JAN-88
+	LR	R7,RL			:SET UP STATE LOOKUP	:DRE 4-JAN-88
+	TBT	R2,ACCEPT,R1,R1		:SEE IF ACCEPTABLE FOR LINE STATE :DRE 4-JAN-88
+	JEFS	RACCP2			:NOT ACCEPTABLE		:DRE 4-JAN-88
+RACCP1	LHL	R7,IPORT		:INTERNAL PORT #
+	LB	R1,PCKSTE,R7,		:GET CHANNELS STATE
+	TBT	R2,ACCEPT,R1,R1		:SEE IF ACCEPTABLE
+	JNR	R4			:IF ACCEPTABLE
+RACCP2	LB	R13,DIAGTB,R1,					:DRE 4-JAN-88
+	ERRPTRACE			:TRACE ILLEGAL PACKET
+	J	RTEDEC+4,,		:GO TO ERROR ROUTINES	:DRE 4-JAN-88
+ENDPATCH(CORRECT ILLEGAL RESPONSES DURING RESTART PACKET HANDLING)
+
+:*****************************
+:	Patch by:   Dennis Ernst
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	During testing a number of incorrect packet level responses
+:	during normal conditions were found.  They include
+:	the recognition of an illegal packet as legal, ignoring
+:	certain erroneous packets, and sending incorrect responses to
+:	errored packets.
+
+
+PATCH(010788,1130,D/ERNST,RTCLR+0C,,6)
+	JAL	R4,RTACCP		:ACCEPTABLE PACKET?
+	JFS	RTCLR+1A
+  IF	PVC
+CONPATCH(RTD419+14,,6)
+  ELSE
+CONPATCH(RTD400+14,,6)
+  EI
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,2A)
+	CLHI	R0,YCALR
+	JE	RTD420-1A,,
+	LHI	R13,CLRCAU^8!DIA020	:ILLEGAL PACKET FOR STATE P1 :DRE 31-DEC-87
+	LR	R1,R0
+	NHI	R1,1F			:USE LOW 5 BITS ONLY
+	LB	R2,RTGO,R1,		:GET INTERNAL PACKET EQUIVALENT
+	JN	RTD480,,		:SEND CLEAR		:DRE 31-DEC-87
+	LHI	R13,CLRCAU^8!DIA033	:UNDEFINED PACKET	:DRE 6-JAN-88
+	J	RTD480,,					:DRE 6-JAN-88
+CONPATCH(CCAC+12,,14)
+	LHI	R12,DIA038		:PACKET TOO SHORT CHECKED FOR HERE :DRE 10-FEB-87:DRE 4-JAN-88E
+	LR	R8,R8
+	JE	CCAC60			:IF NO CALLED ADDRESS
+	LB	R4,CDL.LT,RL,		:CALLED ADR LENGTH TO CHECK (LINK OPTION)
+	JE	CCAC50			:IF CALLED ADR NOT TO BE CHECKED
+
+CONPATCH(LNGTBL,,2)
+	HC	SNDCLR-LNGTBL
+CONPATCH(LNGTBL+16,,8)
+	HC	RTD020-LNGTBL
+	HC	RTD020-LNGTBL
+	HC	RTD020-LNGTBL
+	HC	SNDRSE-LNGTBL
+CONPATCH(RTELN1,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,22)
+	LHL	R7,IPORT		:INTERNAL PORT #
+	LB	R2,PCKSTE,RL,		:CHECK LINE STATE	:DRE 5-JAN-88
+	CLHI	R2,PREADY		:COMPARE WITH READY	:DRE 5-JAN-88
+	JNFS	RTELN3			:NOT READY, USE LINE STATE :DRE 5-JAN-88
+	LB	R2,PCKSTE,R7,		:READY STATE, USE CHANNEL STATE :DRE 5-JAN-88
+RTELN3	LH	R2,LNGTBL,R2,R2		:GET ROUTINE ADDRESS	:DRE 5-JAN-88
+	J	LNGTBL,R2,
+CONPATCH(RTESHT+0E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,18)
+	LIS	R0,1						:DRE 01-MAR-85
+	AHM	R0,SHTPKT,RL,RL
+	OOPS
+	LHI	R13,DIA038		:SET UPT TOO SHORT DIAG :DRE 5-JAN-88
+	LA	R12,RSMSG4,,
+	J	RTELN1,,		:HANDLE ACCORDING TO STATE :DRE 5-JAN-88
+CONPATCH(ICPSN+26,,2)
+	JFS	ICPSN+2E	:DO NOT CLEAR CAUS AND DIAGNOSTIC
+CONPATCH(ICPSN+40,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1A)
+	CLHI	R0,PSCALC	:CHECK FOR CALL CONF STATE
+	JE	ICP020,,
+	CLHI	R0,PSCLRQ		:CHECK FOR CLEAR QUEUED
+	JE	ICP010+0A,,
+	J	ICPSN+48,,
+ENDPATCH(FIX VARIOUS PACKET LEVEL ERROR HANDLING PROBLEMS)
+
+:***********************************************************************
+:***************
+:*****
+:   Patch to module:	XCOMRT
+:   Patch by:		Henry Rivers
+:   Description:	The code from PCR578 to PCR660 that handled the cases
+:			of empty CUD or a non-CCITT Protocol ID did not put in
+:			the semi-colon,<CR> needed in IEDBUF for a Target
+:			Profile call.  Changed to do this.
+:   Related NSR:        Televerket escalatio?????
+:
+PATCH(880114,1700,HRIVERS,PCR620+2,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+	TBT	R2,CUNTRG,,		:TARGET PROFILE?
+	JN	PCR630,,		:IF SO, GO PUT IN SEMI-COLON AND <CR>
+    : Start copied code
+	TBT	R2,GATWAY,,		:GATEWAY CALL?
+	JN	PCR640,,		:SKIP IF YES
+    : End copied code
+	J	PCR620+0C,,		:BACK TO SURCE
+ENDPATCH(CK FOR TARGET PROFILE CALL IF NO CUD OR NON-CCITT PROTOCOL ID)
+
+
+:*******************************************************************
+:
+:	Patch by: 	Paolo Mele
+:	NSR number: 	1442
+:	Version:	4.03
+:	Description:
+:	The DIBUF are copied into FACBUF at label PFRA05, when there
+:	are national facilities. The routine CDT, that moves data
+:	from one set of buffers to the other, wants the pointer
+:	to the DIBUF in register R1. This patch sets R1 to DIBUF.
+:
+:***********************************************************************
+
+:PATCH(880201,1655,PMELE,PFRA01+18,,6)
+:	J	PA1PTR,,
+:CONPATCH(PA1PTR,,14)
+:	LHI	R1,TMPBF1
+:	JAL	R4,WCI,,
+:	LHL	R1,DIBUF
+:	J	PFRA01+20,,
+:ENDPATCH(SET POINTER TO DIBUF FOR NAT. FACILITIES)
+
+:*******************************************************************
+:
+: Above patch is in a poor location because of IF TFAC
+: The logic has been moved to PFRA05 right above CDT routine
+: Ken Stone 8/21/89
+: This patch replaces (xcompat)facdib.403
+:
+:*******************************************************************
+
+patch(082189,0930,stonk,pfra05,,6)
+	 j      pa1ptr,,
+conpatch(pa1ptr,,10)
+	 lhl    r1,dibuf
+	 ais    r5,1
+	 sr     r7,r5
+	 jlr    r13
+	 j      pfra05+6,,
+endpatch(set pointer to dibuf for nat. facilities)
+endpatch(repairs source patch 880201)
+
+:*******************************************************************
+:
+:	Patch by: 	Henry Rivers
+:	NSR number: 	Televerket Escalation #??????
+:	Version:	4.03
+:	Description:
+:	Crashed when receiving UUN.  Changed to discard.
+:
+:***********************************************************************
+
+PATCH(880203,1800,HRIVERS,MMFR50-0C,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,22)
+	JGFS	MMFR51			:IF GREATER THAN MAX CTL MSG
+	LH	R3,ISCTL-(CM.FST*2),R2,R2
+	JN	ISCTL,R3,		:IF PROCESSABLE CTL MSG, GO DO IT
+	JFS	MMFR52			:ELSE TRAP
+MMFR51	CLHI	R2,0C1			:IS IT UUN?
+	JNFS	MMFR52			:DIE IF NOT
+	LIS	R2,5			:GET LENGTH-3
+	J	MMFR35,,		:GO DISCARD
+MMFR52	TRAP(R2,F1)			:UNPROCESSABLE ISIS CTL MSG
+ENDPATCH(DISCARD UUN INSTEAD OF CRASHING)
+
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	1325
+:	Version:	4.03
+:	Description:
+:	This patch fixes that:
+:	(1) When interface receives a PVC request on a channel
+:	    which has been used by another PVC circuit.
+:	    The interface will accept the current request and 
+:	    zap the previous PVC circuit which targets to the
+:	    current PVC channel.
+:	(2) When interface receives NEEDLE from a dispatch port
+:	    which already has a internal port associated with it.
+:	    The interface will flush the NEEDLE message and
+:	    zap the circuit.
+:***********************************************************************
+  IF	PVC
+PATCH(880225,1500,JSOUNG,PA0PTR,,8)
+DPSAVE	HS	1		:TEMPORARY SAVE DPORT OF THE CURRENT CIRCUIT
+IPSAVE	HS	1		:TEMPORARY SAVE IPORT OF THE CURRENT CIRCUIT
+ERRPVC	WC	0		:INCREASE BY ONE WHEN RECEIVE A PVC ON AN 
+				:ACTIVE IPORT
+
+: PART I OF THIS PATCH
+
+CONPATCH(ESP19A+22,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,78)
+	LHL	R4,EPORT
+	LH	R9,EI.MT,R4,R4	:PVC CHANNEL ALREADY HAS AN ACTIVE IPORT?
+	JL	ESP19C		:NO - OK
+	L	R4,ERRPVC,,	:GET ERROR COUNT
+	AIS	R4,1
+	ST	R4,ERRPVC,,	:INCREASE ERROR COUNT BY ONE
+	LHL	R4,IPORT	:GET IPORT OF THE CURRENT CIRCUIT
+	STH	R4,IPSAVE,,	:SAVE IT
+	STH	R9,IPORT	:SAVE IPORT OF THE OLD CIRCUIT
+	LHL	R4,DPORT	:GET DPORT OF THE CURRENT CIRCUIT
+	STH	R4,DPSAVE,,
+	LHL	R4,ID.MT,R9,R9	:GET DPORT OF THE OLD CIRCUIT
+	STH	R4,DPORT
+	LIS	R4,AA.NET	:TERMINATION CODE
+	STH	R4,TERMCD
+	JAL	R9,DDONE,,	:DETACH, CLEAN UP AND FREE DPORT
+	LHL	R4,IPORT
+	RBT	R4,PVCCAL
+	JAL	R9,IDONE,,	:FREE UP IPORT
+	LHL	R4,IPSAVE,,	:GET IPORT OF THE CURRENT CIRCUIT
+	STH	R4,IPORT
+	LHL	R4,DPSAVE,,	:GET DPORT OF THE CURREMNT CIRCUIT
+	STH	R4,DPORT
+ESP19C	JAL	R0,NDLST2,,	:RESTORE THE INSTRUCTION
+	J	ESP19A+28,,
+
+: PART II OF THIS PATCH
+
+CONPATCH(MMFR40+8,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,2A)
+	LR	R2,R2		:RECEIVE A NEEDLE MESSAGE?
+	JE	MMFR42		:YES - ERROR
+	LB	RL,IL.MT,R11,	:RESTORE THE INSTRUCTION
+	J	MMFR40+0E,,
+MMFR42	JAL	R4,GETCH,,	:SKIP SUBTYPE
+	JAL	R4,GETCH,,	:GET MESSAGE LENGTH
+	JAL	R4,FLUSH,,	:FLUSH THE MESSAGE
+	J	ICZAP+6,,	:ZAP THE CIRCUIT
+ENDPATCH(IF PVC CHANNEL HAS BEEN USED FOR ANOTHER PVC, INTERFACE ZAPS OLD PVC)
+ENDPATCH(IF NEEDLE IS RECEIVED FROM A DPORT WHICH HAS AN IPORT, XCOM ZAPS IT)
+  EI	:PVC
+
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	None, ExNet
+:	Version:	4.03
+:	Description:
+:	Changes to fix the following problems:
+:	(1) the interface miscounts the length of Gdnic in the 
+:	    destination host field when handling the target profile login.
+:	(2) when interface receives a call request packet, if:
+:	    (a) the DNIC in the called address does not match with our DNIC
+:	    (b) the NUI facility is found in the facility field
+:	    (c) the link which receives this call request packet does not
+:	        request for target profile,
+:	    the interface clears the call with improper diagnostic code.
+:	(3) when interface receives a call request packet
+:	    with NUI facility and NTN in the called address is more
+:	    than 1 digit which starts with 9, the interface clears
+:	    the call with an improper diagnostic code.
+:	(4) when the interface receives a call request 
+:	    packet, if:
+:           (a) NUI facility is specified
+:	    (b) NTN in the called address has only 1 digit which is 9
+:	    (c) call user data is not specified,
+:           the interface does not insert a <CR> at the end of network
+:	    login string.
+:	(5) In routine "PCR910", internal port number stored in R2
+:	    is destroyed by routine "wci".  In routine "PCR920",
+:	    R2 has to be restored before the interface does the checking.
+:	    
+:***********************************************************************
+
+PATCH(880315,1120,JSOUNG,PCR938,,2)
+	LIS	R0,5+1		:A COLON AT END OF USERNAME+LENGTH OF Gdnic
+CONPATCH(PCR420+0E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,16)
+	TBT	R4,NUICAL,,	:AN NUI CALL?
+	JE	PCR420+18,,	:NO - GO SEARCH THROUGH BOC DNICS
+	LHI	R12,DIA065	:"FACILITY CODE NOT ALLOWED"
+	J	PCR457,,
+CONPATCH(PCR920+4A,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,14)
+	CLHI	R8,1		:ONLY ONE DIGIT IN NTN?
+	JE	PCR920+52,,	:YES - OK
+	LHI	R12,DIA065	:"FACILITY CODE NOT ALLOWED"
+	J	RTECAL,,	:CLEAR THE CALL
+CONPATCH(PCR640+20,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,22)
+	LR	R6,R6		:NULL CALL USER DATA FIELD?
+	JL	PCR670		:YES - GO CHECK WHETHER A NUICAL
+	J	PCR640+26,,
+PCR670	LHL	R2,IPORT	:GET INTERNAL PORT NUMBER
+	TBT	R2,NUICAL,,	:A NUICAL CALL?
+	JN	PCR545,,	:YES - PUT IN A <CR>
+	J	PCR550,,	:NO - DON'T PUT IN A <CR>
+CONPATCH(PCR660,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,0C)
+	LR	R6,R6		:ANY CALL USER DATA LEFT?
+	JE	PCR670		:NO - GO CHECK WHETHER IS A NUICAL?
+	J	PCR660+6,,
+CONPATCH(PCR920+32,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,10)
+	LHL	R2,IPORT
+	SBT	R2,NTNCAL,,	:SET NTN CALL FLAG
+	J	PCR920+38,,
+ENDPATCH(CORRECTLY COUNTING THE LENGTH OF Gdnic FIELD IN THE LOGIN STRING)
+ENDPATCH(PROVIDE PROPER DIAGNOSTIC CODE WHEN INTERFACE CLEARS THE CALL)
+ENDPATCH(RESTORE R2 AFTER JUMPPING BACK FROM WCI ROUTINE)
+ENDPATCH(INSERT<CR> AT END OF LOGIN STRING IF CUD IS NOT SPECIFIED AND)
+ENDPATCH(CALLED ADDRESS IS "dnic9")
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	T#177609 for Televerket
+:	Version:	4.03
+:	Description:
+:	Patch to fix that XCOM does not store the iport number with 
+:       the link number when XCOM tries to build a RESTART INDICATION  
+:	packet into output sector.
+
+PATCH(880322,1000,JSOUNG,RMK025+1E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,12)
+	LR	R6,RL		:IPORT NO. = LINK NO.
+	STH	R6,IPORT	:SAVE IPORT NO.
+	LCS	R0,1
+	STH	R0,EPORT	:FLAG NULL CHANNEL
+	J	RMK080,,
+ENDPATCH(STORE IPORT# BEFORE BUILDING A RESTART INDICATION INTO OUTPUT SECTOR)
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	T#177610 for Televerket
+:	Version:	4.03
+:	Description:
+:	This patch fixes the problem that the interface crashes
+:	if routine "BOCSX" is used to send a canned message
+:	which is not a link selectable canned message.
+:	Routine "BOCSY" should be used in this case.
+
+PATCH(880323,1400,JSOUNG,NPMT20+42,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT22+1E,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT30+60,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT36+1E,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT40+26,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+  IF	TADRS
+CONPATCH(NPMT10-0E,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT10+2C,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NPMT12+1E,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NDLPMT+42,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+  EI	:TADRS
+CONPATCH(NERR50-0A,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NERR50+48,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+CONPATCH(NERR60+30,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+  IF	XOM
+CONPATCH(XOMZP2+1C,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+  EI	:XOM
+:
+:    Further change to this patch added 3/89 by jl.  One other case
+:    found where BOCSX used improperly for a non-selectable link
+:    message.  NSR 2381.
+:
+CONPATCH(T1S440+2E,,6)
+	JAL	R5,BOCSY,,	:OUTPUT NON-SELECTABLE CANNED MESSAGE
+:
+ENDPATCH(SEND NON-SELECTABLE CANNED MESSAGE BY USING ROUTINE "BOCY")
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	None, Televerket crash
+:	Version:	4.03
+:	Description:
+:	This patch fixes the following problems:
+:	(a) when interface receives IIX clear information from the 
+:           network, the call accepted packet might be still queued
+:	    in the IECBUF and the information for building the call
+:	    connected packet is still in FACBUF.
+:	    In this case, the count of TNICNT won't be equal to the
+:	    the count of FACBUF and the interface shouldn't crash
+:	    the slot.
+:	(b) before interface queues up a clear indication packet into
+:	    IECBUF, the interface emptys the IECBUF first.
+:	    If a call accepted packet is flushed in this case,
+:	    the information for building the call connected packet is 
+:	    still in FACBUF.
+:	    Later on, RMAKE will use the information saved for call 
+:	    connected packet to build the clear indication packet.
+
+  IF	X.75
+PATCH(880325,1600,JSOUNG,ESP17+34,,6)
+  ELSE	X.25
+PATCH(880325,1600,JSOUNG,ESP17+30,,6)
+  EI
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,48)
+	CR	R4,R3		:LENGTH OF TNIC LIST=LENGTH OF FACBUF?
+  IF	X.75
+	JE	ESP17+3A,,	:YES - OK
+  ELSE	X.25
+	JE	ESP17+36,,	:YES - OK
+  EI
+	LB	R5,PCKSTE,R7,	:GET CHANNEL STATE
+	CLHI	R5,PSCALC	:IN SEND CAL CONFIRMATION STATE?
+	JN	ESP179,,	:NO - ERROR
+	LR	R5,R3		:SAVE LENGTH OF FACBUF
+	JE	ESP179,,	:PROGRAMMING ERROR
+	LHL	R1,FACBUF
+				:1ST AND 2ND OF THE FACBUF SHOULD BE THE 
+				:LENGTH OF THE INFORMATION FOR BUILDING
+				:CALL CONNECTED PACKET
+	JAL	R4,GCPEEK,,	:SCAN FIRST BYTE IN FACBUF
+	LR	R12,R0		:SAVE IT
+	JAL	R4,GCSCAN,,	:SCAN SECOND BYTE IN FACBUF
+	SLHL	R12,8		:GET THE LENGTH OF INFORMATION FOR BUILDING
+	OR	R12,R0		:CALL CONNECTED PACKET
+	SIS	R5,2		:LENGTH OF FACBUF-2 BYTES LENGTH BYTES
+	CR	R5,R12		:ALL THE INFORMATION ARE FOR CALL CONNECTED
+	JN	ESP179,,	:NO - ERROR
+  IF	X.75
+	J	ESP17+3A,,	:OK - GO BACK TO NORMAL FLOW
+  ELSE	X.25
+	J	ESP17+36,,	:OK - GO BACK TO NORMAL FLOW
+  EI
+CONPATCH(QCR+14,,4)
+	J	QCR+1A		:DON'T EMPTY IECBUF BEFORE QUEUE UP THE
+				:CLEAR INDICATION PACKET
+ENDPATCH(CORRECTLY SEND CALL CONNECTED AND CLEAR INDICATION PACKETS TO LINK)
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	None,Televerket crash
+:	Version:	4.03
+:	Description:
+:	For call which called address is not equal to our DNIC,
+:	the interface adds our DNIC to the TNIC list and
+:	reports our DNIC to supervisor.  During the processing,
+:	R9 which contains the return address is destroyed and then
+:	causes the crash.  This happens only when DPORT is equal
+:	to zero.
+
+  IF	X.75
+PATCH(880331,1630,JSOUNG,ADDT18+3E,,4)
+	JE	ADDT18+52
+ENDPATCH(RESTORE R9 AFTER ADDING OUR DNIC TO THE TNIC LIST)
+  EI
+
+:*********************************************************************
+:	Patch by:   Aileen Ma
+:	NSR number: 1219
+:	Version:    4.03
+:	Description:
+:	Correct the T3 timer (idle link) expire routine, so SABM will 
+:	not be sent before the T3 timer really expired.
+
+  IF	HDLC&(LAP!LAPB)
+PATCH(880419,0800,AMA,T1S520+8,,4)
+	JLE	T1S510
+ENDPATCH(Correct T3 timer expire routine)
+  EI
+
+
+:*********************************************************************
+:	Patch by:   Aileen Ma
+:	NSR number: 1476
+:	Version:    4.03
+:	Description:
+:	Fix bad GFI field in the data packet. Login to a shut host which
+:	had very long "1 down" message, sup promted 'host shut' messages. 
+:	LOG45 routine jumped to MVDIIE to move data from id to ied. Since the
+:	data size in idbuffer is greater than 80, the message in idbuffer is 
+:	cut into two data packet. First full packet use the content of 
+:	register 6 as flag byte. Register 6 contained '9A3' which should be 
+:	cleaned before jump to mvdiie.
+
+
+PATCH(880419,0830,AMA/JWANG,LOGT45+4,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,0E)
+        LIS     R6,0    
+        LHL     R1,IPORT
+        SLLS    R1,2
+        J       LOGT45+0A,,
+ENDPATCH(CLEAN FLAG BYTE IN LOGT45)
+
+:*********************************************************************
+:	Patch by:   Louisa Hsu
+:	NSR number: 1551
+:	Version:    4.03
+:	Description:
+:	This patch fixes the problem that when the destination inteface
+:	receives a needle with TID and/or gouging level, the interface should 
+:	compare the throughput class converted from the TID or the gouging 
+:	level with the default (also maxmnum) throughput class defined by
+:	the macro TCLASS.  If either requested XMIT or RCV throughput class 
+:	exceeds the default (max) TC defined by the macro TCLASS, changes 
+:	to use the default TC.
+
+
+PATCH(880419,1700,JWANG/LOUISA,NST220,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,3E)
+	LB	R4,TTR.LT,RL,	:Get the max TC allowed on this link.
+	CR	R2,R4		:Compare with the requested TC
+	JE	NST224		:Skip if equal the max, all OK.
+	JLFS	NST222		:Skip if at least Xmit TC is OK.
+:	The XMIT TC may be bad. Compare for XMIT TC.
+	LR	R3,R4		
+	NHI	R3,0F0		:get max Xmit TC.
+	NHI	R2,00F		:get requested Rcv TC.
+	OR	R2,R3		:Merge max Xmit TC with requested Rcv TC.
+:	The XMIT TC (left 4 bits) is OK. Compare for RCV TC.
+NST222	LR	R3,R2	      :Copy current working TC, Xmit TC already checked
+	NHI	R3,00F		:get requested Rcv TC
+	NHI	R4,00F		:get max Rcv TC
+	CR	R3,R4		:Check RCV TC (right 4 bits).
+	JLFS	NST224		:Skip if everything is OK!
+:	The requested RCV TC exceeds the default one, changes to use the
+:	default one
+	NHI	R2,0F0		:Mask off bad Rcv TC, keep Xmit TC.
+	OR	R2,R4		:Merge max Rcv TC into R2.
+:	Value in R2 is now OK!
+:		Resume NST220 logic....
+NST224	LHL	R4,IPORT	:Get IPORT for index.
+	STB	R2,TCLTR,R4,	:Save computed TC for later.
+	J	NST220+0A,,	:Return!
+ENDPATCH(TID or gouging level should not exceed the default TC value)
+
+:*******************************************************************
+:
+:	Patch by: 	BPC, Janet Soung
+:	NSR number: 	1164
+:	Version:	4.03
+:	Description:
+:	This patch fixes the problem that the XONOF option switch 
+:	in macro PADOPT does not work properly.  If +XONOF is specified
+:	in macro PADOPT, the interface will set RXONEN when the interface
+:	receives a call from the network or receives a call from the link.
+:	When RXONEN is set, the interface will search data packets for
+:	X-on or X-off character.
+
+  IF	PDO.|XONOF|
+PATCH(861208,1800,bpc/jsoung,idone+6,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,12)
+	RBT	R1,NEWLOG,,	:RESTORE INSTRUCTION
+	RBT	R1,RXONEN,,	:CLEAR "RXONEN" WHEN CIRCUIT ZAPPED
+	J	IDONE+0C,,
+CONPATCH(NDLST2+20,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+	STB	RL,IL.MT,R3,	:RESTORE INSTRUCTION
+	TBT	RL,XON.F,,	:LINK SPECIFIES "xonof" SWITCH OPTION
+	JE	NDLST2+26,,	
+	SBT	R3,RXONEN,,	:INDICATE INTERFACE WILL CHECK X-on/X-off
+	J	NDLST2+26,,
+CONPATCH(INICAL+4C,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+	STB	RL,IL.MT,R2,	:RESTORE INSTRUCTION
+	TBT	RL,XON.F,,	:LINK SPECIFIES "xonof" SWITCH OPTION
+	JE	INICAL+52,,
+	SBT	R2,RXONEN,,	:INDICATE INTERFACE WILL CHECK X-on/X-off
+	J	INICAL+52,,
+ENDPATCH(CORRECTLY HANDLE X-on/X-off SPECIFIED BY MACRO PADOPT OPTION XONOF)
+  EI
+
+:*******************************************************************
+:
+:	Patch by: 	Janet Soung
+:	NSR number: 	None, Televerket testing
+:	Version:	4.03
+:	Description:
+:	This patch is used to store the crash code provided by XCOM
+:	when crash method shown as following is used to cause the software 
+:	crash by XCOM.
+:       HC	11		:crash indicator
+:	BC	4*REG,TYPE	:4*REG=(REG) to display in CFROM in CRAT
+:				:t=crash type to display in CRAT and SUP LOG
+
+	LO	CRASH
+PATCH(880415,1430,JSOUNG,FAIL1+3A,,6)
+	J 	PA1PTR,,
+CONPATCH(PA1PTR,,38)
+	CLHI	R0,11		:illegal instruction ISIS crash?
+	JN	FAIL3		:no - skip
+	CLH	R0,0,R13	:crash indicator is 11?
+	JN	FAIL3		:no - skip
+	LB	R0,3,R13	:get slot provided crash type
+	CHI	R0,2		:would this simulate power fail or restart?
+	JGEFS	FAIL2		:no - allow this crash code
+	LIS	R0,$A10		:yes - ignore it
+FAIL2	LB	R2,2,R13	:get calling register
+	L	R1,CRREG,R2,	:get contents of the regsiter
+	STH	R0,CRAT+CRASHC,,:save slot crash code
+FAIL3	ST	R1,CRAT+CFROM,,	:save place crash from
+	J	FAIL1+40,,
+ENDPATCH(STORE CRASH CODE PROVIDED BY THE INTERFACE INTO CRASH TABLE)
+	FO	CRASH
+
+
+:**************************************************************************
+:	Patch by:  	Paolo Mele, Janet Soung
+:	NSR number: 	fixes a situation detected in dump NW2050.D01
+:			Televerket - Mar 11 88
+:	Version:	4.03
+:	Description:
+:	The xcom interface can receive a non-iix data message just
+:	after a needle bearing an iix indication.
+:	This patch discards such kind of messages.
+:	Moreover this patch resets IIXCAL in the ascii connection
+:	case.
+
+:	PART 1:
+:	DISCARD DATA DURING IIX HANDSHAKE
+:
+:The following logic checks if we are in a iix call but turkey is not yet
+:set. While in this state, any non iix data message is discarded.
+:Checks must be located at DATAMS and at LIM200. For both labels the logic is
+:the same.
+
+PATCH(880328,1000,pmele/jsoung,DATAMS,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,6E)
+
+	LH	R1,DPORT,,		:restore DPORT
+	TBT	R1,PIIX,,		:any SIIX received?
+	JN	DT.NXT			:if yes skip
+	TBT	R1,TURKEY,,		:is turkey set?
+	JN	DT.NXT			:if yes skip
+	TBT	R1,TGATE,,
+	JN	DT.NXT	
+	TBT	R1,IIXCAL,,		:are we in iix mode?
+	JE	DT.NXT			:if no skip
+
+:	a non iix data msg received during the initial iix handshake
+:	JAL	R4,ELIR,,		:discard it
+DT.CHK	JAL	R4,LOOK,,		:REFETCH THE CURRENT MESSAGE HEADER
+	J	DT.ERR
+	JE	DT.ERR			:UNEXPECTED INTRA-ISIS MESSAGE
+	LR	R2,R2
+	JE	DT.ERR			:UNEXPECTED NEEDLE
+	CLHI	R2,CM.FST
+	JGE	DT.ERR			:UNEXPECTED CONTROL MESSAGE
+	LHI	R0,1,R2			:TYPE IS ALOSE TO BE FLUSHED
+	JAL	R4,FLUSH,,
+	J	MMFRA,,			:back to scan the ring
+DT.ERR	HC	0
+
+:	a non iix data msg received when expected
+DT.NXT	LHL	R1,IPORT,,		:see if chann still in ext log mode
+	TBT	R1,EXTLOG,,
+	J	DATAMS+8,,		:back to handle data msg
+
+
+
+CONPATCH(LIM200,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,36)
+
+	LH	R1,DPORT,,		:restore DPORT
+	TBT	R1,PIIX,,		:any SIIX received?
+	JN	LM.NXT			:if yes skip
+	TBT	R1,TURKEY,,		:is turkey set?
+	JN	LM.NXT			:if yes skip
+	TBT	R1,IIXCAL,,		:are we in iix mode?
+	JE	LM.NXT			:if no skip
+
+:	a non iix data msg received during the initial iix handshake
+	J	DT.CHK,,
+
+:	a  data msg received when expected
+LM.NXT	STB	R5,DMSGLN,R1,	
+	J	LIM200+6,,		:back to handle data msg
+
+
+:	PART 2:
+:	RESET IIXCAL FOR ASCII CONNECTIONS
+
+CONPATCH(GME040,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,18)
+	LH	R12,DPORT,,		:pick up dport
+	RBT	R12,IIXCAL,,		:reset iixcal
+	LI	R12,ID.ASC^8
+	J	GME040+6,,
+
+
+CONPATCH(GMEXP8,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,24)
+	LH	R0,DPORT,,
+	RBT	R0,IIXCAL,,		:reset iixcal
+	RBT	R0,NOMBFL,,		:allow m-bit operation
+	LHL	R0,LO7,,
+	JE	NDL080,,
+	J	GMEXP8+8,,
+
+ENDPATCH(discard non iix data message while in iix handshake)
+
+:****************************************************************
+:	Patch by:	James Wang, Janet Soung
+:	NSR number:	1323
+:	Version:	4.03
+:	Description:
+:	ON PVC CHANNEL, IF THE RTD FINDS THE EI.MT TABLE VALUE ISN'T
+:	DEFINED (IE., IPORT ISN'T ASSIGNED) WHEN PROCESSING AN INCOMING 
+:	PACKET, RTD400 WILL THEN BE EXCUTED. BUG IN THE RTD400 CAUSES 
+:	THE CODE TO RECORD WRONG INFORMATION (PACKET TYPE) IN THE PT 
+:	TRACE TABLE.
+:	TASK: NOT DESTROY THE PACKET TYPE STORAGE BEFORE DOING THE ERROR 
+:             PT TRACE. ALSO DO THE ERROR PT TRACE IF THE INCOMING PACKET
+:             IS RESET CONFIRMATION AND IPORT ISN'T ASSIGNED ALREADY.
+
+  IF  PVC
+PATCH(880419,1000,JWANG/JSOUNG,RTD400+14,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,22)
+        ERRPTRACE			:TRACE ILLEGAL PACKET
+        LHI     R0,YREST		:SEND RESET PACKET
+        STB     R0,PACKET,,
+	LHI	R13,RLOCPE^8!DIA035	:LOCAL PROCEDURE ERROR, INVALID PACKET
+	J	RTD480+0E,,
+CONPATCH(RTD410+8,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+        ERRPTRACE			:TRACE ILLEGAL PACKET
+        LHI     R0,YRESTC		:SEND RESET CONFIRMATION PACKET
+        STB     R0,PACKET,,
+        J       RTD480+0E,,
+CONPATCH(RTD415+4,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,1C)
+        CR      R1,R0			:A RESET CONFIRMATION PACKET?
+        JN      RTD417,,		:NO - SEND RESET PACKET
+        ERRPTRACE			:TRACE ILLEGAL PACKET
+        J       RTD020,,		:IGNORE RESET CONFIRMATION PACKET
+CONPATCH(RTD417,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,22)
+        ERRPTRACE			:TRACE ILLEGAL PACKET
+        LHI     R0,YREST		:SEND RESET PACKET
+        STB     R0,PACKET,,		
+        LHI     R13,RNETCG^8!DIA000	:CAUSE, NETWORK CONGESTION
+        J       RTD480+0E,,
+ENDPATCH(NOT DESTROY PACKET TYPE STORAGE BEFORE DOING PT TRACE)
+  EI
+
+:********************************************************
+:	Patch by:	Kit Lueder, Janet Soung
+:	NSR number:	1159
+:	Version:	4.03
+:	Description:	
+:	PATCH TO FORCE CALLER PAID CALL FOR CALLS FROM INTERNATIONAL 
+:	NODES VI AT 2.01 TYMNET COUNTRIES.  DNICNODES MACRO MUST BE 
+:	INCLUDED IN THE SLOT TYMFILE.
+:	THIS PATCH IS CONDITIONAL ON DNICND, WHICH IS NOT SET UNLESS 
+:	DNICNODES MACRO IS INCLUDED.  
+
+ IF DNICND		:IF DNICNODE STMTS ARE INCLUDED IN TYM FILE.
+
+PATCH(880419,1600,KJL/JSOUNG,PA0PTR,,NDGRPS*2)
+	GL	DN.FND
+DN.FND	HS	NDGRPS		:BIT AREA TO REMEMBER IF MATCH IN NODTAB.
+CONPATCH(FNDD15+2,,6)
+	J	PA1PTR,,
+:	PATCH CODE HERE TO SEE IF MATCH BETWEEN NEEDLE'S ORIGINATION NODE
+:	AND A NODE IN A DNICNODE STMT.  IF SO, SET BIT FOR THAT DISP PORT.
+CONPATCH(PA1PTR,,10)
+	JN	FNDD10,,	:IF NOT SAME, CONTINUE SCAN.
+	LHL	R7,DPORT
+	SBT	R7,DN.FND	:FOUND MATCH. SET BIT FOR THIS DISP PORT.
+	JR	R9		:DONE.  FOUND MATCH. RETURN.
+CONPATCH(FNDD30,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,10)
+	LHL	R7,DPORT
+	RBT	R7,DN.FND	:CLEAR BIT FOR THIS DISP PORT.
+	LH	R4,NODTAB,R1,	:GET THE DEFAULT DNIC FROM END OF TABLE.
+	JR	R9
+CONPATCH(CRQ300+0C,,06)
+	J       PA1PTR,,	:INVOKE THE FOLLOWING PATCH.
+CONPATCH(PA1PTR,,1A)
+:	PATCH CODE HERE, TO MODIFY ACCOUNTING REPORTING.
+	LHL	R6,DPORT	:GET DISP PORT, TO INDEX INTO DN.FND
+	TBT	R6,DN.FND	:SEE IF FOUND MATCH IN NODTAB.
+	JN	CRQ301,,	:IF BIT WAS SET, FORCE CALLER PAID CALL.
+	SBT	R7,RVCHRG,,	:ELSE FORCE REVERSE CHARGE CALL.
+	J	CRQ300+12,,	:RETURN TO CODE.
+CONPATCH(CRQ306+10,,6)
+	J	PA1PTR,,	:INVOKE THE FOLLWOING PATCH.
+CONPATCH(PA1PTR,,1E)
+:	PATCH CODE HERE, TO MODIFY REV CHG INSERTION INTO BUILT CALL REQ.
+	TBT	RL,CPT.F	:CALLER PAID ALLOWED?
+	JN	CRQ307,,	:YES - NO REVERSE CHARGE
+	LHL	R4,DPORT	:GET DISP PORT, TO INDEX INTO DN.FND
+	RBT	R4,DN.FND	:TEST IF SHOULD FORCE CALLER PAID
+	JE	CRQ307-4,,	:RETURN TO CODE IF NOT SET.  REV CHG
+	J	CRQ307,,	:RETURN.  USE CALLER PAID.
+ENDPATCH(For intl calls from T 2.01 Tymnet countries force caller paid)
+  EI DNICND
+
+:*****************************************************************************
+:
+:	Patch by:	Paolo Mele
+:	NSR number:	none - Televerket problem 21/mar/88
+:	Version:	4.03
+:
+:	Description:
+:	The routine DDONE crashes the slot if the report termination
+:	code is set to FF. This patch resets the report termination code to 
+:	zero and skips the accounting report. (If the report termination
+:	code is set to FF either it was already sent or the caller did not
+:	set it.)
+:
+:*****************************************************************************
+PATCH(880321,1500,pmele,PA0PTR,,8)
+RET.CN	HS	1			:error counter for TERCMD not set	
+RET.C1  HS	1
+RET.AD	WS	1			:save last caller address
+
+CONPATCH(DDN008+7E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,24)
+	CLHI	R7,AA.ERR
+	JN	DDN010,,		:if TERCMD is set->send acc msg
+
+:TERCMD was not set
+
+	LIS	R7,1
+	AHM	R7,RET.CN,,		:increase a counter
+	L	R7,DDRET,,
+	ST	R7,RET.AD,,		:store caller address
+	J	DDN020,,		:skip account. report
+
+ENDPATCH(accounting message report)
+
+
+:**************************************************************************
+:	
+:		Patch by: Paolo Mele
+:		NSR number: ticket 177223, Televerket
+:		Description:
+:		When it's started, the Xcom interface sends an host status
+:		message with host DOWN status and then it sends an
+:		host status message with host ANSW. status. There is a time
+:		lapse between the two messages. If the interface receives
+:		a call request within this time frame it will generate a
+:		pseudo-needle request prior to the host ANSW. message.
+:		The supervisor is not able to deal with this wrong sequence.
+:		This patch checks the host status before processing a call
+:		request and sends an host ANSW. message to the sup if the
+:		host is not answered yet.
+:
+:*************************************************************************
+
+
+		PATCH(110388,1200,pmele,PA0PTR,,0C)
+CRE.05		WS	1	:save area for r5
+CRE.06  	WS	1	:save area for r6
+CRE.RL		WS	1	:save area for rL
+
+	IF	XOM
+		CONPATCH(RTCALR+3e,,6)
+	ELSE
+
+		CONPATCH(RTCALR+32,,6)
+	EI
+		J	PA1PTR,,
+
+	if	xom						:lsh 28-Feb-89	
+                CONPATCH(PA1PTR,,78)
+	else
+		CONPATCH(PA1PTR,,60)
+	ei
+
+		ST	R5,CRE.05,,		:save r5
+		ST	R6,CRE.06,,		:save r6
+		ST	RL,CRE.RL,,		:save rL
+		LB	R6,LH.MT,RL,		:load relative host #
+	if	xom						:lsh 28-Feb-89
+		tbt	r6,xombhd,,		:Does XOM want host DOWN ?
+		jn	sndcl0,,		:yes, then clear the call
+	ei	:xom
+		LHL	R13,HOSTS,R6,R6		:load host #
+		
+		LH	R3,PORTS,R6,R6		:load port descriptor
+		NI	R3,0C000		:only host status bits
+		JE	CHKST2			:skip if already answered
+  	if	xom						:lsh 03-mar-89
+		tbt	r6,xombhs,,		:Does XOM want host SHUT ?
+		jn	chkst2,,		:don't report host answered
+        ei							:lsh 03-mar-89
+		:send host answered message
+
+		LIS	R12,0			:set host answered
+		JAL	R5,CHSTAT,,		:send host status message
+						:input:
+						:R6: relative host #
+						:R13: net host #
+						:R12 host status
+						:(uses R0-4, 15)
+		:send port availability message
+		
+		RBT	R6,HPA.FO,,		:the next msg to be sent it's
+		SBT	R6,HPA.FC,,		:host port availability
+	
+CHKST2		:continue call processing
+
+		LHL	R1,ELCI,,
+		L	R5,CRE.05,,		:restore r5
+		L	R6,CRE.06,,		:restore r6
+		L	RL,CRE.RL,,		:restore rL
+		J	PCR040+0A,,		:back to lis 7,1	
+
+		ENDPATCH(patch for host answered status)
+
+
+:***********************************
+:	Patch by:   Chuck Younger
+:	NSR number: None, TVT testing
+:	Version:    4.03
+:	Description:
+:	The following code discards the current data message
+:	from the ISIS input ring. It does not need to know how
+:	many characters from the message have already been
+:	processed by input ring handlers, so long as ELIR has
+:	not been invoked.
+	PATCH(880301,1540,CHUCK,MCRASH,,6)
+	J	PA1PTR,,
+	CONPATCH(MCRAS1,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,2A)
+	JAL	R4,LOOK,,		:refetch the current message header
+	J	MCRBAD
+	JE	MCRBAD		:unexpected intra-ISIS message
+	LR	R2,R2
+	JEFS	MCRBAD		:unexpected needle
+	CLHI	R2,CM.FST
+	JGEFS	MCRBAD		:unexpected control message
+	LHI	R0,1,R2		:type is also to be flushed
+	JAL	R4,FLUSH,,	:flush the data message
+	J	MCRAS2+6,,
+MCRBAD	HC	0
+	ENDPATCH(flush invalid data message from input ring)
+
+:***********************************
+:	Patch by:   Paul Johnson
+: 	Patch for XCOM 4.03
+: 	Avoids dispatcher crash of slot due to slot sending ISIS Break
+: 	Indication followed by Yellow Ball after processing a X.29 Break
+: 	Indication message on a DPORT that is in LOGIN MODE.  This is
+: 	illegal according to the dispatcher, which promptly crashes the slot.
+:
+PATCH(880226,1930,PJOHNSON,RLEV36-68,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,18)
+	LH	R2,DPORT,,	: restore R2 destroyed by X29MSD, etc.
+	TBT	R2,DPLOGN,,	: are we in login mode?
+	JN	TDA300,,	: YES, don't send anything to dispatcher.
+	J	RLEV36-60,,
+ENDPATCH(AVOID SENDING BRK AND YB TO DISPATCHER WHILST IN LOGIN MODE)
+
+
+:***********************************
+:	Patch by:   Ben Chen
+:	NSR number:	TVT 179262
+:	Version:	4.03
+:
+:	Description:
+: 	xom won't accept 5 digits host number
+: 	in change hihost command '67'
+:
+  IF XOM
+patch(880321,1800,bpc,xomsc1+0c,,4)
+          clhi    8,5
+conpatch(xmchih+06,,6)
+          j       xmchi0,,
+conpatch(xomsc3,,6)
+          j       xmsc01,,
+conpatch(pa1ptr,,48)
+xmchi0     jg     csexom,,
+           lb     r0,xompar+2,,
+           je     xmchi1
+           lhl    0,xompar+2,,
+           j      xmchih+0e,,
+xmchi1     l      0,xompar+2,,
+           j      xmchih+0e,,
+xmsc01    clhi    8,4
+          jg      xmsc00
+          sth     2,xompar,3
+          ais     3,2
+          j       xomsc3+6,,
+xmsc00    st      2,xompar,3
+          ais     3,4
+          j       xomsc3+6,,
+endpatch(allow xom accept 5 digits hi host number)
+ 
+
+patch(880404,1300,bpc,xomhih,,6)
+        j       xomhi0,,
+conpatch(pa1ptr,,90)
+xomhi0  l       rl,hihst,,
+        j       msdhr0,,            :replace xmsdhr
+msdhr0  lis     2,5
+        jal     9,omstm0,,          :replace xomstm
+        lr      3,r12
+        jal     r4,belodr,,
+        j       xomrsp,,
+omstm0  lr      0,2
+        ais     0,3
+        lh      r1,xomprt
+        jal     r4,bslor,,
+        lis     r12,0
+        lr      0,rl
+        jal     7,uthas0            :replace puthas
+        jr      9
+uthas0  st      7,temp2,,
+        jal     7,putha0
+        j       putby7,,
+putha0  st      7,temp,,
+        ni      0,0ffffff
+        cli     0,0ffff
+        jg      putha2,,
+        clhi    0,0ff
+        jg      putha1,,
+        j       putbyn,,
+putha2  st      0,temp1,,
+        lb      0,temp1+1,,
+        jal     7,putbyn,,
+        lhl     0,temp1+2,,
+        j       putha1,,
+endpatch(xom query command 21 to display 5 digits high host number)
+  EI 
+ 
+:*****************************
+:	Patch by:   Paul Johnson/Aileen Ma
+:	NSR number: 1833
+:	Version:    4.03
+:	Description:
+:	Patch to avoid illegal memory reference crash when a link's channel
+:	status is queried using XOM and ICNL channels are configured.
+:	The crash is due to the value of the highest numbered ICNL not being
+:	taken into account by the XOM query routine.
+
+	IF	XOM
+PATCH(880706,1720,PJOHNSON/AMA,XOMI52-6,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,12)
+	SH	R9,LCC.LT,RL,RL		:EPORT NUMBER OF CHAN
+	LHL	R5,HIC.LT,RL,RL		:SET THE HIGHEST ICNL
+	J	XOMI52,,
+ENDPATCH(AVOID CRASH ON XOM QUERY CHANNEL STATUS IF ICNL PRESENT)
+	EI	:XOM	
+
+
+:*****************************
+:	Patch by:   Ben Chen/Aileen Ma
+:	NSR number: none
+:	Version:    4.03
+:	Description:
+:	Instead of zapping the circuit, the interface will ignore the
+:	IIX message 8087 (request product ID and version).
+
+	
+PATCH(880727,1120,BCHEN/AMA,GMEXP7,,6)
+	J	MMFRA,,
+ENDPATCH(IGNORE IIX MSG 8087 INSTEAD OF SENDING A ZAP)
+
+
+:**********************************************************************
+:	Patch by:   Aileen Ma
+:	NSR number: none
+:	Version:    4.03
+:	Description:
+:	Due to the TEMP1 was not initialized properly, the X.75 had the 
+:	illegal memory crash when the second time login to it. This was
+:	happened when the CMT built a circuit to PBH through the X.75.  
+	
+PATCH(880727,1140,AMA,PFAC+20,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,0C)
+	LIS	R8,0		
+	ST	R8,TEMP1		:ZERO OUT TEMP1
+	LCS	R8,1			:ORIGINAL CODE
+	J	4,R13			:ORIGINAL CODE
+ENDPATCH(INITIALIZE TEMP1 TO AVOID THE ILLEGAL MEMORY CRASH)
+
+
+:   patch by jlucas to avoid problem where mandatory RR may not be
+:   sent.  if a second foreground frame is received, the mandatory
+:   rr state could be overwritten by an optional rr state.  this is
+:   problematical if we have just sent an rnr and need to clear it
+:   with rr.  rr piggybacked to data will not clear rnr.
+
+PATCH(880523,1130,JL,FIF040,,6)
+         J         FIF043,,
+CONPATCH(PA1PTR,,1C)
+FIF043   LB        R5,XSSTAT,RL,            :CURRENT LINK XMIT STATE
+         CLHI      R5,XMSRRM                :MANDATORY RR STATE?
+         JE        FIF044                   :YES, DON'T CHANGE TO RR STATE
+         STB       R2,XSSTAT,RL,            :NO, IT'S OKAY TO CHANGE IT
+FIF044   L         R5,RQRET,RL2,RL2
+         JR        R5
+ENDPATCH(DON'T CHANGE TO OPTIONAL RR STATE IF ALREADY IN MANDATORY RR STATE)
+
+:
+:      PATCH WRITTEN BY JERRY LUCAS 5/31/88 TO CHECK DATA BUFFER BEFORE
+:      RESPONDING ORANGE BALL TO YELLOW BALL.  IF WE RESPOND ORANGE BALL,
+:      THE OTHER END WILL THINK THAT DATA IS SAFELY AT THE OTHER END.  IF A
+:      ZAP FOLLOWS, THE DATA STILL IN THE IED BUFFER WILL BE LOST.  THE
+:      PATCH IS DIVIDED INTO THREE PARTS:
+:        1. WHEN A YB IS RECEIVED, CHECK THE DATA BUFFER.  IF DATA PRESENT,
+:           SET A FLAG THAT AN ORANGE BALL NEEDS TO BE RETURNED.
+:        2. IN DDONE ROUTINE, WHEN THE SESSION IS OVER, CLEAR THE
+:           ORANGE BALL FLAG.
+:        3. IN HALF SECOND LOGIC, CHECK IF THE FLAG IS SET.  IF YES, AND THE
+:           DATA BUFFER IS EMPTY, THEN SEND THE ORANGE BALL.  IF THERE IS
+:           STILL DATA IN THE DATA BUFFER, CONTINUE TO WAIT.
+:
+PATCH(880531,1630,JL,PA0PTR,,NDGRPS*2)
+OBPEND   HS        NDGRPS        :FLAGS FOR ORANGE BALL PENDING TO BE SENT
+:
+:   PART 1 OF PATCH.  WE HAVE RECEIVED THE YELLOW BALL.
+:
+CONPATCH(ICYB+0E,,6)
+         J         ICYB03,,
+CONPATCH(PA1PTR,,5E)
+ICYB03   LHL       R1,DPORT,,
+         SLLS      R1,2
+         AHI       R1,DIBIA
+         CBCT(R4)
+         LR        R4,R4
+         JN        ICYB06              :CHECK DI AND IED BUFFERS FOR DATA
+         LHL       R1,DPORT,,
+         LHL       R1,DI.MT,R1,R1  :GET THE IPORT
+         JLE       ICYB08
+         SLLS      R1,2                :AND THE DATA BUFFER
+         AHI       R1,IEDBIA          
+         CBCT(R4)                      :IS THE DATA BUFFER EMPTY?
+         LR        R4,R4
+         JE        ICYB08              :EMPTY, SEND IMMEDIATE ORANGE BALL
+ICYB06   LHL       R1,DPORT,,          :HAS DATA, FLAG ORANGE BALL PENDING
+         SBT       R1,OBPEND,,
+         J         MMFRA,,             :...AND WAIT FOR THE DATA TO CLEAR
+ICYB08   LHL       R1,DPORT,,          :NORMAL, OKAY TO SEND ORANGE BALL
+         TBT       R1,TURKEY,,
+         J         ICYB+16,,
+:
+:   PART 2 OF PATCH.  CLEAR THE FLAG IF THE SESSION TERMINATES
+:
+CONPATCH(DDONE+2E,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,12)
+         RBT       R1,NOMBFL,,
+         RBT       R1,OBPEND,,         :RESET ORANGE BALL PENDING FLAG
+         J         DDONE+34,,
+:
+:    PART 3 OF PATCH.  CHECK EVERY 1/2 SECOND FOR DATA BUFFER TO BE EMPTY.
+:    IF FLAG IS ON, AND DATA BUFFER EMPTY, THEN SEND THE ORANGE BALL.
+:
+CONPATCH(LOGT10+0A,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,64)
+         TBT       R12,OBPEND,,        :DO WE HAVE AN ORANGE BALL PENDING?
+         JE        LOGT12              :NO, NORMAL SITUATION
+         LR        R1,R12
+         SLLS      R1,2
+         AHI       R1,DIBIA            :CHECK DI AND IED BUFFERS FOR DATA
+         CBCT(R2)
+         LR        R2,R2
+         JN        LOGT12
+         LHL       R1,DI.MT,R12,R12    :GET IPORT
+         JLE       LOGT11              :IF UNDEFINED, SKIP
+         SLLS      R1,2                :GET IED BUFFER
+         AHI       R1,IEDBIA           :ONLY IF BOTH DI AND IED BUFFERS ARE
+         CBCT(R2)                      :...EMPTY, SEND ORANGE BALL
+         LR        R2,R2
+         JN        LOGT12
+LOGT11   RBT       R12,OBPEND,,        :EMPTY, RESET FLAG, AND SEND ORANGE BALL
+         LHL       R1,DPORT,,
+         LIS       R0,3
+         LHI       R2,CM.OB
+         JAL       R4,SLOR,,
+         JAL       R4,ELOR,,
+LOGT12   LB        R0,LOGTIM,R12,      :BACK TO REGULAR CODE
+         J         LOGT10+10,,
+ENDPATCH(ONLY RESPOND OB TO YB AFTER DI AND IED BUFFERS EMPTIED)
+
+:**********************************************************************
+:	Patch by:   Paul Johnson/Aileen Ma
+:	NSR number: 1664
+:	Version:    4.03
+:	Description:
+:	Patch to set F-bit when responding with the first FRMR to an
+:	illegal S or U frame which had the P-bit set.
+
+	IF	HDLC&(LAPB!LAP)
+:
+PATCH(880827,1145,PJOHNSON/AMA,SNFRMR,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,18)
+	JAL	R6,SENDFR,,	: restore original instruction
+	TBT	RL,CRBIT,,	: command frame?
+	JN	RFG210,,	: YES - don't reset PFBIT before sending.
+	J	RFG200,,
+   IF XOM
+CONPATCH(TINF10+20,,4)
+   ELSE
+CONPATCH(TINF10+1A,,4)
+   EI	
+	NOP
+CONPATCH(TINF20+18,,4)
+	NOP
+ENDPATCH(SET F BIT IN FRMR IF BAD S OR U FRAME HAD P=1)
+:
+	EI
+:*****************************************************
+:	Patch by:	Janet Soung
+:	NSR Number:	1670
+:	Version:	4.03
+:	Description:	In the current XCOM interface, when the 
+:	XCOM interface receives an illegal response or an illegal
+:	command in the Frame Reject state, the interface retransmits 
+:	the FRMR response with the C-field of the frame just received 
+:	in the I-field of the FRMR instead of with the same I-field 
+:	as originally transmitted.
+:	This patch fixes that the interface will send the additional 
+:	FRMR response with the I-field to reflect the original bad frame.
+
+  IF	LAPB!LAP
+PATCH(880902,0830,JSOUNG,SECDEC+12*SECMDR+4,,4)
+	HC	SFRFMR-PRIDEC		:UA COMMAND RECEIVED, ILLEGAL
+	HC	SFRFMR-PRIDEC		:FRMR COMMAND RECEIVED, ILLEGAL
+CONPATCH(SECDEC+12*SECMDR+0E,,4)
+	HC	SFRFMR-PRIDEC		:AN ILLEGAL CONTROL FIELD RECEIVED
+	HC	SFRFMR-PRIDEC		:SARM RECEIVED, ILLEGAL
+    IF	  LAPB
+CONPATCH(PRIDEC+12*PRFRMR,,4)
+	HC	SFRFMR-PRIDEC		:SABM(E) RECEIVED ON WRONG ADDRESS
+	HC	SFRFMR-PRIDEC		:DISC RECEIVED ON WRONG ADDRESS
+CONPATCH(PRIDEC+12*PRFRMR+0E,,2)
+	HC	SFRFMR-PRIDEC		:AN ILLEGAL CONTROL FIELD RECEIVED
+    EI
+ENDPATCH(SEND ADDITIONAL FRMR WITH THE SAME I-FIELD AS ORIGINALLY TRANSMITTED)
+  EI
+:*********************************************************************
+:	Patch by:	Paul Johnson (MDISI-TSG)
+:	NSR number:	1671
+:	Version:	4.03
+:	Description:
+:
+: Patch to correctly check command frame lengths.
+: Current arbritrary length check for 3 bytes does not take all cases
+: into account, and does not detect bad S and U-frames having an
+: illegal, 1-byte I-field.
+: Distinction must be made between LAP and LAPB in that LAP does not
+: support extended sequence numbering (modulo 128).
+: In modulo 128, I and S frames have a 2-byte C-field.
+:
+	IF	X.25
+	IF	HDLC&(LAPB!LAP)
+	IF	LAPB
+PATCH(880318,1130,PJOHNSON,RFG160+12,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,38)
+	TBT	RL,F128.F,,	: running modulo 128 numbering?
+	JE	RFG165		: No
+	CLHI	R1,CT.SBE	: Yes - SABME received ?
+	JE	RFG165		: 	Yes - SABME has 1-byte C-field
+	CLHI	R1,CT.DIS	:	DISC received ?
+	JEFS	RFG165		:	Yes - DISC has 1-byte C-field
+	CLHI	R9,3		:	Rest have 2-byte C-field
+	JG	SNFMRX,,	:	send FRMR if too long
+	J	RFG160+1A,,	:		return
+RFG165	CLHI	R9,2		: running modulo 8, max frame length = 2
+	JG	SNFMRX,,	: send FRMR if too long
+	J	RFG160+1A,,	: return.
+ENDPATCH(CORRECTLY CHECK COMMAND FRAME LENGTHS)
+:
+	ELSE	LAP
+:
+PATCH(880318,1130,PJOHNSON,RFG160+1E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,10)
+	CLHI	R9,2
+	JG	SNFMRX,,
+	J	RFG160+26,,
+ENDPATCH(CORRECTLY CHECK COMMAND FRAME LENGTHS)
+:
+	EI	: LAP
+	EI	: HDLC&(LAPB!LAP)
+	EI      :X.25
+
+:*********************************************************************
+:	Patch by:	Louisa Hsu
+:	NSR number:	1881
+:	Version:	4.03
+:	Description:
+:	Patch to report the "calling address",  "called address"
+:	segment count, and packet count accounting messages  
+:	when the interface receives the call accepted packet
+:	from the link.
+:
+PATCH(880913,1130,LOUISA,PCA340+28,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,4E)
+	LA	R9,DTESAV,,
+	LI	R8,AA.CD4
+	JAL	R13,ACTADR,,		:'CALLED ADDRESS' ACCOUNTING
+	LA	R9,DTESAX,,
+	LI	R8,AA.CL4
+	JAL	R13,ACTADR,,		:'CALLING ADDRESS' ACCOUNTING
+	LHL	R4,DPORT,,
+	SBT	R4,POCHNG,,
+	SBT	R4,PICHNG,,
+	SBT	R4,SOCHNG,,
+	SBT	R4,SICHNG,,
+	JAL	R4,PCTRPT,,
+	J	PCA340+2E,,
+ENDPATCH(REPORT ACCOUNTING MESSAGES WHEN RECEIVING CALL ACCEPTED PACKET)
+:
+
+:****************************************************************************
+:	Patch by:	Louisa Hsu
+:	To initialize the host status to SHUT instead of DOWN
+:
+:****************************************************************************
+
+
+PATCH(022789,1825,louisa,start7+0a,,2)
+	lis	r12,2			:report host shut
+  if	1-pvc
+CONPATCH(hst040,,8)
+	clhi	r3,08000		:Has been shut already ?
+	jebs	hst030			:don't need to report again
+	lis	r12,2			:report host shut
+  ei
+  if	xom
+CONPATCH(xmcho7,,0a)
+	rbt	r6,xombhd		:reset down request
+	sbt	r6,xombhs		:set shut request
+	lis	r12,2			:report host shut
+  ei
+ENDPATCH(Initialize the host status to SHUT instead of DOWN)
+
+
+:	Patch by:	Paul Johnson (MDISI-TSG)
+:	NSR number:	2029
+:	Version:	4.03
+:	Description:
+:
+: When using XOM to configure a link's logical channels (ICNL,OCNL or
+: TCNL) from NONE (i.e XOM value FFFF) it is impossible to use the
+: first 2 channels, i.e. I/O/TCNL(1,2). All call attempts are cleared
+: "out of channels".
+: In fact, a comparison to see if any XOM change has been made needs to
+: be done on a halfword basis. Otherwise the code takes a bad jump and
+: subtracts even more from the channels/link counter - this goes to FFFD
+: thus rendering the link unusable until at least 3 channels are
+: configured.
+: Bug provoked by bad incorporation of version 3.01 patch.
+ 
+	IF	XOM
+PATCH(091388,1030,PJOHNSON,XMNEC1+4,,2)
+	LHR	R3,R3	: Previous channels configured? (ON HALFWORD BASIS)
+ENDPATCH(ENABLE USE OF FIRST 2 LOGICAL CHANNELS AFTER XOM ADD FROM "NONE")
+	EI	:XOM
+
+
+:
+:   In the code which handles the national marker, xcom will jump to
+:   PUF040 to empty buffer.  However it does not restore the length
+:   (should be 0) into FACBUF.  Call will be incorrectly cleared later
+:    on.  
+:
+   IF   X.25
+:
+patch(880819,1200,bpc,puf40,,6)
+        j       pa1ptr,,
+conpatch(pa1ptr,,0e)
+        jal     4,empty,,
+        lis     7,0
+        j       puf05,,
+endpatch(restore facility length in facbuf)
+   EI
+
+
+
+:******************************************************************
+: PAtchname: MAKCLR.403                 product version: 4.03
+:   Author:  JAmes WAng                     Organization: STS
+: Description of the problem:               DAte written: MAr 2, 1989
+:
+:       When pseudo needle reject received, xcom cleans up the circuit
+:       and builds a clear indication packet with TNIC list. The link
+:       register is not prepared before call ADDTNI.
+:*********************************************************************
+
+   IF   X.75
+
+PATCH(890302,1400,JWANG,MAKCLR+4,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,12)
+        LB      RL,IL.MT,R1,
+        LB      R7,TNICNT,R1,
+        J       MAKCLR+0A,,
+ENDPATCH(pREPARE LINK REGISTER IN MAKCLR ROUTINE BEFORE PROCESSING TNICs)
+   EI
+
+:
+:	Patch 3/89 by jl to fix a bug in the hostcosting logic.  Register
+:	6 gets destroyed by CKPUPC routine, recently added.
+:
+PATCH(881013,1200,JL,PA0PTR,,4)
+TEMPR6   BS        4                  :TEMPORARY STORE FOR R6
+CONPATCH(T15S05,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,20)
+         SIS       R6,1
+         JL        TORET,,
+         ST        R6,TEMPR6,,
+         JAL       R4,CKPUPC,,        :CHECK PACKUP CHANGES
+         L         R6,TEMPR6,,
+         J         T15S05+0C,,
+ENDPATCH(PRESERVE R6 FROM BEING DESTROYED ON CALL TO CKPUPC)
+
+:
+:	Patch added 3/89 by jl to fix out-of-channels problem by
+:	correcting the counter in IDONE routine.  Previously, if the
+:	IPORT was defined but the EPORT wasn't, the APORTS counter
+:	would not have been properly decremented in IDONE.  The patch
+:	fixes the problem and brings APORTS counter to correct value.
+:
+   IF XOM
+PATCH(890313,1700,JL,IDONE6-8C,,6)
+	J	PA1PTR,,
+   ELSE
+PATCH(890313,1700,JL,IDONE6-7A,,6)
+	J	PA1PTR,,
+   EI
+CONPATCH(PA1PTR,,14)
+	JL	EMPTY,,
+	LCS	R7,1		:Decrement APORTS here
+	AHM	R7,APORTS,,
+   IF XOM
+	J	IDONE6-86,,
+   ELSE
+	J	IDONE6-74,,
+   EI
+CONPATCH(IDONE6-1E,,4)
+	J	IDONE6-1A	:Skip over wrong decrement for APORTS
+CONPATCH(INI290+4,,6)
+	J	PA1PTR,,	
+CONPATCH(PA1PTR,,1E)
+	STH	R13,IE.MT,R14,R14	:APORTS should be 0 at the
+	CLHI	R14,NLINKS		:...completion of initialization.
+	JL	INI290+0A,,		:Call to IDONE will decrement
+	LIS	R9,1			:...APORTS except for channel 0,
+	AHM	R9,APORTS,,		:...i.e. when IPORT#<NLINKS.
+	J	INI290+0A,,		:So must do the reverse here.
+ENDPATCH(Corrects bad decrement of APORTS, leading to wrong out-of-channels)
+:
+:   Patch 3/89 by jl to fix 2 bugs in alternate break key feature:
+:    (1) Link register RL is used to index into PBC.LT array, but this
+:    register can also be used as the echo flag.  (2) Comparison of
+:    character received to user-genned alternate break key needs to and
+:    off high order bit, or comparison will never work.
+:
+   IF \PBCIND
+PATCH(890315,1430,JL,DATBRK,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1E)
+	LB	R3,LINUM,,	:use R3 as the link number
+	LB	R2,PBC.LT,R3,	
+	CLHI	R2,0FF		:If not defined, leave
+	JE	4,R4
+	NHI	R2,7F		:Insure R2 comparable to R8
+	J	DATBRK+0E,,
+ENDPATCH(Fixes 2 code-level bugs in alternate break key feature)
+   EI
+
+
+
+
+:
+: problem: XCOM HPAD does not handle SET X.29 packet parameter 8!!!
+:           
+
+PATCH(880525,1000,JWANG,L1TBL4+22,,2)
+        HC      L1P8C-L1TBL
+CONPATCH(L1TBL5+22,,2)
+        HC      L1P8F-L1TBL
+ENDPATCH(FIX THE XCOM HPAD SET X.29 PARAMETER 8 HANDLING DECISION TABLE)
+
+
+:
+:	This patch corrects the test for Reverse Charge Non-Acceptance (RCNA)
+:	in CONUP.  The test was made on the reverse charge flag (RVCHRG)
+:	which is set if reverse charge is requested.  This flag is set on 
+:	calls to and from the link.  The test at CONUP should be made only
+:	for calls to the link, becuase calls from the link are already
+:	tested against the appropriate flag in RT.   NSR 650 DRE 3/28/86
+
+
+   IF  INFSW1
+PATCH(860328,1600,DRE,CONUP+30,,6)
+        J       PA1PTR,,
+   ELSE
+PATCH(860328,1600,DRE,CONUP+24,,6)
+	J	PA1PTR,,
+   EI
+CONPATCH(PA1PTR,,1C)
+	TBT	R1,EXTCAL,,		:CALL FROM THE LINK?
+	JN	CON010,,		:YES, THIS ISN'T CORRECT TEST
+	TBT	RL,RCNA.F		:REVERSE CHARGING ACCEPTABLE?
+	JE	CON010,,		:YES, CONTINUE
+   IF  INFSW1
+        J       CONUP+38,,
+   ELSE
+	J	CONUP+2C,,		:NO, HANDLE ERROR
+   EI
+ENDPATCH(PERFORM REVERSE CHARGE NON-ACCEPTANCE TEST IN CORRECT DIRECTION)
+ 
+:###########################################################################
+: filename: (JWANG)TRACE.403
+: This patch is upgraded from version 3.01.  (Jwang)trace.301.
+:
+:  NSR 827 was sent with TRACE.301. SOmehow this patch TRACE.301 was not
+:      incorporated into xcom 4.03. A little improvement from version 3.01
+:      to 4.03 is done. For HQTECH and Field to do the troubleshooting,
+:      we strongly need this patch to be incorporated into source code.
+:
+:   original problem: PB and OS traces only print out part of a packet.
+:   TAsk of TRACE.301: let OS and PB print out whole packet content.
+:   What has been done on version 4.03: tried to spool the whole packet
+:                      when the length of packet is less than 44(hex) for 
+:                      PB or less than 42(hex) for OS. If the length of
+:                      packet greater than these two number 42/44, then 
+:                      only the first 42/44 BYTES are printed out.
+:   Task of TRACE.403: What has been done on version 4.03 is not exactly
+:                      what HQTECH/FIELD who is doing the troubleshooting
+:                      needs.
+:                      So, HQTECH upgrade the patch TRACE.301 to TRACE.403
+:                      again. Task of TRACE.403 is the same as TRACE.301.
+:
+:                      Each new line is commented by a date.
+:
+:*****************************************************************************
+:*****************************************************************************
+
+:
+: PATCH FOR VERSION 3.01
+: PROBLEM REPORTED BY SOUTHWESTERN BELL 56577.
+:
+: PROBLEM:
+:THE DDT PB TRACE SHOWS ONLY PART OF THE DATA PACKET
+:
+: TASK: FIX THE PB TRACE TO BE ABLE TO (1). SHOW THE LINE NUMBER
+:       AND (2). THE FULL DATA PACKET.
+:     
+: OTHER TASKS: SAME PROBLEM OCCURS IN THE XPBTR, OS, XOSTR TRACES.
+:       THIS PATCH WILL ALSO FIX THOSE PROBLEMS.
+  IF DDTDIA
+:*************************************************************************
+: TASK 1. DISPLAY THE LINE NUMBER FOR PB AND XPBTR TRACE.
+:*************************************************************************
+
+PATCH(860711,1400,JWANG,PA0PTR,,0A)
+MSGSP1  SC      /LINE   "8A"8D/         :TO DISPLAY THE LINE NUMBER FOR PB
+CONPATCH(PBT12+0A,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,44)
+        L       R5,PBTTBL,R6,
+        JE      PBT25,,
+        LB      R5,PBTTBL,R6,           :GET THE LINE NUMBER
+        LR      R11,R5
+        NHI     R5,0F
+        LB      R5,SIAASC,R5,           :CONVERT TO ASCII
+        STB     R5,MSGSP1+7,,
+        SRLS    R11,4
+        LB      R11,SIAASC,R11,         :CONVERT TO ASCII
+        STB     R11,MSGSP1+6,,
+        SVC     0B,MSGSP1,,             :PRINT INTERPRETATION
+        L       R13,PBTTBL,R6,
+        J       PBT12+10,,
+:
+:************************************************************************
+: TASK 2. DISPLAY FULL DATA PACKET FOR PB AND XPBTR TRACE.
+:***********************************************************************
+:
+CONPATCH(PBT20+18,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,28)
+        LA      R9,M.CRLF,,
+        JAL     R12,MSGMOV,,
+
+: PRINT INTERPRETATION EACH LINE TO TERMINAL
+        SVC     0B,MSGSPC,,
+        LIS     R5,0
+        STB     R5,MSGSPC,,             :ZERO OUT THE MESSAGE LENGTH
+        SIS     R7,1                    :END OF DATA PACKET?
+        JN      PBT20,,                 :IF NO, CONTINUE TO INTREPRET
+        J       PBT23+16,,
+:+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+:
+: TASK 3. DISPLAY FULL DATA PACKET FOR OS AND XOSTR COMMANDS
+:+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  IF  HDLC
+CONPATCH(XOSL40+1E,,6)     :CONPATCH(XOSL40+20,,6)    CHANGED ON MAR 1988
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,28)
+        LA      R9,M.CRLF,,
+        JAL     R12,MSGMOV,,
+        SVC     0B,MSGSPC,,             :PRINT INTREPRETATION TO TERMINAL
+        LIS     R5,0
+        STB     R5,MSGSPC,,             :ZERO OUT THE MESSAGE
+        SIS     R7,1
+        JN      XOSL40,,
+        J       XOSL60+16,,
+:
+: THE FOLLOWING NOPs ARE ADDED FOR VERSION 4.03 TO REMOVE THE LIMITION
+:  OF PACKET LENGTH.
+CONPATCH(XOSL30+1E,,0C)         :ADDED ON MAR 1988
+        NOP     0,0,0           :ADDED ON MAR 1988
+        NOP     0,0,0           :ADDED ON MAR 1988
+        NOP     0,0,0           :ADDED ON MAR 1988
+  EI HDLC
+CONPATCH(PBT12+2A,,0C)
+        NOP     0,0,0           :ADDED ON MAR 1988
+        NOP     0,0,0           :ADDED ON MAR 1988
+        NOP     0,0,0           :ADDED ON MAR 1988
+ENDPATCH(SHOW LINE NUMBER FOR PB XPBTR AND FULL PACKET FOR PB OS XPBTR XOSTR)
+  EI DDTDIA
+ 
+:###########################################################################
+: PATCH TO FIX THE MACESC ROUTINE BUG WHICH MODIFES THE CALL ACCEPTED
+: PACKET IN THE LINK INPUT BUFFER AND CAUSES THE 'PB' TRACE NOT TO
+: SHOW PACKET TYPE-0F IN THE CALL ACCEPTED PACKET.
+: CUSTOMER IS MGT NET
+  IF   X.25
+PATCH(860429,0800,JWANG,PA0PTR,,08)
+ADR1    WC      0
+ADR2    WC      0
+CONPATCH(MAKS10+0E,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,18)
+        LIS     R0,0
+        STB     R0,,R9
+        ST      R9,ADR2         :SAVE THE POSITION OF THIS DUMMY UTILITY
+        L       R0,TEMP
+        ST      R0,ADR1         :SAVE THE POSITION OF ADR LENGTH FIELD
+        J       MAKS15,,
+CONPATCH(MAKS40+0A,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,34)
+        JAL     R7,ESCDTA,,
+        L       R1,ADR1
+        L       R2,ADR2
+        JER     R14             :JUMP IF THE INPUT BUFFER WASN'T MODIFIED
+MAKS44  LB      R0,-1,R2,
+        STB     R0,,R2          :RECOVER BACK WAHTEVER WAS CHANGED
+        SIS     R2,1
+        CR      R2,R1           :FINISH RECOVERING?
+        JGE     MAKS44          :NOT YET,JUMP BACK TO LOOP
+        LIS     R0,0F
+        STB     R0,,R2          :RESTORE 0F BACK
+        LIS     R0,0
+        ST      R0,ADR1         :ZERO OUT THE ADDRESS
+        ST      R0,ADR2         :ZERO OUT THE ADDRESS
+        JR      R14
+ENDPATCH(FIX THE BUG THAT PB TRACE SHOWS NO 0F BYTE IN CALL ACCEPTED PKT)
+   EI   X.25
+ 
+ 
+:###########################################################################
+: WHEN THE CODE RECEIVES CALL REQUEST PACKET FROM THE LINK, IT
+: WILL RESPNSE BACK 'PLEASE LOGIN:' TO THE LINK IN THE CASE
+: THAT THE CALLED ADDRESS IS IMCOMPLETE OR SOME SPECIAL OPTION
+: IS ON (SUCH AS NONTN).
+: AFTER THIS POINT:
+:   1. USER ENTERS USERNAME WITHOUT CONTROL CHARACTER.
+:      CURRENT XCOM CODE WILL SEND THIS USERNAME WITHOUT GOUGING CHARACTER
+:      TO SUP.
+:   2. IF THIS USERNAME IS REJECTED BY SUP, THE USER WILL BE PROMPTED FOR
+:      'ERROR, TYPE USERNAME:'. AGAIN, WHEN THE SECOND USERNAME WITHOUT
+:      CONTROL CHARACTER RECEIVED BY THE XCOM FROM THE LINK. THE USERNAME
+:      WITHOUT GOUGING WILL BE SENT TO SUP.
+:
+: THIS PATCH WILL SEND THE GOUGING  CORRESPONDING TO THE FINAL TC BEFORE
+: USERNAME TO THE SUP.
+: PATCH IS DONE ON LOGS30---SEND GOUGING WHEN IT PASS THE SUP (ISIS B4)
+:                           MESSAGES OF 'PLEASE LOGIN' OR 'USERNAME'
+:                           OR 'ERROR , TYPE USERNAME' TO THE LINK.
+:                           TO THE LINK.
+:                 ON ICP070---SEND GOUGING WHEN IT PROMPTS 'PLEASE LOGIN:'
+:                             TO THE LINK
+:                             DUE TO IMCOMPLETE ADDRESS AND NULL CUD
+:                             OR OTHER OPTION SUCH AS NONTN IS ON.
+:       (NOTE THAT ON THESE TWO CASES, THE GOUGING WILL BE SENT TO SUP
+:        AT THE TIME THE CODE TRY TO SEND ANY PROMPT MESSAGE.)
+ 
+PATCH(860617,1300,JWANG,PA0PTR,,4)
+GOUGRC  BS      4               :TO SAVE R12
+:
+: FOLLOWING IS TO CHECK THE SUP MESSAGE TYPE. IF THE MESSAGE
+:  IS 'PLEASE LOGIN' OR 'USERNAME' OR 'ERROR, TYPE USERNAME',
+:  THEN SEND GOUGING TO SUP. OTHERWISE, NOT TO SNED GOUGING.
+:
+CONPATCH(LOGS30,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,6A)       :CONPATCH(PA1PTR,,58)
+        CLHI    R7,1            :'PLEASE LOGIN:'?
+        JE      SGOUGN
+        CLHI    R7,2            :'ERROR, TYPE USERNAME'?
+        JE      SGOUGN
+        CLHI    R7,4            :'USERNAME'?
+        JE      SGOUGN
+        JAL     R13,PROMPT,,
+        JR      R12
+:
+: SEND GOUGING CHARACTER TO SUP
+:
+SGOUGN  LIS     R0,4
+        LHL     R1,DPORT,,
+        TBT     R1,TGATE,,      :ADDED ON MAR 1988 -- JWANG
+        JE      SGOUG1          :ADDED ON MAR 1988 -- JWANG
+        JAL     R13,PROMPT,,    :ADDED ON MAR 1988 -- JWANG
+        JR      R12             :ADDED ON MAR 1988 -- JWANG
+SGOUG1  LHI     R2,0B3          :B3 MESSAGE TYPE
+        JAL     R4,SLOR,,       :SEND B3 MESSAGE WITH GOUGING CHARACTER
+        ST      R12,GOUGRC,,
+        JAL     R12,GETCSI,,    :GET CIRCUIT SPEED CORRESPONDING TO FINAL TC
+        JAL     R4,PUTCH,,
+        JAL     R13,PROMPT,,
+        JAL     R4,ELOR,,
+        L       R12,GOUGRC,,
+        JR      R12
+:
+: 'PLEASE LOGIN:' IS GENERATED BY XCOM AND IS SENT TO THE LINK.
+:
+CONPATCH(ICP070+28,,6)          :BPC ICP070+26 IN VERN 3.01 HERE
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,0A)
+        LA      R12,MMFRA,,
+        J       SGOUGN
+ENDPATCH(SEND GOUGING BEFORE USERNAME TO SUP)
+
+
+:###########################################################################
+: THE CODE RECEIVES A CALL REQUEST PACKET WITH CALLED ADDRESS
+: 310690448700 AND NO CALL USER DATA.  THE USERNAME 90448700 IS SENT
+: TO SUP AND GET 'B405' SUP MESSAGE.  USER ENTERS PASSWORD.  IF THE
+: DESTINATION HOST IS SHUT, SUP SENDS BACK 'HOST SHUT' MESSAGE AND
+: THEN 'B4C1' (PLEASE LOGIN).  THE CODE WILL SET LOGIN TIMER WHEN
+: 'B4C1' RECEIVED.  WHEN TIMER EXPIRED, THE CIRCUIT WILL BE CLEARED IF
+: WE ARE IN PSCALC PACKET STATE . (OTHERWISE, THE LOGIN TIMER WILL BE
+: DISCARDED).
+:
+: PROBLEM OF THIS ESCALATION:  WHEN LOGIN TIMER EXPIRE, LOGT ROUTINE
+: FINDS WE ARE IN FLOW CONTROL STATE AND THEN IGNORE THE
+: LOGIN-TIMER-EXPIRED-ACTION. CONSEQUENTLY, USER IS HUNG THERE AFTER
+: ENTERING PASSWORD IF THE HOST IS SHUT. PATCH FUNCTION IS TO
+: CHECK THE PACKET STATE. IF IN PFLOWC, ZAP THE CIRCUIT.
+ 
+PATCH(861112,1400,JWANG,LOGT21+6,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,1A)
+        CLHI    R0,PSCALC
+        JE      LOGT21+0E,,
+        CLHI    R0,PFLOWC
+        JN      LOGT10,,
+        J       LOGT21+18,,     :NOT CHECK EXTLOG FLAG
+ENDPATCH(FORCE THE CODE TO HANDLE LOGIN TIMER PROCESS IN FLOW CONTROL)
+ENDPATCH(STATE. ALSO, NOT CHECK EXTLOG)
+ 
+ 
+:	Patch by:	Paul Johnson (MDISI-TSG)
+:	NSR number:	2067
+:	Version:	4.03
+:	Description:
+: When an I-frame is received with bad N(R) AND bad N(S), the code
+: correctly takes the N(R) as having higher priority and sends a FRMR,
+: rather than a REJ for the bad N(S). However, things were not being
+: cleaned up as far the bad N(S) is concerned - the next good I-frame
+: after FRMR recovery by SABM/UA receives a REJ.
+ 
+	IF	LAPB
+PATCH(093088,1930,PJOHNSON,RIF100+0E,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,12)	: I-Frame rec'd with bad N(S) AND bad N(R)
+	JAL	R6,FTRCIN,,	: Restore
+	RBT	RL,SEQERR,,	: forget about bad N(S)
+	J	RIF100+14,,	: Go send FRMR Z=1
+ENDPATCH(AVOID REJ OF FIRST I-FRAME AFTER FRMR RECOVERY)
+	EI	:LAPB
+
+:
+:	Patch by Louisa Hsu to fix problems for placing a DSP call 
+:
+PATCH(890412,1100,Louisa,NDL062+12,,6)
+	LI	R0,((IX.SDC&0FF)^18)!(ID.DSP^8)!(ID.XCM^-8)	
+CONPATCH(NDL062+1e,,4)
+	LHI	R0,(ID.XCM&0FF)^8)!ID.ASC^-8			
+ENDPATCH(Fix problems for placing a DSP call)
+:
+:*****************************
+:	Patch by:   Louisa Hsu 
+:	NSR number: None, Internal testing
+:	Version:    4.03
+:	Description:
+:	Instead of setting a one minute timer (TNTA.F), the xcom interface 
+:	sends a clear confirmation packet right after receiving a clear request 
+:	from a channel in flow control state.
+:
+PATCH(071189,1630,Louisa,tclr40,,4)
+	j	tclr70
+ENDPATCH(Fix to response a clear request with a clear confirmation packet)
+
+
+:    PATCH ADDED BY JERRY LUCAS 7/89 FOR NSR 2839.  WHEN PROCESSING
+:    AN ERROR IN ENTERED CALL USER DATA, THE WRONG LTEXT MESSAGE IS
+:    SENT BACK TO THE USER.  THIS IS BECAUSE THE NDLERR ROUTINE ASSUMES
+:    THAT THE LINK NUMBER IS NOT DEFINED YET.  HOWEVER, IN THE CASE OF
+:    CALL USER DATA ENTERED FROM THE TERMINAL, THE LINK NUMBER HAS BEEN
+:    FOUND AND SHOULD BE USED.  THE LINK NUMBER, OR -1 IF NOT SELECTED
+:    YET, SHOULD BE SET UP IN RL AT THE START OF NDLERR.
+:
+:
+PATCH(890706,1000,JL,NERR40+2C,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,12)
+         RBT       R1,ERRLOG,,
+         LB        RL,IL.MT,R1,       :SET UP LINK NUMBER, OR FFFF IF NOT
+         J         NERR40+32,,        :...DEFINED YET
+ENDPATCH(IF LINK NUMBER IS DEFINED, MAKE SURE IT IS IN RL ON NDLERR PROCESS)
+:
+:
+:
+:       THIS PATCH FIXES A BUG IN VERSION 4.03.  IN A CALL REQUEST
+:       PACKET, WITH A D-BIT OR Q-BIT SET, THE CODE WILL TRY TO
+:       CLEAR THE CALL BEFORE AN IPORT IS GOTTEN.  THE PATCH WILL
+:       GET THE IPORT FIRST.
+:
+PATCH(891012,0940,JL,RTCALR,,6)
+        J       PA1PTR,,
+:
+CONPATCH(PA1PTR,,36)
+        LB      R1,PACKET,,
+        CLHI    R1,YCALR
+        JN      RTEILL,,
+        LHI     R13,CNETCG^8!DIA192     :CLEAR THE CALL IF UNABLE TO
+        JAL     R3,FINDIP,,             :..FIND AN IPORT
+        J       RTCA30
+	LIS	R7,1
+	AHM	R7,AELCNT,RL2
+        JAL     R9,INICAL,,             :SKIP RETURN FROM FINDIP IF WE
+        J       RTCALR+0C,,
+:
+RTCA30  J       RTD480,,
+:
+   IF XOM
+CONPATCH(PCR040-16,,4)
+        JN      SNDCL0
+   EI
+:
+ENDPATCH(GET AN IPORT BEFORE ANY CHANCE OF SENDING A CLEAR)
+:
+:    Patch 7/89 by jl.  Fixes bug in logic that adds a PVC through XOM.
+:    PVCTAB pointer used by the routine ESP19S is not set up properly
+:    by XMCAPV.
+:
+   IF   PVCCD&XOM
+:
+PATCH(890718,1530,jl,XMCAPV+42,,16)
+	LH	R9,PVCLNK,RL,RL
+	SLHLS	R11,4
+	AR	R9,R11
+	STH	R9,PVCTAB,,
+	AI	R9,PVCTAB-10
+ENDPATCH(FIXES POINTER PVCTAB WHEN BUILDING A NEW PVC THROUGH XOM COMMAND)
+   EI
+:
+:
+   IF  .EQ.(DDTDIA,1)
+:
+:    patch by ben chen to provide ddt command in 4.03 to set crstop.  
+:    necessary for debugging.
+:
+patch(880415,1700,bpc,ddmmy1-0a,,6)
+        j       pa1ptr,,
+conpatch(pa1ptr,,12)
+        svc     0b,m.15,,
+        svc     0b,m.18,,
+        j       dstrt2,,
+conpatch(pa0ptr,,12)
+m.18    sc      /"8d"8aCrstop is ON "8d"8a/
+endpatch(display crstop is set or not set message)
+:
+:
+  lo  crash
+patch(880415,1600,bpc,m.14+3,,36)
+        AC      /CRON  Enable Crstop             CROF  Disable Crstop  /
+conpatch(pa0ptr,,2)
+  if  crstop
+crashj  hc       1
+conpatch(m.18+0d,,3)
+         ac     /ON /
+  else
+crashj  hc       0
+conpatch(m.18+0d,,3)
+        ac       /OFF/
+  ei
+conpatch(entry1+2,,6)
+        j        entry8,,
+conpatch(pa1ptr,,34)
+entry8  ahm      1,crat+crshct,,
+        lhl      4,crashj
+        je       crgo,,
+crashs  clhi     0,1
+        jle      entry2,,
+        ohi      0,0cc00
+        sth      0,fpanel,,
+  if  excrsh
+        jal      5,crsh.p,,
+  else
+        nop      0,0,0,
+  ei
+        lm       0,crreg,,
+        svc      sys,halt.
+crgo    eq       entry2-14
+endpatch(aloow crash stop to be modified later on)
+  fo  crash
+  lo  status
+patch(880417,1200,bpc,pa0ptr,,3e)
+onmsg   sc       /"8d"8aSlot will HALT on Crash  "8d"8a/
+offmsg  sc       /"8d"8aSlot will RESTART on Crash "8d"8a/
+conpatch(pa1ptr,,50)
+cron    lis      0,1
+        sth      0,crashj,,
+        lhi      0,0ce      :N
+        stb      0,m.18+0e,,
+        lhi      0,0a0      :SPACE
+        stb      0,m.18+0f,,
+        svc      0b,onmsg,,
+        j        dstrt2,,
+crof    lis      0,0
+        sth      0,crashj,,
+        lhi      0,0c6       :F
+        stb      0,m.18+0e,,
+        lhi      0,0c6       :F
+        stb      0,m.18+0f,,
+        svc      0b,offmsg,,
+        j        dstrt2,,
+conpatch(cmdlst+110,,14)
+        wc       cron
+        ac       /CRON/
+        wc       0
+        wc       crof
+        ac       /CROF/
+endpatch(add ddt commands to enable/disable CRSTOP)
+  fo  status
+:
+   EI
+:
+ 
+PATCH(890726,1130,louisa,LIM500+1A,,6)
+	J	PA1PTR,,
+
+:------------------fix for bad CUD problem --------------:lsh 7/25/89
+:
+:When we receive incorrect call user data from the user, we do the following
+:clean up and resend semicolon prompt for called address and call user data
+:if there is no canned called address.  If there is canned called address,
+:we only resend a '+' prompt for call user data from the user.
+:
+:Reset the "link already selected" flag LSLCTD. Clear the connection
+:between I port and link as well as the connection between I port and E port.
+:when we receive the data (called address or CUD) from the user again, we will
+:select the link and assign E port again.  Note that we need to decrement 
+:AELCNT (the total E port count on the link) but not APORTS (total active 
+:channel count on the interface.  See LIM210 and LIM300 routines.  Also refer 
+:to the clean-up logic in the IDONE routine.  
+:
+:
+   IF HCO.MX
+CONPATCH(PA1PTR,,84)
+   ELSE
+CONPATCH(PA1PTR,,7E)
+   EI
+	JAL	R0,NDLERR,,
+	LHL     R0,DPORT					
+	RBT 	R0,LSLCTD,,		:RESET THE "LINK ALREADY SELECTED" FLAG
+	LHL	R5,IPORT	:R5 = I port number
+	LIS	R0,0
+	LA	R2,,R5,R5
+	STH	R0,BF+IEDBIA,R2,R2	:CLEAR BF OF IED BUFFER
+	STH	R0,BF+IECBIA,R2,R2	:CLEAR BF OF IEC BUFFER
+	LCS	R0,1
+	LB	R2,IL.MT,R5,	:R2 = link number
+	AHM	R0,AELCNT,R2,R2		:DECREMENT ACTIVE E PORT COUNT ON LINK
+	STB	R0,IL.MT,R5,		:RESET IPORT TO LINK MAP
+	LH	R3,IE.MT,R5,R5	:R3 = E port number
+	STH	R0,IE.MT,R5,R5		:RESET IPORT TO EPORT MAP
+	STH	R0,EI.MT,R3,R3		:RESET EPORT TO IPORT MAP
+	SBT	R3,EPA.F,,		:MAKE EPORT REAVAILABLE
+	LCS	R7,1			:DECREASE ACTIVE CHANNEL COUNT
+	SH	R3,EPB.LT,R2,R2		:REMOVE PORT BIAS FOR LINK	
+	AH	R3,LCC.LT,R2,R2		:GET LOGICAL CHANNEL NUMBER	
+	LH	R5,LOC.LT,R2,R2		:GET LOWEST OUTGOING CHANNEL NUMBER
+				:IF WE DO'NT HAVE OUTGOING CHANNEL
+	JLFS	LIM510		:MEANS THIS CHANNEL WAS INCOMING OR TWO-WAY 
+	CLR	R3,R5			:IS THIS CHANNEL AN OUTGOING CHANNEL ?
+	JLFS	LIM510			:NO,NOT AN OUTGOING CHANNEL
+	LIS	R7,0	 :IF IT WAS OUTGOING CHANNEL, DON'T CHANGE CHANNEL COUNT
+LIM510	LIS	R5,1			:INDICATE A PORT HAS FREED UP
+	JAL	R9,HPACHK,,		:UPDATE AVAILABLE CHANNEL COUNT
+  IF	HCO.MX
+	JAL	R9,HCOST,,		:RECALCULATE HOST COST
+  EI
+
+	J	MMFRA,,			:
+
+
+:------------------fix for bad CUD problem --------------:lsh 7/25/89
+ENDPATCH(LOUISA BAD CUD PROBLEM FIX)
+:
+:    patch by dennis ernst and jerry lucas to fix logic in handling
+:    pad parameter 9.  sh instrucion in x.map routine should be lh.
+:
+PATCH(890809,1045,DRE/JL,X.MAP2+28,,6)
+	LH	R4,PABCD,R8,R8
+ENDPATCH(FIX HANDLING OF PAD PARM. 9)
+:
+:
+:    PATCH BY LOUISA TO ALLOW RESTART IN FLOW CONTROL READY STATE, PREVENT
+:	A POTENTIAL F8 CRASH.
+:
+PATCH(890810,1245,louisa/jl,ALOWED+1C,,4)
+	HC	05FF,8000
+ENDPATCH(PERMIT RESTART PACKET IN FLOW CONTROL READY STATE)
+:
+:	patch by louisa/jlucas to insure iport and iecbuf are properly
+:	loaded in TRSE90 routine before call to WCI and before IPORT-
+:	related flags are changed.
+:
+PATCH(890810,1245,louisa/jl,TRSE90,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1A)
+	LHI	R0,ZRESCN
+	LHL	R1,IECBUF,,
+	LHL	R7,IPORT
+	JAL	R4,WCI,,
+	J	TRSE90+8,,
+ENDPATCH(SET UP IPORT AND IECBUF CORRECTLY IN REGISTERS IN TRSE90)
+:
+:
+:
+:   PATCH BY JERRY LUCAS TO FIX LOCKUP WITH RNR/RR LOGIC.  FOLLOWING IS
+:   A POSSIBLE SCENARIO LEADING TO THE PROBLEM:
+:    - NOS RECEIVED FROM NET, SEND RNR TO HOST.
+:    - SND RECEIVED FROM NET, ICSND ROUTINE JUMPS TO CWROT. FLAGS ARE SET
+:      BUT NO RR IS QUEUED TO RMAKE.
+:    - RMAKE IS NEXT IN BGEXEC LOOP, HAS DATA QUEUED UP.  WINROT FLAG IS
+:      RESET AT PSUB7E.
+:    - ROTWIN IS CALLED BY BGEXEC LOOP, BUT WINROT HAS BEEN RESET IN RMAKE.
+:      NO RR WILL BE QUEUED.
+:    - CCITT SAYS AN RNR MUST BE CLEARED BY RR, NOT JUST BY DATA CARRYING
+:      P(R).  SO WE HANG.
+:
+:   SUGGESTED FIX IS TO RMAKE.
+:
+PATCH(891017,1000,JL,PSUB7E,,6)
+        J       PA1PTR,,
+:
+CONPATCH(PA1PTR,,18)
+        STB     R2,TPPR,R6,
+        TBT     R6,LSTRNR,,
+        JN      PSUB7D,,
+        J       PSUB7E+6,,              :..CONDITION, DON'T RESET FLAGS
+ENDPATCH(FIX POSSIBLE PACKET FLOW CONTROL LOCK-UP)
+:
+:---------------------------------------------------------------------
+: Patch name:  # inpary.403          Product and Version:  # xcom 4.03
+:     Author:  # ken stone                  Organization:  # sts
+: Description of Problem:  # parity changed on host to host call.
+:  inparity(space or mark) with -allcalls or default ignored.
+:  parity was spaced or marked, when it should follow data or allcalls
+:  parameter.
+:
+:---------------------------------------------------------------------
+
+ if (.mark!.space)&.data&.all
+patch(103189,0950,stonk,makd30+44,,6)
+       j    pa1ptr,,
+conpatch(pa1ptr,,12)
+       n    r0,all.f,,
+       n    r0,dap.f,,
+       j    makd30+4c,,
+endpatch(and do not add to decide parity control)
+ ei
+:
+:
+:********************************************************************
+: Patch name: INPROG.403             Product and Version: XCOM 4.03
+:     Author: JCR                           Organization: STS
+: Description of Problem:  
+:
+:	This patch correctly sets up IDBUF before call to EMPTY
+:	when processing par 8 Q-bit packet at L1P8F. Failure to
+:	empty the correct IDBUF at this point leads to GCI or
+:	dispatcher crash because BFRITD and RTDAT get out of sync
+:	with ID buffer message lengths.
+
+PATCH(891109,1500,JREILLY,L1P8F+18,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,18)
+	RBT	R1,INPROG,,		: source
+	SLLS	R1,2			: use DPORT...
+	AHI	R1,IDBIA		: ...to make ID buffer
+	STH	R1,IDBUF,,		: save it
+	J	L1P8F+22,,		: now we can EMPTY
+
+ENDPATCH(Use correct IDBUF for EMPTY at L1P8F)
+
+
+
+:---------------------------------------------------------------------
+: Patch name:  # natomk.403          Product and Version:  # xcom 4.03
+:     Author:  # ken stone                  Organization:  # sts
+:   Customer:  # dupont                     Date Written:  # 12/20/89
+: Description of Problem:  # c08d message contains national options
+:  marker.  call is cleared with diag 175 because other begin of
+:  markers are spotted in the string.  ccitt says marker should
+:  be 000f or 00ff or not valid.
+:  patch avoids looking for markers other than the first encountered...
+:
+:  when processing markers get characters from dibuf, not tmpbf1
+:---------------------------------------------------------------------
+
+patch(122089,1320,stonk,pfra08+14,,2)
+      jfs   pfra08+18                  : skip multi nat opt checks
+conpatch(pfra08+28,,6)
+      j     pa1ptr,,
+conpatch(pa1ptr,,12)
+      lhl   r1,dibuf,,
+      l     r2,bb,r1,                  : get char from dibuf where it is
+      j     pfra08+2e,,                : ... not tmpbf1 where it ain't
+endpatch(don't check for other national markers in c08d message)
+endpatch(offset for next character should be dibuf, not tmpbf1)
+
+:---------------------------------------------------------------------
+: Patch name:  srlboc.403            Product and Version:  XCOM 4.03
+:     Author:  G Hudson                     Organization:  STS
+:   Customer:  TYMNET                       Date Written:  4 / 1 / 90
+:
+: Description of Problem:  Logic enters the RESET and BOCSX routines
+: without having initialized the RL register.
+:---------------------------------------------------------------------
+:
+patch(900401,1600,gch,ZPSRSE,,6)
+	j	pa1ptr,,
+:
+conpatch(pa1ptr,,16)
+	lhl	r1,iport	:Get iport
+	lb	rl,il.mt,r1,	:...and then the line no.
+	la	r12,RSMZAP,,	:Restore overlaid instruction.
+	j	ZPSRSE+6,,	:Return to program body.
+endpatch(Set "RL" before going to sbrtnes RESETP & BOCSX)
+:---------------------------------------------------------------------
+: Patch name:  XOMSW1.403            Product and Version:  XCOM 4.03
+:     Author:  G Hudson                     Organization:  STS
+:   Customer:  TYMNET                       Date Written:  2 / 23 / 90
+: Compatible with shared XCOM 4.03
+:
+: Description of Problem: The NETWORK CONSOLE and XOM (command 4A) were 
+: producing incorrect data for:
+:    1. "last start-up after halt:"
+:    2. "crash count:"
+:    3. "crash code:" 
+:
+:---------------------------------------------------------------------
+:
+PATCH(022390,1700,GCH,START3,,6)
+	LHL	R1,CRAT+CRSHCT,,	:How many times has the slot started.
+:
+ IF XOM
+CONPATCH(XOMMSC+6A,,6)
+	LHL	R0,CRAT+CRSHCT,,	:Number of crashes.
+:
+CONPATCH(XOMMSC+76,,6)
+	LHL	R0,CRAT+CRASHC,,	:Reason for last crash.
+:
+ EI
+ENDPATCH(Correct XOM crash count and code, and start-up date after last halt.)
+
+:---------------------------------------------------------------------
+: Patch name:  padidl.403           Product and Version:  XCOM 4.03
+:     Author:  JL                       Organization:  STS 
+:   Customer:                           Date Written:  5/16/90
+:   Patch function described below.  
+:---------------------------------------------------------------------
+:
+:	PATCH 5/90 by Jerry Lucas to fix initialization of pad idle timer
+:	at call setup.  DDONE routine sets pad idle timer to 2.  If tymfile
+:	specifies padidletimer to be 0, i.e. off, then 0 should be stored
+:	in the cell and the flag ndatim should be on (this flag is set to
+:	deactivate the timer, to distinguish between not on vs. on with a
+:	value 0).  Code at PCA300 when we receive call accept packet does
+:	not work for the case where padidletimer in tymfile is set to 0.
+:
+PATCH(900516,1640,jl,PCA300+18,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,1C)
+	LB	R0,TREF4,RL,		:default pad idle timer
+	JE	PCA304			:if it is set up as zero, then
+	RBT	R1,NDATIM,,		:..make sure 0 gets written and
+PCA304	STB	R0,IDLCNT,R1,		:..the ndatim flag is kept on (this
+	J	PCA310,,		:..will insure timer set off)
+ENDPATCH(PADIDLETIMER of 0 in tymfile should be set up properly at call accept)
+:********************************************************************
+: Patch name: 5DIGIT.403             Product and Version: XCOM 4.03
+:     Author: JCR                           Organization: STS
+:   Customer: Babcock & Brown               Date Written: 1/9/90
+: Description of Problem:  
+:
+:	When we receive a call request where called address contains
+:	no DNIC and we want to do host to host call to 5 digit host,
+:	XCOM is stripping the 1st host digit when building login
+:	string due to NI R2,0FFFF at BLDH04+4. (ex. call request is
+:	0B06011160, we send X25:01160 as logon string).
+
+PATCH(900109,1130,JREILLY,BLDH04+4,,6)
+	NI	R2,0FFFFF		: save digits 2-6 (not 3-6)
+
+CONPATCH(BLDH04+26,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,1C)
+	LR	R3,R2			: work with R3
+	NI	R3,0FFFF		: lose high half-word
+	OR	R0,R3			: and get low half-word into R0
+	ST	R0,DTESAX,R7,		: save it
+	NI	R2,0FFFFFF00		: lose 5th host digit (if any)
+	J	BLDH04+2C,,		: and return
+
+ENDPATCH(Patch to allow host to host call to 5 digit host when no DNIC)
+:
+:
+: VERSION 4.03.
+:
+: ESC 53894. CUSTOMER:  COMPUSERVE
+:  PROBLEM: XCOM RECEIVES IIX 80818083 THEN ANOTHER DATA MESSAGE.
+:           IF THE FIRST CHARACTER OF THIS ISIS MESSAGE HAS THE
+:           HIGH ORDER BIT ON, THIS ISIS DATA MESSAGE WILL THEN 
+:           BE TRAETED AS IIX MESSAGE. THIS FAULT MAY CAUSE
+:           THE CODE JUMP TO ANYPLACE IN THE BACKGROUND OR 
+:           FORGROUND. FOR THIS ESCALATION, ISIS DATA MESSAGE
+:           '0021 038EFDC5'. THIS BYTE '8E' CAUSES THE CODE JUMP FROM 
+:           DISPATCHER DIALECT LOGIC TO PCR525 ROUTINE AND THEN
+:           CRASHES AT PCR540.
+:
+:   TASK:      FIX THE BUG ON ESCMSG. IF DNPROG ISN'T SET, WE NEED
+:              FLUS THE DATA. THE SBT INSTRCUTION NEEDS TO BE
+:              CHANGED TO TBT.
+
+
+PATCH(870701,1500,JWANG,ESCMSG+6,,6)
+        J       PA1PTR,,
+CONPATCH(PA1PTR,,1A)
+        TBT     R7,DNPROG,,
+        JN      ESC012,,        :IF ALREADY DONE ONE
+        LR      R0,R5
+        JAL     R4,FLUSH,,      :FLUSH THE REST OF IRING MESSAGE
+        J       MMFRA,,
+ENDPATCH(FLUSH THE NON IIX MESSAGE DURING THE IIX DIALECT EXCHANGE)
+:
+:    THIS PATCH INCREASES THE SECONDARY PVC REBUILD TIMER TO AN
+:    AMOUNT IN SECONDS EQUAL TO 10d * PVCTIM.  PVCTIM SHOULD 
+:    BE DEFINED IN THE TYMFILE.
+:
+:
+   IF   PVC
+    IF \PVCTIM
+     IF PVCTIM-0F
+PATCH(890907,1700,JL,NMPNR1+3C,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,10)
+         LHI       R0,PVCTIM
+         STB       R0,PVCTIK,R1,
+         J         MMFRA,,
+CONPATCH(PVCERR+42,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,10)
+         LHI       R0,PVCTIM
+         STB       R0,PVCTIK,R1,
+         J         PVCERR+4A,,
+ENDPATCH(INCREASE PVC SECONDARY REBUILD TIMER TO > 2 MINS. 30 SECS.)
+:
+     ELSE
+PATCH(890907,1700,JL,NMPNR1+3C,,2)
+         LIS    R0,0F
+CONPATCH(PVCERR+42,,2)
+         LIS    R0,0F
+ENDPATCH(INCREASE PVC SECONDARY REBUILD TIMER)
+     EI
+    EI
+   EI
+
+:**********************************************************************
+:---------------------------------------------------------------------
+: Patch name:  # nonatm.403          Product and Version:  # xcom 4.03
+:     Author:  # ken stone                  Organization:  # sts
+:   Customer:  #                            Date Written:  # 10/26/89
+: Description of Problem:  # when returning parameter indication
+:  there is a 0000 between 18 and 19.
+:
+:---------------------------------------------------------------------
+
+patch(102689,1600,stonk,xla.30+24,,6)
+        j     pa1ptr,,
+conpatch(pa1ptr,,16)
+        lb    r1,nopmp1,r1,
+        stb   r1,padpr1,r8,
+        je    4,r3
+        j     xla.40,,
+endpatch(prevent 0000 indication between parm 18 and 19)
+:---------------------------------------------------------------------
+: Patch name:  # XOMSHR.403          Product and Version:  # XCOM 4.03
+:     Author:  # KEN STONE                  Organization:  # STS
+:   Customer:  # SHARED XCOM                Date Written:  # 12/01/89
+: Description of Problem:  # TO ALLOW XOM AND ?TRAN WORK IN SHARED XCOM.
+:
+: PATCH 1) ALLOW EACH LINK TO ACCESS THE XOM, NOT RESTRICTED TO LINK
+:          0 OR SPECIFIED LINK.
+: PATCH 2) WHEN ENTERING 83 XOM COMMAND AND TRYING TO MAKE HOST GONE,
+:          DO NOT MAKE CHECK FOR ORIGINATING SLOT.
+: PATCH 3) WHEN ENTERING 83 XOM COMMAND DO NOT REMOVE LHST.F LINKHOST.
+:          THIS IS OVERKILL.
+:
+:---------------------------------------------------------------------
+
+ IF XOM
+PATCH(120189,0900,STONK,NDLXOM+4,,4)
+        J    NDLXOM+1C
+CONPATCH(XMCH03+8,,4)
+        J    XMCHO2+0E
+CONPATCH(XMCHO2+22,,6)
+        J    XMCHO2+2A,,
+ENDPATCH(XOM CHANGES FOR SHARED XCOM PROJECT)
+ EI
+:********************************************************************
+: Patch name: XOMDET.403             Product and Version: XCOM 4.03
+:     Author: JCR                           Organization: STS
+:   Customer: ALL                           Date Written: 12/1/89
+: Description of Problem:  
+:
+:	This patch fixes problem where a ZAP follows 'XOM is in
+:	use' message when a second XOM user attempts to log on. The
+:	ZAP overtakes the message and the user just sees 'please log
+:	in: ' prompt. If we reset DPLOGN bit at NXOM09, then DDONE
+:	(called by NEDCLR) will send a detach instead of a ZAP.
+   IF XOM
+PATCH(891201,1200,JREILLY,NXOM09+1E,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,18)
+	LHL	R1,DPORT,,		: get DPORT
+	RBT	R1,DPLOGN,,		: reset DPLOGN so DET is sent
+	LA	R9,XOMAON,,		: get message (source)
+	J	NXOM09+24,,		: and return...
+
+ENDPATCH(Patch to send DET instead of ZAP when XOM is in use)
+   EI
+:
+: CLEAR INDICATION TIMEOUT HANDLING LOGIC FOR CCITT 1984.
+:
+:  CCITT 1984 SAYS, WE CAN ONLY RETRANSMIT CLEAR INDICATION WITH DIAGNOSTIC
+:        50 (DECIMAL) WHEN THE FIRST TIME THE TIMER EXPIRED.
+:        IF THE SECOND TIME THE TIMER EXPIRED AGAIN, WE NEED TO CLEAN
+:        UP THE CHANNEL AND ENTER P1 STATE (READY STATE).
+:        WE MAY ISSUE A DIAGNOSTIC PACKET WITH DIAG 050 (decimal).
+:        THIS PATCH WILL NOT ISSUE DIAGNOSTIC PACKET.
+:
+:        SM.A2 ERROR CELL SHOULD READ AS THE NUMBER OF TIME THE SECOND
+:        TIME THE CLEAR INDICATION TIMER EXPIRED. (I.E., THE NUMBER OF TIME 
+:        WE CLEAN UP THE CHANNEL DUE TO THE SECOND TIME CLEAR INDI TIMER
+:        EXPIRED.
+
+
+PATCH(870807,1500,JWANG,T1S350,,6)
+        J       PA1PTR,,
+CONPATCH(PA0PTR,,2*NEGRPS)
+SMA2.F  HS      NEGRPS                  :FLAG FOR CLEAR INDI 2nd TIMER EXPIRED
+CONPATCH(PA1PTR,,58)
+        LHI     R7,DIA050               :USE DIAGNOSTIC 50 IN decimal
+        STB     R7,PSDIAG+1,R2,R2       :SAVE THEM FOR RMAKE
+        LB      R4,RTRYCN,R2,           :CHOULD BE 2,OTHERWISE CORRECT TYMFILE
+        SIS     R4,1                    :DECREMENT BY ONE
+        STB     R4,RTRYCN,R2,           :RESTORE IT BACK
+        JLE     T1S365                  :2nd TIMER EXPIRED
+        J       T1S360,,                :1st TIME,SEND CLEAR INDI WITH D50
+T1S365  RBT     R2,FIRSTR,,
+        LIS     R4,1
+        AHM     R4,SM.A2,RL,RL          :INCREMENT ERROR CELL BY ONE
+        LHL     R4,IE.MT,R2,R2          :GET EPORT
+        SBT     R4,SMA2.F,,             :FLAG ON THE EPORT
+        JAL     R9,IDONE,,
+        LHI     R0,AA.ERR
+        STH     R0,TERMCD,,
+        JAL     R9,DDONE,,
+        J       T1S240,,
+ENDPATCH(CCITT 1984 FOR CLEAR INDICATION TIMER EXPIRATION PROCESS)
+
+:*********************************************************************
+
+:*********************************************************************
+: PUT ANY ADDITIONAL PATCHES ABOVE THIS LINE
+:********************************************************************
+ 
+PATCHREPORT                     :REPORT BYTES OF PATCH AREAS USED
+FINPATCH                        :MAKE FINAL REPORT ON SEGMENT USAGE
+:**** end of patch area*****************************************************
+yp,b
