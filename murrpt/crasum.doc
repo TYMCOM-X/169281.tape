@@ -1,0 +1,568 @@
+
+
+
+
+
+		     The MUR "CRASH.SUMMARY" report
+		     ------------------------------
+		    (Written 07/18/84 by D. Baigent)
+
+
+INTRODUCTION:
+------------
+	The CRASH.SUMMARY report is generated on a daily basis in the
+MURRPT directory on system 55.  The report contains a summary of all
+unscheduled crashes for each TYMSHARE host sorted by the system type
+(CLASS), the system location (SITE), and the system number (SYSNO).  The
+report provides totals for the number of crashes for each system, the
+number crashes for each SITE and the total number of crashes for each
+CLASS of system.  The report also calculates the availability of each
+system, expressed as a percent of scheduled up time, and provides this
+figure for each system as well as a summary of availability for each
+SITE and CLASS.
+
+	The daily CRASH.SUMMARY reports are output to two files in the
+MURRPT directory on system 55.  The "CSL.RPT" file contains a summary of
+crashes for each valid CLASS and SITE for the previous month.  The "CS.RPT"
+file contains a summary of all crashes for each valid CLASS and SITE for
+the current month up to the date the report is generated.  Alternately,
+those users that are valid in the MUR data base can run CRASH.SUMMARY
+manually and specify the date range, CLASS and/or SITE they wish in the
+report.  Contact the MUR data base administrator if there are any
+questions on how to run CRASH.SUMMARY manually.
+
+THE CRASH.SUMMARY FORMAT:
+------------------------
+	Once the CRASH.SUMMARY report file is created, it can be printed
+on a hardcopy terminal by typing "TYPE FILENAME" at the EXEC level,
+where "FILENAME" is the CRASH.SUMMARY report file.  (For example, typing
+"TYPE CSL.RPT" followed by a carriage return would type the report in
+the MURRPT directory).  The following is a desciption of the
+CRASH.SUMMARY report format, please refer to the example copy at the end
+of this document (EXAMPLE OUTPUT:)...
+
+1)  A page heading is supplied at the top of each page as follows:
+
+CRASH SUMMARY FOR Mmm DD, YYYY TO Mmm DD, YYYY AS OF Mmm DD, YYYY HH:MM
+
+Where "Mmm DD, YYYY TO Mmm DD, YYYY" is the beginning and ending dates
+for the report and "AS OF Mmm DD, YYYY HH:MM" is the date and time the
+report was generated (see line (1) in EXAMPLE OUTPUT:).  Each page is
+defined as 66 lines long.
+
+2)  Each CLASS of systems has a heading that includes an abbreviation of
+the system type, the abbreviations of the various crash code titles and
+headings for the columns that will contain the totals, availability
+percentages and the last date that data was entered for each system.
+(see line (2) in EXAMPLE OUTPUT:)
+
+(NOTE: A description of the various crash code abbreviations, along with
+all other CRASH.SUMMARY abbreviations will be disscussed later in this
+document.  The asterisks in the header indicate crash codes that are not
+calculated in the adjusted availability percentage, also to be discussed
+later.)
+
+3)  After the CLASS heading, a detail line is printed for each system of
+the current SITE.  Under the system type abbreviation in the header is
+the appropriate system number followed by the number of crashes for each
+of the various crash codes.
+  
+    Under the "TOT" heading will be the total number of crashes for that
+system followed by the calculated availability percentage under the
+"AVAIL" heading.  (How this figure is calculated will be discussed
+later).
+
+    Under the "DATE" heading will be the last date that data was entered
+into the data base for that system in the format "MMDD".  If the date in
+this column is prior to the ending date for the report, data effecting
+the output of the report has not yet been entered into the data base, and
+the presented figures may be inaccurate.
+(see line (3) in EXAMPLE OUTPUT:)
+
+(NOTE: An asterisk in between the "AVAIL" figure and the "DATE" figure
+indicates a system that is not calculated in the adjusted CLASS summary
+discussed later.)
+
+4)  When all the systems of the current CLASS for the current SITE have
+been outputted, CRASH.SUMMARY provides a summary line for the current
+SITE.  Under the system type heading will be the abbreviation of the
+current SITE followed by the total number of crashes for each of the
+various crash codes.
+
+   Under the "TOT" heading will be the total number of all crashes for
+the current SITE followed by the availability of the current CLASS of
+systems for that SITE under the "AVAIL" heading.
+
+   Under the "DATE" heading will be a figure that represents the average
+number of crashes per system for the current SITE.  (This figure is
+calculated by dividing the total number of crashes by the number of
+systems of the current CLASS for the particular SITE.)
+(see line (4) in EXAMPLE OUTPUT:)
+
+5)  The line following the SITE summary is the adjusted summary for the
+current SITE as indicated by the asterisk under the SITE abbreviation.
+This line provides the adjusted number of crashes, the adjusted
+availability and the adjusted crashes per system under the "TOT",
+"AVAIL" and "DATE" headings, respectively.  These totals do not take
+into account those crashes that are considered "exempt" from the system
+reliability rating as indicated by the asterisks in the CLASS heading.
+(see line (5) in EXAMPLE OUTPUT:)  More on adjusted reliability later.
+
+6)  Once all the valid SITEs for the current CLASS have been reported,
+CRASH.SUMMARY will print a CLASS summary as indicated by the "TOT"
+abbreviation under the system type heading.  This line contains the
+total number of crashes for the current CLASS for each of the various
+crash codes in the CLASS heading.  The "TOT", "AVAIL" and "DATE" columns
+contain the total number of crashes, availability and average crashes
+per system for the current CLASS in the same format as the SITE
+summary line.
+(see line (6) in EXAMPLE OUTPUT:)
+
+7)  After the CLASS summary line is the adjusted summary for the current
+CLASS as indicated by the asterisk directly under the "TOT"
+abbreviation.  This line is in the same format as the adjusted summary
+for each SITE described above.
+(see line (7) in EXAMPLE OUTPUT:)
+
+8)  At the end of the report, CRASH.SUMMARY provides group totals for
+each type of crash code.  The various crash codes are grouped by type in
+the following manner:
+
+CPU:    All CPU related crashes 
+MEM:    All memory related crashes
+DSK:	All disk related crashes
+I/O:	All input-output (peripheral) related crashes
+OHW:	All crashes caused by other types of host hardware
+SSW:	All system software related crashes
+OSW:	All crashes caused by other types of host software
+NWK:	All network hardware and/or software related crashes
+PER:	All crashes caused by personnel error
+PWR:	All crashes caused by public utility power failures
+ENV:	All crashes caused by environmental factors
+P/E:	All crashes caused by inhouse power equipment failures
+UNK:	All undetermined (unknown) crashes
+OLT:	Other Lost Time (crashes not belonging to any of the above)
+
+The report will first print the group totals (the first line under the
+GRP abbreviation that starts with "TOT") followed by the percentage of
+crashes attributed to each of the crash code groups.  For example, in
+the EXAMPLE OUTPUT, the lines following the (8) indicate that 17 crashes,
+or 20% of all the crashes for this report were caused by CPU errors, 13%
+by memory errors, 17% by disk errors, etc.  Under the "TOT", "AVAIL" and
+"CPS" headings are the values for the total number of crashes (87),
+the total system availability (99.5%) and the average number of crashes
+per system (1.9) for the entire report.
+
+9)  The final two lines of the CRASH.SUMMARY report (line (9) and the
+line following it) show the adjusted group totals for the report.  The
+first line adjusts for exempt codes and the second line adjusts for exempt
+codes and exempt systems.  (see the description of availability 
+adjustments later in this document)
+
+
+THE AVAILABILITY PERCENTAGES:
+----------------------------
+	Each of TYMSHARE's hosts has a timesharing schedule that
+determines how many hours of the day a host is supposed to be available
+for timesharing.  This schedule is used to establish the time of day
+that a host may be taken off-line to perform routine or scheduled
+preventative maintenance or to perform other functions, such as
+accounting routines, that require the host to be free of timesharing
+users.
+
+	This schedule is expressed as a start and stop time for
+timesharing hours on a 24 hour clock.  For example, if the hours for
+preventative maintenance were to be from midnight to three o'clock in
+the morning, the schedule for the system would be expressed as
+0300-2400.
+
+	This means that the system would have a total of 21 hours of
+"scheduled up time" that it was to be available for timesharing.  If a
+crash occurs during the scheduled up time, this is considered "lost
+time" for the host, and the amount of time the system is unavailable due
+to the crash is subtracted from the host's total availability.  
+
+	When CRASH.SUMMARY is run, the program determines how many hours
+the system has in "scheduled up time" according to its schedule and how
+many hours of "lost time" the system has according to the data entered
+into the MUR data base by operations.  The program then divides the
+host's total availability (scheduled up time - lost time) by the host's
+scheduled availability and prints the result as a percentage of
+scheduled up time that the system was actually available.  Therefore, an
+availability percentage of 99.8 would mean that the particular host was
+available 99.8% of the time it was scheduled to be available during the
+given date preiod.
+
+
+THE SUMMARY ADJUSTMENTS:
+-----------------------
+	When calculating the adjusted crash totals, availability
+percentages and crash-per-system figures for the adjusted SITE summary
+line described above, CRASH.SUMMARY does not take into account those crash
+codes defined as "exempt".  These include crashes that considered beyond
+the control of TYMSHARE and its system support personnel, such as
+crashes due to public power failures, environmental phenomenae such as
+earthquakes and floods, or software field testing.  The amount of time a
+system is down due to these "exempt" causes are not calculated into the
+adjusted availability percentages.  The "exempt" codes are indicated by
+an asterisk preceding their abbreviation in the CLASS heading.
+
+	Additionally, some entire systems are designated as "field test
+systems" and are not taken into account in the calculation of the
+adjusted crash totals, availability percentages and crashes-per-system
+figures for the adjusted CLASS summary lines.  These systems are used for
+the testing of new system software, such as developmental operating systems
+or network interfacing, and are not considered as valid, customer-oriented
+timesharing hosts.  Their downtime, therefore, is not calculated into
+the adjusted CLASS summary figures.  The "field test systems" are
+indicated by an asterisk between the availability percentage and date
+figures on the system's detail line.
+
+
+THE ABBREVIATIONS:
+-----------------
+
+1: THE CLASS ABBREVIATIONS:
+	Each host belongs to a certain CLASS of system, depending on the
+manufacturer and/or type of the system's hardware.  The various CLASSes
+are given in the table below: (NOTE: The "CODE" is a unique, numeric
+identifier used by MUR to sort the various CLASSes)
+
+ABBREV	CODE	TYPE				SITES
+------	----	------------------------------	-----------------
+940	1	XDS 940 mainframe (TYMCOM-IX)	CUP only
+PDP	2	DEC PDP-10 mini (TYMCOM-X)	CUP,DAL,FRE and VF
+370	3	IBM 370 mainframe (TYMCOM-370)	DAL,FRE and VF
+DEC	7	DEC PDP 20/20 mini (TYMCOM-20)	CUP only
+FNA	10	FOONLY F3, F4 and 26KL mini	CUP (Bldg "A")
+FNC	11	FOONLY F3, F4 and 26KL mini	CUP (Bldg "C")
+P70	12	DEC PDP 1170 mini (IBIS host)	VF only
+VAX	13	DEC VAX mini    		DAL and FRE
+
+	At present, these are the only CLASSes that will appear on the
+CRASH.SUMMARY output.  Other CLASS codes and abbreviations may be added
+at some future date.  Contact the MUR data base administrator for
+information on any new CLASS codes.
+
+2: THE SITE ABBREVIATIONS:
+	TYMSHARE currently supports 5 valid data centers located around
+the country.  The abbreviations, codes and locations of these data
+centers are given below: (NOTE: The "CODE" is a unique, numeric
+identifier used by MUR to sort locations)
+
+ABBREV	CODE	LOCATION
+------	----	----------------------------
+CUP	1	Cupertino, California (Bldg "A" and Bldg "C")
+DAL	5	Dallas, Texas
+FRE	8	Fremont, California
+VF	2	Valley Forge, Pennsylvania
+
+Other valid sites may be added or deleted from the MUR data base at a
+future date.
+
+3:  THE CRASH CODE ABBREVIATIONS:
+	Each time a system crashes, the operators resposible for
+supporting that system record the time it crashed, a numeric code that
+represents the cause of the crash and the time the system came back up.   
+The crash codes vary for different CLASSes to reflect different causes
+that occur for the various hardware types.  However, some codes are
+common to all CLASSes, for example code 50 always means a public utility
+power failure caused the system to crash.  The following is a list of
+the various abbreviations, the corresponding crash code and a brief
+description of each code, including its group classification, for the
+eight CLASSes in CRASH.SUMMARY:
+
+CLASS 1 (940):
+-------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+RAD	31	Rapid Access Device failure 		  OHW
+CPU	32	Mainframe (CPU) failure 		  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Calcomp disk drive failure 		  DSK
+MEM	35	Memory failure 				  MEM
+NHW	36	Network Hardware failure 		  NWK
+S/C	37	Varian 620/i Selector Channel failure     OHW
+SSW	41	System Software failure 		  SSW
+NSW	42	Network Software failure 		  NWK
+NFT	44	Network Field Test Software failure 	  OSW
+PER	43	Personnel error 			  PER
+PWR	50	Public Utility power failure 	  	  PWR
+ENV	51	Environmental disruption 		  ENV
+UNK	59	Cause is undetermined			  UNK
+
+CLASS 2 (PDP):
+-------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe (CPU) failure 		  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Disk failure 				  DSK
+MEM	35	Memory failure 				  MEM
+NHW	36	Network Hardware failure 		  NWK
+FTS	40	Field Test Software 			  OSW
+SSW	41	System Software failure 		  SSW
+NSW	42	Network Software failure 		  NWK
+NFT	44	Network Field Test Software 		  NWK
+PER	43	Personnel error 			  PER
+PWR	50	Public Utility power failure 		  PWR
+ENV	51	Environmental disruption 		  ENV
+P/E	52	Power Equipment failure 		  P/E
+UNK	59	Cause is undetermined 		  	  UNK
+CLN	60	Disk Clean procedure 			  OLT
+
+CLASS 3 (370):
+-------------
+ABBEV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CDC	25	CDC disk failure			  DSK
+IBM	26	IBM disk failure			  DSK
+STR	27	STC random access memory failure	  OHW
+STD	28	STC disk failure			  DSK
+CON	29	System Console device failure 		  OHW
+PCM	30	Plug compatible memory failure		  OHW
+DRM	31	IBM 2305 Rapid Access Drum failure 	  OHW
+CPU	32	Mainframe (CPU) failure 		  CPU
+I/O	33	Peripheral device failure		  I/O
+AMP	34	Ampex Disk drive failure 		  DSK
+MEM	35	System memory failure			  MEM
+NHW	36	Network Hardware failure 		  NWK
+LEM	37	LEMCOM Network Interfacing device failure OHW
+MRX	38	Memorex Disk drive failure 		  DSK
+STT	39	STC Tape drive failure 			  OHW
+SSW	41	System Software failure 		  SSW
+NSW	42	Network software failure		  NWK
+PER	43	Personnel error 			  PER
+PWR	50	Public Utility power failure 		  PWR
+ENV	51	Environmental disruption 		  ENV
+UNK	59	Cause is undetermined 			  UNK
+
+CLASS 7 (DEC):
+-------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe (CPU) failure 		  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Disk drive failure 			  DSK
+MEM	35	System Memory failure 			  MEM
+NHW	36	Network Hardware failure 		  NWK
+FTS	40	Field Test Software failure 		  OSW
+SSW	41	System Software failure 		  SSW
+NSW	42	Network Software failure 		  NWK
+NFT	44	Network Field Test Software failure 	  NWK
+PER	43	Personnel error 			  PER
+PWR	50	Public Utility power failure 		  PWR
+ENV	51	Environmental disruption 		  ENV
+UNK	59	Cause is undetermined 		  	  UNK
+CLN	60	Disk Clean procedure 			  OLT
+
+CLASS 10 (FNA):
+--------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe failure (CPU)			  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Disk drive failure			  DSK
+MEM	35	System memory failure			  MEM
+NHW	36	Network Hardware failure		  NWK
+FTS	40	Field Test Software failure		  OSW
+SSW	41	System Software failure			  SSW
+NSW	42	Network Software failure		  NWK
+NFT	44	Network Field Test Software failure	  NWK
+PER	43	Personnel error				  PER
+PWR	50	Public Utility power failure		  PWR
+ENV	51	Environmental disruption		  ENV
+UNK	59	Cause is undetermined			  UNK
+CLN	60	Disk Clean procedure			  OLT
+
+CLASS 11 (FNC):
+--------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe failure (CPU)			  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Disk drive failure			  DSK
+MEM	35	System memory failure			  MEM
+NHW	36	Network Hardware failure		  NWK
+FTS	40	Field Test Software failure		  OSW
+SSW	41	System Software failure			  SSW
+NSW	42	Network Software failure		  NWK
+NFT	44	Network Field Test Software failure	  NWK
+PER	43	Personnel error				  PER
+PWR	50	Public Utility power failure		  PWR
+ENV	51	Environmental disruption		  ENV
+UNK	59	Cause is undetermined			  UNK
+CLN	60	Disk Clean procedure			  OLT
+
+CLASS 12 (P70):
+--------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe (CPU) failure			  CPU
+I/O	33	Input/Output (peripheral) device failure  I/O
+DSK	34	Disk drive failure			  DSK
+MEM	35	MOS Memory failure			  MEM
+NHW	36	Network are failure        	  NWK
+DME	37	Core Memory failure			  MEM
+COM	38	Async DV (communications board) failure   OHW
+CCS	40	CCS11 Software failure			  OSW
+SSW	41	RSX11M Software failure			  SSW
+NSW	42	Network Software failure        	  NWK
+PER	43	Personnel error				  PER
+MPE	44	Maintenance Personnel error		  PER
+PWR	50	Public Utility power failure		  PWR
+ENV	51	Environmental disruption		  ENV
+UNK	59	Cause is undetermined			  UNK
+
+CLASS 13 (VAX):
+--------------
+ABBREV	CODE	DESCRIPTION				 GROUP
+------	----	---------------------------------------- -----
+CPU	32	Mainframe (CPU) failure			  CPU
+DSK	34	Disk drive failure			  DSK
+MEM	35	MOS Memory failure			  MEM
+NHW	36	Network Hardware failure        	  NWK
+COM	38	Async DZ (communications board) failure   OHW
+X25	39	X25 Interface (IBM DUP/KMS) failure       OHW
+APP	40	Applications Software failure		  OSW
+VMS	41	System Software failure			  SSW
+NSW	42	Network software failure		  NWK
+PER	43	Personnel error				  PER
+MPE	44	Maintenance Personnel error		  PER
+PWR	50	Public Utility power failure		  PUB
+ENV	51	Environmental disruption		  ENV
+UNK	59	Cause is undetermined			  UNK
+
+(** NOTE: The OTR abbreviations that appear in the CLASS headings are
+not crash codes.  CRASH.SUMMARY puts all other "lost time" crash codes
+in the last column of the report for those CLASSes that would otherwise
+require more columns than could fit on an 80 character page width.)
+
+
+
+EXAMPLE OUTPUT:
+--------------
+
+
+(1) CRASH SUMMARY FOR Jul  1,1984 TO Jul 18,1984 AS OF Jul 18,1984 10:02
+(2)
+ 940 HW  CPU MEM DSK I/O RAD S/C*NFT SSW NHW NSW PER*PWR*ENV UNK  TOT AVAIL DATE
+(3)1 G     0   0   0   0   0   1   0   0   0   0   0   0   0   0    1  99.8 0712
+   2 E     0   0   1   0   0   0   0   0   0   0   0   0   0   0    1 100.0 0712
+   3 D     0   1   2   0   0   0   0   0   0   0   2   0   0   0    5  99.5 0712
+   4 F     0   0   1   0   0   0   0   0   0   0   0   0   0   0    1  99.9 0712
+   5 H     0   1   0   0   0   0   0   0   0   0   0   0   0   0    1 100.0 0712
+   6 I     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0712
+   8 X     0   0   2   0   0   0   0   0   0   0   0   0   0   0    2  99.9 0712
+  11 A     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0712
+  14 B     2   1   0   0   0   0   0   0   0   0   0   0   0   0    3  99.4 0711
+  16 C     0   2   0   0   0   0   0   0   0   0   2   0   0   0    4  99.8 0712
+  20 J     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0712
+ CUP (4)   2   5   6   0   0   1   0   0   0   0   4   0   0   0   18  99.8  1.6
+ *   (5)                                                           18  99.8  1.6
+ TOT (6)   2   5   6   0   0   1   0   0   0   0   4   0   0   0   18  99.8  1.6
+ *   (7)                                                           18  99.8  1.6
+ PDP HW  CPU MEM DSK I/O SSW*FTS*NFT NHW NSW PER*PWR*ENV UNK OTR  TOT AVAIL DATE
+  26 XX    0   0   0   0   0   1   0   0   0   0   0   0   0   0    1  99.5 0715
+  29 ZZ    2   0   0   0   0   0   0   0   0   0   0   0   0   0    2  98.9 0715
+  33 VV    3   0   4   0   0   2   0   0   0   0   0   1   1   0   11  88.8*0715
+  34 AA    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0715
+  35 QQ    0   0   0   0   0   0   0   0   0   1   0   0   0   0    1 100.0 0715
+  36 YY    0   0   1   0   0   3   0   0   0   0   0   0   0   0    4  99.5 0715
+  39 RR    0   0   0   0   0   3   0   0   0   0   0   0   3   0    6  99.5 0715
+  55 FF    2   0   0   0   0   0   0   0   0   0   0   0   0   0    2  99.5 0715
+  57 EW    0   0   1   0   0   0   0   0   0   0   0   0   1   0    2  99.7 0715
+ CUP       7   0   6   0   0   9   0   0   0   1   0   1   5   0   29  98.6  3.2
+ *                                                                 11  99.7  1.4
+  22 PP    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0708
+  70 EE    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0708
+  72 BB    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0708
+ VF        0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0   .0
+ *                                                                  0 100.0   .0
+  23 OO    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0      *0710
+  25 TT    2   0   0   0   0   0   0   0   0   0   0   0   0   0    2  99.9 0717
+  27 MM    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  32 SS    0   1   0   0   0   0   0   0   0   0   0   0   0   0    1  99.9 0717
+  37 KK    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  54 II    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  56 JJ    0   3   0   0   0   0   0   0   0   0   0   0   2   0    5  99.1 0717
+  65 LL    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  79 NN    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+ DAL       2   4   0   0   0   0   0   0   0   0   0   0   2   0    8  99.9  1.0
+ *                                                                  8  99.9  1.0
+  28 BBB   0   0   0   0   0   0   0   1   0   0   0   0   0   0    1 100.0 0715
+  30 CCC   0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0715
+  38 AAA   1   0   0   0   0   0   0   0   0   0   0   0   0   0    1  99.9 0715
+  74 DDD   0   0   0   0   0   0   0   1   0   0   0   0   1   0    2  99.6 0715
+5780 EEE   5   1   0   0   1   1   0   0   0   0   0   0   1   0    9  95.2*0715
+ FRE       6   1   0   0   1   1   0   2   0   0   0   0   2   0   13  98.9  2.6
+ *                                                                  4  99.9  1.0
+ TOT      15   5   6   0   1  10   0   2   0   1   0   1   9   0   50  99.2  2.3
+ *                                                                 23  99.8  1.2
+ 370 HW  CPU MEM AMP MRX CON DRM LEM SSW NHW PER*PWR*ENV UNK OTR  TOT AVAIL DATE
+  43 D     0   0   0   1   0   0   0   0   0   0   0   0   1   0    2  99.7 0715
+  44 E     0   0   0   1   0   0   3   0   0   0   0   0   0   0    4  98.9 0715
+  48 H     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0715
+ VF        0   0   0   2   0   0   3   0   0   0   0   0   1   0    6  99.6  2.0
+ *                                                                  6  99.6  2.0
+  41 M     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  47 G     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  49 I     0   0   0   1   0   0   0   0   0   0   0   0   0   0    1  99.7 0717
+
+
+                   CRASH SUMMARY FOR Jul  1,1984 TO Jul 18,1984          PAGE 2
+
+  52 A     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+  82 B     0   1   0   0   0   0   0   0   2   0   0   0   1   0    4  99.6 0717
+  85 N     0   0   0   0   0   0   1   0   0   0   0   0   0   0    1 100.0 0717
+ DAL       0   1   0   1   0   0   1   0   2   0   0   0   1   0    6  99.9  1.0
+ *                                                                  6  99.9  1.0
+  40 JJ    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0701
+ 142 KK    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0701
+ FRE       0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0   .0
+ *                                                                  0 100.0   .0
+ TOT       0   1   0   3   0   0   4   0   2   0   0   0   2   0   12  99.8  1.4
+ *                                                                 12  99.8  1.4
+ FNA HW  CPU MEM DSK I/O SSW*FTS*NFT NHW NSW PER*PWR*ENV UNK CLN  TOT AVAIL DATE
+ 185 FD    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0702
+ 232 FC    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0702
+ 895 FA    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0702
+ 896 FB    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0702
+1311 FL    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0702
+ CUP       0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0   .0
+ *                                                                  0 100.0   .0
+ TOT       0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0   .0
+ *                                                                  0 100.0   .0
+ FNC HW  CPU MEM DSK I/O SSW*FTS*NFT NHW NSW PER*PWR*ENV UNK CLN  TOT AVAIL DATE
+ 180 FG    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0709
+1087 FI    0   0   0   0   0   3   0   0   0   0   0   0   0   0    3  99.5 0709
+1088 FJ    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0709
+1643 FH    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0709
+ CUP       0   0   0   0   0   3   0   0   0   0   0   0   0   0    3  99.9   .8
+ *                                                                  0 100.0   .0
+ TOT       0   0   0   0   0   3   0   0   0   0   0   0   0   0    3  99.9   .8
+ *                                                                  0 100.0   .0
+ P70 HW  CPU MEM DME DSK I/O COM SSW*CCS NHW NSW PER MPE*PWR OTR  TOT AVAIL DATE
+ 684 A     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0  99.1*0715
+ 908 B     0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0*0715
+ VF        0   0   0   0   0   0   0   0   0   0   0   0   0   0    0  99.6   .0
+ *                                                                  0      
+ TOT       0   0   0   0   0   0   0   0   0   0   0   0   0   0    0  99.6   .0
+ *                                                                  0      
+ VAX HW  CPU MEM DSK I/O COM X25 SSW APP NHW NSW PER MPE*PWR OTR  TOT AVAIL DATE
+1596 IB    0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0717
+2588 IS    0   0   0   3   0   0   0   0   0   0   0   0   0   0    3  99.7 0717
+ DAL       0   0   0   3   0   0   0   0   0   0   0   0   0   0    3  99.9  1.6
+ *                                                                  3  99.9  1.6
+5781 GGG   0   0   0   0   0   0   0   0   0   0   1   0   0   0    1  99.9*0716
+ FRE       0   0   0   0   0   0   0   0   0   0   1   0   0   0    1  99.9  1.0
+ *                                                                  0      
+ TOT       0   0   0   3   0   0   0   0   0   0   1   0   0   0    4  99.9  1.4
+ *                                                                  3  99.9  1.6
+ GRP CPU MEM DSK I/O OHW SSW OSW NWK PER PWR ENV P/E UNK OLT      TOT AVAIL  CPS
+(8)% CPU MEM DSK I/O OHW SSW OSW NWK PER PWR ENV P/E UNK OLT
+ TOT  17  11  15   3   5   1  13   4   6   0   1   0  11   0
+ TOT  20  13  17   3   6   1  15   5   7   0   1   0  13   0       87  99.5  1.9
+ * (9)                                                             66  99.8  1.6
+ *                                                                 56  99.8  1.4
+'6CÞ
