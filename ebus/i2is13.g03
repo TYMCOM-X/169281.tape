@@ -1,0 +1,1136 @@
+****************
+*** 103,109 ****
+  	GL	ID
+  ]
+  :
+! 
+  	DEFAULT(TSIDT,0)		:NO MDCSC DISC/TAPE SERVER
+  
+  	IF	\FSYS1
+--- 103,113 ----
+  	GL	ID
+  ]
+  :
+! :	PLTSZE defines the length in bytes for the PATHIS area.
+! :
+! 	DEFAULT(PLTSZE,200)
+! PLTSZE	EQ	(PLTSZE+0F)/10*10
+! :
+  	DEFAULT(TSIDT,0)		:NO MDCSC DISC/TAPE SERVER
+  
+  	IF	\FSYS1
+****************
+*** 304,309 ****
+--- 304,316 ----
+     if	tsi!nano
+  	default(totsiz,$a960)		:allows for 64k spirt bus window
+     else
++      if macv
++ 	if .eq.(machin,5)
++ 	   default(totsiz,$a1024)
++ 	else
++ 	   default(totsiz,$a2048)
++ 	ei
++      ei (macv)
+  	default(totsiz,$a1024)
+     ei	(tsi!nano)
+  	DEFAULT(SPIXPI,0)		:XPI EMUL. SPIRIT BUS
+****************
+*** 842,847 ****
+--- 842,857 ----
+  	DEFAULT(DSZUN2,0)		:UN2
+  	DEFAULT(DSZUTL,0)		:UTILITY
+  	DEFAULT(SUPPAN,0)		:FRONT CONSOLE DISPLAY PTR
++ 
++ : SUP AND SUP SLAVES DMA MAC REGISTERS
++ 	DEFAULT(SBDMRG,0)		:
++ 	DEFAULT(PRDMRG,0)		:
++ 	DEFAULT(ERDMRG,0)		:
++ 	DEFAULT(ACDMRG,0)		:
++ 	DEFAULT(SYDMRG,0)		:
++ 	DEFAULT(UNDMRG,0)		:
++ 	DEFAULT(UTDMRG,0)		:
++ 
+  					:
+  :		DEFINE COMMON AREA MAC SEGMENTS
+  
+****************
+*** 1941,1947 ****
+     EI  (ESYNCI)				:
+  					:
+  SPATCH	HS	SPASIZ			:PATCH AREA
+- 					:
+     IF	LBOOT				:
+  	ORG	700+0C00		:
+     EI	(LBOOT)				:
+--- 1945,1950 ----
+****************
+*** 2525,2531 ****
+     ei	(tsi!nano)
+  	ST	R11,MACAREA,R8		:INITIALIZE MAC AREA
+  	SIS	R8,4			:
+! 	JGEBS	IZ4			:
+  	STM	R14,RELPSW		:SET UP A MAC PSW
+  	LHI	R14,24F0		:ENABLE MAC RELOCATION
+  	EPSR	R1,R14			:ENABLE MAC RELOCATION
+--- 2525,2532 ----
+     ei	(tsi!nano)
+  	ST	R11,MACAREA,R8		:INITIALIZE MAC AREA
+  	SIS	R8,4			:
+! :*: fixes 240 error
+! 	JGE	IZ4			:
+  	STM	R14,RELPSW		:SET UP A MAC PSW
+  	LHI	R14,24F0		:ENABLE MAC RELOCATION
+  	EPSR	R1,R14			:ENABLE MAC RELOCATION
+****************
+*** 2637,2643 ****
+     IF	NPRINT				:
+  	JAL	R1,IPRINT		:INIT. PRINTERS
+     EI	(NPRINT)			:
+! 					:
+     IF	MACV!ZITEL			:If MAC 5, 3, or 2
+  IECC	LHI	R1,0F0			:REG SET F, INTERRUPTS DISABLED
+  	EPSR	R2,R1			:
+--- 2637,2662 ----
+     IF	NPRINT				:
+  	JAL	R1,IPRINT		:INIT. PRINTERS
+     EI	(NPRINT)			:
+! :
+! :	.......................................................................
+! :	Clear crash/restart values in double word tables pointed to by sltinf
+! :	.......................................................................
+! :*:?dash table clear
+! :
+! 	lhi	r1,0f0
+! 	epsr	r2,r1					:
+! 	lis	r7,0			:counter
+! 	lis	r5,0			:
+! crstv	lr	r11,r7			:
+! 	slls	r11,3			: table index
+! 	sth	r5,sltinf+2,r11,	:
+! 	clhi	r7,nslot+1		:slots plus nc
+! 	jfs	crstv9			:exit
+! 	ais	r7,1			:next slot
+! 	jbs	crstv			:again
+! crstv9	eq	.
+! 	epsr	r2,r1
+! :
+     IF	MACV!ZITEL			:If MAC 5, 3, or 2
+  IECC	LHI	R1,0F0			:REG SET F, INTERRUPTS DISABLED
+  	EPSR	R2,R1			:
+****************
+*** 4124,4130 ****
+     EI  (ESYNCI)				:
+  
+  s.xyz	st	r2,r2.f			:device address
+! 	st	r3,dv8.f		:context of crash
+  	st	r4,r4.f			:offending value
+  	LHL	R4,SPORT-20,R2		:
+  	LH	R4,OSLOTO,R4		:
+--- 4124,4131 ----
+     EI  (ESYNCI)				:
+  
+  s.xyz	st	r2,r2.f			:device address
+! :*: fixes coding mistake
+! 	sth	r3,dv8.f		:context of crash
+  	st	r4,r4.f			:offending value
+  	LHL	R4,SPORT-20,R2		:
+  	LH	R4,OSLOTO,R4		:
+****************
+*** 5311,5323 ****
+  :	.......................................................................
+  					:
+     IF	BAUDR-1				:4800 BAUD MAX
+  VIDTG	BC	0B			:4800 BAUD
+  	BC	0A,0A			:2400
+  	BC	5,5			:1200
+  	BC	0FF,0FF,0FF,0FF		:
+! 	BC	0FF,0FF,0FF,0FF		:
+  	BC	2,2,2,2			:300
+! 	BC	0FF,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF		:
+--- 5311,5328 ----
+  :	.......................................................................
+  					:
+     IF	BAUDR-1				:4800 BAUD MAX
++ :*: expand async baud rate
++ : index table for 300 baud used for the Terminal Speed Identifier
++ : value mapped in by the Async pulse duration for overspeed/underspeed
++ : detect modems connected to highspeed interrupts nodes. tck
++ :
+  VIDTG	BC	0B			:4800 BAUD
+  	BC	0A,0A			:2400
+  	BC	5,5			:1200
+  	BC	0FF,0FF,0FF,0FF		:
+! 	BC	0FF,0FF,0FF,2		:
+  	BC	2,2,2,2			:300
+! 	BC	2,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF,0FF	:
+  	BC	0FF,0FF,0FF,0FF		:
+****************
+*** 10235,10246 ****
+  : this code will crash a slot that crashes/restarts more than 5d times in 
+  : 10 minutes. it can be restarted with new counting via ddt (?dash)
+  :
+- 	lh	r4,sltddt		:ddt flag for enable/disable
+- 	je	sltinz			
+  	lh	r4,slot,r1		:slot #
+  	jl	sltinz			:skip on ff
+  	slls	r4,3			:index on slot
+! 	l	r12,sltinf+2,r4		:get count
+  	je	sltin2			:new restart
+  	l	r12,slowc		:ticker
+  	s	r12,sltinf+4,r4		:time of last
+--- 10254,10265 ----
+  : this code will crash a slot that crashes/restarts more than 5d times in 
+  : 10 minutes. it can be restarted with new counting via ddt (?dash)
+  :
+  	lh	r4,slot,r1		:slot #
+  	jl	sltinz			:skip on ff
+  	slls	r4,3			:index on slot
+! 	lh	r12,sltinf,r4		:get key!!!
+! 	jg	sltinz			:ddt flag for enable/disable
+! 	lhl	r12,sltinf+2,r4		:get count
+  	je	sltin2			:new restart
+  	l	r12,slowc		:ticker
+  	s	r12,sltinf+4,r4		:time of last
+****************
+*** 10355,10366 ****
+  q	eq	0
+  	re	nslot+1
+  zslt|q|	eq	q			:set equate
+! 	hc	zslt|q|			:slot #
+  	hc	0			:restart #
+  	wc	0			:slowc
+  q	eq	q+1
+  	er
+- sltddt	hc	1			:enable on ddt flag
+  
+  
+  :	.......................................................................
+--- 10374,10384 ----
+  q	eq	0
+  	re	nslot+1
+  zslt|q|	eq	q			:set equate
+! 	hc	zslt|q|!8000		:slot # with enable set
+  	hc	0			:restart #
+  	wc	0			:slowc
+  q	eq	q+1
+  	er
+  
+  
+  :	.......................................................................
+****************
+*** 19873,19879 ****
+  	SUBTTL KERNEL TRACE LOGIC AND PATCH AREA
+  					:
+  	RA	0			:
+! 					:
+  KPATCH	HS				:
+  	ST	R0,PATCH3		:USED FOR TRACING...SAVE REGISTER
+  	L	R0,.,,			:PATCH WITH TEST QUANTITY
+--- 19876,19915 ----
+  	SUBTTL KERNEL TRACE LOGIC AND PATCH AREA
+  					:
+  	RA	0			:
+! PATHIS	WS	PLTSZE/4		:PATCH HISTORY TABLE
+! :
+! 	GL	PLTPTR,PATHIS,PLTSZE	:GLOBALS FOR PATCH HISTORY LIST
+! :	>> PATLST MACRO <<
+! 
+! 	KILL PATLST
+! 
+! PATLST	MACRO(day,tim,usr,c1,c2,c3,c4,c5)	[
+! 	REMARK   %%PATCH added on day at tim by usr`.
+! 
+! 	org	pltptr
+! 
+!        if (pltptr+1)-(pathis+pltsze)
+! 	REMARK  %>>>> Too many PATCHs, increase PLTSZE beyond
+! 	NUMBER $0PLTSZE
+! 	REMARK x and reassemble ... assembly killed  <<<<
+! 	QUIT 1
+!        ei :(pltptr+1)-(pathis+pltsze)
+! 	wc	$0 day!19000000		: install date 
+! 	hc	$0 tim			: install time
+! q	ac	\usr\			: install username
+! q1	hs
+! 	org	q+$a10			: skip to next history area
+! pltptr	hs				
+!      if		q1-.			: if length(user)>10 char., clear overflow
+! 	re	q1-.
+!        bc	0
+! 	er
+!      ei		:q1-.
+! 
+! 	REMARK <<< c1``c2``c3``c4``c5 >>>
+! ]
+! pltptr	eq	pathis			: begin at start of patch history list
+! :					:
+  KPATCH	HS				:
+  	ST	R0,PATCH3		:USED FOR TRACING...SAVE REGISTER
+  	L	R0,.,,			:PATCH WITH TEST QUANTITY
+****************
+*** 19970,19976 ****
+  ERR.22	EQ	16			:22d	REQUEST IGNORED FOR THIS TYPE DEVICE
+  ERR.23	EQ	17			:23d	ESELCH TIMEOUT
+  ERR.24	EQ	18			:24d	OPERATION SUCCESSFUL, BUT ERROR RECOVERY DONE
+! 
+  	IF	1-TSIDT			
+  
+  	REMARK	%Engine shared device handler selected
+--- 19970,19976 ----
+  ERR.22	EQ	16			:22d	REQUEST IGNORED FOR THIS TYPE DEVICE
+  ERR.23	EQ	17			:23d	ESELCH TIMEOUT
+  ERR.24	EQ	18			:24d	OPERATION SUCCESSFUL, BUT ERROR RECOVERY DONE
+! ERR.25	EQ	19			:25d	dma address range error
+  	IF	1-TSIDT			
+  
+  	REMARK	%Engine shared device handler selected
+****************
+*** 21135,21140 ****
+--- 21135,21142 ----
+  EDPB1	STH	R5,AAD(PB.MAP),R3	:SWITCH WILL BE TESTED BY "READ"
+  					: TO SAVE A LOT OF DUPLICATED STATES
+  					: TO PERFORM A "MAP READ".
++ 	cli	r13,0fffff		:no dma for second meg
++ 	jg	svce25			:reject request
+  	ST	R12,AAD(PB.SMA),R3	:STARTING MEMORY ADDR
+  	ST	R13,AAD(PB.EMA),R3	:ENDING MEMORY ADDR
+  	ST	R1,AAD(PB.USR),R3	:ADDR OF USER BLOCK
+****************
+*** 21346,21351 ****
+--- 21348,21356 ----
+  SVCE15	LHI	R5,ERR.21
+  SVCE.Y	STH	R6,SVC.ST,R4
+  	J	SVCE.
++ :	dma addressing error
++ svce25	lhi	r5,err.25
++ 	j	svce.
+  :	UNIMPLEMENTED REQUEST TYPE
+  SVCE16	LHI	R5,ERR.22
+  	JFS	SVCE.
+****************
+*** 27281,27287 ****
+  	COMAND(S,L.S0P!L.P!L.H!L.L,SAVE)	:SAVE ON DISC
+     EI  (NDISC!MSCDSK)
+    EI   (SHARE)
+! 	COMAND(E,L.HALT!L.S0P!L.P!L.H!L.L!L.E,EXEC)	:EXECUTE JOB
+  	COMAND(W,L.SYP!L.S0P!L.P!L.H!L.L,DWRITE)	:WRITE MEMORY
+  	COMAND(F,L.SYP!L.S0P!L.P!L.H!L.L!L.E,DF)	:ENABLE CONNECTION TO A SET OF KIO JOBS
+  	COMAND(H,L.SYP!L.S0P!L.P!L.H!L.E,DHALT)	:HALT JOB
+--- 27281,27288 ----
+  	COMAND(S,L.S0P!L.P!L.H!L.L,SAVE)	:SAVE ON DISC
+     EI  (NDISC!MSCDSK)
+    EI   (SHARE)
+! :*: l.syp lic for exec job
+! 	COMAND(E,L.HALT!L.SYP!L.S0P!L.P!L.H!L.L!L.E,EXEC)	:EXECUTE JOB
+  	COMAND(W,L.SYP!L.S0P!L.P!L.H!L.L,DWRITE)	:WRITE MEMORY
+  	COMAND(F,L.SYP!L.S0P!L.P!L.H!L.L!L.E,DF)	:ENABLE CONNECTION TO A SET OF KIO JOBS
+  	COMAND(H,L.SYP!L.S0P!L.P!L.H!L.E,DHALT)	:HALT JOB
+****************
+*** 27342,27347 ****
+--- 27347,27356 ----
+      IF	NDISC!MSCDSK
+  	BC	02,80,0B
+  LERR	SC	'disc error '
++ :
++ 	BC	02,80,35
++ dmaerr	SC	'out of dma address range '
++ :*: dma address error
+      EI(NDISC!MSCDSK)
+     EI (SHARE)
+  	BC	02,80,0C
+****************
+*** 27428,27433 ****
+--- 27428,27438 ----
+  esdash	sc	/enable auto slot halt? (Y"2FN)? /
+  	bs	02,80,34
+  RUNMS	SC	/ running: /
++ 	bs	02,80,35
++ ildlst	sc	/ill defined user list "8D"8A /
++ 	bs	02,80,36
++ badexc	sc	/ill user definded addr. "8D"8A /
++ :
+  AMPSND	SC	/ &/
+  DWNMS	SC	/ down: /
+  COLMS	SC	/: /
+****************
+*** 29013,29026 ****
+  	JL	TTYERR			:CAN'T EXECUTE A SYSTEM JOB
+  :
+  : this resets the repeat crash counter flag for starting slots
+- : and re-enables auto start halt
+  :
+  	lis	r1,0			:
+  	lr	r3,r0			:copy slot #
+  	slls	r3,3			:index on slot
+  	sth	r1,sltinf+2,r3,		:clear repeat crash counter
+! 	lis	r1,1			:enable auto slot halt
+! 	sth	r1,sltddt,,
+  :
+  	IF	MXP
+  	CLHI	R0,SLTXMI		:NOT VALID IF XMI SLOT
+--- 29031,29045 ----
+  	JL	TTYERR			:CAN'T EXECUTE A SYSTEM JOB
+  :
+  : this resets the repeat crash counter flag for starting slots
+  :
+  	lis	r1,0			:
+  	lr	r3,r0			:copy slot #
+  	slls	r3,3			:index on slot
+  	sth	r1,sltinf+2,r3,		:clear repeat crash counter
+! : do we want to enable auto start halt?
+! :	lhl	r1,sltinf,r3,
+! :	ohi	r1,8000			:enable auto slot halt		
+! :	sth	r1,sltinf,r3,		:
+  :
+  	IF	MXP
+  	CLHI	R0,SLTXMI		:NOT VALID IF XMI SLOT
+****************
+*** 29160,29166 ****
+  	JE	TTY			:NO DISK ERROR - RETURN
+  	CLHI	R0,9			:WAS REQUESTED ABANDONED BY QUIT CHAR?
+  	JE	TTY			:RETURN IF SO
+! 	LA	R1,LERR
+  	JAL	R9,OOUT			:ISSUE STOCK MESSAGE
+  	L	R0,HDISK,R8
+  	LIS	R1,8			:PRINT IN FORM "SSUUCCDD"
+--- 29169,29180 ----
+  	JE	TTY			:NO DISK ERROR - RETURN
+  	CLHI	R0,9			:WAS REQUESTED ABANDONED BY QUIT CHAR?
+  	JE	TTY			:RETURN IF SO
+! 	clhi	r0,019			:dma address erro
+! 	jnfs	load2
+! 	la	r1,dmaerr		:dma address error
+! 	jal	r9,oout
+! 	j	tty			:return
+! load2	LA	R1,LERR
+  	JAL	R9,OOUT			:ISSUE STOCK MESSAGE
+  	L	R0,HDISK,R8
+  	LIS	R1,8			:PRINT IN FORM "SSUUCCDD"
+****************
+*** 29321,29326 ****
+--- 29357,29363 ----
+  	QENTRY(3,MAC,QMAC)		:QUERY MAC
+  	QENTRY(3,ABS,QABS)		:QUERY ABS ADDRESS
+  	QENTRY(4,SLOT,QSLOT)		:QUERY SLOT
++ 	QENTRY(2,PQ,QPQ)		:QUERY PATCH HISTORY TABLE
+  	QENTRY(2,BT,QBT)		:QUERY BACKGROUND PSW
+  	QENTRY(2,FT,QFT)		:QUERY FOREGROUND PSW
+  	QENTRY(3,BRR,QBRR)		:QUERY BACKGROUND REGISTERS
+****************
+*** 30494,30503 ****
+  					:
+  :	....................................................................
+  :	DDT command = ?DASH  - Disable auto slot halt
+! :	looks at sltddt flag -- 0 for disabled, 1 for enabled (default)
+  :	....................................................................
+! qdash	lh	r1,sltddt,,		:get context
+! 	je	qdash1			:jump on disabled
+  	la	r1,dsdash		:get message for disable
+  	jal	r9,oout,,		:send to user
+  	jal	r1,inchar,,		:get the next input character
+--- 30513,30528 ----
+  					:
+  :	....................................................................
+  :	DDT command = ?DASH  - Disable auto slot halt
+! :	looks at first hw for sltinf entry  --  negative for enabled (default) 
+  :	....................................................................
+! qdash	eq	.
+! 	lh	r9,slot,r8		:get slot #
+! 	jgfs	qdash0
+! 	svc	out,nffmsg		:not from slot ff
+! 	j	tty
+! qdash0	slls	r9,3			:index on slot
+! 	lh	r2,sltinf,r9,		:get context
+! 	jge	qdash1			:jump on disabled
+  	la	r1,dsdash		:get message for disable
+  	jal	r9,oout,,		:send to user
+  	jal	r1,inchar,,		:get the next input character
+****************
+*** 30504,30511 ****
+  	jal	r1,cuc,,		:convert to upper case
+  	clhi	r0,0d9			:is it a "Y"?
+  	jn	tty			:user isn't sure..
+! 	lis	r1,0			:set disable flag
+! 	sth	r1,sltddt,,
+  	j	tty			:
+  qdash1	la	r1,esdash		:get messabe for enable
+  	jal	r9,oout,,		:send to user
+--- 30529,30539 ----
+  	jal	r1,cuc,,		:convert to upper case
+  	clhi	r0,0d9			:is it a "Y"?
+  	jn	tty			:user isn't sure..
+! 	lh	r9,slot,r8		:get slot #
+! 	slls	r9,3			:index on slot
+! 	lhl	r2,sltinf,r9,		:get context again
+! 	nhi	r2,0fff			:set disable flag
+! 	sth	r2,sltinf,r9,		:
+  	j	tty			:
+  qdash1	la	r1,esdash		:get messabe for enable
+  	jal	r9,oout,,		:send to user
+****************
+*** 30513,30526 ****
+  	jal	r1,cuc,,		:convert to upper case
+  	clhi	r0,0d9			:is it a "Y"?
+  	jn	tty			:user isn't sure..
+- 	lis	r1,1			:set enable flag
+- 	sth	r1,sltddt,,		
+- 	lis	r1,0
+  	lh	r9,slot,r8		:get slot #
+  	slls	r9,3			:index on slot
+  	sth	r1,sltinf+2,r9,		:clear repeat crash counter
+  	j	tty			:
+! :	....................................................................
+  :	QUERY STATISTICS
+  :	....................................................................
+  					:
+--- 30541,30557 ----
+  	jal	r1,cuc,,		:convert to upper case
+  	clhi	r0,0d9			:is it a "Y"?
+  	jn	tty			:user isn't sure..
+  	lh	r9,slot,r8		:get slot #
+  	slls	r9,3			:index on slot
++ 	lis	r1,0
+  	sth	r1,sltinf+2,r9,		:clear repeat crash counter
++ 	lhl	r2,sltinf,r9,		:get context again
++ 	ohi	r2,8000			:
++ 	sth	r2,sltinf,r9,		:
+  	j	tty			:
+! :					:
+! nffmsg	sc	/not valid from slot ff! "8D"8A /
+! :
+  :	QUERY STATISTICS
+  :	....................................................................
+  					:
+****************
+*** 31424,31429 ****
+--- 31461,31556 ----
+  OPROM6	SC	': SHARED!'		:
+  OPROM7	SC	'starting at location '	:
+  					:
++ :	.......................................................................
++ :	QUERY PQ			:PATCH HISTORY TABLE
++ :*:patch history table
++ :	.......................................................................
++ 					:
++ QPQ	SVC	OUT,QPQTAB		:OUTPUT TABLE WITH VERSION
++ 	LHI	R0,IVERNO		:output version #
++ 	LHI	R1,20A			:2 decimal digits
++ 	SVC	KIO,$A 10		:
++ 	SVC	OUT,QVERM1		:output "."
++ 	LHI	R0,IRVLNO		:output revision level #
++ 	LHI	R1,24A			:3 decimal digits
++ 	SVC	KIO,$A 10		:
++ 	SVC	OUT,QPQHDR		:OUTPUT HEADER
++ 	SVC	OUT,QPQUDL		:OUTPUT UNDERLINE
++ 	LA	R11,PATHIS,,		:pointer to PATHIS descriptor
++ 	LHI	R12,PLTSZE		:table size
++ QPQ1	LR	R12,R12			:done?
++ 	JLE	TTY			:yes
++ 	LB	R0,0,R11		:check for 1900
++ 	JE	TTY			:end, and exit
++ 	LHI	R1,24A			:2 decimal digit zero fill
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output 19
++ 	LB	R0,1,R11		:year
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output year		
++ 	SVC	OUT,QPQCOL		:":"
++ 	LB	R0,2,R11		:month
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output month
++ 	SVC	OUT,QPQCOL		:":"
++ 	LB	R0,3,R11		:day
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output day
++ 	SVC	OUT,QPQCOL		:":"
++ 	LB	R0,4,R11		:hour
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output hour
++ 	LB	R0,5,R11		:min
++ 	JAL	R4,CVRTNM		:ascii to hex
++ 	SVC	KIO,$A 10		:output min
++ 	LA	R2,QPQMSG		:array for name
++ 	lis	r4,6
++ 	stb	r4,qpqval		:array pointer
++ QPQ2	ar	r4,r11			:index into pathis
++ 	lb	r0,0,r4			:get character
++ 	jefs	qpq3			:finished on null
++ 	lb	r4,qpqval		:get index again
++ 	ar	r4,r2			:index into name array
++ 	stb	r0,0,r4			:put character
++ 	lb	r4,qpqval		:get index
++ 	ais	r4,1			:up index
++ 	stb	r4,qpqval		:store index
++ 	chi	r4,10			:check on length
++ 	jl	qpq2			:finished on length
++ QPQ3	SVC	OUT,QPQMSG		:output name
++ 	lhi	r0,0a0			:space
++ 	lis	r4,6			:index
++ QPQ4	stb	r4,qpqval		:store
++ 	ar	r4,r2			:index into name array
++ 	stb	r0,0,r4			:clear value in array
++ 	lb	r4,qpqval		:
++ 	ais	r4,1			:increment
++ 	chi	r4,10			:finished?
++ 	jlbs	qpq4			:next
++ 	AHI	R11,10			:point to next PATHIS cell
++ 	SHI	R12,10			:count another PATHIS cell done
++ 	J	QPQ1			:and try again
++ 
++ :
++ : convert ascii byte into hex representation
++ : input/output is R0, uses R2,R3, and R4
++ :
++ cvrtnm	lis	r2,0f
++ 	nr	r2,r0			:lower nibble in r2
++ 	srls	r0,4			:upper nibble in r0
++ 	lr	r3,r0			:copy to r3
++ 	slls	r0,2			:x4
++ 	ar	r0,r3			:x5
++ 	ar	r0,r0			:x10
++ 	ar	r0,r2			:hex value in r0
++ 	jr	r4
++ :
++ QPQHDR	SC	/"8D"8A"8D"8AYEAR:MO:DY:TIME     PATCH NAME"8D"8A/
++ QPQUDL	SC	/---- -- -- ----     ----------"8D"8A/
++ QPQCOL	SC	/:/
++ QPQMSG	SC	/               "8D"8A/
++ QPQVAL	BS	1
++ QPQTAB	SC 	/"8D"8APATCH HISTORY TABLE  VERSION: /
+  :	.......................................................................
+  :	QUERY SLOT
+  :	.......................................................................
+****************
+*** 31647,31652 ****
+--- 31652,31658 ----
+  	J	BMAC			:
+  	LR	R1,R0			:COPY ABSOLUTE
+  	LHL	R2,2,R1,		:GET NUMBER OF ENTRIES
++ 	lr	r9,r2			:save for list check
+  	SIS	R2,1			:DECREMENT
+  	SLHLS	R2,3			:MAKE DOUBLE WORD INDEX
+  QCOM3	C	R3,4,R1,R2		:
+****************
+*** 31654,31661 ****
+  	SIS	R2,8			:ELSE CONTINUE SCAN
+  	JGEBS	QCOM3			:CHECK NEXT ENTRY
+  	J	TTYERR			:ERROR, NO MATCH
+! QCOM4	L	R0,8,R1,R2		:
+! 	LA	R9,TTY			:SET A RETURNTO TTY
+  	J	QSTAT1			:
+  					:.......................................................................
+--- 31660,31686 ----
+  	SIS	R2,8			:ELSE CONTINUE SCAN
+  	JGEBS	QCOM3			:CHECK NEXT ENTRY
+  	J	TTYERR			:ERROR, NO MATCH
+! QCOM4	lr	r9,r9			:count should be non-zero
+! 	jnfs	qcom5
+! 	la	r1,ildlst,,		:bad illegal defined list
+! 	jal	r9,oout,,		:
+! 	j	ttyerr,,
+! qcom5	L	R0,8,R1,R2		:
+! : check that this is executable code....
+! :*: user list check
+! 	lr	r12,r0			:copy xddt addr
+! 	exhr 	r14,r12			:r12 has user address
+! 	nhi	r14,mmasks		:isolate "SN"
+! 	srhls	r14,mshftx		:right justify "SN"
+! 	slhls	r14,2			:index word table
+! 	l	r15,mactrn,r8		:location of current mac set
+! 	l	r14,-macdis,r14,r15	:
+! 	thi	r14,mask8		:check on executable
+! 	jefs	qcom6			:set on exec protection
+! 	la	r1,badexc,,		:not executable code
+! 	jal	r9,oout,,
+! 	j	ttyerr,,
+! qcom6	LA	R9,TTY,,		:SET A RETURNTO TTY
+  	J	QSTAT1			:
+  					:
+  :	.......................................................................
+****************
+*** 31716,31722 ****
+  	STH	R0,BGON,,		:TURN OFF TRACE
+  	LI	R1,BGNUM-1		:GET HIGHEST CELL
+  	SLLS	R1,2			:MAKE FULLWORD INDEX
+! QBRST1	ST	R0,BGCNT,R1		:CLEAR THE COUNT
+  	SIS	R1,4			:
+  	JGEBS	QBRST1			:IF NOT DONE, DO NEXT
+  	LIS	R0,1			:
+--- 31716,31723 ----
+  	STH	R0,BGON,,		:TURN OFF TRACE
+  	LI	R1,BGNUM-1		:GET HIGHEST CELL
+  	SLLS	R1,2			:MAKE FULLWORD INDEX
+! :*: fixes op.out.range in kernel module
+! QBRST1	ST	R0,BGCNT,R1,		:CLEAR THE COUNT
+  	SIS	R1,4			:
+  	JGEBS	QBRST1			:IF NOT DONE, DO NEXT
+  	LIS	R0,1			:
+****************
+*** 31733,31739 ****
+  	STH	R0,BGON,,		:TURN OFF TRACE
+  	SVC	OUT,QBDSM1		:DISPLAY HEADER
+  	SVC	OUT,QBDSM2		:
+! 	L	R0,BGCNT		:GET FIRST COUNT VALUE
+  	JEFS	QBDSP1			:IF ZERO, SKIP IT
+  	SVC	OUT,QBDSM3		:OUTPUT HEADER
+  	LHI	R1,0C2A			:TWELVE DECIMAL BLANK FILL
+--- 31734,31740 ----
+  	STH	R0,BGON,,		:TURN OFF TRACE
+  	SVC	OUT,QBDSM1		:DISPLAY HEADER
+  	SVC	OUT,QBDSM2		:
+! 	L	R0,BGCNT,,		:GET FIRST COUNT VALUE
+  	JEFS	QBDSP1			:IF ZERO, SKIP IT
+  	SVC	OUT,QBDSM3		:OUTPUT HEADER
+  	LHI	R1,0C2A			:TWELVE DECIMAL BLANK FILL
+****************
+*** 31743,31749 ****
+  QBDSP2	AIS	R2,4			:BUMP INDEX
+  	CLI	R2,(BGNUM-1)*4		:IS IT LAST ENTRY
+  	JGE	QBDSP3			:
+! 	L	R3,BGCNT,R2		:GET COUNT VALUE
+  	JEBS	QBDSP2			:IF ZERO, SKIP
+  	LR	R0,R2			:
+  	SRLS	R0,2			:GET COUNTER NUMBER
+--- 31744,31750 ----
+  QBDSP2	AIS	R2,4			:BUMP INDEX
+  	CLI	R2,(BGNUM-1)*4		:IS IT LAST ENTRY
+  	JGE	QBDSP3			:
+! 	L	R3,BGCNT,R2,,		:GET COUNT VALUE
+  	JEBS	QBDSP2			:IF ZERO, SKIP
+  	LR	R0,R2			:
+  	SRLS	R0,2			:GET COUNTER NUMBER
+****************
+*** 31754,31760 ****
+  	SVC	KIO,$A10		:OUTPUT COUNT
+  	SVC	OUT,CRLF		:GET NEXT LINE
+  	J	QBDSP2			:LOOK AT NEXT COUNTER
+! QBDSP3	L	R0,BGCNT,R2		:GET FIRST COUNT VALUE
+  	JEFS	QBDSP4			:IF ZERO, SKIP IT
+  	SVC	OUT,QBDSM4		:OUTPUT HEADER
+  	LHI	R1,0C2A			:TWELVE DECIMAL BLANK FILL
+--- 31755,31761 ----
+  	SVC	KIO,$A10		:OUTPUT COUNT
+  	SVC	OUT,CRLF		:GET NEXT LINE
+  	J	QBDSP2			:LOOK AT NEXT COUNTER
+! QBDSP3	L	R0,BGCNT,R2,		:GET FIRST COUNT VALUE
+  	JEFS	QBDSP4			:IF ZERO, SKIP IT
+  	SVC	OUT,QBDSM4		:OUTPUT HEADER
+  	LHI	R1,0C2A			:TWELVE DECIMAL BLANK FILL
+****************
+*** 32718,32725 ****
+          JN      PTRAC1			:
+  PTRAC2	STH	R4,DATACD,,		:SAVE DATA COMPARE CODE
+          LR      R4,R4			:
+!         JE      TTY                     :IF ZERO, SKIP DATA PROMPT
+! 					:
+  :	.......................................................................
+  :	GET DATA COMPARE HALFWORD VALUE
+  :	.......................................................................
+--- 32718,32725 ----
+          JN      PTRAC1			:
+  PTRAC2	STH	R4,DATACD,,		:SAVE DATA COMPARE CODE
+          LR      R4,R4			:
+!         JE      TTY,,                   :IF ZERO, SKIP DATA PROMPT
+! :*: fixes op.out.range in share module					:
+  :	.......................................................................
+  :	GET DATA COMPARE HALFWORD VALUE
+  :	.......................................................................
+****************
+*** 32727,32733 ****
+  	SVC	OUT,TRCEM6		:PROMPT FOR DATA COMPARE CODE
+  	JAL	R9,NUM			:
+          STH     R0,PATERN,,             :SAVE DATA PATTERN HALFWORD
+!         J       TTY                     :RETURN
+  					:
+  :	.......................................................................
+  :	COMMAND TO START/STOP MAC TRACE
+--- 32727,32733 ----
+  	SVC	OUT,TRCEM6		:PROMPT FOR DATA COMPARE CODE
+  	JAL	R9,NUM			:
+          STH     R0,PATERN,,             :SAVE DATA PATTERN HALFWORD
+!         J       TTY,,                   :RETURN
+  					:
+  :	.......................................................................
+  :	COMMAND TO START/STOP MAC TRACE
+****************
+*** 32758,32767 ****
+          STH     R4,350,,                :STORE IN 350 INITIALIZES TRACE
+          LCS     R4,1			:
+          STH     R4,TRONOF,,             :FLAG TRACE "RUNNING"
+!         J       TTY			:
+  TRSTOP  LIS     R4,0			:
+          STH     R4,TRONOF,,             :FLAG TRACE "STOPPED"
+!         J       TTY                     :RETURN
+  					:
+  :	.......................................................................
+  :	DISPLAY MAC TRACE DATA
+--- 32758,32767 ----
+          STH     R4,350,,                :STORE IN 350 INITIALIZES TRACE
+          LCS     R4,1			:
+          STH     R4,TRONOF,,             :FLAG TRACE "RUNNING"
+!         J       TTY,,			:
+  TRSTOP  LIS     R4,0			:
+          STH     R4,TRONOF,,             :FLAG TRACE "STOPPED"
+!         J       TTY,,                   :RETURN
+  					:
+  :	.......................................................................
+  :	DISPLAY MAC TRACE DATA
+****************
+*** 32894,32900 ****
+          JAL     R9,DOCRLF		:
+  QBTR2   AIS     R4,4			:
+          JL      QBTR1                   :SCAN NEXT LOCATION
+!         J       TTY			:
+  					:
+  TRCREG  LIS     R3,0			:
+          LIS     R4,0F                   :OUTPUT 16 REGISTERS
+--- 32894,32900 ----
+          JAL     R9,DOCRLF		:
+  QBTR2   AIS     R4,4			:
+          JL      QBTR1                   :SCAN NEXT LOCATION
+!         J       TTY,,			:
+  					:
+  TRCREG  LIS     R3,0			:
+          LIS     R4,0F                   :OUTPUT 16 REGISTERS
+****************
+*** 32913,32924 ****
+  					:
+  CHKMAC  LHL     R4,ULICEN,R8            :CHECK ON LICENSE
+          THI     R4,L.SYP                :MUST HAVE SYSTEM PATCH
+!         JE      TTYERR			:
+          L       R4,MACSTAT              :FETCH MAC STATUS REGISTER
+          THI     R4,20                   :TEST FOR BIT 10 ON
+          JER     R9                      :IF NOT ON, RETURN
+          SVC     OUT,STRCM2              :TELL USER THIS WON'T WORK
+!         J       TTY                     :EXIT
+  					:
+  DTRC01  SC      /"8D"8ATRACE: /
+  DTRC02  SC      /RUNNING    /
+--- 32913,32924 ----
+  					:
+  CHKMAC  LHL     R4,ULICEN,R8            :CHECK ON LICENSE
+          THI     R4,L.SYP                :MUST HAVE SYSTEM PATCH
+!         JE      TTYERR,,		:
+          L       R4,MACSTAT              :FETCH MAC STATUS REGISTER
+          THI     R4,20                   :TEST FOR BIT 10 ON
+          JER     R9                      :IF NOT ON, RETURN
+          SVC     OUT,STRCM2              :TELL USER THIS WON'T WORK
+!         J       TTY,,                   :EXIT
+  					:
+  DTRC01  SC      /"8D"8ATRACE: /
+  DTRC02  SC      /RUNNING    /
+****************
+*** 34481,34486 ****
+--- 34481,34487 ----
+  CA.CTO	EQ	2			: Count-report open
+  CA.WHY	EQ	4			: set if Termination-reason recorded
+  CA.ORG	EQ	8			: Origination slot acct flag
++ CA.TRM	EQ	10			: if still to do termination accting
+  					:
+  
+  	SUBTTL	DISPATCHER - Macros
+****************
+*** 35238,35243 ****
+--- 35239,35245 ----
+  	NHI	R7.PT.,3FFF		: extract Path-number
+  	CPFPN(R7.PT.,R1.p)		: convert to path-pointer
+  	LB	R0,P.STAT,R1.p		: check state
++ :*: send termination acct.
+  :	JEFS	MMFR5			: all done
+  	LIS	R0,$2 01		: else terminate Accounting
+  	NH	R0,P.NO,R1.p		: 01 if odd (came from Dest)
+****************
+*** 35955,35961 ****
+  	sis	r5,1			: crash type re-adjust
+  	l	r6,gmt			: get current time
+  	st	r6,dsptyp+8,r3		:
+! 	lpswr	r4,r6			: get psw
+  	st	r6,dsptyp+0c,r3		:
+  	srls	r3,4			: get back index
+  	ais	r3,1			: increment for next cell
+--- 35955,35962 ----
+  	sis	r5,1			: crash type re-adjust
+  	l	r6,gmt			: get current time
+  	st	r6,dsptyp+8,r3		:
+! :*: changes lpswr to epsr instruction
+! 	epsr	r6,r6			: get psw
+  	st	r6,dsptyp+0c,r3		:
+  	srls	r3,4			: get back index
+  	ais	r3,1			: increment for next cell
+****************
+*** 36781,36786 ****
+--- 36783,36789 ----
+  	OHI	R4,PA.CPC		: set path to collect project-code
+  NEED6	STB	R4,P.STAT,R1.p		: set new path-state
+  	OH	R0,C.STAT,R1.p		: update acct. info. for origination
++ 	OHI	R0,CA.TRM		: do termination accounting
+  	STH	R0,C.STAT,R1.p		: save Channel Project_code-state
+  	STB	R14.d,P.SLOT,R1.p	: connect Path to this slot
+  	STH	R14.d,LO.KEY		: save destination Key
+****************
+*** 36850,36855 ****
+--- 36853,36859 ----
+  	AIS	R2,CA.PCO		: project-code open too
+  	AIS	R0,PA.CPC		: collect project-code
+  NEED12	STB	R0,P.STAT,R1.p		: save state
++ 	OHI	R2,CA.TRM		: do termination accounting
+  	STH	R2,C.STAT,R1.p		: Channel state too
+  	J	SNDACT			: go finish off
+  					:
+****************
+*** 37235,37240 ****
+--- 37239,37245 ----
+  	AIS	R2,CA.PCO		: set project-code open too
+  	AIS	R0,PA.CPC		: path is to collect it
+  ISN22	STB	R0,P.STAT,R1.p		: set this path's new state
++ 	OHI	R2,CA.TRM		: do termination accounting
+  	STH	R2,C.STAT,R1.p		: set this channel's new state
+  	J	SNDACT			: and skip to pass it on, set up Accounting
+  :	DISPATCHER - LOG-II ASLP logic
+****************
+*** 37800,37813 ****
+  	ST	R4,DCTEMP		: save it
+  	LB	R2,SAVE			: get Message-type
+  	CLHI	R2,DETMSG		: is this DETACH?
+! 	JNFS	DCD1			: skip if not
+  	LCS	R3,4			: set up TIMEOUT-timer
+! 	STH	R3,P.HIST,R1.p
+  	LHI	R3,0C001		: set TIMEOUT-flags
+  	LHI	R0,YBMSG^8		: send Yellow-ball
+  	STH	R0,SAVE			:  ...instead of Zapper
+  	J	DCD3			: and skip to finish up
+- 
+  DCD1	LIS	R3,0
+  	STH	R3,P.STAT,R1.p		: close path
+  	LIS	R3,X.PNR.		: ZAPPER, no CLEANUP unless PNR
+--- 37800,37816 ----
+  	ST	R4,DCTEMP		: save it
+  	LB	R2,SAVE			: get Message-type
+  	CLHI	R2,DETMSG		: is this DETACH?
+! 	JN	DCD1			: skip if not
+  	LCS	R3,4			: set up TIMEOUT-timer
+! :*: fixes ball logic
+! 	sth	r2,save			: save r2 for use in COPOP
+! 	copop(r1.p,r2)			: r2 is opposite path
+! 	STH	R3,P.HIST,r2		: thats where timeout routine looks
+! 	lhl	r2,save
+  	LHI	R3,0C001		: set TIMEOUT-flags
+  	LHI	R0,YBMSG^8		: send Yellow-ball
+  	STH	R0,SAVE			:  ...instead of Zapper
+  	J	DCD3			: and skip to finish up
+  DCD1	LIS	R3,0
+  	STH	R3,P.STAT,R1.p		: close path
+  	LIS	R3,X.PNR.		: ZAPPER, no CLEANUP unless PNR
+****************
+*** 38074,38079 ****
+--- 38079,38086 ----
+  AATERM	JAL	R2,AAMAKP		: make pointer to Accounting data
+  	LHL	R2,C.STAT,R3.c		:
+  	JER	R4			: abort if Channel not in use
++ 	THI	R2,CA.TRM		: should it send termination acctng?
++ 	JER	R4			: origination or already sent
+  	STM	R0,AASAVE		: else save registers
+  	OI	R0,0E0000000		: generate the Termination-code
+  	ST	R0,AATEMP		: and save it
+****************
+*** 38086,38093 ****
+  	JEFS	AATER1			: no...use given value
+  	L	R6,C.WHY,R7.c		: yes...report previous value
+  AATER1	JAL	R5,AASAR		: send reason for termination
+! 	LHI	R0,@CA.ORG		: close accounting
+! 	NHI	R0,C.STAT,R7.c		:
+  	STH	R0,C.STAT,R7.c		:
+  	LM	R0,AASAVE		: restore registers
+  	JR	R4			: Done...exit
+--- 38093,38100 ----
+  	JEFS	AATER1			: no...use given value
+  	L	R6,C.WHY,R7.c		: yes...report previous value
+  AATER1	JAL	R5,AASAR		: send reason for termination
+! 	LHI	R0,@(CA.TRM)		: sent termination accounting so
+! 	NHI	R0,C.STAT,R7.c		: reset CA.TRM
+  	STH	R0,C.STAT,R7.c		:
+  	LM	R0,AASAVE		: restore registers
+  	JR	R4			: Done...exit
+****************
+*** 39373,39381 ****
+  :	1. Allocate Sup/Slave DMA areas first then
+  :	2. Allocate Slots' DMA areas
+  :	.......................................................................
+  					:
+!   IF	SUP				:
+!     if macv
+  	BND	PAGE			:
+  	GL	DMABGN,DMAEND		:
+  DMABGN	EQ	.			:
+--- 39383,39394 ----
+  :	1. Allocate Sup/Slave DMA areas first then
+  :	2. Allocate Slots' DMA areas
+  :	.......................................................................
++ :       changes implemented to fix sup gens for non-mac5 environment
++ :*: fixes non-mac5 sup(r)
++ :
+  					:
+!  IF MACV
+!    IF	SUP				:
+  	BND	PAGE			:
+  	GL	DMABGN,DMAEND		:
+  DMABGN	EQ	.			:
+****************
+*** 39427,39445 ****
+     ELSE					:
+  UTDMRG  EQ	0			:
+     EI  (DSZUTL)				:
+  					:
+  :	.......................................................................
+- :	DEFINE SUPERVISOR-NODE CODE COMMUNICATIONS COMMON AREA
+- :	.......................................................................
+- 					:
+- 	BND	PAGE			:
+- SCMAC	EQ	MACVAL(SCSIZ,.,8)!80000000	:COMMON AREA FOR SUP COMM
+- SCAREA	HS	SCSIZ/2			:
+- DMAEND	EQ	.			:End of relocated DMA area
+-      ei (macv)
+-    EI  (SUP)				:
+- 					:
+- :	.......................................................................
+  :	Allocate DMA areas for conventional slots where
+  :	X - Slot number
+  :
+--- 39440,39450 ----
+     ELSE					:
+  UTDMRG  EQ	0			:
+     EI  (DSZUTL)				:
++ DMAEND	EQ	.			:End of SUP relocated DMA area
++   EI 	(SUP)					:
++ 
+  					:
+  :	.......................................................................
+  :	Allocate DMA areas for conventional slots where
+  :	X - Slot number
+  :
+****************
+*** 39448,39456 ****
+  :
+  :	.......................................................................
+  					:
+-  IF	SUP				:
+-  ELSE					:
+-   IF	MACV				:Only if it is a MAC-5 machine
+     IF	DMAREL				:Only if DMA relocation requested
+      IF \DMABGN				:
+      ELSE				:
+--- 39453,39458 ----
+****************
+*** 39469,39475 ****
+  DMAEND	EQ	.			:
+     EI  (DMAREL)				:
+    EI  (MACV)				:
+-  EI   (SUP)				:
+  					:
+  :	.......................................................................
+  :	Check slot DMA relocation area .vs. 1MG boundary
+--- 39471,39476 ----
+****************
+*** 39484,39491 ****
+  	REMARK	%	2. Reduce the number of slot with DMA usage
+  	REMARK	%%%
+     EI  
+!   EI   (DMAREL)				:
+  					:
+  :	.......................................................................
+  :	DEFINE MICRO-CODED ASYNC RING-STORAGE AREA
+  :	.......................................................................
+--- 39485,39502 ----
+  	REMARK	%	2. Reduce the number of slot with DMA usage
+  	REMARK	%%%
+     EI  
+!   EI   (\DMABGN)				:
+  					:
++  IF  SUP				:
++ :	.......................................................................
++ :	DEFINE SUPERVISOR-NODE CODE COMMUNICATIONS COMMON AREA
++ :	.......................................................................
++ 					:
++ 	BND	PAGE			:
++ SCMAC	EQ	MACVAL(SCSIZ,.,8)!80000000	:COMMON AREA FOR SUP COMM
++ SCAREA	HS	SCSIZ/2			:
++  EI  (SUP)				:
++ 
+  :	.......................................................................
+  :	DEFINE MICRO-CODED ASYNC RING-STORAGE AREA
+  :	.......................................................................
+****************
+*** 39711,39717 ****
+--- 39711,39722 ----
+  	IF	MACV
+  	 REMARK	%Expects MAC V
+  	ELSE	ZITEL
++ 	  if .eq.(macver,3)
++ :*: MAC II remark
++ 	 REMARK	%Expects MAC III
++ 	  else		
+  	 REMARK	%Expects MAC II
++ 	  ei
+  	ELSE
+  	 REMARK	%Expects MAC I
+  	EI
+****************
+*** 40176,40187 ****
+  	ORG	NCTA			:NOW, BACK TO END LOCATION
+  					:
+  MEMCON	EQ	(Q2+1023)/1024		:Total configured system memory size
+! 	REMARK	%%***Highest location used in this configuration is 
+  	NUMBER	$0 Q2
+  :
+!      if macv
+!      else
+! 	if (memcon-totsiz)
+  	   REMARK %%MEMORY SIZE CONFIGURATION INCONSISTENCY!%%
+  	   REMARK Assembly Memory Size Exceeds Total Configuration Memory Size%%
+  	   REMARK Assembly Memory Size:          
+--- 40183,40193 ----
+  	ORG	NCTA			:NOW, BACK TO END LOCATION
+  					:
+  MEMCON	EQ	(Q2+1023)/1024		:Total configured system memory size
+! :*: kernal memory fix
+! 	REMARK	%%***Highest location used in the kernel configuration is 
+  	NUMBER	$0 Q2
+  :
+! 	if (memcon-totsiz))
+  	   REMARK %%MEMORY SIZE CONFIGURATION INCONSISTENCY!%%
+  	   REMARK Assembly Memory Size Exceeds Total Configuration Memory Size%%
+  	   REMARK Assembly Memory Size:          
+****************
+*** 40193,40199 ****
+  	   REMARK %%Fatal error ... machine over configured.. assembly killed!%
+  	   quit 1
+  	ei (memcon-totsiz)
+-      ei
+  :
+  	REMARK	%%Requires 
+  :	NOTE:	BOOTSTRAP REQUIRES 1000X BYTES OF CORE!
+--- 40199,40204 ----
+****************
+*** 40201,40207 ****
+  	IF	TSI!NANO
+  	NUMBER	(Q2+65536+1023)/1024
+  	ELSE
+! 	NUMBER	(Q2+4096+1023)/1024  		:adds 4K for boot
+  	EI	(TSI!NANO)
+  	REMARK	d k-bytes of core memory
+  	REMARK	%%%.............................................%
+--- 40215,40221 ----
+  	IF	TSI!NANO
+  	NUMBER	(Q2+65536+1023)/1024
+  	ELSE
+! 	NUMBER	(Q2+1023)/1024  		:adds 4K for boot
+  	EI	(TSI!NANO)
+  	REMARK	d k-bytes of core memory
+  	REMARK	%%%.............................................%
+T nX
