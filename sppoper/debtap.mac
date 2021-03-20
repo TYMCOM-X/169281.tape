@@ -1,0 +1,276 @@
+
+
+
+
+
+
+        title debtap - This is used for debugging tapchg
+
+        subttl - jroysden, written 1/29/81
+
+;This program was written to emulate (PJ)Job 3 in its function of running
+;Tapchg for the purpose of charging off tape requests given in (PJ)Spool.tap.
+;Only the debugging directory is used in this program, and only the system on
+;which this program is being run is used; that is, it does not look at the
+;request number in Spool.tap to determine what system to build a circuit to.
+;For further information, see tapchg.doc.
+
+;Accumulators
+
+        ac==0
+        ch==1
+        ac2==2
+        ac3==3
+        ac4==4
+        ac5==5
+        p==17
+
+;Ascii chars
+
+        lf==12                  ;Ascii line feed
+        cr==15                  ;Ascii carraige return
+        lc==40                  ;Amount lowercase ascii greater than uppercase
+
+;Misc
+
+        cx.nzp==1000000         ;No zap bit for circuit on reset
+
+;Auxcals
+
+        .axi8s==1               ;Input char and skip
+        .axo8==3                ;Output char
+        .axo8i==4               ;Output char immediate
+        .axsi==44               ;Put input into port's input buffer
+        .axost==52              ;Output character string
+        .axcfs==64              ;Change port's file status bits
+
+;Set line and port chars
+
+        io.nec==200             ;Set the port's no echo bits
+        lc.dfr==1000            ;Deferred echo
+        
+;Channel defs
+
+        chan==1                 ;Channel 1
+
+;Get login string and store it
+
+start:
+        move    p,pdlptr        ;Set up push down stack
+        outstr  [asciz /Login string: /] ;Prompt for login string
+in:     inchwl  ch              ;Get the login string
+        cain    ch,lf           ;Is this the end of the string?
+         jrst   [movei  ch,cr   ;Yes; get ascii carraige return
+                 idpb   ch,lgnptr ;Put in for project code
+                 jrst   login]  ;Go login to new circuit
+        caig    ch,"z"          ;Is the char lower case?
+        cail    ch,"a"          ;
+         subi   ch,lc           ;Yes, so make it upper case
+        idpb    ch,lgnptr       ;Save for the creaux
+        jrst    in              ;and get the rest of the string
+
+;Try to login
+
+login:  move    ac,[cx.nzp+logins] ;Get nozap bit and login string
+        creaux  ac,             ;Try to build the circuit and log in
+         jrst   crxerr          ;Error on creaux
+        movem   ac,auxprt#      ;Save the port number
+
+;Start up TAPCHG and get the handshake 
+
+        hrl     ac,auxprt       ;Get the aux port number
+        hrri    ac,.axost       ;For sending a string
+        auxcal  ac,runtap       ;Start up TAPCHG
+        hrri    ac,.axi8s       ;Prepare to receive slave's handshake
+        movei   ac3,1           ;We should get a 1, 2, 3, and 4
+        movei   ac4,4           ;The number of chars that we should get
+tryagn: auxcal  ac,ch           ;Pick up the char from the port's input buffer
+         jrst   tryagn          ;Keep trying until a char is found
+        came    ch,ac3          ;Is it the char we were looking for?
+         jrst   tryagn          ;No, try again
+        aos     ac3             ;Next char to look for
+        sojg    ac4,tryagn      ;We are only looking for four chars
+
+;Send our handshake
+
+        hrri    ac,.axo8i       ;Send our handshake
+        auxcal  ac,1            ;Send a 1,2,3,4
+        auxcal  ac,2
+        auxcal  ac,3
+        auxcal  ac,4
+
+;Open the file that will be sent to the slave
+
+        open    chan,fildef     ;Open the input channel
+         jrst   opnerr          ;Couldn't open it
+        inbuf   chan,1          ;Set the number of input buffers to one
+        lookup  chan,filblk     ;Lookup the file
+         jrst   lukerr          ;Error on lookup
+
+;Input a buffer of information
+
+infil:  move    ac,stradr#      ;Get the starting buffer address
+        in      chan,           ;Input a buffer
+        skipa                   ;Input succeeded
+         jrst   inerr           ;Input error
+        jumpn   ac,sndfil       ;If address already computed, don't do again
+        move    ac,filin        ;Get the buffer address
+        addi    ac,1            ;Point to word 2 of the buffer
+        movem   ac,stradr#      ;Save it
+        addi    ac,200          ;Get the address of the last word of buffer
+        movem   ac,endadr#      ;Save it
+
+;Get the information from the file (request # and dates) and send it to tapchg
+;so it can access the gdf record and build an accounting record
+
+        move    ac,stradr       ;Get the start address of the buffer
+sndfil: movem   ac,inadr#       ;It is now the word we wish to point to
+nxtwd:  aos     inadr           ;Point to the next word
+        move    ac,inadr        ;Get the address of the last word we accessed
+        camle   ac,endadr       ;Is it past the end of the buffer?
+         jrst   infil           ;Input another buffer
+        move    ac,@inadr       ;Pick up the word to send
+        skipn   ac              ;If null word, then end of file
+         jrst   finado          ;In that case, done
+        movem   ac,wdin         ;Save the word for picking up bytes
+        aos     inadr           ;Point to the next word
+        move    ac,@inadr       ;Get it
+        movem   ac,wdin+1       ;Save it
+        hrri    ac,.axo8        ;Auxcal function for sending bytes
+        hrl     ac,auxprt       ;Get the aux port sending to
+        movei   ac2,5           ;Number of bytes to pick up
+        move    ac3,reqptr      ;Pointer for request number
+sndreq: ildb    ch,ac3          ;Six bit bytes
+        auxcal  ac,ch           ;Send the byte to the waiting tapchg program
+        sojg    ac2,sndreq      ;Send until all bytes are sent
+        move    ac3,rdtptr      ;Pointer for dates
+        pushj   p,snddat        ;Send the request date
+        move    ac3,cdtptr      ;Pointer for completion date
+        pushj   p,snddat        ;Send the completion date
+        pushj   p,getcod        ;Find out if the charge was successful
+        jrst    nxtwd           ;Send the entire file
+        jrst    finado          ;Error from tapchg
+
+;Send the date of the request or the completion date to tapchg
+
+snddat: movei   ac2,2           ;Number of bytes to send
+sd:     ildb    ch,ac3          ;Eight bit bytes
+        auxcal  ac,ch           ;Send
+        sojg    ac2,sd          ;until done
+        popj    p,              ;Return
+
+;Get the code from tapchg that will say if the charge was successful
+
+getcod: hrri    ac,.axi8s       ;For auxcal input char and skip
+        hrl     ac,auxprt       ;Get auxport number
+gc:     auxcal  ac,ch           ;Retrieve the char
+         jrst   .-1             ;Keep trying
+        cain    ch,151          ;Did tapchg charge successfully?
+         popj   p,              ;Return
+        movei   ac,unkerr       ;Unknown error in case not recognized
+        cain    ch,152          ;An error has occurred
+         movei  ac,taperr       ;Tapchg encountered an error
+        cain    ch,153          ;Was the request not found?
+         movei  ac,reqerr       ;Request not found error
+        outstr  @ac             ;Output error message
+        cain    ac,unkerr       ;Try again
+         jrst   gc              ;Get some more
+        cain    taperr          ;Is this an error from TAPCHG?
+         jrst   [aos    (p)     ;Error return
+                 popj   p, ]    ;Return
+        pushj   p,cnvsix        ;Convert the sixbit reqnum to ascii
+        outstr  reqnum          ;Print it
+        popj    p,              ;Normal return
+
+;Convert sixbit string to asciz
+
+cnvsix: move    ac3,reqptr      ;Get pointer to the request number
+        movei   ac2,5           ;Loop for five times
+        setzm   ac              ;Clear accum
+cs:     ildb    ch,ac3          ;Get a byte of the number
+        addi    ch,40           ;Convert to asciz
+        ior     ac,ch           ;Store for now into ac
+        caile   ac2,1           ;Don't shift last byte
+        lshc    ac,7            ;Store for now into ac2
+        sojg    ac2,cs          ;Repeat four more times
+        lsh     ac,1            ;Left justify
+        movem   ac,reqnum#      ;Store the asciz request number
+        popj    p,              ;Job done
+
+;Error routines
+
+lukerr: outstr  [asciz /
+        Error looking up file /]
+        jrst    finado          ;Close the channel
+
+inerr:  stato   chan,20000      ;End of file?
+         outstr [asciz /
+        Error on channel /]     ;Not end of file, some other error
+        jrst    finado          ;Close the channel 
+
+opnerr: outstr  [asciz /
+        Error on opening channel /]
+        jrst    quit            ;Leave the program
+
+crxerr: outstr  [asciz / 
+        Error encountered building circuit /]
+        jrst    quit            ;Leave the program
+
+auxerr: outstr  [asciz /
+        Aux error /]
+        jrst quit
+
+;Close the channel, zap the circuit, and exit the program
+
+finado: close   chan,           ;Close the channel (and the file)
+quit:   setom   ac              ;Zap the circuit that was built
+        zapcir  ac,             ;Zap!
+        exit    1,              ;Leave this program, right now!
+        
+
+;Ascii strings
+
+runtap: asciz /
+ru tapchg
+/
+
+unkerr: asciz /
+        Unknown code from TAPCHG /
+
+taperr: asciz /
+        TAPCHG encountered an error /
+
+reqerr: asciz /
+        Request not found: #/
+
+;Pointers
+
+lgnptr: point   7,logins        ;Pointer for login string
+
+pdlptr: iowd    10,pdl
+
+reqptr: point 6,wdin,5
+
+rdtptr: point 8,wdin+1,1
+cdtptr: point 8,wdin+1,19
+
+;Memory
+
+pdl:    block 10
+
+wdin:   block 2
+
+
+logins: block 6                 ;Max number chars for login string is 29
+fildef: exp 10  
+        sixbit /dsk/
+        xwd     0,filin
+filin:  block 3
+filblk: sixbit  /SPOOL/
+        sixbit  /TAP/
+        0
+debgan: 3,,234620               ;SPPOPER
+
+
+        end     start
+ 
