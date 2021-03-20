@@ -1,0 +1,878 @@
+PATCH(861008,1520,JL,PA0PTR,,3C+0E*NDPORT+8*NDGRPS)
+R4TEMP   BS     4            :REGISTER SAVE LOCATIONS
+R5TEMP   BS     4            :           "
+R12TMP   BS     4            :           "
+R7TEMP   BS     4            :           "
+R6TEMP   BS     4            :           "
+R11TMP   BS     4            :           "
+PADRES   BS    2*NDPORT      :VALUES OF BAD RECALL CHARACTERS
+NOPDRS   BS     4*NDGRPS     :FLAGS IF PAD RECALL NOT ALLOWED
+PRMODE   BS     4*NDGRPS     :FLAGS INDICATING IF IN PAD COMMAND MODE
+PRCURS   BS    2*NDPORT      :CURSOR POSITIONS IN USER COMMAND BUFFER
+PRBUFR   BS  0A*NDPORT       :USER COMMAND BUFFER             
+CERMSG   BC    0D,0A         :ERROR MESSAGE TO USER
+         AC    /pad command error/
+ACCMSG   BC    0D,0A         :CONFIRMATION MESSAGE TO USER
+         AC    /accepted/
+         BC    0D,0A
+PNUMBR   BS    1             :SAVE AREA FOR PARM. NUMBER
+PDAUTO   BC    0             :GEN SWITCH - SET TO 1 IF AUTO PAD RECALL AT ^P
+XTRA1    BS   3                       :PAD TO INSURE ENDS ON FULLWORD BOUNDARY
+:
+CONPATCH(DDN005+10,,6)
+         J         DDN007,,
+CONPATCH(PA1PTR,,52)
+DDN007   RBT       R1,PAR4,,          :RESET ALL FLAGS HERE, THIS
+         RBT       R1,PAR12,,         :...REPRESENTS INITIALIZATION FOR
+         RBT       R1,PRMODE,,
+         LCS       R4,1               :...THE USER, ALSO EXECUTED EACH TIME
+         LB        R3,PDAUTO,,        :IS AUTO GEN SWITCH TURNED ON?
+         JE        DDN07A             :NO, SET TO 0
+         LHI       R4,10              :OTHERWISE ^P
+DDN07A   STB       R4,PADRES,R1,      :...CALL IS CLEARED
+         RBT       R1,NOPDRS,,
+         LIS       R4,0
+         STB       R4,PRCURS,R1,
+         LIS       R3,9               :ZERO OUT COMMAND BUFFER FOR USER
+         MHR       R3,R1
+         LIS       R2,0
+CLRPAD   STB       R4,PRBUFR,R3,R2
+         AIS       R2,1
+         CLHI      R2,9
+         JN        CLRPAD
+         J         DDN005+18,,
+:
+CONPATCH(DAT170+1E,,4)
+         J         DAT170+22          :INSURE ENOUGH SPACE IN ORINGS FOR
+CONPATCH(DAT040+4,,6)
+         J         PA1PTR,,    
+CONPATCH(PA1PTR,,1E)
+         JE        DAT040+16,,
+         LHL       R4,DPORT,,
+         TBT       R4,PAR0,,
+         JE        DAT040+16,,
+         J         DAT040+14,,
+CONPATCH(DAT040+1A,,4)
+         AHI       R0,30              :...PAD COMMANDS IF NEEDED
+:
+CONPATCH(ICPSN+14,,6)
+         J         ICP007,,
+CONPATCH(PA1PTR,,1A)
+ICP007   JAL       R4,GETH,,          :NO PAD RECALL ALLOWED IF ACTING AS
+         LCS       R4,1
+         STB       R4,PADRES,R1,
+         SBT       R1,NOPDRS,,        :...AN HPAD
+         J         ICPSN+1A,,
+:
+CONPATCH(NSAV15+8,,6)
+         J         NSAV12,,
+CONPATCH(PA1PTR,,38)
+NSAV12   TBT       R7,IIXCAL,,        :NO PAD RECALL ALLOWED IF AN IIX CALL
+         JE        NSAV13
+         LCS       R0,1
+         STB       R0,PADRES,R1,
+         SBT       R1,NOPDRS,,
+NSAV13   LB        R0,ORGTID,R1,      :...OR AN AUX CIRCUIT
+         JN        NSAV14
+         LCS       R0,1
+         STB       R0,PADRES,R1,
+         SBT       R1,NOPDRS,,
+NSAV14   L         R0,LIMSAV,,
+         JR        R0
+:
+CONPATCH(CLD050,,6)
+         J         CLD053,,
+CONPATCH(PA1PTR,,30)
+CLD053   CLHI      R0,0D
+         JE        CLD100,,
+         CLHI      R0,10              :SCAN USER'S CALLED ADDRESS STREAM
+         JN        CLD050+8,,         :...FOR PRESENCE OF CONTROL P.  IF
+         TBT       R1,NOPDRS,,        :...FOUND, THEN SET PAD RECALL TO 10
+         JN        CLD090,,           :...PROVIDED PAD RECALL IS ALLOWED.
+         LHI       R4,10              :...KEEP ANY CONTROL P OUT OF ACTUAL
+         STB       R4,PADRES,R1,      :...CALLED ADDRESS BUFFER
+         J         CLD090,,
+:
+CONPATCH(NERR20+8,,6)
+         J         NERR2A,,
+CONPATCH(PA1PTR,,1A)
+NERR2A   LHL       R1,DPORT,,         :IF ERROR IN CALLED ADDRESS OR CALL
+         LCS       R6,1               :...USER DATA, TURN OFF PAD RECALL,
+         STB       R6,PADRES,R1,      :...USER MUST RE-ENTER CONTROL P
+         TBT       R1,DEM,,
+         J         NERR20+10,,
+:
+    IF .MARK
+CONPATCH(DAT100,,6)
+         J         DAT103,,           :JUMP TO THE MAIN ROUTINE, USED WHEN
+CONPATCH(DAT140,,6)
+         J         DAT143,,           :...MARK PARITY IN EFFECT
+CONPATCH(PA1PTR,,30)
+DAT103   JAL       R4,GETCH,,
+         LR        R8,R0
+         NHI       R8,7F
+         JAL       R4,CHKPDR,,        :JUMP TO THE MAIN ROUTINE
+         J         DAT100,,           :SKIP RETURN, AVOIDS PACKETIZING CMDS.
+DAT143   JAL       R4,GETCH,,         :MARK PARITY WITH ECHO
+         LR        R8,R0
+         NHI       R8,7F
+         JAL       R4,CHKPDR,,
+         J         DAT140,,
+    EI
+:
+    IF .SPACE
+CONPATCH(DAT110,,6)
+         J         DAT113,,           :SPACE PARITY NO ECHO
+CONPATCH(DAT150,,6)
+         J         DAT153,,           :SPACE PARITY WITH ECHO
+CONPATCH(PA1PTR,,30)
+DAT113   JAL       R4,GETCH,,
+         NHI       R0,7F
+         LR        R8,R0
+         JAL       R4,CHKPDR,,        :JUMP TO MAIN ROUTINE
+         J         DAT110,,           :SKIP RETURN IF IN PAD COMMAND MODE
+DAT153   JAL       R4,GETCH,,
+         NHI       R0,7F
+         LR        R8,R0
+         JAL       R4,CHKPDR,,
+         J         DAT150,,
+    EI
+:
+CONPATCH(DAT120,,6)
+         J         DAT12A,,           :USUAL CASE, SAVE PARITY
+CONPATCH(DAT160,,6)
+         J         DAT16A,,
+CONPATCH(PA1PTR,,30)
+DAT12A   JAL       R4,GETCH,,         :SAVE PARITY NO ECHO
+         LR        R8,R0
+         NHI       R8,7F
+         JAL       R4,CHKPDR,,        :CALL TO MAIN ROUTINE
+         J         DAT120,,           :SKIP RETURN TO PROCESS PAD COMMAND
+DAT16A   JAL       R4,GETCH,,
+         LR        R8,R0
+         NHI       R8,7F
+         JAL       R4,CHKPDR,,        :CALL TO MAIN ROUTINE
+         J         DAT160,,           :SKIP RETURN
+:
+CONPATCH(PA1PTR,,688)
+CHKPDR   ST        R4,R4TEMP,,        :MAIN ROUTINE, LOOKS FOR ESCAPE TO
+         ST        R12,R12TMP,,       :...PAD COMMAND MODE, THEN PROCESSES
+         ST        R7,R7TEMP,,        :...COMMANDS.  START OFF BY SAVING
+         ST        R6,R6TEMP,,        :...SOME REGISTERS IN TEMPORARY
+         ST        R11,R11TMP,,       :...LOCATIONS
+         LHL       R4,DPORT,,
+         TBT       R4,PRMODE,,        :ARE WE COLLECTING A PAD COMMAND NOW?
+         JN        PRCOLL             :YES, GO DO THE COLLECTING
+         LB        R12,PADRES,R4,     :PAD RECALL CHARACTER
+         JLE       CKPREX             :NOT DEFINED, EXIT BY NORMAL RETURN
+         CR        R8,R12             :HAVE WE JUST PICKED UP THE PAD RECALL
+         JN        CKPREX             :...CHARACTER? - NO, NORMAL RETURN
+         SBT       R4,PRMODE,,        :FOUND IT, FLAG IN PAD COMMAND MODE
+         J         PRECHO             :GO ECHO IT IF NECESSARY
+:
+PRCOLL   LIS       R12,9              :COLLECTING A PAD COMMAND INTO BUFFER
+         MHR       R12,R4             :FORM POINTER TO USERS COMMAND BUFFER
+         LB        R11,PRCURS,R4,     :...REMEMBERING HIS CURSOR POSITION
+         CLHI      R8,08              :DID USER JUST HIT BACKSPACE?
+         JN        PRSAVE             :NO, NORMAL CHARACTER, SAVE IT
+         LR        R11,R11            :IF AT START OF BUFFER, IGNORE BACKSPACE
+         JE        PREC03
+         SIS       R11,1              :IF A VALID BACKSPACE, DECREMENT THE
+         STB       R11,PRCURS,R4,     :...CURSOR, ECHO BACKSPACE IF NEEDED
+         J         PRECHO
+:
+PRSAVE   STB       R8,PRBUFR,R12,R11  :A VALID CHARACTER, BUFFER IT
+         CLHI      R8,0D              :IF IT'S THE TERMINATOR, GO DO THE
+         JE        PRANAL             :...ANALYSIS
+         AIS       R11,1              :NOT C.R., INCREMENT CURSOR,
+         STB       R11,PRCURS,R4,     :...AND STORE NEW VALUE,
+         CLHI      R11,8              :...STILL NEED A C.R. TO FINISH UP,
+         JE        PRERR              :...IF COMMAND TOO LONG, ERROR
+         J         PRECHO             :IF OKAY, GO CHECK IF WE NEED TO ECHO
+:
+PRANAL   LHL       R4,DPORT,,         :HAVE RECEIVED CR, VALID END OF COMMAND,
+         RBT       R4,PRMODE,,        :...FLAG NO LONGER IN PAD COMMAND MODE
+         LIS       R12,0              :ZERO THE USER'S CURSOR INTO BUFFER
+         STB       R12,PRCURS,R4,
+         LIS       R6,0               :INITIALIZE OFFSET FOR PRVLGT
+         JAL       R8,PRVLGT,,        :GET THE PARAMETER NUMBER
+         AIS       R6,1               :INCREMENT THE OFFSET FOR NEXT CALL
+         LHL       R4,DPORT,,
+         CLHI      R11,0D             :IF TERMINATED IN CR, ERROR
+         JE        PRERR
+         STB       R7,PNUMBR,,        :VALID NUMBER, SAVE IT
+         JAL       R8,PRVLGT,,        :GET THE PARAMETER VALUE
+         LHL       R4,DPORT,,
+         CLHI      R11,3A             :SHOULD END IN CR, ELSE ERROR
+         JE        PRERR              
+         LB        R6,PNUMBR,,        :NOW HAVE PARM. IN R6, VALUE IN R7
+         CLHI      R6,1               :CHECK FOR PARAMETER NUMBER, AND
+         JE        PNUMB1             :...BRANCH TO APPROPRIATE PLACE
+         CLHI      R6,2
+         JE        PNUMB2
+         CLHI      R6,3
+         JE        PNUMB3
+         CLHI      R6,4
+         JE        PNUMB4             :REAL EXCITING CODE (YAWN)
+         CLHI      R6,5
+         JE        PNUMB5
+         CLHI      R6,7
+         JE        PNUMB7
+         CLHI      R6,0C
+         JE        PNUMBC
+         CLHI      R6,0D
+         JE        PNUMBD
+         CLHI      R6,0F
+         JE        PNUMBF
+         CLHI      R6,10
+         JE        PNUM10
+         CLHI      R6,11
+         JE        PNUM11
+         CLHI      R6,12
+         JE        PNUM12
+         CLHI      R6,13
+         JE        PNUM13
+         LR        R7,R7              :IF UNSUPPORTED PARM., OKAY IF A READ
+         JGE       PRERR              :ERROR IF TO SET AN UNSUPPORTED PARM.
+         LIS       R12,0              :READ ON UNSUPPORTED PARM., REPORT A
+         CLHI      R6,6               :REPORT A VALUE OF 5 FOR PARM. 6
+         JN        PRAN1
+         LIS       R12,5
+         J         CHKRE0
+:
+PRAN1    CLHI      R6,9               :FOR PARM. 9, REPORT THE VALUE MAPPED
+         JN        PRAN2              :...FROM ISIS PARMS. A,B,C,D.  IF BAUD
+         ST        R5,R5TEMP,,        :...RATE UNKNOWN, REPORT 0
+         STB       R12,XPAD.9,,
+         JAL       R0,TY.MAP,,
+         J         PRAN1A
+PRAN1A   LB        R12,XPAD.9,,
+         J         PRAN3B
+:
+PRAN2    CLHI      R6,0B              :FOR PARM. 11, REPORT CCITT BAUD RATE
+         JN        PRAN3
+         LB        R12,BAUD,R4,    
+         NHI       R12,0F
+         LB        R12,TY.CC,R12,
+         J         CHKRE0
+:
+PRAN3    CLHI      R6,0E              :FOR PARM. 14, REPORT THE VALUE MAPPED
+         JN        CHKRE0             :...FROM ISIS PARMS. A,B,C,D ANALOGOUS
+         ST        R5,R5TEMP,,        :...TO LOGIC FOR PARM. 9
+         STB       R12,XPAD.E,,       :...R12 IS ZERO HERE
+         JAL       R0,TY.MAP,,
+         J         PRAN3A
+PRAN3A   LB        R12,XPAD.E,,
+PRAN3B   L         R5,R5TEMP,,
+         LHL       R4,DPORT,,
+         LHL       R1,DIBUF,,
+         J         CHKRE0
+:
+PRVLGT   LIS       R12,9              :SUBROUTINE TO READ A DECIMAL NUMBER
+         LCS       R7,1               :...CONSISTING POSSIBLY OF MULTIPLE
+         MHR       R12,R4             :...DIGITS OUT OF USER COMMAND BUFFER.
+PRVAL1   LB        R11,PRBUFR,R12,R6  :TERMINATED BY COLON OR CR.
+         CLHI      R11,3A             :...ROUTINE TAKES AS INPUT R4 AS DPORT
+         JER       R8                 :...OUTPUT IN R7 IS THE NUMBER IN HEX
+         CLHI      R11,0D             :...AND R11 IS THE TERMINATOR,IE A CR
+         JER       R8                 :...OR A COLON.  ERROR FOR A BAD
+         CLHI      R11,30             :...TERMINATOR OR FOR AN ASCII DIGIT
+         JL        PRERR              :...NOT IN RANGE 30-39.  ALSO IF
+         CLHI      R11,39             :...NUMBER OVERFLOWS THE BUFFER
+         JG        PRERR
+         SHI       R11,30
+         LR        R7,R7
+         JGE       PRVAL2
+         LIS       R7,0
+PRVAL2   LHI       R4,0A
+         MHR       R7,R4              :MULTIPLY CURRENT VALUE BY 10d AND
+         AR        R7,R11             :...ADD THE NEW DIGIT
+         AIS       R6,1
+         CLHI      R6,8
+         JE        PRERR
+         J         PRVAL1
+:
+PNUMB1   LB        R12,PADRES,R4,     :GET PRESENT VALUE
+         CLHI      R12,10             :IS IT SET FOR ^P?
+         JN        PNU1
+         LIS       R12,1              :IF SO, REPORT  A VALUE OF 1
+PNU1     JAL       R8,CHKREA,,        :GO CHECK FOR A READ
+         CLHI      R7,7E              :PROCESS PARM. 1, FIRST RANGE CHECK
+         JG        PRERR              :...ON VALUE
+         LR        R7,R7              :VALUE CANNOT BE 00 (NULL CHAR.)
+         JN        PNO0
+         LCS       R7,1               :ZERO MUST MEAN TURN PAD RECALL OFF
+         J         PNO1C
+PNO0     CLHI      R7,7F              :CAN'T BE 7F
+         JE        PRERR
+         CLHI      R7,1               :IS IT TURNED ON?
+         JE        PNO1B
+         CLHI      R7,20              :CAN'T BE IN RANGE 2-1F
+         JL        PRERR
+         J         PNO1C
+PNO1B    LHI       R7,10
+PNO1C    STB       R7,PADRES,R4,      :IT'S VALID, STORE IT
+         JAL       R6,CMNDOK,,        :TELL USER IT WAS ACCEPTED
+         J         PREC1A             :GO TAKE SKIP RETURN
+:
+PNUMB2   LIS       R12,0              :SET UP TO TEST FOR READ
+         TBT       R4,PAR0,,
+         JE        PNO2A
+         LIS       R12,1
+PNO2A    JAL       R8,CHKREA,,
+         CLHI      R7,1               :PAD PARM. 2, ERROR IF NO 0 OR 1
+         JG        PRERR
+         LIS       R12,0              :SET UP TO SEND B1 MESSAGE TO TYMSAT,
+         RBT       R4,PAR0,,          :...ALSO TO FLAG ECHO ON OR OFF
+         LR        R11,R7             :...BASED ON CONTENTS OF R7
+         JE        SENDB1
+         SBT       R4,PAR0,,
+         J         SENDB1
+:
+PNUMB3   LB        R12,XMTMSK,R4,     :CHECK FOR READ
+         JAL       R8,CHKREA,,
+         CLHI      R7,7F              :RANGE CHECK ON VALUE, PAD PARM. 3
+         JG        PRERR
+         STB       R7,XMTMSK,R4,      :STORE THE NEW VALUE
+         JAL       R6,CMNDOK,,        :GIVE USER ACCEPTED MESSAGE
+         J         PREC1A             :AND SET UP FOR SKIP RETURN
+:
+PNUMB4   LB        R12,IDLCNT,R4,
+         JAL       R8,CHKREA,,
+         CLHI      R7,0FF             :IDLE TIMER, DO RANGE CHECK ON VALUE
+         JG        PRERR
+         RBT       R4,NDATIM,,
+         LR        R7,R7              :IF ZERO, THEN TURN TIMER OFF
+         JN        PNO4A
+         SBT       R4,NDATIM,,
+PNO4A    STB       R7,IDLCNT,R4,      :OKAY, SAVE THE VALID VALUE
+         JAL       R6,CMNDOK,,        :USER GETS GOOD MESSAGE
+         J         PREC1A             :SET UP SKIP RETURN
+:
+PNUMB5   LIS       R12,0
+         TBT       R4,PAR12,,
+         JE        PNO5A
+         LIS       R12,1
+PNO5A    JAL       R8,CHKREA,,
+         CLHI      R7,1               :ANCILLARY DEVICE CONTROL, DO RANGE
+         JG        PRERR              :...CHECK ON VALUE
+         RBT       R4,PAR12,,         :SET LOCAL FLAG DEPENDING ON IF PARM.
+         LIS       R12,0C             :...TURNED ON OR OFF, SET UP R11 AND
+         LR        R11,R7             :...R12 FOR SENDB1 ROUTINE FOR MESSAGE
+         JE        SENDB1             :...TO TYMSAT
+         SBT       R4,PAR12,,
+         J         SENDB1
+:
+PNUMB7   LB        R12,BRKMSK,R4,
+         JAL       R8,CHKREA,,
+         CLHI      R7,7               :BREAK HANDLING, DO RANGE CHECK ON
+         JLE       PN7A               :...VALUES
+         CLHI      R7,10
+         JL        PRERR
+         CLHI      R7,17
+         JG        PRERR
+PN7A     STB       R7,BRKMSK,R4,      :HAVE A VALID VALUE, STORE IT
+         LHI       R12,11             :SEND B1 TO TYMSAT IF DISCARD OUTPUT
+         LIS       R11,1              :...IS ON OR OFF
+         THI       R7,10
+         JN        SENDB1
+         LIS       R11,0
+         J         SENDB1
+:
+PNUMBC   LIS       R12,0
+         TBT       R4,PAR14,,
+         JE        PNOCA
+         LIS       R12,1
+PNOCA    JAL       R8,CHKREA,,
+         CLHI      R7,1               :PARM. 12 RANGE CHECK, MUST BE 0 OR 1
+         JG        PRERR
+         LIS       R12,0E             :SET UP LOCAL FLAG AND SEND B1 DEPENDING
+         RBT       R4,PAR14,,         :...ON IF PARM. SET TO 0 OR 1
+         LR        R11,R7
+         JE        SENDB1
+         SBT       R4,PAR14,,
+         J         SENDB1
+:
+PNUMBD   LIS       R12,0
+         TBT       R4,PAR3,,
+         JE        PNODA
+         LIS       R12,4
+PNODA    JAL       R8,CHKREA,,
+         LR        R7,R7              :LF INSERTION AFTER CR, THIS PARM. MUST
+         JE        PND1               :...BE 0 OR 4
+         CLHI      R7,4
+         JN        PRERR
+PND1     LIS       R12,3              :SET UP FOR B1, ALSO SET LOCAL FLAG
+         RBT       R4,PAR3,,          :...BASED ON THE VALUE IN R7
+         LR        R11,R7
+         JE        SENDB1
+         SBT       R4,PAR3,,
+         LIS       R11,1              :FALL THROUGH TO SENDB1
+         J         SENDB1
+PNUMBF   LB        R12,PAD15,R4,      :PAD PARM. 15, EDITING ON/OFF
+         JAL       R8,CHKREA,,        :CHECK IF READ
+         CLHI      R7,1               :IF NOT A READ, SHOULD ONLY BE 0,1
+         JG        PRERR              :ELSE ERROR
+         STB       R7,PAD15,R4,       :SAVE THE VALUE FOR REPORTING
+         SBT       R4,EDITON,,        :FLAG IF EDITING ENABLED/DISABLED
+         LR        R7,R7
+         JN        PNOFA
+         RBT       R4,EDITON,,
+PNOFA    JAL       R6,CMNDOK,,
+         J         PREC1A
+PNUM10   LB        R12,PAD16,R4,
+         JAL       R8,CHKREA,,
+         CLHI      R7,7F              :RANGE CHECK ON PARM. 12
+         JG        PRERR
+         STB       R7,PAD16,R4,       :ACCEPTABLE SET, STORE THE NEW VALUE
+         JAL       R6,CMNDO      :SEND MESSAGE TO USER
+         J         PREC1A
+PNUM11   LB        R12,PAD17,R4,      :PAD PARM. 17 - LINE DELETE
+         JAL       R8,CHKREA,,
+         CLHI      R7,7F
+         JG        PRERR
+         STB       R7,PAD17,R4,
+         JAL       R6,CMNDOK,,
+         J         PREC1A
+PNUM12   LB        R12,PAD18,R4,      :PAD PARM. 18 - LINE DISPLAY
+         JAL       R8,CHKREA,,
+         CLHI      R7,7F
+         JG        PRERR
+         STB       R7,PAD18,R4,
+         JAL       R6,CMNDOK,,
+         J         PREC1A
+PNUM13   LB        R12,BRKCHR,R4,     :PAD PARM. 19, CREATED FOR CONVENIENCE
+         JAL       R8,CHKREA,,        :...AND EASE OF ASSIMILATION.  ALLOWS
+         CLHI      R7,7F              :...USER TO DEFINE HIS OWN BREAK KEY
+         JG        PRERR
+         STB       R7,BRKCHR,R4,
+         JAL       R6,CMNDOK,,
+         J         PREC1A
+:
+CHKREA   LR        R7,R7              :CHECK FOR A READ COMMAND.  R12 HAS THE
+         JGER      R8                 :...CURRENT PARAMETER VALUE IN CASE
+CHKRE0   LHI       R7,9               :...WE ARE TO EXECUTE A READ.  R7 IS
+         MHR       R7,R4              :...NEGATIVE AS A FLAG FOR THE READ
+         LHI       R0,0D              :ECHO CR,LF ON A READ
+         JAL       R4,PUTCH,,
+         LHI       R0,0A
+         JAL       R4,PUTCH,,
+CKRE1    LB        R0,PRBUFR,R7,      :COPY THE PARAMETER NUMBER AND COLON
+         JAL       R4,PUTCH,,         :...OUT OF USER COMMAND BUFFER AND
+         AIS       R7,1               :...ECHO BACK TO HIM
+         CLHI      R0,3A
+         JN        CKRE1
+         LR        R7,R12             :NOW GET THE PARAMETER VALUE OUT OF R12.
+         LHI       R12,$A100          :CONVERT THE VALUE FROM HEX TO DECIMAL
+         DHR       R7,R12             :...AND SEND BACK TO THE USER
+         LR        R3,R8
+         LR        R0,R8
+         JE        CKRE2              :ONLY SEND NONZERO DIGIT IN HUNDREDS
+         AHI       R0,30              :...PLACE
+         JAL       R4,PUTCH,,         :ECHO ASCII EQUIVALENT
+CKRE2    LHI       R12,$A10
+         DHR       R7,R12
+         LR        R0,R8              :IF BOTH TENS AND HUNDREDS DIGITS ARE
+         AR        R3,R0              :...ZERO, THEN DON'T SEND THE TENS DIG.
+         JE        CKRE3
+         AHI       R0,30
+         JAL       R4,PUTCH,,
+CKRE3    LR        R0,R7              :ALWAYS SEND THE UNITS DIGIT
+         AHI       R0,30
+         JAL       R4,PUTCH,,
+         LHI       R0,0D              :ECHO BACK CR AND LF
+         JAL       R4,PUTCH,,
+         LHI       R0,0A
+         JAL       R4,PUTCH,,
+         JAL       R4,ELODR,,
+         J         PREC1A             :TAKE SKIP RETURN AND NO ECHO
+:
+SENDB1   JAL       R6,CMNDOK,,        :FIRST GIVE USER THE CONFIRMATION MSG.
+         LHL       R1,DPORT,,         :THEN SEND THE APPROPRIATE B1 MESSAGE
+         LIS       R0,5               :... TO TYMSAT.  EXPECTS R12 TO CONTAIN
+         LHI       R2,0B1             :... THE ISIS PARAMETER NUMBER AND
+         JAL       R4,BSLOR,,         :...R11 THE ISIS PARAMETER VALUE
+         LR        R0,R12
+         JAL       R4,BPUTCH,,
+         LR        R0,R11
+         JAL       R4,BPUTCH,,
+         JAL       R4,BELOR,,
+         J         PREC1A             :NOW EXIT BY SKIP RETURN
+:
+CMNDOK   LIS       R7,0               :ROUTINE TO SEND POSITIVE CONFIRMATION
+COK1     LB        R0,ACCMSG,R7,      :...TO USER AFTER VALID PAD COMMAND
+         NHI       R0,7F              :INSURE SPACE PARITY
+         JAL       R4,PUTCH,,
+         AIS       R7,1
+         CLHI      R7,0C
+         JN        COK1
+         JAL       R4,ELODR,,         :AND TERMINATE THE OUTPUT TO RING
+         JR        R6
+:
+PRERR    LIS       R12,0              :HERE IF AN ERROR IN USER'S COMMAND
+PRERR1   LB        R0,CERMSG,R12,     :...STREAM, SEND MESSAGE AND EXIT
+         NHI       R0,7F              :INSURE SPACE PARITY
+         JAL       R4,PUTCH,,         :...FROM PAD RECALL MODE.  RESET ALL
+         AIS       R12,1              :...FLAGS.
+         CLHI      R12,15
+         JN        PRERR1
+         JAL       R4,ELODR,,         :TERMINATE RING OUTPUT
+         LIS       R12,0
+         LHL       R4,DPORT,,
+         STB       R12,PRCURS,R4,
+         RBT       R4,PRMODE,,
+         J         PREC1A             :TAKE THE SKIP RETURN
+:
+PRECHO   STB       R0,CARSAV,,        :HERE TO HANDLE POSSIBLE ECHOING OF
+         LR        R10,R10            :...CHARACTER, R10 IS THE ECHO FLAG
+         JE        PREC03             :IF NO ECHOING, THEN SPLIT
+         TBT       R4,HLFDUP,,        :HALF DUPLEX TERMINAL?
+         JN        PREC01             :YES, ONLY ECHO LF FOR CR IF OPTION SET
+         TBT       R8,DETBL,R9,       :DO WE HAVE ECHOABLE CHARACTER?
+         JE        PREC01             :NO, JUST CHECK LF FOR CR
+         JAL       R4,PUTCH,,         :ECHOABLE CHARACTER, SEND IT BACK
+:
+PREC01   LHL       R4,DPORT,,         :CHECK TO ECHO LF FOR CR
+         CLHI      R8,0D              :DID WE JUST GET C.R.?
+         JN        PREC02             :NO, MOVE OUT
+         TBT       R4,PAR3,,          :IS OPTION SET TO SEND BACK LF?
+         JE        PREC02             :NO, MOVE ON
+         JAL       R4,ELODR,,         :END ECHOED OUTPUT FOR NOW
+PREC1A   LHL       R1,DPORT,,         :AND START A NEW DATA MESSAGE
+         LR        R0,R5              :GET WHAT'S LEFT IN THE IRING MSG.
+         AHI       R0,30              :ADD A BIG SLOP FACTOR
+         LR        R2,R5
+         JAL       R4,SLOR,,          :AND START A NEW ORING MESSAGE
+         LHI       R0,0A              :SEND OUT A LINEFEED
+         JAL       R4,PUTCH,,
+PREC02   LB        R0,CARSAV,,        :GET BACK ORIGINAL CHARACTER
+PREC03   LHL       R1,DIBUF,,         :HERE FOR SKIP RETURN WITHOUT ECHO
+         L         R12,R12TMP,,
+         L         R11,R11TMP,,       :PREPARE FOR POSSIBLE ADJOURNMENT
+         L         R7,R7TEMP,,
+         L         R6,R6TEMP,,
+         SIS       R5,1               :DECREMENT COUNT LEFT IN RING
+         JE        DAT170,,           :NOTHING LEFT
+         L         R4,R4TEMP,,        :GET BACK RETURN ADDRESS
+         JR        R4
+CKPREX   L         R4,R4TEMP,,        :NORMAL RETURN IF HERE
+CKPRE2   L         R12,R12TMP,,       :RESTORE THE OTHER REGISTERS AND
+         L         R11,R11TMP,,       :...SPLIT
+         L         R7,R7TEMP,,
+         L         R6,R6TEMP,,
+         J         CNTX
+ENDPATCH(INTERACTIVE PAD SUPPORT)
+PATCH(861205,1200,JL,PA0PTR,,238+88*NDPORT+4*NDGRPS)
+BUFSAV   BS        4                   :TEMPORARY ADDRESS SAVE AREA
+BADDR    BS        4                   :BUFFER INDEX SAVE AREA
+RADDR    BS        4                     :SAVE AREA FOR RETURN ADDRESS
+R9SAVE   BS        4
+R1TMP    BS        4
+R7SAVE   BS        4
+BRKDET   BS        2*NDGRPS+4           :FLAGS BREAK CHARACTER DETECTED
+EDITON   BS        2*NDGRPS+4           :FLAGS EDITING ENABLED
+PAD15    BS        NDPORT+4             :VALUE OF PAD PARM. 15
+PAD16    BS        NDPORT+4             :PAD 16 VALUES
+PAD17    BS        NDPORT+4             :PAD 17 VALUES
+PAD18    BS        NDPORT+4             :PAD 18 VALUES
+BRKCHR   BS        NDPORT+4             :USER DEFINED BREAK KEY
+CURPTR   BS        NDPORT+4
+DPTBFR   BS        80*NDPORT+200         :INTERMEDIATE BUFFERS FOR DPORTS
+XTRA2    BS        2*NDPORT
+CONPATCH(XL1300+1A,,4)
+         J         XL1300+40
+CONPATCH(DDONE+16,,6)
+         J         CLRBFR,,
+CONPATCH(XL1500+4,,4)
+         JE        XL1800
+CONPATCH(DAT240,,6)
+         J         DAT243,,
+CONPATCH(XL1200+6,,6)
+         J         XL120A,,
+CONPATCH(L1PXB+2,,4)
+         J         4,R9                :OKAY TO READ ANY PARAMETER
+CONPATCH(L1PXC,,6)
+         J         L1PW10,,
+CONPATCH(L1PXD,,6)
+         J         L1PXD7,,
+CONPATCH(XL1130,,6)
+         J         XL1133,,
+CONPATCH(L1PXD+6,,4)
+         J         L1PXE
+CONPATCH(PA1PTR,,42C)
+CNTX     ST        R9,R9SAVE,,         :SAVE LINK NUMBER
+         ST        R4,RADDR,,          :SAVE RETURN ADDRESS AND USE R4 FOR WORK
+         ST        R7,R7SAVE,,
+         LHL       R4,DPORT,,          :DPORT NUMBER
+         STB       R0,CARSAV,,         :SAVE ORIGINAL CHAR., AND CHECK ECHO
+         LR        R10,R10             :CHECK FOR ECHOING
+         JE        CNTX03              :NO ECHOING, SPLIT
+         TBT       R4,HLFDUP,,         :HALF DUPLEX TERMINAL?
+         JN        CNTX01              :YES, JUST CHECK CR AND LF INSERTION
+         TBT       R8,DETBL,R9,        :ECHOABLE CHARACTER ON THAT LINK?
+         JE        CNTX01              :NO, CHECK CR AND LF INSERTION
+         JAL       R4,PUTCH,,          :IS ECHOABLE, ECHO IT
+CNTX01   LHL       R4,DPORT,,
+         CLHI      R8,0D               :IS IT A CR?
+         JN        CNTX02              :NO, MOVE ON
+         TBT       R4,PAR3,,           :ARE WE INSERTING LF FOR CR?
+         JE        CNTX02              :NO, MOVE ON
+         JAL       R4,ELODR,,          :END ECHOED RING OUTPUT
+         LHL       R1,DPORT,,          :START A NEW MESSAGE WITH LINEFEED
+         LR        R0,R5               :REMAINING IRING COUNT
+         AHI       R0,30               :ADD A BIG SLOP
+         LR        R2,R5
+         JAL       R4,SLOR,,
+         LHI       R0,8A               :AND SEND BACK THE LINEFEED
+         JAL       R4,PUTCH,,
+CNTX02   LB        R0,CARSAV,,         :RESTORE ORIGINAL CHARACTER TO R0
+CNTX03   LHL       R1,DIBUF,,          :AND THE DI BUFFER NUMBER
+         LHL       R4,DPORT,,
+         LHI       R7,80               :EACH DPORT BUFFER IS 128 BYTES
+         MR        R3,R7               :LOCATE THE DPORT BUFFER
+         ST        R4,BADDR,,          :SAVE THE START OF BUFFER ADDRESS
+         LHL       R9,DPORT,,          :GET DPORT AGAIN
+         LB        R7,CURPTR,R9,       :GET LOCATION OF CURSOR
+         TBT       R9,EDITON,,         :SEE IF EDITING ENABLED
+         JE        NOEDIT              :NO, DON'T DO IT
+         LB        R3,PAD16,R9,        :VALUE OF CHAR. DELETER
+         JE        TRY17               :NOT DEFINED
+         CR        R3,R8               :DO WE HAVE IT?
+         JE        BSHIT               :YES, GO TREAT AS BACKSPACE
+TRY17    LB        R3,PAD17,R9,        :TRY LINE DELETER
+         JE        TRY18               :NOT DEFINED
+         CR        R3,R8
+         JE        CXHIT               :WE HAVE IT
+TRY18    LB        R3,PAD18,R9,        :CHECK FOR LINE DISPLAYER
+         JE        TRYBRK              :MAYBE IT'S A BREAK KEY
+         CR        R3,R8
+         JE        LNDSPY
+TRYBRK   LB        R3,BRKCHR,R9,       :PICK UP USER'S BREAK CHARACTER
+         JE        NOEDIT              :UNDEFINED, THERE'S NO EDIT CHAR.
+         CR        R3,R8               :IS THAT WHAT WE HAVE?
+         JN        NOEDIT              :NO, WE DON'T HAVE AN EDIT CHAR.
+         SBT       R9,BRKDET,,         :FLAG BREAK CHARACTER SEEN
+         J         CXHIT                 :RESET CURSOR, FLUSH BUFFERED DATA
+NOEDIT   TBT       R9,PAR14,,          :IS FLOW CONTROL TURNED ON?
+         JE        NOEDC               :NO, NORMAL CODE
+         CLHI      R8,11               :FLOW CONTROL ON, DON'T FORWARD
+         JE        CURSTR              :...^S OR ^Q TO HOST
+         CLHI      R8,13
+         JE        CURSTR
+NOEDC    STB       R0,DPTBFR,R4,R7     :STORE ORIGINAL CHARACTER IN DPORT 
+         CLHI      R7,7F               :END OF DPORT BUFFER?
+         JE        CLN                 :YES, FORWARD THE DATA
+         L         R11,R7SAVE,,        :DAT FORWARDING CONDITION IN R11
+         LB        R4,XMTASC,R8,       :CHARACTER MASK
+         NR        R4,R11              :FORWARDING CHARACTER?
+         JN        CLN                 :YES, SEND OFF TO HOST
+         AIS       R7,1                :DON'T FORWARD, UPDATE CURSOR
+CURSTR   STB       R7,CURPTR,R9,       :STORE THE UPDATED CURSOR
+         L         R9,R9SAVE,,         :RECOVER LINK NUMBER
+         L         R7,R7SAVE,,         :RETRIEVE ORIGINAL R7 VALUE
+         L         R4,RADDR,,          :EITHER CONTINUE LOOPING IF STILL MORE
+         SIS       R5,1                :...IN THE IRING MSG., OR GO FINISH
+         JNR       R4                  :UP
+         J         DAT170,,            :DONE WITH RING, NO FORWARDING CHAR. YET
+CXHIT    LIS       R7,0                :HERE IF USER HITS LINE DELETE
+         LHI       R0,0D               :ECHO BACK CARRIAGE RETURN
+         JAL       R4,PUTCH,,
+         LHI       R0,0A               :AND ALSO A LINEFEED
+         JAL       R4,PUTCH,,
+         JAL       R4,ELODR,,
+         LR        R0,R5               :START UP A NEW LOGICAL OUTPUT RECORD
+         LR        R2,R5
+         AHI       R0,10
+         ST        R1,R1TMP,,
+         LHL       R1,DPORT,,
+         JAL       R4,SLOR,,
+         L         R1,R1TMP,,
+         J         CURSTR              :SET CURSOR TO ZERO
+CLN      L         R4,BADDR,,          :BUFFER INDEX BACK TO R4
+         LIS       R11,0               :HERE TO FORWARD TO HOST
+CLN1     LB        R0,DPTBFR,R4,R11    :ORIGINAL CHARACTER IN R0
+         JAL       R4,WCI,,            :SEND NEXT CHARACTER TO DI BUFFER
+         L         R4,BADDR,,          :RETRIEVE INDEX INTO DPTBFR
+         CR        R11,R7              :CHECK IF DONE
+         JE        CLN2                :YES - JUMP OUT
+         AIS       R11,1               :UPDATE INDEX INTO BUFFER
+         J         CLN1                :AND FORWARD NEXT CHARACTER
+CLN2     LIS       R6,1
+         CLHI      R7,7F               :IF FULL PACKET, SET R6 TO 0
+         JN        CLN3
+         LIS       R6,0
+CLN3     LIS       R7,0                :ZERO THE CURSOR FOR NEXT TIME
+         STB       R7,CURPTR,R9,       :STORE THE ZERO CURSOR
+         L         R9,R9SAVE,,         :RESTORE LINK NUMBER BEFORE RETURN
+         L         R7,R7SAVE,,         :RESTORE ORIGINAL R7
+         J         DAT220,,            :FINISH THE DATA PACKET
+BSHIT    LR        R7,R7               :JUST HIT BACKSPACE
+         JE        CURSTR              :IF NOTHING IN BUFFER, IGNORE
+         SIS       R7,1                :OTHERWISE BACK UP CURSOR BY 1
+         J         CURSTR              :AND KEEP GOING
+LNDSPY   JAL       R4,ELODR,,          :LINE DISPLAY, END ECHOED OUTPUT
+         LHL       R1,DPORT,,
+         LR        R0,R7               :SET UP TO ECHO THE LINE
+         AIS       R0,2                :WITH CR AND LF AT BEGINNING
+         LR        R2,R0
+         JAL       R4,SLOR,,
+         LHI       R0,8D
+         JAL       R4,PUTCH,,
+         LHI       R0,8A
+         JAL       R4,PUTCH,,
+         LIS       R2,0                :ECHO CHARACTERS IN THE USER'S BUFFER
+LDLOOP   CR        R2,R7               :...ONE AT A TIME
+         JE        LDLP1
+         L         R3,BADDR,,
+         LB        R0,DPTBFR,R3,R2
+         JAL       R4,PUTCH,,
+         AIS       R2,1
+         J         LDLOOP
+LDLP1    JAL       R4,ELOR,,           :END THE ECHOED OUTPUT
+         LR        R0,R5               :SET UP FOR MORE ECHOED OUTPUT POSSIBLE
+         AHI       R0,10
+         LR        R2,R5
+         JAL       R4,SLOR,,
+         LHL       R1,DIBUF,,          :RESTORE R1 WITH BUFFER NUMBER
+         LR        R4,R3
+         J         CURSTR
+CLRBFR   RBT       R1,RFLINT,,
+         RBT       R1,BRKDET,,
+         RBT       R1,DEM,,
+         LIS       R3,0               :CLEAR THE EDIT BUFFER AND SET THE
+         STB       R3,PAD16,R1,
+         STB       R3,PAD17,R1,
+         STB       R3,PAD18,R1,
+         LHI       R2,80              :EDIT BUFFER'S CURSOR TO ZERO
+         MHR       R2,R1
+         STB       R3,CURPTR,R1,
+         LIS       R4,0
+CLRLP    STB       R3,DPTBFR,R2,R4
+         AIS       R4,1
+         CLHI      R4,80
+         JN        CLRLP
+         J         DDONE+1E,,
+DAT243   LHL       R4,DPORT,,
+         RBT       R4,BRKDET,,         :CHECK IF BREAK WAS FOUND
+         JN        ICBRK+6,,           :YES, GO HANDLE IT
+         JAL       R9,APPBKP,,
+         J         MMFRA,,
+XL120A   TBT       R8,SETPAR,,        :ARE WE SETTING?
+         JE        XL120E             :NO, DON'T MESS WITH THIS
+         CLHI      R0,1
+         JN        XL120W             :CHECK FOR SETTING PARMS. 1,15,16,17,18
+         JAL       R4,PICKCH,,        :GET THE VALUE
+         CLHI      R0,1               :IF SETTING TO 1, STORE 10
+         JN        XL122A
+         LHI       R0,10
+XL122A   STB       R0,PADRES,R8,      :AND STORE THE NEW VALUE
+         J         XL120F
+XL120W   CLHI      R0,0F              :CHECK FOR PARM. 15
+         JN        XL120B             :NO, LOOK FOR 16,17,18
+         JAL       R4,PICKCH,,        :GET THE VALUE
+         STB       R0,PAD15,R8,       :STORE IT
+         RBT       R8,EDITON,,        :FLAG EDITING ENABLED OR DISABLED
+         LR        R0,R0
+         JE        XL120F
+         SBT       R8,EDITON,,
+         J         XL120F
+XL120B   CLHI      R0,10              :CHECK FOR PARM. 16
+         JN        XL120C
+         JAL       R4,PICKCH,,
+         STB       R0,PAD16,R8,       :GET AND STORE THE VALUE
+         J         XL120F
+XL120C   CLHI      R0,11              :CHECK FOR PARM. 17
+         JN        XL120D
+         JAL       R4,PICKCH,,        :YES, GET AND STORE THE VALUE
+         STB       R0,PAD17,R8,
+         J         XL120F
+XL120D   CLHI      R0,12              :CHECK FOR PARM. 18
+         JN        XL120E
+         JAL       R4,PICKCH,,        :YES, GET AND STORE IT
+         STB       R0,PAD18,R8,
+         J         XL120F
+XL120E   JAL       R4,PICKCH,,
+XL120F   ST        R5,XLR5,,
+         J         XL1200+0E,,
+L1PW10   LB        R0,PADPRX,R8,      :PICK UP PAD PARM. NO.
+         CLHI      R0,1               :IS IT PAD RESET (1)?
+         JN        L1PW15             :NO, CHECK OTHER POSSIBILITIES
+         LB        R1,PADRES,R8,      :PICK UP THE PARM. VALUE
+         CLHI      R1,10              :IS IT SET TO 10?  IF SO REPORT 1
+         JN        L1PW13
+         LIS       R1,1
+         J         L1PW50
+L1PW13   LR        R1,R1
+         JGE       L1PW50             :IF IT'S -1, THEN REPORT 0
+         LIS       R1,0
+         J         L1PW50
+L1PW15   CLHI      R0,0F              :CHECK FOR PARM. 15
+         JN        L1PW20             :NO, TRY 16 OR 17
+         LB        R1,PAD15,R8,       :REPORT VALUE OF 15
+         J         L1PW50
+L1PW20   CLHI      R0,10              :IS IT PARM. 16?
+         JN        L1PW30             :NO, COULD BE 17, 18, OR OTHER
+         LB        R1,PAD16,R8,       :REPORT THE VALUE
+         J         L1PW50
+L1PW30   CLHI      R0,11              :SAME FOR PARM. 17
+         JN        L1PW40
+         LB        R1,PAD17,R8,
+         J         L1PW50
+L1PW40   CLHI      R0,12              :IF NOT 18, THEN IT'S AN ERROR
+         JN        L1PXD7   
+         LB        R1,PAD18,R8,
+L1PW50   SLLS      R0,8               :SHIFT PARM. NO. OVER A NIBBLE
+         OR        R0,R1              :AND COMBINE WITH ITS VALUE
+         J         L1PXE+2,,          :RETURN
+L1PXD7   LB        R0,PADPRX,R8,      :CHECK IF PAD PARM. 19
+         CLHI      R0,13
+         JN        L1PXD+6,,
+         LB        R1,BRKCHR,R8,      :IF SO, RETURN ITS CURRENT VALUE
+         J         L1PW50
+XL1133   JAL       R4,PICKCH,,
+         ST        R5,XLR5,,
+         CLHI      R3,13              :ARE WE MESSING WITH PARM. 19
+         JN        XL1130+8,,         :NO, GO BACK
+         STB       R0,BRKCHR,R8,      :YES, SAVE THE VALUE
+         J         XL1130+8,,
+CONPATCH(DATM20+8,,6)
+         J         PA1PTR,,
+CONPATCH(PA1PTR,,0A4)
+         LB        R5,CURPTR,R8,      :DATA FORWARDING ON TIMER BASED ON
+         JE        DATM10,,           :...CONTENTS OF EDIT BUFFER, IF EDIT
+         LH        R6,DI.MT,R8,R8     :...BUFFER IS EMPTY THEN DON'T FORWARD
+         JLE       DATM10,,
+         LR        R1,R6              :DEFINED IPORT
+         SLLS      R1,2               :FORM IED BUFFER NUMBER
+         AHI       R1,IEDBIA
+         LHI       R0,ZDATA           :START A DATA PACKET
+         JAL       R4,WCI,,
+         STH       R5,RUFCNT,R8,R8    :SAVE DATA COUNT FOR ACCOUNTING
+         LIS       R0,0               :NOW PUT IN TWO-BYTE LENGTH
+         JAL       R4,WCI,,
+         LR        R0,R5
+         AIS       R0,1               :ADD 1 FOR FLAG BYTE
+         JAL       R4,WCI,,
+         LIS       R0,0               :FLAG BYTE
+         JAL       R4,WCI,,
+         STH       R8,DPORT,,
+         ST        R1,R1TMP,,
+         JAL       R4,COP1SX,,        :REPORT SEGMENT AND PACKET COUNTS
+         L         R1,R1TMP,,
+         LH        R8,DPORT,,
+         LB        R5,CURPTR,R8,      :PREPARE TO MOVE DATA TO IEDBUF
+         LHI       R4,80              :LOCATE START OF EDIT BUFFER
+         MHR       R4,R8
+         LIS       R6,0
+IDLMOV   LB        R0,DPTBFR,R4,R6    :LOOP TO MOVE CHARACTERS FROM EDIT
+         ST        R4,BUFSAV,,        :SAVE BUFFER ADDRESS
+         JAL       R4,WCI,,           :...BUFFER TO IED BUFFER
+         L         R4,BUFSAV,,        :RESTORE BUFFER ADDRESS
+         AIS       R6,1
+         CR        R6,R5
+         JN        IDLMOV
+IDL2     LIS       R6,0
+         STB       R6,CURPTR,R8,      :ZERO OUT THE INDEX 'CAUSE DATA MOVED
+         J         DATM10,,
+ENDPATCH(ADDS SUPPORT OF PARMS. 16,17,18, USER BREAK KEY TO IPAD FEATURE)
+   9 &×
