@@ -1,0 +1,689 @@
+
+SETOP - License distribution program                                 Page  1
+Introduction
+
+			    Introduction
+
+
+    The SETOP opername information is organized in a tree structure with a
+    special opername "ROOT" at its base.  All other opernames branch from
+    the ROOT.  Opernames at the base of each branch are normally designated
+    as managers (MG) and may make changes to all opernames in their branch.
+    An exception may be made for security reasons that some opernames at the
+    base of a branch are not designated as managers.  This allows a manager
+    of a large branch to subdivide the branch into smaller branches without
+    delegating managerial capabilities to the opernames at the base of each
+    smaller branch.  The information in this tree is solely to provide the
+    management structure for each of the employees entered in the database.
+
+    A second independent tree structure which contains all the license and
+    capability information is intertwined with the first tree.  This allows
+    license to be given to those employees that require license to perform
+    their jobs without granting the same license to their organizational
+    managers that do not require it.  Opernames at the base of each branch
+    in the license tree must be designated license managers with license-
+    grant (LG) capability.
+
+
+    The SETOP program allows a user with an opername on the TYMCOM-X system
+    to perform various housekeeping functions on his or her own opername.
+    Anyone with a valid opername may:
+
+     o  List information on:
+	- himself or herself
+	- any specific opername
+	- opernames managed by himself or herself
+	- opernames managed by any specific opername
+
+     o  Show license and capabilities on:
+	- himself or herself
+	- any specific opername
+
+     o  Change any unrestricted information on himself or herself including:
+	- password
+	- telephone number and inter-office mailstop
+	- internet SMTP mail address
+
+
+SETOP - License distribution program                                 Page  2
+Introduction
+
+
+    An opername that has manager capability may make changes to any opername
+    in his or her management branch, such as:
+
+     o  Change the following unrestricted information:
+	- password
+	- telephone number and inter-office mailstop
+	- internet SMTP mail address
+	- user name of employee
+	- supervisor name, telephone and inter-office mailstop
+
+     o  Transfer an opername from one manager on his or her management branch
+	to any other opername on the same branch.  (If the opername does not
+	have manager (MG) capability, then the transfer will create a branch
+	that describes an organizational structure without delegating manager
+	authority).
+
+     o  Place an opername in his or her management branch in a temporary hold
+	state which has the effect of removing license and other capabilities
+	from that opername.  (This is used to temporarily prevent an opername
+	from being used without affecting any of the information known about
+	that opername).
+
+     o  Release an opername in his or her management branch which has has
+	been placed in temporary hold, thus allowing full use of that
+	opername.
+
+
+    An opername with license-grant (LG) capability may:
+
+     o  Grant any of the accumulated license received to any valid opername
+	in the database.
+
+     o  Remove any license previous granted by this opername to any other
+	opername.  (A side-effect of removing license from an opername is to
+	remove that license from any opernames that received a grant from the
+	specified opername.  Note:  This may cause a "ripple effect" removal
+	of license.)
+	
+
+SETOP - License distribution program                                 Page  3
+Introduction
+
+
+    SETOP may be run from PDP-10 or TYMEX mode.  To run SETOP, the employee
+    types "R SETOP<CR>".  An employee must have a valid opername to run the
+    SETOP program.  If an employee does not have an opername and requires
+    one to do his or her job, then a request should be made to validations
+    to create an opername.  Send all requests to username REQUESTOP.
+
+    To run SETOP, an employee be must validated by the program as shown:
+
+	._______R SETOP
+	License manager %1(55)
+	[OPRVER Memory map verified]
+	Opername: ____________YOUROPERNAME
+	Password:                            (your password doesn't print)
+	Manager: ___________YOURMANAGER
+
+	SETOP>
+
+    The program verifies the internal structure of the database and then asks
+    for a valid opername and password.  The user has 3 tries to enter a valid
+    opername and password.  Invalid opernames and password attempts create a
+    log entry in the SETOP audit file.
+
+    After receiving a valid opername and password, SETOP indicates that it has
+    found the employee's opername record by printing the managing opername.
+    Note:  Any questions about an opername should be addressed to the employee
+    associated the managing opername.  SETOP then enters command mode which is
+    indicated by the prompt "SETOP>".
+
+
+SETOP - License distribution program                                 Page  4
+License Summary
+
+			    License Summary
+
+
+    SETOP maintains three classes of license:  Capabilities, pseudo-license
+    and frame-license.  Capabilites determine what a user may or may not do
+    while running SETOP.  Pseudo-license is used by various system utility
+    programs to determine what a user may or may not do while running each
+    of the various utility programs.  Frame-license may be set, enabled or
+    disabled on the users frame (or job) so that the operating system may
+    determine what capabilities the user has while running various programs.
+    Frame-license also controls what access a user has to user and system
+    information on each host.
+
+    Capabilities:
+
+	Name	Long Name		Description
+
+	SU	Setop utility		Perform utility functions in SETOP
+	LG	License grant		Permit granting of license to others
+	MG	Manager			Permit organizational subordinates
+
+    Pseudo Licenses
+
+	Name	Long Name		Description
+
+	VL	Validation		Allow TYMVAL/USRVAL access
+	RL	Remote license		(obsolete: never implemented)
+	SP	Spooling		Allow data center spooling
+	MT	Maintenance		Run MT programs (obsolete)
+	AP	Accounting programs	Run raw accounting (obsolete)
+	CS	Customer services	Run CS programs
+	HU	Hang user		Logout any user
+
+    Frame License:
+
+	Name	Long Name		Description
+
+	WC	Write core		Write physical memory
+	RC	Read core		Read physical memory
+	OP	Operator		Perform special operator functions
+	SY	Systat			Read system information tables
+	GD	Get devices		Assign restricted I/O devices
+	TD	Transfer devices	Transfer I/O devices to any frame
+	ST	Structures		Perform special structure functions
+	HF	Home files (WF in FPN)	Write any file in FPN directory
+	JL	Jacct-login		Perform special login functions
+	AC	Aux circuits		Build many circuits
+	XC	Modify charges		Change raw billing charges
+	QM	Queue Manager		Perform special queue functions
+	HR	Home read (RF in FPN)	Read any file from FPN directory
+	RP	Read project		Read from any directory in the same GAN
+	RF	Read files		Read from any directory on the system
+	RA	Read absolute		Read anywhere on the disk
+	WP	Write project		Write to any directory in the same GAN
+	WF	Write files		Write to any directory on the system
+	WA	Write absolute		Write anywhere on the disk
+
+
+SETOP - License distribution program                                 Page  5
+Command Summary
+
+			    Command Summary
+
+    There are multiple command levels:  Normal, License, Manager, Utility and
+    Maintenance.  The normal level is available to any employee with a valid
+    opername and password.  The license and manager levels are parallel and
+    provide the capability to manage branches of license or organization.  The
+    utility level is used by the validations department to maintain the SETOP
+    user information database.  The Maintenance level allows someone from the
+    system software group to perform program checks and other special commands.
+
+    Normal level:
+	Request   opername  Request a new opername from validations.
+	List      opername  List one or more opername entries.
+	Managed   opername  List all names managed by opername.
+	Change    opername  Change information for an opername entry.
+	Password  opername  Change the password for an opername entry.
+	Show      opername  Show license grant links for an entry.
+	Brief               Disable VERBOSE mode.
+	Verbose             Enable verbose messages when available.
+	Help or ?           Reprint this message.
+	Quit                Exit program.
+
+    License level:
+	Grant     opername  Grant license to another entry.
+	Remove    opername  Remove license from an opername entry.
+
+    Manager level:
+     *	Change    opername  Change information for an opername entry.
+     *	Password  opername  Change the password for an opername entry.
+	Transfer  oper man  Transfer opername oper to manager man.
+	Hold      opername  Put an opername entry on hold.
+	Release   opername  Release an opername from hold.
+
+    Utility level:
+	Add       opername  Create a new opername entry.
+	Cancel    opername  Remove an opername entry.
+	Imitate   opername  Assume another identity.
+	Who                 Print information about my identity.
+
+    Maintenance level:
+	Batch               Toggle batch/normal mode for data entry.
+	Debug               Allow developer to debug the program.
+	Dump      <file>    Dump the database into a flat file.
+	Index               Index text file against binary file.
+	Open      <file>    Read system file or <file> into memory.
+	Statistic opername  Show statistics for an opername entry.
+	Unlock              Unlock binary and text files after crash.
+	Verify              Verify structure and space allocation.
+	Write               Write password file to user directory.
+
+     *	The change and Password commands allow each user to change specific
+	information about their own opername.  An opername with MG may also
+	change information about other opernames in their branch.
+
+SETOP - License distribution program                                 Page  6
+Command Examples
+
+
+    Entering SETOP:
+
+	._______r setop
+
+	License manager %1(54)
+	[OPRVER Memory map verified]
+	Opername: __________newmanager
+	Password: 
+	Manager: ROOT
+
+
+    Leaving SETOP:
+
+	SETOP> ____quit
+
+
+    Listing information about an opername:
+    - Brief listing
+
+	SETOP> ____________list techops
+	TECHOPS     #999999 MG
+	            Manager: ROOT        
+
+
+    - Verbose listing
+
+	SETOP> _______verbose
+	SETOP> ____________list techops
+	TECHOPS     #999999 MG
+		    Manager: ROOT        
+	Entry date: 31-May-88 23:41:17
+	Employee:   John Q Employee
+	Address:    (213) 555-1212; ISG HQ-D21
+	Username:   ISGHQ999999
+	Mailbox:    M999999@McAuto.Tymnet
+	Supervisor: Fred R Manager
+	Department: MDNSC, Communications L243
+	Why needed: National technical operations.
+
+
+
+SETOP - License distribution program                                 Page  7
+Command Examples
+
+
+    Adding a new user to the database:
+
+	SETOP> ___add
+	New oper name:  _______techops
+	Initial password: 
+	Enter password again: 
+	Privileges (MG LG): _____mg lg
+	Oper manager:   ____root
+	Marketing Dist: _0
+	Employee Name:  _______________John Q Employee
+	Employee ISC#:  ______999999
+	Payroll center (St.Louis, Irvine, Other): _S
+	Employee Phone #: ______________(213) 555-1212
+	Employee inter-office Mail stop: __________ISG HQ-D21
+	Supervisor (name, phone, mailstop): ______________Fred R Manager
+	ISC Company & Department: __________________________MDNSC, Communications L243
+	Username(s) used by employee: ___________ISGHQ999999
+	SMTP internet mailbox: ______________M999999@MCAUTO
+	Why is license needed: ______________________________National technical operations.
+
+
+    Changing information about an opername:
+
+	SETOP> ______________change techops
+	Change: ____help
+	  ISCNumber  ISC Identification Information.
+	  OperName   Oper Name for this entry.
+	  Password   Oper password for this entry.
+	  License    Capability license.
+	  District   Marketing district number.
+	  Employee   Employee name.
+	  Telephone  Employee telephone number.
+	  Address    Employee mail stop.
+	  Mailbox    Internet SMTP mailbox.
+	  Username   Username(s) used by employee.
+	  Manager    Employee manager name, telephone, mailbox.
+	  Department Employee department.
+	  Why        Why license is needed.
+	  Help       Print this text.
+	
+	Change: _______license
+	Privileges (MG LG): __mg
+	Change: _______mailbox
+	SMTP internet mailbox: _____________________M999999@McAuto.Tymnet
+	Change: ____<CR>
+
+
+    Changing your own password:
+
+	SETOP> ________password
+	New password: 
+	Enter password again: 
+
+
+SETOP - License distribution program                                 Page  8
+Command Examples
+
+
+    Listing all opernames in the current branch:
+    (in this example, the entire tree)
+
+	SETOP> ____list
+	ROOT        #       MG LG SU
+        	    WC RC OP SY GD TD ST JL AC XC QM RA WA HU CS AP MT SP RL VL
+
+
+	TECHOPS     #999999 MG
+        	    Manager: ROOT        
+	Entry date: 31-May-88 23:41:17
+	Employee:   John Q Employee
+	Address:    (213) 555-1212; ISG HQ-D21
+	Username:   ISGHQ999999
+	Mailbox:    M999999@McAuto.Tymnet
+	Supervisor: Fred R Manager
+	Department: MDNSC, Communications L243
+	Why needed: National technical operations.
+
+	NEWMANAGER  ?943002 LG
+		    Manager: TECHOPS                 district: 4
+	Entry date: 31-May-88 23:39:37
+	Employee:   Marion A Jobber
+	Address:    (301) 555-2471; C211 GW blvd.
+	Username:   ENFE
+	Mailbox:    Marion A Jobber <MarionJ@F29.Tymnet>
+	Supervisor: Samuel N Washing
+	Department: MDNSC, NTS-QSATS
+	Why needed: Duties for QSATS on shared hosts.
+
+    Listing all opernames managed by an opername:
+
+	SETOP> ____________managed root
+	NEWMANAGER  ?943002 LG
+	            SY RF WP
+	            Manager: ROOT                    district: 4
+
+
+
+SETOP - License distribution program                                 Page  9
+Command Examples
+
+    Granting license to another opername:
+    (LG license is required)
+
+	SETOP> _____grant
+	Grant license to: _________newmanager
+	License: ________rf sy wp
+
+
+    Displaying received license:
+
+	SETOP> _______________show newmanager
+	NEWMANAGER      60  LG
+	 from ROOT         on 31-May-88
+	      SY RF WP
+
+
+    Removing license previously granted:
+
+	SETOP> ____________________remove newmanager wp
+	Removing license grants:
+	 ROOT         to NEWMANAGER   WP
+
+	SETOP> _______________show newmanager
+	NEWMANAGER      60  LG
+	 from ROOT         on 31-May-88
+	      SY RF
+
+
+    Transfering an opername to another organizational manager:
+
+	SETOP> ________transfer
+	Opername to transfer: __________newmanager
+	Manager name: ____root
+	NEWMANAGER   ==> ROOT        
+
+
+    Cancelling an opername:
+    (Note: in this example TECHOPS has no license)
+
+	SETOP> ______________cancel techops
+	Removing license grants
+	?OPRNGF No grant found for TECHOPS.
+
+
+
+SETOP - License distribution program                                 Page 10
+Initialization and rebuilding
+
+
+    When SETOP is initialized (this will only occur once) or rebuilt, the
+    database will be empty.  To allow the generation of a new database SETOP
+    has a built-in mechanism for generating the ROOT of the tree.  Once this
+    is done, the employee entries may be re-entered one at a time or by using
+    the rebuild procedure.  (See your system software support specialist for
+    information on the rebuild procedure).
+
+
+    Initializing the database:
+
+
+	._______r setop
+
+
+	License manager %1(54)
+	(SYS)DRWSPR.BIN not found.  Empty list created.
+	[OPRVER Memory map verified]
+	SETOP> 
+
+    Initial database structure:  ROOT
+
+	SETOP> ____list
+	ROOT        #       MG LG SU
+		    WC RC OP SY GD TD ST JL AC XC QM RA WA HU CS AP MT SP RL VL
+
+    Help summary at initilization:
+
+	SETOP> ____help
+
+	License manager %1(54)
+	Commands:
+	  Add       opername  Create a new opername entry.
+	  Cancel    opername  Remove an opername entry.
+	  Imitate   opername  Assume another identity.
+	  Who                 Print information about my identity.
+	  Request   opername  Request a new opername from validations.
+	  List      opername  List one or more opername entries.
+	  Managed   opername  List all names managed by opername.
+	  Change    opername  Change information for an opername entry.
+	  Password  opername  Change the password for an opername entry.
+	  Transfer  oper man  Transfer opername oper to manager man.
+	  Grant     opername  Grant license to another entry.
+	  Remove    opername  Remove license from an opername entry.
+	  Show      opername  Show license grant links for an entry.
+	  Hold      opername  Put an opername entry on hold.
+	  Release   opername  Release an opername from hold.
+	  Brief               Disable VERBOSE mode.
+	  Verbose             Enable verbose messages when available.
+	  Help or ?           Reprint this message.
+	  Quit                Exit program.
+
+
+
+SETOP - License distribution program                                 Page 11
+External Design Information
+
+
+		    External Design Information
+
+    Record Types
+
+	Employee Record		Description of authorized individual
+	Opername Record		Description of an Opername
+	License Grant Record	Description of who is giving what license
+
+	Password File Record	7 word binary format used in password file
+
+
+    The Master File
+
+	The master file is actually split into two parts.  The first part
+	(the Structure file) contains the tree structure, license, password
+	and  records in a binary record format.  The second part (the
+	Employee file) contains information about the employee in text
+	format.
+
+
+    The Structure File
+
+	The Structure file uses the first page as a status and directory map
+	for the data contained in it.
+
+	Name		|  0  File verification information
+	Format		|  1  File format version
+	Version		|  2  SETOP program version
+	Size		|  3  Size of file in pages
+	Lock		|  4  Write-lock for entire file
+	Text		|  5  Write-lock for entire text file
+	PPN		|  6  Change PPN
+	Change		|  7  Change date-time in TDT format
+	Next		|  8  Next date-time to change
+	Extra		|  9  Extra
+	WhoLock		| 10  Who (UID) has the file locked
+	WhoText		| 11  Who (UID) has the text file locked
+
+	SAT		| 12  First space allocation word
+			| **  12-511 block allocation table
+
+
+    The second and succeeding pages of the structure file contain the
+    opername and license grant record data.
+
+
+SETOP - License distribution program                                 Page 12
+Record descriptions
+
+
+    Employee Record
+
+	The employee record is a description of an authorized individual that
+	requires some particular privilege or capability that is unobtainable
+	just by having a valid username on a particular host computer system.
+	The information in this record is needed to track the person that
+	is responsible for using a particular opername.  The direct line of
+	corporate management may also found in this record.  (As such, it is
+	possible for an employee record to exist, without any status, for the
+	sole purpose of tracking an individual's manager).
+
+	Employee Number			ISG Employee Number
+	District Number			Marketing District number
+	Entry Info			Date-time of entry, who entered
+	Employee Name			Name of Employee
+	Employee Phone			Phone number, interoffice mail stop
+	Security Mail address *		SMTP mailing address
+	User Name of employee **	Assigned network username(s)
+
+
+     *  In the event of any suspected improprieties, SMTP mail will be
+	directed to this address or to the address specified in the manager's
+	record for this opername.  A message may also be sent to the address
+	designated by those individuals that have granted various licenses to
+	this employee.
+
+    **  This username will be used to identify access via the appropriate
+	network to the host systems designated herein.  In the event of
+	any suspected security breach the owner of this username will be
+	contacted as well as other appropriate security officials.
+
+	The usernames that may use this opername as designated will be
+	permitted to use this opername without question.  Any others will
+	be flagged by the stream reader and mail will be sent to the
+	appropriate parties.
+
+	Note:  The opername belongs to the specified employee.  The main
+	purpose of the username list is for those employees that use more
+	than one username in the normal process of work.
+    
+
+SETOP - License distribution program                                 Page 13
+Record descriptions
+
+
+    Opername Record
+
+	The Opername record describes completely the capabilities of each
+	opername associated with an individual.  An employee may have any
+	number of different opernames.
+
+	Oper Name			12 character oper status name
+	Password Cipher			Hashed password
+	Password Change TDT		Date and time of password change
+	Who changed password 1-12	Opername that changed the password
+	Payroll Site # and ISG #	ISG Employee info
+	Marketing district		Marketing information
+	License				Implicit license for this name
+	Grant,,Gift pointers		Link to list of grants and gifts
+	Employee info pointer		External pointer to employee info
+	Management chain pointers	Manager and subordinate pointers
+
+	A linked list of capabilities is kept with pointers to the opername
+	and the employee that granted and received the license.  This list
+	allows different licenses to be granted by different opernames and
+	merged into a single license list.
+
+
+    License Grant Record
+
+	Each license grant record describes the license that is to be passed
+	from one opername to another.  Each record is linked to all other
+	records for a particular opername and to all licenses granted by an
+	opername.  Note:  The two lists thus linked have no bearing on the
+	management structure or each other.  Thus, any opername may pass any
+	of it's license to any other opername.
+
+	For reasons of security, if any license is taken away from an
+	opername, any license grants by that opername also lose license.
+	To prevent problems when an employee leaves the company, the
+	employee's record can be marked inactive rather than cancelled
+	until all licenses passed by that opername to others can be passed
+	by some other opername (probably one taking the place of the
+	employee that is now gone).
+
+	All license grant records contain activation and removal dates.
+	If the activation date is 0, the entry date is used.  If the
+	removal date is 0, no termination is assumed.
+
+	Grantor pointer			Opername granting license
+	Receiver pointer		Opername receiving license
+	Grantor list link		Next grant by this grantor
+	Receiver list link		Next grant for this receiver
+	Activation Date			Start Date
+	Removal Date			Stop  Date
+	License value			License granted/received
+
+
+SETOP - License distribution program                                 Page 14
+Command Appendix
+
+			Command Appendix
+
+  Code  Command             Purpose
+  ----  -------             -------
+    P   Add       opername  Create a new opername entry.
+    P   Cancel    opername  Remove an opername entry.
+    P   Imitate   opername  Assume another identity.
+
+	Request   opername  Request a new opername from validations.
+	List      opername  List one or more opername entries.
+	Managed   opername  List all names managed by opername.
+    M*  Change    opername  Change information for an opername entry.
+    M   Transfer  oper man  Transfer opername oper to manager man.
+
+    G   Grant     opername  Grant license to another entry.
+    G   Remove    opername  Remove license from an opername entry.
+	Show      opername  Show license grant links for an entry.
+
+	Brief               Disable VERBOSE mode.
+	Verbose             Enable verbose messages when available.
+	Help or ?           Reprint this message.
+    I   Exit                Exit program.
+	Quit                Exit program.
+
+    I   Trace     opername  Print trace information for an entry.
+    D   Debug               Allow developer to debug the program.
+    D   Dump      <file>    Dump the database into a flat file.
+    D   Open      <file>    Read system file or <file> into memory.
+    D   Statistic opername  Show statistics for an opername entry.
+    D   Verify              Verify structure and space allocation.
+
+
+    The interpretation of the codes is as follows:
+
+    P   Privileged command, requires setop-utility (SU) license.
+    G   Restricted command, requires license-grant (LG) license.
+    M   Restricted command, requires manager (MG) license.
+    *   Not restricted for self, requires MG license for subordinates.
+    I   Invisible command, does not appear in help text.
+    D   Debugging command, must be privileged and in maintenance mode.
+
+   j…
