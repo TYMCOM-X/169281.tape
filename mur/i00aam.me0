@@ -1,0 +1,883 @@
+PROCEDURE OVERALL.REPORT
+
+% NOTE:  when the data base was designed, it was intended that the class abbreviations and titles be unique even though
+         it is not necessary for this information to be unique in order to be inserted into the class. relation.
+
+         if the inhouse systems or sites change, the sections of code depending on this information will also have to be
+         changed. %
+
+ENTIRE.PROCEDURE:
+BEGIN
+  PROCEDURE OUTPUT.HOURS.1(OUTPUT.FIELD.1)
+    BEGIN
+      PRINT (OUTPUT.FIELD.1 / 60) AS '3ZN', ':',
+            (OUTPUT.FIELD.1 MOD 60) AS '2N'
+    END
+
+  PROCEDURE OUTPUT.HOURS.2(OUTPUT.FIELD.2)
+    BEGIN
+      PRINT (OUTPUT.FIELD.2 / 60) AS '5ZN', ':',
+            (OUTPUT.FIELD.2 MOD 60) AS '2N'
+    END
+
+  FIELDS
+
+    AVAILABILITY                           AS '2ZN.NN',
+    AVG.AVAIL                              AS '2ZN.NN',
+    AVG.MTBF                               AS '7N',
+    AVG.MTBI                               AS '7N',
+    AVG.MTTR                               AS '7N',
+    AVG.REL                                AS '2ZN.NN',
+
+    CLASS.ABBREV                           AS '3C',
+    CLASS.INPUT                            AS '4C',
+    CLASS.MATCH                            AS '3C' DEFAULT 'NO',
+    CONTINUE                               AS '3C',
+
+    DATE.PERIOD                            AS 'C',
+
+    ELAPSED.TIME                           AS '4N',
+
+    HARDWARE.REPAIR.PERIODS                AS '4N',
+
+    INHOUSE.FLAG                           AS '3C' DEFAULT 'NO',
+    INTERRUPTIONS                          AS '4N',
+    INTERRUPT.TIME                         AS '7N',
+
+    MONTH.COUNT                            AS '2N.NN',
+    MTBF                                   AS '5N',
+    MTBI                                   AS '5N',
+    MTTR                                   AS '5N',
+
+    NO.THRESH.COUNT                        AS '2N',
+
+    ODD.DAYS                               AS '2N.NN',
+
+    PREVIOUS.CLASS                         AS 'N',
+    PREVIOUS.CODE                          AS '3N',
+    PREVIOUS.CODE.TYPE                     AS '3C',
+
+    REL.COUNT                              AS '3N',
+    RELIABILITY                            AS '2ZN.NN',
+    REPAIR.TIME                            AS '7N',
+    REPORT.COUNT                           AS '2N',
+    REPORT.END.DATE                        AS DATE 'MM-DD-YY',
+    REPORT.NO                              AS '2N',
+    REPORT.START.DATE                      AS DATE 'MM-DD-YY',
+
+    SCHED.TIME                             AS '7N',
+    SCHEDULED.TIME                         AS '7N',
+    SET.NO                                 AS '2N',
+    SITE.IDENT                             AS 'C',
+    SITE.INPUT                             AS '3C',
+    SITES                                  AS '10C',
+    START.MONTH                            AS '2N',
+    STEP.DATE                              AS DATE 'MM-YY',
+    SUB.SYS.COUNT                          AS '2N',
+    SUB.TOTAL.AVAIL                        AS '4N.NN',
+    SUB.TOTAL.INTERRUPTIONS                AS '4N',
+    SUB.TOTAL.INTERRUPT.TIME               AS '7N',
+    SUB.TOTAL.MTBF                         AS '7N',
+    SUB.TOTAL.MTBI                         AS '7N',
+    SUB.TOTAL.MTTR                         AS '7N',
+    SUB.TOTAL.REL                          AS '4N.NN',
+    SUB.TOTAL.SCHED.TIME                   AS '7N',
+    SUB.TOTAL.TIME.UP                      AS '7N',
+    SUB.TOTAL.TOTAL.TIME                   AS '7N',
+    SUB.TOT.UNSCH.INTERRUPTIONS            AS '4N',
+    SUB.TOT.UNSCH.INTERRUPT.TIME           AS '7N',
+    SYS.COUNT                              AS 'ZN',
+
+    TEMP.AREA                              AS '7N',
+    TEMP.DATE                              AS DATE 'MM-DD-YY',
+    TIME.UP                                AS '7N.NNNN',
+    TIME.UP.UNSCHED                        AS '7N',
+    TOTAL.AVAIL                            AS '4N.NN',
+    TOTAL.CRASHES                          AS '2ZN.N',
+    TOTAL.HARDWARE.REPAIR.PERIODS          AS '4N',
+    TOTAL.INTERRUPTIONS                    AS '4N',
+    TOTAL.INTERRUPT.TIME                   AS '7N',
+    TOTAL.MTBF                             AS '7N',
+    TOTAL.MTBI                             AS '7N',
+    TOTAL.MTTR                             AS '7N',
+    TOTAL.REL                              AS '4N.NN',
+    TOTAL.REPAIR.TIME                      AS '7N',
+    TOTAL.SCHED.TIME                       AS '7N',
+    TOTAL.SCHEDULED.TIME                   AS '7N',
+    TOTAL.TIME                             AS '7N.NNNN',
+    TOTAL.TIME.UP                          AS '7N',
+    TOTAL.TIME.UP.UNSCHED                  AS '7N',
+    TOTAL.TOTAL.TIME                       AS '7N',
+    TOTAL.UNSCHED.INTERRUPTIONS            AS '4N',
+    TOTAL.UNSCHED.INTERRUPT.TIME           AS '7N',
+    TOT.AVG                                AS 'N',
+
+    UNSCHED.INTERRUPT.TIME                 AS '7N.NNNN',
+    UNSCHEDULED.INTERRUPTIONS              AS '4N'
+
+
+  RELATION CLASS.TEMP IS
+    KEY CLASS.ABBREV
+    DATA SET.NO
+
+  RELATION NO.THRESHOLD.LIST IS
+    KEY CLASS.ABBREV
+
+  RELATION PERFORMANCE.DATA IS
+    KEY SET.NO,
+        SYSNO,
+        SYSTEM.ID
+    DATA TOTAL.TIME,
+         SCHEDULED.TIME,
+         SCHED.TIME,
+         TIME.UP,
+         INTERRUPT.TIME,
+         UNSCHED.INTERRUPT.TIME,
+         INTERRUPTIONS,
+         UNSCHEDULED.INTERRUPTIONS,
+         REPAIR.TIME,
+         HARDWARE.REPAIR.PERIODS,
+         TIME.UP.UNSCHED,
+         INHOUSE.FLAG
+
+  RELATION PERCENTAGES IS
+    KEY SYSNO,
+        SYSTEM.ID
+    DATA TOTAL.TIME,
+         SCHED.TIME,
+         TIME.UP,
+         TIME.UP.UNSCHED,
+         RELIABILITY,
+         AVAILABILITY,
+         INTERRUPTIONS,
+         UNSCHEDULED.INTERRUPTIONS
+
+  RELATION SYSTEM.TEMP IS
+    KEY SET.NO,
+        SYSNO,
+        SYSTEM.ID
+    DATA CLASS.ABBREV
+
+  CONTROLS FOR RELATIONS CONCURRENT UPDATE
+
+  REPORT TO OUTPUT.FILE
+    HEADING.SIZE 3
+    PAGE.SIZE 66
+    TOP.MARGIN 6
+    BOTTOM.MARGIN 4
+    REPORT.HEADING
+      PRINT @TAB 53, 'OVERALL SYSTEM PERFORMANCE', @TAB 28, 'Report Date ',
+            TODAY AS DATE 'MM-DD-YY', @CR, @TAB 52, 'FROM: ', REPORT.START.DATE,
+            '  TO: ', REPORT.END.DATE, @SKIP 2
+    PAGE.HEADING
+      PRINT @TAB 6, 'OVERALL SYSTEM PERFORMANCE FROM: ', REPORT.START.DATE,
+            '  TO: ', REPORT.END.DATE, ' Continued', @TAB 49, 'Page ',
+            PAGE.NUM AS 'ZN', @SKIP 2
+
+  TYPE @CR, 'IF THIS REPORT IS PRINTED DIRECTLY TO THE TERMINAL, IT IS',
+       @CR, 'NECESSARY THAT THE TERMINAL CURRENTLY HAS A LINE LENGTH',
+       @CR, 'OF AT LEAST 132 CHARACTERS.  WOULD YOU LIKE TO CONTINUE? '
+  GO:
+  BEGIN
+    ACCEPT CONTINUE
+
+    IF CONTINUE = 'Y' OR 'YE' OR 'YES'
+      THEN NOTHING
+      ELSE IF CONTINUE = 'N' OR 'NO'
+             THEN FINISH ENTIRE.PROCEDURE
+             ELSE BEGIN
+                    TYPE @CR, 'PLEASE ENTER "YES" OR "NO": '
+                    REPEAT GO
+                  END
+  END  % go %
+
+% determine the start and end dates of this report %
+
+  GET.DATES:
+  BEGIN
+    TYPE @CR, 'PLEASE ENTER THE DATE PERIOD OF THIS REPORT.  THIS ',
+         @CR, 'MONTH(T), LAST MONTH(L), OR A DATE RANGE(R): '
+    ACCEPT DATE.PERIOD
+
+    CONDITIONAL ON DATE.PERIOD
+      BEGIN
+        'T': BEGIN
+               LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+               LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+               LET REPORT.END.DATE = TODAY AS DATE 'MM-DD-YY'
+               LET ODD.DAYS = (DAY(TODAY) - DAY(REPORT.START.DATE)) + 1
+               LET MONTH.COUNT = ODD.DAYS / DAY(LAST.DAY(TEMP.DATE))
+               FINISH GET.DATES
+             END  % conditional on 't' %
+        'L': BEGIN
+               LET TEMP.DATE = TODAY AS DATE 'MM-YY'
+               SUBTRACT 1 FROM MONTH(TEMP.DATE)
+               LET REPORT.START.DATE = FIRST.DAY(TEMP.DATE)
+               LET REPORT.END.DATE = LAST.DAY(TEMP.DATE)
+               LET MONTH.COUNT = 1
+               FINISH GET.DATES
+             END  % conditional on 'l' %
+        'R': BEGIN
+  GET.RANGE:
+  BEGIN
+               TYPE @CR, 'PLEASE ENTER THE START AND END DATES OF THIS REPORT AS',
+                    @CR, '"MM-DD-YY" (SEPARATE THE ENTRIES WITH COMMAS): '
+               ACCEPT REPORT.START.DATE, REPORT.END.DATE
+
+               IF REPORT.START.DATE GT REPORT.END.DATE
+                 THEN BEGIN
+                        TYPE @CR, 'THE START DATE OF THIS REPORT IS GREATER THAN THE END DATE.'
+                        REPEAT GET.RANGE
+                      END
+               IF REPORT.END.DATE GT TODAY AS DATE 'MM-DD-YY'
+                 THEN BEGIN
+                        TYPE @CR, 'THE END DATE OF THIS REPORT CANNOT BE GREATER THAN THE CURRENT DATE.'
+                        REPEAT GET.RANGE
+                      END
+  END  % get.range %
+
+% this section of code calculates the number of months in the specified date range.  the odd days (i.e., the days that are
+  a part of a fractional month) are divided by an average of 30 days to calculate the number of months that they represent.
+  the number of months is later used to determine the number of threshold crashes for the class and date range. %
+
+               LET STEP.DATE = REPORT.START.DATE
+               LET START.MONTH = MONTH(REPORT.START.DATE)
+               LET ODD.DAYS = 0
+               LET MONTH.COUNT = 0
+
+               WHILE MONTH(STEP.DATE) LT MONTH(REPORT.END.DATE)
+                 DO BEGIN
+                      IF (MONTH(STEP.DATE) = START.MONTH) AND (DAY(REPORT.START.DATE) NE 1)
+                        THEN LET ODD.DAYS = (DAY(LAST.DAY(STEP.DATE)) - DAY(REPORT.START.DATE)) + 1
+                        ELSE ADD 1 TO MONTH.COUNT
+                      ADD 1 TO MONTH(STEP.DATE)
+                    END
+               IF MONTH(STEP.DATE) = START.MONTH
+                 THEN IF (DAY(REPORT.START.DATE) = 1) AND (REPORT.END.DATE = LAST.DAY(STEP.DATE))
+                        THEN LET MONTH.COUNT = 1
+                        ELSE BEGIN
+                               LET ODD.DAYS = (DAY(REPORT.END.DATE) - DAY(REPORT.START.DATE)) + 1
+                               LET MONTH.COUNT = ODD.DAYS / DAY(LAST.DAY(STEP.DATE))
+                             END
+                 ELSE IF REPORT.END.DATE = LAST.DAY(STEP.DATE)
+                        THEN LET MONTH.COUNT = (MONTH.COUNT + 1) + (ODD.DAYS / 30)
+                        ELSE BEGIN
+                               LET ODD.DAYS = ODD.DAYS + DAY(REPORT.END.DATE)
+                               ADD (ODD.DAYS / 30) TO MONTH.COUNT
+                             END
+
+% end of months calculation %
+
+             END  % conditional on 'r' %
+      END  % conditional on date.period %
+  END  % get.dates %
+
+% end of start and end date determination %
+
+% initialization of the temporary relations %
+
+  DELETE FROM CLASS.TEMP ALL
+  DELETE FROM NO.THRESHOLD.LIST ALL
+  DELETE FROM PERFORMANCE.DATA ALL
+  DELETE FROM PERCENTAGES ALL
+  DELETE FROM SYSTEM.TEMP ALL
+
+% end of relation initialization %
+
+% determine the class to be reported %
+
+  TYPE @CR, 'PLEASE ENTER THE SYSTEM CLASS TO BE REPORTED (FOR A LIST',
+       @CR, 'OF THE CLASS CHOICES, TYPE "HELP"): '
+  REP.GET.CLASS:
+  BEGIN
+    ACCEPT CLASS.INPUT
+
+    IF CLASS.INPUT = 'H' OR 'HE' OR 'HEL' OR 'HELP'
+      THEN BEGIN
+             TYPE @CR, 'THE CLASS CHOICES ARE:'
+             FOR EACH CLASS.
+               TYPE @CR, @TAB 5, TRIM(ABBREV)
+             TYPE @CR, @TAB 5, 'ALL',
+                  @CR, @CR, 'PLEASE ENTER THE CLASS TO BE REPORTED: '
+             REPEAT REP.GET.CLASS
+           END
+    IF CLASS.INPUT = 'ALL'
+      THEN NOTHING
+      ELSE BEGIN
+             FOR EACH CLASS. WHERE (ABBREV = CLASS.INPUT)
+               LET CLASS.MATCH = 'YES'
+             IF CLASS.MATCH = 'NO'
+               THEN BEGIN
+                      TYPE @CR, 'THERE IS NO SUCH CLASS........',
+                           @CR, 'PLEASE ENTER THE CLASS TO BE REPORTED: '
+                      REPEAT REP.GET.CLASS
+                    END
+           END
+  END  % rep.get.class %
+
+% end of class determination %
+
+% determine the site to be reported %
+
+  TYPE @CR, 'PLEASE ENTER THE SITE TO BE REPORTED.  CUPA(CPA),',
+       @CR, 'CUPC(CPC), DALLAS(DAL), FREMONT(FRE), OR',
+       @CR, 'ALL OF THESE SITES(ALL): '
+  REP.GET.SITE:
+  BEGIN
+    ACCEPT SITE.INPUT
+
+    CONDITIONAL ON SITE.INPUT
+      BEGIN
+        'CPA': LET SITES = '9'
+        'CPC': LET SITES = '0'
+        'DAL': LET SITES = '5'
+        'FRE': LET SITES = '8'
+        'ALL': LET SITES = '0589'
+      END
+      ELSE BEGIN
+             TYPE @CR, 'THIS CHOICE FOR THE SITE DOES NOT EXIST........',
+                  @CR, 'PLEASE ENTER THE SITE TO BE REPORTED: '
+             REPEAT REP.GET.SITE
+           END
+  END  % rep.get.site %
+
+% end of site determination %
+
+% select the systems that fit the date, class and site criteria specified above %
+
+  LET SYS.COUNT = 0
+  IF CLASS.INPUT = 'ALL'
+    THEN BEGIN
+           LET PREVIOUS.CLASS = 0
+           LET REPORT.COUNT = 0
+           FOR EACH SYSTEM. WHERE (START.DATE LE REPORT.END.DATE AS DATE 'MM-DD-YY' AND END.DATE GE
+                                  REPORT.START.DATE AS DATE 'MM-DD-YY') SORTED ON CLASS.ID
+             BEGIN
+               SELECT CLASS. VIA (ID = CLASS.ID)
+                 THEN BEGIN
+                        CONDITIONAL ON SITE.ID
+                          BEGIN
+                            1: LET SITE.IDENT = '1'
+                            2: LET SITE.IDENT = '2'
+                            3: LET SITE.IDENT = '3'
+                            5: LET SITE.IDENT = '5'
+                            6: LET SITE.IDENT = '6'
+                            7: LET SITE.IDENT = '7'
+                            8: LET SITE.IDENT = '8'
+			    9: LET SITE.IDENT = '9'
+			   10: LET SITE.IDENT = '0'
+                          END
+                          ELSE LET SITE.IDENT = ''
+                        IF POSITION(TRIM(SITES),SITE.IDENT) > 0
+                          THEN BEGIN
+                                 SELECT THRESHOLD. VIA (ABBREV = ABBREV OF CLASS.)
+                                   THEN BEGIN
+                                          IF CLASS.ID NE PREVIOUS.CLASS
+                                            THEN BEGIN
+                                                   LET PREVIOUS.CLASS = CLASS.ID
+                                                   ADD 1 TO REPORT.COUNT
+                                                   INSERT INTO CLASS.TEMP USING (ABBREV FOR CLASS.ABBREV,
+                                                                                REPORT.COUNT FOR SET.NO)
+                                                 END
+                                          INSERT INTO SYSTEM.TEMP USING (REPORT.COUNT FOR SET.NO,
+                                                                        ID OF SYSTEM. FOR SYSTEM.ID,
+                                                                        ABBREV FOR CLASS.ABBREV)
+                                        END  % select threshold. then %
+                                   ELSE SELECT NO.THRESHOLD.LIST VIA (CLASS.ABBREV = ABBREV OF CLASS.)
+                                          THEN NOTHING
+                                          ELSE INSERT INTO NO.THRESHOLD.LIST USING (ABBREV FOR CLASS.ABBREV)
+                               END  % if position %
+                      END  % select class. %
+             END  % for each system. %
+           IF COUNT(CLASS.) NE COUNT(CLASS.TEMP)
+             THEN BEGIN
+                    TYPE @CR, 'THERE ARE CURRENTLY NO SYSTEMS OF THE FOLLOWING CLASS(ES):'
+                    FOR EACH CLASS.
+                      SELECT CLASS.TEMP VIA (CLASS.ABBREV = ABBREV)
+                        THEN NOTHING
+                        ELSE SELECT NO.THRESHOLD.LIST VIA (CLASS.ABBREV = ABBREV)
+                               THEN NOTHING
+                               ELSE TYPE @CR, @TAB 5, TRIM(ABBREV)
+                  END
+           IF COUNT(NO.THRESHOLD.LIST) > 0
+             THEN BEGIN
+                    TYPE @CR, 'THE REPORT(S) FOR THE FOLLOWING CLASS(ES) CANNOT BE', 
+                         @CR, 'GENERATED BECAUSE THERE ARE NO THRESHOLD VALUES:'
+                    FOR EACH NO.THRESHOLD.LIST
+                      TYPE @CR, @TAB 5, TRIM(CLASS.ABBREV)
+                  END
+           IF REPORT.COUNT = 0
+             THEN FINISH ENTIRE.PROCEDURE
+         END  % if class.input = 'all' then %
+    ELSE BEGIN
+           FOR EACH CLASS. WHERE (ABBREV = CLASS.INPUT)
+             FOR EACH SYSTEM. WHERE (CLASS.ID = ID OF CLASS. AND START.DATE LE REPORT.END.DATE AS
+                                    DATE 'MM-DD-YY' AND END.DATE GE REPORT.START.DATE AS DATE 'MM-DD-YY')
+               BEGIN
+                 CONDITIONAL ON SITE.ID
+                   BEGIN
+                     1: LET SITE.IDENT = '1'
+                     2: LET SITE.IDENT = '2'
+                     3: LET SITE.IDENT = '3'
+                     5: LET SITE.IDENT = '5'
+                     6: LET SITE.IDENT = '6'
+                     7: LET SITE.IDENT = '7'
+                     8: LET SITE.IDENT = '8'
+		     9: LET SITE.IDENT = '9'
+		    10: LET SITE.IDENT = '0'
+                   END
+                   ELSE LET SITE.IDENT = ''
+                 IF POSITION(TRIM(SITES),SITE.IDENT) > 0
+                   THEN BEGIN
+                          SELECT THRESHOLD. VIA (ABBREV = CLASS.INPUT)
+                            THEN INSERT INTO SYSTEM.TEMP USING (1 FOR SET.NO,
+                                                               ID OF SYSTEM. FOR SYSTEM.ID,
+                                                               ABBREV FOR CLASS.ABBREV)
+                          ADD 1 TO SYS.COUNT
+                        END
+               END  % for each system. %
+           IF SYS.COUNT = 0
+             THEN BEGIN
+                    TYPE @CR, 'THERE ARE CURRENTLY NO SYSTEMS OF THIS CLASS AT THIS(ESE) SITE(S).'
+                    FINISH ENTIRE.PROCEDURE
+                  END
+             ELSE IF COUNT(SYSTEM.TEMP)                     THEN BEGIN
+                           TYPE @CR, 'THIS REPORT CANNOT BE GENERATED - THERE ARE NO THRESHOLD',
+                                @CR, 'VALUES FOR THIS CLASS.'
+                           FINISH ENTIRE.PROCEDURE
+                         END
+                    ELSE BEGIN
+                           LET REPORT.COUNT = 1
+                           INSERT INTO CLASS.TEMP USING (CLASS.INPUT FOR CLASS.ABBREV,
+                                                        1 FOR SET.NO)
+                         END
+         END  % if class.input = 'all' else %
+
+% end of the system selection %
+
+% evaluate and accumulate the data from the time. relation for each system to be reported %
+
+  TYPE @CR, @CR, 'PLEASE WAIT ........', @CR
+
+  FOR EACH SYSTEM.TEMP
+    BEGIN
+      LET TOTAL.TIME = 0
+      LET SCHEDULED.TIME = 0
+      LET TIME.UP = 0
+      LET INTERRUPT.TIME = 0
+      LET UNSCHED.INTERRUPT.TIME = 0
+      LET INTERRUPTIONS = 0
+      LET UNSCHEDULED.INTERRUPTIONS = 0
+      LET REPAIR.TIME = 0
+      LET HARDWARE.REPAIR.PERIODS = 0
+      LET TIME.UP.UNSCHED = 0
+      LET PREVIOUS.CODE = 0
+      LET PREVIOUS.CODE.TYPE = '   '
+      FOR EACH TIME. VIA (SYSTEM.ID = SYSTEM.ID OF SYSTEM.TEMP), WHERE (DATE. GE
+                         REPORT.START.DATE AND DATE. LE REPORT.END.DATE)
+        BEGIN
+          IF DATE. CHANGING
+            THEN ADD 1440 TO TOTAL.TIME
+          LET ELAPSED.TIME = STOP.TIME - START.TIME
+          SELECT CODE. VIA (ID = CODE.ID)
+            THEN BEGIN
+                   CONDITIONAL ON TYPE.ABBREV
+                     BEGIN
+                       'UP': BEGIN
+                               IF SCHED.FLAG = 1
+                                 THEN ADD ELAPSED.TIME TO SCHEDULED.TIME
+                                 ELSE ADD ELAPSED.TIME TO TIME.UP.UNSCHED
+                               ADD ELAPSED.TIME TO TIME.UP
+                             END  % conditional on 'up' %
+                       'SDN': BEGIN
+                                IF SCHED.FLAG = 1
+                                  THEN BEGIN
+                                         IF PREVIOUS.CODE NE ID OF CODE.
+                                           THEN IF PREVIOUS.CODE.TYPE = 'UP'
+                                                  THEN BEGIN
+                                                         ADD 1 TO INTERRUPTIONS
+                                                         ADD 1 TO UNSCHEDULED.INTERRUPTIONS
+                                                       END
+                                         ADD ELAPSED.TIME TO UNSCHED.INTERRUPT.TIME
+                                       END
+                                  ELSE IF PREVIOUS.CODE NE ID OF CODE.
+                                         THEN IF PREVIOUS.CODE.TYPE = 'UP'
+                                                THEN ADD 1 TO INTERRUPTIONS
+                                ADD ELAPSED.TIME TO INTERRUPT.TIME
+                              END  % conditional on 'sdn' %
+                       'LST': BEGIN
+                                IF SCHED.FLAG = 1
+                                  THEN BEGIN
+                                         IF PREVIOUS.CODE NE ID OF CODE.
+                                           THEN IF PREVIOUS.CODE.TYPE = 'UP'
+                                                  THEN BEGIN
+                                                         ADD 1 TO INTERRUPTIONS
+                                                         ADD 1 TO UNSCHEDULED.INTERRUPTIONS
+                                                       END
+                                         ADD ELAPSED.TIME TO UNSCHED.INTERRUPT.TIME
+                                         IF GROUP.ID OF CODE. = 5
+                                           THEN BEGIN
+                                                  ADD 1 TO HARDWARE.REPAIR.PERIODS
+                                                  ADD ELAPSED.TIME TO REPAIR.TIME
+                                                END
+                                       END
+                                  ELSE IF PREVIOUS.CODE NE ID OF CODE.
+                                         THEN IF PREVIOUS.CODE.TYPE = 'UP'
+                                                THEN ADD 1 TO INTERRUPTIONS
+                                ADD ELAPSED.TIME TO INTERRUPT.TIME
+                              END  % conditional on 'lst' %
+                      END  % conditional on type.abbrev %
+                    LET PREVIOUS.CODE = ID OF CODE.
+                    LET PREVIOUS.CODE.TYPE = TYPE.ABBREV OF CODE.
+                  END  % select code. %
+        END  % for each time. %
+      IF SYSTEM.ID = 70 OR 76
+        THEN INSERT INTO PERFORMANCE.DATA USING ('YES' FOR INHOUSE.FLAG)
+        ELSE INSERT INTO PERFORMANCE.DATA
+    END  % for each system.temp %
+
+% end of the data evaluation and accumulation %
+
+% report generation %
+
+  TYPE @CR, 'THE NUMBER OF REPORTS TO BE GENERATED BY THIS PROCEDURE = ', REPORT.COUNT, '.',
+       @CR, 'THE REPORT(S) MAY BE PRINTED TO EITHER THE TERMINAL OR TO',
+       @CR, 'A FILE(S).', @CR
+  LET REPORT.NO = 1
+    WHILE REPORT.NO LE REPORT.COUNT
+      DO FOR EACH CLASS.TEMP WHERE (SET.NO = REPORT.NO)
+           BEGIN
+
+% determine the report's destination %
+
+  GET.DESTINATION:
+  BEGIN
+             TYPE @CR, 'THIS REPORT IS FOR CLASS = ', TRIM(CLASS.ABBREV), '.'
+  REP.GET.DEST:
+  BEGIN
+             TYPE @CR, 'PLEASE ENTER THE DESTINATION OF THIS REPORT: '
+             ACCEPT OUTPUT.FILE
+
+             IF OUTPUT.FILE = 'T' OR 'TE' OR 'TER' OR 'TERM' OR 'TERMI' OR 'TERMIN' OR 'TERMINA' OR 'TERMINAL'
+               THEN BEGIN
+                      IF OUTPUT.FILE = 'T' OR 'TE'
+                        THEN LET OUTPUT.FILE = DEFAULT
+                      TYPE @CR, 'THIS REPORT WILL BE PRINTED TO THE TERMINAL.', @CR
+                      FINISH GET.DESTINATION
+                    END
+             IF SUBSTR(OUTPUT.FILE,1,1) NE '('
+               THEN IF SUBSTR(OUTPUT.FILE,1,1) GE 'A'
+                      THEN IF LENGTH(OUTPUT.FILE) LE 10
+                             THEN BEGIN
+                                    IF POSITION(OUTPUT.FILE,'.') = 0
+                                      THEN BEGIN
+                                             IF LENGTH(OUTPUT.FILE) LE 6
+                                               THEN FINISH REP.GET.DEST
+                                           END
+                                      ELSE IF POSITION(OUTPUT.FILE,'.') LE 7
+                                             THEN IF (LENGTH(OUTPUT.FILE) - POSITION(OUTPUT.FILE,'.')) LE 3
+                                                    THEN FINISH REP.GET.DEST
+                                  END
+             TYPE @CR, 'IF THE DESTINATION OF THE REPORT IS A FILE, ENTER ONLY THE',
+                  @CR, 'FILE IDENTIFIER (I.E., DO NOT INCLUDE A USER NAME).  THE',
+                  @CR, 'FILE IDENTIFIER SHOULD NOT TOTAL MORE THAN 10 CHARACTERS',
+                  @CR, '(A 6 CHARACTER FILE NAME AND AN OPTIONAL PERIOD AND',
+                  @CR, '3 CHARACTER EXTENSION) AND THE FIRST CHARACTER MUST BE',
+                  @CR, 'AN ALPHA CHARACTER FROM A-Z.'
+             REPEAT REP.GET.DEST
+  END  % rep.get.dest %
+             LET OUTPUT.FILE = '(' + TRIM(USER.NAME) + ')' + OUTPUT.FILE
+             TYPE @CR, 'THIS REPORT WILL BE PRINTED TO THE FILE ', TRIM(OUTPUT.FILE), '.', @CR
+  END  % get.destination %
+
+% end of destination determination %
+
+             WRITE REPORT
+               BEGIN
+                 LET TOTAL.TOTAL.TIME = 0
+                 LET SUB.TOTAL.TOTAL.TIME = 0
+                 LET TOTAL.SCHED.TIME = 0
+                 LET SUB.TOTAL.SCHED.TIME = 0
+                 LET TOTAL.TIME.UP = 0
+                 LET SUB.TOTAL.TIME.UP = 0
+                 LET TOTAL.INTERRUPT.TIME = 0
+                 LET SUB.TOTAL.INTERRUPT.TIME = 0
+                 LET TOTAL.UNSCHED.INTERRUPT.TIME = 0
+                 LET SUB.TOT.UNSCH.INTERRUPT.TIME = 0
+                 LET TOTAL.INTERRUPTIONS = 0
+                 LET SUB.TOTAL.INTERRUPTIONS = 0
+                 LET TOTAL.UNSCHED.INTERRUPTIONS = 0
+                 LET SUB.TOT.UNSCH.INTERRUPTIONS = 0
+                 LET TOTAL.MTBI = 0
+                 LET SUB.TOTAL.MTBI = 0
+                 LET TOTAL.MTBF = 0
+                 LET SUB.TOTAL.MTBF = 0
+                 LET TOTAL.MTTR = 0
+                 LET SUB.TOTAL.MTTR = 0
+                 LET TOTAL.REL = 0
+                 LET SUB.TOTAL.REL = 0
+                 LET TOTAL.AVAIL = 0
+                 LET SUB.TOTAL.AVAIL = 0
+                 LET SYS.COUNT = 0
+                 LET REL.COUNT = COUNT(PERFORMANCE.DATA)
+                 LET SUB.SYS.COUNT = 0
+                 PRINT @TAB 20, '------HOURS AVAILABLE------', @TAB 36, '---------MEAN ',
+                       'TIME----------', @TAB 4, '% UP DURING', @CR
+                 PRINT @TAB 9, 'SYSTEM', @TAB 26, 'ACTUAL', @TAB 3, 'INTERRUPT HOURS',
+                       @TAB 4, 'INTERRUPTS', @TAB 5, 'BETWEEN', @TAB 4, 'BETWEEN',
+                       @TAB 5, 'TO', @TAB 5, 'SCHED', @TAB 4, '24', @CR
+                 PRINT @TAB 6, 'NUMBER', @TAB 2, 'TYPE', @TAB 3, 'TOTAL', @TAB 5, 'SCHED',
+                       @TAB 5, 'TOTAL', @TAB 4, 'TOTAL', @TAB 3, 'UNSCHED', @TAB 2, 'TOTAL',
+                       @TAB 2, 'UNSCHED', @TAB 2, 'INTERRUPTS', @TAB 2, 'FAILURE', @TAB 3,
+                       'REPAIR', @TAB 3, 'HOURS', @TAB 3, 'HOURS', @CR
+                 FOR EACH PERFORMANCE.DATA VIA (SET.NO = REPORT.NO)
+                   BEGIN
+                     IF INHOUSE.FLAG = 'YES'
+                       THEN PRINT @CR, @TAB 6, '#', SYSNO, @TAB 3
+                       ELSE PRINT @CR, @TAB 7, SYSNO, @TAB 3
+
+                     PRINT CLASS.ABBREV, @TAB 3
+
+                     LET TEMP.AREA = TOTAL.TIME
+                     APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                     PRINT @TAB 3
+
+                     LET SCHED.TIME = SCHEDULED.TIME + UNSCHED.INTERRUPT.TIME
+                     APPLY OUTPUT.HOURS.1(SCHED.TIME)
+                     PRINT @TAB 3
+
+                     LET TEMP.AREA = TIME.UP
+                     APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                     PRINT @TAB 2
+
+                     LET TEMP.AREA =INTERRUPT.TIME
+                     APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                     PRINT @TAB 2
+
+                     LET TEMP.AREA = UNSCHED.INTERRUPT.TIME
+                     APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                     PRINT @TAB 2
+
+                     PRINT INTERRUPTIONS AS '3ZN', @TAB 4
+
+                     PRINT UNSCHEDULED.INTERRUPTIONS AS '3ZN', @TAB 5
+
+                     IF INTERRUPTIONS = 0
+                       THEN LET MTBI = 0
+                       ELSE LET MTBI = TIME.UP / INTERRUPTIONS
+                     APPLY OUTPUT.HOURS.1(MTBI)
+                     PRINT @TAB 4
+
+                     IF UNSCHEDULED.INTERRUPTIONS = 0
+                       THEN LET MTBF = 0
+                       ELSE LET MTBF = TIME.UP / UNSCHEDULED.INTERRUPTIONS
+                     APPLY OUTPUT.HOURS.1(MTBF)
+                     PRINT @TAB 2
+
+                     IF HARDWARE.REPAIR.PERIODS = 0
+                       THEN LET MTTR = 0
+                       ELSE LET MTTR = REPAIR.TIME / HARDWARE.REPAIR.PERIODS
+                     APPLY OUTPUT.HOURS.1(MTTR)
+                     PRINT @TAB 2
+
+                     LET TEMP.AREA = SCHED.TIME + TIME.UP.UNSCHED
+                     IF TEMP.AREA = 0
+                       THEN LET RELIABILITY = 0
+                       ELSE LET RELIABILITY = (TIME.UP / TEMP.AREA) * 100
+                     PRINT RELIABILITY, @TAB 2
+
+                     IF TOTAL.TIME = 0
+                       THEN LET AVAILABILITY = 0
+                       ELSE LET AVAILABILITY = (TIME.UP / TOTAL.TIME) * 100
+                     PRINT AVAILABILITY
+                     IF SYSTEM.ID = 70 OR 76
+                       THEN BEGIN
+                              ADD TOTAL.TIME TO SUB.TOTAL.TOTAL.TIME
+                              ADD SCHED.TIME TO SUB.TOTAL.SCHED.TIME
+                              ADD TIME.UP TO SUB.TOTAL.TIME.UP
+                              ADD INTERRUPT.TIME TO SUB.TOTAL.INTERRUPT.TIME
+                              ADD UNSCHED.INTERRUPT.TIME TO SUB.TOT.UNSCH.INTERRUPT.TIME
+                              ADD INTERRUPTIONS TO SUB.TOTAL.INTERRUPTIONS
+                              ADD UNSCHEDULED.INTERRUPTIONS TO SUB.TOT.UNSCH.INTERRUPTIONS
+                              ADD MTBI TO SUB.TOTAL.MTBI
+                              ADD MTBF TO SUB.TOTAL.MTBF
+                              ADD MTTR TO SUB.TOTAL.MTTR
+                              ADD RELIABILITY TO SUB.TOTAL.REL
+                              ADD AVAILABILITY TO SUB.TOTAL.AVAIL
+                              ADD 1 TO SUB.SYS.COUNT
+                            END  % if sysno %
+                     ADD TOTAL.TIME TO TOTAL.TOTAL.TIME
+                     ADD SCHED.TIME TO TOTAL.SCHED.TIME
+                     ADD TIME.UP TO TOTAL.TIME.UP
+                     ADD INTERRUPT.TIME TO TOTAL.INTERRUPT.TIME
+                     ADD UNSCHED.INTERRUPT.TIME TO TOTAL.UNSCHED.INTERRUPT.TIME
+                     ADD INTERRUPTIONS TO TOTAL.INTERRUPTIONS
+                     ADD UNSCHEDULED.INTERRUPTIONS TO TOTAL.UNSCHED.INTERRUPTIONS
+                     ADD MTBI TO TOTAL.MTBI
+                     ADD MTBF TO TOTAL.MTBF
+                     ADD MTTR TO TOTAL.MTTR
+                     ADD RELIABILITY TO TOTAL.REL
+                     ADD AVAILABILITY TO TOTAL.AVAIL
+                     ADD 1 TO SYS.COUNT
+                     INSERT INTO PERCENTAGES
+                     IF LINE.NUM LE 52 AND REL.COUNT EQ 1
+                       THEN NOTHING
+                       ELSE IF (LINE.NUM GT 52 AND REL.COUNT EQ 2) OR
+                               (LINE.NUM EQ 62 AND REL.COUNT GT 2)
+                              THEN BEGIN
+                                     PRINT @SKIP TO 62, @CR, @TAB 20, '------HOURS AVAILABLE------', @TAB 36,
+                                           '---------MEAN TIME----------', @TAB 4, '% UP DURING', @CR
+                                     PRINT @TAB 9, 'SYSTEM', @TAB 26, 'ACTUAL', @TAB 3, 'INTERRUPT HOURS',
+                                           @TAB 4, 'INTERRUPTS', @TAB 5, 'BETWEEN', @TAB 4, 'BETWEEN',
+                                           @TAB 5, 'TO', @TAB 5, 'SCHED', @TAB 4, '24', @CR
+                                     PRINT @TAB 6, 'NUMBER', @TAB 2, 'TYPE', @TAB 3, 'TOTAL', @TAB 5, 'SCHED',
+                                           @TAB 5, 'TOTAL', @TAB 4, 'TOTAL', @TAB 3, 'UNSCHED', @TAB 2, 'TOTAL',
+                                           @TAB 2, 'UNSCHED', @TAB 2, 'INTERRUPTS', @TAB 2, 'FAILURE', @TAB 3,
+                                           'REPAIR', @TAB 3, 'HOURS', @TAB 3, 'HOURS', @CR
+                                  END
+                     SUBTRACT 1 FROM REL.COUNT
+                   END  % for each performance.data %
+                 PRINT @SKIP 1, @TAB 6, '-----------------------------------TOTAL',
+                       '-----------------------------------', @TAB 2,
+                       '------------------AVERAGE-------------------', @SKIP 1
+                 IF SUB.SYS.COUNT = 0
+                   THEN PRINT @TAB 9, SYS.COUNT, @TAB 7
+                   ELSE BEGIN
+                          LET TOT.AVG = 1
+                          PRINT @TAB 9, SYS.COUNT, @TAB 6, '*'
+                        END
+  TOTALS.AVGS:
+  BEGIN
+                 LET TEMP.AREA = TOTAL.TOTAL.TIME
+                 APPLY OUTPUT.HOURS.2(TEMP.AREA)
+                 PRINT @TAB 1
+
+                 LET TEMP.AREA =TOTAL.SCHED.TIME
+                 APPLY OUTPUT.HOURS.2(TEMP.AREA)
+                 PRINT @TAB 1
+
+                 LET TEMP.AREA = TOTAL.TIME.UP
+                 APPLY OUTPUT.HOURS.2(TEMP.AREA)
+
+                 LET TEMP.AREA = TOTAL.INTERRUPT.TIME
+                 APPLY OUTPUT.HOURS.2(TEMP.AREA)
+                 PRINT @TAB 2
+
+                 LET TEMP.AREA = TOTAL.UNSCHED.INTERRUPT.TIME
+                 APPLY OUTPUT.HOURS.1(TEMP.AREA)
+
+                 PRINT TOTAL.INTERRUPTIONS AS '5ZN', @TAB 2
+
+                 PRINT TOTAL.UNSCHED.INTERRUPTIONS AS '5ZN', @TAB 5
+
+                 LET AVG.MTBI = TOTAL.MTBI / SYS.COUNT
+                 APPLY OUTPUT.HOURS.1(AVG.MTBI)
+                 PRINT @TAB 4
+
+                 LET AVG.MTBF = TOTAL.MTBF / SYS.COUNT
+                 APPLY OUTPUT.HOURS.1(AVG.MTBF)
+                 PRINT @TAB 2
+
+                 LET AVG.MTTR = TOTAL.MTTR / SYS.COUNT
+                 APPLY OUTPUT.HOURS.1(AVG.MTTR)
+                 PRINT @TAB 2
+
+                 LET AVG.REL = TOTAL.REL / SYS.COUNT
+                 PRINT AVG.REL, @TAB 2
+
+                 LET AVG.AVAIL = TOTAL.AVAIL / SYS.COUNT
+                 PRINT AVG.AVAIL
+                 IF TOT.AVG = 1
+                   THEN BEGIN
+                          SUBTRACT SUB.TOTAL.TOTAL.TIME FROM TOTAL.TOTAL.TIME
+                          SUBTRACT SUB.TOTAL.SCHED.TIME FROM TOTAL.SCHED.TIME
+                          SUBTRACT SUB.TOTAL.TIME.UP FROM TOTAL.TIME.UP
+                          SUBTRACT SUB.TOTAL.INTERRUPT.TIME FROM TOTAL.INTERRUPT.TIME
+                          SUBTRACT SUB.TOT.UNSCH.INTERRUPT.TIME FROM TOTAL.UNSCHED.INTERRUPT.TIME
+                          SUBTRACT SUB.TOTAL.INTERRUPTIONS FROM TOTAL.INTERRUPTIONS
+                          SUBTRACT SUB.TOT.UNSCH.INTERRUPTIONS FROM TOTAL.UNSCHED.INTERRUPTIONS
+                          SUBTRACT SUB.TOTAL.MTBI FROM TOTAL.MTBI
+                          SUBTRACT SUB.TOTAL.MTBF FROM TOTAL.MTBF
+                          SUBTRACT SUB.TOTAL.MTTR FROM TOTAL.MTTR
+                          SUBTRACT SUB.TOTAL.REL FROM TOTAL.REL
+                          SUBTRACT SUB.TOTAL.AVAIL FROM TOTAL.AVAIL
+                          SUBTRACT SUB.SYS.COUNT FROM SYS.COUNT
+                          LET TOT.AVG = 2
+                          PRINT @CR, @TAB 9, SYS.COUNT, @TAB 5, '**'
+                          REPEAT TOTALS.AVGS
+                        END  % if tot.avg %
+  END  % totals.avgs %
+                 IF SUB.SYS.COUNT NE 0
+                   THEN BEGIN
+                          PRINT @SKIP 1, @TAB 86, 'NOTE: *  ALL SYSTEMS',
+                                @CR, @TAB 92, '** LESS INHOUSE SYSTEM(S) #'
+                          PRINT @SKIP 1
+                        END
+                   ELSE PRINT @SKIP 3
+                 LET REL.COUNT = COUNT(PERCENTAGES)
+                 SELECT THRESHOLD. VIA (ABBREV = CLASS.ABBREV)
+                   THEN BEGIN
+                          LET TOTAL.CRASHES = MONTH.COUNT * UNADJSTD.CRASHES
+                          IF LINE.NUM GT 53
+                            THEN PRINT @SKIP TO 62, @CR
+                          PRINT @TAB 54, 'SYSTEMS BELOW THRESHOLD', @CR, @TAB 44,
+                                'THRESHOLD:  LESS THAN', UNADJSTD.PERCENT AS '2ZN.NN',
+                                '% RELIABILITY OR', @CR, @TAB 56, 'GREATER THAN ',
+                                TOTAL.CRASHES, ' CRASHES', @SKIP 1
+                          PRINT @CR, @TAB 43, '------HOURS AVAILABLE------', @TAB 4,
+                                '% UP DURING', @CR
+                          PRINT @TAB 32, 'SYSTEM', @TAB 26, 'ACTUAL', @TAB 3, 'SCHED',
+                                @TAB 4, '24', @TAB 6, 'INTERRUPTS', @CR
+                          PRINT @TAB 29, 'NUMBER', @TAB 2, 'TYPE', @TAB 3, 'TOTAL', @TAB 5,
+                                'SCHED', @TAB 5, 'TOTAL', @TAB 4, 'HOURS', @TAB 3, 'HOURS',
+                                @TAB 2, 'TOTAL', @TAB 2, 'UNSCHED', @CR
+                          FOR EACH PERCENTAGES
+                            BEGIN
+                              IF RELIABILITY < UNADJSTD.PERCENT OR
+                                 UNSCHEDULED.INTERRUPTIONS > TOTAL.CRASHES
+                                THEN BEGIN
+                                       PRINT @CR, @TAB 30, SYSNO, @TAB 3
+
+                                       PRINT CLASS.ABBREV, @TAB 3
+
+                                       LET TEMP.AREA = TOTAL.TIME
+                                       APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                                       PRINT @TAB 3
+
+                                       APPLY OUTPUT.HOURS.1(SCHED.TIME)
+                                       PRINT @TAB 3
+
+                                       LET TEMP.AREA = TIME.UP
+                                       APPLY OUTPUT.HOURS.1(TEMP.AREA)
+                                       PRINT @TAB 2
+
+                                       PRINT RELIABILITY, @TAB 2
+
+                                       PRINT AVAILABILITY, @TAB 2
+
+                                       PRINT INTERRUPTIONS AS '3ZN', @TAB 4
+
+                                       PRINT UNSCHEDULED.INTERRUPTIONS AS '3ZN'
+                                     END  % if reliability %
+                              IF LINE.NUM EQ 62 AND REL.COUNT GE 2
+                                THEN BEGIN
+                                       PRINT @CR, @TAB 43, '------HOURS AVAILABLE------', @TAB 4,
+                                             '% UP DURING', @CR
+                                       PRINT @TAB 32, 'SYSTEM', @TAB 26, 'ACTUAL', @TAB 3, 'SCHED',
+                                             @TAB 4, '24', @TAB 6, 'INTERRUPTS', @CR
+                                       PRINT @TAB 29, 'NUMBER', @TAB 2, 'TYPE', @TAB 3, 'TOTAL', @TAB 5,
+                                             'SCHED', @TAB 5, 'TOTAL', @TAB 4, 'HOURS', @TAB 3, 'HOURS',
+                                             @TAB 2, 'TOTAL', @TAB 2, 'UNSCHED', @CR
+                                     END
+                              SUBTRACT 1 FROM REL.COUNT
+                            END  % for each percentages %
+                        END  % select threshold. %
+                 ADD 1 TO REPORT.NO
+                 DELETE FROM PERCENTAGES ALL
+               END  % write report %
+           END  % for each class.temp %
+
+% end of report generation %
+
+END  % entire.procedure %
+     q$+
