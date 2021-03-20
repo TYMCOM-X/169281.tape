@@ -1,0 +1,61 @@
+        ENTRY   S1BYTE,S2BYTE,S3BYTE,G1BYTE,G2BYTE,G3BYTE,SUNAME
+
+S1BYTE: HRL     2,@(16)         ; get port no. and prepare for auxcal
+        HRRI    2,3
+        MOVE    1,@1(16)        ; get content of the byte to be sent
+        AUXCAL  2,1             ; send one byte
+        POPJ    17,             ; return to caller
+
+S2BYTE: MOVEI   3,2             ; set number of bytes
+        MOVE    2,@1(16)        ; get content of argument
+        LSH     24              ; left justify
+        JRST    SBYTES
+
+S3BYTE: MOVEI   3,3             ; set 3 bytes to be sent
+        MOVE    2,@1(16)        ; get content of 3 bytes
+        LSH     2,14            ; left justify
+
+SBYTES: HRL     4,@(16)         ; get port no. and put into left of AC. 4
+        HRRI    4,3             ; prepare for auxcal
+        SETZ    1,              ; clear AC 1
+        LSHC    1,10            ; get left 8-bit of AC 2 and put into AC 1
+        AUXCAL  4,1             ; send a byte (8-bit)
+        SOJG    3,.-3           ; continue if AC 3 is greater than zero
+        POPJ    17,             ; return to caller
+
+G1BYTE: HRL     2,@(16)         ; get port no. and prepare for auxcal
+        HRRI    2,0
+        SETZ    1,              ; clear AC 1
+        AUXCAL  2,1
+        JRST    .-1
+        MOVEM   1,@1(16)        ; return a byte
+        POPJ    17,
+
+G2BYTE: MOVEI   3,2             ; number of bytes is 2
+        JRST    GBYTES
+
+G3BYTE: MOVEI   3,3             ; number of bytes is 3
+
+GBYTES: HRL     2,@(16)         ; get port no. and prepare for auxcal
+        HRRI    2,0
+        SETZ    4,              ; zero result field
+        SETZ    1,
+        AUXCAL  2,1             ; get a byte
+        JRST    .-1
+        LSH     4,10            ; shift previous value
+        OR      4,1             ; include current byte
+        SOJG    3,.-5           ; do the rest
+        MOVEM   4,@1(16)        ; move result to return argument
+        POPJ    17,
+
+SUNAME: MOVE    1,1(16)         ; get address of string
+        HRLI    1,(POINT 7)     ; make byte pointer
+        HRL     2,@(16)         ; get port no. and prepare for auxcal
+        HRRI    2,3
+        MOVEI   3,14            ; number of bytes is 12
+SUNAM1: ILDB    4,1             ; get one byte
+        AUXCAL  2,4             ; send it
+        SOJG    3,SUNAM1        ; do the rest
+        POPJ    17,
+
+        END
