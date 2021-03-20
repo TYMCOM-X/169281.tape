@@ -1,0 +1,38 @@
+:********************************************************************
+: Patch name: SNDBRK.603             Product and Version: ISCS 6.03
+:     Author: JCR                           Organization: STS
+:   Customer: Public CONSATs                Date Written: 6/2/88
+: Description of Problem:  
+:
+:	This patch causes CONSAT to generate .083ms of break on
+:	output when indication of break (Isis AE) message is re-
+:	ceived. Only assembled with Outdial.
+
+	IF	OUTDIA
+	LO	CONSAT
+	LO	ISIS
+	LO	SIGNAL
+
+PATCH(880602,1600,JREILLY,SIGDIS+4,,2)
+	HC	EA(BRKSIG)		: break signal routine
+
+CONPATCH(BSPEC+14,,2)
+	 IF	NMPVC+X3ON
+	HC	0BFF			: pass break to filters
+	 ELSE
+	HC	0BFB			: pass break (but not OB)
+	 EI	:NMPVC+X3ON
+
+CONPATCH(PA1PTR,,8)
+BRKSIG	JAL	RBF,A.BRK,,		: go send break (00E5)
+	JR	RLINK			: and continue...
+
+ENDPATCH(Patch to generate break when Isis AE is received)
+
+	FO	SIGNAL
+	FO	ISIS
+	FO	CONSAT
+	EI	:OUTDIA
+
+:********************************************************************
+
