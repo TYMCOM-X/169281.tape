@@ -1,0 +1,233 @@
+   (SPL)SFTP                       Tymcom-X                        (SPL)SFTP
+
+
+   SYNOPSIS
+
+           Simple file transfer protocol slave program.
+
+   SYNTAX
+
+           R (SPL)SFTP
+
+   DESCRIPTION
+
+           Invokes  a  slave  process  to  handle  simple   file  transfers.
+           Transfers are restricted to text files.  There is no  checksum or
+           retransmission protocol to detect  or recover from errors,  it is
+           assumed this function is provided by the network.
+
+           Commands  consist  of a  four  character command  followed  by an
+           optional  argument  followed  by  end-of-line.   The  end-of-line
+           convention used to terminate commands determines  the end-of-line
+           used in data transfer.
+
+           The slave will answer with the welcome message:
+                   220 SFTP server v?? ready.
+
+           The following commands may then be sent to the slave:
+
+           HELO master-system-name
+
+                   This command is optional and merely  provides information
+                   for  file  creation and  any  logs that  may  be  kept in
+                   future.  Possible responses are:
+                           250 okay
+
+           READ filename
+
+                   This command reads a file from the slave system.   If the
+                   file is successfully opened, a response
+                           252 File data follows
+                   is sent followed by
+                           <cr><lf><file><^d><cr><lf>
+                   In the body, <file>, the character <^d> is sent twice for
+                   each real occurance  to eliminate confusion with  the end
+                   of file sequence.  The possible failure responses are:
+                           450 File being modified: file-name
+                           501 Illegal file name: file-name
+                           550 File not found: file-name
+                           550 No such user: file-name
+                           550 File protected: file-name
+                           554 File selection error code 'octal-integer
+                   Also, the non-fatal error message:
+                           211-Block mode not available
+                   may precede the 252 message in cases where the network is
+                   temporarily out of block  IO buffers.  After the  file is
+                   transfered, the final status is reported if successful:
+
+                               December 10, 1986                           1
+   (SPL)SFTP                       Tymcom-X                        (SPL)SFTP
+
+
+                           250 file-name decimal-integer chars
+                   Or if unsuccessful:
+                           451 Black ball received - data lost
+                           451 IO.DER Device error for DSK:file-name
+                           451 IO.DTE Data error for DSK:file-name
+                           552 IO.BKT Disk full or quota exceeded
+                   If  the  READ  command  is  terminated  by  <CR><LF>,  no
+                   translation occurs.  If the command is terminated by only
+                   <LF>, all  occurances of <CR><LF>  in the  file (Tymcom-X
+                   end-of-line) are translated to <LF> when sent  (Unix end-
+                   of-line).   The end  of file  mark,  <^d><CR><LF>, always
+                   contains  <CR>.  In  all cases,  SFTP will  remove PDP-10
+                   style  line  numbers  (as left  by  the  SOS  editor) and
+                   embedded and trailing nulls.
+
+           WRIT filename
+
+                   This commands accepts a  file to be written on  the slave
+                   system.  If the file is successfully opened, a response
+                           354 Start file input; end with <eot><crlf>
+                   is sent.  The master should then send the contents of the
+                   file  using the  same escape  mechanism  described above.
+                   After  the end  of file,  <^d><cr><lf>, is  received, the
+                   following message will be  sent if the file  transfer was
+                   successful:
+                           250 file-name decimal-integer chars
+                   Or if unsuccessful, one of the error messages:
+                           451 Black ball received - data lost
+                           451 IO.DER Device error for DSK:file-name
+                           451 IO.DTE Data error for DSK:file-name
+                           552 IO.BKT Disk full or quota exceeded
+                   The following errors are possible in response to the WRIT
+                   command:
+                           450 File being modified: file-name
+                           452 Disk full or quota exceeded
+                           501 Illegal file name: file-name
+                           550 File not found: file-name
+                           550 No such user: file-name
+                           550 File protected: file-name
+                           554 File selection error code 'octal-integer
+                   In addition, the  following advisory message  may precede
+                   the 354 message  in response to  the WRIT command  in the
+                   event  the  network  is unable  to  provide  a  block I/O
+                   buffer, resulting in a less efficient transfer:
+                           211-Block mode not available
+                   The following errors are possible in response to  the end
+                   of file <^d><cr><lf>:
+                           451 Black ball received - data lost
+                           451 IO.DER Device error for device DSK:
+                           451 IO.DTE Data error for device DSK:
+                           451 IO.ERR Unknown error for device DSK:
+                           552 IO.BKT Disk full or quota exceeded
+
+
+                               December 10, 1986                           2
+   (SPL)SFTP                       Tymcom-X                        (SPL)SFTP
+
+
+                   A <CR> preceding a  <LF> is optional, and if  absent will
+                   be provided by the program to meet  Tymcom-X conventions.
+                   In block mode input (if available), there will be a 15-20
+                   second delay  after sending the  end of file  mark before
+                   the system responds.
+
+           NOOP
+
+                   Response is
+                           250 okay
+
+           HELP
+
+                   Response is
+                           214-Commands implemented:
+                           214 HELO, READ file, WRIT file, NOOP, HELP, QUIT
+
+           QUIT
+
+                   Response is
+                           221 Service closing transmission channel
+                   followed by LOGOFF.
+
+           STOP
+
+                   This command is typically used for debugging.   It causes
+                   the  server  program  to  immediately  terminate  without
+                   logging out.
+
+           All  messages  from  the  SFTP  slave  will  be  terminated  with
+           <cr><lf>.  Commands and data are not echoed.
+
+           It is very important that the master program properly process any
+           error messages that may  be created.  In most cases,  this simply
+           means reporting them  to the user  and terminating.  In  order to
+           test error processing, the following otherwise illegal file names
+           may be specified with the  READ or WRIT commands to  simulate the
+           error conditions indicated:
+                   .0      file not found
+                   .1      user not found
+                   .2      file protected
+                   .3      file being modified
+                   .8      illegal file name
+                   .12     disk full or quota exceeded
+                   .17     unknown file selection error
+                   .18     unknown IO error
+                   .19     device IO error
+                   .20     data IO error
+                   .21     disk full or quota exceeded
+                   .31     black ball
+           Each of these conditions should be tested to make sure the master
+           program  responds properly.   Errors 0-17  are detected  when the
+
+
+                               December 10, 1986                           3
+   (SPL)SFTP                       Tymcom-X                        (SPL)SFTP
+
+
+           file  is  opened and  prevent  the data  transfer  from starting.
+           Errors 18-35 are detected in the process of transfering data.  In
+           a READ, these errors cause the data transfer to stop and  an EOT-
+           CR-LF sequence to  be sent followed by  the error message.   In a
+           WRIT, these errors do  not interrupt the data transfer,  but wait
+           for  the  EOT-CR-LF  to  be  received  from  the   master  before
+           outputting the error message.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               December 10, 1986                           4
+  
