@@ -1,0 +1,88 @@
+::*********************************************************************
+::
+::	SAMPLE TYMFILE - T-II NODE CODE - VERSION 05.31
+::               REVISED  5-01-88   sdw
+::			>>ISIS NODE<<
+::
+::*********************************************************************
+
+:	* MEANS PARAMETER IS SET TO DEFAULT VALUE
+
+:       HARDWARE CONFIGURATION
+ENGINE  EQ      1               : Tymnet Engine
+MICRO   EQ      2               :*microcode level (enhanced sync)
+ZITEL	EQ	1		: MAC II
+M.NCARD	EQ	1		: number of SIO mother boards
+M.DA0	EQ	$0 80		: SIO mother board 0 device address
+M.NP0	EQ	$A 4		: number of ports on mother board 0
+
+:       ISIS CONFIGURATION
+NSLOT   EQ      2               : number of slots + Node Code
+NLU     EQ      $A 12           : max logical units per slot
+ 
+:       NODE CONFIGURATION
+NETID	EQ	0		: network ID (network dependent)
+MACHNM  EQ      $8 2162         : Node number
+HST0    EQ      $A 634          : kernel host number
+TII     EQ      1               : Tymnet II
+NDP	EQ	$A 256		:*number of dispatcher ports
+NPTHR	EQ	$A 256		:*number of available passthroughs
+
+:	XRAY CONFIGURATION
+NXUBLK	EQ	$A 3		:*number of remote Xray users
+XRYTMC	EQ	0		:*0 = Network Console Xray off - Xray on
+				: 1 = Network Console Xray on  - Xray on
+				: 2 = Network Console Xray on  - Xray reduced
+
+:	OPTIONS
+	OPTION(REBLD)		: Enable rebuild option
+	OPTION(NRSH,NRSS)	:*hardware and software crash options
+
+:       NETWORK CONFIGURATION
+	TIILNK(2160)
+	TIILNK(2161)
+        TIILNK(2163)
+	TIILNK(2164)
+XLINKS  EQ      $A 4            : Number of wild card links (WSIZ 8)
+
+
+:       SLOT 0 - TYMNET-II NODE CODE
+S0CORE  EQ      $A 320          : number kilobytes of memory for slot 0
+NLUS0   EQ      $A 12		: number of logical units for slot 0
+S0L0    S.REF(0)
+S0L1    S.REF(1)
+S0L2    S.REF(2)
+S0L3    S.REF(3)
+S0L4    S.REF(4)
+S0L5    S.REF(5)
+S0L6    S.REF(6)
+S0L7	S.REF(7)
+S0L8	M.REF(0,0)
+S0L9	M.REF(0,1)
+S0L10	M.REF(0,2)
+S0L11	M.REF(0,3)
+
+:       SLOT 1 - AVAILABLE
+S1CORE  EQ      $A 300
+
+:       SLOT 2 - AVAILABLE
+S2CORE  EQ      $A 40
+
+:	SAMPLE XRAY GOODGUY LIST FOR ISIS NODE  
+:	The definition of 'XGG' is used for both ISIS and Xray Goodguy
+:	List entries.  'GG' calls are not allowed outside of the 'XGG'
+:	definition for ISIS nodes and the 'XGG' definition must always be
+:	provided even if it doesn't include any 'GG' calls.
+
+XGG	MACRO [
+
+:	ISIS ENTRIES CAN BE MADE HERE
+
+        GG(0,0,DLOAD,0,T.DLOAD) :downline load username
+	GG(2,0,TIIDEV,30)	:entry for TIIDEV
+	GG(0,0,XRAY,0)		:entry for XRAY,
+				: no privilege or overide capability
+
+:	ADDITIONAL ISIS OR XRAY 'GG' ENTRIES CAN BE MADE ANYWHERE WITHIN
+:	THE 'XGG' DEFINITION.
+]
