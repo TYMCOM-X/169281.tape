@@ -1,0 +1,102 @@
+TITLE SIXASC
+SUBTTL CONVERT SIXBIT TO ASCII
+
+comment/
+
+fortran call as follows:
+
+        CALL SIXASC(SIXARY,ASCARY,NCHRS)
+
+/
+
+        entry   sixasc,ascasc,ascsix
+
+sixasc: skipa
+        push    17,16
+        movem   0,savblk
+        move    0,[1,,savblk+1]
+        blt     0,savblk+17
+
+        movei   1,@0(16)
+        movei   2,@1(16)
+        move    3,@2(16)
+        move    4,[point 6, (1)]
+        move    5,[point 7, (2)]
+lp:
+        ildb    6,4
+        addi    6,40
+        idpb    6,5
+        sojg    3,lp
+
+gbak:   move    0,[savblk+1,,1]
+        blt     0,17
+        move    0,savblk
+        popj    17,
+
+savblk: block   20
+
+comment/
+
+fortran call as follows:
+
+        CALL ASCASC(ASCAR1,ASCAR2,NCHRS,UPCASE)
+
+If updase is not equal to zero, convert to uppercase.
+
+/
+
+ascasc: skipa
+        push    17,16
+        movem   0,savblk
+        move    0,[1,,savblk+1]
+        blt     0,savblk+17
+
+        movei   1,@0(16)
+        movei   2,@1(16)
+        move    3,@2(16)
+        move    7,@3(16)
+        move    4,[point 7,(1)]
+        move    5,[point 7,(2)]
+lp2:
+        ildb    6,4
+        skipn   6
+         movei  6," "
+        jumpe   7,c1
+        cail    6,141
+        subi    6,40
+c1:     idpb    6,5
+        sojg    3,lp2
+
+        jrst gbak
+
+comment/
+
+fortran call as follows:
+
+        CALL ASCSIX(ASCARY,SIXARY,NCHRS)
+
+/
+
+ascsix: skipa
+        push    17,16
+        movem   0,savblk
+        move    0,[1,,savblk+1]
+        blt     0,savblk+17
+
+        movei   1,@0(16)
+        movei   2,@1(16)
+        move    3,@2(16)
+        move    4,[point 7,(1)]
+        move    5,[point 6,(2)]
+
+lp3:    ildb    6,4
+        jumpe   6,c2
+        cail    6,141
+         subi   6,40
+        subi    6,40
+c2:     idpb    6,5
+        sojg    3,lp3
+
+        jrst    gbak
+
+        end
