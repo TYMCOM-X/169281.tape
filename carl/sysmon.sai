@@ -1,0 +1,729 @@
+begin "SysMON - System Monitor (Display) Hack"
+
+  require "(sailib)sail.def"   source!file;
+  require "(sailib)uuosym.def" source!file;
+  require "(sailib)vmfile.req" source!file;
+  require "(carl)daytim.req"   source!file;
+  require "sydisp.req" source!file;
+  require '1 lsh 24 lor ( "@"-"@" ) lsh 18 lor '412 version;
+
+define	MaxRow = 24;			! maximum row in screen array ;
+define	CmdRow = MaxRow;		! row to display commands ;
+define	MsgRow = MaxRow-1;		! row to display messages ;
+
+define	DpyReset  = 0;			! screen for normal display ;
+define	DpyDisk   = DpyReset + 1;	! screen for disk   display ;
+define	DpyMax    = DpyDisk;		! maximum screen count ;
+
+define Msg(x,y,text) = {Install(BP_point(7,Buffer[x,y],-1),text)};
+
+define File.Page = '776;
+
+define	PEEK(x) = { Calli( !bit(0) lor (x), calli!VPEEK ) }
+,	Gettab( idx, tbl ) = {( calli( !xwd( idx, tbl ), calli!GETTAB ) )}
+;
+
+! globals ;
+
+real
+	rds,				! blocks read ;
+	wts,				! blocks written ;
+	pgs,				! pages mapped/created ;
+	mcs,				! microcycles ;
+	rmcy,				! microcycles per second ;
+	rsec;				! jiffies/sec period ;
+
+
+boolean	DisplayIncremental,		! true if showing incremental data ;
+	StillRunning;			! true while we're still going ;
+
+integer	MyJob,				! this frame number ;
+	Row, Col,			! current row, col within buffer ;
+	BP, V, I,			! byte pointer, value, index ;
+	ThisScreen,			! which display screen ;
+	Offset, Page,			! offsets for what to display ;
+	SysSlot, SysSize,		! file slot and size for data ;
+	LineCount,			! counter for displayed lines ;
+	StartRow,			! row to start incrmental display ;
+	CmdArg,				! command argument value ;
+	SleepTime,			! seconds to sleep between scans ;
+	Phy!Memory,			! size of physical memory ;
+	Mon!Memory,			! size of monitor memory ;
+	Mon!Ports,			! maximum # ports on system ;
+	Mon!Jobs,			! maximum # jobs for system ;
+	HiJob,				! highest job in use ;
+	SerialNumber,			! serial number this cpu ;
+	CPU!Tics,			! tics used last min ;
+	CPU!TicsPerMin,			! tics per min this cpu ;
+	CPU!TicsPerSec;			! tics per second ;
+
+string  System, S;			! system name, scratch string ;
+string  CmdLine, MsgLine;		! text of cmd and msg lines ;
+string  File.Name;
+
+safe integer array Buffer[ 1:MaxRow, 1:27 ];	! screen redisplay buffer ;
+
+define DatSize = 16;
+safe integer array Data[ 1:DatSize ];	! data to be put into monitor file ;
+
+safe integer array cmp,cmph[0:1,-3:127];
+safe integer array rct,wct,pag[0:1,-3:127];
+safe integer array Blockio,CharsIn,CharsOut[0:1,-3:127];
+safe integer array JobStatus,JobCore[-3:127];
+
+
+!	Initialization support
+;
+
+simple procedure SetZone;		! set timezone to GMT ;
+begin
+    own integer Zone;
+
+    Zone_ Gettab( -1,!gtPRV );
+    dpb( '20, point( 6,Zone,7 ) );
+    calli( jp!nat lor Zone, calli!SETPRV );
+
+end;
+require SetZone initialization;
+
+
+internal simple procedure SetLog;
+begin "set log name"
+    own string Today;
+
+    Today_ TymDay( GetTDT );
+    Today_ Today[8 for 2] &
+	   ("0"&cvs( CMonth( Today[4 for 3] ) ))[inf-1 to inf] &
+	   Today[1 for 2];
+
+    File.Name_ "(SYS)"& Today &".MON";
+
+end "set log name";
+require SetLog initialization;
+
+
+simple procedure WriteFile;
+begin "write file"
+
+if ( 0 > SysSlot_ VMFile( "(SYS)SYSDAT.MON", VM$Read, 1, File.Page ) )
+ then begin
+    print( "(SYS)SYSDAT.MON not found."& crlf );
+    SysSize_ 0;
+ end
+ else begin
+    SysSize_ VMGetC( SysSlot, VM$Size ) div 5;
+    VMFree( SysSlot, CL!ACS lor CL!RST );
+ end;
+
+if ( 0 > SysSlot_ VMFile( "(SYS)SYSDAT.MON", VM$Write, 1, File.Page ) )
+ then userErr( 0,0, "Cannot write (SYS)SYSDAT.MON", "X" )
+ else begin
+
+    VMSetW( SysSlot, Data[ 1 ], SysSize );
+    SysSize_ SysSize + DatSize;
+
+ end "get entry";
+
+chnior( VMGetC( SysSlot, VM$Chan ), memory[ SysSize ], !chFTR );
+VMFree( SysSlot );
+
+end "write file";
+
+
+! Some utility routines
+;
+
+simple string procedure CVHMS( integer HMS );
+begin
+    string S;
+
+    S_ cvs( HMS div 3600 ) & ":";
+    HMS_ HMS mod 3600;
+    S_ S & ( "0" & cvs( HMS div 60 ))[inf-1 to inf] & ":";
+    HMS_ HMS mod 60;
+    S_ S & ( "0" & cvs( HMS ))[inf-1 to inf];
+    return( S );
+
+end;
+
+
+simple string procedure TMin( Integer Min );
+begin "T Min"
+    String S;
+
+    S_ Null;
+    if Min > 24*60 then begin
+	S_ S& " "& cvs(Min%(24*60))& "d";
+	Min_ Min mod (24*60);
+    end;
+    if Min > 60 then begin
+	S_ S& " "& cvs(Min%60)& "h";
+	Min_ Min mod 60;
+    end;
+    if Min
+     then S_ S& " "& cvs(Min)& "m";
+
+    return( ("          " & S)[inf-9 to inf] );
+end "T Min";
+
+! Utility routine to put a string into the buffer
+;
+
+simple integer procedure Install( integer BP; string S );
+begin "install string"
+
+    while ( length( S )) do idpb( lop( S ), BP );
+    return( BP );
+
+end "install string";
+
+! screen section display routine
+;
+
+simple procedure Section( string Str, Head( NULL ); integer AddCol( 0 ) );
+begin "section"
+
+    if ( Offset < (LineCount_ LineCount+1) leq (Offset+(MsgRow-StartRow)) )
+     then begin "print string"
+
+	Msg( Row, Col, Str );
+
+	if ( MsgRow = Row_ Row + 1 )
+	 then if ( AddCol )
+		then begin "reset coordinates"
+
+		    Col_ Col + AddCol;
+		    Row_ StartRow;
+		    LineCount_ Offset;
+
+		    if ( length( Head ) )
+		     then Msg( StartRow-1, Col, Head );
+
+		end "reset coordinates";
+
+     end "print string";
+
+end "section";
+
+! display initialization ;
+
+simple procedure InitSystem;
+begin "initialization"
+
+    CPU!TicsPerMin_ ( CPU!TicsPerSec_ Gettab( !CNJPS, !gtCNF ) ) * 60;
+
+    System_ cvstr( Gettab( 0,!gtCNF )) & cvstr( Gettab( 1,!gtCNF )) &
+	    cvstr( Gettab( 2,!gtCNF )) & cvstr( Gettab( 3,!gtCNF )) &
+	    cvstr( Gettab( 4,!gtCNF ));
+    while ( length( System ) and ( System[inf for 1] = 0 ) )
+     do System_ System[1 to inf-1];
+
+    SerialNumber_ Gettab( !CNSER, !gtCNF );
+    Mon!Jobs_     Gettab( !CNNJB, !gtCNF );
+    Mon!Ports_    Gettab( !CNPTS, !gtCNF );
+    Mon!Memory_   Gettab( !CNSIZ, !gtCNF ) div 512;
+    Phy!Memory_   Gettab( !NSMMS, !gtNSW ) div 512;
+
+    Offset_ 0;  Page_ 14;
+
+    StillRunning_ true;
+    DisplayIncremental_ false;
+    CmdArg_ 0;
+    SleepTime_ 5;
+
+    ThisScreen_ DpyReset;	! 0=normal ;
+    CmdLine_ MsgLine_ NULL;
+
+    arrClr( Blockio ); arrClr( CharsIn ); arrClr( CharsOut );
+    arrClr( cmph );    arrClr( cmp );
+    arrClr( rct );     arrClr( wct );     arrClr( pag );
+
+    ! Initialize the function code to !sdSPY (or !sdMEM) function '10 ;
+    JobCore[-3]_   JobStatus[-3]_
+    Blockio[1,-3]_ CharsIn[1,-3]_ CharsOut[1,-3]_
+    cmph[1,-3]_ cmp[1,-3]_ rct[1,-3]_ wct[1,-3]_ pag[1,-3]_
+								 '10;
+
+    ! Set the start address to the table address from !gtSLF ;
+    JobCore[-2]_   Gettab(   '100, !gtSLF );	! pages,,UPT address ;
+    JobStatus[-2]_ Gettab( !gtSTS, !gtSLF );	! job status ;
+    Blockio[1,-2]_ Gettab( !gtBIO, !gtSLF );	! block io characters ;
+    CharsIn[1,-2]_ Gettab( !gtCIN, !gtSLF );	! scnser chars in ;
+    CharsOut[1,-2]_Gettab( !gtCOT, !gtSLF );	! scnser chars out ;
+    cmph[1,-2]_    Gettab( !gtMC2, !gtSLF );	! high microcycles ;
+    cmp[1,-2]_     Gettab( !gtMC1, !gtSLF );	! low  microcycles ;
+    rct[1,-2]_     Gettab( !gtRCT, !gtSLF );	! disk block reads ;
+    wct[1,-2]_     Gettab( !gtWCT, !gtSLF );	! disk block writes ;
+    pag[1,-2]_     Gettab( !gtMPC, !gtSLF );	! pages mapped/created ;
+
+end "initialization";
+
+! Collect information for job tables
+;
+
+Simple procedure CollectJobInfo;
+begin
+    define delta = {if DisplayIncremental then};
+
+    delta arrBLT( cmph[0,0],    cmph[1,0],    128 );
+    delta arrBLT( cmp [0,0],    cmp [1,0],    128 );
+
+    delta arrBLT( blockio[0,0], blockio[1,0], 128 );
+    delta arrBLT( charsin[0,0], charsin[1,0], 128 );
+    delta arrBLT( charsout[0,0],charsout[1,0],128 );
+
+    delta arrBLT( rct [0,0],    rct [1,0],    128 );
+    delta arrBLT( wct [0,0],    wct [1,0],    128 );
+    delta arrBLT( pag [0,0],    pag [1,0],    128 );
+
+    calli( !xwd( 128+3, location(cmph[1,-3]) ),    calli!SYSDVF );
+    calli( !xwd( 128+3, location(cmp[1,-3]) ),     calli!SYSDVF );
+
+    calli( !xwd( 128+3, location(JobStatus[-3]) ), calli!SYSDVF );
+    calli( !xwd( 128+3, location(JobCore[-3]) ),   calli!SYSDVF );
+
+    calli( !xwd( 128+3, location(Blockio[1,-3]) ), calli!SYSDVF );
+    calli( !xwd( 128+3, location(CharsIn[1,-3]) ), calli!SYSDVF );
+    calli( !xwd( 128+3, location(CharsOut[1,-3]) ),calli!SYSDVF );
+
+    calli( !xwd( 128+3, location(rct[1,-3]) ),     calli!SYSDVF );
+    calli( !xwd( 128+3, location(wct[1,-3]) ),     calli!SYSDVF );
+    calli( !xwd( 128+3, location(pag[1,-3]) ),     calli!SYSDVF );
+
+end;
+
+! Install information about the system
+;
+
+simple procedure InstallSystemInfo;
+begin "install system info"
+    own safe integer array up[0:1];
+    own safe integer array lost[0:1];
+    integer W,D;
+    string S;
+
+    S_ System;
+    if ( SerialNumber )
+     then S_ S & " #" & Cvs( SerialNumber );
+
+    Up[0]_ Up[1];
+    S_ S & "  " & CVHMS( call( 0, "MSTIME" ) div 1000 )
+       & " Up " & CVHMS( (Up[1]_ Gettab(!NSUPT,!gtNSW)) div CPU!TicsPerSec );
+
+    CollectJobInfo;			! collect here so uptime works ;
+
+    getFormat( W,D );
+    rsec_ ( up[1] - up[0] ) / CPU!TicsPerSec;
+    setFormat( 10,3 );
+    S_ S & "  " & cvf( rsec );
+    Msg( 1, 1, S );
+
+    HiJob_ Gettab( !NSHJB, !gtNSW );
+    if ( HiJob = !Xwd( !NSHJB, !gtNSW ) )
+     then HiJob_ Mon!Jobs;
+
+    rmcy_ (cmph[1,0]*2.0^35) + cmp[1,0] - (cmph[0,0]*2.0^35) - cmp[0,0];
+    setFormat( 11,0 );
+    v_ (rmcy * 100.0) / (rsec * 400000.0);
+    S_ ("  "&cvs(v))[inf-2 to inf]& "% "&
+       "Mcy/sec" & ("           "&cvf( rmcy/rsec ))[inf-12 to inf-1];
+    setFormat( W,D );
+    Msg( 1, 12, S );
+    
+
+! ** Line 2 ** ;
+! Memory size ;
+
+    S_ Cvs( Phy!Memory ) & " pages, Sys(" & Cvs( Mon!Memory ) &
+	") User(" & Cvs( Phy!Memory - Mon!Memory ) & ")";
+    Msg( 2, 1, S );
+
+! Ports ;
+!    S_ S & "  " & Cvs( Mon!Ports ) & " ports";
+
+    Msg( 2, 11, S );
+
+! Jobs ;
+
+    V_ 0;
+    For I_ 1 step 1 until Mon!Jobs
+     do if ( Gettab( I, !gtSTS ) land jb!jna )	! JNA ;
+	 then V_ V + 1;
+
+    S_ "Frames: " & Cvs( V ) & ":" & Cvs( Mon!Jobs );
+    Msg( 2, 8, S );
+
+! CPU info ;
+
+    CPU!Tics_ CPU!TicsPerMin - Gettab( !NSNMN, !gtNSW );
+    V_ ( CPU!Tics * 100 ) div CPU!TicsPerMin;
+    S_ "CPU " & ("  "&cvs(V))[inf-2 to inf] & "% ";
+    V_ (CPU!Tics * 10) div CPU!TicsPerMin;
+    S_ S & ("::::::::::"[1 for V] & "..........")[1 for 10];
+    Msg( 2, 13, S );
+
+  end "install system info";
+
+! Install information about selected jobs
+;
+
+simple procedure DisplayData;
+begin "display job info"
+    integer Job, AllJob, AllCore;    string S;
+    integer W, D;
+
+    StartRow_ Row_ 4;  Col_ 1;
+
+    LineCount_ AllJob_ AllCore_ 0;
+
+    for Job_ 1 upto HiJob
+     do begin "each job slot"
+
+	if not( JobStatus[Job] land jb!jna )	! jna = 0 ? ;
+	 then continue "each job slot";
+
+	AllJob_ AllJob + 1;
+	AllCore_ AllCore + !lh(JobCore[Job]) land '777;
+
+	S_ ("   "&cvs(Job)&" ")[inf-3 for 4];
+	S_ S &("            "& cvos(JobStatus[Job]))[inf-11 to inf]&" ";
+
+	! size in pages.  (uses incorrectly documented gettab) ;
+	S_ S & ("   "&cvs(!lh(JobCore[Job]) land '777))[inf-3 for 3];
+
+	getFormat( W,D );		! save format for below ;
+	if ( DisplayIncremental )
+	 then begin "show incremental"
+
+	    setFormat( 12,1 );
+	    mcs_ (cmph[1,Job]*2.0^35)+cmp[1,Job]-(cmph[0,Job]*2.0^35)-cmp[0,Job];
+	    v_ (mcs * 100.0) / (rsec * 400000.0);	! percentage of cpu this cycle ;
+	    mcs_ 0 max ( mcs/rsec );
+	    S_ S & ("         "&cvf(mcs))[inf-9 to inf]
+	       & (if v then ("   "&cvs(v))[inf-3 to inf] &"%" else "     ");
+
+	    setFormat( 5,0 );
+	    v_ 0 max (CharsIn[1,Job] - CharsIn[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+	    v_ 0 max (CharsOut[1,Job] - CharsOut[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+	    v_ 0 max (Blockio[1,Job] - Blockio[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+
+	    setFormat( 5,1 );
+	    v_ 0 max (rct[1,Job] - rct[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+	    v_ 0 max (wct[1,Job] - wct[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+	    v_ 0 max (pag[1,Job] - pag[0,Job]);
+	    S_ S&("    "&cvs(v))[inf-4 to inf];
+
+	 end "show incremental"
+	 else begin "show it all"
+
+	    setFormat( 10,0 );
+	    mcs_ (cmph[1,Job]*2.0^35)+cmp[1,Job];
+	    S_ S & ("         "&cvf(mcs))[inf-10 to inf-1];
+
+	    S_ S&("        "&cvs(CharsIn[1,Job]))[inf-9 to inf];
+	    S_ S&("        "&cvs(CharsOut[1,Job]))[inf-9 to inf];
+	    S_ S&("        "&cvs(Blockio[1,Job]))[inf-9 to inf];
+
+	 end "show it all";
+	setFormat( W,D );
+
+	Section( S );			! display the job info ;
+
+      end "each job slot";
+
+    if ( AllJob )
+     then begin "print job totals"
+
+	S_ "Users: " & (Cvs(AllJob) & "    ")[1 for 4] &
+	   "Pages: " & (Cvs(AllCore) & "      ")[1 for 6];
+
+	If ( DisplayIncremental )
+	 then begin "show incremental"
+	    getFormat( W,D );
+
+	    v_ 0 max (CharsIn[1,0]-CharsIn[0,0]);  S_ S&("        "&cvs(v))[inf-8 to inf];
+	    v_ 0 max (CharsOut[1,0]-CharsOut[0,0]);S_ S&("        "&cvs(v))[inf-8 to inf];
+	    v_ 0 max (Blockio[1,0]-Blockio[0,0]);  S_ S&("        "&cvs(v))[inf-8 to inf];
+
+	    setFormat( 8,1 );
+	    v_ 0 max (rct[1,0]-rct[0,0]); S_ S&("        "&cvs(v))[inf-8 to inf];
+	    v_ 0 max (wct[1,0]-wct[0,0]); S_ S&("        "&cvs(v))[inf-8 to inf];
+	    v_ 0 max (pag[1,0]-pag[0,0]); S_ S&("        "&cvs(v))[inf-8 to inf];
+
+	    setFormat( W,D );
+	 end "show incremental"
+	 else begin "show it all"
+
+	    S_ S&("        "&cvs(CharsIn[1,0]))[inf-8 to inf];
+	    S_ S&("        "&cvs(CharsOut[1,0]))[inf-8 to inf];
+	    S_ S&("        "&cvs(Blockio[1,0]))[inf-8 to inf];
+
+	    S_ S&("        "&cvs(rct[1,0]))[inf-8 to inf];
+	    S_ S&("        "&cvs(wct[1,0]))[inf-8 to inf];
+	    S_ S&("        "&cvs(pag[1,0]))[inf-8 to inf];
+
+	 end "show it all";
+
+	Msg( MsgRow, 1, S );
+
+     end "print job totals";
+    
+end "display job info";
+
+! Install disk info
+;
+
+simple procedure DisplayDisk;
+begin "install disk info"
+    define UNINAM =  '0, UNILOG =  '1;
+    define UNIBRC = '16, UNIBWC = '17, UNIDRC = '20, UNIDWC = '21,
+	   UNIMRC = '22, UNIMWC = '23, UNIICT = '25, UNIOCT = '26,
+	   UNIPPU = '41, UNICHR = '42, UNITAL = '47;
+    define BRC = 1, BWC = 2, DRC = 3, DWC = 4, MRC = 5, MWC = 6,
+	   ICT = 7, OCT = 8, RDS = 9, WTS =10;
+
+    own safe integer array Unit[ -3:UNITAL ];
+    own safe integer array Units[ 0:63, 1:10 ];
+    integer Drive, Free, Pages, URead, UWrite, MRead, MWrite, PRead, PWrite;
+    string S, Head;
+
+    LineCount_ Drive_ 0;  StartRow_ Row_ 5;  Col_ 1;
+
+    Msg( 3, Col,       "                              User             Monitor              Paging" );
+    Msg( 4, Col, Head_ "Disk      Free  Full     Reads   Writes    Reads   Writes      Reads     Writes" );
+
+    Unit[-3]_ !bit(0) lor !sdUNI;	! function to read UDB ;
+    Unit[-2]_ 0;			! start at the beginning ;
+
+    Free_ Pages_ URead_ UWrite_ MRead_ MWrite_ PRead_ PWrite_ 0;
+    while ( true )
+     do begin "every unit";
+
+	calli( !xwd( UNITAL+1+3, location(Unit[-3]) ), calli!SYSDVF );
+
+	if ( Unit[-2] = 0 )
+	 then done;
+
+	Free_   Free   + Unit[UNITAL];
+	Pages_  Pages  + Unit[UNIPPU];
+
+	V_ (( Unit[UNIPPU] - Unit[UNITAL] ) * 100  ) div Unit[UNIPPU];
+	S_  cvxstr( Unit[UNILOG] )[1 for 6] &
+	     ( "        " & cvs( Unit[UNITAL] ))[ inf-7 to inf ] &
+	     ( "    "&cvs( V ) )[inf-4 to inf] & "%";
+
+	if ( DisplayIncremental )
+	 then begin
+	    S_ S &
+		 ("           "&cvs( (Unit[UNIBRC]-Units[Drive,BRC])+(Unit[UNIDRC]-Units[Drive,DRC]) ))[ inf-9 to inf ] &
+		 ("          "& cvs( (Unit[UNIBWC]-Units[Drive,BWC])+(Unit[UNIDWC]-Units[Drive,DWC]) ))[ inf-8 to inf ] &
+		 ("          "&cvs( Unit[UNIMRC]-Units[Drive,MRC] ))[ inf-8 to inf ] &
+		 ("          "&cvs( Unit[UNIMWC]-Units[Drive,MWC] ))[ inf-8 to inf ] &
+		 ("              "&cvs( Unit[UNIICT]-Units[Drive,ICT] ))[ inf-10 to inf ] &
+ 		 ("              "&cvs( Unit[UNIOCT]-Units[Drive,OCT] ))[ inf-10 to inf ];
+
+	    URead_  URead  + (Unit[UNIBRC]-Units[Drive,BRC]) + (Unit[UNIDRC]-Units[Drive,DRC]);
+	    UWrite_ UWrite + (Unit[UNIBWC]-Units[Drive,BWC]) + (Unit[UNIDWC]-Units[Drive,DWC]);
+	    MRead_  MRead  + (Unit[UNIMRC]-Units[Drive,MRC]);
+	    MWrite_ MWrite + (Unit[UNIMWC]-Units[Drive,MWC]);
+	    PRead_  PRead  + (Unit[UNIICT]-Units[Drive,ICT]);
+	    PWrite_ PWrite + (Unit[UNIOCT]-Units[Drive,OCT]);
+	    Units[Drive,BRC]_ Unit[UNIBRC];
+	    Units[Drive,DRC]_ Unit[UNIDRC];
+	    Units[Drive,BWC]_ Unit[UNIBWC];
+	    Units[Drive,DWC]_ Unit[UNIDWC];
+	    Units[Drive,MRC]_ Unit[UNIMRC];
+	    Units[Drive,MWC]_ Unit[UNIMWC];
+	    Units[Drive,ICT]_ Unit[UNIICT];
+	    Units[Drive,OCT]_ Unit[UNIOCT];
+	 end
+	 else begin
+	    S_ S &
+		 ( "           "&cvs( Unit[UNIBRC]+Unit[UNIDRC] ))[ inf-9 to inf ] &
+		 ( "          "& cvs( Unit[UNIBWC]+Unit[UNIDWC] ))[ inf-8 to inf ] &
+		 ( "          "&cvs( Unit[UNIMRC] ))[ inf-8 to inf ] &
+		 ( "          "&cvs( Unit[UNIMWC] ))[ inf-8 to inf ] &
+		 ( "              "&cvs( Unit[UNIICT] ))[ inf-10 to inf ] &
+		 ( "              "&cvs( Unit[UNIOCT] ))[ inf-10 to inf ];
+
+	    URead_  URead  + Unit[UNIBRC]+Unit[UNIDRC];
+	    UWrite_ UWrite + Unit[UNIBWC]+Unit[UNIDWC];
+	    MRead_  MRead  + Unit[UNIMRC];
+	    MWrite_ MWrite + Unit[UNIMWC];
+	    PRead_  PRead  + Unit[UNIICT];
+	    PWrite_ PWrite + Unit[UNIOCT];
+	 end;
+	Section( S );		! old = "Section( S, Head, 5 )" ;
+
+	Drive_ Drive + 1;	! increment drive for storage array ;
+
+      end "every unit";
+
+    V_ ((Pages-Free) * 100) div Pages;	! calculate overall percentage ;
+    MsgLine_ "Total " &
+	 ( "        " & cvs( Free ))[ inf-7 to inf ] &
+	 ( "    "&cvs( V ) )[inf-4 to inf] & "%" &
+	 ( "           "&cvs( URead  ))[ inf-9 to inf ] &
+	 ( "          "& cvs( UWrite ))[ inf-8 to inf ] &
+	 ( "          "& cvs( MRead  ))[ inf-8 to inf ] &
+	 ( "          "& cvs( MWrite ))[ inf-8 to inf ] &
+	 ( "              "&cvs( PRead  ))[ inf-10 to inf ] &
+	 ( "              "&cvs( PWrite ))[ inf-10 to inf ];
+
+    S_  ( "            " & cvs( URead  + MRead  + PRead  ) )[inf-12 to inf] &
+	( "            " & cvs( UWrite + MWrite + PWrite ) )[inf-1inf];
+    Msg( 3, 1, S );
+
+end "install disk info";
+
+! Fill the buffer with text to be displayed
+;
+
+procedure SetupBuffer;
+  begin "setup buffer"
+    integer BP;
+
+    arrclr( Buffer, cvasc("     ") );	! fill in the display ;
+
+    Row_ 1;  Col_ 1;	InstallSystemInfo;
+
+    Case ( ThisScreen )
+     of begin "do right screen"
+	[DpyReset]  DisplayData;
+	[DpyDisk]   DisplayDisk;
+	[Else]      begin
+		    end
+     end "do right screen";
+
+    Install( BP_ point( 7, Buffer[MsgRow,1], -1 ), MsgLine );
+    Install( BP_ point( 7, Buffer[CmdRow,1], -1 ), CmdLine );
+    
+  end "setup buffer";
+
+! Command Scanner
+;
+
+procedure CommandScan;
+begin "command scan"
+  integer C;
+
+  while ( T!ChrP )
+   do begin "get a character"
+
+    C_ T!GetC;
+
+    Case ( C )
+     of begin "each character"
+
+	[" "]
+	    begin end;
+
+	["C"-'100]["Z"-'100] ["Q"]["q"]
+	    StillRunning_ false;
+	[#CR][#Esc] begin
+		MsgLine_ Null;
+		CmdArg_ 0;
+	     end;
+	[#FF] begin
+		arrclr( Buffer, cvasc("     ") );
+		R!Disp( Buffer, true, 1, 1 );
+	     end;
+	["G"-'100]
+	    Offset_ 0;
+
+	["V"-'100] ["+"]
+	    Offset_ Offset + Page;
+	["W"-'100] ["-"]
+	    Offset_ (Offset - Page) Max 0;
+
+
+	["0"]["1"]["2"]["3"]["4"]["5"]["6"]["7"]["8"]["9"]
+	    CmdArg_ (CmdArg * 10) + (C - "0");
+	["H"-'100]['177]
+	    CmdArg_ CmdArg div 10;
+
+	["D"]["d"] begin
+		ThisScreen_ DpyDisk;
+		Offset_ 0;
+	     end;
+	["I"]["i"]
+	    DisplayIncremental_ not DisplayIncremental;
+	["L"]["l"] begin
+		Page_ CmdArg Min 18;
+		CmdArg_ 0;
+	     end;
+	["R"]["r"] begin
+		ThisScreen_ DpyReset;
+		Offset_ 0;
+	     end;
+	["S"]["s"] begin
+		SleepTime_ CmdArg;
+		CmdArg_ 0;
+	     end;
+
+	[else] begin
+		T!Bell;
+		CmdArg_ 0;
+	     end
+
+	end "each character";
+
+     end "get a character";
+
+    if ( CmdArg )
+     then CmdLine_ "Arg: " & Cvs( CmdArg )
+     else CmdLine_ NULL;
+
+  end "command scan";
+
+! Routine to sleep for the specifed amount of time or until a
+! break character arrives
+;
+
+procedure Snooze;
+  begin
+
+    if ( SleepTime ) then
+      calli( !xwd( '31, SleepTime ), '72 );	! hiber ;
+
+  end;
+! Top level logic
+;
+
+    if ( not( Gettab( -1, !gtLIC ) land LC!SY ))
+     then usererr( 0,0,"Requires SY", "x" );
+
+    InitSystem;
+
+    T!Init;
+    R!Init;
+
+    while ( StillRunning )
+     do begin "main loop"
+
+	if ( T!ChrP )
+	 then begin
+	    CommandScan;
+	    continue;
+	 end
+	 else Snooze;
+
+	if ( T!ChrP ) 
+	 then continue;
+
+	SetupBuffer;
+	R!Disp( Buffer, true, 1, 1 );
+
+    end "main loop";
+
+  T!Fini;
+
+  call(0,"EXIT");
+    
+end "SysMON - System Monitor (Display) Hack";
+    x <S
