@@ -1,0 +1,3172 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+                           NETWORK PROFILE DATABASE
+
+
+                                 User's Guide
+
+
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              TYMNET OPERATIONS
+
+              ~~~~~~~~~~Database Administration Group~~~~~~~~~~
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+                                 MARCH, 1984
+                                                                   Page 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                           PROGRAM SPECIFICATIONS:
+
+
+
+
+                Program Title    : Network Profile Database
+        
+                Host system      : 56  (Back up system 54)
+ 
+                Developed by     : George Beidler and Jim Daulton
+ 
+                Release          : Version 3-0 * March, 1984
+ 
+                Documentation by : Diane Corner
+ 
+                Document filename: (NETDB:56) Profil.Doc
+                                                                   Page 3
+
+
+
+
+                              Table of Contents
+
+
+
+        Section I  - Why a Network Profile Database?..................5
+ 
+ 
+ 
+        Section II - What is in the Network Profile Database?.........6
+ 
+                     Part A - Site Records............................7
+                     Part B - Node Records............................15
+                     Part C - Host Records............................21
+ 
+ 
+        Section III - Who uses this database?.........................26
+ 
+ 
+ 
+        Section IV - How Does it work?................................28
+ 
+                     Part A - Accessing the database..................28
+                     Part B - Cursor movement.........................29
+                     Part C - Commands................................31
+                               1.Display..............................31
+                               2.Print................................32
+                               3.List.................................33
+                               4.Report...............................33
+                               5.Search...............................37
+                               6.Orders...............................38
+                               7.Old nodes............................39
+                               8.Mail to DBA..........................39
+                               9.Set environment......................40
+                               10.Instructions........................40
+                               11.News................................40
+                               12.Change..............................41
+                               13.Add.................................41
+                               14.Delete..............................42
+                               15.History.............................43
+                               16.Purge...............................44
+                               17.Read mail...........................44    
+                     Part D - Non-425 Terminal Users..................45
+                     Part E - Chart: Structure of the database........46
+                                                                   Page 4
+
+
+
+
+                        Table of Contents (continued)
+
+
+
+        Section V  - Appendices.......................................47
+ 
+                     Appendix A - Netpatrol Naming Convention.........47
+                     Appendix B - NFE Regions by state................48
+                     Appendix C - Tech Support Areas by state.........49
+                     Appendix D - NTD (Baseline) product names........50
+                     Appendix E - State Codes.........................51
+                     Appendix F - Country Codes.......................52
+ 
+         Section VI - Addendum for Release 3-0.........................54
+Network Profile Database                                           Page 5
+
+
+
+
+
+
+
+               SECTION I - WHY A NETWORK PROFILE DATABASE?
+
+
+
+             The  central  components  of  Tymnet's  business,  from   an
+        operations  view,  are the sites where network nodes and customer
+        hosts are located.  The Network Profile Database is  designed  to
+        provide  a  standard  definition  of network locations and of the
+        machines and contact people associated with these locations.
+
+             The specific functions of this database include:
+
+                * Unique identification of each network site.
+        
+                * Assignment of node and host numbers.
+        
+                * Identification of hardware, software, and contacts,
+                  both Tymnet and customer.
+        
+                * Classification of the various machines and interfaces 
+                  in the network by hardware and software type.
+
+             Part of the value of the Network Profile is its  ability  to
+        promote  sharing  of information among groups within the company.
+        By defining the most basic components of the network, it provides
+        a solid foundation for many other in-house information management
+        functions.  It also provides another step towards standardization
+        of terminology and its usage within the company.
+
+             If we have a dependable representation of  sites  and  their
+        machines,  this  data  can then be used to validate other systems
+        such as TYMDATA and TOPICS (parts inventories), T-BILL (telephone
+        bill  reconciliation), PIMS (fixed asset accounting), Validations
+        and Billing databases, and Marketing tools  and  analysis.   This
+        can be accomplished in the form of on-line files and/or reports.
+
+             The  structure  of  the  database  is  modular  and   easily
+        expandable.   By  adding  internal  files,  it can be upgraded to
+        represent the circuits that connect sites and  machines,  or  the
+        ports that provide access to the network.  
+
+             Finally, it is a vehicle to track and record network changes
+        on  a day-to-day basis.  With over 800 Tymnet and customer sites,
+        over 1000 nodes, and well over 1000 host interfaces, this  is  no
+        small  task.   The  database is designed to work in parallel with
+        the Order Entry System to  record  and  display  changes  to  the
+        network as they occur.
+Network Profile Database                                           Page 6
+
+
+
+
+
+
+
+
+
+
+
+
+            SECTION II - WHAT IS IN THE NETWORK PROFILE DATABASE?
+
+
+
+             This  database  is  a  screen-oriented  MAGNUM  system.   It
+        consists  of  thousands  of RECORDS, one for each SITE, NODE, and
+        HOST in the network, as well as  Tymnet  and  customer  CONTACTS.
+        Each  record contains specific FIELDS.  For example, SITE records
+        contain fields such as:  company name, address, phone, etc.  NODE
+        records  contain fields such as:  node number, hardware, software
+        etc.
+
+             The point of this section is to get you thinking in terms of
+        SITE, NODE, HOST, and CONTACT records.  It is also to familiarize
+        you with  the  fields  belonging  to  each.   Understanding  what
+        belongs  in  each field is a prerequisite for using the database.
+        For this reason the glossaries and charts appear here and not  in
+        the back of the document.  
+
+
+
+
+         This section is divided into three parts:
+ 
+                           A) SITE RECORDS 
+                           B) NODE RECORDS
+                           C) HOST RECORDS
+ 
+         Each part contains the following: 
+ 
+                           --A sample record
+                           --A chart of field characteristics          
+                           --A glossary of fields for that record    
+Network Profile Database                                           Page 7
+
+
+
+
+
+
+
+
+
+
+
+
+        <<< PART A - SITE RECORDS >>>
+
+
+
+
+             A network site is  anywhere  a  node  or  host  computer  is
+        physically  located.   If  the  node  and its connecting host (or
+        hosts) are in the same location, the site record will be the same
+        for  all of them.  If they are in different places, there will be
+        a record for the node site and a separate record  for  each  host
+        site.
+
+
+
+
+             There are a few instances in  the  network  where  a  Tymnet
+        machine  is  sitting in an office or building not owned or leased
+        by Tymnet or one of our customers.  (We  may  have  use  of  this
+        small space by mutual agreement with the owner).  In these cases,
+        the company shall be listed as  Tymnet  and  a  remark  shall  be
+        entered clarifying the situation.
+
+
+
+
+             Our sites are broken down into 5 main classes.   Site  CLASS
+        is  used to define sites by their "logical hierarchy" in the net,
+        by the applications they support.  We also identify each site  by
+        type.   Site  TYPE  is  used to define sites by their real estate
+        requirements (eg.  footprints, square footage, etc).  Both  CLASS
+        and  TYPE  appear  as  fields  in  the  site record and are fully
+        described on page 13.
+Network Profile Database                                           Page 8
+
+
+
+
+
+
+
+
+
+
+
+
+       This is a sample of a SITE record:
+       ************************************************************************
+       Enter site id [    ]           Site id [6001]            Class: 5 Type:E
+       HONEYWELL                      Phone: 612/870-5000       Manned? Y
+       2801 4th Ave. South            Cust. no.: 5771           Salesrep: 13610
+       Minneapolis     MN             Username: HNYMINN         Tech Area: CATS
+                55408     USA         Hours: 24/hrs                
+                                      Mailname: HNYMAIL
+       Effective: 04/13/83            Last changed: 02/25/83    Order no: 4223
+       Remarks:
+       Engines are located on the second floor in the computer room.
+       This building is the Honeywell Plaza South Building.
+    
+       Contacts:              Type:         Phone:              Ontyme:
+       CHERYL TADDEI          OFFICE        612/870-2919     
+       TED METZ               CUST TECH     612/870-6593   
+       TOM FORAN              TECH SUPT     612/338-6462        TYM.T/FORAN
+       MIKE MACEK             NFE           312/469-2600        TYM.CINCY    
+       ************************************************************************
+
+
+
+
+
+
+             As you can see, it contains basic information about a  given
+        site,  including  a  place  for  remarks and contact information.
+        (The contact fields are included with the site fields).  
+
+             The   following   chart    diagrams    site/contact    field
+        characteristics, including length, type (numeric or alphanumeric)
+        and any special restrictions:
+Network Profile Database                                           Page 9
+
+
+ 
+ 
+                    <<<SITE/CONTACT FIELD CHARACTERISTICS>>>
+ 
+ 
+         FIELD:                 TYPE:      SIZE:         VALID VALUES:   
+ 
+         *********************************************************************
+         *********************************************************************
+ 
+ 
+         SITE ID                 N          4                assigned
+         COMPANY NAME            C          30               ANY
+         STREET                  C          30               ANY    
+         CITY                    C          20               ANY  
+         STATE                   C          2                state codes 
+         COUNTRY                 C          3                country codes
+         ZIP                     C          9                5 or 9 digit
+         PHONE                   C          20               ANY
+         CUSTOMER NUMBER         N          5                ANY 
+         USERNAME                C          15               ANY  
+         HOURS OF OPERATION      C          30               ANY 
+         MAILNAME                C          22               ANY
+         MANNED?                 C          1                "Y" or "N"  
+         SALESREP NUMBER         N          5                ANY 
+         TECH SUPPORT AREA       C          5                WATS,CATS,NEATS,
+                                                             NYATS,SEATS,ITS/P,
+                                                             ITS/A,TNSUK,TNSFR
+         REMARKS                 C          76               ANY 
+         SITE CLASS              N          2                ANY
+         SITE TYPE               N          2                ANY 
+         EFFECTIVE DATE          D          8                MM/DD/YY
+         LAST CHANGED            D          8                MM/DD/YY
+         ORDER NUMBER            N          5                ANY
+         CONTACT NAME            C          22               ANY
+         CONTACT TYPE            N          1                1, 2, 3, or 4 
+         CONTACT PHONE           C          20               ANY
+         ONTYME NAME             C          22               ANY     
+ 
+ 
+ 
+                                          **::::::::::::::::::::**
+                                          ::                    ::
+                                          ::  N = NUMERIC       ::
+                                          ::  C = ALPHANUMERIC  ::
+                                          ::  D = DATE          ::
+                                          ::                    ::
+                                          **::::::::::::::::::::**
+ 
+ 
+ 
+         *******************************************************************
+         *******************************************************************
+Network Profile Database                                          Page 10
+
+
+                    <<<GLOSSARY OF SITE/CONTACT FIELDS>>>
+
+
+        >>>SITE IDENTIFIER:  The program assigns a unique site id to each
+        site  in  the  network.   A site id becomes available immediately
+        after a record is established in  the  database  for  that  site.
+        This  site id scheme is identical to the one in use by Tymshare's
+        Fixed Assets group and  Tymshare  Manufacturing.   (In  the  site
+        relation, this field is the key field for each record).
+
+
+        >>>COMPANY NAME:  This refers to the company that has  a  machine
+        (or  machines)  in  our  network.  The machine may be a node or a
+        host.  The company name "Tymnet" will appear:
+
+                              1. At all sites owned by Tymnet.
+        
+                              2. At all sites leased by Tymnet.
+        
+                              3. At all sites where we have a 
+                                 Tymnet machine sitting on space
+                                 not owned or leased by Tymnet
+                                 or one of our customers.
+        
+                The company name of our customer will appear:
+        
+                              1. At all sites owned or leased 
+                                 by the customer.
+        
+                Sample Entries:  Tymnet, Inc.
+                                 McDonnell Douglas
+                                 Alascom
+
+
+        >>>STREET CITY STATE ZIP:  These refer to the site only.  STREETS
+        and  CITIES shall be spelled out in full.  For STATE we are using
+        the US Post Office standard, 2 letter abbreviations.  (A list  of
+        these  appears  in  Appendix E on page 51).  For ZIP we are using
+        the US Post Office standard ZIP CODES.  
+                Sample Entries: STREET: 949 East 36th Ave.
+                                CITY:   Anchorage, AK
+                                ZIP:    99502
+
+
+        >>>PHONE:  Phone refers to the general phone number at  the  site
+        and  includes  the  area  code.   (Contacts  may  or may not have
+        numbers different from the mainphone).  
+
+
+        >>>MANNED?:  Most sites in the network are manned.  For these  we
+        would enter a "Y".  For the unmanned sites we would enter an "N".
+        If there are any special remarks regarding unmanned  sites,  they
+        may be entered in the Remark field.
+Network Profile Database                                          Page 11
+
+
+        >>>HOURS OF OPERATION:  This field tells us the  hours  that  the
+        site  is open or available.  It may include the hours, days, etc.
+        and the time zone.
+                Sample Entries:  24/HRS 7/DAYS
+                                 0800-1800/7 DAYS (EST)  
+                                 WKDAYS 24/HRS WKENDS 0800-1200 
+
+
+        >>>COUNTRY CODE:  We are using the  (ISO)  three  letter  country
+        codes.   These  are  especially  helpful  in keeping track of our
+        international machines.  A listing  of  these  codes  appears  in
+        Appendix F on page 52 of this manual.
+                Sample Entry: MEX 
+
+
+        >>>SALES  REP  NUMBER:   This  number   identifies   the   Tymnet
+        salesperson responsible for the sale or the most recent change in
+        service for a particular customer node or host.
+                Sample Entry: 11121
+
+
+        >>>CUSTOMER IDENTIFIER (CID):  CIDs are assigned to our customers
+        by  the  Billing  Dept.  Our invoices are then generated based on
+        these numbers.  Tymshare and its divisions (including Tymnet) all
+        have CIDs, which should appear in the database.
+                Sample Entry: 23963
+
+
+        >>>MAILNAME:  Mailnames are the usernames issued to our customers
+        for   setting  up  additional  usernames  using  the  Validations
+        program.  They also  allow  communication  with  Tymnet  via  the
+        Internal Mail System (IMS) on System 8.
+                Sample Entry: CBICMAIL
+
+
+        >>>TECH:  This refers to the AREA level  Sales/Tech  Support
+        office  that the node or host site is located under.  A breakdown
+        of Tech Areas by state appears in Appendix C on page 49).
+                Sample Entry: NYATS  
+
+
+        >>>USERNAME:  This name is used by Tech Support  to  log  into  a
+        customer host for diagnostic purposes.  (Any additional usernames
+        and/or passwords may be entered in REMARKS since this field  only
+        has room for one).
+                Sample Entry: FMCMAIL
+
+
+        >>>REMARKS:  This is open for all  details  not  covered  in  any
+        other  field.   The  program  will  allow  for  a maximum of five
+        remarks, all appearing at the site level.  Should a remark  apply
+        to a specific node or host, it shall be referenced in the remark.
+                Sample Entries: Supervisor on 4th floor can arrange 
+                                night entry to building.
+        
+Network Profile Database                                          Page 12
+
+
+                                RE: Node 2253-Do not put shuts on 
+                                this machine before contacting    
+                                TTMS Control Center. 
+        
+                                RE: Customer host 2050-Host Trouble 
+                                # is 408/225-4732.  Ask for WRFS     
+                                Standby on off-hours.                    
+
+
+        >>>CONTACT NAME:  This  field  provides  for  the  names  of  the
+        various  contacts  we have for our nodes and hosts.  There can be
+        an unlimited number of contacts at any given site.  Contacts  can
+        be:  an individual, a group, a computer room.  etc.
+                Sample Entries: Bob Pfister
+                                WNFEOPS
+                                Carolyn Walmann
+                                Computer Room
+
+
+        >>>CONTACT TYPE:  The contacts are divided into four main  types:
+
+                           1.OFFICE   2.NFE   3.TECH SUPP   4.CUST TECH
+        
+        These types are spelled out on display screens  and  reports  but
+        the  update  screens  will  accept the corresponding number only.
+        The types are as follows:
+
+          1.  OFFICE:  This is the general contact at  a  customer  or  a
+              Tymnet  site that is aware that service is being installed.
+              This person is able to let the installer into the building.
+              After  service  is  installed,  this  person remains in our
+              database  as  the  office  contact  at  the  site.   Office
+              contacts may be Tymnet or customer contacts.
+
+          2.  NFE  (Network  Field  Engineer):   This  contact   provides
+              overall  hardware  support  at  the  node  level.   The NFE
+              contact remains in the database after service is  installed
+              for  all  node hardware-related problems with a given node.
+              NFE's are always Tymnet contacts.  They may or may  not  be
+              at the site.
+
+          3.  TECH  SUPPORT:   This  contact  provides  overall  software
+              support  at  the  node  and/or  host  level.   Tech Support
+              determines the software needs of each customer and supports
+              those  products  after  the  customer  is in the net.  Tech
+              Support are always Tymnet contacts.  They may or may not be
+              at the site.
+
+          4.  CUSTOMER TECHNICAL:  This contact is the support  from  the
+              customer  end  of the node or host.  It is someone employed
+              by  the  customer   company   who   can   provide   general
+              software/hardware  knowledge  (or  steer  us to someone who
+              can) on the customer end.  This contact may or may  not  be
+              at the site.
+
+Network Profile Database                                          Page 13
+
+
+        *** NOTE:  There may be instances where a contact  does  not  fit
+        into  any  of  the  above catagories.  In that case the contact's
+        name may be entered, leaving the Contact  Type  field  blank.   A
+        remark may be entered giving any details.  
+
+
+        >>>PHONE:  This is the phone number  where  the  CONTACT  can  be
+        reached.   It  may or may not be the main phone at the SITE.  (It
+        may not be at the site at all).
+
+
+        >>>ONTYME NAME:  This is the personal or group OnTyme name of the
+        contact.
+                Sample Entries: TYM.BERNIE
+                                TYM.NETCON
+
+
+        >>>SITE CLASS:  Each site in the network is identified  by  class
+        in terms of its "logical heirarchy" in the net:
+
+          1.  CLASS 1:  HIGH CAPACITY  BACKBONE  CENTER  -  TDS  support,
+              backbone  lines,  special  applications (Sup, OnTyme), host
+              interfaces, high capacity offerings, DDD local access.
+
+          2.  CLASS  2:   SWITCHING  CENTER  -  backbone  lines,  special
+              applications, host interfaces, DDD local access.
+
+          3.  CLASS 3:  PERIPHERAL NODE SITE - special applications, host
+              interfaces, DDD local access.
+
+          4.  CLASS 4:  METRO HIGH CAPACITY SITE - (tributary  site)  TDS
+              support, high capacity offerings.
+
+          5.  CLASS 5:  REMOTE SITE - DDD local access only.  only.
+
+
+
+        >>>SITE TYPE:  Each site in the network is identified by type  in
+        terms of its real estate requirements:
+
+          1.  TYPE A:  PRIMARY BACKBONE SITE -  [switchers,  INTF,  local
+              access] dedicated Tymnet space, long-term lease, up to 2500
+              sq.   ft.,  can  accomodate   between   60-100   footprints
+              (cabinets), manned site.
+
+          2.  TYPE B:  SECONDARY BACKBONE SITE - [switchers, INTF,  local
+              access] dedicated Tymnet space, long-term lease, up to 1500
+              sq.  ft., can accomodate between 35-65 footprints,  may  or
+              may not be a manned site.
+
+          3.  TYPE C:  LARGE PERIPHERAL NODE SITE - [INTF, local  access]
+              dedicated  Tymnet  space,  long-term  lease,  up to 750 sq.
+              ft., can accomodate 16-25 footprints.
+Network Profile Database                                          Page 14
+
+
+          4.  TYPE D:  SMALL PERIPHERAL NODE SITE - [INTF, local  access]
+              dedicated  Tymnet  space,  medium-term lease, up to 400 sq.
+              ft., can accomodate up to 8 footprints.
+
+          5.  TYPE  E:    FX   REPLACEMENT   -   [local   acces]   shared
+              customer/Tymnet  space,  short-term lease, can accomodate 1
+              footprint (including modems), daytime/weekday access only.
+
+
+
+        >>>EFFECTIVE DATE:  In  this  field  you  will  see  one  of  the
+        following:
+
+          1.  A DATE - This tells when the site became operational.
+
+          2.  "PENDING" - This means that the site is in the  process  of
+              being set up and is not yet in the net.
+
+          3.  A BLANK - This means that the effective date for  the  site
+              is unknown at this time.
+
+        **NOTE:  If no date is entered at the time a new site  record  is
+        established,  the  program  will automatically enter "PENDING" in
+        this field.
+
+
+        >>>LAST CHANGED:  This date marks the last time a change was made
+        to the site record.  
+
+
+        >>>ORDER NUMBER:  This gives us the number of the LAST order with
+        which this site was associated.  (For more complete order-related
+        data you will want to access Command 6:  ORDERS).
+
+
+        ***NOTE:  The last 5 fields in this glossary DO NOT appear on the
+        combined  screens  (where the site record is combined with a node
+        or host record).  They DO appear when displaying  or  printing  a
+        site by itself, or when printing out a hard copy.
+
+
+
+
+
+
+
+
+                  <<<END GLOSSARY OF SITE/CONTACT FIELDS>>>
+Network Profile Database                                          Page 15
+
+
+
+
+
+
+
+
+
+
+
+
+        <<< PART B - NODE RECORDS >>>
+
+
+
+
+
+
+             A  network  node  is  a  mini-computer  which  serves  as  a
+        communications   processor.    It   may   be   a  Tymnet  Engine,
+        Mini-engine,  Micro-engine,  Varian,  Interdata,  etc.,  and  may
+        function  as  a  Tymsat,  Tymcom,  Base, Micro-base etc.  In very
+        general terms, a node can be thought of  as  an  intermediary,  a
+        processor that originates, terminates, or switches traffic.  This
+        database contains a separate record for each node in the network.
+
+
+
+
+
+        This is a sample of a NODE record:
+        ***********************************************************************
+ 
+        Enter Node [     ]       Node no: 2433                Old node: 1723
+        Hardware: ENGINE         Node name: GLENEL_CI         Site id: 152
+        Memory: CORE             Kernel host no: 2007         Subnet:
+        Core size: 384           Node soft: TYMSAT            Prop. no.:
+        Region: ENFE             Soft ver:20405               Restart: MANUAL
+        Serial no:               Code loc: (TYMNET:70)ND2433.BND
+        Effective: 05/21/82      Order no: 4327          Last changed: 09/06/83
+ 
+        ***********************************************************************
+Network Profile Database                                          Page 16
+
+
+ 
+ 
+                         <<<NODE FIELD CHARACTERISTICS>>>
+ 
+ 
+ 
+         FIELD:                 TYPE:      SIZE:        VALID VALUES:
+         **********************************************************************
+         **********************************************************************
+ 
+         NODE NUMBER              N          5               ANY
+         HARDWARE                 C          12              ENGINE,MINI-ENGINE,
+                                                             MICRO-ENGINE, V72,
+                                                             V73,V77,620I,620L,
+                                                             L100,LSI11,1103,
+                                                             LEMCOM 
+         MEMORY                   C          4               CORE or SEMI 
+         CORE SIZE                C          5               ANY
+         REGION                   C          5               WNFE, CNFE, ENFE,
+                                                             INTL
+         SERIAL NUMBER            C          5               ANY
+         NODE NAME                C          9               NETPATROL NAMES 
+         KERNEL HOST NUMBER       N          4               ANY
+         NODE SOFTWARE            C          15              ISIS, SWITCHER,
+                                                             TYMSAT, BASE,
+                                                             SUPERVISOR, 
+                                                             VARIAN TYMSAT, 
+                                                             ASYNC TYMCOM,
+                                                             BISYNC TYMCOM  
+                                                             MICRO-TYMBASE
+         NODE SOFTWARE VERSION    C          6               ANY 
+         CODE LOCATION            C          27              ANY
+         SITE ID                  N          4               assigned
+         SUBNET NUMBER            N          2               ANY
+         PROPERTY NUMBER          C          12              ANY
+         RESTART                  C          7               REMOTE, MANUAL, 
+                                                             RELOAD
+         NETWORK NUMBER           N          2               assigned 
+         OLD NODE                 N          5               ANY
+         EFFECTIVE DATE           D          8               MM/DD/YY
+         ORDER NUMBER             N          5               ANY
+         LAST CHANGED             D          8               MM/DD/YY
+ 
+ 
+                                          **::::::::::::::::::::**
+                                          ::                    ::
+                                          ::  N = NUMERIC       ::
+                                          ::  C = ALPHANUMERIC  ::
+                                          ::  D = DATE          ::
+                                          ::                    ::
+                                          **::::::::::::::::::::**
+ 
+ 
+ ******************************************************************************
+ ******************************************************************************
+Network Profile Database                                          Page 17
+
+
+                        <<<GLOSSARY OF NODE FIELDS>>>
+
+
+        >>>NODE NUMBER:  Each time a new  node  is  brought  up,  Network
+        Engineering  assigns  a  unique number to it.  The number remains
+        assigned to that node throughout its life in the network.
+
+        An up or downgrade in the  node's  software  (from  Tymnet  I  to
+        Tymnet  II  or  vice  versa)  is one instance where a node number
+        changes.  In this case, once the new software is up  and  running
+        in that node, the new number takes effect and the old one becomes
+        available to be reassigned to another node.  
+
+        The node number for a particular machine may also change if it is
+        assigned to another customer, or moved to a new location.
+        ***NOTE: Node numbers under 2000 employ Tymnet I software.
+                 Node numbers over 2000 employ Tymnet II software.
+
+
+        >>>PROPERTY NUMBER:   Each  piece  of  Tymnet  equipment  in  the
+        network  will  be assigned a property number (or fixed asset tag)
+        on the basis of a physical inventory conducted  by  the  Auditing
+        department.   This number will allow the department to keep track
+        of what we own.  It will remain the same for a particular machine
+        even if its node number changes.
+
+
+        >>>NODE NAME:  Each node in the network has a name in addition to
+        its  number.   Our database uses the Netpatrol naming convention.
+        An explanation of this naming convention appears in Appendix A on
+        page 47.
+
+        For new nodes coming into the net, the node name WILL NOT  appear
+        in  the  database until a completed Project Report is received by
+        the Database Administration Group.  Once DBA dtermines  that  the
+        node  is  up  and  running,  the  name  will be added to the node
+        record.  Therefore, if you are in the database and you see a node
+        record  without  a  node name, you'll know the node is not yet in
+        the network.  
+
+                         Sample Entries: DALLAS_DI
+                                         BUBBRD_WB
+                                         HNYWEL_XI
+        
+        ***NOTE:  Another commonly used node name (ND__) appears  in  the
+        database in the Code Location field.  
+
+
+        >>>SITE IDENTIFIER:  In the node relation, this is a  data  field
+        pointing  to  the  site  where  the  node  is located.(For a more
+        detailed explanation see definition on page 10).
+
+
+        >>>REGION:  This refers to the Network Field  Engineering  region
+        in  which  the  node  or  host  site resides.  The three domestic
+Network Profile Database                                          Page 18
+
+
+        regions are:  Eastern, Central, and Western.  We abbreviate them:
+        ENFE,  CNFE,  and WNFE.  The international region is abbreviated:
+        INTL.  (A breakdown of NFE regions by state appears in Appendix B
+        on page 48).
+
+
+        >>>NODE SOFTWARE:  This field refers to the code that runs in the
+        machine and defines the function of the node only.
+                Sample Entry: Tymsat
+
+
+        >>>SERIAL NUMBER:  This refers to the unique number  assigned  to
+        node machines by Tymshare Manufacturing.
+
+
+        >>>NODE HARDWARE:  Node hardware refers to the node in  terms  of
+        the physical machine configuration (eg.  V72, Interdata etc).  
+                Sample Entry: ENGINE
+
+
+        >>>MEMORY TYPE:  This refers to the type of memory that the  node
+        contains.  It may be core or semi-conductor.  
+
+
+        >>>CORE SIZE:  This is the size (in kilobytes) of online  storage
+        for the node.
+                Sample Entry: 1024
+
+
+        >>>CODE LOCATION:  This refers to the directories, host  systems,
+        and  file  names  where the compiled node code can be found.  The
+        Tymnet directory (maintained by the Project Implementation group)
+        contains code for public net machines only.  The location of node
+        code for international and lab machines would be various  private
+        directories.
+                Sample Entry: (TYMNET:70)ND2424.BND
+
+
+        >>>SUBNET NUMBER:  The Database Administration  group  assigns  a
+        unique  numerical identifier to each subnetwork within TYMNET.  A
+        subnetwork is a set of nodes within the public net  dedicated  to
+        one  customer  application.  A subnetwork uses the public network
+        supervisor but confines all traffic within the specified  set  of
+        nodes.
+
+
+        >>>KERNEL HOST NUMBER:  All engines running ISIS (or  Tymnet  II)
+        software  have  a  Kernel host.  The kernel is the portion of the
+        Engine (slot 0)  that  controls  and  schedules  all  other  jobs
+        (running  in  slot 1, 2, 3, etc.).  Each Kernel host has a unique
+        number.  The database does NOT contain host  records  for  kernel
+        hosts.
+Network Profile Database                                          Page 19
+
+
+        >>>NODE SOFTWARE VERSION:  This identifies exactly which  version
+        of  node  code  is  currently  running  in  the  node.   It  also
+        immediately tells us the function of  that  node.   We  now  have
+        approximately 80 different versions of node software in the net.
+
+        ***NOTE:  The version number will be periodically updated by  the
+        Database  group  from  a  file  produced  directly from the Probe
+        utility.
+                Sample Entry: 140447
+
+
+        >>>RESTART INFO:  This field gives Network Control and  our  NFEs
+        the necessary information for restarting or reloding a node.  The
+        three valid entries are:
+        
+                REMOTE  =  Node may be restarted from a remote location
+                MANUAL  =  Node may only be started on-site
+                RELOAD  =  Node requires reloading 
+
+
+        >>>NETWORK NUMBER:   This  database  is  capable  of  maintaining
+        information  on  more than one independent network.  Each network
+        is assigned its own number.  The network being accessed  defaults
+        to  the  Tymnet  Public  Network (network 1) unless otherwise set
+        using the SET ENVIRONMENT command.
+
+        Once the environment is reset to another network, the  user  will
+        be  viewing  only  those  nodes and hosts in that network.  To go
+        back to the Tymnet Public Network, the environment  must  be  set
+        back to 0.  (See SET ENVIRONMENT command on page 40).
+
+
+        >>>OLD NODE:  This is the previous number of a node that has been
+        upgraded.   For example, old node 1723 appears in the node record
+        for node 2433.  This tells us that node 2433 was once 1723.
+
+
+        >>>EFFECTIVE DATE:  In  this  field  you  will  see  one  of  the
+        following:
+
+          1.  A DATE - This tells when the node became operational.
+
+          2.  "PENDING" - This means  that  the  node  is  in  the  order
+              process and not yet in the net.
+
+
+        **NOTE:  If no date is entered at the time a new node  record  is
+        established  the  program  will  automatically enter "PENDING" in
+        this field.
+
+
+        >>>ORDER NUMBER:  This gives us the number of the LAST order with
+        which this node was associated.  (For more complete order-related
+        data you will want to access Command 6:  ORDERS).
+Network Profile Database                                          Page 20
+
+
+        >>>LAST CHANGED:  This date marks the last time a change was made
+        to the node record.  
+
+
+        ***NOTE:  The last 4 fields in this glossary DO NOT appear on the
+        combined  screens  (where the node record is combined with a site
+        record, for example).  They DO appear when displaying or printing
+        a node by itself, or when printing out a hard copy.
+
+
+
+
+
+
+
+
+                      <<<END GLOSSARY OF NODE FIELDS>>>
+Network Profile Database                                          Page 21
+
+
+        <<< PART C - HOST RECORDS >>>
+
+
+
+             The term "HOST" actually applies to two  different  concepts
+        in  the  network.   A  host can be a customer or Tymnet computer,
+        external to the node, which serves as a termination  point  of  a
+        session  OR it can be an internal, software-defined portion of an
+        Engine.
+
+
+             An example of the  first  type  would  be  Host  2700  which
+        belongs to Software Arts, Inc., located in Wellesley, MA.  (It is
+        connected by a synchronous line to  node  2557,  located  at  our
+        Tymnet site in Salem, NH).
+
+
+             An example of the second type would be host 832, one of  our
+        OnTyme  hosts,  which  physically  resides  inside  node  2316 in
+        Fremont.  We may summarize Hosts in the following way:
+        
+        
+        
+             Hosts EXTERNAL to                Hosts INTERNAL to  
+                 the node                         the node 
+             -----------------                -----------------
+        1) may be at the same site            1) Kernel hosts             
+        
+        2) may be at a different site         2) Other diagnostic hosts
+                                                 like TMCS
+         
+                                              3) Host applications like
+                                                 OnTyme, Netpatrol, MUX
+        
+        
+
+
+        This is a sample of a HOST record:
+        ***********************************************************************
+ 
+         Enter host [1056     ]   Node no.: 2274   Host mfr: IBM
+         Slot no.: 1              Site id: 673     Host model: 3033 
+         Int type: ACOM           Region: WNFE     Host soft: REL3 VTAM
+          desc: TYMCOM            BPS: 1200        Front-end mfr: IBM
+          vers: 1.07              No. ports: 8     Front-end model: 3705
+         Code loc: (TYMNET:70)ND2274.N01          Front-end soft: ROLL NCP/NTO
+         Effective: 02/15/82      Order no: 4122   Last changed: 09/06/83
+ 
+        ***********************************************************************
+Network Profile Database                                          Page 22
+
+
+                      <<< HOST FIELD CHARACTERISTICS >>>
+
+
+ 
+ 
+ 
+         FIELD:                 TYPE:      SIZE:        VALID VALUES:
+         **********************************************************************
+         **********************************************************************
+ 
+ 
+ 
+         HOST NUMBER              N          10              ANY
+         SLOT NUMBER              N          2               ANY
+         INTERFACE TYPE           C          4               NTD (Baseline)
+                                                             PRODUCT NAMES
+         INTERFACE DESCRIPTION    C          20              ANY   
+         INTERFACE VERSION        C          5               ANY          
+         CODE LOCATION            C          27              ANY
+         NODE NUMBER              N          5               ANY
+         SITE ID                  N          4               assigned
+         REGION                   C          5               WNFE, CNFE, ENFE
+                                                             INTL
+         BPS                      N          5               ANY
+         NUMBER OF PORTS          N          2               ANY
+         HOST MANUFACTURER        C          20              ANY
+         HOST MODEL               C          20              ANY
+         HOST SOFTWARE            C          20              ANY        
+         FRONT END MANUFACTURER   C          20              ANY
+         FRONT END MODEL          C          20              ANY
+         FRONT END SOFTWARE       C          20              ANY
+         NETWORK NUMBER           N          2               assigned
+         EFFECTIVE DATE           D          8               MM/DD/YY
+         ORDER NUMBER             N          5               ANY
+         LAST CHANGED             D          8               MM/DD/YY
+ 
+    
+                                         **::::::::::::::::::::**
+                                         ::                    ::
+                                         ::  N = NUMERIC       ::
+                                         ::  C = ALPHANUMERIC  ::
+                                         ::  D = DATE          ::
+                                         ::                    ::
+                                         **::::::::::::::::::::**
+ 
+ 
+         
+         **********************************************************************
+         **********************************************************************
+Network Profile Database                                          Page 23
+
+
+                       <<< GLOSSARY OF HOST FIELDS >>>
+
+
+        >>>HOST NUMBER:  Each time a new  host  is  brought  up,  Network
+        Engineering  assigns  a  unique number to it.  The number remains
+        assigned to that host throughout its life in the network.   If  a
+        customer cancels service, or for any reason the host is taken out
+        of the network, its number becomes available to be reassigned  to
+        another host.
+
+
+        >>>NODE NUMBER:  (See explanation on page 17).
+
+
+        >>>SITE IDENTIFIER:  In the host relation,  site  id  is  a  data
+        field  pointing  to  the  site where the host is located.  (For a
+        more detailed explanation see page 10).
+
+
+        >>>REGION:  (See explanation on page 17).
+
+
+        >>>SLOT NUMBER:  All Engines running ISIS software have  internal
+        slots  which appear in numerical order.  ISIS allows each slot to
+        run a different application all within the same Engine.  
+
+
+        >>>INTERFACE TYPE:  This  is  the  slot  code  that  defines  the
+        function  of  a  given  slot.   Most slots function as interfaces
+        (hence, the name of this field) but there are exceptions.
+
+        What qualifies as an interface type in this database?   All  host
+        and terminal interfaces, gateways, and any host product that runs
+        on an engine and has its own host number in and of itself.
+
+        A list of these interface software types and their  corresponding
+        product  names  can be found in Appendix D on page 50.  These are
+        taken  directly  from  the  Network  Technology  Division   (NTD)
+        Baseline H documentation, July 1983.
+                Sample Entries: XCOM
+                                PBH
+                                PBT
+
+
+        >>>INTERFACE VERSION:  This identifies the version of  slot  code
+        currently running in a given slot.
+                Sample Entry: 1.15
+
+
+        >>>INTERFACE DESRIPTION:  This is a general  description  of  the
+        interface software running in a given slot.
+                Sample Entries: X.25,HDLC,LAPB
+                                3270 Term
+                                X.75
+Network Profile Database                                          Page 24
+
+
+        >>>CODE LOCATION:  This refers to the directories, host  systems,
+        and  file  names where the compiled slot code can be found.  Most
+        of these are maintained by Tech Support.  The  compiled  versions
+        are needed to reload the slots.
+                Sample Entry: (TYMNET:70)ND3420.N02
+
+
+        >>>NUMBER OF PORTS:  This refers to the number of ports  assigned
+        to  a  given  interface.   This is determined by its software and
+        SHOULD NOT BE  CONFUSED  WITH  THE  NUMBER  OF  PORTS  PHYSICALLY
+        AVAILABLE ON AN ENGINE.
+
+
+        >>>BPS:  This refers to the speed (bits per second) at which  the
+        interface is capable of sending or receiving.  
+
+
+        >>>HOST MANUFACTURER:  Here we want the brand name  of  the  host
+        processor attached to a host interface.
+                Sample Entries: BURROUGHS
+                                IBM
+
+
+        >>>HOST  MODEL:   This  refers  to  the  hardware  of  the   host
+        processor.
+                Sample Entries: 5900
+                                4331
+
+
+        >>>HOST SOFTWARE:  This describes the  operating  system  of  the
+        host processor.
+                Sample Entries: LARGE SYSTEM MCP
+                                DOS/VSE (UNDER BTAM)
+
+
+        >>>FRONT END MANUFACTURER:  Here we want the brand  name  of  any
+        front  end  processor  between our network interface and the host
+        computer.
+                Sample Entry: IBM
+
+
+        >>>FRONT END MODEL:  This refers to the  hardware  of  the  front
+        end.
+                Sample Entry: 3705
+
+
+        >>>FRONT END SOFTWARE:  This  describes  the  interface  software
+        that allows the front end to talk to our node.
+                Sample Entry: COMMPRO
+
+
+        >>>NETWORK NUMBER:  (See explanation on page 19).
+Network Profile Database                                          Page 25
+
+
+        >>>EFFECTIVE DATE:  In  this  field  you  will  see  one  of  the
+        following:
+
+          1.  A DATE - This tells when the host became operational.
+
+          2.  "PENDING" - This means  that  the  host  is  in  the  order
+              process and not yet in the net.
+
+
+        **NOTE:  If no date is entered at the time a new host  record  is
+        established  the  program  will  automatically enter "PENDING" in
+        this field.
+
+
+        >>>ORDER NUMBER:  This gives us the number of the LAST order with
+        which this host was associated.  (For more complete order-related
+        data you will want to access Command 6:  ORDERS).
+
+
+        >>>LAST CHANGED:  This date marks the last time a change was made
+        to the host record.  
+
+
+        ***NOTE:  The last 3 fields in this glossary DO NOT appear on the
+        combined  screens  (where the host record is combined with a site
+        record, for example).  They DO appear when displaying or printing
+        a host by itself, or when printing out a hard copy.
+
+
+
+
+
+
+
+
+                     <<< END GLOSSARY OF HOST FIELDS >>>
+Network Profile Database                                          Page 26
+
+
+
+
+
+
+
+        SECTION III- WHO USES THIS DATABASE?  WHAT DO THEY USE IT FOR?
+
+             This database is intended for the  general,  in-house  user.
+        Anyone  at  Tymnet  who  has  a  need for site, node, and/or host
+        information can access this database to display, print, list,  or
+        report  the  data  that  they  need.   It  was  designed with the
+        following main users in mind:
+        
+        
+                                Customer Services
+                                Network Control
+                                Network Field Engineering
+                                Technical Support
+                                Network Engineering
+                                Telecommunications
+                                Project Implementation
+                                Validations
+                                Marketing/Sales
+        
+        
+                     Each of these groups has different needs
+                        which are mentioned briefly below:
+
+
+
+        <<<CUSTOMER SERVICES>>> This group is first in  line  for  Tymnet
+        customers  experiencing  problems with the network.  They use the
+        database to locate the proper Tymnet  contact  for  the  customer
+        having problems.
+
+
+        <<<NETWORK CONTROL>>> Monitoring the network on a 24-hour  basis,
+        Netcon  needs quick access to site, node, and host records at all
+        times.  The Supervisor informs them of a  downed  node  or  host.
+        The  database  then provides them with the extra information they
+        need to trouble-shoot problems.  This is especially critical  for
+        maintaining service after hours.
+
+
+        <<<NETWORK FIELD ENGINEERING>>> Our  NFEs  are  concerned  mainly
+        with hardware at the node level.  The database supplies them with
+        various  node  hardware-related  details  as  well  as   accurate
+        information needed to access our sites.
+
+
+        <<<TECHNICAL  SUPPORT>>>  Our  Communications   Consultants   are
+        concerned  mainly  with software on the customer node and/or host
+        level.  The database supplies  them  with  slot,  interface,  and
+        other software-related details.
+Network Profile Database                                          Page 27
+
+
+        <<<NETWORK ENGINEERING>>> This group needs to  be  familiar  with
+        our  sites  and  the  machines  at  each one in order to engineer
+        incoming service and reconfigure existing service.  The  database
+        provides  them  with  this  information  as  well  as  a tool for
+        assigning node and host numbers.
+
+
+        <<<TELECOMMUNICATIONS>>> Telcom needs accurate site  and  contact
+        information  to insure that telephone installers will have access
+        to our sites.
+
+
+        <<<PROJECT  IMPLEMENTATION>>>   In   monitoring   and   executing
+        completion  of  orders, P.I.  needs access to all site, node, and
+        host information.  The database also provides them  with  a  tool
+        for checking code versions for host interfaces and nodes.
+
+
+        <<<VALIDATIONS>>> Validations uses the database to maintain their
+        list of Customer Identifiers (C.I.D.'s) and Validations usernames
+        for our customers.
+
+
+        <<<MARKETING/SALES>>> Our Marketing and Sales groups need  to  be
+        familiar  with  the  various types of host systems and interfaces
+        deployed in our network.  This database gives them the  necessary
+        host  and  interface  information needed to give our customers an
+        idea of the range of services available in the network.
+Network Profile Database                                          Page 28
+
+
+
+
+
+                        SECTION IV: HOW DOES IT WORK?
+
+
+        PART A:  ACCESSING THE DATABASE
+
+             Using your own username or  your  group's  username,  you'll
+        need  to  log into the host where the database resides (currently
+        System 56, backed up by 54).  At the exec prompt (-) type:   -GFD
+        NETDB.   Once  you  are  in  this  directory  you'll need to call
+        MAGNUM.   You  do  this   by   typing:    -MAGNUM.    This   will
+        automatically put you into the database.
+
+             From there the program will ask you if you are using  a  425
+        terminal.   The  answer  to this question is a simple "Y" or "N".
+        (It is possible to set your environment so that the program won't
+        ask  you this question each time.  See SET ENVIRONMENT command on
+        page 40).  Non-425 mode is nearly identical to the 425 mode  with
+        a few exceptions.  (Non-425 mode is explained on page 45).
+
+             After you have entered a "Y" or "N", the COMMAND screen will
+        come  up.   This  is  the  main  screen  or  primary level of the
+        database containing all the available commands  (Display,  Print,
+        List,  etc).   At  this  time, there are 4 levels of access which
+        determine the commands available to users of the database.   They
+        are:
+        
+                  Level 0 = Commands 1 through 11 (the default level)
+                  Level 1 = Commands 1 through 12
+                  Level 2 = Commands 1 through 13
+                  Level 3 = Commands 1 through 17 (DBA only)
+        
+
+             Once you choose a command, you will continue on to the  next
+        level  of  the  database,  the  OPTION screen.  The OPTION screen
+        contains all the available options  for  a  given  command.   For
+        example, the OPTION screen for the PRINT command allows you to:
+        
+                        1.  Print site
+                        2.  Print node/site
+                        3.  Print node
+                        4.  Print host/site
+                        5.  Print host
+                        6.  Print node/site/host/site
+                        7.  Print node/host.
+        
+
+             Once you choose one of these options you will continue on to
+        the third or last level of the database, the RECORD screen.  This
+        is where the record is actually displayed, added, or changed.  (A
+        diagram of this entire structure appears on page 46).
+Network Profile Database                                          Page 29
+
+
+
+
+
+
+
+        PART B:  CURSOR MOVEMENT
+
+
+
+             The next thing you need to know is how to move around on the
+        screens.  The following keys will work in this program:
+          
+        
+        
+                  TAB..........jump forward from field to field
+        
+        
+                  BACK TAB.....jump backwards from field to field
+        
+        
+                  ARROWS.......jump up, down, or side-to-side one 
+                               character
+        
+        
+                  The following keys will work in ADD or CHANGE commands:
+        
+        
+        
+                  SPACE BAR....will delete next character
+        
+        
+                  CHARACTER DELETE...will delete the current character
+        
+        
+                  LINE ERASE.........will erase the entire field
+        
+        
+        
+        ***NOTE:  Do not use the ESCAPE key while in the program.  If you
+        need to exit at any time use  Function-Q  or  Function  -L.   The
+        following  Function keys are the only ones that will work in this
+        program:
+Network Profile Database                                          Page 30
+
+
+
+
+
+
+
+                         <<< FUNCTION CHARACTERS >>>>
+
+
+
+
+
+            1.  FUNCTION - SPACE...........The function key  followed  by
+                the  space  bar.   This  will signal the host computer to
+                accept the input you have entered on the screen and  send
+                you on to the next logical screen in the sequence.
+
+
+            2.  FUNCTION - R...............The function key  followed  by
+                the  letter  R.   This will send you back to the previous
+                screen.  When done  twice  it  will  send  you  back  two
+                screens.
+
+
+            3.  FUNCTION - C...............The function key  followed  by
+                the  letter  C.   This  will  send  you  back to the main
+                command screen.
+
+
+            4.  FUNCTION - P...............The function key  followed  by
+                the  letter  P.  This will print out a record when in the
+                DISPLAY, LIST, CHANGE, or ADD command.  Be sure  to  turn
+                your  printer  on before executing a function-P, and turn
+                it off afterwards.  
+
+
+            5.  FUNCTION - Q...............The function key  followed  by
+                the  letter Q.  This will take you out of MAGNUM and back
+                to the exec level prompt (-).
+
+
+            6.  FUNCTION - L...............The function key  followed  by
+                the  letter L.  This will take you back to Please Log In.
+
+Network Profile Database                                          Page 31
+
+
+        PART C:  COMMANDS
+        
+        These are the commands currently available:
+        
+                        1.  Display
+                        2.  Print
+                        3.  List
+                        4.  Report
+                        5.  Search
+                        6.  Orders
+                        7.  Old nodes
+                        8.  Mail to DBA
+                        9.  Set environment
+                        10. Instructions
+                        11. News
+                        12. Change
+                        13. Add
+                        14. Delete
+                        15. History
+                        16. Purge
+                        17. Read mail
+        
+        The following is a description of each command:
+
+        (1) DISPLAY:
+
+             The program will only display one  record  at  a  time.   To
+        display  a record, access the DISPLAY command and then choose the
+        appropriate OPTION:  Display  site,  node,  host,  or  node/host.
+        Once you have displayed a record you may:
+ 
+                -display another record
+                -use Function-R to go back to the command screen
+                -use Function-P to print out the record
+ 
+
+
+            <<< GENERAL INFORMATION ABOUT THE DISPLAY COMMAND >>>
+
+            1.  -- Display node, host, and node/host also show  the  site
+                information.
+
+            2.  -- To display a site you need to know the  site  ID.   (A
+                brief  report  containing all site IDs can be printed out
+                for your personal use.  See BRIEF REPORTS on page 33).
+
+            3.  -- To display  a  node  record  (or  a  combination  node
+                record) you need to know the node number.
+
+            4.  -- To display  a  host  record  (or  a  combination  host
+                record) you need to know the host number.  
+
+            5.  -- On display node/host:  Function-P will only work after
+                ALL the hosts for that node have been displayed.
+Network Profile Database                                          Page 32
+
+
+            6.  -- Display node/host is a way of viewing  a  node  record
+                followed by all of its attached hosts.  Since the program
+                only displays one record at a time, you  will  be  seeing
+                the  node record first, followed by all the host records,
+                one at a time.
+
+                This can be a long process if the  node  has  many  hosts
+                attached  to it.  To find out first you might want to use
+                LIST NODE.  This will show you the  node  record  with  a
+                list  of  its  attached  hosts.   The  record won't be as
+                detailed but it's faster.
+
+            7.  -- Remember:  After the node or site record is listed you
+                may  print  it  out (using function-P) if you want a hard
+                copy.
+
+
+
+
+        (2) PRINT:
+
+             This command is handy for printing out  a  hard  copy  of  a
+        record  when you don't want to take the time to display it first.
+        Once you've accessed the PRINT command  and  chosen  one  of  the
+        options  (site,  node,  host,  or  node/host)  you will print the
+        record out to the terminal.  THE PROGRAM  WILL  NOT  DISPLAY  THE
+        RECORD FIRST.
+
+
+
+             <<< GENERAL INFORMATION ABOUT THE PRINT COMMAND >>>
+
+            1.  -- To print a site record you need to know the site ID.
+
+            2.  -- To print a node (or combination node) record, you need
+                to know the node number.
+
+            3.  -- To print a host (or combination host) record, you need
+                to know the host number.
+
+            4.  -- After you have entered one of the  above  numbers  and
+                are  ready to print out the record, REMEMBER TO TURN YOUR
+                PRINTER ON.
+
+            5.  -- After the record has been printed,  REMEMBER  TO  TURN
+                YOUR PRINTER OFF.  
+
+Network Profile Database                                          Page 33
+
+
+        (3) LIST:  This command has two options:
+        
+                 List node - enables the user to view a node with a
+                             list of the hosts attached to that node.
+        
+                 List site - enables the user to view a site with a list
+                             of all the nodes and/or hosts at that site.
+
+
+              <<< GENERAL INFORMATION ABOUT THE LIST COMMAND >>>
+
+            1.  -- To list node you need to know the node number.
+
+            2.  -- To list site you need to know the site ID.
+
+            3.  -- Remember:  After the node or site record is listed you
+                may  print  it  out (using function-P) if you want a hard
+                copy.  
+
+
+
+
+        (4) REPORT:
+
+        The database can produce the following REPORTS:
+        
+                    1. BRIEF reports
+                    2. DETAILED reports
+                    3. SPECIAL reports 
+        
+        >>> BRIEF REPORTS:
+
+             Brief reports are very handy to have around.   They  can  be
+        easily  generated  by the database and typed out on your printer.
+        You'll probably want to generate and type out the ones  you  need
+        fairly often to insure that you have data that is up-to-date.
+
+        > OPTIONS:  There are 3 options on brief reports:  SITE, NODE, or
+        HOST.  The fields contained in each one are listed below.
+        
+        SITE REPORTS            NODE REPORTS            HOST REPORTS
+        ============            ============            ============
+        Site id                 Node #                  Host #
+        Company name            Hardware                Node #
+        Street                  Memory                  Slot
+        City/State              Core                    Company name
+        Main phone              NFE Region              City/State
+        Customer id             Node name               Site id
+        Sales Rep #             Kernel host             NFE Region
+        Tech Supp Area          Software                Tech Supp Area
+        Effective date          Version                 Sales Rep #
+                                Site id                 Host Mfr.
+                                Company name            Interface type
+                                City/State
+        
+Network Profile Database                                          Page 34
+
+
+        
+        >  SELECTION:   Once you have chosen the type of report you want,
+        you'll need to decide how it is to be  selected.   The  selection
+        criteria are as follows:
+        
+              1. ALL      2. ENFE      3. WNFE      4.CNFE      5. INTL
+              6. WATS     7. NYATS     8. CATS      9. SEATS    10. NEATS
+        
+        The selection criteria produce reports containing data from  just
+        a  portion  of  the  network,  or  from  the entire network.  For
+        example, a node report selected by CNFE contains just  the  nodes
+        in  the Central Field Engineering region.  A host report selected
+        by SEATS contains just the hosts in the South East  Tech  Support
+        Area.   If  your selection is "ALL", the report will contain data
+        from the entire network.   You  may  choose  only  one  selection
+        criteria.
+
+        > SORT:  The last choice you have is how  you  want  your  report
+        sorted.  
+
+        1.  SITE REPORTS can be sorted:
+
+                 1. Numerically by Site id           Filename = SITE1.LST
+                 2. Alphabetically by Company name   Filename = SITE2.LST
+                 3. Alphabetically by State/City     Filename = SITE3.LST
+                 4. Numerically by Sales Rep #       Filename = SITE4.LST
+
+        2.  NODE REPORTS can be sorted:
+
+                 1. Numerically by Node #            Filename = NODE1.LST
+                 2. Alphabetically by State/City     Filename = NODE2.LST
+                 3. Alphabetically by Hardware type  Filename = NODE3.LST
+                 4. Alphabetically by Software type  Filename = NODE4.LST
+
+        3.  HOST REPORTS can be sorted:
+
+                 1. Numerically by Host #            Filename = HOST1.LST
+                 2. Numerically by Node #            Filename = HOST2.LST
+                 3. Alphabetically by Company name   Filename = HOST3.LST
+                 4. Alphabetically by State/City     Filename = HOST4.LST
+                 5. Numericaly by Sales Rep #        Filename = HOST5.LST
+
+
+
+
+           <<< STEPS FOR GENERATING AND TYPING OUT YOUR REPORTS >>>
+
+        1.  Access the Report command, choose your option, selection, and
+            sort criteria.  The program then generates the report for you
+            (this takes a few minutes or longer depending on  the  system
+            load).
+
+        2.  After the report is generated,  the  directory  and  filename
+            will  appear  at  the  bottom of your screen.  (See filenames
+            listed above).  Notice that  the  file  is  written  to  YOUR
+Network Profile Database                                          Page 35
+
+
+            directory.
+
+        3.  At this point, perform a Function-Q to get back to  the  exec
+            level and GFD back to your directory.
+
+        4.  Set your printer on compressed type, issue the -TTY WIDTH 132
+            command, and type out the file.
+
+        5.  ***NOTE:  It usually takes about 10  minutes  to  type  these
+            reports  out.   Also,  if  you  want to save the file for any
+            reason RENAME IT TO SOMETHING ELSE because the next time  the
+            program  generates  that report it will write over the one in
+            your directory.
+
+
+
+
+        >>> DETAILED REPORTS:
+
+             Detailed reports are useful when you need to  access  entire
+        records but don't want to bother with the screens.  These reports
+        can be thought of as hard copies of the entire  database,  sorted
+        differently.
+
+             Because they contain entire records,  they  are  very  large
+        (500  pages  and  up),  so  keep that in mind.  It is possible to
+        select the report by NFE region (which will print  out  only  the
+        records  in  one  region,  for example WNFE).  This is one way of
+        getting around the large size.
+
+             These reports may be generated out of the  database  in  the
+        same  way  as  the  brief  reports,  so you'll want to follow the
+        instructions just given.  One difference is that you'll  want  to
+        spool  the  detailed  reports  (or  run  them off on a high speed
+        printer) so as not to tie up your terminal.
+
+        There are currently 6 detailed reports available:
+
+          1. SITE REPORT (sorted by site id)        Filename = SITE10.REP
+          2. SITE REPORT (sorted geographically)    Filename = SITE20.REP
+          3. NODE REPORT (sorted by node #)         Filename = NODE30.REP
+          4. HOST REPORT (sorted by host #)         Filename = HOST40.REP
+          5. NODE/HOST REPORT (sorted by node #)    Filename = NODE50.REP
+          6. NODE/HOST REPORT (sorted by site id)   Filename = NODE60.REP
+          7. SITE REPORT (sorted by company name)   Filename = SITE70.REP
+          
+
+        ***NOTE:  When node and/or host  records  following  one  another
+        share  the  same site ID, the site information will be printed in
+        the first record only.  Keep this in mind  when  reading  through
+        the detailed reports.
+Network Profile Database                                          Page 36
+
+
+        >>> SPECIAL REPORTS:
+
+             Special reports are those designed with a specific user  (or
+        users)  in  mind.   Their contents vary depending on the needs of
+        the user.  These  reports  are  generated  out  of  the  database
+        (similar  to  all  other  reports) and are available for anyone's
+        use.
+
+             The SPECIAL REPORTS feature is useful because it allows  new
+        reports  to be added to the database as needed.  (In other words,
+        we are not limited to a static set of reports).  A special report
+        may be requested by filling out a database modification sheet and
+        submitting it to Database Administration.  Presently,  there  are
+        three special reports available:
+
+        > THE NODE LIST 
+
+             This report takes the place of the NODE LIST currently being
+        maintained  by  Network  Engineering.  To generate it and type it
+        out, follow the procedures mentioned  above  for  brief  reports.
+        Once generated, it is written to your directory with the filename
+        NODELI.  
+
+             It can be generated and typed out as often as necessary  and
+        will   contain   all  current  nodes  and/or  hosts  assigned  by
+        Engineering and  added  to  the  database  each  day.   The  list
+        contains the followng fields in this order:
+
+                                Node #
+                                Old node # (when applicable)
+                                Order #
+                                Effective date
+                                Company name
+                                City/State
+                                Host #(s) 
+                                Kernel host #
+        
+
+
+        > THE ISIS REPORT
+
+             This report contains all of the Isis nodes  in  the  network
+        grouped  by  NFE  region.  The program will ask you to select the
+        NFE region you wish to look at (WNFE, ENFE, etc).  You  may  also
+        select the whole network.
+
+             The report is sorted  alphabetically  by  state  within  the
+        region.   For  example,  if you generate an Isis report for WNFE,
+        you can expect to see the Isis nodes in Alaska first, followed by
+        the Arizona nodes, etc.  
+
+             Each  record  contains  the  company  name  and  other  site
+        information,  the  Isis node number, and each slot on the machine
+        in numerical order (with corresponding host  numbers).   It  also
+        contains  the  type  of  interface  running  in each slot and the
+Network Profile Database                                          Page 37
+
+
+        customer that it belongs to.  A typical Isis node record in  this
+        report would look like this:
+        
+        = = = = = = = = = = = = = = = = = = = = = = =  = = = = = = = =
+        **HONEYWELL                        SITE ID: 0936
+          5115 N. 27TH AVE.                PHONE: 602/862-8000
+          PHOENIX, AZ
+        
+          ==> Node: 3172       HNYWEL_XI              Memory: SEMI 1024
+            Slot: 1  Host:   397   TYMCOM             HONEYWELL
+            Slot: 2  Host:  1330   X.25,HDLC,LAP      HONEYWELL
+            Slot: 3  Host:  2765   X.25,HDLC,LAPB     HONEYWELL
+        = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+             
+
+             The procedure for generating and typing out Isis reports  is
+        the  same as that for all brief reports.  The filenames for these
+        Isis reports are as follows:
+        
+        WNFE.IS  -  CNFE.IS  -  ENFE.IS  -  INTL.IS  -  ALL.IS
+
+
+        > THE SITE SUMMARY
+
+             This special report contains a count of all nodes and  hosts
+        at  each  site  in the network.  For example, it tells us that at
+        site 974 (Timesharing Consultants Inc.  in Tucson)  there  are  2
+        nodes and 1 host.
+
+             The sites are sorted alphabetically by state,  and  then  by
+        city.  (All international sites appear at the front of the report
+        sorted alpahbetically by city).
+
+             Keep in mind that this is a COUNT of nodes and hosts at each
+        site;   It  does  not  contain a listing of node or host numbers.
+        For instructions on how to generate and type out the Site Summary
+        follow  those  given  previously for brief reports.  The filename
+        for the Site Summary report is:  SITE30.REP.
+
+
+
+        (5) SEARCH:
+
+             This command allows the user to search the  entire  database
+        for  specific information.  For example, you may want to know how
+        many X.25 interfaces we have connected to IBM 3033 computers.  Or
+        you  may  want  to  know  how  many  network sites we have in Los
+        Angeles.  The SEARCH  command  will  supply  answers  to  similar
+        questions.
+
+             At the site level it is presently possible to search  for  a
+        particular  contact name, company name, or a particular city.  At
+        the  host  level  it  is  presently  possible  to  search  for  a
+        particular  interface  (X.25,  Async,  etc.), a host manufacturer
+        (IBM, NCR, Amdahl, etc.), a host model (3000 series,  750,  6303,
+Network Profile Database                                          Page 38
+
+
+        etc.),  or  host software type (KMS11, COMMPRO, etc).  It is also
+        possible  to  search  for  front  end  manufacturer,  model,   or
+        software.
+
+        > SUBSTRINGS:  It is not necessary to type  in  the  entire  word
+        when  doing  a  search;  the program will accept and search for a
+        sub-string.  For example, I want to search  the  database  for  a
+        site  in  Pennsauken,  NJ,  but  I  don't  remember  how to spell
+        Pennsauken.  By simply typing in "ken", the program will be  able
+        to  find  it.   (Remember,  though,  that  every  other city that
+        contains the letters "ken" would also be found).
+
+
+             Although the program will  accept  as  few  as  one  or  two
+        characters  for  a  sub-string  search, it is not advisable since
+        it's likely to come back with  more  than  you  want.   The  more
+        specific you can be on sub-strings, the better.
+
+
+
+             <<< GENERAL INFORMATION ABOUT THE SEARCH COMMAND >>>
+
+            1.  -- When searching for a particular company name, city, or
+                contact  name,  the results will be listed out for you on
+                the screen.
+
+            2.  -- If you want a hard copy of these  results,  perform  a
+                Function-P,  but  wait  until all the instances have been
+                displayed on the screen.
+
+            3.  -- If there are 0 records found, the program will  notify
+                you with a message on the bottom of your screen.
+
+            4.  -- When searching for particular interface or host  data,
+                it  is  advisable  to start out with a broad category and
+                gradually become more specific.  For example,  you  might
+                first  ask  to  search  for all IBM hosts.  Once it comes
+                back with those, ask for  all  model  3033's  etc.   This
+                tends to be a faster way to go about it.
+
+            5.  -- After a  particular  interface,  host,  or  front  end
+                search has completed, the program gives you the option of
+                1) printing the data out at the terminal, 2) writing  the
+                data  to  a file, or 3) displaying only the customer data
+                at the terminal.
+
+
+
+
+        (6) ORDERS:
+
+             The ORDERS command  allows  the  user  to  find  all  orders
+        relating  to  any  given  site, node, or host.  At the time a new
+        record is added to the database, the corresponding  order  number
+        is  also  entered  (if known).  The database then keeps a running
+Network Profile Database                                          Page 39
+
+
+        history of these order numbers and  supplies  them  to  the  user
+        under the ORDERS command.  
+
+             The command first prompts you for site, node, or host.  Your
+        selection  is  based  on the corresponding order history desired.
+        (i.e.  Suppose you wanted to know all the orders relating to node
+        3515,  your  selection would therefore be NODE).  Once the orders
+        are found, they are listed out on the screen.  If a hard copy  of
+        the results is desired, perform a Function-P.
+
+
+
+        (7) OLD NODES:
+
+             This command allows the  user  to  access  the  node  number
+        history  for any currently or previously existing node(s).  Given
+        a current node number, the program finds its old number and tells
+        whether  it  has been reused or not.  Given a previously existing
+        node, the program finds its current node  number.   For  example,
+        the  number history for an EXISTING (sample) node might look like
+        this:
+        
+        The following node number changes have occurred for NODE: 7777
+        
+                1234 changed to 7777 on 06/11/82
+        
+
+             This number history shows that node 7777 was, at  one  time,
+        node 1234.  On 06/11/83 the number was changed in the database to
+        7777 to reflect the upgrade.  I now know the previous number  for
+        this existing node.  
+
+             Now suppose that I knew an old number  (170),  but  not  the
+        number  it was upgraded to.  I enter the number (170) and this is
+        what the database reports back:
+        
+        The following node number changes have occurred for NODE: 170
+        
+                170 changed to 2110 on 04/22/82
+        
+
+             This tells me that 170 was upgraded to 2110 in April of  82;
+        I now know its existing number.  From this data we may also imply
+        that number 170 then became available and was probably reassigned
+        to another node.
+
+             Although not every detail is supplied, a node number history
+        can still be a good place to start when doing research on a node.
+        It can point the user in the right direction.
+Network Profile Database                                          Page 40
+
+
+        (8) MAIL TO DBA:
+
+             This command allows users of the database to  send  mail  to
+        the  Database  Adminstration  group  for  any  needed assistance,
+        question, problem, suggestion, etc.  The message space allowed is
+        5  lines  per  message  and  the date and time of the message are
+        recorded by the program.
+
+             The Database Administration group encourages  all  users  to
+        take  advantage  of  this  feature.  It is there for your use and
+        allows us to better support you by means of direct communication.
+        All messages will be pulled daily and addressed accordingly.
+
+
+
+        (9) SET ENVIRONMENT:
+
+        > TERMINAL TYPE:
+
+             The SET ENVIRONMENT command  allows  the  user  to  set  the
+        terminal type being used to avoid being prompted for it each time
+        the database is entered.  It also allows  the  user  to  set  the
+        desired  network  for  viewing, otherwise the program defaults to
+        the Tymnet public network.  Once either of these  has  been  set,
+        they can be reset at any time.
+
+             If you wish to set the terminal type for your  own  username
+        and  you  consistently access the database on a 425 terminal, set
+        your environment to 1.  If you consistently access it on a 444 or
+        a  126  or any other terminal, set your environment to 2.  If you
+        go back and forth between terminal types leave it set on 0.   The
+        reason  for  this  is because if the environment is set for a 425
+        and you go home and log into it on a 126, it will be set  up  for
+        screen mode and you won't be able to get out.
+
+             If the username you use to access the database is used by an
+        entire  group,  check and make sure all members of the group have
+        the same terminal type to avoid locking anyone out.  IF  YOU  ARE
+        UNSURE, LEAVE IT SET ON 0.
+
+        > NETWORK:
+
+             The second part of the SET ENVIRONMENT  command  has  to  do
+        with accessing multiple networks, one at a time.  The database is
+        designed to  allow  the  user  to  view  records  in  independent
+        networks as well as the Tymnet public network.  
+
+             Setting your environment to a specific network will drop you
+        automatically  into  that  network.   There you will see only the
+        records contained within it.  You will  remain  in  that  network
+        permanently  unless  you  re-set  your network back to the Tymnet
+        Public Network (Network 1).
+Network Profile Database                                          Page 41
+
+
+        (10) INSTRUCTIONS:
+
+             Selection of this command puts you back at the beginning  of
+        the  database  where the instructions are displayed on the screen
+        for review.
+
+
+
+        (11) NEWS:
+
+             The NEWS command explains changes  to  the  Network  Profile
+        software since the last major version release.
+
+
+
+        (12) CHANGE:
+
+             The change command is used to change fields  in  an  already
+        existing record.  For example, when a node's software is upgraded
+        from T-I to T-II many fields in the existing node record need  to
+        be  changed, or when a contact leaves a company, a new name needs
+        to be put in its place through the change site command.
+
+             All users with access level 1, 2, or 3 may change fields  to
+        update  the  data  in an existing site, node, or host record.  To
+        change a field, simply access the CHANGE command and then  choose
+        the  appropriate  OPTION:   change  site,  change node, or change
+        host.  Once the record appears on the screen, you may use the TAB
+        and ARROW keys to move around and make your changes.  (See Cursor
+        movement on page 29).  
+
+
+             <<< GENERAL INFORMATION ABOUT THE CHANGE COMMAND >>>
+
+            1.  -- To change site you need to know the site ID.  (A brief
+                report  containing  all  site ID's can be printed out for
+                your personal use.  (See Brief Site Report on page 33).
+
+            2.  -- To change node you need to know the node number.
+
+            3.  -- To change host you need to know the host number.
+
+            4.  -- If you attempt to make a change to  a  field  and  the
+                program  won't  allow  it,  its  because  that  field  is
+                assigned by the program only.
+
+Network Profile Database                                          Page 42
+
+
+        (13) ADD:
+
+             The ADD command is used to add a new  site,  node,  or  host
+        record  to  the  database.   This occurs in the following manner:
+        The Database Administration unit is copied on all Sales sign-offs
+        and all incoming orders are immediately reviewed.  Existing sites
+        are verified and new sites are established (if necessary) at this
+        time.
+
+             The  Network  Engineering  unit  then  configures  the   new
+        service, pre-assigns the node and host number(s), and establishes
+        the corresponding node and host record(s) in the database  before
+        signing off their path.  (These new records established by either
+        DBA or Neteng are almost immediately reflected in the  Node  List
+        as it is generated and updated each night).
+
+             If the data is entered at the onset of an order, how can  we
+        determine when the site, node, or host is actually up in the net?
+        The EFFECTIVE DATE field either tells  us  it  is  "pending",  or
+        gives the date when it became operative.  This is how we tell the
+        difference between sites, nodes, and hosts that are  not  yet  in
+        the net, and those that are.
+
+             This entire procedure for adding records allows the database
+        to function parallel to the OES as a funnel, sorting all incoming
+        data directly from orders into the correct records right from the
+        start.    It  allows  the  the  database  to  be  a  centralized,
+        company-wide source of data for all new sites, nodes,  and  hosts
+        being ordered, long before they are actually in the net.
+
+             Secondly, because many users  have  the  ability  to  access
+        records  and  update  information through the CHANGE command, new
+        records can be maintained throughout an order's path as  well  as
+        after the service is up and operative.  Existing records can also
+        be maintained as new data is acquired.
+
+             As a direct result  of  the  ADD  and  CHANGE  features  and
+        procedures,  the  database  truly functions in a partnership with
+        the OES.  Both programs are maintained and accessed on  the  same
+        host  computer.  The data from one system feeds and is maintained
+        in the other.  They are interdependent.
+
+
+              <<< GENERAL INFORMATION ABOUT THE ADD COMMAND >>>
+
+            1.  -- You cannot add a site,  node,  or  host  that  already
+                exists.
+
+            2.  -- To add a site you need to know the zip code where  the
+                site is located.
+
+            3.  -- When entering a 9-digit zip  code,  the  program  will
+                only  accept  the first 5 digits initially.  Once you get
+                into the record you can add the remaining digits.
+                     -- To add a node or host you need to know either the
+Network Profile Database                                          Page 43
+
+
+                site  id  where  each  is located, or the zip code of the
+                site.
+
+
+
+
+        (14) DELETE:
+
+             Records are deleted out of the database for various reasons.
+        For  example,  when  a customer cancels service or a lease is up,
+        the sites and machines involved need to be removed.  If an  order
+        was  involved  in the canceling of service and subsequent removal
+        of a record, the order number may be  entered  at  the  time  the
+        record is deleted.  This enables the program to keep track of all
+        order  numbers  involved  with   all   records.    The   Database
+        Administration unit performs ALL deletions from the database.
+
+             Data can be deleted by accessing the DELETE command and then
+        choosing  the  appropriate  option:   Delete  host,  delete node,
+        delete site.
+
+
+             <<< GENERAL INFORMATION ABOUT THE DELETE COMMAND >>>
+
+            1.  -- A site may  not  be  deleted  if  the  database  still
+                contains node or host records attached to that site.
+
+            2.  -- A node record may not be deleted if the database still
+                contains host records attached to that node.
+
+
+
+
+        (15) HISTORY:
+        
+                        HISTORY OPTIONS AVAILABLE:
+                        -------------------------
+        
+                        1.  Date
+                        2.  User
+                        3.  Site
+                        4.  Node
+                        5.  Host
+        
+
+        1.  DATE:  This option prints out all activity that  occurred  in
+            the  database  on any given day.  It is a history which lists
+            the records that were changed, added,  or  deleted  from  the
+            database  on  that  day.   The  records  themselves  are  not
+            displayed, only the site ids,  node  or  host  numbers  which
+            uniquely identify each one appear on the list.  The user must
+            specify the date for  which  the  history  is  desired.   The
+            format for entering the date is MM/DD/YY.
+Network Profile Database                                          Page 44
+
+
+        2.  USER:  This option prints out all activity of a given user of
+            the  database.   It is a history which lists the records that
+            were changed, added,  or  deleted  by  that  user  between  2
+            specific  dates.   The  records themselves are not displayed,
+            only the site  ids,  node  or  host  numbers  which  uniquely
+            identify each one appear on the list.
+
+            (For example, I may want to know how many records were  added
+            to  the  database by the username NETDB between August 01 and
+            August 31, 1983).  If no dates are specified, the default  is
+            a total history for that user.
+
+        3.  SITE, 4.NODE, or 5.HOST:  Each time one of these  records  is
+            added,  changed,  or  deleted, the program keeps track of it.
+            If the need arises to track this information  on  a  specific
+            record, the options 3, 4, or 5 may be used.
+
+
+        **NOTE:  The history command may be  accessed  by  the  DBA  unit
+        only.
+
+
+
+        (16) PURGE:
+
+             This  command   allows   the   Database   Administrator   to
+        periodically  remove  all  site,  node,  or host history from the
+        database from a specified date, backwards.  It was designed  with
+        conserving system storage in mind.
+
+
+
+        (17) READ MAIL:
+
+             This allows DBA to type out all mail received from  database
+        users.
+Network Profile Database                                          Page 45
+
+
+        PART D:  NON-425 TERMINAL USERS
+
+             This database is designed for  general  use  on  a  Tymshare
+        Model  425  terminal.   It is possible, however, for those of you
+        with 444's, 125's, 350's etc.  to access  the  database;   you'll
+        just be slightly limited in what you can do.
+        
+        
+        
+                The following commands are available
+                on non-425 terminals:
+        
+                        1. Print
+                        2. List
+                        3. Report
+                        4. Search
+                        5. Orders
+                        6. Old nodes
+                        7. Mail to DBA
+                        8. Set environment
+                        9. Instructions
+                       10. News
+        
+        
+         
+
+             The program executes these commands for you in generally the
+        same  way  it  does  for  425  users.   You'll  want  to read the
+        information on them (just covered  in  PART  C)  if  you  haven't
+        already.   There  are  a  few  things  in  the  program  that are
+        different for you:
+
+
+            1.  -- You  won't  use  Function-space.   After  you  make  a
+                selection,  type  a  carriage return and the program will
+                continue.
+
+
+            2.  -- You won't use Function-P.  Use the  PRINT  command  in
+                its  place.   The  PRINT  command  will  be  your  way of
+                "displaying" a record.
+
+
+            3.  -- You won't use function-C, Q, or  L.   Use  a  carriage
+                return  (or  multiple  carriage  returns)  to  return  to
+                previous levels or exit back to the exec level.
+
+
+            4.  -- In terms of any detailed reports you  may  want,  make
+                sure you spool them so that your terminal is not tied up.
+
+Network Profile Database                                          Page 46
+
+
+                   <<< Structure of the Network Profile Database >>>
+ 
+ 
+                 <--------------------function-C----------------------
+ 
+                 <----- function-R ---------------- function-R -------
+                 ^                        ^                       ^
+                 |                        |                       |     
+              Commands:                Options:                Records: 
+                 |
+                 |                     _____________           _____site
+                 |                    |   Display   |         |_____node
+                 |               ---->|   Print     |-------->|_____host
+                 |              |     |_____________|         |_____combination
+                 |              |      _____________         
+                 |              |     |             |          _____site
+                 |              |---->|   List      |-------->|_____node 
+                 |              |     |_____________|         
+            -----------------   |      _____________           
+           | Display         |  |     |             |          _____brief   
+           | Print           |  |---->|   Report    |-------->|_____detailed
+           | List            |  |     |_____________|         |_____special  
+           | Report          |  |      _____________
+           | Search          |  |     |             |          _____site data
+           | Orders          |  |---->|   Search    |-------->|_____host/front 
+           | Old nodes       |  |     |_____________|               end data
+           | Mail to DBA     |  |      _____________            
+           | Set environment |--|     |   Orders    |          _____site 
+           | Instructions    |  |---->|   Change    |-------->|_____node
+           | News            |  |     |   Add       |         |_____host 
+           | Change          |  |     |_____________|
+           | Add             |  |      _____________               
+           |-----------------|  |     |             |
+           | Delete          |  |---->|   Old nodes |-------->|_____node
+           | History         |  |     |_____________|
+           | Purge           |  |
+           | Read mail       |  |
+           |_________________|  |
+                                |
+                                |      Helpful options:        DBA only:
+                                |      ----------------       -----------   
+                                |     | Mail to DBA    |     | Delete    | 
+                                |---->| Set environment|     | History   |
+                                |<----| Instructions   |     | Purge     |
+                                |     | News           |     | Read mail |
+               L                |     |________________|     |___________|
+               O                |                                 ^   
+               G     X          |_________________________________|
+               O     E          
+               U     X          
+               T     E          
+               ^     C           
+               |     ^           
+               |     |_________________ function-Q ______________________
+               |_______________________ function-L ______________________
+Network Profile Database                                          Page 47
+
+
+                                  APPENDIX A
+                      << NETPATROL NAMING CONVENTION >>
+
+             This system gives Network Control,  NFE/Ops,  Tech  Support,
+        etc.   a  way  to  quickly  identify a node and know a little bit
+        about it just by looking at the name.   (All  nodes  that  employ
+        this  naming  convention  are  ND nodes in the old convention and
+        their code is located under ND).The names have 9  characters  and
+        look like this:
+        
+                                  SDIEGO_LI
+                                  ALASCO_HI
+                                  BLUBEL_PA  
+        
+        
+        Let's break them down into 3 parts:
+
+            1.  The first 6 characters = CITY OR CUSTOMER NAME.  If it is
+                a Tymnet or Tymshare node, the first 6 characters will be
+                the  city  where  it  is  located.   (These  are  usually
+                accessable  24  hours).   If  it  is a customer node, the
+                first 6 characters will be the customer name.  (These are
+                usually  accessable  only  during  customer  hours).  The
+                first 6 characters are ALWAYS followed by an underscore.
+
+            2.  The 8th character = NFE/OPS DISTRICT OFFICE
+                
+                           A = China Basin (San Francisco)
+                           B = Boston (New England district)
+                           C = Chicago                      
+                           D = Dallas                       
+                           H = Houston                      
+                           L = Los Angeles                  
+                           N = New York
+                           P = Philidelphia
+                           S = Santa Clara
+                           T = Seattle
+                           V = Denver
+                           W = Washington
+                           X = Phoenix  
+
+            3.  The 9th character = NODE TYPE
+                
+                           A = Async Tymsat on an Engine
+                           B = Base
+                           I = Isis Engine
+                           M = Mini-engine
+                           S = Switcher
+                           V = all Varian machines
+                
+
+Network Profile Database                                          Page 48
+
+
+                                  APPENDIX B
+               << NETWORK FIELD ENGINEERING REGIONS BY STATE >>
+     
+  
+  
+  
+  
+  
+       WNFE                     CNFE                    ENFE
+       ----                     ----                    ----
+  
+       WASHINGTON               NORTH DAKOTA            MAINE
+       OREGON                   SOUTH DAKOTA            VERMONT
+       CALIFORNIA               NEBRASKA                NEW HAMPSHIRE
+       IDAHO                    KANSAS                  NEW YORK
+       NEVADA                   OKLAHOMA                MASSACHUSETTS
+       MONTANA                  TEXAS                   CONNECTICUT
+       WYOMING                  MINNESOTA               RHODE ISLAND
+       COLORADO                 IOWA                    NEW JERSEY
+       UTAH                     MISSOURI                DELAWARE
+       ARIZONA                  ARKANSAS                MARYLAND
+       ALASKA                   LOUISIANA               DISTRICT OF COLUMBIA
+       HAWAII                   WISCONSIN               WEST VIRGINIA
+                                ILLINOIS                VIRGINIA
+                                MICHIGAN                NORTH CAROLINA
+                                INDIANA                 PENNSYLVANIA
+                                OHIO                    
+                                KENTUCKY
+                                TENNESSEE
+                                MISSISSIPPI
+                                ALABAMA
+                                GEORGIA
+                                SOUTH CAROLINA
+                                FLORIDA
+                                NEW MEXICO
+Network Profile Database                                          Page 49
+
+
+                                  APPENDIX C
+                    << TECHNICAL SUPPORT AREAS BY STATE >>
+   
+    
+   
+   WATS =                      CATS =                     NEATS =
+   WESTERN AREA                CENTRAL AREA               NORTHEAST AREA
+   ------------                ------------               ----------- 
+   
+   WASHINGTON                  NORTH DAKOTA               MICHIGAN
+   OREGON                      SOUTH DAKOTA               OHIO
+   CALIFORNIA                  NEBRASKA                   GREATER PITTSBURG
+   IDAHO                       KANSAS                     UPSTATE NEW YORK 
+   NEVADA                      OKLAHOMA                   CONNECTICUT
+   MONTANA                     TEXAS                      MAINE
+   UTAH                        LOUISIANA                  VERMONT
+   ARIZONA                     MISSISSIPPI                NEW HAMPSHIRE
+   WYOMING                     ILLINOIS                   MASSACHUSETTS
+   COLORADO                    ARKANSAS                   RHODE ISLAND
+   NEW MEXICO                  MISSOURI                   ONTARIO, CANADA 
+                               IOWA
+                               MINNESOTA
+                               WISCONSIN
+                               INDIANA
+                               HONEYWELL (NATIONWIDE)               
+    
+   
+   
+   
+   NYATS =                     SEATS =                   INTL = 
+   NEW YORK AREA               SOUTHEAST AREA            INTERNATIONAL   
+   --------------              --------------            ------------- 
+   
+   GREATER NEW YORK CITY       DELAWARE                  ITS/A = ATLANTIC
+   NEW JERSEY                  MARYLAND                  ITS/P = PACIFIC  
+                               WASHINGTON D.C.           TNSUK = UNITED    
+                               VIRGINIA                          KINGDOM
+                               WEST VIRGINIA             TNSFR = FRANCE   
+                               NORTH CAROLINA
+                               SOUTH CAROLINA
+                               KENTUCKY
+                               TENNESSE
+                               ALABAMA
+                               GEORGIA
+                               FLORIDA
+                               GREATER PHILEDELPHIA
+                               ALL FEDERAL ACCOUNTS
+Network Profile Database                                          Page 50
+
+
+                                  APPENDIX D
+                      << NTD (Baseline) PRODUCT NAMES >>
+ 
+ 
+ 
+ 
+              The following are valid host interface types that we 
+              would expect to find in the database.  The product
+              names are the only valid entries in the Interface Type
+              field.  They were taken from Baseline H (July 1983):
+ 
+ 
+ 
+        PRODUCT NAME    PRODUCT DESCRIPTION         
+        ------------    -------------------
+ 
+ 
+ 
+        XCOM            X.25/X.75 COMMUNICATIONS INTERFACE
+        ACOM            FLEXIBLE ISIS ASYNCHRONOUS TYMCOM
+        ASAT            TYMSAT
+        ISCS            CONSOLIDATED TYMSAT
+        PBH             3270 HOST INTERFACE
+        PBT             3270 TERMINAL INTERFACE
+        BBXS            2780/3780/HASP INTERFACE
+        CMTI            CHARACTER MODE TRANSLATOR/3270
+        ELF             ECLECTIC LOAD FACILITY
+        I2G1            ISIS2 TYMNET-I GATEWAY
+        LEM             LEMCOM/370 BASE
+        MUX             ISIS CIRCUIT MULTIPLEXER
+        NTCN            NETWORK CONSOLE
+        NVAL            NETVAL VALIDATIONS PROGRAM
+        ONTM            ONTYME SYSTEM   
+        RAM             RAW ACCOUNTING MERGER   
+        SDLC            SDLC EXTENSION CORD SERVICE
+        TMCS            TYMNET MONITOR AND CONTROL SYSTEM
+        VAC             VARIAN ASYNC TYMCOM
+        VAL             VALIDATIONS
+        VBC             VARIAN BASE
+        VBS             VARIAN BSC TYMCOM
+ 
+Network Profile Database                                          Page 51
+
+
+                                  APPENDIX E
+                               < STATE CODES >>
+
+  
+  
+                CODE    STATE
+  
+                AK      ALASKA                    TN     TENNESSEE
+                AL      ALABAMA                   TX     TEXAS     
+                AR      ARKANSAS                  UT     UTAH
+                AS      AMERICAN SAMOA            VA     VIRGINIA
+                AZ      ARIZONA                   VI     VIRGIN ISLANDS
+                CA      CALIFORNIA                VT     VERMONT
+                CM      NORTHERN MARIANA ISLANDS  WA     WASHINGTON
+                CO      COLORADO                  WI     WISCONSIN 
+                CT      CONNECTICUT               WV     WEST VIRGINIA
+                DC      DISTRICT OF COLUMBIA      WY     WYOMING 
+                DE      DELAWARE
+                FL      FLORIDA
+                GA      GEORGIA
+                GU      GUAM
+                HI      HAWAII
+                IA      IOWA
+                ID      IDAHO
+                IL      ILLINOIS
+                IN      INDIANA
+                KS      KANSAS
+                KY      KENTUCKY
+                LA      LOUISIANA
+                MA      MASSACHUSETTS
+                MD      MARYLAND
+                ME      MAINE
+                MI      MICHIGAN
+                MN      MINNESOTA
+                MO      MISSOURI
+                MS      MISSISSIPPI
+                MT      MONTANA
+                NC      NORTH CAROLINA
+                ND      NORTH DAKOTA
+                NE      NEBRASKA
+                NH      NEW HAMPSHIRE
+                NJ      NEW JERSEY
+                NM      NEW MEXICO
+                NV      NEVADA
+                NY      NEW YORK
+                OH      OHIO
+                OK      OKLAHOMA
+                OR      OREGON
+                PA      PENNSYLVANIA
+                PR      PUERTO RICO
+                RI      RHODE ISLAND
+                SC      SOUTH CAROLINA
+                SD      SOUTH DAKOTA
+Network Profile Database                                          Page 52
+
+
+                                  APPENDIX F
+                             << COUNTRY CODES >>
+        
+        
+        This a listing selected from one developed by the
+        International Organization for Standardization (ISO):
+        
+        
+        AFG   Afghanistan                      HKG   Hong Kong
+        ALG   Algeria                          HUN   Hungary
+        ARG   Argentina                        ISL   Iceland
+        AUS   Australia                        IND   India
+        AUT   Austria                          IDN   Indonesia
+        BHS   Bahamas                          IRN   Iran
+        BHR   Bahrain                          IRQ   Iraq
+        BRB   Barbados                         IRL   Ireland
+        BEL   Belgium                          ISR   Israel
+        BLZ   Belice                           ITA   Italy
+        BMU   Bermuda                          CIV   Ivory Coast
+        BOL   Bolivia                          JAM   Jamaica
+        BRA   Brazil                           JPN   Japan
+        VGB   British Virgin Islands           JOR   Jordan 
+        BGR   Bulgaria                         KEN   Kenya
+        BUR   Burma                            KWT   Kuwait
+        CAB   Cambodia                         LBN   Lebenon
+        CAN   Canada                           LBR   Liberia
+        CAF   Central African Republic         LIE   Liechtenstein
+        CEY   Ceylon                           LUX   Luxembourg
+        CHL   Chile                            MYS   Malaysia
+        CHN   China                            MEX   Mexico
+        COL   Columbia                         MCO   Monaco 
+        CRI   Costa Rica                       MAR   Morocco
+        CUB   Cuba                             NPL   Nepal
+        CSK   Czechoslovakia                   NLD   Netherlands
+        DNK   Denmark                          NZL   New Zealand
+        DOM   Dominican Republic               NIC   Nicaragua
+        ECU   Ecuador                          NGA   Nigeria
+        EGY   Egypt                            NOR   Norway
+        SLV   El Salvador                      PAK   Pakistan
+        ETH   Ethiopia                         PAN   Panama
+        DEU   Federal Republic of Germany      PRY   Paraguay
+        FJI   Fiji                             PER   Peru
+        FIN   Finland                          PHL   Phillippines
+        FRA   France                           POL   Poland
+        DDR   German Democratic Republic       PRT   Portugal
+        GHA   Ghana                            PRI   Puerto Rico
+        GRC   Greece                           KOR   Republic of Korea
+        GRL   Greenland                        ROM   Romania
+        GUM   Guam                             SAU   Saudi Arabia
+        GTM   Guatemala                        SGP   Singapore
+        GUY   Guyana                           ZAF   South Africa
+        HTI   Haiti                            ESP   Spain
+        HND   Honduras                         SDN   Sudan
+Network Profile Database                                          Page 53
+
+
+                            APPENDIX H (continued)
+            
+            
+            
+            SWE   Sweden
+            CHE   Switzerland
+            SYR   Syrian Arab Republic
+            THA   Thailand
+            TTO   Trinidad and Tobago
+            TUN   Tunisia 
+            TUR   Turkey
+            SUN   USSR
+            UGA   Uganda
+            VAR   United Arab Republic   
+            GBR   United Kingdom
+            USA   United States
+            VIR   United States Virgin Islands
+            URY   Uruguay
+            VEN   Venezuela
+            VNM   Viet-Nam
+            YUG   Yugoslavia
+Network Profile Database                                            Page 54
+ADDENDUM
+
+
+
+
+
+
+
+
+
+
+                   NETWORK PROFILE DATABASE -- USER'S GUIDE
+
+                     ADDENDUM:  Version 3-0, March, 1984
+
+
+
+
+                           SUMMARY OF NEW FEATURES
+
+
+        Version 3-0 of the Network Profile Database adds  several  enhanced
+        capabilities to the system.  These new features include:
+
+            1) Access to information on synchronous circuits between  nodes
+               and from nodes to hosts.
+
+            2) New reports in the SPECIAL REPORTS package
+
+            3) Other new background features, such as:
+
+                  * Automatic node and host number assignment
+                  * Table of valid cities
+                  * Basic statistics package
+                  * Table update program
+                  * Canadian provinces
+                  * Large report generation in NETDB
+
+
+
+
+                             NETWORK CONNECTIONS
+
+
+        The primary objective of Version 3-0 is  the  addition  of  network
+        connection  information  to  the  Network  Profile  data structure.
+        Information on  the  following  types  of  network  connections  is
+        included in this release:
+
+               NODE-TO-NODE leased lines
+               NODE-TO-NODE hardwires and memory shufflers
+               NODE-TO-HOST leased lines
+
+        A future release is planned which will incorporate asynchronous and
+        terminal  oriented  connections (corresponding to the current Ports
+        Database).
+Network Profile Database                                            Page 55
+ADDENDUM
+
+
+        SOURCES OF DATA
+        ---------------
+
+        Network connection data is being provided for display only in  this
+        release  of the Network Profile.  Direct update of this data within
+        the Profile is scheduled for implementation as part of Release 4-0.
+
+        Network connection information is fed into  the  Profile  from  two
+        sources:
+
+            1) The Topology Database (NODE.TEK and LINE.TEK).   This  is  a
+               1022  database  maintained  by  the  Database Administration
+               group.  It is updated  from  project  reports,  orders,  and
+               Network  Control  shift summaries.  Circuits are verified in
+               Probe before being entered into Topology.
+
+            2) The Paradyne Analysis Database (ANAL.DMS).  This is  another
+               1022  file  of  line and drop information for circuits under
+               the Paradyne analysis  system.   It  is  maintained  by  the
+               Network Quality Control group.
+
+        The information from these two sources  is  copied  onto  the  host
+        system  for Network Profile on a daily basis via a PERP job.  There
+        it is loaded into MAGNUM relations where it is  accessible  through
+        LIST, SEARCH, and REPORT commands.
+
+
+        NEW FIELDS
+        ----------
+
+            CIRCUIT NAME:   For  leased  lines  this  is  the  alphanumeric
+               designator  used  by  ATT  Long  Lines  or  the  local  Bell                                       _
+               operating company to identify the circuit (eg.  FDEA123456).
+               This  field  also  designates  hardwires  as  HW  and memory
+               shufflers as MS.
+
+            TROUBLE PHONE:  This is the telephone  number  used  to  report
+               line   outages   and   problems  to  the  telephone  company
+               responsible for the circuit.
+
+            BPS:  Line speed as measured in bits per second  (eg.   9600  =
+               9600 bits/second;  56KB = 56,000 bits/second.
+
+            LINE:  Logical line indicator for the Paradyne analysis system.
+               A  line  on  this  system  can monitor up to 15 master/slave
+               pairs, or up to 30 individual Paradyne modems.
+
+            DROP:  The logical  address  for  each  modem  monitored  by  a
+               particular line in the Paradyne analysis system.
+
+            TRIBUTARY:  Tributary is the drop  address  for  slave  modems.
+               Its  primary  use  is for multi-drop synchronous circuits to
+               indicate the relationship  of  several  slave  modems  to  a
+               single master.
+Network Profile Database                                            Page 56
+ADDENDUM
+
+
+
+
+
+
+
+
+        COMMAND CHANGES
+        ---------------
+
+            LIST:  The list command now gives two new options:   LIST  NODE
+               CONNECTIONS  and  LIST  HOST CONNECTIONS.  These two options
+               work identically in 425 and non-425 modes.  Having  selected
+               an  option  in  425 mode, the user will find that the screen
+               features are turned off and the  terminal  accepts  carriage
+               returns rather than function key sequences.
+
+               The following example  illustrates  use  of  the  LIST  NODE
+               CONNECTIONS option.
+
+
+
+Enter Node Number or RETURN: 2270           [The user enters node number
+                                             2270 and <CR> at the prompt]
+
+
+
+ID  PORT   Network Neighbor & Port     Circuit              BPS   Trouble Phone
+========== =========================== ==================== ===   =============
+ 1) SYNC 0   2173 SWITCHER      SYNC 2 HW                   9600              
+ 2) SYNC 1   2171 SWITCHER      SYNC 3 HW                   9600              
+ 3) SYNC 2   4166 TYMSAT        SYNC 1 HW                   9600              
+ 4) SYNC     1830 HOST                 FDEA536313-PDY       4800  800/672-8825
+ 5) SYNC     4164 HOST                 74FDEA150950-PDY     9600  611         
+ 6) SYNC     2732 HOST                 FDEA286969-PDY       9600  408/491-9092
+ 7) SYNC     4791 HOST                 *TYM-LINK            4800  408/980-8204
+ 8) SYNC     4131 HOST                 FDEA607268-PDY       9600  408/491-1821
+
+
+
+              [The program has responded with a list of the connections  to
+               node  2270.   This display shows three hardwired connections
+               to neighbor nodes, two switchers and a Tymsat, and the  sync
+               ports  for  each  node.  It also shows five synchronous host
+               connections  via  leased  lines.   Each   of   these   eight
+               connections  is  given a temporary "Line ID" for purposes of
+               this display.]
+Network Profile Database                                            Page 57
+ADDENDUM
+
+
+
+
+Enter a Line ID or RETURN: 4      [The user now requests more detailed infor-
+                                   mation on circuit FDEA536313 by entering
+                                   Line ID 4 and <CR> at the prompt.]
+
+
+
+===============================================================================
+Node:   2270                Type: ISIS               Kernel: 1338
+Hardware: ENGINE            Memory: CORE1024         Region: WNFE 
+Company: TYMSHARE/TYMNET                             City & St: SANTA CLARA ,CA
+Phone  at site: 408/446-7770                         Site Id:  150
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Circuit: FDEA536313-PDY     Bps: 4800                Trouble #: 800/672-8825   
+Line:    50                 Drop:    27              Trib:    28
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Host:   1830                Int: 3270 HOST           Site Id: 6306  Manned?  
+Company: ITEL CORPORATION                            City & st: SAN FRANCISC,CA
+Phone at site: 415/955-0000        
+===============================================================================
+
+
+
+              [The  program  has  now  responded  with  Paradyne   analysis
+               information  on  the  line itself, as well as detailed node,
+               host, and site information for the two end-points.]
+
+
+
+
+
+Enter a Line ID or RETURN:     [The user now has the choice of entering one
+                                of the other seven Line IDs for detailed
+                                display or simply entering a <CR> to return
+                                to the prompt for entering another node.]
+
+
+
+               The LIST HOST CONNECTIONS option works exactly the  same  as
+               the  LIST  NODE CONNECTIONS option illustrated above, except
+               that in most cases there will be only one Line  ID  for  the
+               user to select for detailed display.
+Network Profile Database                                            Page 58
+ADDENDUM
+
+
+
+
+
+
+            SEARCH:  The SEARCH command has a new  option,  SEARCH  CIRCUIT
+               NAME.   This  option  allows  the  user  to enter any set of
+               characters from a circuit name.  The program will  return  a
+               list  of  circuits  that  contain  the  specified  character
+               string.
+
+               The example below illustrates the SEARCH CIRCUIT NAME option
+               in  non-425 mode.  Where 425 mode differs from this example,
+               it is noted in the explanation.
+
+
+
+Enter search string or RETURN: 5363   [The user has entered a numeric sub-
+                                       string of a circuit name at the
+                                       prompt.  In general, the more char-
+                                       acters that can be entered here, the
+                                       faster the search will be.]
+
+
+
+ID    Circuit              Bps    Point1  City        St  Point2  City        St
+
+   1 FDEA536316-PDY        4800   N 2361  SANTA CLAR  CA  N  410  MONTEREY    CA
+   2 FDEA536340-PDY        9600   N 1017  MOUNTAIN V  CA  N 2171  SANTA CLAR  CA
+   3 FDEA536313-PDY        4800   N 2270  SANTA CLAR  CA  H 1830  SAN FRANCI  CA
+   4 FDEA536327-PDY        9600   N 2173  SANTA CLAR  CA  N 2105  SAN BRUNO   CA
+   5 FDEA536356-PDY        9600   N  707  SANTA CLAR  CA  H  803  PALO ALTO   CA
+   6 FDEA536309-PDY        4800   N 2172  SANTA CLAR  CA  N 2757  MENLO PARK  CA
+
+
+
+              [The program has responded  with  a  list  of  circuits  that
+               contain  the  requested  character string.  The user now has
+               the option to display detailed information on one  of  these
+               circuits  by  entering  the  Line  ID,  or  to return to the
+               previous prompt and enter another  search  string.   In  425
+               mode  the screen is capable of displaying up to ten circuits
+               at a time.  If the list is longer  than  ten  circuits,  the
+               user  will  be asked to enter FUNCTION-SPACE repetitively to
+               see the full list.]
+
+
+
+Enter a Line ID or RETURN: 3      [The user enters Line ID 3 to display
+                                   detailed information for circuit
+                                   FDEA536313.]
+
+Network Profile Database                                            Page 59
+ADDENDUM
+
+
+
+
+
+
+
+Ckt name : FDEA536313-PDY      
+Bps      : 4800 
+Trouble# : 800/672-8825   
+
+Point1   : N 2270
+Company1 : TYMSHARE/TYMNET               
+Street1  : 3255 SCOTT BLVD  SUITE 4B     
+City1    : SANTA CLARA          CA
+SiteId   :  150
+SitePhone: 408/446-7770        
+
+Point2   : H 1830
+Company2 : ITEL CORPORATION              
+Street2  : 55 FRANCISCO STREET           
+City2    : SAN FRANCISCO        CA
+SiteId   : 6306
+SitePhone: 415/955-0000        
+
+
+              [The program has now displayed the detailed  information  for
+               the  requested  Line ID.  (Note that one end point is a node
+               and the other is a host).  If the program is  able  to  find
+               only  one  circuit  that  matches the search string, it will
+               immediately jump to this detailed display.]
+Network Profile Database                                            Page 60
+ADDENDUM
+
+
+            REPORTS:  A variety of new reports are  available  for  network
+               connections.  They can all be created by first selecting the
+               BRIEF REPORT option in the  REPORT  command,  and  then  the
+               NETWORK  CONNECTIONS  option.   There  is no real difference
+               between 425 and non-425 modes as far as creating reports  is
+               concerned.
+
+               Several of  these  reports  are  quite  large,  and  require
+               significant  time  and system resources to create.  In these
+               cases the program will indicate to  the  user  that  a  file
+               containing  the  report already exists on line, and the date
+               that it was last created.  If the date is recent enough  the
+               user  may  choose  to  type  out the existing report without
+               spending the time to create a newer version.
+
+               As with the other brief reports, these new reports  are  all
+               132 columns wide.  They can be SPOOLed if the user specifies
+               LARGE form size and 66 lines per page in the SPOOL  request.
+               If  they  are  output  to  a printer the user should set TTY
+               WIDTH 132 and set the printer on compressed type.
+
+               The available  reports  and  their  individual  options  are
+               briefly described below.
+
+
+
+            1) CIRCUIT MAP - This report comes in two basic  versions.   It
+               is  similar  to  the  Circuit Map formerly produced from the
+               1022 version of the Topology  Database,  but  contains  more
+               site details.
+
+               a) Node/host sort.  This version of the  Circuit  Map  lists
+                  circuits  by node and then by host.  Connections for each
+                  node are grouped together, first sync ports, and then SIO
+                  ports.  The neighbor node or host on the other end of the
+                  circuit is listed with site  details,  as  well  as  line
+                  speed,  trouble  reporting  number, and Paradyne analysis
+                  information.  Host connections are listed in  a  separate
+                  section  following  the  node connections.  Every line is
+                  listed twice in this report, once  for  each  end  point.
+                  This report can be selected by NFE region or Tech Support
+                  area.
+
+               b) Circuit name sort.  This version contains one  entry  for
+                  each  leased line (no hardwires or memory shufflers).  It
+                  is much smaller than the node/host version,  and  has  no
+                  selection options.
+
+            2) LEASED LINE REPORTS - These reports group  leased  lines  by
+               site,  and  show  details  of nodes and hosts connected to a
+               particular site as well as a mileage figure  calculated  for
+               each  circuit.  Three options for this report are all lines,
+               Tymnet to customer lines, and customer  to  customer  lines.
+               All versions can be selected by region or area.
+Network Profile Database                                            Page 61
+ADDENDUM
+
+
+            3) SITE CONNECTIONS - This report comes in  only  one  version,
+               though  it  can  be  selected  by region or area.  Lines are
+               grouped by node  or  host  within  each  site,  and  include
+               hardwires  and  memory  shufflers  as  well as leased lines.
+               Thus, from this report it is possible to  see  how  machines
+               within  a  site  are interconnected, as well as how the site
+               itself is connected to other network locations.
+
+
+
+
+                               SPECIAL REPORTS
+
+
+
+        The following is a listing of the reports available in the  special
+        reports  package.   These  reports  can be created by accessing the
+        SPECIAL option within the REPORT command.  A few of  these  reports
+        have  been  described in the Version 2-0 document, but they are all
+        listed here for the sake of completeness and convenience.
+
+            1) The NODE List.  This report is similar in format to the  old
+               Editor file maintained by Project Implementation and then by
+               Network Engineering.  It lists all  nodes,  in  node  number
+               order,  including  location  (company,  city and state), old
+               node number for upgrades, number  of  the  order  that  last
+               affected  the node, effective date, and all hosts associated
+               with the node, including kernel host.
+
+            2) The HOST list.  This report is in the format  of  the  brief
+               host  report.   It  is  separated into two sections, one for
+               normal hosts (recognized by  the  Supervisor)  and  one  for
+               accounting hosts (5-digit host numbers).
+
+            3) TYMNET-I Nodes.  A report of the remaining T-I nodes in  the
+               public  network,  including hardware type, software type and
+               location.
+
+            4) The ISIS Report.  This report summarizes  all  of  the  ISIS
+               nodes  in  the  network  by  location.   It  shows the hosts
+               assigned to each  node,  including  pending  hosts.   It  is
+               possible  to  use  this  report to approximate the number of
+               ISIS slots available at each site.
+
+            5) The ISIS Report - Tymnet Sites.   Same  as  above  but  only
+               listing Tymnet ISIS sites.
+
+            6) Site Summary - Tymnet/Tymshare Network Sites.  A report that
+               gives  a one-line description of each Tymnet and/or Tymshare
+               site, with a listing of nodes and hosts at that site.
+
+            7) Site Summary -  All  Network  Sites.   Same  as  above,  but
+               including  customer  sites  as  well  as Tymnet and Tymshare
+               sites.
+Network Profile Database                                            Page 62
+ADDENDUM
+
+
+            8) Site Summary -  All  Sites  in  the  Database,  Network  and
+               Non-network.   Same  as  above,  but  including sites in the
+               database where no nodes or hosts are located.  These  latter
+               sites  are  in  the  database to provide complete congruence
+               with Tymshare Fixed Assets site  listing.   All  three  Site
+               Summary reports are sorted geographically.
+
+            9) Site Report - Network and  Non-network  Sites.   This  is  a
+               listing  of  all sites in the database by site id, including
+               all the Fixed Assets sites.
+
+            10) Circuit Dump - This is a file, with no report headings,  of
+               basic circuit information.  It is intended to be loaded into
+               1022 or some other database structure.
+
+
+
+
+                              OTHER NEW FEATURES
+
+
+
+        There are several new features incorporated in Release 3-0 that are
+        not  apparent  to  the general user.  They are, however, of general
+        interest, and for that reason are briefly documented here.
+
+             * AUTOMATIC NODE AND HOST  NUMBER  ASSIGNMENT  -  The  Network
+               Profile  is  the  official vehicle for assigning and keeping
+               track of node and host numbers.  The  database  software  is
+               now  able  to  assign the next valid number to a user who is
+               allowed to add a node or host record.  It will automatically
+               reassign  numbers  that  have  been deleted for more than 60
+               days, in the interests of  keeping  the  Supervisor's  fixed
+               node and host number tables to a minimum.
+
+             * TABLE OF VALID CITIES - The program now checks  a  table  of
+               cities  whenever  a site is entered or changed.  If the user
+               is entering a city not already  in  the  table,  a  list  of
+               cities  in  that  country  or state that start with the same
+               letter is produced.  This gives the user an  opportunity  to
+               verify that the city being entered is not a variant spelling
+               of an existing city in the database.
+
+             * BASIC STATISTICS PACKAGE - This gives a brief report on such
+               items  as  number  of  nodes and sites in the network.  This
+               feature will be greatly enhanced in future releases.
+
+             * TABLE UPDATE PROGRAM - There is now a graceful way  for  the
+               Database  Administration  group  to  update  tables of valid
+               values, such as hardware and software types.
+
+             * CANADIAN PROVINCES -  Two-character  abbreviations  for  the
+               Canadian   provinces  have  now  been  added  to  the  state
+               abbreviation  tables.   The  following  is  a  list  of  the
+Network Profile Database                                            Page 63
+ADDENDUM
+
+
+               provinces and their corresponding abbreviations:
+
+                    AB Alberta
+                    BC British Columbia
+                    MB Manitoba
+                    NB New Brunswick
+                    NF Newfoundland
+                    NS Nova Scotia
+                    ON Ontario
+                    PE Prince Edward Island
+                    PQ Quebec
+                    SK Saskachewan
+
+             * LARGE REPORT GENERATION IN NETDB - Many of the reports  that
+               can  be  produced from the database are large, both in terms
+               of paper pages and in terms  of  disk  storage.   They  also
+               require  significant  amounts  of  time  and CPU capacity to
+               produce.  In order to reduce system degradation during prime
+               time,  to  minimize  disk  usage,  and  to  free  up  users'
+               terminals, a new scheme  is  being  used  to  produce  large
+               reports.
+
+               The large reports include most of the  SPECIAL  reports  and
+               the  BRIEF  and  DETAILED  reports that are produced for the
+               entire public network.  These  reports  will  be  maintained
+               within  the  NETDB  directory.  When the user chooses one of
+               them the program will respond with  a  message  stating  the
+               last  time  it  was created.  The user then has an option of
+               creating a more up-to-date copy (with  the  attendant  delay
+               and  CPU  usage),  or  immediately  exiting  and  typing  or
+               SPOOLING the copy that  is  already  on-line  in  the  NETDB
+               directory.
+   &"W@
