@@ -1,0 +1,468 @@
+*** /tymnet/lib/t2e/05.37/src/t2e05.r37	Mon Dec  6 14:19:10 1993
+--- t2e05.r37	Fri Nov 10 14:26:22 1995
+***************
+*** 314,320 ****
+         IF	\LOG.II 	:what ISIS decided to use
+  LOGII   EQ	LOG.II
+         EI
+! 	CFIG(LOGII,1)		:Include LOG II code    		###sdw
+         IF	LOGII
+  IDTACH  EQ	1
+         EI
+--- 314,325 ----
+         IF	\LOG.II 	:what ISIS decided to use
+  LOGII   EQ	LOG.II
+         EI
+! LG2OFF EQ	NETID&$00DF	:see if netid is southwest bell
+!        IF	LG2OFF
+! 	CFIG(LOGII,0)		:Exclude LOG II code 
+!        ELSE			:LG2OFF
+! 	CFIG(LOGII,1)		:Include LOG II code for Southwest Bell only
+!        EI			:LG2OFF
+         IF	LOGII
+  IDTACH  EQ	1
+         EI
+***************
+*** 2834,2839 ****
+--- 2839,2845 ----
+  R4RBFT  WS	1		:return bufferlets routine
+  
+  PROCID	HS	1		:CURRENT PROCESS NUMBER
++ SAVEKN	WS	1		:Save kn / r11 in zap routine
+  ::
+  ALINES	BS	LNSIZE		:ACTIVE LINES
+  ALINKS	BS	LKSIZE		:ACTIVE LINKS
+***************
+*** 6017,6028 ****
+  	STB     R10,SIOTB,R2		:no active transmitting
+  	STB     R10,SIOFB,R2		:first CCW is free
+  	ST	R6,SIOBLI,R1,		:CCW for input
+  	ST	R7,SIOBLI+8,R1,
+  	li	r6,5^10+siofsz/2	:max size of an sio record
+  	ST	R6,SIOBLI+4,R1,		:note that siobli+0c is stop ccw
+! 	LR	R3,R1
+  	AR	R3,R1			:FOR 30H BLK IN XRESET
+- 	AR	R3,R1			:FOR 30H BLK IN XRESET
+  	STH	R5,SIOBLR,R3,		: for Expanded reset ##AL
+  :	increment values for next set of stores
+  
+--- 6023,6042 ----
+  	STB     R10,SIOTB,R2		:no active transmitting
+  	STB     R10,SIOFB,R2		:first CCW is free
+  	ST	R6,SIOBLI,R1,		:CCW for input
++ :: 10-Aug-95 sdw (patch 12)
++ :	pico does not correctly cmd 5 to set record size.  since it defaults
++ :	correctly unless line is marked as high speed, pico will just have
++ :	to accept never having a 256KB line.
++        if	HMICRO!TSI
++ 	ST	R7,SIOBLI+4,R1,
++        else	:normal engines
+  	ST	R7,SIOBLI+8,R1,
+  	li	r6,5^10+siofsz/2	:max size of an sio record
+  	ST	R6,SIOBLI+4,R1,		:note that siobli+0c is stop ccw
+!        ei	:tsi tweak
+!   	LR	R3,R1
+!   	AR	R3,R1			:FOR 30H BLK IN XRESET ...
+  	AR	R3,R1			:FOR 30H BLK IN XRESET
+  	STH	R5,SIOBLR,R3,		: for Expanded reset ##AL
+  :	increment values for next set of stores
+  
+***************
+*** 6050,6056 ****
+  :	if split dismiss for 30 seconds so sup will know base went away and
+  :	is now coming back
+         if	split
+! 	svc	fast,$a 30
+         ei	:split
+  
+  	if	tii.fg
+--- 6064,6070 ----
+  :	if split dismiss for 30 seconds so sup will know base went away and
+  :	is now coming back
+         if	split
+! 	svc	dismis,$a 30
+         ei	:split
+  
+  	if	tii.fg
+***************
+*** 6630,6636 ****
+  g125m3
+  	if	nlinks-20		:if packets have room
+  	l	r0,alinks+4
+! 	st	r0,bpmtiq
+  	ei
+  	l	r0,alinks
+  	st	r0,bpmtiq
+--- 6644,6650 ----
+  g125m3
+  	if	nlinks-20		:if packets have room
+  	l	r0,alinks+4
+! 	st	r0,bpmtiq+4
+  	ei
+  	l	r0,alinks
+  	st	r0,bpmtiq
+***************
+*** 15685,15705 ****
+  :	and 600x after escaping then escape both bytes of len.  If len>600x
+  :	then don't escape 1st byte since if escaped it would look like a
+  :	msg of 6 bytes (which is the smallest legal msg).		###sdw
+  	LIS	R1,0			:WRITE THE LEADING ESCAPE FOR BYTE CNT
+  	JAL	R8,WCI,,
+  	CLHI	LRC,400 		:very large msg?
+  	JLFS	SUPO33  		:nope
+  	L	R11,BE,R2,		:1st byte not escaped
+  	J	SUPO36
+  SUPO33	JAL	R8,WCI,,		:SAVE SPACE FOR BYTE COUNT
+  	L	R11,BE,R2,		:POINTER TO BYTE COUNT
+  	CLHI	LRC,0C0 		:two byte len (with escapes)?
+! 	JLFS	SUPO40  		:nope just one byte len
+  SUPO36  JAL	R8,WCI,,  		:escape low byte
+  	JAL	R8,WCI,,
+  	AI	R11,80000000		:and mark this as a HW of len
+- SUPO40	LR	CD,LRC
+- 	AIS	LRC,2			:MESSAGE IS AT LEAST THIS LONG
+  SUPO45	LB	R1,SOB,PRD,		:GET BYTE
+  	AIS	PRD,1
+  	JLFS	SUPO48
+--- 15699,15721 ----
+  :	and 600x after escaping then escape both bytes of len.  If len>600x
+  :	then don't escape 1st byte since if escaped it would look like a
+  :	msg of 6 bytes (which is the smallest legal msg).		###sdw
++ 	LR	CD,LRC			:save from sup msg length
+  	LIS	R1,0			:WRITE THE LEADING ESCAPE FOR BYTE CNT
+  	JAL	R8,WCI,,
+  	CLHI	LRC,400 		:very large msg?
+  	JLFS	SUPO33  		:nope
++ 	AIS	LRC,1			:one more length byte for 3 byte length
+  	L	R11,BE,R2,		:1st byte not escaped
+  	J	SUPO36
+  SUPO33	JAL	R8,WCI,,		:SAVE SPACE FOR BYTE COUNT
++ 	AIS	LRC,2			:two length bytes for 4&2 byte lengths
+  	L	R11,BE,R2,		:POINTER TO BYTE COUNT
+  	CLHI	LRC,0C0 		:two byte len (with escapes)?
+! 	JLFS	SUPO45  		:nope just one byte len
+  SUPO36  JAL	R8,WCI,,  		:escape low byte
+  	JAL	R8,WCI,,
++ 	AIS	LRC,2			:two more length bytes for 4&3 byte len
+  	AI	R11,80000000		:and mark this as a HW of len
+  SUPO45	LB	R1,SOB,PRD,		:GET BYTE
+  	AIS	PRD,1
+  	JLFS	SUPO48
+***************
+*** 21910,21916 ****
+  DSIZAP	SBT	CHN,DISZNK		:INDICATES WE'RE AWAITING ZAP ACK
+         IF	T2GATE
+  	RBT	CHN,DISFLG		:Kludge fix for 3E63 crash (testing)
+!        EI	:T2GATE
+  	lhl	r1,bf,r2,		:get what should be our chn number
+  	clhi	r1,diszfl,chn		:does it match our chn number
+  	jnfs	dsiza1			:no, a mess up so die now
+--- 21926,21932 ----
+  DSIZAP	SBT	CHN,DISZNK		:INDICATES WE'RE AWAITING ZAP ACK
+         IF	T2GATE
+  	RBT	CHN,DISFLG		:Kludge fix for 3E63 crash (testing)
+!        ELSE	:not gateway
+  	lhl	r1,bf,r2,		:get what should be our chn number
+  	clhi	r1,diszfl,chn		:does it match our chn number
+  	jnfs	dsiza1			:no, a mess up so die now
+***************
+*** 21919,21924 ****
+--- 21935,21942 ----
+  	lhl	r1,bf,r1,		:get other chn number
+  	jefs	dsiza2			:it must be zero 
+  dsiza1	crash.(.disza)			:crash here instead of when get
++ 
++        EI	:1-T2GATE
+  					: ZAPACK and take 6863 crash in ZAPV
+  dsiza2	LHI	R1,ISZAPR		:PUT ZAPPER (09F) IN RING
+  	J	DSIMES
+***************
+*** 22599,22605 ****
+  
+  ::****************************************
+  :	done with rtd copy, restore prd to cursor from pointer
+! diso50	si	prd,dorng,,		:fix up prd
+  diso51					:exit with prd already corrected
+  	j	diso6			:back to common code after moving msg
+  
+--- 22617,22626 ----
+  
+  ::****************************************
+  :	done with rtd copy, restore prd to cursor from pointer
+! :: 18-Sep-95 jms (patch 13)
+! :	When assembling t2e05.r37 on the PDP-10 (for their EBUS bases), that
+! :	version of NAD does not like the double comma in "si prd,dorng,,".
+! diso50	si	prd,dorng,		:fix up prd	#jms remove extra ","
+  diso51					:exit with prd already corrected
+  	j	diso6			:back to common code after moving msg
+  
+***************
+*** 28514,28520 ****
+--- 28535,28546 ----
+  	JAL	R8,PCI			:SKIP LEADING 0
+  	CLHI	R1,3			:TEST FOR 03-PAIR (ONLY ZAPPERS)
+  	JE	LEPZAP			:ZAP SUP CIRCUIT IF IT IS
++ 
+  :	following handles new variable size len fields			###sdw
++ :       have 3 possible length variations.
++ :       00 xx for shorter messages where xx is 6 or greater
++ :       00 yy 00 xx where yyxx is overall length and yy is less than 6
++ :       yy 00 xx (yy is bigger than 3 to not be a network signal)
+  
+  	JL	LEP1.0			:otherwise 1st byte is high byte of len
+  	LR	LRC,R1
+***************
+*** 28544,28553 ****
+  	LM	R0,REGST		:restore regs		###sdw
+  	EI	:LPGDBG
+  
+! 	JAL	R8,GCI			:DISCARD BYTE CNT
+! 	JAL	R8,GCI
+! 
+! 	L	R3,BB,R2,		:PCI needs this
+  	JAL	R9,PHWI			:GET THE NODE #
+  	NHI	R1,7FFF
+  	CLHI	R1,MACHNM
+--- 28570,28590 ----
+  	LM	R0,REGST		:restore regs		###sdw
+  	EI	:LPGDBG
+  
+! :subsequent LEP command processing routines assume a length of two
+! :and subtract that from LRC.  We will subtract and extra byte
+! :for three byte length messages and an extra two bytes for four
+! :byte length messages
+! 					:skip over variable length len ###shm
+! 	JAL	R8,GCI			:check first byte
+!         LR      R1,R1
+!         JNFS    LEP1.7                  :first byte 0 (escape)
+! 	JAL	R8,GCI			:yes get next byte
+!         CLHI    R1,6                    :if 2nd byte >= 6 we have all length
+!         JGEFS   LEP1.8                  :yes done
+!         SIS     LRC,1                   :sub one byte from lrc for 4 byte len
+! LEP1.7  SIS     LRC,1                   :sub one byte from lrc for 3&4!
+!         JAL     R9,GCIE                 :skip next byte and escape
+! LEP1.8		L	R3,BB,R2,		:PCI needs this
+  	JAL	R9,PHWI			:GET THE NODE #
+  	NHI	R1,7FFF
+  	CLHI	R1,MACHNM
+***************
+*** 33382,33387 ****
+--- 33419,33425 ----
+  ZAPX2	HS	0
+  	IF	T2GATE
+  ::Count a port and send "cleared" message if appropriate
++ 	st	r11,savekn		:save kn from corruption in aarlo
+          st      r4,zapxs2               :R4 is needed by inthst zaps
+          sth     r3,GASAVE               :is restored soshould be saved
+          STH     CHN,GZAPSV              :save some regs to allow some work regs
+***************
+*** 33454,33459 ****
+--- 33492,33498 ----
+  	L	R9,GRSAVE
+  GZPCX6	LHL	R3,GASAVE		:...and proceed ....
+  	LHL	R8,GZSAVE		:and continue
++ 	L	R11,SAVEKN		:restore R11/KN
+  	LHL	CHN,GZAPSV
+          l       r4,zapxs2               :restore r4 saved at ZAPX2
+  	LIS	R0,0
+***************
+*** 33557,33567 ****
+  :	we will clear the channel and free the buffer.  If TID not yet sent,
+  :	we can clean things up ourselves without fear of a race condition
+  :	in reassigning a port which the sup thinks is still in login mode.
+! 	IF	T2GATE
+  	OHI	R0,LOGSUP		:Gateway only requires bit 4
+! 	ELSE
+! 	OHI	R0,LOGSUP+LOGNDC	:MAKE SURE ZAPPER TRAVELS
+! 	EI	:T2GATE
+  	STH	R0,BF,R2,
+  	THI	R0,LG.TID		:HAS TID BEEN SENT TO SUP?
+  	JER	R9			:YES, SEND ZAPPER TO SUP.
+--- 33596,33618 ----
+  :	we will clear the channel and free the buffer.  If TID not yet sent,
+  :	we can clean things up ourselves without fear of a race condition
+  :	in reassigning a port which the sup thinks is still in login mode.
+!        IF	T2GATE
+  	OHI	R0,LOGSUP		:Gateway only requires bit 4
+!        ELSE
+! 
+! :	The following used to have +LOGSUP which was wrong.  If a message
+! :	has been sent to the sup then we must not send the zapper to the
+! :	sup since sup will answer our first message and ignore the second.
+! :	LOGNDC means we have something to send to the sup when we are able
+! :	to send to the sup.  This is believed to fix a A063 crash when
+! :	sup is overloaded and returns a login zap ack after port has
+! :	been reused (since it was improperly freed up).		###sdw
+! :	OHI	R0,LOGNDC		:Have something to send to sup
+! 
+! :	reverse this fix because it causes bogus login limit	###sln
+! 	OHI	R0,LOGNDC+LOGSUP	:Have something to send to sup
+! 
+!        EI	:T2GATE
+  	STH	R0,BF,R2,
+  	THI	R0,LG.TID		:HAS TID BEEN SENT TO SUP?
+  	JER	R9			:YES, SEND ZAPPER TO SUP.
+***************
+*** 36424,36429 ****
+--- 36475,36481 ----
+  	LHI	R1,7FFF			:DEPOSIT DUMMY ID'S
+  	JAL	R9,WHWI,,
+  	JAL	R9,WHWI,,
++ 	if	1-t2gate
+  	LIS	R4,0			:index into username
+  MAKND5	LB	R1,XGGDLA+6,R4,		:get first byte of username
+  	JEFS	MAKND6
+***************
+*** 36433,36438 ****
+--- 36485,36498 ----
+  	JLBS	MAKND5
+  MAKND6	LIS	R1,0D			:CR end of username
+  	JAL	R8,WCI,,
++ 	else	
++         LHI     R1,444C
++         JAL     R9,WHWI,,               :DEPOSIT DLOAD USER NAME
++         LHI     R1,4F41
++         JAL     R9,WHWI,,
++         LHI     R1,440D
++         JAL     R9,WHWI,,
++ 	ei				:1-t2gate
+  	JAL	R8,CBCCT,,		:GET THE BYTE COUNT FOR THE NEEDLE
+  	STB	R1,0,PRD		:AND DEPOSIT INTO ITS SLOT
+  	JAL	R9,CRQHCR		:BUILD HALF CRQ
+***************
+*** 37130,37136 ****
+  
+  FNDCHN	LHL	R0,IOTAB,CHN,CHN	:IS THIS CHANNEL FREE?
+  	Jefs	FNDCH2			:yes
+! 	AIS	CHN,1
+  	SIS	R1,1
+  	JGbs	FNDCHN
+  	SKIP(0,R9)			:immed ret - NO FREE PORT FOUND	###wjl
+--- 37190,37196 ----
+  
+  FNDCHN	LHL	R0,IOTAB,CHN,CHN	:IS THIS CHANNEL FREE?
+  	Jefs	FNDCH2			:yes
+! FNDCH4	AIS	CHN,1
+  	SIS	R1,1
+  	JGbs	FNDCHN
+  	SKIP(0,R9)			:immed ret - NO FREE PORT FOUND	###wjl
+***************
+*** 37159,37169 ****
+  :	recently zapped.
+  FNDCH9
+         if	db.chn
+  	tbt	chn,chs,,		:if was just zapped then give isis
+! 	je	fndchn			:time to clear it so just try next chn
+  	CRASH.(.FNCH1)			:node code must have messed it up
+         else	:not debugging so use next free port
+! 	j	fndchn			:continue search for a free port
+         ei
+  
+  ::*********************************************************************
+--- 37219,37230 ----
+  :	recently zapped.
+  FNDCH9
+         if	db.chn
++ 	LR	R2,R0			:PRESERVE R2
+  	tbt	chn,chs,,		:if was just zapped then give isis
+! 	je	FNDCH4			:time to clear it so just try next chn
+  	CRASH.(.FNCH1)			:node code must have messed it up
+         else	:not debugging so use next free port
+! 	j	FNDCH4			:continue search for a free port
+         ei
+  
+  ::*********************************************************************
+***************
+*** 37569,37576 ****
+--- 37630,37642 ----
+  	JAL	R10,SUP14A,,		:Send to HNET sup
+  
+  :	NOW SEND DATA TO INET, first send LSF
++ :: 18-Sep-95 jms (patch 13)
++ :	While documenting the changes needed for Invoice-2, found an
++ :	oversight where invoice number was not being reduced to 24 bits
++ :	when the E9 half of the E9 EB pair is created.  Added "NI".
+  AASWA2	LHL	CHN,GB7PRT		:for insertion into message
+  	L	R4,AAINV,R11		:GET SECONDARY NET INVOICE#
++ 	NI	R4,000FFFFFF		:mask off MSF 8 bits   #jms
+  	OI	R4,0E9000000		:ADD MSG TYPE
+  	ST	R4,GB7INV		:STORE IN CANNED MSG
+  	LA	R1,GDB7M		:ADDR OF CANNED MSG
+***************
+*** 39466,39474 ****
+  GDB4	LB	R1,DORNG,PRD,	:PRD updated by DISOUT routine
+  	STB	R1,GLGSTA	:Store away status byte
+  	TBT	CHN,LOGING	:This channel should be in Log-in mode
+! 	JE	DSKP3,,		:Jump out to DISKIP's error handling
+  ::      Now double check to ensure that the right buffer is used
+! 	XHI	R2,4		:Flip to incoming (from terminal)buffer
+  	LHL	R1,GDLGTB,CHN,CHN	:Get previously stored buffer #
+  	CR	R1,R2		:These should match
+  	JN	DSOCRH,,
+--- 39532,39543 ----
+  GDB4	LB	R1,DORNG,PRD,	:PRD updated by DISOUT routine
+  	STB	R1,GLGSTA	:Store away status byte
+  	TBT	CHN,LOGING	:This channel should be in Log-in mode
+!         JNFS    GDB4GO          :in login mode jump to GDB4GO
+!         SIS     PRD,3           :not in login: readjust PRD for DSKP3
+!         LI      R1,0B4          :put message type in R1 for DSKP3
+! 	J	DSKP3,,		:Jump out to DISKIP's error handling
+  ::      Now double check to ensure that the right buffer is used
+! GDB4GO	XHI	R2,4		:Flip to incoming (from terminal)buffer
+  	LHL	R1,GDLGTB,CHN,CHN	:Get previously stored buffer #
+  	CR	R1,R2		:These should match
+  	JN	DSOCRH,,
+***************
+*** 39632,39640 ****
+  
+  ::      First, check to ensure that this is the correct circuit
+  GDB6	TBT	CHN,LOGING	:This channel should be in Log-in mode
+! 	JE	DSKP3,,		:Jump out to DISKIP's error handling
+  ::      Now double check to ensure that the right buffer is used
+! 	XHI	R2,4		:Flip to incoming (from terminal)buffer
+  	LHL	R1,GDLGTB,CHN,CHN	:Get previously stored buffer
+  	CR	R1,R2		:These should match
+  	JE	GDB602		:They do - proceed
+--- 39701,39712 ----
+  
+  ::      First, check to ensure that this is the correct circuit
+  GDB6	TBT	CHN,LOGING	:This channel should be in Log-in mode
+!         JNFS    GDB6GO          :in login mode jump to GDB4GO
+!         SIS     PRD,3           :not in login: readjust PRD for DSKP3
+!         LI      R1,0B6          :put message type in R1 for DSKP3
+! 	J	DSKP3,,		:Jump out to DISKIP's error handling
+  ::      Now double check to ensure that the right buffer is used
+! GDB6GO	XHI	R2,4		:Flip to incoming (from terminal)buffer
+  	LHL	R1,GDLGTB,CHN,CHN	:Get previously stored buffer
+  	CR	R1,R2		:These should match
+  	JE	GDB602		:They do - proceed
+***************
+*** 40399,40404 ****
+--- 40471,40477 ----
+  ttygg	XGX0
+  	kill	xgx0
+  
++       if	1-t2gate
+        IF        1-XGGXDW	:no downline load entry
+   REMARK%%ERROR -- Node cannot downline load neighbor unless an Xray
+   REMARK%%    goodguy entry is targeted to T.DLOAD.  Please correct the
+***************
+*** 40405,40410 ****
+--- 40478,40484 ----
+   REMARK%%    goodguy list.
+  	KILLER(1)
+        EI        :XGGXDW
++       ei	:1-t2gate
+  
+         if	1-xggpgg	:no names can change goodguy list
+   REMARK %%SECURE NODE: Goodguy List cannot be modified since no Goodguy Name
+***************
+*** 50448,50454 ****
+  	lhl	r1,xltchn,ln,ln		:get chn# running test
+  	rbt	r1,xltcha		:this chn's line testers is inactive
+  	sth	r0,xltlnm,r1,r1		:clear line number this guy is running
+- 	sth	r0,xltchn,ln,ln		:clear chn by line (links the two)
+  	lhi	r0,siorr-seg1		:back to resets
+  	sth	r0,siotst,ln,ln
+  	j	xrcrlf,,			:end of end
+--- 50522,50527 ----
