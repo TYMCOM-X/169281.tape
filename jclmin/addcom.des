@@ -1,0 +1,284 @@
+ADD USER HOST command -
+ 
+This command is used to validate an existing user to a Tymshare host. This
+user's customer information must be established in the accounting system type
+of the host which the user will be added on.
+ 
+A. Processing flow:
+ 
+1. Update in accounting data base - If user is not valid on input accounting
+   system type then add 'new user for the accounting system type', otherwise
+   add 'a host for uun'.
+ 
+2. Update the lud - 'Add user lud'; will be treated differently depends on
+   accounting system type: In PDP-10, a right shift is made before sending
+   license byte. For 370, sending read/write passwords and mailing address
+   if midsk allocation count is not zero. If don't want any passwords, send
+   both read and write passwords with blanks. For 940, shift cud district
+   word and embed into privilege word then send privilege word. Also send
+   a byte of billable/non-billable bit, a byte of timezone (including daylight
+   saving mask) and a zero byte. End with sending 44444444 in octal.
+ 
+3. If any error occurred in updating lud, 'reverse last accounting entry'.
+ 
+B. important subroutines:
+ 
+*GEXUSR - get username, get user cid, if changing items, make sure user
+          is not valid on input host.
+ 
+*GEXHME - get host, build circuit to lud, get ast, check to see if user is
+          not valid on the host. Set flags for later prompts, get customer
+          acctg. info for setting Tymshare license. Check user is valid on
+          this host, if not then get default ast, get user's acctg. record
+          for adding new system type.
+ 
+*GEXLIC - get license base on ACTSYS; first get privileged word from cud, if
+          it is not a TYPE request command, then this is unnecessary since
+          GEXUSR already got the word. Based on cud license, set TYM, A.S.,
+          HUSH bits. If pdp10 also ask for MODE. If 370 ask for VGAN and
+          FOCUS bits.
+ 
+*GEXCYL - get mdisk allocation count, if input is not zero, set MFLAG = 1.
+ 
+*GETRPW - get read password, if input is blank, set write password to be
+          blank too, otherwise set DFLAG = 1 so that write password will be 
+          prompted.
+ 
+ 
+ 
+NEW USER command -
+ 
+This command is used to add a new user in an existing GAN and an existing
+customer.
+
+A. Processing flow:
+ 
+1. Add new user in the Cud - First setup NMCPAR, NMCOLN, NMIRC and NMCLSS.
+   Then send the arguments to Cud. Note the sending one byte before sending
+   GAN and sending another byte before sending zero UUN; Also get one byte 
+   before getting GAN and new UUN respectively.
+ 
+2. Add new user in accounting. If failed, then remove new username from Cud
+   without telling PJ.
+ 
+3. Add user into lud - Same as those described in the ADD USER HOST command.
+   If failed, remove new username from the Cud and reverse last accounting
+   entry for deleting (3) new user reocrds in accounting.
+ 
+B. Important subroutines:
+ 
+* GEYSYS - get system type; if enter carriage return ask again, convert input
+           system type to ast and save into ACTSYS. Also set flags which will
+           cause more prompts for PDP10 and 370 system types.
+ 
+* GEXCSN - get cid, check access and make sure cid existing respect to input 
+           ast, this is done by get customer acctg. record. The invoice code
+           and focus flag will be used later to set up user's license.
+ 
+* GEYGAN - get username in desired gan. Check user against cud,check access,
+           make sure user's cid agree with input cid, check user is valid on
+           input ast, if not, get default ast. In either cases, get user
+           accounting info for establishing new user's accounting record.
+ 
+* GETNNM - get new username. Make sure this name is not used. This routine 
+           is written in CHANGE USER NAME command.
+ 
+* GEYHME - get host number. Same as GEXHME except without checking username
+           being valid on the host.
+ 
+* GEYPSW - get password then convert to password cipher. Check all kinds of
+           Tymshare password rules. If user enter null password (no password),
+           then don't check against rules.
+ 
+* PSWOUT - This routine only type 'Password: Not Shown', the purpose is let
+           user change password when necessary.
+ 
+* RWPSW  - write password cipher, not password.
+ 
+ 
+ADD CUSTOMER command -
+ 
+This command is used to vaildate an existing customer to another system type.
+ 
+A. Processing flow:
+ 
+1. Define pricing code; if internal, then assign 1,5,8 to ast 1,2,3 respectively
+   otherwise assign 99 to pricing code.
+ 
+2. Add customer with new ast.
+ 
+3. If input ast is 370 then update customer FOCUS flat fee flag. If failed,
+   then reverse last accounting entry.
+ 
+4. If pricing code is 99 then write to 99 file.
+ 
+B. Important subroutines:
+ 
+* GEZCSN - get cid, get default ast for this cid for checking it is valid and
+           checking access. Check cid is not valid on input ast. Finally, get
+           customer info from default ast, this is for establishing customer
+           record in new (input) ast.
+ 
+ 
+NEW CUSTOMER command -
+ 
+This command is used to establish a new customer in Tymshare.
+ 
+A. Processing flow:
+ 
+1. Get new customer number from mud, and prompt the new cid.
+ 
+2. Update customer industry code in the mud.
+ 
+3. Set variable pricing flag to 0, set minimum code to 1 and set default
+   pricing code to 99 if invoice code is not 3 (billable) and ast is 1, 2
+   or 3. Add new customer into accounting.
+ 
+4. If input ast is 370 then update customer FOCUS flat fee flag. If failed,
+   then reverse last accounting entry.
+ 
+5. If default pricing code is 99, then write 99 file: cid, ast, customer
+   name, contact name and phone number. Write tattle file.
+ 
+6. If process request then write reqnum.DAT file, record cid, salesman number 
+   etc. for future use.
+ 
+B. Important subroutines:
+ 
+* GEZSYS - get ast (including special system types), set default pricing code
+           and set flags.
+ 
+* GEXDIS - get district number, if user is district type then default to his
+           own district (don't prompt).
+ 
+* GEXINV - if district user, ask for billable or non-billable which will be
+           converted to invoice code 1 or 3 respectively. Otherwise, ask for
+           invoice code.
+ 
+* GETPRX - if immediate mode then return, if district user or examine or type
+           a request then ask for "should users this customer receive standard
+           pricing?". If answer is no, ask for contact name and phone number.
+ 
+ 
+NEW GAN command -
+ 
+This command is used to add first user into a new account for an existing
+customer.
+ 
+A. Processing flow:
+ 
+1. Very similar to step 1 in NEW USER command, except have to get invoice code
+   from customer accounting record to set up NMCOLN; invoice code = 3 is non-
+   billable otherwise are billable. The other exception is set NMGAN to zero
+   before getting it and display new global account number to the terminal.
+ 
+2. Get district and salesman number from customer info; get default pricing
+   code, language code and currency code from table then add new user into
+   accounting data base, similar to those in the NEW USER command.
+ 
+3. add user into lud, similar to those in the NEW USER command.
+ 
+B. Important subroutines:
+ 
+* GEGHME - if this is a request or non-immediate mode, default host to 0 and
+           return. If examine or immediate mode then ask for real host number.
+           The purpose of this routine is let examiner assign the host instead
+           of users do it.
+ 
+ 
+NUOGAC routine -
+ 
+This is a sub-routine is called after add customer request, when user want to
+add a new user to this customer under an existing gan.
+ 
+A. Processing flow: similar to NEW USER command. 
+ 
+B. Important subroutines: In request or non-immediate mode, get system type
+   and customer from memory (from ADD CUSTOMER request). Otherwise get them 
+   request file.
+ 
+ 
+AUHOAC routine - 
+ 
+This routine is called after add customer request when user wants to validate
+an existing user (belong to this customer) to a host of input (new) system
+type. This routine is basically same as ADD USER HOST command, only difference
+is getting system type and customer from memory during the request mode.
+ 
+A. Important subroutine:
+ 
+N2UUSR - get username and make sure he is belong to the customer in the
+         request. Since this is a request after add customer (to new ast)
+         request, it is assumed that user is not valid on the input ast.
+ 
+ 
+NGANAC routine -
+ 
+This routine is called after add customer request when user wants to create a
+new account. Basically, it is same as NEW GAN command with two differences:
+ 
+1. In non-immediate or request mode, get ast and cid from memory.
+ 
+2. After process the request successfully, write reqnum.DAT file with all data
+   needed for subsequent new user request after add customer request.
+ 
+ 
+NUNGAC routine -
+ 
+This routine is called after add customer request and  new gan (first new user
+after add customer) request. This routine is similar to NEW USER command with
+two exceptions:
+ 
+1. In non-immediate or request mode, get ast and cid from memory.
+ 
+2. No get gan routine; when generating the request, write REQNM2 - the request
+   number of new gan request, defined in EXMMAC - to reqnum.REQ file. Before
+   processing, read in REQNM2 along with other info, then open the REQNM2.DAT
+   file and read in gan, colon etc. for creating user's cud and acctg. records.
+ 
+ 
+NGANNC routine -
+ 
+This routine is called after new customer request when user wants to create a
+new account. Basically, it is same as NEW GAN command with three differences:
+ 
+1. In non-immediate or request mode, get ast from memory.
+ 
+2. Get REQNM1 from reqnum.REQ file then get real cid etc. from REQNM1.DAT file.
+ 
+3. After process the request successfully, write reqnum.DAT file with all data
+   needed for subsequent new user request after new customer request.
+ 
+ 
+NUNGNC routine -
+ 
+This routine is called after new customer request and  new gan (first new user
+after new customer) request. This routine is similar to NEW USER command with
+two exceptions:
+ 
+1. In non-immediate or request mode, get ast from memory.
+ 
+2. No get gan routine; when generating the request, write REQNM2 - the request
+   number of new gan request, defined in EXMMAC - to reqnum.REQ file. Before
+   processing, read in REQNM2 along with other info, then open the REQNM2.DAT
+   file and read in cid, gan, colon etc. for creating user's cud and acctg.
+   records.
+ 
+ 
+NUOGNC routine -
+ 
+This is a sub-routine is called after new customer request, when user want to
+add a new user to new customer under an existing gan. The request number of new
+customer request (REQNM1) is recorded into to request file. Cid will be read in
+from REQNM1.DAT file before processing the request.
+ 
+A. Processing flow : similar to new user request; except  NMCOLN is defined by
+                     customer invoice code instead of old uesr in the gan.
+ 
+B. Important subroutine :
+ 
+   R7UGAN - get username from existing gan, no check of access since it is done
+            in new customer request. If request mode, make sure user is belong
+            -ing to the same district as entered in the new customer request.
+            Finally, get user accouting record.
+ 
