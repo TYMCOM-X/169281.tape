@@ -1,0 +1,438 @@
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 1
+RUNEXE	MAC	27-Dec-69 10:37		Carl A Baltrunas	Tymshare TSG 1981
+
+     1					Title	Runexe	Program to map-in an EXE file and run it!
+     2					Subttl	Carl A Baltrunas	Tymshare TSG 1981
+     3
+     4						SEARCH	Carl,Macten,JOBDAT,UUOSYM
+     5						SALL
+     6
+     7						.REQUEST DSK:TYMCAB.REL		; SUBROUTINES
+     8
+     9						EXTERNAL    GETWRD,OUTOCT,OUTSIX,$$$TYC
+    10
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 2
+RUNEXE	MAC	27-Dec-69 10:37		MACRO DEFINITIONS
+
+    11						SUBTTL	MACRO DEFINITIONS
+    12
+    13			000001			VER==1		;VERSION 1
+    14			000000			EDIT==0		;EDIT NUMBER
+    15
+    16					DEFINE VERSION(VER,EDIT)<
+    17						LOC 137
+    18						BYTE	(3)0(9)<VER>(6)0(18)<EDIT>
+    19						RELOC
+    20					>
+    21
+    22	000137	0 001 00 000000 		VERSION	VER,EDIT	;SETUP VERSION
+    23
+    24			000001			Chan==1
+    25
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 3
+RUNEXE	MAC	27-Dec-69 10:37		Initialization section
+
+    26						SUBTTL	Initialization section
+    27
+    28	000000'	047 00 0 00 000000 	RUNEXE:	RESET				;RESET ANY & ALL I/O LINES
+    29	000001'	402 00 0 00 000002 		STORE	T1,T2,P,0		;CLEAR AC'S
+    30	000002'	200 01 0 00 000176'
+    31	000003'	251 01 0 00 000017 
+    32	000004'	200 17 0 00 000177'		MOVE	P,[IOWD 100,PDL]	;SETUP PDL LIST
+    33	000005'	304 00 0 00 000000 		Caia
+    34	000006'	051 03 0 00 000200'	FNF:	 Outstr	[Asciz\?File Not found!\]
+    35	000007'				Main:	Outstr	[Asciz\
+    36	000007'	051 03 0 00 000204'	File: \]
+    37	000010'	400 01 0 00 000000 		SETZ	T1,			;MAKE SURE WE'RE READY HERE
+    38	000011'	260 17 0 00 000000*		PUSHJ	P,GETWRD		;LOOK FOR A WORD (SOMETHING)
+    39	000012'	322 02 0 00 000007'		  Jumpe	T2,Main
+    40	000013'	202 02 0 00 000311'		Movem	T2,Direct+.RBNAM	;Store name
+    41	000014'	205 02 0 00 457045 		Movsi	T2,'EXE'		;  and extension
+    42	000015'	202 02 0 00 000312'		Movem	T2,Direct+.RBEXT
+    43
+    44	000016'	050 01 0 00 000345'		OPEN	CHAN,OPNBLK		;OPEN A CHANNEL
+    45	000017'	254 04 0 00 000017'		  HALT	.
+    46
+    47	000020'	076 01 0 00 000307'		LOOKUP	CHAN,DIRECT		;LOOKUP THE FILE
+    48	000021'	254 00 0 00 000006'		  Jrst	FNF
+    49	000022'	550 05 0 00 000044 		Hrrz	P1,.Jbrel		; Coresize-1 in words
+    50	000023'	340 05 0 00 000000 		Aoj	P1,			; Fix the -1
+    51	000024'	202 05 0 00 000350'		Movem	P1,Offset		; Remember this
+    52	000025'	242 05 0 00 777767 		Lsh	P1,-^D9			; Convert to pages
+    53	000026'	202 05 0 00 000351'		Movem	P1,Pages		; Save it!
+    54	000027'	500 05 0 00 000206'		Hll	P1,[1b7+1b17]		; Make ready, .prro!1 page
+    55	000030'	261 17 0 00 000005 		Push	P,P1			; Save this for later
+    56	000031'	201 06 0 00 000002 		Movei	P2,2			; From file page (2)
+    57	000032'	200 01 0 00 000207'		Move	T1,[.Chmfp,,chan]	; Read in the job data area?
+    58	000033'	043 01 0 00 000005 		Chanio	T1,P1
+    59	000034'	254 04 0 00 000034'		  Halt	.
+    60	000035'	200 05 0 00 000350'		Move	P1,Offset		; Use offset into block!
+    61	000036'	200 01 0 05 000133 		Move	T1,.Jbcor(P1)		; Get core needed for lowseg
+    62	000037'	202 01 0 00 000353'		Movem	T1,Jbcor		; Be mnemonic!
+    63	000040'	621 01 0 00 777777 		Tlz	T1,777777		; Zap half.
+    64	000041'	340 01 0 00 000000 		Aoj	T1,			; Add 1 to use pages
+    65	000042'	242 01 0 00 777767 		Lsh	T1,-^D9			; And convert!
+    66	000043'	275 01 0 00 000400 		Subi	T1,400			; Don't forget this one!
+    67	000044'	202 01 0 00 000352'		Movem	T1,Hghpag		; Highpage! Offset.
+    68	000045'	200 01 0 05 000115 		Move	T1,.Jbhrl(P1)		; Likewise... for High-seg if any
+    69	000046'	332 00 0 00 000001 		Skipe	T1			; High!?
+    70	000047'	201 01 0 01 400000 		Movei	T1,-400000(T1)		; Clear left half & 400000 bit
+    71	000050'	202 01 0 00 000354'		Movem	T1,Jbhrl		; Be mnemonic!
+    72	000051'	262 17 0 00 000005 		Pop	P,P1			; Restore code from aboce!
+    73	000052'	047 05 0 00 777712 		Vclear	P1,			; Now remove that page *** !
+    74	000053'	254 04 0 00 000053'		  Halt	.			; Not typically possible! So STOP!
+    75	000054'	550 01 0 00 000353'		Hrrz	T1,Jbcor		; Lowcore.
+    76	000055'	270 01 0 00 000354'		Add	T1,Jbhrl		; Add high -- If any!
+    77	000056'	550 02 0 00 000044 		Hrrz	T2,.Jbrel		; Get my current core!!!
+    78	000057'	317 01 0 00 000002 		Camg	T1,T2			; Do I need More?
+    79	000060'	254 00 0 00 000063'		  Jrst	Nocore			; No!  Don't take any away either!
+    80	000061'	047 01 0 00 000011 		Core	T1,			; Get the core.
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 3-1
+RUNEXE	MAC	27-Dec-69 10:37		Initialization section
+
+    81	000062'	254 04 0 00 000062'		  Halt	.			; OOPS!
+    82
+    83	000063'	200 05 0 00 000351'	Nocore:	Move	P1,Pages		; Get page # we want to use!
+    84	000064'	500 05 0 00 000206'		Hll	P1,[1b7+1b17]		; Make ready, .prro!1 page
+    85	000065'	047 05 0 00 777712 		Vclear	P1,			; Now remove that page *** !
+    86	000066'	254 04 0 00 000066'		  Halt	.			; Not typically possible! So STOP!
+    87	000067'	201 06 0 00 000001 		Movei	P2,1			; From file page (1)
+    88	000070'	200 01 0 00 000207'		Move	T1,[.Chmfp,,chan]	; Read in the page map page
+    89	000071'	043 01 0 00 000005 		Chanio	T1,P1
+    90	000072'	254 04 0 00 000072'		  Halt	.
+    91	000073'	200 05 0 00 000350'		Move	P1,Offset		; Get the offset figure
+    92	000074'	554 01 0 05 000000 		Hlrz	T1,(P1)			; Check code.
+    93	000075'	302 01 0 00 001776 		Caie	T1,1776			;  for 1776,,count
+    94	000076'	254 00 0 00 000306'		  Jrst	Errexe			;  OOPS!
+    95
+    96	000077'	550 01 0 05 000000 		Hrrz	T1,(P1)			; Get count
+    97	000100'	242 01 0 00 777777 		Lsh	T1,-1			; Convert to number of pairs in block
+    98	000101'	213 00 0 00 000001 		Movns	T1			; Negate
+    99	000102'	514 01 0 00 000001 		Hrlz	T1,T1			; Convert to -n,,0
+   100	000103'	540 01 0 00 000350'		Hrr	T1,Offset		;	-n,,pageoffset
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 4
+RUNEXE	MAC	27-Dec-69 10:37		Main processing Loop
+
+   101						Subttl	Main processing Loop
+   102
+   103	000104'	135 03 0 00 000210'	Loop:	Ldb	T3,[point 13,1(T1),35]	; Get the file page # (-1)
+   104	000105'	135 02 0 00 000211'		Ldb	T2,[point 13,2(T1),35]	; Get the process page #
+   105	000106'	135 04 0 00 000212'		Ldb	T4,[point  9,2(T1),8]	; Get the repeat count -1
+   106	000107'	313 02 0 00 000351'	Addone:	Camle	T2,Pages		; Do something special-pages in core
+   107	000110'	254 00 0 00 000120'		  Jrst	Normal			;  else skip to the normal routine
+   108	000111'	340 03 0 00 000000 		Aoj	T3,			; Increment physical page # in file
+   109	000112'	322 04 0 00 000147'		Jumpe	T4,Justadd		; If repeat = 0, then add to list
+   110	000113'	202 03 0 02 000355'		Movem	T3,Base(T2)		; Otherwise, Add one here
+   111	000114'	306 03 0 00 000001 		Cain	T3,1			; If File-page = 1, make zeroes
+   112	000115'	400 03 0 00 000000 		  Setz	T3,			;   and make sure it stays = 1!
+   113	000116'	340 02 0 00 000000 		Aoj	T2,			; Increment process page #
+   114	000117'	364 04 0 00 000107'		Soja	T4,Addone		; Decrement repeat by 1 & Loop
+   115
+   116	000120'	322 03 0 00 000150'	Normal:	Jumpe	T3,Donext		; Well?  Why clear then create?
+   117	000121'	340 03 0 00 000000 		Aoj	T3,			; Increment file page # for real
+   118	000122'	340 04 0 00 000000 		Aoj	T4,			; Increment count for real
+   119	000123'	301 02 0 00 000400 		Cail	T2,400			; Check if it's high-seg
+   120	000124'	270 02 0 00 000352'		  Add	T2,Hghpag		; Blam!
+   121	000125'	504 02 0 00 000004 		Hrl	T2,T4			; Copy as Repeat,,Process-page
+   122	000126'	661 02 0 00 002000 		Tlo	T2,2000			; Add reference bit!
+   123	000127'	047 02 0 00 777712 		Vclear	T2,			; First clear the page
+   124	000130'	254 00 0 00 000305'		  Jrst	Errclr			; Error trying to clear it???
+   125	000131'	621 02 0 00 002000 		Tlz	T2,2000			; Clear bit!
+   126	000132'	661 02 0 00 004000 		Tlo	T2,4000			; Equiv to 2b7, (Copy on Write)
+   127	000133'	200 00 0 00 000207'		Move	[.Chmfp,,chan]		; Setup UUO call to map the page
+   128	000134'	043 00 0 00 000002 		Chanio	T2			; Map the page
+   129	000135'	254 00 0 00 000302'		  Jrst	Errmap			;  Error mapping the page ???
+   130	000136'	254 00 0 00 000141'		Jrst	Workit			; Add it to the working set
+   131
+   132	000137'	047 02 0 00 777711 	Nullit:	Vcreat	T2,			; Create private pages for now!
+   133	000140'	254 00 0 00 000304'		  Jrst	Errvcr			; No? something's wrong!
+   134	000141'	621 02 0 00 004000 	Workit:	Tlz	T2,4000			; Clear (copy on write bit)
+   135	000142'	661 02 0 00 002000 		Tlo	T2,2000			; Set Add to working set bit
+   136	000143'	200 00 0 00 000213'		Move	[.Wsrng,,T2]		; Setup funtion code
+   137	000144'	047 00 0 00 777704 		Wsctl				; Add it!
+   138	000145'	254 00 0 00 000303'		  Jrst	Errwsc			;  Error in working set command
+   139	000146'	304 00 0 00 000000 		 Caia				; Skip! and do next pair!
+   140	000147'	202 03 0 02 000355'	Justad:	Movem	T3,Base(T2)		; Set page in table (Must be r/w)
+   141	000150'	340 01 0 00 000000 	DoNext:	Aoj	T1,			; Increment first part
+   142	000151'	253 01 0 00 000104'		Aobjn	T1,Loop			; Do next pair
+   143	000152'	200 02 0 00 000214'		Move	T2,[Xwd 1777,1]		; Get End-of-map,,Len=1 constant
+   144	000153'	312 02 0 01 000001 		Came	T2,1(T1)		;  and make sure we made it ok!
+   145	000154'	254 00 0 00 000306'		  Jrst	Errexe			; Nope, Bad EXE format!
+   146	000155'	332 02 0 00 000074 		Skipe	T2,.Jbddt		; Skip if DDT!
+   147						 Outstr	[Asciz\
+   148					% DDT loaded!
+   149	000156'	051 03 0 00 000215'	\]
+   150
+   151	000157'	200 01 0 00 000352'	Lastpt:	Move	T1,Hghpag		; Get the high-seg start page
+   152	000160'	201 01 0 01 000400 		Movei	T1,400(T1)		; and make it real again.
+   153	000161'	242 01 0 00 000011 		Lsh	T1,^D9			; Shift it to make words.
+   154	000162'	360 01 0 00 000000 		Soj	T1,			; Subtract to get top address
+   155	000163'	336 00 0 00 000354'		Skipn	Jbhrl			; Should we have a high segment?
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 4-1
+RUNEXE	MAC	27-Dec-69 10:37		Main processing Loop
+
+   156	000164'	400 01 0 00 000000 		  Setz	T1,			; No-- Set value to 0
+   157	000165'	200 07 0 00 000001 		Move	P3,T1			; Save the REMAP? value!
+   158	000166'	200 01 0 00 000221'		Move	T1,[Base,,140]		; Copy page list to page 0
+   159	000167'	251 01 0 00 000157 		Blt	T1,137+20		; -- max of 20 words! --
+   160	000170'	205 01 0 00 000222'		Movsi	T1,Finals		; Get the address of this code
+   161	000171'	541 01 0 00 000160 		Hrri	T1,140+20		; And where to put it!
+   162	000172'	251 01 0 00 000237 		Blt	T1,137+20+Finalz	; -- Copy Code --
+   163	000173'	200 05 0 00 000350'		Move	P1,Offset		; Save this since it's going away
+   164	000174'	200 06 0 00 000351'		Move	P2,Pages		; .. Ditto ..
+   165	000175'	254 00 0 00 000160 		Jrst	140+20			; Bye!
+   166
+   167						Xlist
+   168						list
+   169
+   170	000160				Finals:	Phase	140+20			; Just to remind me that 20!
+   171
+   172
+   173	000160	205 01 0 06 000000 	Finalb:	Movsi	T1,(P2)			; Subtract 1 & set as the count
+   174	000161	661 01 0 00 002000 		Tlo	T1,2000			; Set 1b7 to remove reference bits
+   175	000162	541 01 0 00 000001 		Hrri	T1,1			; Begin at page 1
+   176	000163	047 01 0 00 777712 		Vclear	T1,			; All Gone!!! Now set them up!
+   177	000164	254 04 0 00 000164 		  Halt	.			; Huh?
+   178	000165	210 01 0 00 000006 		Movn	T1,P2			; Get count as -n
+   179	000166	207 00 0 00 000001 		Movss	T1			; Now swap
+   180	000167	541 01 0 00 000141 		Hrri	T1,141			; Begin with first page (must b one)
+   181
+   182	000170	336 03 0 01 000000 	Finall:	Skipn	T3,(T1)			; Do we have a page?
+   183	000171	254 00 0 00 000203 		  Jrst	Paged			; Not any more!
+   184	000172	201 02 0 01 777640 		Movei	T2,-140(T1)		; Process page #
+   185	000173	505 02 0 00 004001 		Hrli	T2,(2b7!1b17)		; Set C-o-W & 1 page
+   186	000174	200 00 0 00 000220 		Move	[.Chmfp,,chan]		; Get ready!
+   187	000175	043 00 0 00 000002 		Chanio	T2			; Create page! (read from file)
+   188	000176	254 04 0 00 000176 		  Halt	.
+   189	000177	505 02 0 00 002001 		Hrli	T2,2001			; Set Add to working set bit
+   190	000200	200 00 0 00 000221 		Move	[.Wsrng,,T2]		; Setup funtion code
+   191	000201	047 00 0 00 777704 		Wsctl				; Add it!
+   192	000202	254 04 0 00 000202 		  Halt	.
+   193	000203	253 01 0 00 000170 	Paged:	Aobjn	T1,Finall		; Loop on pages that were in core
+   194
+   195					; Now do page 0
+   196
+   197	000204	205 04 0 00 002001 	Page0:	Movsi	T4,(1b7!1b17)		; For Vclear! page 0
+   198	000205	200 03 0 00 000140 		Move	T3,140			; Page # in file
+   199	000206	205 02 0 00 004001 		Movsi	T2,(2b7!1b17)		; Set C-o-W & 1 page for page 0
+   200	000207	336 00 0 00 000007 		Skipn	P3			; Don't remap if no high-seg
+   201	000210	254 00 0 00 000213 		  Jrst	Pager			; .
+   202	000211	047 07 0 00 000037 		 Remap	P3,
+   203	000212	254 04 0 00 000212 		  Halt	.
+   204	000213	200 01 0 00 000222 	Pager:	Move	T1,[Pounce,,P1]		; Begin here!
+   205	000214	251 01 0 00 000017 		Blt	T1,17			; Copy all!
+   206	000215	200 01 0 00 000221 		Move	T1,[.Wsrng,,T2]		; Working set stuff!
+   207	000216	200 00 0 00 000220 		Move	[.Chmfp,,chan]		; Get ready!
+   208	000217	254 00 0 00 000005 		Jrst	P1
+   209
+   210	000220					lit
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 4-2
+RUNEXE	MAC	27-Dec-69 10:37		Main processing Loop
+
+   211	000220	000035	000001
+   212	000221	000001	000002
+   213	000222	000223	000005
+   214	000223					var
+   215
+   216	000223				Pounce:
+   217	000265'					Dephase
+   218	000005					Phase	P1
+   219	000005	047 02 0 00 777712 		Vclear	T2,			; Clear page 0!
+   220	000006	254 04 0 00 000006 		  Halt	.
+   221	000007	043 00 0 00 000002 		Chanio	T2			; Create page! (read from file)
+   222	000010	254 04 0 00 000010 		  Halt	.
+   223	000011	416 00 0 00 000140 		Setmm	140			; Usually here! Ref to make copy!
+   224	000012	200 01 0 00 000120 		Move	T1,.Jbsa		; Start address!
+   225	000013	254 00 0 01 000000 		Jrst	(T1)			; Bye!
+   226	000014	000000	000012			12
+   227	000015	000000	000013			13
+   228	000016	000000	000014			14
+   229	000017	000000	000015			15
+   230	000020	000000	000016			16
+   231	000021	000000	000016			16
+   232	000302'					Dephase
+   233
+   234			000060		Finalz==.-Finals
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page 5
+RUNEXE	MAC	27-Dec-69 10:37		DATA AREAS FOR DIRECTORY LOOKUPS & FILE LOOKUPS
+
+   235						SUBTTL	DATA AREAS FOR DIRECTORY LOOKUPS & FILE LOOKUPS
+   236
+   237	000302'	254 04 0 00 000302'	Errmap:	Halt	.
+   238	000303'	254 04 0 00 000303'	Errwsc:	Halt	.
+   239	000304'	254 04 0 00 000304'	Errvcr:	Halt	.
+   240	000305'	254 04 0 00 000305'	Errclr:	Halt	.
+   241	000306'	254 04 0 00 000306'	Errexe:	Halt	.
+   242
+   243	000307'	000000	000035		DIRECT:	Exp	35
+   244	000310'	000 00 0 00 000000 		Z
+   245	000311'	000 00 0 00 000000 		Z
+   246	000312'	45 70 45 00 00 00 		Sixbit	/EXE/
+   247	000313'					BLOCK	36-4		;SETUP BLOCK FOR DIRECTORIES
+   248
+   249	000345'	000000	000017		OPNBLK:	17				;SET MODE DUMP
+   250	000346'	44 63 53 00 00 00 	DEVBLK:	SIXBIT	/DSK/			;SIXBIT/DSK/
+   251	000347'	000000	000000			XWD	0,0			;BUFFER SPACE
+   252
+   253	000350'				Offset:	Block	1
+   254	000351'				Pages:	Block	1
+   255	000352'				Hghpag:	Block	1
+   256	000353'				Jbcor:	Block	1
+   257	000354'				Jbhrl:	Block	1
+   258	000355'				Base:	Block	20
+   259
+   260	000375'				PDL:	BLOCK	100			;SETUP PDL LIST
+   261
+   262			000000'			END	Runexe
+
+NO ERRORS DETECTED
+
+PROGRAM BREAK IS 000475
+CPU TIME USED 00:29.049
+
+11K CORE USED
+Runexe	Program to map-in an EXE file and run it!	MACRO %53A(1155) 02:37 24-Apr-81 Page S-1
+RUNEXE	MAC	27-Dec-69 10:37		SYMBOL TABLE
+
+ADDONE		000107'		VCLEAR	047000	777712		
+BASE		000355'		VCREAT	047000	777711		
+CHAN		000001	spd	VER		000001	spd	
+CHANIO	043000	000000		WORKIT		000141'		
+CORE	047000	000011		WSCTL	047000	777704		
+DEVBLK		000346'		$$$TYC		000000	ext	
+DIRECT		000307'		.CHMFP		000035	spd	
+DONEXT		000150'		.JBCOR		000133		
+EDIT		000000	spd	.JBDDT		000074		
+ERRCLR		000305'		.JBHRL		000115		
+ERREXE		000306'		.JBREL		000044		
+ERRMAP		000302'		.JBSA		000120		
+ERRVCR		000304'		.RBEXT		000003	spd	
+ERRWSC		000303'		.RBNAM		000002	spd	
+FINALB		000160		.WSRNG		000001	spd	
+FINALL		000170		
+FINALS		000222'		
+FINALZ		000060	spd	
+FNF		000006'		
+GETWRD		000011'	ext	
+HALT	254200	000000		
+HGHPAG		000352'		
+JBCOR		000353'		
+JBHRL		000354'		
+JUSTAD		000147'		
+LASTPT		000157'		
+LOOKUP	076000	000000		
+LOOP		000104'		
+MAIN		000007'		
+NOCORE		000063'		
+NORMAL		000120'		
+NULLIT		000137'		
+OFFSET		000350'		
+OPEN	050000	000000		
+OPNBLK		000345'		
+OUTOCT		000000	ext	
+OUTSIX		000000	ext	
+OUTSTR	051140	000000		
+P		000017		
+P1		000005		
+P2		000006		
+P3		000007		
+PAGE0		000204		
+PAGED		000203		
+PAGER		000213		
+PAGES		000351'		
+PDL		000375'		
+POUNCE		000223		
+REMAP	047000	000037		
+RESET	047000	000000		
+RUNEXE		000000'		
+T1		000001		
+T2		000002		
+T3		000003		
+T4		000004		
+
+Symbol cross reference
+
+ADDONE	   106#	   114
+BASE	   110	   140	   158	   258#
+CHAN	    24#	    44	    47	    57	    88	   127	   186	   207
+DEVBLK	   250#
+DIRECT	    40	    42	    47	   243#
+DONEXT	   116	   141#
+EDIT	    14#	    22
+ERRCLR	   124	   240#
+ERREXE	    94	   145	   241#
+ERRMAP	   129	   237#
+ERRVCR	   133	   239#
+ERRWSC	   138	   238#
+FINALB	   173#
+FINALL	   182#	   193
+FINALS	   160	   170#	   234
+FINALZ	   162	   234#
+FNF	    34#	    48
+GETWRD	     9#	    38
+HGHPAG	    67	   120	   151	   255#
+JBCOR	    62	    75	   256#
+JBHRL	    71	    76	   155	   257#
+JUSTAD	   109	   140#
+LASTPT	   151#
+LOOP	   103#	   142
+MAIN	    35#	    39
+NOCORE	    79	    83#
+NORMAL	   107	   116#
+NULLIT	   132#
+OFFSET	    51	    60	    91	   100	   163	   253#
+OPNBLK	    44	   249#
+OUTOCT	     9#
+OUTSIX	     9#
+P	    31	    32	    38	    55	    72
+P1	    49	    50	    51	    52	    53	    54	    55	    58	    60	    61	    68	    72	    73	    83
+	 	    85	    89	    91	    92	    96	   163	   204	   208	   218
+P2	    56	    87	   164	   173	   178
+P3	   157	   200	   202
+PAGE0	   197#
+PAGED	   183	   193#
+PAGER	   201	   204#
+PAGES	    53	    83	   106	   164	   254#
+PDL	    32	   260#
+POUNCE	   204	   216#
+RUNEXE	    28#	   262
+T1	    30	    31	    37	    57	    58	    61	    62	    63	    64	    65	    66	    67	    68	    69
+	    70	    71	    75	    76	    78	    80	    88	    89	    92	    93	    96	    97	    98	    99
+	   100	   103	   104	   105	   141	   142	   144	   151	   152	   153	   154	   156	   157	   158
+	   159	   160	   161	   162	   173	   174	   175	   176	   178	   179	   180	   182	   184	   193
+	   204	   205	   206	   224	   225
+T2	    29	    30	    39	    40	    41	    42	    77	    78	   104	   106	   110	   113	   119	   120
+	   121	   122	   123	   125	   126	   128	   132	   134	   135	   136	   140	   143	   144	   146
+	   184	   185	   187	   189	   190	   199	   206	   219	   221
+T3	   103	   108	   110	   111	   112	   116	   117	   140	   182	   198
+T4	   105	   109	   114	   118	   121	   197
+Symbol cross reference
+
+VER	    13#	    22
+WORKIT	   130	   134#
+$$$TYC	     9#
+.CHMFP	    57	    88	   127	   186	   207
+.JBCOR	    61
+.JBDDT	   146
+.JBHRL	    68
+.JBREL	    49	    77
+.JBSA	   224
+.RBEXT	    42
+.RBNAM	    40
+.WSRNG	   136	   190	   206
+Macro/Opdef cross reference
+
+CHANIO	    58	    89	   128	   187	   221
+CORE	    80
+HALT	    45	    59	    74	    81	    86	    90	   177	   188	   192	   203	   220	   222	   237	   238
+	   239	   240	   241
+LOOKUP	    47
+OPEN	    44
+OUTSTR	    34	    35	   147
+REMAP	   202
+RESET	    28
+STORE	    29
+VCLEAR	    73	    85	   123	   176	   219
+VCREAT	   132
+VERSIO	    16#	    22
+WSCTL	   137	   191    ?p	
