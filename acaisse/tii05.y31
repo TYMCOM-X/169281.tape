@@ -1,0 +1,457 @@
+        ******************************************************************
+        **                  PROPRIETARY INFORMATION                     **
+        **                                                              **
+        **  MDC-TYMNET's   proprietary  rights  are  included  in  the  **
+        **  information disclosed herein.  The recipient, by receiving  **
+        **  this document,  agrees that neither this document nor  the  **
+        **  information disclosed herein nor any part thereof shall be  **
+        **  reproduced  or  transferred to other documents or used  or  **
+        **  disclosed  to  others for manufacturing or for  any  other  **
+        **  purpose  except as specifically authorized in  writing  by  **
+        **  MDC-TYMNET.                                                 **
+        ******************************************************************
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  1  OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT ID   :  TII	                      VERSION: 05.31
+        PRODUCT NAME :  NODE CODE
+        RELEASED BY  :  Scott Wedel                       DATE: 28-MAR-89
+        ==================================================================
+
+	__________________________________________________________________
+        A) DESCRIPTION OF PROGRAM CORRECTIONS: (INCLUDE NSR NUMBERS)
+
+        A.1  REFERENCE PREVIOUS RELEASE: This release incorporates the
+		fixes found in the patch files for Versions 5.06, 5.10,
+		5.11, 5.12, 5.13, 5.14, 5.20, 5.21 and 5.22.
+
+        A.2 Corrected XRAY TD and TE commands to always mask the logon
+            data part of the Node/Supervisor message which may contain a
+            password.
+
+        A.3 Removed potential crash from XRAY DB and DE commands when issued
+            from local XRAY.
+
+        A.4 Allow XRAY command PM to be issued from local XRAY.
+
+        A.5 Changed XRAY DR and DS command to not display logon usernames
+            and passwords.
+
+        A.6 Changed XRAY TM F and TM B displays to more clearly display the
+            time of each event.  Previously, there was six spaces between
+            the first and second byte of the FASTC display.  That has been
+            reduced to two spaces.
+
+        A.7 Corrected CKOV to not crash or corrupt memory when a link number
+            greater than 32 is overloaded.
+
+        A.8 Corrected XRAY DB command to not prompt for RATE of seven since
+            six is the highest allowed rate in ISIS machines.  Previously,
+            a RATE of seven was internally converted to a RATE of six.
+
+        A.9 Changed SIO initialization to properly wait for initialization
+            to complete.  Previously, it would loop a specified number of
+            times, but different machine execution rates then leads to
+            longer or shorter time allowed for SIO initialization.
+
+        A.10 Changed link attach logic to properly handle neighbor switching
+             between old style resets and expanded resets.
+
+        A.11 Added logic to send an old style reset every four minutes to
+             fix problem of lines not coming up.
+
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  2  OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+        A.12 NSR# 1630  Changed SIO reset line logic to send only one reset 
+             per second instead of maximum that line can transmit.  Reduces 
+             SIO motherboard load for unused lines.
+
+        A.13 Removed unused and inaccessible SYLVER histogram.
+
+        A.14 NSR#1627 & NSR #1441.  Modified SIO transmit logic to be able to
+                send upto 80 packets per second.  Previously, the maximum 
+                was 40 packets per second.  NSR #1441 is cleared since patch
+                also fixes SIO for SOLO and SOLO is not supported in 5.31.
+
+        A.15 Fixed Gateway to properly report out of ports.
+
+        A.16 Numerous fixes to Gateway zap circuit logic.
+
+        A.17 Gateway assembles when accounting is disabled.
+
+        A.18 Fix to prevent Gateway accounting from corrupting a register
+             which caused a crash.
+
+        A.19 Gateway now does termination accounting when logon session
+             is zapped.
+
+        A.20 Corrected Gateway to function properly when either IHOST or
+             HHOST is less than four.
+
+        A.21 NSR# 1445  Fix SIO line receive packet logic to remove potential
+             foreground/background miscommunication.
+
+        A.22 NSR#1411 - Report MXP machine number with Kernel host number.
+
+        A.23 Fixed host status logic to report Origination/Destination Only
+             bits to Supervisor.
+
+        A.24 Allow debugger to have debugger rings larger than 1024 bytes.
+
+        A.25 NSR#1545  Balance output on SIO multiline links.
+
+        A.26 Fix NS display to use correct header over the time spent in
+             each process.
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  3   OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+
+        A.27 Fix KD to properly count number of command circuits on the
+             link.
+
+        A.28 Added symbols dealing with reset descriptor and SIO to
+             symbol table.
+
+        A.29 Fix bug in SIO retransmission routine.
+
+        A.30 NSR#1800  LOGII Dispatcher Crash when sending RCRI with
+             SMO 24.
+
+        A.31 Fix Xray KD command to display host number of neighbors later
+             than version 5.20.
+
+        A.32 Fix Xray TD/TA commands to only display the header of the LOG II
+             NCRM node to Supervisor message (msg 08).  The data after the
+             header may contain password data and thus should not be displayed.
+
+        A.33 NSR#1813  Fix host status reporting of collect calls status bits.
+
+        A.34 Patch to fix crash when first SIO line is not available.
+
+        A.35 Verification that none of the unsupported TYMSTAR switches
+             have been enabled.
+
+        A.36 Patch to fix crash when a multi-line link is a SIO and a SYNC
+             line.
+
+        A.37 Fix bug of HNET to INET transparent IIX logons that
+             require a password.
+
+        A.38 NSR#1861  Save registers 0 and 1 when doing software crashes.
+
+        A.39 NSR#1862  Correct link saturated calculation for SIO lines.
+             Previously, lightly loaded lines would report as being saturated.
+
+        A.40 Fix Xray DB command to completely initialize the delay circuit
+             which fixes potential crashes when zapping the delay circuit.
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  4  OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+        A.41 NSR 2203  Fix Xray DB command to not let a large fill 
+	     character value crash the node.
+
+        A.42 Service all dispatcher ports even when the number of dispatcher
+             circuits is not a multiple of 8.  This also fixes dispatcher port
+             service when number of dispatcher ports is not a multiple of 8
+             for the gateway configuration.
+
+        A.43 Display the network name associated with the NETID.  This makes
+             it easier to catch incorrect NETIDs at assembly time.
+
+        A.44 Kill the assembly if the NETID is set to 0 since that is never
+             a correct NETID.
+
+        A.45 Redefine the patch macros to cancel the assembly if patch macros
+             detect error while assembling the patch file.
+
+        A.46 Redefine the patch macros to display which parameter needs to
+             be increased when one of the patch areas overflows.
+
+        A.47 Redefine the patch macros to not output BELLs in text messages.
+             Bells are normally reserved for assembly errors and warning
+             messages.
+
+        A.48 Patch to force V5.20+ neighbors to come up on expanded resets.
+             This prevents NETID mismatches from succeeding by coming up on
+             old style resets which do not have NETIDs.
+
+        A.49 Patch to prevent a timing problem with Zap With Reason Dispatcher
+             messages which could crash the node.
+
+	A.50 NSR 2554  Correct reporting of HDLC checksum to not make
+	     a Crypto message when line has a low error rate.
+
+	A.51 NSR 2657  Correct DB and DL to store time of circuit building
+	     so that the Xray NS command has an accurate NEHW (longest
+	     delay in processing a needle).
+
+	A.52 NSR 2664  Do not clear first halfword of the time of SIO
+	     interupt.
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  5  OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+	A.53 Patch to ensure that code is not assembled as a Gateway.
+	     The volumious Gateway patches have not been upgraded for
+	     this version of code.  Thus, for gateway configs please
+	     use versions which fully support Gateway.
+
+        A.54 Check at end of patch file to prevent writeout of nib file
+             if any assembly errors occured during patch file.
+
+	A.55 Patch to allow Xray GP command work with all node and host
+	     numbers.
+
+	A.56 Patch to prevent writing to Segment E since that will cause
+	     a crash.
+
+	A.57 Set up Segment E so that DDT command ?SLOT properly reports
+	     assembly time and version number.
+
+	A.58 Correct Xray SM command to do range checking on parameters.
+
+	A.59 Correct Xray AP command to do range checking on parameters.
+
+	A.60 Correct Xray HS command to display all hosts for the slot.
+
+	A.61 Correct Xray RB command to do range checking on buffer
+	     number.
+
+	A.62 Correct Xray WB command to do range checking on buffer
+	     number.
+
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  6   OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+	__________________________________________________________________
+        B) CHANGES TO EXTERNAL FUNCTIONS VISIBLE TO THE USER
+	   (I.E. PERFORMANCE, FUNCTION, ETC.): (INCLUDE PIR NUMBERS)
+
+	B.1  PIR 2214 - LOG II support.  New circuit building protocol
+             which contains much more information than previous (LOG I).
+             Please reference LG2GED.DOC for details.
+
+             The LOG II functionality is defaulted on.  It can be disabled
+             by setting LOG.II equal to 0 in the tymfile.  Besides
+             handling the new messages and new needle described in the
+             LG2GED.DOC, Xray has been modified as follows:
+
+	     1)  Xray HS command has new field 'L' to indicate whether a
+             host is LOG II capable.  LOG II hosts have a 'Y' in the field
+             while LOG I hosts have a 'N'.
+
+             2)  The Supervisor number in the XRAY ND command display is
+             followed by 'LG2' if the Supervisor is LOG II capable.
+
+             3)  The Xray DR/DS command displays the new LOG II ISIS messages.
+             Only the message header is displayed so that password
+             characters are not inadvertently displayed.
+
+             4)  The Xray TD/TE command displays the new LOG II Node/Supervisor
+             messages.  Any part of a message which may display a password
+             is not displayed.
+
+        B.2 Remove SOLO support.  The SOLO switcher, SOLO Consat and Split
+            Supervisor configurations are no longer supported.  The Solo
+            Consat functionality is present in the ISIS Consat.  The Solo
+            switcher functionality is present in the ISIS Node Code when
+            no other slots besides Node Code are present in the node.
+            The split Supervisor functionality is not present.  The ISIS
+            Supervisor is supported.
+
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  7   OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+        B.3 Remove fixed usernames from code.  All usernames used by
+            Node Code for Xray, IIXray and Downline load must be specified
+            in the GG macro.  The GG macro has a new field, TARGET, to
+            home a username to the Node Code internal host function.
+
+            1) Target Xray:  The username can be targeted to Xray by
+            putting T.XRAY in the target field.  This is the default.
+
+            GG(0,0,JOEBLOW,10,T.XRAY)   :username JOEBLOW is an Xray username.
+            GG(0,0,JANEDOE,10)          :usenname JANEBLOW is targeted to XRAY
+                                        :by default.
+
+            2)  Target IIXRAY (network console):  The username must specify
+            T.IIXRAY as the target.
+
+            GG(0,0,OMNC,0,T.IIXRAY)     :username OMNC is homed to IIXRAY.
+
+            3)  Target Downline Load:  This username must match the username
+            used by LOADII or this node will not be able to downline load
+            neighbors.  Warning messages are displayed at assembly time if
+            no downline load username is specified.
+
+            GG(0,0,DLOAD,0,T.DLOAD)     :username DLOAD is used by LOADII
+
+            4)  The Xray XG command now displays the target of each
+            username.  The target value (0000-0002) is the value used
+            when adding or modifying Xray usernames.
+
+            5)  The Xray XG I and XG <arg> M commands prompt for
+            target.  The value 0 is for Xray, 1 is for IIXray and
+            2 is for downline load.
+        
+        B.4 The Xray IR command has been removed.  The functionality is
+            present in the Xray IS command.
+
+        B.5 The Xray IS command has been greatly expanded.
+
+            1) Current and maximum CPS rates for input and output are
+            display for the ISIS dispatcher rings.
+
+            2) Peak input and output ring usage is displayed.
+
+            3) A histogram showing ring utilization distribution is displaed.
+
+            4) The ISIS ring pointers are displayed.  Ring pointers were
+            displayed by now removed IR command.
+
+            5) Xray command IS Z clears the above dispatcher ring statistics.
+
+
+        ==================================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  8   OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+        B.6 The Xray KS command displays packet overhead and
+            bandwidth utilization on the same line so that the entire
+            KS display fits on a normal screen.
+
+        B.7 The Xray DB command prompts for rate of 0-6 instead of 0-7
+            since rate of 7 is not supported in ISIS configurations.
+
+        B.8 The Xray PM command can be issued from local Xray.
+
+        B.9 Node Code no longers runs with ISIS versions prior to version
+            7.00.  The assembly is killed when Node Code flag IKNRNG is
+            set to 0 which indicates ISIS version prior to 7.00.
+
+        B.10 The debugger has been expanded to include a link debugger.
+             Please refer to NCDBG.DOC for more details.  The debugger
+             is not meant for general usage and should not be used
+             except under request from NTD or STS.
+
+
+	__________________________________________________________________
+        C) CHANGES TO INTERNAL FUNCTIONS NOT VISIBLE TO THE USER WHICH CAN
+ 	   AFFECT OTHER INTERFACE CODES: (INCLUDE PIR NUMBERS)
+
+        C.1 Support of ISIS versions prior to 7.00 has been removed.
+
+        C.2  Numerous fixes and changes to link attach logic to help
+             lines come up.  The changes affect both nodes that send
+             expanded reset packets and those which only support the
+             old style reset packet.
+
+        C.3 The segment Node Code shares with an ISIS Supervisor has been
+            changed to segment 0C from segment 4.  Node Code as an ISIS
+            Supervisor Base will only run with ISIS version 10.00.
+
+
+        =============================================================
+                    TYMNET NETWORK TECHNOLOGY DEVELOPMENT
+
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  9   OF  9
+        ==================================================================
+        DESCR FILE   :  TII05.Y31
+        PRODUCT NAME :  NODE CODE
+        ==================================================================
+
+        __________________________________________________________________
+        D) CHANGES TO SYSTEM GENERATION PARAMETERS:
+
+	D.1  The parameter LOG.II (default 1) can be used to disable
+             LOG II functionality.  The Gateway does not support LOG II
+             and forces LOG.II to 0.
+
+        D.2  All of the tymfile parameters specific to the solo 
+             configurations are no longer used.
+
+        D.3 The size of Node Code's dispatcher rings (DRSZ) is now defaulted
+            to 2048 bytes from 1024 bytes.
+
+        D.4 The number of packets received before sending a packet with
+            only an acknowledgement (TH.ACK) is now defaulted to 2 (was 3)
+            after testing showed this gives optimal link performance.
+
+        D.5 For ISIS Supervisor, NCV530 must be set to 1 in the tymfile
+            so that Node Code and ISIS agree which segment is to be
+            shared with the Supervisor.  Node Code must assemble with
+            ISIS version 10.00 or higher in the ISIS Supervisor configuration.
+
+        D.6 NSR# 1413 - XLINKS defaults.  DEFWSZ sets the default windowsize
+            for XLINKS.  The default is 8.
+
+        D.7 The SILINS equate is now only used in the Gateway configuration.
+            The number of SIO lines is now calculated from the M.REFs
+            assigned to slot 0 logical units.  A check is also added to
+            make sure all of Node Code's SIO lines follow the last sync
+            line definition which prevents successful assembly of code which
+            will crash when loaded.
+
+
+	__________________________________________________________________
+        E) RELIABILITY OF THE RELEASE: (SUMMARY OF TESTS, DEFICIENCIES, ETC.)
+
+        No known problems.
+
+	==================================================================
+
+
+
+
+ ipQ–
