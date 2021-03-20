@@ -1,0 +1,61 @@
+:top
+:erase
+
+                        M  E  M  O  R  A  N  D  U  M
+
+                         BRITISH TELECOMMUNICATIONS
+                                TYMNET, INC.
+
+Date:     15 April 1991
+
+To:       Khushru Mistry      	                     Copies:  See CC List
+
+From:     Bruce Shepherd                              
+
+Subject:  Bisync and "FFFF" Characters
+
+-------------------------------------------------------------------------
+
+Khushru,
+
+I  noticed the pad character problem in ticket 342415 and I'm not sure if
+the explanation in the patch file is enough to clarify the problem.  This
+is something  we found  on the  bisync testing  in CANNET and essentially
+what happens is that the SIO underruns during the transmission of a short
+record and the  FFFF  characters  appear.   The bisync code does not take 
+into account that an underrun  may occur during any size record, and only
+took steps to  prevent the  corruption of large records.  The sequence of
+events is something like this:
+
+    o  PBx begins to transmit a short record (normally the polling
+       sequence).
+
+    o  Before  this short  record transmission  completes, the SIO
+       enters into an underrun condition meaning that the software
+       is not keeping up with  the SIO  firmware.   At this  point
+       ISIS is required to send the idle line pad character out on
+       the line to insure  that the  line remains  active and does
+       not enter into the transmit ending state.  Since the bisync
+       code only accounts for large records,  the pad character is
+       "FFFF" or sync-sync on idle lines.
+
+    o  Bisync completes the transmission  of the record,  but  the
+       receiving end  sees the  "FFFF"  as data and the calculated
+       checksum does not agree, hence a bisync protocol violation.
+
+What  the patch does is insure that prior  to  transmission of ANY record
+the  idle line  pad character  is changed  to "3232" which  is ignored or
+stripped off by  the firmware  at the  receiving end.   This prevents the 
+transmitted record from being corrupted by the marking characters.  A pad
+character  of  "3232"  during  transmission  is  not  a  bisync  protocol 
+violation at the receiving side nevers sees the pad characters.  Once the
+transmission is complete the pad character is set back to "FFFF".
+
+Hope this helps to clarify the problem and the intent of the patch.
+
+Best regards,
+Bruce
+
+:send cc * bthk
+Bisync and "FFFF" Characters
+:out
