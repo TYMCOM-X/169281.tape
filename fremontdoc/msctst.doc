@@ -1,0 +1,1765 @@
+
+
+
+
+
+
+
+
+
+
+
+
+                           MSC Standalone Disk Diagnostic
+
+
+                                       MSCTST
+
+
+                                     Version 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  Michael F. Rude
+
+                                   Tymshare Inc.
+
+                            Network Technology Division
+
+                                    May 5, 1983
+
+
+
+
+
+
+
+        ^                                                                  ^
+        ^    This  document  is  the  sole  property  and  confidential    ^
+        ^    information of  Tymshare, Inc., and  may not be  copied in    ^
+        ^    whole or part or disclosed to  any third party without the    ^
+        ^    prior written consent of Tymshare.                            ^
+        ^                                                                  ^
+
+
+
+
+
+
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+                                      CONTENTS                                      ________
+
+
+        1.0 INTRODUCTION ................................................. 2
+
+        2.0 INITIAL SYSTEM CHECKOUT PROCEDURE ............................ 3
+
+        3.0 LOADING THE DIAGNOSTIC ....................................... 4
+
+           3.1 Restarting the Diagnostic ................................. 4
+
+           3.2 Front Panel Display ....................................... 4
+
+        4.0 RUNNING THE DIAGNOSTIC ....................................... 6
+
+           4.1 Commands .................................................. 6
+
+           4.2 Setting Parameters ........................................ 9
+
+              4.2.1 Default Parameters ................................... 9
+
+              4.2.2 Parameter Commands ................................... 9
+
+        5.0 THE DIAGNOSTIC TESTS ........................................ 14
+
+           5.1 Test Descriptions ........................................ 14
+
+        6.0 FORMATTING .................................................. 17
+
+        7.0 ERROR MESSAGES .............................................. 18
+
+           7.1 Messages for Command Errors .............................. 18
+
+           7.2 Messages for Test Errors ................................. 20
+
+              7.2.1 Interrupt Errors .................................... 20
+
+              7.2.2 Controller and Drive Errors ......................... 21
+
+           7.3 Messages During Formatting ............................... 25
+
+        8.0 Example ..................................................... 27
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      Page i
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 1.0 INTRODUCTION        ________________________
+
+        This document  describes the  functions, features  and usage  of the
+        MSC-1400 standalone diagnostic.
+
+        The MSC-1400 is a  microprocessor-based high-density disk controller
+        for interfacing the Tymnet Engine to 300 Mbyte SMD disk drives.
+
+        The  MSC-1400 Diagnostic  program provides  a means  of testing  the
+        operation of the MSC-1400 Disk Controller as a part of an integrated
+        system.  The program will test the  controller's ability to communi-
+        cate with the host  CPU, with the disk drives, and  to carry out the
+        operations for  which it was designed.   Generally, this is  done by
+        setting test parameters, and then RUNning the TEST sequence.
+
+        The program will format disks, detect  bad tracks, and assign alter-
+        nate tracks for bad tracks.  This is  the function of the RUN FORMAT
+        command.
+
+        Additionally, the program allows a  programmer to examine and modify
+        any chosen memory location with the EXAMINE and MODIFY commands.
+
+        The diagnostic can  be found in the ENGDIAG directory  on systems 33
+        and 39 as MSCTST.NIB.  The file is downline-loadable.  This document
+        can also be found in the ENGDIAG directory as MSCTST.DOC.
+
+        This diagnostic requires a minimum of  one-half Mbyte of Engine mem-
+        ory.
+
+        The use of an MSC-1400 controller is not presently recommended with-
+        out MAC-II.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                      INTRODUCTION    Page 1
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 2.0 INITIAL SYSTEM CHECKOUT PROCEDURE        _____________________________________________
+
+
+
+        The following section describes the procedure to be used at the time
+        of initial  system installation.   Each step  should be  followed to
+        ensure the correct operation of the controller and drives.
+
+
+             1.  Load the diagnostic into the system (Section 3.0).
+
+             2.  Refer to the example in Section 8.
+
+             3.  Type: OPTION
+
+             4.  Set the parameters to the proper values for your
+                 installation (Section 4.1).
+
+             5.  Disconnect the drive.
+
+             6.  Type: TEST 0,1,2
+
+             7.  Type: RUN TEST
+                 This will check controller to host communication.
+
+             8.  Reconnect the drive and type: TEST 3
+
+             9.  Type: RUN TEST
+                 This will test controller to drive communication.
+
+            10.  Bring the drive on line.
+
+            11.  Type:  PERMIT
+                 Answer YES to the question.
+
+            12.  Type: RUN FORMAT
+                 This will initiate formatting of the pack. This process
+                 may take up to 45 minutes.
+
+            13.  Type:  HICYL 20
+                 This will set the parameter for the write tests to use the
+                 first 20 (hex) cylinders of the disk.
+
+            14.  Type: TEST 4,5,6,7,8,9,A,B,C,D,E,F,10,12
+                 (If two drives are available, test 11 should also be
+                 included.)
+
+            15.  Type: RUN TEST
+                 This will initiate executiion of the drive tests.
+
+            16.  All tests should report NO ERRORS. (See notes for
+                 individual tests, Section 5.1)
+
+
+
+
+                                 INITIAL SYSTEM CHECKOUT PROCEDURE    Page 2
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 3.0 LOADING THE DIAGNOSTIC        __________________________________
+
+        Connect a terminal to the RS 232  connector on the Engine multifunc-
+        tion card.  Verify that the thumbwheel speed switch matches the ter-
+        minal  speed.   Initialize the  Engine  (INI)  and toggle  the  boot
+        switch.  Using  the LOADII "L"  command, load (WCM)  MSCTST.NIB into
+        the  machine.  When  the  load is  complete,  the following  message
+        should appear on the terminal:
+
+            DISK TEST AND FORMATTER PROGRAM FOR MSC CONTROLLER.
+
+            FOR LIST OF COMMAND TYPE LIST.
+            ->
+
+
+        SECTION 3.1 Restarting the Diagnostic        _____________________________________
+
+        The diagnostic is set  up to restart on power fail  and can normally
+        be restarted by entering  INI.  The diagnostic takes  about ten sec-
+        onds to initialize memory before setting the front panel display.
+
+        If this fails, the diagnostic may  be manually restarted.  The diag-
+        nostic start address is 0A00.  Enter INI,  DATA, SET, DATA, A, 0, 0,
+        ADR, and RUN to restart it.
+
+
+        SECTION 3.2 Front Panel Display        _______________________________
+
+
+        The front panel display indicates the  status of the program.  When-
+        ever the program is  idle and waiting for a command  it will display
+        the following on the front panel:
+
+             D I S C D I A n n
+
+        where nn is the version number of the program.
+
+        During the running of all tests except test 10, the front panel will
+        have the following format:
+
+             t t c c c h h s s
+
+        where tt is the test number
+
+             ccc is the cylinder number
+             hh  is the head number
+             ss  is the sector number within the track
+
+        The values of tt will be the following:
+
+             0 - 12 for test number
+             C0     for COMPARE command
+             CC     for COPY command
+             F0     for FORMAT command.
+
+
+                                            LOADING THE DIAGNOSTIC    Page 3
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        For test 10 only, the front panel has the following format:
+
+             1 0 0 0 a a a a a
+
+        where aaaaa is the address of the packet being issued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            LOADING THE DIAGNOSTIC    Page 4
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 4.0 RUNNING THE DIAGNOSTIC        __________________________________
+
+        This section describes the commands used to run the diagnostic.  The
+        commands, their functions and syntax are found in the following sec-
+        tion. In addition to the commands,  there are a number of parameters
+        which are modifiable.  These paramters are also described.
+
+
+        SECTION 4.1 Commands        ____________________
+
+        1.  The PROMPT Symbol
+
+            The program will issue a prompt  symbol (->) to indicate that it
+            is ready  to accept  input from the  operator.  This  allows the
+            operator to  set parameters,  specify test  sequences, etc.   In
+            most cases, when the input is inappropriate, the program will so
+            indicate, and repeat the prompt.
+
+        2.  The BREAK Key
+
+            BREAK <CR>  will abort the  current command, release  the drive,
+            and return the user to the prompt.  If the RELEASE DRIVE command
+            fails, the diagnostic program should be restarted (Section 3.1).
+
+        3. The LIST Command
+
+            Command Format:  LIST
+
+            Causes the program to list all the commands it will accept.  The
+            command definitions follow.
+
+        4.  The OPTIONS Command
+
+            Command Format:  OPTIONS
+
+            Causes the program to list the current values of its test param-
+            eters.  These values may be modified to tailor the diagnostic to
+            a given system.  The options include  logical drive number, pat-
+            terns to use  for formatting, number of times to  run the tests,
+            etc. (Section 4.2).
+
+        5.  The EXAMINE Command
+
+            Command Format:  EXAMINE <address>
+                             EXAMINE <address>,<count>
+
+            The contents of memory are displayed starting from the specified
+            address and continuing for the  number of halfwords specified by
+            the optional  count.  Count  may be either  decimal or  hex.  If
+            decimal, it must end  with a decimal point or it  will be inter-
+            preted as hex.  The default value is  1.  The address must be on
+            a halfword boundary.
+
+                 Example:  EXAMINE 30A8,100
+
+
+                                            RUNNING THE DIAGNOSTIC    Page 5
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+            This will cause the 256 (decimal) halfwords starting at location
+            30A8 to be displayed on the console.
+
+        6.  The MODIFY Command
+
+            Command Format:  MODIFY <address>,<H1>,<H2>,<H3>,...
+
+            The halfwords specified by H1, H2, H3 etc., are loaded into suc-
+            cessive  memory locations  starting  at  the specified  address.
+            Address must be on a halfword boundary.
+
+                 Example:  MODIFY 1000,0000,003D,101F,FFFF
+
+            This will enter the following into memory:
+
+                 LOCATION     CONTENTS
+
+                   1000            0000
+                   1002            003D
+                   1004            101F
+                   1006            FFFF
+
+        7.  The TIMCON Command
+
+            Command Format:  TIMCON <number>
+
+            Adjusts the program's internal clock, to allow for variations in
+            CPU speed, etc.   To use it, enter TIMCON, followed  by a number
+            of less than  1000.  The program  will print the  following mes-
+            sage:
+
+            PRESS RETURN.  BEEP SHOULD SOUND AFTER 10 SECONDS.
+
+            Depress the return key, and start timing with a watch.  The ter-
+            minal bell should  sound after ten seconds.  If  the bell sounds
+            before ten seconds, repeat the TIMCON command with a larger num-
+            ber; if  more than  ten seconds  elapse, use  a smaller  number.
+            Adjust the value of TIMCON until  just ten seconds elapse before
+            the  bell.  This  parameter has  been  set for  the Engine  with
+            MAC-II and  semiconductor memory.  If  the Engine does  not have
+            this configuration, the value should be reset.
+
+        8.  The RUN Command
+
+            Command Format:  RUN TEST
+                             RUN FORMAT
+
+            This initiates either of the two  primary sequences in the Diag-
+            nostic.  RUN TEST  runs a specified test sequence,  based on the
+            current OPTION values.
+
+            RUN FORMAT formats and  checks the disk pack, based  on the cur-
+            rent OPTION values.
+
+
+
+                                            RUNNING THE DIAGNOSTIC    Page 6
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        9.  The COPY Command
+
+            Command Format:  COPY
+
+            This initiates a  copy of disk data on the  disk drive specified
+            by TFILE between the cylinders LOCYL and HICYL to the disk drive
+            specified by  XFILE (Section 4.2).   When the copy  is complete,
+            the following message will be output:
+
+            END OF COPY
+
+        10. The COMPARE Command
+
+            Command Format: COMPARE
+
+            This command  initiates a  comparison of disk  data on  the disk
+            drive specified by  TFILE between the cylinders  LOCYL and HICYL
+            with the disk drive specified by  XFILE (Section 4.2).  When the
+            compare is complete, the following message will be output:
+
+            END OF COMPARE
+
+
+        11. The PERMIT Command
+
+            Command Format:  PERMIT
+
+            This command must be  used in order to format a  disk or perform
+            any tests that  write to the disk.  These tests  are numbered 7,
+            8, 9, A, B, C, E and F  (Section 5.1).  The program will ask the
+            following question to verify the user's intent:
+
+            IS IT ALL RIGHT TO DESTROY DATA ON DISCS YES/NO?->
+
+            The user must enter YES to the question in order to permit these
+            tests.
+
+        12. The DUMP Command
+
+            Command Format: DUMP
+
+            This command  is used  to display the  contents of  a particular
+            disk sector.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            RUNNING THE DIAGNOSTIC    Page 7
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 4.2 Setting Parameters        ______________________________
+
+        To set  a parameter, type the  option name, followed by  its desired
+        value.  The options available are:
+
+            PATTERNS   SECNUM
+            FMREAD     LOOP
+            TFILE      DISCON
+            RETRY      LOCYL
+            HICYL      DRVTYP
+            CYLS       HEADS
+            SECTORS    DATA
+            XFILE      NOMSG
+            TEST       FASTCHK
+
+
+        4.2.1 Default Parameters              __________________
+
+        When the diagnostic is loaded, the parameters have the values below.
+
+             PATTERNS B6D9B6D9    00000000
+             *SECNUM 53.
+             FMREAD 1.
+             LOOP 1.
+             TFILE 0.
+             DISCON F8.
+             RETRY 1.
+             LOCYL 0000
+             HICYL 0000
+             DRVTYP 0
+             *CYLS 0337
+             *HEADS 13
+             *SECTORS 35
+             TIMCON 310.
+             XFILE 1
+             DATA B6D9B6D9
+             TEST 00,01,02,03,04,05,06,0D.10.12
+             NOMSG 0
+             FASTCHK 0
+
+             * Note:  These  defaults are set for  a 300 Mb SMD  disk drive.
+             If a drive  other than this type  is used, the  parameters pre-
+             ceded by asterisks must be set correctly.
+
+
+        4.2.2 Parameter Commands              __________________
+
+        1.  The PATTERNS Command
+
+            Command Format:  PATTERNS <P1>,< P2>,< P3>,...,< P8>
+
+            The PATTERNS command  supplies up to eight  fullword patterns to
+            be used when formatting the  disk.  P1,...,P8 must be fullwords,
+
+
+
+                                            RUNNING THE DIAGNOSTIC    Page 8
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+            and must  be separated by commas.   When RUN FORMAT is  run, the
+            program will  format the  pack using  each of  the patterns  P1,
+            P2,...,P8 in turn.   The advantage of using  several patterns is
+            that they may detect different bad  places on the disk; however,
+            the  time required  for formatting  may become  quite long.   In
+            practice, two  patterns usually  suffice.  The  default patterns
+            are:
+
+                 B6D9B6D9 and 00000000
+
+            In any case, the final PATTERN of a FORMAT run should be zeros.
+
+        2.  The SECNUM Command
+
+            Command Format: SECNUM <number>
+
+            The SECNUM  command specifies the number  of disk sectors  to be
+            transferred  by a  single read  or write  command.  The  default
+            value is 53 (a  full track).  The value may be  changed based on
+            the size of a  disk sector (bytes) and the amount  of I/O buffer
+            space available in memory.
+
+        3.  The FMREAD Command
+
+            Command Format:  FMREAD <number>
+
+            The FMREAD  command specifies  the number  of times  the program
+            should  read  and verify  thsk  after formatting  it.   The
+            default value is 1.
+
+        4.  The LOOP Command
+
+            Command Format:  LOOP <number>
+
+            The LOOP command  specifies the number of times  to loop through
+            all tests.   At the end  of each  pass through all  the selected
+            tests, the following message will be output:
+
+            END OF PASS nn
+
+            where nn is the pass number.
+
+        5.  The TFILE Command
+
+            Command Format:  TFILE <number>
+
+            The  TFILE command  specifies the  logical drive  number of  the
+            drive to be  used in all tests; it also  specifies logical drive
+            number of Drive 1 in the two-drive test.
+
+
+
+
+
+
+
+                                            RUNNING THE DIAGNOSTIC    Page 9
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        6.  The XFILE Command
+
+            Command Format:  XFILE <number>
+
+            The XFILE command specifies the logical drive number of Drive 2,
+            and is used only in the two-drive test.  (Test 11)
+
+        7.  The DISCON Command
+
+            Command Format:  DISCON <hex number>
+
+            The DISCON command specifies the  device address of the MSC-1400
+            Controller.  The  default value  is F8 for  the ENGINE.   If the
+            controller is at any other address, this command must be reset.
+
+        8.  The RETRY Command
+
+            Command Format:  RETRY <number>
+
+            The RETRY  command specifies  the number of  retries in  case of
+            error.
+
+        9.  The LOCYL Command
+
+            Command Format:  LOCYL <number>
+
+            The LOCYL  command specifies the  beginning cylinder  number for
+            the read/write  tests and the  COPY and COMPARE  operations.  It
+            must be equal to or greater than zero, and equal to or less than
+            CYLS.
+
+        10. The HICYL Command
+
+            Command Format:  HICYL <number>
+
+            The HICYL command  specifies the ending cylinder  number for the
+            read/write tests and the COPY and COMPARE operations.  Its value
+            must be equal to or greater than LOCYL and equal to or less than
+            CYLS.
+
+        11. The DRVTYP Command
+
+            Command Format:  DRVTYP <number>
+
+            The DRVTYP command specifies the type  of drive under test, thus
+            supplying correct values for various  disk attributes.  DRVTYP 0
+            (the default) specifies  300 Mb SMD drives.   DRVTYP 1 specifies
+            200 Mb SMD and DRVTYP 2 specifies 80 Mb drives.
+
+        12. The CYLS Command
+
+            Command Format:  CYLS <number>
+
+            The CYLS command specifies the number of cylinders on the drive.
+
+
+                                           RUNNING THE DIAGNOSTIC    Page 10
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        13. The HEADS Command
+
+            Command Format:  HEADS <number>
+
+            The HEADS command specifies the number of heads on the drive.
+
+        14. The SECTORS Command
+
+            Command Format:  SECTORS <number>
+
+            The SECTORS command specifies the number of sectors per track on
+            the drive.
+
+        15. The DATA Command
+
+            Command Format:  DATA <fullword>
+
+            The DATA command specifies the pattern to  be used in the worst-
+            case read/write test.  The default value is B6D9B6D9.
+
+        16. The TEST Command
+
+            Command Format:  TEST <N0>,<N2>,...<N11>
+
+            The TEST command specifies the test  sequence to be run when the
+            RUN TEST command  is issued.  The numbers N0, N1,  etc., are hex
+            numbers in the range 0 to 12 that indicate which tests are to be
+            run.  (See  Section 5.1  for a description  of each  test.)  The
+            numbers must  be separated by commas,  but may be in  any order.
+            Repeats are  ignored.  The tests  will be executed  in numerical
+            order.
+
+                 Example:  TEST 0,1,4,10,F,5
+
+            The above command sets up the diagnostic  to run test 0, test 1,
+            test 4, test 5, test F, and test 10.  It will run the above test
+            series LOOP times, when RUN TEST is entered.
+
+        17. The NOMSG Command
+
+            Command Format:  NOMSG 0
+                  or         NOMSG 1
+
+            The NOMSG command permits the user  to suppress the routine mes-
+            sages (e.g., Test 1 completed). This  suppression may be desira-
+            ble when the test sequence is looping  many times.  NOMSG 1 sup-
+            presses routine  messges;  NOMSG 0  (the default) does  not.  In
+            either  case, the  program will  print error  messages and  test
+            results.
+
+
+
+
+
+
+
+                                           RUNNING THE DIAGNOSTIC    Page 11
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        18. The FASTCHK Command
+
+            Command Format:  FASTCHK 0
+                    or       FASTCHK 1
+
+            The FASTCHK command  allows the user to specify  whether full or
+            short read-backs should  be performed for the  read/write tests.
+            If the command is set to  zero (default) full read/backs will be
+            performed.  If it is  set to one, only the first  sector will be
+            checked.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           RUNNING THE DIAGNOSTIC    Page 12
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 5.0 THE DIAGNOSTIC TESTS        ________________________________
+
+        The MSC-1400  Diagnostic has a repertory  of 18 (decimal)  tests.  A
+        brief  description of  each follows.   Again,  a given  test may  be
+        invoked by including its number in the TEST command.
+
+
+        SECTION 5.1 Test Descriptions        _____________________________
+
+        TEST 0
+
+        Verifies communication between the MSC-1400  controller and the host
+        CPU.  The  program issues  a packet  containing a  NOP command,  and
+        waits for the controller to signal that the packet is done.
+
+        TEST 1
+
+        Checks that the  controller can transfer  data between its  own one-
+        sector data buffer and the host memory.  A pattern is transferred to
+        the controller's buffer, read back, and verified.  This procedure is
+        repeated with a second pattern.
+
+        TEST 2
+
+        Causes the MSC-1400 controller to  execute its internal diagnostics.
+        Note:  When running this test with drive on line, a sector pulse may
+        cause an  error to be  reported (code DB  or DC).  If  this happens,
+        rerun the test without the drive.
+
+        TEST 3
+
+        Issues a DSTATE command to the controller.  This causes the control-
+        ler to sense the status of the target drive and set appropriate bits
+        in the status word of the packet.
+
+        TEST 4
+
+        Seeks to all cylinder numbers which are  powers of two.  All bits of
+        the cylinder address  get used.  The test also seeks  to the highest
+        cylinder number  (CYLS).  Before each seek,  the test does  a RECAL.
+        All seeks start from cylinder 0.  After each seek, the test verifies
+        that the target cylinder has been reached.
+
+        TEST 5
+
+        Oscillating Seek Test.   Call the high cylinder M.   This test seeks
+        (and verifies that the seek was  correct) cylinder M, 1, M-1,...,M-2
+        2, M-1, 1, M, 0.  Every possible length forward and backward seek is
+        made, two to each cylinder.
+
+        TEST 6
+
+        Tests the head-positioning servo with 2000 random seeks.
+
+
+
+                                             THE DIAGNOSTIC TESTS    Page 13
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        TEST 7
+
+        Tests that each head can read and write correctly.
+
+        TEST 8
+
+        Tests that the controller can write to every sector on a track with-
+        out disturbing any other sectors within the track.
+
+        TEST 9
+
+        Tests the controller's ability to transfer more than one sector at a
+        time by issuing multi-sector reads and writes.  Also, the controller
+        must switch heads between the first and second sector.
+
+        For each sector pair, the following steps are performed:
+
+        A separate WRITE is issued to  each sector, a single two-sector READ
+        is used  to read them  back and verify  them, a two-sector  WRITE is
+        issued to write a different pattern  on them, two separate READS are
+        used to read back the new pattern  and verify that it was written to
+        both sectors.
+
+        TEST A
+
+        Spiral Data Test (Spiral data means a series of consecutive numbers,
+        modulo 256.)  Writes,  reads, and verifies all sectors on the cylin-
+        ders between LOCYL and HICYL with spiral data.  (The pattern is 0 in
+        the first  byte of  each sector, 1  in the second,  2 in  the third,
+        etc.)  It performs this test to SECNUM sectors at a time.
+
+        TEST B
+
+        Same as TEST A except it uses the pattern found in DATA for data.
+
+        TEST C
+
+        Same as TEST A and TEST B except is uses random data.
+
+        TEST D
+
+        Tests that  the controller interrupts when  it should, and  does not
+        when it should not.
+
+        TEST E
+
+        ECC Test.  Tests the controller's ECC logic by artificially creating
+        errors on  the disk and  then  reading them back.   Both correctable
+        and uncorrectable errors are created.  The data on the disk are ran-
+        dom and the errors are written at random locations.
+
+
+
+
+
+
+                                             THE DIAGNOSTIC TESTS    Page 14
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        TEST F
+
+        FIFO Test.  Tests that the FIFO  mechanism works correctly.  A WRITE
+        command  followed by  a READ  command  is issued  to the  controller
+        through a small FIFO.  The data is  read back and compared with what
+        was written.  This process is repeated.
+
+        The FIFO is started with an ADDRESS command  giving the FIFO address
+        to the controller.  To  start the second READ-WRITE,  the READY com-
+        mand is issued, telling the controller  that packets have been added
+        to the FIFO.
+
+        The FIFO has three  cells.  For the first WRITE-READ, cells  1 and 2
+        are used; for  the second, cells 3 and  1. This is done  so that the
+        controller must wrap around the end of the FIFO.
+
+        TEST 10
+
+        Tests  that  the  controller  can deal  with  a  variety  of  packet
+        addresses.  A packet containing  a NOP command is set up  at the end
+        of the program  area and then issued.  The address of the  packet is
+        then  incremented by  68 and  issued again.  This process  continues
+        until the address would be greater than 80000 (hex).
+
+        TEST 11
+
+        Two-drive Test.   The test first resets  both drives.  Then  using a
+        FIFO, the test asks for a long seek  on Drive 1, and a short seek on
+        Drive 2.  The short seek should complete first.
+
+        Next, again using the  FIFO, the test writes to the  two drives, and
+        reads back (without the FIFO) what was written and verifies it.
+
+        TEST 12
+
+        Oscillating Seek Test. This test uses  the same algorithm as test 5,
+        except that  each track is  tested, rather  than the first  track of
+        each cylinder.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             THE DIAGNOSTIC TESTS    Page 15
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 6.0 FORMATTING        ______________________
+
+
+
+        The MSC-1400 Diagnostic formats disks using  a two stage process. It
+        first writes  a data pattern  to the disk,  seven tracks at  a time.
+        After  writting the  entire disk  (cylinders 0  through CYLS-1),  it
+        reads the pattern back. If any errors are detected, an error message
+        is output and the  operation is retried. The retry is  made a sector
+        at a  time in  order to determine  the bad  track.  This  process is
+        repeated for each of the patterns set for the PATTERNS command (Sec-
+        tion 4.2.2). When all the patterns have been tested, the tracks with
+        bad sectors are reassigned. The program will mark each sector as bad
+        and place into it the track number of an alternate track to be used.
+        Then it will mark each sector on  the alternate track with an alter-
+        nate-track flag and place into each of  them the track number of the
+        bad track.
+
+        The last two cylinders of the disk are reserved for alternates. Thus
+        there are  38 tracks  available for  reassignment. If  more than  38
+        tracks are determined  to be bad, the program will  output a message
+        declaring the  pack to  be bad.   A typical  formatting sequence  is
+        shown in Section 8.
+
+        Note that  the diagnostic will  output the messages  "FORMAT..." and
+        "CHECK..." during the writing and  read-back of each pattern.  After
+        the last pattern is complete, any  alternate track reassignment mes-
+        sages will be  output (section 7.3) and finally  the message "FORMAT
+        COMPLETED".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       FORMATTING    Page 16
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 7.0 ERROR MESSAGES        __________________________
+
+        The error messages of  this program are divided  into three categor-
+        ies:  messages for  command errors, messages for  errors detected by
+        the tests, and messages for formatting errors.
+
+
+        SECTION 7.1 Messages for Command Errors        _______________________________________
+
+        Whenever the diagnostic detects an error in  a user command, it out-
+        puts the  command word or  line in  question followed by  a question
+        mark.  It then  outputs one of the following  messages detailing the
+        error.
+
+        COMMA EXPECTED
+
+             This message indicates that the user  input does not conform to
+             the required command syntax.  Refer  to the appropriate command
+             description for the proper format.
+
+        CYLINDER DOES NOT EXIST ON SELECTED DRIVE TYPE
+
+             This message  indicates that the user  has specified an  out of
+             range cylinder number for the currently selected drive type.
+
+        EXTRANEOUS INPUT
+
+             This message indicates that the user  input does not conform to
+             the required command syntax.  Refer  to the appropriate command
+             description for the proper format.
+
+        FAST CHK MUST BE EQUAL TO 0 OR 1
+
+             This message  indicates that an  illegal value for  the FASTCHK
+             parameter was detected.
+
+        FILE NUMBER MUST BE FROM 0 TO 3
+
+             This message indicates that an improper  value for the XFILE or
+             TFILE parameter was detected.
+
+        FORMAT NOT PERMITTED--DESTROYS DATA ON DISK
+
+             This  message indicates  that a  RUN FORMAT  command was  input
+             while the PERMIT option was set to NO.
+
+        FULLWORD DATA PATTERN REQUIRED
+
+             This message indicates  that eight hexadecimal digits  were not
+             detected for a PATTERN parameter.
+
+
+
+
+
+
+                                                   ERROR MESSAGES    Page 17
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        ILLEGAL DECIMAL NUMBER
+
+             This message indicates  that an illegal character  was detected
+             in a decimal input field.
+
+        INVALID TEST NUMBER
+
+             This message  indicates that  an out of  range test  number was
+             detected.
+
+        MORE THAN 8 PATTERN NOT ALLOWED
+
+             This message indicates that more  than eight PATTERN parameters
+             were detected.
+
+        NOMSG MUST EQUAL 0 OR 1
+
+             This message indicates that an illegal value for the NOMSG par-
+             ameter was detected.
+
+        NUMBER EXPECTED
+
+             This  message  indicates  that  a  non  numeric  character  was
+             detected in a numeric field.
+
+        NUMBER MUST BE FROM 1 TO 64
+        NUMBER TOO LARGE
+
+             These messages indicate that an  out-of-range numeric value was
+             detected.
+
+        PATTERNS MUST BE GIVEN AS FULLWORDS
+
+             This message indicates  that eight hexadecimal digits  were not
+             detected for a PATTERN parameter.
+
+        TEST NOT PERMITTED-WOULD DESTROY DISK DATA
+
+             This message indicates that a test which writes to the disk was
+             included in a  TEST command while the PERMIT option  was set to
+             NO.
+
+        THAT IS TOO MUCH
+
+             This messge indicates that the numeric value input for the TIM-
+             CON parameter is out of range.
+
+        TOO LARGE FOR DRIVE TYPE NUMBER
+
+             This  message indicates  that  an  out-of-range value  for  the
+             DRVTYP parameter was detected.
+
+        TYPE RUN FORMAT OR RUN TEST
+
+
+
+                                                   ERROR MESSAGES    Page 18
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+             This message indicates  that a RUN option other  than FORMAT or
+             TEST was detected.
+
+        WORD NOT RECOGNIZED
+
+             This message  indicates that the word  was not recognized  as a
+             valid command.
+
+
+
+        SECTION 7.2 Messages for Test Errors        ____________________________________
+
+        Whenever the diagnostic detects an error  during a test it outputs a
+        message.  These errors  are categorized into two  groups.  The first
+        group includes error  relating to interrupts while  the second group
+        includes those relating to executing disk and controller operations.
+
+
+        7.2.1 Interrupt Errors              ________________
+
+        The following are error messages related to interrupts.
+
+        ADDRESS OF INTERRUPTING PACKET IS WRONG
+
+             This message indicates that the address  received from the con-
+             troller did not match the address of  the packet which was ini-
+             tiated.   This indicates  either that  that  the controller  or
+             another I/O device is defective.
+
+        INTERRUPT BUT DONE BIT NOT SET IN PACKET
+        INTERRUPT BUT DONE BIT NOT SET IN STATUS
+
+             These messages indicate  that an interrupt from  the controller
+             was detected but the packet or status indicates that the opera-
+             tion was not  complete.  This indicates that  the controller or
+             another I/O device is defective.
+
+        INTERRUPT FROM UNKNOWN DEVICE PRESS INI ON PANEL
+        DEVICE ADDRESS WAS xxxx
+
+             This message  indicates that an  interrupt from a  device other
+             than the disk  controller was detected.  The  device address is
+             represented by xxxx.
+
+        UNWANTED INTERRUPT FROM DISC CONTROLLER
+
+             This message indicates that a controller interrupt was detected
+             while the diagnostic had not requested an interrupt.
+
+
+
+
+
+
+
+
+                                                   ERROR MESSAGES    Page 19
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        7.2.2 Controller and Drive Errors              ___________________________
+
+        All controller and drive error messages have the following format:
+
+                               ERROR:  COMMAND =  op
+                                        text
+
+        Where OP represents the operation requested
+        text represents the error condition.
+
+        The operations that may be found in the OP field include the follow-
+        ing:
+
+                NO OP
+
+                SET INTERLEAVE
+
+                FILL BUFFER
+
+                EMPTY BUFFER
+
+                DIAGNOSTICS
+
+                DRIVE STATE
+
+                RELEASE DRIVE
+
+                RECALIBRATE
+
+                SEEK
+
+                WRITE
+
+                WRITE HALFWORD
+
+                FORMAT WRITE
+
+                BAD TRACK WRITE
+
+                WRITE LONG
+
+                READ
+
+                READ ID
+
+                CYCLIC CHECK
+
+        Descriptions of  each operation  can be found  in the  MSC-1400 Disk
+        Controller Manual.
+
+
+
+
+
+
+
+                                                   ERROR MESSAGES    Page 20
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        The  text of  the error  condition  will include  the physical  disk
+        address if applicable to the  operation.  This information will have
+        one of the following formats:
+
+        DRIVE n CYL nnnn HEAD nn SECT nn
+        DRIVE n BETWEEN CYL nnnn HEAD nn SECT nn AND CYL nnnn HEAD nn SECT nn
+
+        Where n is a hexadecimal digit.
+
+        If the  operation did  not complete, one  of the  following messages
+        will be output:
+
+        TIME-OUT
+        REQUESTED INTERRUPT DID NOT OCCUR
+
+        These  messages usually  indicate that  the controller  is hung  up.
+        Check the  status LEDs on the  controller.  If any  indicator except
+        the leftmost is lit,  restart the diagnostic with the  INI key (Sec-
+        tion 3.1).
+
+        The diagnostic will then output a message if the status is not prop-
+        erly set.   The following  two messages indicate  a failure  of this
+        type:
+
+        TOP BIT OF FLAG OFF BUT STATUS NOT ZERO
+        TOP BIT OF FLAG SET BUT STATUS = ZERO
+
+        Both messages indicate that the controller is defective.
+
+        Any ECC faults are output next.
+
+        CORRECTED ECC ERROR
+
+             This  message indicates  that the  controller  detected an  ECC
+             error and corrected for it.  This is not an error.
+
+        CORRECTABLE ECC ERROR HANDLED IMPROPERLY
+        FAILURE TO DETECT CORRECTABLE ECC ERROR
+        FAILURE TO DETECT UNCORRECTABLE ECC ERROR
+
+             These messages indicate failure in the ECC mechanism within the
+             controller.
+
+        Next a message  is printed for each  bit set in the  status halfword
+        from the controller.
+
+                  TABLE OF MESSAGES RELATING TO "STATUS" HALFWORD                  ______________________________ ______ _________
+
+
+        ID ECC ERROR.
+
+        ID ADDRESS ERROR.
+
+        STATUS BIT 3--UNDEFINED ERROR.
+
+
+                                                   ERROR MESSAGES    Page 21
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        UNCORRECTABLE DATA ERROR.
+
+        BAD SECTOR.
+
+        PROTECTED SECTOR.
+
+        ILLEGAL ACCESS TO ALTERNATE TRACK.
+
+        STATUS BIT 8--UNDEFINED ERROR.
+
+        SEEK ERROR.
+
+        STATUS BIT 10--UNDEFINED ERROR.
+
+        DRIVES READ-ONLY SWITCH IS SET.
+
+        DRIVE FAULT.
+
+        DRIVE HELD TO ANOTHER CONTROLLER.
+
+        DRIVE NOT READY.
+
+        NO DRIVE OR MORE THAN ONE DRIVE RESPONDED.
+
+
+        If a fault  condition is detected, a  message for the fault  code is
+        then output.  All the fault codes indicate controller problems.
+
+                            TABLE OF FAULT CODE MESSAGES                            ____________________________
+
+
+        ID ERROR IN WHOLE TRACK.
+
+        INVALID ADDRESS (SEEK ROUTINE).
+
+        CONTROLLER TIME OUT (ON-CYLINDER ROUTINE).
+
+        NOT ON CYLINDER (ON-CYLINDER ROUTINE).
+
+        BAD LINK.
+
+        CONTROLLER TIME OUT (ON-INDEX ROUTINE).
+
+        NO SECTOR FOUND (ON-SECTOR ROUTINE).
+
+        ALU TEST FAULT.
+
+        REGISTER TEST FAULT.
+
+        ACC TEST FAULT.
+
+        MAR TEST FAULT.
+
+        DATA REG TEST FAULT.
+
+
+                                                   ERROR MESSAGES    Page 22
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTOR COUNTER TEST FAULT.
+
+        BIT COUNTER FAULT.
+
+        RAM BUFFER TEST FAULT.
+
+        BUS TEST FAULT.
+
+        WORD READY LATCH TEST FAULT.
+
+        DATA PATH VIA DIB LATCH TEST FAULT.
+
+
+        For certain operations, the diagnostic can check if defective tracks
+        and alternates were properly set up.  If a track is not properly set
+        up, the following message will be output:
+
+        ALTERNATE OR BAD TRACK--SHOULD POINT TO A DIFFERENT CYLINDER
+        FOUND CYL NO. nn IN ID
+        FOUND HEAD NO. nn IN ID
+
+        Where nn is two hexadecimal digits.
+
+        If the track was properly set up, the fillowing message will be out-
+        put:
+
+        TRACK HAS BEEN REASSIGNED
+
+        Certain tests  involve verifying the data  written to the  disk.  If
+        any discrepancies are detected,  the following message will  be out-
+        put:
+
+        DATA READ BACK DOES NOT MATCH DATA WRITTEN
+        OUT OF nnn WORDS THERE WAS/WERE nnn MISMATCH
+
+        When an error is detected in the use of the FIFO mechanism, the fol-
+        lowing message will be output.
+
+        FIFO ENTRY NOT RESET TO ZERO AFTER PACKET COMPLETED
+
+        This message indicates a controller or DMA problem.
+
+        Finally, there are two messages specific  to a partcular test.  Test
+        10  checks to  see if  packets  can be  sent  from a  wide range  of
+        addresses.  If a packet fails, the following message will be output:
+
+        ADDRESS OF PACKET = xxxxx
+
+        Where xxxxx is the memory address of the start of the packet.
+
+        Test 11, the two drive test, checks  to ensure that the drives prop-
+        erly seek.  If the  seeks do not take the proper  relative time, the
+        following message will be output.
+
+
+
+                                                   ERROR MESSAGES    Page 23
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SHORT SEEK TOOK AS LONG AS LONG SEEK
+
+        This message may indicate a drive problem.
+
+
+        SECTION 7.3 Messages During Formatting        ______________________________________
+
+        The following messages may be output by the diagnostic while execut-
+        ing a RUN FORMAT command.
+
+        BAD PACK - TOO MANY TRACKS!
+
+        This message indicates that too many  (more than 38) bad tracks were
+        detected during the format process.  The pack is defective.
+
+        BAD PACK - UNABLE TO READ FROM REASSIGNED TRACK.
+
+        This message indicates that during a track reassignment the diagnos-
+        tic found that the  reassigned track was defective.   Rerun the for-
+        mat.
+
+        BAD MEMORY OR NOT ENOUGH MEMORY
+
+        This message indicates that the diagnostic  was unable to initiate a
+        format procedure because  of a memory fault or lack  of memory.  The
+        diagnostic is configured to require 512 kbytes of memory.
+
+        CYL aaa HEAD bb BAD--ALTERNATE TRACK IS CYL ccc HEAD dd
+
+        This message indicates that the track identified by cylinder aaa and
+        head bb has  been flagged as bad.  The track  identified by cylinder
+        ccc and head dd has been flagged as the alternate track.
+
+        MEDIA ERROR:  COMMAND =  op
+        text
+
+        This message  indicates that  error was  detected during  the format
+        process.  The  subsections of  this message  are the  same as  those
+        described for test errors in the previous section.
+
+        REASSEMBLE FORMATTER WITH LARGER BIT-TABLE
+
+        This message indicates that the  diagnostic needs to be reconfigured
+        for a  larger track  bit map.   Contact the  Diagnostics Maintenance
+        group.
+
+
+
+
+
+
+
+
+
+
+
+                                                   ERROR MESSAGES    Page 24
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        SECTION 8.0 Example        ___________________
+
+        DISC TEST AND FORMATTER PROGRAM FOR MSC CONTROLLER.
+
+        FOR LIST OF COMMANDS TYPE LIST.
+
+        OPTION
+        PATTERNS B6D9B6D9.  00000000
+        SECNUM 53.
+        FMREAD 1.
+        LOOP 4096.
+        TFILE 0
+        DISCON F8
+        RETRY 1.
+        LOCYL 0000
+        HICYL 0000
+        DRVTYP 0
+        CYLS 0337
+        HEADS 13
+        TIMCON 310.
+        XFILE 1
+        DATA B6D9B6D9
+        TEST 00.01.02.03.04.05.06.0D.10.12
+        NOMSG 1
+        FASTCHK 0
+
+        ->TEST 0,1,2,
+        ->RUN TEST
+        TEST 00
+        NO ERROR
+        TEST 01
+        NO ERROR
+        TEST 02
+        NO ERROR
+        ->TEST 3
+        ->RUN TEST
+        TEST 03
+        NO ERROR
+        ->PERMIT
+        IT IS ALL RIGHT TO DISTROY DATA ON DISCS YES/NO? ->YES
+        ->RUN FORMAT
+        FORMAT...
+        CHECK...
+        FORMAT...
+        CHECK...
+
+        FORMAT COMPLETED.
+
+        ->HICYL 20
+        ->TEST 4,5,6,7,8,9,A,B,C,D,E,F,10,12
+        ->RUN TEST
+        TEST 04
+        NO ERROR
+        TEST 05
+
+
+                                                          Example    Page 26
+
+
+        MSC Standalone Disk Diagnostic
+
+
+
+        NO ERROR
+        TEST 06
+        NO ERROR
+        TEST 07
+        NO ERROR
+        TEST 08
+        NO ERROR
+        TEST 09
+        NO ERROR
+        TEST 0A
+        NO ERROR
+        TEST 0B
+        NO ERROR
+        TEST 0C
+        NO ERROR
+        TEST 0D
+        NO ERROR
+        TEST 0E
+        NO ERROR
+        TEST 0F
+        NO ERROR
+        TEST 10
+        NO ERROR
+        TEST 12
+        NO ERROR
+        ->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                          Example    Page 27
+
+    s@lR
