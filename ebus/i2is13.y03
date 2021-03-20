@@ -1,0 +1,229 @@
+        ******************************************************************
+        **                  PROPRIETARY INFORMATION                     **
+        **                                                              **
+        **  BT 's proprietary rights are included in  the information   **
+        **  disclosed herein.  The recipient, by receiving this         **
+        **  document,  agrees that neither this document nor  the       **
+        **  information disclosed herein nor any part thereof shall be  **
+        **  reproduced  or  transferred to other documents or used  or  **
+        **  disclosed  to  others for manufacturing or for  any  other  **
+        **  purpose  except as specifically authorized in  writing  by  **
+        **  BT.                                                         **
+        ******************************************************************
+
+        =================================================================
+                              BT DEVELOPMENT
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  1  OF  1
+        ==================================================================
+        DESCR FILE   :  I2IS13.Y03
+        PRODUCT ID   :  I2IS                          VERSION:  13.03
+        PRODUCT NAME :  ISIS
+        RELEASED BY  :  Eugene Novagratsky              DATE:	01/13/93
+			Kam Pang
+        RELEASE TO FULL BY: Ron Saltgaver               DATE:   02/26/93
+			    Joy Yu
+			    Tim Kochmann
+			    Don Murtaugh
+			    Jennifer Liscom
+        ==================================================================
+	*** REFERENCE PREVIOUS RELEASE: 5.05, 5.08, 7.00, 7.03, 8.00   ***
+	*** 				9.00, 10.01, 11.00, 13.00      ***
+	*** 				13.02                          ***
+        ==================================================================
+
+                                 VERSION:  13.03
+        
+                                 DATE:	01/13/93
+        ==================================================================
+
+        A) DESCRIPTION OF PROGRAM CORRECTIONS: 
+
+	A.1 PATCHES FILES MOVED TO SOURCE FOR 13.02
+
+	   . Patch #1 
+	     Bypasses temperature and voltage sensing for all machine
+	     types. 
+
+	   . Patch #2 
+	     Fixes the problem in ISIS MAC interrupt handling where
+	     an incorrect PC was returned for the DDT job.
+
+	   . Patch #3 
+	     Enforces range check on sync commands. In non-mac5 cases,
+	     a check is made that descriptors and buffers are in slot
+	     space. A failure will set set an irrecoverable device check
+	     error flag and the slot will be taken down.
+
+	   . Patch #4 
+	     Fixes problem for ?CPU command in a SWITCHER configuration.
+
+	   . Patch #5 
+	     This patch is to fix ISIS circuit accounting problem.
+	     in termination of accounting
+
+	   . Patch #6 
+	     Fixes work index into slot block table so that the setting
+	     dc.ira will kill the slot.
+
+	   . Patch #7 
+	     Fixes failure in SVC 37d to set up USER block pointer in
+             Attempting to ZAP a gone port.
+
+	   . Patch #8 
+	     Crashes node with BAD00 8778 if SYNC boards are configured
+	     and don't pass `check fail` test.
+
+	   . Patch #9 
+	     Inserts SYMDEF(MACHIN) in segf table so that bits can determine
+	     PICO paging requirements without asking the user.
+
+	A.2  PATCHES MOVED TO SOURCE FROM ISISPAT DIRECTORY
+
+	   . CONSOL.PAT 
+	     Prevents unecessary PICO internal mailbox overhead in attempting
+	     to emulate the standard engine front console display on the 
+             PICO TTY port.
+
+           . INTR69.PAT
+             Prevents ISIS from taking a hard unexpected I/O interrupt
+	     (BAD00 8730 or type 30) a device address 69 interrupt. This
+             is left over from the TSI (Tymshare Spirt Interface) architecture
+	     and is not valid for the PICO engine.
+
+	   . TYMOUT.PAT
+	     Pads out the timer ISIS uses before it declares an SIO motherboard
+	     timeout.
+	
+	A.3  OTHER PROBLEMS ADDESSED IN THIS UPGRADE
+
+	   . MACV ADDRESSING
+	     Several address references have been modified for the MACV
+	     cases. Namely the labels SEGF and SFSIZE. Also SEG 0F was 
+             re-implemented. Also a MACV context for slot DMA allocation
+	     for SUP on a MAC3
+
+	   . GEN ERROR
+	     A ';' in a header causing a gen error when the SYSDEV parameter
+	     is set in the SGU.DEF macro.
+
+	   . RANGE CHECK
+	     Check for parameter in LUDEF macro for sync lines on second
+	     board changed from 16 to 32.
+
+	   . NKU CHANGE
+             Change NKU to equate to 2 + NSLOT + SUP. The effect here is to
+	     allow a SWITCHER with two DDT circuits.
+
+        __________________________________________________________________
+        B) CHANGES TO EXTERNAL FUNCTIONS VISIBLE
+           TO THE USER (I.E. PERFORMANCE, FUNCTION, ETC.):
+
+           . DISPATCHER crash codes for crashing a slot
+	     The dispatcher will crash a slot if it does not like what it 
+ 	     sees in the slot rings. There are 43 infractions that it 
+	     complains about. An entry in the history log will list which 
+	     infraction the dispatcher complains about. The label 'dsptyp'
+	     (40 byte) gives information on the last four dispatcher crashes.
+	     At the label 'dspreg' is found the register set F for 40 bytes.
+	     Refer to the Z-file section B.3 for an explanation of the
+	     the particular crash.
+
+	   . Change in ISIS crash codes
+	     There have been changes in the ISIS crash codes. A complete
+	     list of crash codes can be found in section B.2 in the Z-file.
+
+	   . Crash SLOT hard for repeated crash/restart failures
+	     If a slot fails 5 times within 600 seconds, the slot will not be
+	     restarted. A new ddt command - ?dash has been implemented which
+	     will disable the 'auto slot halt' or enable if it is disabled. 
+	     The function (default) is enabled.
+		
+			*?dash
+			disable auto slot halt? (Y/N)?     <if enabled>
+			enable auto slot halt? (Y/N)?	   <if disabled>
+
+	     The execute (e) ddt command will also reset the timer allowing 
+	     for slot reloads to take the 'auto slot halt' with a clean 
+	     window and re-enable the 'auto slot halt' function. In the 
+	     event that the offending slot is Node Code the node is crashed 
+	     with BADO4 8755.
+
+           . Crash on BAUDR mismatch
+	     Code has been implemented to determine if there is a baudr 
+	     mismatch and if so to crash isis with an BAD00 8779 type error.
+
+	   . Changes to DDT 'HALT' logic
+	      The 'halt' logic has been changed for slot 0. The "H" command
+	      is NEVER valid for slot 0 and "?HALT" is only valid for slot 0
+	      from the TTY port unless under debug state (NTDDBG) when 
+	      "?HALT" is valid for slot 0 from an external port.
+	   
+           . Soft crash on 'range error' within Kernel
+	     On the first occurrence of a BAD04 8753 error create an entry in
+	     the DDT log and jump to address 70. On a second occurrence within 
+	     seven days take ISIS down `hard'. See Z-file (i2is13.z03) for
+	     more particulars.
+
+	__________________________________________________________________
+        C) CHANGES TO INTERNAL FUNCTIONS NOT VISIBLE
+           TO THE USER WHICH CAN AFFECT OTHER INTERFACE CODES:
+	
+	   . Kill gen when memory size exceeded (non-MACV)
+	     On a non-MACV machine that gens to  more than a meg of memory
+	     it is useful to  kill the gen rather than load and have the 
+	     machine crash on load.  Refer to section Z-file section A.2 
+	     for more particulars.
+
+           . Enforce 'range check' on sync commands
+	     For SYNC output, the requirement that the output descriptors
+	     and buffers be in the same segment has been modified. In the
+	     non-MAC5 case the requirement is modified to check that the 
+	     descriptors and buffers are located in slot memory. Contrary
+	     to ISIS documentation if descriptors and buffers overflow a 
+	     segment and are in contiguous full segments, sync output will 
+	     work. It remains the slots responsbility to adhere to this 
+	     requirement. In the MAC5 case virtual segments can be 1 meg 
+	     and thus descriptors and buffers will reside in the same segment.
+	     Several address cells have been provided for debugging purposes.
+	     In case of a range error, a context value is stored at the label
+	     dv8.f. The device address will be found at r2.f and the 
+	     offending value at r4.f. The slot is crashed with an 
+	     'irrecoverable device' error.
+
+	   . PICO bits paging
+	     Change to allow bits paging determination. A SYMDEF(MACHIN) 
+	     attribute has been added to allow for BITS to determine if 
+	     the machine is a PICO for its paging requirements. This will 
+	     remove the requirement for bits to prompt the user.
+
+	   . Excessive SYNC board(s) check
+	     Code has been added to evaluate if there sync boards present that
+	     are not defined in ISIS. In this event, ISIS will crash with a 
+             BAD00 8778. This test is not performed on the PXL hardware 
+             platform.
+	__________________________________________________________________
+        D) CHANGES TO SYSTEM GENERATION PARAMETERS:
+
+	   . Changes in the LUDEF macro
+	     Ability to use ranges in the LUDEF macro and to display
+	     the channel number with the board number for the logical unit.
+
+	   . Add PXL as a pararmeter option for the TYPE field in the
+	     MACHNS macro.
+
+	   . Defaults for ASYNC ring structure
+	     Change for defaults on async ring structure.
+	     	If NEWARN is not defined and NASYNG > 0 
+	     	then default NEWARN to 1.
+	     See Z-file section A.1 for more particulars
+
+
+	   . Gen size for TSI
+	     For TSI the max gen size is 960Kb since TSI requires 64Kb for
+	     S-bus window.
+
+
+	__________________________________________________________________
+        E) RELIABILITY OF THE RELEASE: (SUMMARY OF TESTS, DEFICIENCIES, ETC.)
+
+
