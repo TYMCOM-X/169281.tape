@@ -1,0 +1,279 @@
+
+MICRO IV (HDLC) ASYNC RECOMMENDATIONS				20-JUN-1988
+----- -- ------ ----- ---------------
+
+The  Micro IV  (HDLC) can now be configured to provide up to 4 sync and  10
+async ports.  This change from the standard 10 sync and 4 asyn requires  NO
+field changes other than selecting the appropriate baud rate for the  async
+ports.  This document will outline the configuration  guidelines  for async
+usage and modifications necessary to utilize the additional async ports.
+
+
+CONFIGURATION GUIDELINES:
+------------- ----------
+
+The following is a view of the rear panel diagram of the Micro IV:
+
+	 +----------------------------------------------+
+	 |						|
+	 |   [Ports 4-7]  [Port 8]			|
+	 |   [Ports 0-3]  [Port 9]			|
+	 |						|
+	 |                   [Ports 10-14]		|
+	 +----------------------------------------------+
+
+
+NOTE:  For purposes of this document  the terms  channel and  port are used
+       interchangeably and refer the same thing.  For additional details on
+       the Micro IV, please refer to the HDLC u-Engine Field Service Guide.
+
+
+The current configuration of the Micro IV utilizes ports 10-13 as SIO async
+with the remaining 10 ports (0-9) being sync or SIO only.
+
+Under the new configuration guidelines ports  0-3 are  reserved for sync or
+SIO, while ports 4-13 can be configured for either sync, SIO or SIO  async.
+The   following are  the recommended  guidelines for  using  the additional
+async channels on the Micro IV:
+
+
+    NOTE:  The following require that  a minimum of  two (2) 19.2K or  four
+           four (4) 9.6K sync lines (on channels 0-3)  for network  access.
+	   For  configurations  that  require less  than the  maximum async 
+	   usage,  the network connection  baud rate  can be adjusted lower
+	   to accommodate the maximum async CPS rate expected.
+
+
+    Configuration                                            Aggregate CPS
+    -------------					     --------- ---
+
+    4  Channels at 9600 baud  plus  1 channel  at 4800 baud	4320
+    4  Channels at 9600 baud  plus  3 channels at 2400 baud	4560
+    4  Channels at 9600 baud  plus  6 channels at 1200 baud 	4560
+    
+    6  Channels at 4800 baud  plus  4 channels at 2400 baud 	3840
+    6  Channels at 4800 baud  plus  4 channels at 1200 baud 	3360
+
+    10 Channels at 2400 baud 					2400
+
+    10 Channels at 1200 baud 					1200
+
+Due to  the interrupt logic in the Micro IV the limitations for async ports
+configured  all at 4800 baud (maximum of 6) or 9600 baud (maximum of 4)  is
+significantly less than for lower speeds.  The aggregate async speed should
+never be larger than 4560 CPS, with the sync channels configured to provide
+a minimum of 3840 CPS (2 @19.2K or 4@9.6K BPS).  
+
+
+All  of the above configuration specifications  are based on using the HDLC
+T201 (standard TYMNET) protocol on sync lines.  Should the TYMSYNC protocol
+be used there may be a slight,  although  not significant decrease in  the
+throughput for the Micro IV.
+
+
+
+
+TYMFILE MODIFICATIONS:
+------- -------------
+
+The  only changes  necessary to  reference  channels  4-9  as  async are to
+declare them  as SIO async in the same manner that channels 10-13 have been
+in the past.    The node  tymfile will  declare  them simply as SIO logical
+units  (M.REF),  while the  slot tymfile  will declare  them as  SIO  async
+logical units.
+
+
+
+
+
+CONFIGURATION HINTS:
+------------- -----
+
+When  configuring the  Micro IV  with ONLY four (4) async channels, use the
+the  standard async  channels 10-13,  with the baud rate strapping provided
+by the E5/E6 jumpers.
+
+
+When configuring the  Micro IV  with more  than four (4) async channels, it
+may  become necessary  to  change  the  baud  rate  generator jumper  E6 to
+accommodate all of  the channels.   If  no more  than  four  (4) high speed
+channels  (speeds 2400 baud or greater), these channels can be assigned  to
+the  standard async  channels 10-13,  and the  baud rate  generator  (which
+impacts channels 0-9) can be left in the normal position  (A to C   with  B
+open).   With the  baud rate  generator in  the normal position (multiplier
+being times 16),  the async  baud rates provided on channels 4-9 are up  to
+1200  baud, while the sync baud rate provided is up to 19200 baud.   
+
+
+If more  than four (4) high speed  async  channels are required, it becomes
+necessary to change the baud rate generator to the times 16 position (A and
+B  open on jumper E6).   With the baud rate generator in this configuration	
+only async speeds of  2400, 4800,  and 9600 baud are provided,   while sync
+speeds of 19200 to 153600  baud are  provided.   Currently the  Micro IV is
+limited to speeds of 19200 baud, therefore with  the baud rate generator in
+the  times 16  position,  the only sync speed available is 19200 baud.   In 
+this configuration, the minimum network access (sync) line is  19200  baud,
+no lower speed is available.
+
+
+When configuring the Micro IV for  low speed async (1200 baud or less), the
+baud rate  generator can  be left  in the  normal  (times 16) position with
+A to C  and  B open (E6 jumper).   This will  provide up to 1200 baud async
+and sync speeds up to 19200 baud.
+
+
+
+
+
+MICRO IV HDLC I/O BOARD:
+----- -- ---- --- -----
+
+
+NOTE:  Refer  to end of this  document for  a simplified  schematic of  the
+       Micro IV HDLC I/O  board.  For additional details  on the  Micro IV,
+       please refer to the HDLC u-Engine Field Service Guide.
+
+
+
+ECO 86-289 is not a requirement  for utilizing  ports 4-13 as async.   This
+ECO  has no impact  on async usage other than  the internal/external  clock
+select switches  (SW11-SW16 for ports 4-9) will  not be  present,  in their
+place  a 4-stake jumper  (at locations  E9 through  E28) for selecting  the
+clock source will be present.
+
+
+The standard  async channels (10-13) are divided into two pairs of channels
+driven  by  Z80-SIO/2  controllers  with  T609  custom SIO support devices.
+Channels 10-13 are configured for fixed frequency RS232 operation, with the
+baud rate timing provided by a  14411  baud rate generator.   Each  pair of
+channels may be strapped for one of the available baud rates by terminating
+the async BR  bus with  a jumper  to one  of the outputs of the 14411.  The
+jumpers for the standard 4 async channels are located at E4 and E5.
+
+
+
+The  async ports originating from channels 4-9 are selected via the  rotary
+switches located on the I/O board labeled SW4 through SW10.  Each of  these
+switches  are individually  selected and the outputs are tied to the  74151
+multiplexers for baud rate selection.   The internal/external clock  select
+switches  must be  in the  ON  position  for  these ports to function.  The
+correlations between the individual channel and it's related baud rate  and
+internal/external clock selection switches is as follows:
+
+
+
+	Channel		Baud Rate Switch	Internal/External Switch
+	-------   	---- ---- ------	----------------- ------
+
+	   4	     	     SW6		        SW16
+	   5	  	     SW2		        SW15
+	   6		     SW5		        SW14
+	   7		     SW1		        SW13
+	   8		     SW10		        SW12
+	   9		     SW9			SW11
+
+
+
+The  baud  rate  multiplier  jumper  (E6)  determines the  on-board  timing
+available for the Z80-SIO/2 and T609 support devices.  A 1.8432 Mhz crystal
+oscillator drives the 14411 baud rate generator  (at location 2W),  and the
+frequency of the baud  rate generator can be multiplied  by one of  several
+values by strapping the jumper pad at location E6.  The baud rate strapping
+options are as follows:
+
+
+   	Jumper Option		     Multiplier
+	------ ------		     ----------
+		
+	A to C  and  B to D	      times  1 (unused)
+	A open  and  B to D           times  8 (unused)
+	A to C  and  B open	      times 16
+	A open  and  B open	      times 64
+	
+
+
+
+The speeds associated with the each of these switches are as follows:
+
+
+      Async          Sync                      Rotary
+    Baud Rate     Baud Rate	 E6 Jumper     Switches   E4/E5 Jumpers
+    ---- ----     ---- ----	 -- ------     --------	  ----- -------
+     
+       9600	    153600       A & B open                  A to L
+       4800	     76800   	 A & B open	   3         B to M
+       2400	     38400       A & B open    	   2         C to N
+       1200          19200	 A & B open        1         D to P
+		     
+       1800	     28800	   A to C          7          N/A
+       1200          19200	   A to C          6         D to P
+        900          14400	   A to C          5          N/A
+        600	      9600         A to C          4         E to R
+        300           4800	   A to C          3	     F to S
+	150           2400         A to C          2         G to T
+	100           1600	   A to C          1          N/A
+	135	      N/A	   A to C         N/A        H to U
+	110	      N/A	   A to C         N/A        J to V
+	 75           1200         A to C         N/A  	     K to W  
+
+
+MICRO IV I/O BOARD LAYOUT:
+----- -- --- ----- ------
+
+
+NOTE:  For additional details  on the  Micro IV,   please refer to the HDLC
+       u-Engine Field Service Guide.
+
+
+    ---------------------------
+   |                           |
+   |                           |
+   |                            ---------------
+   |                                            |
+   |   E4	                                |
+   |   14411   					|
+   |   E5					|
+   |                                            |
+   |    SW10 SW9                                |
+   |                                            |
+   |                                            |
+   |                                            |
+   |              SW5 SW1                       |
+   |                                            |
+   |              SW6 SW2                       |
+   |                                            |
+   |              SW7 SW3                       |
+   |                                OSC  14411  |
+   |              SW8 SW4                       |
+   |                                            |
+    ----                                        |
+        |       E6                              |
+        |                                       |
+         --------------------------------------- 
+
+
+
+The following are the descriptions of the locations noted above:
+
+    E4 and E5 -  Async baud rate  selector  for  channels  10-14.  The baud
+       rate  timing is  provided by  the 14411  baud rate generator located
+       between the two jumpers.
+
+    E6 - Baud  rate  multiplier  jumper for  channels 0-9.   The baud  rate
+       timing  is provided  by the 14411 baud rate generator and the 1.8432
+       Mhz crystal oscillator located on the right (as pictured above).
+
+    SW1 to SW10 - The 10 rotary switches on the board that are tied to  the
+       74151 multiplexers for selecting the baud rates for channels 0-9.
+
+    SW11 to SW20 (Not pictured)  -  The  10  switches on  the transmit  and
+       receive  lines that  select the on-board (ON  position) or  external 
+       (OFF position) clock   sources.   These switches are  located  below
+       rotary switches SW9 and SW10 running parallel to SW1 to SW8.
+       
+    OSC  -  A 1.8432 Mhz crystal oscillator providing the frequency used by
+       the 14411 baud rate generator.
+
+    14411 - Divides the oscillator frequency providing seven (7) continuous
+       frequencies output on the BR bus.
+ 
