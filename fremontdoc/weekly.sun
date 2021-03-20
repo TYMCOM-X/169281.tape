@@ -1,0 +1,383 @@
+
+
+
+
+
+
+          W E E K L Y    B A C K U P   P R O C E D U R E S
+
+                            LEVEL 0 DUMP
+
+               (Documentation prepared: March 1, 1990)
+
+
+
+
+
+
+PREPARING FOR SHUTDOWN:
+-----------------------
+
+     Before taking the SUN Servers down, log into "operroot" with the
+     current password.  After all of the messages print out, you will
+     be at the "(local/root) operroot@(hostname)#" prompt.
+     At this prompt, type in "boomer".
+     It may take a while for the circuit to be built - BE PATIENT.
+
+     When the circuit is built, you will receive the same messages as
+     before.  After these messages have completed, your prompt will be
+     "(/) root@(hostname)#".
+     The "hostname" will be either "boomer" or "flyer", depending on
+     which system you built the circuit to.
+     If the circuit is built successfully, then you know that the
+     BACKUP SUN Server is up.  Do this on both "boomer" and "flyer"
+     as both Servers must be up.
+
+     Type in "logout" at the prompt.  You should receive the statement
+     "connection closed." and the prompt
+     "(local/root) operroot@(hostname)#".
+
+     If you cannot log into the BACKUP SUN Servers, then call Malvern at
+     (215)251-2898 and inquire as to when they will be up.  The Fremont 
+     SUN Servers should not be taken down until both BOOMER and FLYER
+     are UP.
+
+     If the BACKUP Servers are up, then call NETCON and inform them that
+     you are taking the Servers down for weekly backup.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                         S A M P L E
+                        -------------
+
+hostname login: operroot
+Password:
+
+Last login: Fri Feb 23 08:11:56 from 3106009414
+SunOS Release 4.0.3 (CODEGEN_X25) #7: Thu Feb 15 16:44:23 PST 1990
+
+ +---------+ @@@@@@@@@@@ +---------+ +---------+ +---------+ +---------+
+ | 01 + 07 | @ 02 + 10 @ | 03 + 11 | | 04 + 12 | | 05 + 13 | | 06 + 14 |
+ |  delta  | @ gemini  @ | saturn  | | mercury | |  atlas  | |  titan  |
+ |  9928   | @  9929   @ |  4644   | |  5060   | |  8875   | |  9752   |
+ +---------+ @@@@@@@@@@@ +---------+ +---------+ +---------+ +---------+
+Feb 23 11:09:24 gemini login: ROOT LOGIN console
+
+--- Malvern hosts:   boomer = x.25 host 10655, flyer = x.25 host 10663
+--- To see old system messages, use "msgs 1".
+--- Problems with an account?  Call Validations at (408) 922-7012.
+--- To report problems, use the "gripe" command.
+
+
+Please use the 'gen' command instead of running 'nad' directly.  Part of the
+'node put' and 'node update' procedures require gen's log files.
+
+To locate tym and cmd files, use 'node check'.  To find nibs, use 'nfind'.
+
+Bits 3.00 is now installed as the standard bits program.  This version fixes
+some problems reported with bits 2.10 and should be used for all node and slot
+loads.  The files /suninfo/bits03.x00 and /suninfo/bits03.y00 contain more
+specific information about the release of this product.
+
+Erase set to Backspace
+(local/root) operroot@hostname# boomer
+
+Last login: Fri Feb 23 08:11:56 from 3106009414
+SunOS Release 4.0.3 (CODEGEN_X25) #7: Thu Feb 15 16:44:23 PST 1990
+
+           boomer = x.25 host 10655, flyer = x.25 host 10663
+
+
+--- Malvern hosts:   boomer = x.25 host 10655, flyer = x.25 host 10663
+--- To see old system messages, use "msgs 1".
+--- Problems with an account?  Call Validations at (408) 922-7012.       
+--- To report problems, use the "gripe" command.
+
+Please use the 'gen' command instead of running 'nad' directly.  Part of the
+'node put' and 'node update' procedures require gen's log files.
+
+To locate tym and cmd files, use 'node check'.  To find nibs, use 'nfind'.
+
+Bits 3.00 is now installed as the standard bits program.  This version fixes
+some problems reported with bits 2.10 and should be used for all node and slot
+loads.  The files /suninfo/bits03.x00 and /suninfo/bits03.y00 contain more
+specific information about the release of this product.
+
+Erase set to Backspace
+(/) root@hostname# logout
+Connection closed.
+(local/root) operroot@hostname# logout
+
+
+
+                    SUN SYSTEMS WEEKLY BACKUPS
+
+
+     The following text describes the procedures to be followed when
+     performing the level 0 weekly dumps.
+
+TIME:
+     The weekly level 0 dump is scheduled from 20:00 to 22:00 every
+     Saturday evening.
+
+FILES USED FOR DUMPS:
+
+            FILENAME                 PARTITION              MODE
+     ________________________________________________________________
+     backup.weekly.singleuser | (root-var)             | single user
+     backup.weekly.ts         | (export) (home) (xd4h) | time sharing
+                              | (xd5h)                 |
+ **  backup.weekly.usrntdlib  | (usr) (ntdlib)         | time sharing
+     ----------------------------------------------------------------
+     ** = gemini only
+
+PARTITIONS:
+     There are 7 partitions that are dumped on the following systems:
+          DELTA
+          SATURN
+          MERCURY
+          ATLAS
+          TITAN
+
+     The partitions are always dumped in the following order:
+
+          root/var: these two partitions are always dumped together and
+                    will not use more than 1 tape.
+
+          export  : This partition will normally take two or more tapes.
+                    But, do not become alarmed if it only uses one tape.
+
+          home    : "home" also uses, in most cases, two or more tapes.
+
+          tym-xd4h: This partition normally takes 3 tapes, some systems
+                    may take more.
+
+          tym-xd5h: This partition will use 2 tapes. The exception is
+                    GEMINI which has taken as many as 5 tapes.
+
+     GEMINI will dump all of the forementioned partitions,
+     and add 2 more to it's dump. These partitions are:
+
+          usr     : Only uses 1 tape.
+
+          ntdlib  : Uses a minimum of 2 tapes.
+
+
+
+
+
+
+
+
+
+
+
+TAPE IDENTIFICATION:
+     The script used for the level 0 dump prompts you for the tape that
+     it wants you to mount.
+
+          e.g. Please mount tape #1 on gemini for (root-var)
+
+     The most important factor in determining which tape to mount is the
+     partition name.
+     The second most important factor is the tape number within that par-
+     tition.
+     The tapes are labeled according to each partition. They look like
+     this:
+
+
+
+
+                     WEEKLY BACKUP
+
+                      G E M I N I
+
+                      (TYM-XD4H)
+
+             SET#_______      TAPE#________
+
+
+
+
+
+
+
+
+     The tape straps will also identify the host, the partition, and
+     the tape number within that partition.
+
+***  Be aware that even though the tapes are already labeled, you may
+***  have to add a tape or two to one or more partitions.
+
+
+PROCEDURES:
+
+     When performing a level 0 dump, the "root" and "var" partitions must
+     be dumped when the system is "stand-alone".
+     Therefore, the systems must be brought down and brought up again
+     "stand-alone".
+     The following text will take you step-by-step through the shutdown
+     procedure.
+
+
+SHUTDOWN
+
+     Please be sure to follow these directions exactly. This will keep
+     you from having to call someone to get you out of a jam.
+
+          1. login to each host as "operroot".
+
+          2. in the following order, enter this command: 
+             "mhx -f umount -vat nfs -h hostname<cr>
+             (hostname=host you are on).
+
+                 ORDER OF TAKEDOWN
+                 _________________
+                    1. delta
+                    2. atlas
+                    3. titan
+                    4. mercury
+                    5. saturn
+                    6. gemini          
+
+             This command unmounts the file systems for each host located
+             in the Fremont Data Center.
+             When all file systems are "dismounted", you will be returned
+             to the "(local/root) operroot@hostname#" prompt.
+
+          3. At the prompt, enter the following command:
+
+             shutdown now taking down for weekly backup<cr>
+
+             This command shuts the host and sends a message to each
+             user and each host.
+             Before typing the command on the next system, you must
+             wait for the following response:
+
+             "hostname syslogd: going down on signal 15"
+
+             When the host is shut, you will receive a "WARNING". This is a
+             standard message, which does not require any special attention.
+             You will then recieve a "#" prompt.
+
+          4. At the prompt, type "fasthalt".
+             Again you will receive a "CAUTION". This also is a standard
+             message.
+             When the "fasthalt" command has been processed, it will let
+             you know by responding "Halted".  You will then receive a
+             ">" prompt.
+
+          5. At the ">" prompt, enter "b -s"<cr>.
+             This command boots the system and brings it up single-user or
+             stand-alone.
+             When the "boots" procedure is completed, you will receive
+             a "#" prompt. You are now ready to begin the dump.
+
+BEGINNING THE DUMP:
+
+     From this point, in single-user mode, you will dump (root-var) ONLY.
+     This is done by typing "backup.weekly.singleuser" at the prompt.
+     The script will respond as follows:
+     "Please mount tape #1 on hostname for (root-var)"
+     "Is tape ready? "
+
+           1. Mount the corresponding tape and type a "y".
+              When the partitions, (root-var) have been dumped, the
+              "DUMP" program will reply:
+              "DUMP: Tape rewinding" 
+              "done, weekly singleuser backup"
+              You will then be returned to the "#" prompt.
+
+           2. When all hosts have completed this portion of the dump,
+              type a "ctrl-d" on each host in the following order:
+
+                     BRINGUP ORDER
+                   ________________
+                      1. gemini
+                      2. saturn
+                      3. mercury
+                      4. atlas
+                      5. titan
+                      6. delta
+
+             This brings the systems back into the network and "mounts"
+             all of the file systems.
+             When this is completed, you will be returned to the 
+             "hostname login:" prompt.
+
+          3. Log in as "operroot".
+
+          4. At the prompt, type: backup.weekly.ts<cr>
+             Just as before, you will be prompted to mount a specific
+             tape. Namely, "tape #1 for (export)"
+             Should the (export) partition need more than one tape,
+             the "DUMP" program will respond with:
+
+                "DUMP: Tape rewinding"
+                "DUMP: Change tapes: Mount tape #2"
+                "DUMP: NEEDS ATTENTION: Is the new tape mounted and ready
+                 to go?: ("yes" or "no")"
+
+          5. Although the "dump" program says it is rewinding the tape, 
+             it is not. You will have to manually unload the tape by
+             going to the tape drive and pressing the "reset" button,
+             followed by the "unload" button.
+             Once the new tape is mounted, type "yes" at the prompt to
+             continue the dump.
+             Should you need another tape for this partition, repeat
+             this step.
+
+          6. When the (export) partition has been dumped, you will be
+             prompted to mount tapes in the order described to you in
+             the "PARTITIONS" section of this document.
+                        (home)
+                        (tym-xd4h)
+                        (tym-xd5h)
+
+          7. Once all partitions are dumped you will receive the follow-
+             ing message:
+
+                  "done, weekly ts backup."
+
+             At this point you are done with all of the backups, except
+             GEMINI. On GEMINI you will dump the 2 final partitions,
+             namely (usr) and (ntdlib).
+             On all of the other servers, you can logout.
+
+          8. At GEMINIs' terminal, type the following command:
+
+                 backup.weekly.usr.ntdlib<cr>
+
+             You will then be prompted to mount "tape #1 for (usr)".
+             When (usr) has been dumped, you will be prompted to mount
+             tapes for (ntdlib).
+             As usual, when (ntdlib) has been dumped you will receive
+             a message signifying that the dump has been completed.
+
+                "done, weekly gemini backup."
+
+MAIL:
+
+     Since the systems were scheduled down for these dumps, you should
+     fill out the "SUN SERVER LOGSHEET" and send mail to "system"
+     giving the dates and times that the system was taken down, and
+     brought up. Also, give reason why the servers were taken down.
+
+     (i.e. Weekly Backups)
+
+     Mail need not be sent on each server, include information on all
+     servers in mail sent on GEMINI.
+
+     
+    
