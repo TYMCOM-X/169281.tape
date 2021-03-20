@@ -1,0 +1,47 @@
+:********************************************************************
+: Patch name: NOIIX.603              Product and Version: ISCS 6.03
+:     Author: JCR                           Organization: STS
+:   Customer: PUBLIC CONSATS                Date Written: 5/5/88
+: Description of Problem:  		  	 Updated: 11/28/88
+:
+:	This is a copy of (QSATS)ISCS06.PAS which was written to
+:	disable request for IIX-capable circuit in PNR. That one
+:	made it necessary to SETFLAG(NOIIX,ON) unless Outdial was
+:	included while this one ALWAYS disbales IIX unless PAD or
+:	Telex is included. Although the original problem of sending
+:	data to X.25 before IIX negotiation is complete has been
+:	corrected in ISCS 6.03, many Public Net X.25's have patches
+:	which clear or hang calls with IIX bit set.
+:
+:	This patch updated 11/28/88 to incorporate (ASYNCPAT)STAT.603
+:	which disabled request for extended logon status, but was in
+:	conflict with original NOIIX.603 in that they both patched
+:	the same area. We assume that we ALWAYS want to disable re-
+:	quest for ELS since failure to do so causes erroneous circuit
+:	failure messages in some case.
+:
+:	To disable IIX and ELS, use NOIIX.603.
+:	To disable ELS only, use STAT.603.
+
+
+	IF	X3ON+BTELEX+TTELEX
+	IF	1-\NOIIX
+NOIIX	EQ	0
+	EI	:1-\NOIIX
+	ELSE
+	IF	1-\NOIIX
+NOIIX	EQ	1
+	EI	:1-\NOIIX
+	EI	:X30N...
+
+	IF	NOIIX
+	LO	ISIS
+PATCH(880506,1105,JREILLY,ESTPT4,,0A)
+	NHI	R0,3FFF			:kill IIX and ELS bits
+	JAL	R4,PUTH			:call PUTH subroutine
+	JFS	ESTPT4+0E		:skip over body of .PUTH macro
+ENDPATCH(Patch to disable IIX and Extended Logon Status requests in PNR)
+	FO	ISIS
+	EI	:NOIIX
+
+:********************************************************************
