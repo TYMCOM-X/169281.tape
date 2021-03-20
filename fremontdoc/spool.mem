@@ -1,0 +1,214 @@
+
+
+
+                     ENTERING AND PRINTING SPOOL REQUESTS                     ________ ___ ________ _____ ________
+
+       The PDP10 spool program is used to control the creation and printing  of
+       listings.   Spool  requests  are  numbered  in  the same manner as batch
+       requests;  and like batch requests, they need to be entered into the DEC
+       control  log.   Operators can use the spool program to print large files
+       and tape directories.  The first part of this section will  explain  the
+       creation  of  spool  requests,  from  an Operators standpoint, while the
+       second half describes the methods of printing the requests.
+
+       There are two ways to spool files to specific locations.  To "CENTER" or
+       to a REMOTE PRINTING location.  DEC10'S that have line printers attached
+       to them can print CENTER requests by just leaving the printer in  READY.
+       When we create files we should use the second method and spool the files
+       to our 'REMOTE' location.  A remote printer is a printer hooked directly
+       into  a  TYMNET  engine.  The remote printer on our floor is cabled into
+       NODE 2466.  Print location is R094.
+
+                               SPOOLING REQUESTS                               ________ ________
+
+       The following is an example of how to spool  a  tape  directory  to  our
+       remote  printer.   The  file  is  (OPER)R15149.DIR,  and since the spool
+       program is run from OPER, we won't have to specify (OPER) when  prompted
+       for the file.  Operator entries will be within brackets.  
+
+          .[SPOOL]
+
+          SPOOL 6.2
+
+          *** UPDATING SPOOL DIRECTORY
+          UPDATE COMPLETE
+
+          :[SPOOL]
+          BILL TO CUSTOMER? [N]
+          REQUESTED BY: [DAT]
+          PROJECT CODE: [TEST]
+          TELEPHONE NUMBER: [498-2588]
+          FORMS: [LARGE]
+          PARTS: [1]
+          OPTIONS: [LINES=66,FULLCH,COPIES=##,NODE=2466]
+
+          SPOOLING TO: TYMSHARE, INC.
+          FREMONT COMPUTER OPERATIONS
+          4340 SOLAR WAY
+          FREMONT.CA 94538
+
+          DELIVER BY: [OFF]                     (OFF MEANS INTER-OFFICE
+                                                 MAIL. THE PROGRAM WANTS AN
+                                                 INPUT, AND THIS IS THE
+                                                 SIMPLEST.)
+
+          ADDITIONAL DELIVERY INST. TO CONT-D:   (WE DON'T NEED ANY, SO JUST
+                                                   ENTER THE CONT-D.)
+          ENTER FILES:
+          R15149.DIR
+
+             25  PAGES        R15149.DIR
+                                                                         Page 2
+
+
+          ANY QUESTIONS CONCERNING THIS REQUEST,
+          PLEASE CALL (415) 498-2588
+          03/10/85   13:09
+              1  FILES SPOOLED
+             25  PAGES
+          SPOOL REQUEST NUMBER 38481
+
+          :[QUIT]
+          .
+
+                            PRINTING SPOOL REQUESTS                            ________ _____ ________
+
+       There are two print command  that  we  will  use:   "PRINT  REMOTE"  and
+       "RESTART  REMOTE".   The print command is used for initial printing of a
+       file.  Restart is used to either restart a print file, or  to  change  a
+       print option from the spool requests setting.  
+
+                                 PRINT REMOTE                                 _____ ______
+
+       After you have created a print file, or when there is a customer request
+       on  a  system,  the next procedure is to print the request.  You need to
+       log onto 'OPER' on the system with the request.  At the 'PLEASE LOG IN:'
+       prompt,  before  entering  the  ID, enter a CNTRL-B,D, and R.  This will
+       tell the NETWORK that you will be running a printer, so that the NETWORK
+       can communicate faster than it does with a normal terminal.  Once logged
+       on, set status and enter the spool program.  Then follow this procedure:
+
+          :[SET]
+
+          ENTER YOUR NAME: [KONGK]
+
+          PASSWORD:  (PW)
+
+          :[STAT REMOTE]
+
+          REQUEST    DATE   STAT  LOC  USERNAME     FILES  PAGES PAPER-PTS
+
+          38481   03/10/85  PEND  R094 OPER  1      17   LARGE-1
+
+          :[PRINT REMOTE]
+
+          REMOTE PRINTER TYPE: [CDC]
+
+          IS THIS A FULLCASE PRINTER? [Y]
+
+          ARE THERE   33 PAGES OF 1 PART LARGE PAPER
+          CONFIRM BY TYPING YOUR NAME: [DAT]
+
+          *** THE FILE WILL NOW START PRINTING. ***
+
+          *** WHEN THE FILE IS DONE PRINTING, A SPOOL REQUEST
+              WILL TYPE OUT AT YOUR TERMINAL. THE SPOOL REQUEST
+              WILL BE IN A FORMAT SIMILAR TO THE BATCH REQUEST. ***
+
+       When entering spool to print files,  always  enter  the  'SET'  command.
+       This  is  similar  to  the  CNTRL-B  in that it speeds up communications
+       between the system and the printer.  It also sets your  status  so  that
+                                                                         Page 3
+
+
+       you are allowed to print files.
+
+       There are two different circumstances where you will want to  enter  the
+       spool ID when inputting the print command (e.g.:  [PRINT REMOTE 38481]).
+       First, if the request was spooled to 'CENTER', specifying the  spool  ID
+       will make it possible to print the file on the NETWORK printer.  Second,
+       if you want to print a specific file and there are a number of different
+       files  in  the  queue,  especially  if  the  others are to be printed on
+       another class of paper.
+
+                                RESTART REMOTE                                _______ ______
+
+       As stated earlier, restart can be used to restart a interrupted request,
+       or to change print options.
+
+       If, for any reason, you need to stop  a  file  from  printing,  hit  the
+       ESCAPE  key.   The  file  will then show up in the status command with a
+       status of 'PROC' instead of 'PEND'.  Then, when you are ready to  print,
+       enter  the  restart  remote  command.  When restarting, the command will
+       prompt for the restart copy, file and page numbers.
+
+       The two options that will cause the most  trouble,  and  therefore  will
+       have  to  be the most often changed, are the lines per page and the node
+       number.
+
+       Many spool files are spooled with lines=60.   When  printed  on  TTY  or
+       large  paper, this option will cause the file to be printed with a blank
+       page between every printed page.  The way to correct this is  to  change
+       the page size to lines=66.
+
+       The node can often cause a problem if the Operator does not notice  that
+       a  file  has  been spooled to the CENTER.  When the Operator attempts to
+       print the file using the start remote command, the terminal will  become
+       hung  because it is trying to access a non-existent device.  Thereafter,
+       the file will show a stat of 'PROC', which means it has been  processing
+       and will have to be started again via the restart command.  To restart a
+       file like that, change the node option to NODE=2466.  This will allow it
+       to be printed on our NETWORK printer.
+
+       This example will be of a restart to change both the page size  and  the
+       node options.  
+
+          :[RESTART REMOTE 38466]
+
+          FILE NAME: [TAKEIT.DOC]
+          FOR: OPER         ON 03/10/85? [Y]
+
+          RESTART PAGE NO.: 1
+
+          OPTIONS: LINES=   60,COPIES=    1,REMOTE
+          OPTIONS: [LINES=66,FULLCH,COPIES=##,NODE=2466]
+
+          ARE THERE    46 PAGES OF 1 PART TTY PAPER
+          CONFIRM BY TYPING YOUR NAME: [DAT]
+
+          *** AT THIS POINT IT WILL PRINT THE REQUEST. ***
+                                                                         Page 4
+
+
+                          CANCELLING A SPOOL REQUEST                          __________ _ _____ _______
+
+       Cancelling a spool request is very easy,  so  make  sure  that  you  are
+       canceling the proper request!  Here is an example of a cancel.  
+
+          :[CANCEL 38481]
+          FROM: 03/10/85? [Y]
+
+          ENTER YOUR NAME: [KONGK]
+
+          PASSWORD:
+          REQUEST CANCELED
+
+          :Q
+
+                               PRINTING MANUALLY                               ________ ________
+
+       Sometimes it is necessary to print  files  straight  from  disk  to  the
+       remote printer, bypassing the spool program.  The format for this manual
+       print is as follows.  Use CONTROL B, D, R, at  the  PLEASE  LOG  ON  for
+       faster printing.  
+
+       EXAMPLE:
+
+           "."PRINT CDC:=/SIZE 66/FULLCH (USERNAME)FILE.NAM
+
+              BILL PRINTING TO USER: OPER
+
+              PROJECT CODE: CDC
+
+              "FILE IS NOW PRINTING OUT TO THE REMOTE".
+  
