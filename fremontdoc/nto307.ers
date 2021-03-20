@@ -1,0 +1,2179 @@
+1
+
+
+-
+-
+-
+0                              Netval Operator's Guide
+-                                    Version 3.07
+-                                  November 3, 1986
+-
+-
+-
+-
+-
+0                                       Tymnet
+-                            Network Technology Division
+-
+-
+0        
+         ^                                                                ^
+         ^   Tymnet's proprietary rights  are included in  the informa-   ^
+         ^   tion disclosed  herein.  The recipient, by  receiving this   ^
+         ^   document,  agrees  that  neither  this  document  nor  the   ^
+         ^   information disclosed herein nor any part thereof shall be   ^
+         ^   reproduced or  transferred to other  documents or  used or   ^
+         ^   disclosed to  others for  manufacturing or  for any  other   ^
+         ^   purpose except  as specifically  authorized in  writing by   ^
+         ^   Tymnet.                                                      ^
+         ^                                                                ^
+         
+-
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-                                 Table of Contents
++                                 _____ __ ________
+-        1.0 Document Overview ............................................ 1
+0        2.0 Logging In and Logging Out ................................... 2
+0           2.1 Logging In to Netval ...................................... 2
+0           2.2 Logging In to NVDM ........................................ 3
+0           2.3 Logging Out ............................................... 3
+0        3.0 Supervisor Updating .......................................... 5
+0           3.1 MUD Updating .............................................. 6
+0           3.2 Class/group Table Updating ................................ 7
+0           3.3 Supervisor Notification Procedure ......................... 7
+0           3.4 Supervisor Related Commands ............................... 8
+0              3.4.1 CLEAR Command ........................................ 8
+0              3.4.2 CONSISTENCY Command .................................. 8
+0              3.4.3 DISPLAY UPDATES Command .............................. 9
+0              3.4.4 SET SCHEDULE Command ................................ 12
+0              3.4.5 SET SUPERVISOR Command .............................. 12
+0              3.4.6 STOP Command ........................................ 13
+0        4.0 Controlling the Netval Host State ........................... 14
+0           4.1 HOST SHUT Command ........................................ 14
+0           4.2 HOST STATUS Command ...................................... 14
+0           4.3 HOST UP Command .......................................... 15
+0        5.0 Operator Log ................................................ 16
+0           5.1 DISPLAY FILTER Command ................................... 16
+0           5.2 FILTER Command ........................................... 16
+0              5.2.1 FILTER All Command .................................. 17
+0              5.2.2 FILTER Archive Command .............................. 18
+0              5.2.3 FILTER Consistency Command .......................... 18
+-                                                                      Page i
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-              5.2.4 FILTER Cuderror Command ............................. 18
+0              5.2.5 FILTER DEBug Command ................................ 19
+0              5.2.6 FILTER File Command ................................. 19
+0              5.2.7 FILTER Master Command ............................... 19
+0              5.2.8 FILTER Modify Command ............................... 20
+0              5.2.9 FILTER Mud Update Command ........................... 22
+0              5.2.10 FILTER OPerator Command ............................ 22
+0              5.2.11 FILTER PARameter Command ........................... 22
+0              5.2.12 FILTER Supervisor Command .......................... 23
+0              5.2.13 FILTER SYSMSG1 Command ............................. 23
+0              5.2.14 FILTER UN2 Command ................................. 24
+0              5.2.15 FILTER UUN Merge Command ........................... 24
+0              5.2.16 FILTER Validator Command ........................... 24
+0              5.2.17 FILTER Volumes Command ............................. 25
+0           5.3 MESSAGE Command .......................................... 25
+0           5.4 Tape Backups ............................................. 26
+0              5.4.1 Netval Archive Commands ............................. 27
+0                 5.4.1.1 ASSIGN Command ................................. 28
+0                 5.4.1.2 ATTACH Command ................................. 28
+0                 5.4.1.3 DEASSIGN Command ............................... 29
+0                 5.4.1.4 DETACH Command ................................. 29
+0                 5.4.1.5 DISPLAY ID Command ............................. 29
+0                 5.4.1.6 DISPLAY STATUS Command ......................... 30
+0                 5.4.1.7 RETURN Command ................................. 30
+0                 5.4.1.8 REWIND Command ................................. 31
+0                 5.4.1.9 STORE Command .................................. 31
+0              5.4.2 Backup Procedure .................................... 32
+-
+                                                                      Page ii
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-           5.5 NVDM File Restores ....................................... 33
+0              5.5.1 NVDM Archive Commands ............................... 33
+0                 5.5.1.1 ATTACH Command ................................. 34
+0                 5.5.1.2 DETACH Command ................................. 34
+0                 5.5.1.3 DISPLAY Command ................................ 34
+0                 5.5.1.4 RESTORE Command ................................ 35
+0                 5.5.1.5 RETURN Command ................................. 37
+0                 5.5.1.6 REWIND Command ................................. 37
+0              5.5.2 File Restore Procedure .............................. 37
+0           5.6 Logical Volumes .......................................... 38
+0              5.6.1 Logical Volume Overview ............................. 38
+0              5.6.2 Logical Volume Commands ............................. 40
+0                 5.6.2.1 COPY Command ................................... 40
+0                 5.6.2.2 DISPLAY VOLUMES Command ........................ 41
+0                 5.6.2.3 SET DRIVE OFFLINE Command ...................... 42
+0              5.6.3 STATISTICS Command .................................. 43
+0              5.6.4 System Start-Up ..................................... 44
+0                 5.6.4.1 Automatic Start-up ............................. 44
+0                 5.6.4.2 Operator Assisted Start-up ..................... 44
+0                    5.6.4.2.1 Confirmation Procedure .................... 44
+0                    5.6.4.2.2 Change Disk Pack Procedure ................ 45
+0                    5.6.4.2.3 Come Up With One Disk Procedure ........... 46
+0              5.6.5 Disk Pack Backup Procedure .......................... 47
+-
+-
+-
+-                                                                    Page iii
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 1.0 Document Overview
++        _______ _ _ ________ ________
+0        This document describes Operator Procedures  for Netval Version 3.07
+         and NVDM Version 3.07.  Refer to the Netval External Reference Spec-
+         ification document, (dndspec:39)ntv307.doc  for additional  informa-
+         tion about Netval.
+0        Section two describes Netval and NVDM log in and log out procedures.
+0        Section three  describes Netval in  relation to  network Supervisors
+         and the procedures used to monitor and control their updating.
+0        Section four describes how to control the Netval host state.
+0        Section five describes the operator log.
+0        Section six describes the tape backup procedure.
+0        Section seven describes the file restore procedure.
+0        Section eight explains the logical volume system and procedures that
+         deal with bringing the system up and creating disk pack backups.
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+0                                                 Document Overview    Page 1
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 2.0 Logging In and Logging Out
++        _______ _ _ _______ __ ___ _______ ___
+0        This Section covers  logging in and logging out of  Netval and NVDM.
+         If the  Logical Volumes system  is in use,  and Netval has  not been
+         initialized after loading, the Netval Programmer  or the NVDM Opera-
+         tor may have to follow special login procedures.  These special pro-
+         cedures are explained in Section 5.6.4.2
+-        SECTION 2.1 Logging In to Netval
++        _______ _ _ _______ __ __ ______
+0        Netval usernames are multiple access, i.e.,  many users may login to
+         a username at the same time.  You must be at the PLEASE LOG IN: net-
+         work prompt  in order to  log in  to Netval.  Follow  the procedures
+         established for your terminal in order  to bring you to this prompt.
+         Then, enter the following login string to access Netval:
+0                  - a network username
+                   - a colon ":" (if  the Netval host is not a  home host for
+                     the username)
+                   - the destination host number (if the Netval host is not a
+                     home host for the username)
+                   - a semicolon ";"
+                   - the password for the network username entered (this will
+                     not be echoed at your terminal)
+                   - a Carriage Return
+0        If a successful  login string is entered, Netval  displays a welcome
+         banner and  an asterisk  (*).  The  asterisk is  the Netval  prompt,
+         indicating that you may begin to enter commands.
+-        A sample login sequence is:
+0                  please log in: nvaluser:84;xxxxxxxxx<CR>
+0                  Netval - Version 3.07 at 10/01/85 23:48:42
+0                  *
+0        If your username is not authorized to log in to Netval, you will not
+         be allowed to log in, and Netval will display the following message:
+0                          you are not valid to use NETVAL
+0        If the  Logical Volumes system  is in use,  and Netval has  not been
+         initialized after loading, the Netval Programmer  or the NVDM Opera-
+         tor may have to  log in and select an access  disk, before any other
+         users can log in to Netval.  In this  case, if you attempt to log in
+         to Netval and  you are not using  the Netval Programmer or  the NVDM
+         Operator username,  you will not  be allowed  to log in,  and Netval
+         will display the following message:
+0          NETVAL has not been initialized, no unprivileged logins allowed
+-                                        Logging In and Logging Out    Page 2
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Or, if you are logging in with  the Netval Programmer or NVDM Opera-
+         tor username  and an access disk  must be selected,  Netval displays
+         the disk status, and you must confirm  the disk that will be used as
+         the current disk.  This process is explained in Section 5.6.4.2
+-        SECTION 2.2 Logging In to NVDM
++        _______ _ _ _______ __ __ ____
+0        If NVDM is loaded in the slot, only  one user, using the Netval Pro-
+         grammer or NVDM  Operator username, may login.   The login procedure
+         is the same as for  Netval.  You must be at the  PLEASE LOG IN: net-
+         work  prompt in  order to  log in  to NVDM.   Follow the  procedures
+         established for your terminal in order  to bring you to this prompt.
+         Then, enter the following login string to access NVDM:
+0                  - the NVDM Operator name
+                   - a colon ":" (if  the Netval host is not a  home host for
+                     the NVDM Operator username)
+                   - the destination host number (if the Netval host is not a
+                     home host for the NVDM Operator username)
+                   - a semicolon ";"
+                   - the password for  the NVDM Operator username  (this will
+                     not be echoed at your terminal)
+                   - a Carriage Return
+0        If a  successful login  string is entered,  NVDM displays  a welcome
+         banner and an asterisk (*).  The asterisk  is the NVDM prompt, indi-
+         cating that you may begin to enter commands.
+-        A sample login sequence is:
+0             please log in: nvdmop:84;xxxxxxxxx<CR>
+0             Netval Disk Maintenance - Version 3.07 at 10/01/85 23:48:42
+0             *
+0        If a user other than the NVDM Operator or Netval Programmer attempts
+         to login while NVDM  is loaded in the slot, NVDM  will not allow the
+         user to login and displays the following message:
+0                           you are not valid to use NVDM
+-        SECTION 2.3 Logging Out
++        _______ _ _ _______ ___
+0        This  Section describes  the logout  procedures used  in Netval  and
+         NVDM.  Operators may logout manually, or,  in the case of Netval, be
+         timed out.  The operator  may manually log out of Netval  or NVDM by
+         entering the QUIT command at the asterisk prompt.  When this command
+         is entered the operator is taken to network level and the PLEASE LOG
+         IN prompt will be displayed.
+-
+                                         Logging In and Logging Out    Page 3
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample logout sequence is:
+                   * quit
+0                  Logging out at 10/1/85 23:52:35
+0                  please log in:
+0        There is an  automatic logout factor in Netval.  This  factor is set
+         at system  generation by the  specification of the  Terminal Timeout
+         Parameter in the  configuration file.  This parameter  specifies the
+         number of minutes that  can pass with the user at  the Netval prompt
+         and no activity  on the user's terminal before  the terminal circuit
+         is zapped.  10 minutes is the typical timeout period.
+0        The timeout does not apply to the Netval Programmer.
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-                                        Logging In and Logging Out    Page 4
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 3.0 Supervisor Updating
++        _______ _ _ __________ ________
+0        Netval is  a Network  Validation program  that allows  validators to
+         make changes  to network validation data  on the Netval  system, and
+         automatically transmits these changes to the network Supervisors.
+0        The data that is handled by Netval includes:
+0        1.  CUD/MUD Information
+0            The CUD, or Controlling User Directory,  is a file that contains
+             network usernames,  passwords and  various other  network access
+             and validation  data.  Each Supervisor has  its own copy  of the
+             CUD, called the MUD, or Master User Directory.
+0            When a user attempts to login  through the network, the Supervi-
+             sor uses  the information  in its  MUD to  determine the  user's
+             legal access (i.e., is the username  in the MUD? is the password
+             correct?  can the  user originate from the node or  host that he
+             is entering  the network  from?  can  the user  access the  host
+             specified  as a  destination?   which host  should  the user  be
+             routed to if there is none specified in the login string? etc.).
+0        2.  Class/group Information
+0            Part of  the user's CUD/MUD  entry contains  access information,
+             i.e., legal network origins and destinations for the user.
+0            A CLASS  is a globally defined  set of originating  hosts and/or
+             originating nodes, which  are used to define  the locations from
+             which a user may access the network (ORIGINS).
+0            A GROUP is  a globally defined set of host  numbers.  Groups are
+             used to define the set of hosts to which a user may build a cir-
+             cuit (DESTINATIONS).
+0            Netval maintains information about Classes  and groups, and gen-
+             erates a copy of the Supervisor Class/group Table; each Supervi-
+             sor has its  own copy of the Class/group  Table.  The Supervisor
+             uses its  Class/group Table when a  user is logging in,  and the
+             users MUD entry refers  to a CLASS as an origin or  a GROUP as a
+             destination.
+0        In both these cases, validators login  to Netval and make changes to
+         Netval's  information.  Netval  then transmits  the  changes to  the
+         Supervisors.  When  transmitting CUD data, Netval  communicates with
+         the UN2 slave part of  the Supervisor; when transmitting Class/group
+         data, Netval communicates with the SYSMSG1  slave part of the Super-
+         visor.
+0        It is important that the validation  information gets updated on the
+         Supervisors in a  timely manner.  Out-of-datermation  may cause
+         users to lose access  through the network, or may grant  access to a
+         user that should no longer have it.
+-                                               Supervisor Updating    Page 5
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Netval maintains a list of legal Supervisors, i.e., Supervisors that
+         have been turned ON in Netval with  the SET SUPERVISOR Command (Sec-
+         tion 3.4.5).  These are the Supervisors that Netval will update when
+         there are changes  made to the CUD or Class/group  Table.  This list
+         must  be kept  up-to-date, or  there may  be a  Supervisor with  old
+         information.
+-        SECTION 3.1 MUD Updating
++        _______ _ _ ___ ________
+0        When a modification is made to the  Netval CUD, a description of the
+         change is appended to the MUDUPDATE  file.  An automatic process for
+         each Supervisor  is notified that  there is a  change to be  sent, a
+         circuit is  built to the Supervisor,  and the change  is transmitted
+         through the network.  Only the changed information is sent.
+0        Netval keeps track  of how much data  is in the file  (the file EOF)
+         and the point  to which each Supervisor has been  updated.  When the
+         data has been sent to all legal Supervisors, the EOF is set to 0.
+0        If a  Supervisor is DOWN  (inaccessible to  Netval) for a  period of
+         time, the data  in the MUDUPDATE file  may come close to  filling up
+         the file.  If the MUDUPDATE file  ever becomes full, VALIDATORS WILL
+         NO LONGER BE ABLE  TO MAKE CHANGES TO THE CUD!   A Supervisor may be
+         turned OFF with the SET SUPERVISOR Command (Section 3.4.5).
+0        The DISPLAY UPDATES command (Section  3.4.3) types information about
+         the amount of data  in the file (MUD update EOF),  how full the file
+         is, and the amount of data sent  to each Supervisor (Ptr).  In addi-
+         tion, the date and time the Supervisor was last sent a MUD change is
+         displayed.
+0        Once a day, according to a schedule  set by the SET SCHEDULE Command
+         (Section 3.4.4), an automatic  CONSISTENCY process is run.   It com-
+         pares checksums between CUD and MUD  blocks, and if the MUD checksum
+         does not match  the CUD checksum, the CUD block  data is transmitted
+         to be stored in the MUD.
+0        If it is ever necessary to turn  off the automatic consistency proc-
+         ess altogether, the CLEAR Command (Section 3.4.1) may be used.
+0        A MANUAL,  or command initiated consistency  may also be run  by the
+         operator by executing the CONSISTENCY Command (Section 3.4.2).  Man-
+         ual consistencies are run whenever there  is doubt as to whether the
+         MUD contains up-to-date information.  If  a Supervisor is turned OFF
+         in Netval, when it is turned back ON, it is important the the Super-
+         visor's MUD be  brought up-to-date.  If Netval is  compiled with the
+         RUN_AUTO_CONSISTENCY_ON_SUP_INIT  parameter  set  to   true  in  the
+         configuration file, a consistency will start up immediately when the
+         SET SUPERVISOR Command is executed.  Otherwise, the CONSISTENCY Com-
+         mand should be used to guarantee the data in the MUD.
+-
+-                                               Supervisor Updating    Page 6
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        The DISPLAY  UPDATES command types information  about consistencies.
+         It displays  the time that the  automatic consistency is set  to run
+         (Scheduled consistency period:),  the time that the  previously com-
+         pleted consistency started (Last Start) and stopped (Last Stop), the
+         last block that the previously  completed consistency processed (End
+         Block), the time  any currently running consistencies  started (Cur-
+         rent Start), and the block just  processed (Block).  In addition, it
+         flags any manual or halted consistencies.
+-        SECTION 3.2 Class/group Table Updating
++        _______ _ _ ___________ _____ ________
+0        The Class/group Table information is  maintained by Network Adminis-
+         trator validators.  When the Class/group Table is ready to be trans-
+         mitted to the Supervisors the SEND Command is executed.  This causes
+         a date (Class and Group table last created) to be set to the current
+         time.  An automatic  process continually compares this  time against
+         the time  that the Table  was last sent  to each Supervisor,  and if
+         necessary, transmits a copy of the Table to any out-of-date Supervi-
+         sors.
+0        The DISPLAY  UPDATES Command types the  date (Class and  Group table
+         last created)  and, for each  Supervisor, the  date and time  it was
+         last sent the Table (Class and group Updated).
+-        SECTION 3.3 Supervisor Notification Procedure
++        _______ _ _ __________ ____________ _________
+0        Netval  must be  notified  of changes  in  Supervisor status,  i.e.,
+         changes in their accessibility by Netval.
+-
+                               Turning a Supervisor ON
+0        When a  new Supervisor  is brought up  into the  network, or  when a
+         Supervisor has been  turned OFF and is  now back up and  ready to be
+         updated, Netval must be notified.  This is accomplished with the SET
+         SUPERVISOR Command (Section 3.4.5).
+0        Since the  Supervisor MUD will most  likely be out-of-date,  the MUD
+         must be updated with the current  CUD information.  If the parameter
+         RUN_AUTO_CONSISTENCY_ON_SUP_INIT  is  set  to  TRUE  in  the  Netval
+         configuration  file, a  consistency  will  be automatically  started
+         whenever a  Supervisor is  set to ON.   The DISPLAY  UPDATES Command
+         (Section 3.4.3) will show whether a  consistency starts up; the MES-
+         SAGES Command (Section  5.0) will show if Netval attempted  to run a
+         consistency and  failed (Netval  may fail if  the Supervisor  is not
+         accessiable through the network).
+0        If an automatic consistency does not  start up, the CONSISTENCY Com-
+         mand (Section 3.4.2) must be executed to bring the MUD up-to-date.
+-
+0                                               Supervisor Updating    Page 7
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-                              Turning a Supervisor OFF
+0        When a Supervisor is unavailable for an extended period of time, and
+         MUD change data  is accumulating so much that the  MUDUPDATE file is
+         getting full, Netval  must be notified to stop  attempting to update
+         that Supervisor.  This is accomplished with  the SET SUPERVISOR Com-
+         mand (Section 3.4.5).   The DISPLAY UPDATES Command  (Section 3.4.3)
+         will show if the MUDUPDATE file is getting full.
+-        SECTION 3.4 Supervisor Related Commands
++        _______ _ _ __________ _______ ________
+0        The  following commands  are used  to monitor  and control  Netval's
+         Supervisor access.
+-        3.4.1 CLEAR Command
++              _____ _______
+0        Syntax:  CLear
+0        The CLEAR  command allows  the validator to  turn off  the automatic
+         consistency.  Once the  CLEAR command is used,  the consistency will
+         not run until  the SET SCHEDULE command (Section  3.4.4) is executed
+         to reset the schedule.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-        A sample command/response sequence is:
+0                  * clear
+0                  consistency deactivated
+0                  *
+-        3.4.2 CONSISTENCY Command
++              ___________ _______
+0        Syntax:  CONsistency Supervisor s <Nochange> <From b>
+0        The CONSISTENCY command allows  the validator to force  the informa-
+         tion in a Supervisor MUD to be identical with the information in the
+         CUD.  "s" represents a Supervisor host.
+0        As Netval processes the blocks of  information, it reports its prog-
+         ress.  After every CONSISTENCY_REPORT_INTERVAL (defined  in the con-
+         figuration file) blocks checked, Netval outputs:
+0                                      n<:u/r>
+-
+-                                               Supervisor Updating    Page 8
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        where "n" is the  block number just processed, "u" is  the number of
+         MUD blocks  that needed  to be  updated, "r"  is the  number of  MUD
+         blocks that  were re-transmitted (sent  to the Supervisor  more than
+         once).  "u" and "r" are both output if either one is non-zero.
+0        If the NOCHANGE parameter is included in the command, no MUD updates
+         are  actually  made; differences  are  output  to the  validator  as
+         described above and the differing blocks  are reported to the opera-
+         tor log.
+0        If the FROM parameter is included in the command, and the configura-
+         tion parameter CONSISTENCY_RESTARTABLE is set  to TRUE, the consist-
+         ency will begin at the block specified, "b."
+0        The CONSISTENCY command may also be executed automatically according
+         to a schedule.   To set the schedule for  the automatic consistency,
+         use the SET SCHEDULE command (Section 3.4.4).  An automatic consist-
+         ency and  a manually  initiated consistency cannot  run at  the same
+         time on a  Supervisor.  The DISPLAY UPDATES  command (Section 3.4.3)
+         reports information on whether or not  a consistency is running, and
+         the STOP command (Section 3.4.6) will halt a currently running auto-
+         matic consistency.
+0        Output from the automatic consistency,  which only includes informa-
+         tion about updated and/or re-transmitted blocks  is sent to the LOG,
+         and may be displayed with the MESSAGE command (Section 5.0).
+0        This command  may require considerable  time to complete,  since the
+         entire CUD is processed.  If the update is interrupted, the MUD will
+         be checked only to the current block.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-        A sample command/response sequence is:
+0                  * consistency sup 125
+0                  99 199 299 399:1/0 499 599 . . .
+0                  Supervisor 125 consistency:  complete
+0                  *
+-        3.4.3 DISPLAY UPDATES Command
++              _______ _______ _______
+-
+-
+-
+                                                Supervisor Updating    Page 9
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Syntax:  DIsplay UPdates <Repeat <s>>
+0        The DISPLAY UPDATES command allows the validator to display informa-
+         tion about MUD,  Class and Group Table updates and  current and past
+         runs of consistencies.   If the REPEAT parameter is  included in the
+         command, the display  will be repeated every "s" seconds;  if "s" is
+         omitted,  60 seconds  is  assumed.  The  operator  should enter  the
+         <break> key to halt the command.
+0        The information displayed includes:
+0        The current time in GMT.
+0        Blocks in cud
+              The  BLOCKS IN  CUD  indicates the  total size  of  the CUD  in
+              blocks.
+0        MUD update EOF
+              The MUD UPDATE EOF specifies the  address in the MUDUPDATE file
+              at which the  next CUD change will be recorded;  it is followed
+              by a value which reports how full the MUD update file is.
+0        Class and Group table last created
+              The CLASS AND  GROUP TABLE LAST CREATED specifies  the time and
+              date at which the last SEND command (Section ) was executed.
+0        Scheduled consistency period
+              The  SCHEDULED CONSISTENCY  PERIOD specifies  the current  time
+              period set up by the last SET SCHEDULE command (Section 3.4.4).
+0        For each Supervisor:
+              PTR
+                   For each Supervisor in the  network, Netval keeps track of
+                   the MUD  updates by maintaining  a PTR into  the MUDUPDATE
+                   file.  If the PTR  is the same as the MUD  UPDATE EOF, all
+                   outstanding changes have been sent to the Supervisor.
+0             MUD UPDATED
+                   MUD UPDATED  is the last date  and time that a  MUD change
+                   was sent to that Supervisor.
+0             CLASS AND GROUP UPDATED
+                   CLASS AND GROUP UPDATED is the last date and time that the
+                   Class and Group table was transmitted to that Supervisor.
+0             CONSISTENCY LAST START
+                   CONSISTENCY LAST START is the start time of the previously
+                   started consistency.
+0             CONSISTENCY LAST STOP
+                   CONSISTENCY LAST STOP  is the stop time  of the previously
+                   started consistency.
+-
+0                                              Supervisor Updating    Page 10
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-             CONSISTENCY END BLOCK
+                   CONSISTENCY END BLOCK specifies the  block number the pre-
+                   viously run consistency  completed when it  stopped.  COM-
+                   PLETE means  the consistency  compared all  blocks in  the
+                   CUD.  S  specifies that  the run was  stopped by  the STOP
+                   command (Section  3.4.6).  M  specifies that  the run  was
+                   manual, i.e., initiated  by the CONSISTENCY  command (Sec-
+                   tion 3.4.2).
+0             CONSISTENCY CURRENT START
+                   CONSISTENCY CURRENT START is the start time of a currently
+                   running consistency.
+0             CONSISTENCY BLOCK
+                   CONSISTENCY BLOCK  is the  block that  the consistency  is
+                   currently comparing.  M specifies that the consistency was
+                   started  manually  by  the  CONSISTENCY  command  (Section
+                   3.4.2).
+0        Note: All times are displayed in GMT.
+-        A sample command/response sequence is:
+0        * display updates
+0        Current time is 12/07/84 02:20:39 GMT
+         Blocks in CUD: 2039    MUD update EOF:  294   (0% full)
+         Class and Group table last created:  12/06/83 08:42:02
+         Scheduled consistency period: 01:00 to 04:00
+0        Sup                      MUD        Class and Group
+                    Ptr         Updated          Updated
+         121            4      12/05 11:02      12/05 13:42
+         122          294      12/07 01:42      12/06 12:40
+         124            4      12/06 12:03      12/06 08:43
+         125          294      12/07 02:12      12/06 08:44
+         127           56      12/07 02:45      12/07 01:20
+0        Sup                      CONSISTENCY
+              Last Start     Last Stop   End Block    Current Start  Block
+         121  12/05 01:01   12/05 02:00   complete
+         122  12/06 01:01   12/06 01:15      102   S
+         124  12/06 01:03   12/06 02:26     1205       12/07 01:15      45
+         125  12/06 01:02   12/06 02:25   complete     12/07 01:03    2030 M
+         127  12/07 00:05   12/07 01:15   complete M
+0        *
+-
+-
+-                                              Supervisor Updating    Page 11
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        3.4.4 SET SCHEDULE Command
++              ___ ________ _______
+0        Syntax:  SET SChedule
+0        The SET  SCHEDULE command allows the  validator to specify  the time
+         period during  the day  at which  the automatic  consistency process
+         runs.  The CLEAR command (Section 3.4.1) turns all automatic consis-
+         tencies off.   The times  are entered  in hours  and minutes  in GMT
+         time.
+0        When the following conditions  exist: within the time  period speci-
+         fied, an automatic consistency has not run to completion, Supervisor
+         is legal, consistency  is not currently running, and  no MUD updates
+         are being made - an automatic consistency is started.
+0        At the  end of the time  period, if any automatic  consistencies are
+         running, they will be stopped.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-        A sample command/response sequence is:
+0                  * set schedule
+0                  start time of consistency period: 1:00
+                   stop time of consistency period: 4:00
+0                  entry complete
+0                  *
+-        3.4.5 SET SUPERVISOR Command
++              ___ __________ _______
+0        Syntax:  SET SUpervisor s [ON|OFF]
+0        The  SET SUPERVISOR  command  allows the  validator  to specify  the
+         Supervisors that are to be accessed by:
+0                            MUDUPDATE
+                             CONSISTENCY
+                             Class and Group UPDATE
+0        If the ON parameter is included, Supervisor "s" will be considered a
+         legal Supervisor by Netval; if the OFF parameter is included, Super-
+         visor "s" will be ignored by Netval.
+0        If the operation  is completed successfully, Netval  will report the
+         list of currently legal Supervisors.
+-
+-                                              Supervisor Updating    Page 12
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        When a Supervisor is turned ON, (if previously OFF) and the configu-
+         ration parameter RUN_AUTO_CONSISTENCY_ON_SUP_INIT is set to TRUE, an
+         automatic  consistency is  run when  the SET  SUPERVISOR command  is
+         executed.
+0        Note that the entries are limited by  the definition in the configu-
+         ration file of MAXIMUM_EXPECTED_SUPERVISORS.
+0        A message  is written to the  operator log and the  Supervisor error
+         log specifying that the command was executed by the operator.
+-        A sample command/response sequence is:
+0                  * set supervisor 121 on
+0                  entry completed
+0                  Netval Supervisors are: 121, 122, 124, 125
+0                  *
+-        3.4.6 STOP Command
++              ____ _______
+0        Syntax:  STOp Supervisor s
+0        The STOP command allows the validator  to halt an AUTOMATIC consist-
+         ency run for the specified  Supervisor.  "s" represents a Supervisor
+         host.  The DISPLAY UPDATES command  (Section 3.4.3) reports informa-
+         tion on whether or not a consistency is currently running.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-        A sample command/response sequence is:
+0                  * stop supervisor 121
+0                  consistency halted
+0                  *
+-
+-
+-
+-
+0                                              Supervisor Updating    Page 13
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 4.0 Controlling the Netval Host State
++        _______ _ _ ___________ ___ ______ ____ _____
+0        The initial state of  the Netval host (UP or SHUT)  may be specified
+         in the Netval slot  TYM file.  It may also be  changed with the HOST
+         SHUT or HOST UP commands described in this Section.
+0        Information about  the Netval  host may be  retrieved with  the HOST
+         STATUS command.
+-        SECTION 4.1 HOST SHUT Command
++        _______ _ _ ____ ____ _______
+0        Syntax:  HOst SHut
+0        Description:  The  HOST SHUT command  allows the operator  to change
+         the state of the  Netval host in the network to  the shut state.  In
+         this state,  only users  with the shut  override control  option may
+         login to Netval.
+0        This command is useful  when Netval is to go down,  to allow the MUD
+         change file to catch  up with all its changes.  It  may also be used
+         when Netval first comes up, to give the operator or network adminis-
+         trator a chance to check on the state of Netval files.
+0        The Netval TYM file specifies the initial state of the Netval host.
+0        When Netval is in the shut state,  the HOST UP command (Section 4.3)
+         may be  used to  change the state  of the Netval  host to  allow all
+         users to login.
+0        There are  no errors  possible for  this command,  and a  message is
+         written to the operator log specifying that the command was executed
+         by the validator.
+-        A sample command/response sequence is:
+0                  * host shut
+0                  entry completed
+0                  *
+-        SECTION 4.2 HOST STATUS Command
++        _______ _ _ ____ ______ _______
+0        Syntax:  HOst STatus
+0        Description:  The HOST STATUS command allows the operator to display
+         information about the Netval host, including:
+0                       - hardware identification (node and kernel host)
+                        - the number and type of users currently logged in
+-
+                                 Controlling the Netval Host State    Page 14
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  * host status
+0                  Host 83 is UP
+0                  This hardware is identified by:
+                     node: 2012
+                     kernel host: 12
+0                  logged in:
+                      2 licensed validators
+                      1 programmer validator
+0                  *
+-        SECTION 4.3 HOST UP Command
++        _______ _ _ ____ __ _______
+0        Syntax:  HOst Up
+0        Description:  The HOST UP command allows  the operator to change the
+         state of the Netval host in the network to answered.  In this state,
+         all usual Netval validators may login to Netval.
+0        The hardware identification is displayed to  the operator, and he is
+         prompted to confirm the information.
+0        There are  no errors  possible for  this command,  and a  message is
+         written to the operator log specifying that the command was executed
+         by the validator.
+-        A sample command/response sequence is:
+0                  * host up
+0                   Host 83 is SHUT
+0                  This hardware is identified by:
+                     node: 2012
+                     kernel host: 12
+0                  continue? y
+0                  entry completed
+0                  *
+-
+-
+-                                Controlling the Netval Host State    Page 15
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 5.0 Operator Log
++        _______ _ _ ________ ___
+0        Netval maintains a  log of information about critical  events in the
+         Netval  system.   This  includes  validator  logins,  logouts,  disk
+         errors, and the execution of  critical operational commands (setting
+         Supervisors,   consistency    schedule,   etc.).    If    the   flag
+         CHANGES_TO_OPERLOG is enabled  in the Netval configuration  file, in
+         addition, a record of  each CUD change is written to  the file.  The
+         MESSAGE command is used to display information from the operator log
+         file.  The FILTER command is used  to filter out particular types of
+         messages from the operator  log to be displayed by  the MESSAGE com-
+         mand.  Several filters may be selected before the MESSAGE command is
+         entered.  The DISPLAY FILTER  command is used to  display which fil-
+         ters are currently  selected.  When the MESSAGE  command is entered,
+         it will display the filter types which have been selected, then fil-
+         ter out and display only the messages of the selected types.
+-        SECTION 5.1 DISPLAY FILTER Command
++        _______ _ _ _______ ______ _______
+0        syntax:  DIsplay Filter
+0        Description:   The DISPLAY  FILTER command  allows  the operator  to
+         print the currently  filtered message types to  the user's terminal.
+         This command will  output a list of all the  message types currently
+         selected by filter commands which have been previously entered.
+0        A sample command/response sequence is:
+0                  * display filter
+0                  Messages currently filtered
+                   validator username VALUSER
+                   consistency
+                   modify gan
+0                  *
+-
+-
+-
+-
+-
+-
+0                                                     Operator Log    Page 16
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-
+0        SECTION 5.2 FILTER Command
++        _______ _ _ ______ _______
+0        The message filter types which may be specified are:
+                 - ALL
+                 - ARCHIVE
+                 - CONSISTENCY
+                 - CUDERROR
+                 - DEBUG
+                 - FILE
+                 - MASTER  (if NETVAL_IS_A_SLAVE)
+                 - MODIFY  (if CHANGES_TO_OPER_LOG)
+                 - MUDUPDATE
+                 - OPERATOR
+                 - PARAMETER
+                 - SYSMSG1
+                 - UN2
+                 - UUNMERGE  (if REUSE_UUNS)
+                 - VALIDATOR
+                 - VOLUMES  (if LOGICAL_VOLUMES)
+         The following value  types may be specified.  These  types require a
+         value to be entered after the  command, such as a supervisor number,
+         a validator number or username.
+                 - USER
+                 - SUPERVISOR
+                 - NUMBER
+-
+         5.2.1 FILTER All Command
++              ______ ___ _______
+-        syntax:  Filter ALl
+0        Description:  The  FILTER ALL command  allows the operator  to clear
+         previously  selected  filters.   If  any  other  filters  have  been
+         selected prior  to the FILTER ALL  command, this command  will clear
+         those filters and return to the initial state of the MESSAGE command
+         which displays all the message types contained in the operator log.
+0        A sample command/response sequence is:
+0                  * filter all
+0                  message filter accepted
+0                  *
+-
+-
+-                                                     Operator Log    Page 17
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        5.2.2 FILTER Archive Command
++              ______ _______ _______
+-        syntax:  Filter ARchive
+0        Description:  The  FILTER ARCHIVE command  will filter  out messages
+         reporting on  the Archive  sub-system.  These  messages also  report
+         execution of commands which access files, such as the STORE, RESTORE
+         or DUMP commands.
+0        A sample command/response sequence is:
+0                  * filter archive
+0                  message filter accepted
+0                  *
+-        5.2.3 FILTER Consistency Command
++              ______ ___________ _______
+-        syntax:  Filter CONSistency
+0        Description:  The FILTER CONSISTENCY command  allows the operator to
+         filter out messages concerning either automatic or manual consisten-
+         cies.   These messages  include  start  and stop  of  consistencies,
+         checksum mismatch  errors and errors  reading the  CUD.  Consistency
+         messages for all supervisor numbers will be output unless the opera-
+         tor selects one or more supervisor  numbers with the FILTER SUPERVI-
+         SOR command.  If the FILTER  SUPERVISOR (section 5.2.12) command has
+         been  executed  then  only  consistency  messages  refering  to  the
+         selected supervisor(s) will be printed.
+0        A sample command/response sequence is:
+0                  * filter consistency
+0                  message filter accepted
+0                  *
+-        5.2.4 FILTER Cuderror Command
++              ______ ________ _______
+-        syntax:  Filter CUderror
+0        Description:  The  FILTER CUDERROR  command allows  the operator  to
+         filter out operator log messages which report errors occuring during
+         disk read  or write operations to  the CUD.  The CUD  error messages
+         include checksum errors, format errors and operational disk errors.
+-
+0                                                     Operator Log    Page 18
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  * filter cuderror
+0                  message filter accepted
+0                  *
+-        5.2.5 FILTER DEBug Command
++              ______ _____ _______
+-        syntax:  Filter Debug
+0        Description:  The FILTER DEBUG command allows the operator to filter
+         out miscellaneous messages which are used for debugging.
+0        A sample command/response sequence is:
+0                  * filter debug
+0                  message filter accepted
+0                  *
+-        5.2.6 FILTER File Command
++              ______ ____ _______
+-        syntax:  Filter File
+0        Description:   The FILTER FILE command allows the operator to filter
+         out operator log messages reporting on general disk file operations.
+         The possible messages  include errors in reading or  writing to such
+         files  as  the Node/Hostlist  files,  the  MUD  Update file  or  the
+         Configuration file.
+0        A sample command/response sequence is:
+0                  * filter file
+0                  message filter accepted
+0                  *
+-        5.2.7 FILTER Master Command
++              ______ ______ _______
+-        syntax:  Filter MAster <NUmber n>
+0        Description:  The FILTER  MASTER command only  exists if  the condi-
+         tional flag NETVAL_IS_A_SLAVE is enabled in the NETVAL configuration
+-
+                                                      Operator Log    Page 19
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        file, NVALvv.Arr, where vv=version and rr=revision.  The FILTER MAS-
+         TER command allows the operator to  filter all messages which report
+         MASTER validator activities.  These messages  include MASTER valida-
+         tor login and logout reports.  The  optional parameter NUMBER may be
+         selected to  filter master login and  logout messages refering  to a
+         particular master number 'n'.
+0        A sample command/response sequence is:
+0                  * filter master number 5
+0                  message filter accepted
+0                  *
+-        5.2.8 FILTER Modify Command
++              ______ ______ _______
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+                                                      Operator Log    Page 20
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-
+         syntax:  Filter MOdify <{ACcess, CONTrol, DIstrict, GAn, NAme,
+              PASsword, UUN, GFd, Irc, OVerflow, DELete, NEw} | USername u>
+0        Description:  The  FILTER MODIFY  command is  only available  if the
+         conditional flag CHANGES_TO_OPER_LOG is enabled in the configuration
+         file.  The FILTER MODIFY command allows  the operator to filter mes-
+         sages  reporting execution  of commands  which make  changes to  CUD
+         entries.  If none of the optional parameters are entered, the FILTER
+         MODIFY command will  filter all messages refering  to commands which
+         modify  the CUD.   The parameters  ACCESS,  CONTROL, DISTRICT,  GAN,
+         NAME, PASSWORD and UUN may be  entered to specify messages reporting
+         these types of changes.  The optional  parameter GFD is only availa-
+         ble if the flag NETVAL_IS_A_SLAVE is  enabled.  The optional parame-
+         ter IRC is only  available if the flags  NETVAL_IS_A_SLAVE and TYMS-
+         HARE_CUD_FORMAT both  are enabled.  The optional  parameter OVERFLOW
+         is only  available if the  conditional flag  OVERFLOW_CUD_ENTRIES is
+         enabled.  If  the optional  parameter DELETE  is selected,  messages
+         reporting delete  user entries  will be  filtered.  If  the optional
+         parameter NEW is selected, messages  reporting new user entries will
+         be filtered.  Up to  five of the above options may  be selected with
+         each entry of the FILTER MODIFY  command.  If the parameter USERNAME
+         is entered, messages reporting modifications to username 'u' will be
+         filtered from the operator log.  If  only the FILTER MODIFY USERNAME
+         command has been entered,  ALL messages reporting changes  for user-
+         name 'u'  will be output.  If  other FILTER MODIFY commands  and the
+         FILTER MODIFY USERNAME command have  been entered, only the messages
+         reporting the type(s) of changes  selected and the username selected
+         will be printed.  If FILTER  VALIDATOR command (section 5.2.16) with
+         either the option number or name is  entered none addition to any of
+         the FILTER MODIFY  commands then only the messages  refering to both
+         the  validator selected  and the  message type(s)  selected will  be
+         printed.  For all parameters which are selected, all messages refer-
+         ing to each type selected will be  printed for either all users or a
+         selected username.  That is if NEW  and ACCESS are selected then all
+         messages reporting new user AND all messages reporting change access
+         will be printed  by the MESSAGE command either for  all usernames or
+         the selected  username.  The operator may  select up to  five modify
+         types per command line.
+0        A sample command/response sequence is:
+0                  * filter modify password
+0                  message filter accepted
+0                  *
+-
+-
+-
+                                                      Operator Log    Page 21
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        5.2.9 FILTER Mud Update Command
++              ______ ___ ______ _______
+-        syntax:  Filter MUdupdate
+0        Description:  The  FILTER MUDUPDATE command  allows the  operator to
+         filter out operator log messages  which report events concerning the
+         MUD_UPDATE file.  These messages will  report occurances such as MUD
+         updates  caught up,  format  error in  the  MUD_UPDATE  file or  the
+         MUD_UPDATE file is getting FULL.
+0        A sample command/response sequence is:
+0                  * filter mudupdate
+0                  message filter accepted
+0                  *
+-        5.2.10 FILTER OPerator Command
++               ______ ________ _______
+-        syntax:  Filter Operator
+0        Description:  The  FILTER OPERATOR  command allows  the operator  to
+         filter out operator  report messages.   These messages  are periodi-
+         cally written to the operator log  to report NETVAL host information
+         and how many validators  of each type are logged in.   If the condi-
+         tional flag  LOGICAL_VOLUMES is enabled  in the  configuration file,
+         these messages will include status reports on the logical volumes.
+0        A sample command/response sequence is:
+0                  * filter operator report
+0                  message filter accepted
+0                  *
+-        5.2.11 FILTER PARameter Command
++               ______ _________ _______
+-        syntax:  Filter Parameter
+0        Description:  The  FILTER PARAMETER command  allows the  operator to
+         filter messages which report commands affecting the parameter file.
+-
+-
+-                                                     Operator Log    Page 22
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  * filter parameter
+0                  message filter accepted
+0                  *
+-        5.2.12 FILTER Supervisor Command
++               ______ __________ _______
+-        syntax:  Filter SUpervisor <{121, 122, 123, 124, 125, 126, 127}>
+0        Description:  The FILTER  SUPERVISOR command allows the  operator to
+         filter out  messages which refer  to the supervisors.   The operator
+         may enter  any number of  the supervisor numbers  121 - 127.   If no
+         supervisor number  is entered the  command will filter  all messages
+         refering to any supervisor.  All messages refering to the supervisor
+         numbers  selected  will be  printed  unless  the operator  has  also
+         entered the FILTER CONSISTENCY, FILTER SYSMSG1, FILTER UN2 or FILTER
+         VALIDATOR commands (see sections 5.2.3,  5.2.13, 5.2.14 and 5.2.16).
+         If one or  more of the above  filters have been selected,  then only
+         messages refering to the selected type(s) and to the selected super-
+         visor(s) will be printed.
+0        A sample command/response sequence is:
+0                  * filter supervisor 121
+0                  message filter accepted
+0                  *
+-        5.2.13 FILTER SYSMSG1 Command
++               ______ _______ _______
+-        syntax:  Filter SYsmsg1
+0        Description:  The FILTER SYSMSG1 command allows the operator to fil-
+         ter  out messages  reporting on  access  to the  SUP slave  SYSMSG1.
+         These messages  include errors in  building circuits to  SYSMSG1 and
+         timeout  errors.  The  FILTER  SUPERVISOR  command (section  5.2.12)
+         allows the operator to filter out  SYSMSG1 messages for a particular
+         list of one or more supervisors.
+0        A sample command/response sequence is:
+0                  * filter sysmsg1
+0                  message filter accepted
+0                  *
+-                                                     Operator Log    Page 23
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        5.2.14 FILTER UN2 Command
++               ______ ___ _______
+-        syntax:  Filter UN2
+0        Description:  The FILTER  UN2 command allows the  operator to filter
+         messages reporting  activities involving the  SUP slave  UN2.  These
+         messages include circuit errors to UN2  and errors updating the MUD.
+         The FILTER  SUPERVISOR command  (section 5.2.12)  may be  entered to
+         filter out UN2  messages refering to  a particular list  of supervi-
+         sors.
+0        A sample command/response sequence is:
+0                  * filter un2
+0                  message filter accepted
+0                  *
+-        5.2.15 FILTER UUN Merge Command
++               ______ ___ _____ _______
+-        syntax:  Filter UUNMerge
+0        Description:   This command  only  exists  if the  conditional  flag
+         REUSE_UUNS is enabled in the  NETVAL configuration file.  The FILTER
+         UUNMERGE  command allows  the operator  to filter  out all  messages
+         reporting the  start and stop  of the UUN  Merge and the  UUNS which
+         were added back.
+0        A sample command/response sequence is:
+0                  * filter uunmerge
+0                  message filter accepted
+0                  *
+-        5.2.16 FILTER Validator Command
++               ______ _________ _______
+-        syntax:  Filter VAlidator <NUmber n | USer u>
+0        Description:  The  FILTER VALIDATOR command  allows the  operator to
+         filter  out messages  from  the  operator log  concerning  validator
+         activities.   These messages  include such  validator activities  as
+         logins, logouts,  commands to send the  class and group  tables, set
+         host status  and to write  CUD and  MUD blocks.  If  the conditional
+         flag LOGICAL_VOLUMES  is enabled in  the NETVAL  configuration file,
+         messages reporting  drives set  off-line and  copy commands  will be
+-
+                                                      Operator Log    Page 24
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        included.  If the conditional  flag OVERFLOW_CUD_ENTRIES is enabled,
+         validator messages will include reports of creating overflow blocks.
+         Also, if  the conditional flag  CHANGES_TO_OPER_LOG is  enabled, all
+         commands which modify the CUD will  be included.  The parameter NUM-
+         BER or USER may be entered to filter messages for a particular vali-
+         dator number  'n' or  a particular validator  username 'u'.   Only a
+         validator number  or a validator username  may be filtered  from the
+         message file,  i.e. if a  validator number was  previously filtered,
+         that filter will be removed by the validator user command.  The FIL-
+         TER SUPERVISOR command  may be entered to  select validator commands
+         refering to a particular list of  supervisors.  If the FILTER SUPER-
+         VISOR command (section 5.2.12) has been  entered only validator mes-
+         sages refering  to the supervisor(s)  selected will be  printed.  If
+         either a validator  number or validator name was  selected then only
+         messages refering to both the select number or name and the selected
+         supervisor(s) will be printed.
+0        A sample command/response sequence is:
+0                  * filter validator
+0                  message filter accepted
+0                  *
+-        5.2.17 FILTER Volumes Command
++               ______ _______ _______
+-        syntax:  Filter VOlumes
+0        Description:  The FILTER VOLUMES command is valid only if the condi-
+         tional flag  LOGICAL_VOLUMES is enabled  in the  configuration file.
+         The FILTER VOLUMES command allows the  operator to filter out opera-
+         tor  messages  reporting  logical volumes  events.   These  messages
+         report initializing  logical volumes  copy, errors  during copy  and
+         disk drive offline.
+0        A sample command/response sequence is:
+0                  * filter volumes
+0                  message filter accepted
+0                  *
+-        SECTION 5.3 MESSAGE Command
++        _______ _ _ _______ _______
+-
+-
+-                                                     Operator Log    Page 25
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Syntax:  Message <From date-time>
+0        Contents of the operator's log is  displayed to the user's terminal.
+         The contents of the operator log  are filtered by the filter command
+         (section 5.2) and only the filtered  messages are displayed.  If ALL
+         message types are filtered or if  no filters have been selected, the
+         entire contents of the operator's log is diplayed.  If the FROM par-
+         ameter is omitted, messages not previously read by any user are out-
+         put until the <break> character is entered.
+0        If the FROM  parameter is entered, only records on  or following the
+         date-time  are printed,  and the  command  returns the  user to  the
+         prompt when all messages are displayed.
+0        Times are displayed in GMT.
+0        "date-time" is entered as:
+0                               <MM/DD</YY>>  <HH:MM>
+0        where MM is a month of the year, DD is a day of the month, YY is the
+         optional year (current is default), HH is  an hour of the day and MM
+         is a minute of the hour.  If  the time is omitted, 00:00 is assumed;
+         if the date is omitted, the current day is assumed.
+-        A sample command/response sequence is:
+0                  * message
+0                  ALL Messages currently filtered
+0                  2/28/83  01:30:13
+                   From host: 220 node: 2012 port:3d   invoice: 2156789
+                   Validator login: network administrator 1   USERVAL
+0                  2/28/83  01:35:20
+                   Validator logged out: 1   USERVAL
+                   <break>
+0                  *
+-        SECTION 5.4 Tape Backups
++        _______ _ _ ____ _______
+0        This Section describes the Archive Sub-system commands, and the pro-
+         cedure used to perform a Netval tape backup.
+0        The Netval Archive  sub-system is accessed by logging  in to Netval,
+         and entering the ARCHIVE Command; the  operator may then access tape
+         units and store all Netval disk files from disk to tape.  The prompt
+         for the ARCHIVE sub-system is:
+0                            arch>
+-                                                     Operator Log    Page 26
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Once the user has entered the  ARCHIVE sub-system, he may only enter
+         Netval ARCHIVE commands (Section 5.4.1).
+-        A sample command/response sequence is:
+0                  * archive
+0                  arch>
+-        5.4.1 Netval Archive Commands
++              ______ _______ ________
+0        The Netval ARCHIVE sub-system allows the user to:
+0                  - attach a magnetic tape unit to the Netval slot
+                   - detach a magnetic tape unit from the Netval slot
+                   - store Netval disk files on tape in Netval ARCHIVE format
+0        The prompt for the ARCHIVE sub-system is:
+0                            arch>
+0        Tape units may have the following status:
+0        1.  ATTACHED
+         An ATTACHED tape is accessible by  users logged into the Netval SLOT
+         only; no other slot on the Netval Engine may access the tape unit.
+-        2.  ASSIGNED
+         An ASSIGNED tape is reserved for a single Netval validator; no other
+         ARCHIVE validator may access the tape  unit.  Only one tape unit may
+         be assigned to a validator at a time.  During the period that a tape
+         is assigned to a validator, it is also attached to the Netval slot.
+0        Tape units may become ATTACHED and/or ASSIGNED explicitly or implic-
+         itly.
+0        If a tape unit is ATTACHED explicitly by the ATTACH command (Section
+         5.4.1.2), it remains ATTACHED until it is DETACHED explicitly by the
+         DETACH command (Section 5.4.1.4).  Any  Netval ARCHIVE validator may
+         use (and therefore may also DETACH) an  attached tape, as long as no
+         other validator has the tape ASSIGNED.
+0        If a tape unit  is ASSIGNED explicitly to a validator  by the ASSIGN
+         command (Section 5.4.1.1),  it remains ASSIGNED until  the validator
+         explicitly  DEASSIGNS the  unit  by  the DEASSIGN  command  (Section
+         5.4.1.3) OR  leaves the  Netval system (by  logging out  or becoming
+         disconnected).  If a  Netval user still has a tape  ASSIGNED when he
+         logs out, Netval will notify him of the unit.
+-
+-                                                     Operator Log    Page 27
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        During any  Netval ARCHIVE  command that accesses  a tape  unit, the
+         unit is  necessarily both  ATTACHED and  ASSIGNED for  the validator
+         (implicitly if not by an explicit command).  If reserved implicitly,
+         the tape unit is reserved for the  Netval slot and the validator FOR
+         THE DURATION OF THE COMMAND ONLY.  At the completion of the command,
+         the unit will have the same status as it did before the command.  If
+         the unit had previously been ATTACHED, it will remain ATTACHED.
+0        When a validator enters or leaves the ARCHIVE sub-system he is shown
+         a summary of the status of all tape units in use; the DISPLAY STATUS
+         command (Section 5.4.1.6) may also be used to see the summary.
+0        The following commands may be executed from the ARCHIVE sub-system:
+0             ASSIGN        Reserve tape unit for validator
+              ATTACH        Reserve tape unit for Netval slot
+              DEASSIGN      Free tape unit from validator
+              DETACH        Free tape unit from slot
+              DISPLAY       Type tape availability or Netval tape id
+              RETURN        Return to system level
+              REWIND        Return magnetic tape to beginning of reel
+              STORE         Copy files from disk to tape
+-        5.4.1.1 ASSIGN Command
++                ______ _______
+0        Syntax:  ASsign u
+0        The ASSIGN  command reserves  a magnetic  tape unit  for the  Netval
+         ARCHIVE validator, and prevents any  other validators from accessing
+         the tape  unit.  The unit  is reserved  for the validator  until the
+         DEASSIGN  (Section 5.4.1.3)  command is  executed  OR the  validator
+         leaves the Netval system.
+-        A sample command/response sequence is:
+0                  arch> assign 0
+0                  tape assigned
+0                  arch>
+-        5.4.1.2 ATTACH Command
++                ______ _______
+0        Syntax:  ATtach u
+0        The ATTACH  command reserves  a magnetic  tape unit  for the  Netval
+         slot, and prevents any other slots in the Netval Engine from access-
+         ing the tape unit.   The unit is reserved for the  Netval slot until
+         the DETACH (Section 5.4.1.4) command is executed.
+-
+0                                                     Operator Log    Page 28
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  arch> attach 0
+0                  tape attached
+0                  arch>
+-        5.4.1.3 DEASSIGN Command
++                ________ _______
+0        Syntax:  DEAssign
+0        The DEASSIGN  command frees  the tape unit  from the  Netval ARCHIVE
+         validator and makes it available to other validators.  Since a vali-
+         dator may only have one tape assigned at a time, it is not necessary
+         to supply the tape unit number.
+-        A sample command/response sequence is:
+0                  arch> deassign
+0                  unit 0 deassigned
+0                  arch>
+-        5.4.1.4 DETACH Command
++                ______ _______
+0        Syntax:  DETach u
+0        The DETACH  command frees  the tape  unit from  the Netval  slot and
+         makes it available to other slots in the Netval Engine.
+-        A sample command/response sequence is:
+0                  arch> detach 0
+0                  tape detached
+0                  arch>
+-        5.4.1.5 DISPLAY ID Command
++                _______ __ _______
+0        Syntax:  DIsplay Id <u>
+0        The DISPLAY ID  command allows the validator to  identify a magnetic
+         tape as a Netval  backup tape, and to display its  creation date and
+         version.  The tape is rewound initially, to read the first record.
+-
+0                                                     Operator Log    Page 29
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        If the tape is  already ASSIGNED to the validator, "u"  may be omit-
+         ted.  If  the validator had not  ASSIGNED a tape unit,  however, "u"
+         must specify  the unit.  Since  a validator  may only have  one unit
+         assigned at  a time, if the  validator already has a  unit assigned,
+         the display command must refer to that assigned unit.
+-        A sample command/response sequence is:
+0                  arch> display id
+0                  tape rewinding
+0                  mta is not a Netval tape
+0                  arch> display id 1
+0                  tape rewinding
+0                  Netval tape (Version 03.07) created on: 02/08/83
+0                  arch>
+-        5.4.1.6 DISPLAY STATUS Command
++                _______ ______ _______
+0        Syntax:  DIsplay Status
+0        The DISPLAY STATUS command gives the  validator a summary of current
+         tape usage and availability.  It reports magnetic tape units in use,
+         their  status, and,  if ASSIGNED,  the  validator that  the unit  is
+         assigned to.
+-        A sample command/response sequence is:
+0                  arch> display status
+0                  unit
+0                    0     ATTACHED
+                     2                 ASSIGNED to ARCHIVEUSER
+0                  arch>
+-        5.4.1.7 RETURN Command
++                ______ _______
+0        Syntax:  RETurn
+0        The RETURN command takes the validator back to system command level.
+-
+-                                                     Operator Log    Page 30
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  arch> return
+0                  *
+-        5.4.1.8 REWIND Command
++                ______ _______
+0        Syntax:  REWind <u>
+0        The REWIND command  allows the validator to position a  tape unit to
+         the beginning of the reel.
+0        If the tape is  already ASSIGNED to the validator, "u"  may be omit-
+         ted.  If  the validator had not  ASSIGNED a tape unit,  however, "u"
+         must specify  the unit.  Since  a validator  may only have  one unit
+         assigned at  a time, if the  validator already has a  unit assigned,
+         the rewind command must refer to that assigned unit.
+-        A sample command/response sequence is:
+0                  arch> rewind
+0                  tape rewinding
+0                  tape rewound
+0                  arch>
+-        5.4.1.9 STORE Command
++                _____ _______
+0        Syntax:  STOre <u>
+0        The STORE command rewinds a tape unit, and records all disk files on
+         the tape.
+0        If the tape is  already ASSIGNED to the validator, "u"  may be omit-
+         ted.  If  the validator had not  ASSIGNED a tape unit,  however, "u"
+         must specify  the unit.  Since  a validator  may only have  one unit
+         assigned at  a time, if the  validator already has a  unit assigned,
+         the store command must refer to that assigned unit.
+0        NOTE:  This  may be a very  time consuming command since  the entire
+         CUD is stored.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-
+-
+                                                      Operator Log    Page 31
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  arch> store
+0                  tape rewinding
+0                  storing configuration: 1 records written
+                   storing node_host(header): 1 records written
+                   storing node_host(hostlists): 45 records written
+                   storing node_host(nodelists): 55 records written
+                   storing node_host(classes): 23 records written
+                   storing node_host(groups): 8 records written
+                   storing mud_update: 1 records written
+                   storing CUD: 2039 records written
+                   storing CUD_PARAMETER: 1 records written
+0                  store completed
+                   tape rewinding
+0                  arch>
+-        5.4.2 Backup Procedure
++              ______ _________
+0        Tape Backups are obtained by executing the STORE command in the Net-
+         val archive sub-system.
+0        The following describes the process in more detail:
+-        1.  Determine the tape  unit number to be used, and  mount a scratch
+             magnetic tape on the drive.
+0        2.  Enter the Netval archive sub-system by entering the ARCHIVE Com-
+             mand.
+0        3.  If Netval is  the only slot running  in the Engine, there  is no
+             need to reserve a tape unit for  Netval.  If there is other code
+             running in the  Engine that might access the tape  unit during a
+             backup operation, it is  safest to use the  ATTACH Command (Sec-
+             tion 5.4.1.2) to reserve the tape unit for the Netval slot.
+0            If there may be other users logged into the Netval slot that may
+             also be  performing tape  operations, it  is safest  to use  the
+             ASSIGN Command (Section 5.4.1.1).  This command will insure that
+             no other Netval users will access the tape unit.
+0        4.  Backup the Netval disk data to tape  by executing the STORE Com-
+             mand (Section 5.4.1.9).
+0        5.  If the ATTACH Command was used, execute the DETACH Command (Sec-
+             tion 5.4.1.4) if the ASSIGN Command  was used, execute the DEAS-
+             SIGN Command (Section 5.4.1.3).
+-
+                                                      Operator Log    Page 32
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        SECTION 5.5 NVDM File Restores
++        _______ _ _ ____ ____ ________
+0        This Section describes the NVDM Archive Sub-system commands, and the
+         procedure used to restore Netval files to disk from tape.
+0        NVDM (Netval Disk Maintenance) is a companion program to Netval that
+         is used to perform disk initialization  and various other disk util-
+         ity funcitons.  Its Archive sub-system is used to restore files from
+         Netval Archive tapes to disk.
+0        The NVDM Archive  sub-system is accessed by logging in  to NVDM, and
+         entering  the ARCHIVE  Command; the  operator may  then access  tape
+         units and restore one  or more Netval files from tape  to disk.  The
+         prompt for the ARCHIVE sub-system is:
+0                            arch>
+0        Once the user has entered the  ARCHIVE sub-system, he may only enter
+         NVDM ARCHIVE commands (Section 5.5.1).
+-        A sample command/response sequence is:
+0                  * archive
+0                  arch>
+-        5.5.1 NVDM Archive Commands
++              ____ _______ ________
+0        The Disk Maintenance ARCHIVE sub-system allows the user to:
+0                  - attach a magnetic tape unit to the slot
+                   - detach a magnetic tape unit from the slot
+                   - restore all files from a Netval ARCHIVE tape to disk
+                   - restore a  specific file from  a Netval ARCHIVE  tape to
+                     disk
+0        The prompt for the ARCHIVE sub-system is:
+0                            arch>
+0        If a tape unit is ATTACHED  by the ATTACH command (Section 5.5.1.1),
+         it remains  ATTACHED to  the slot (and  therefore not  accessible by
+         other slots)  until it  is DETACHED by  the DETACH  command (Section
+         5.5.1.2).
+0        The following commands may be executed from the ARCHIVE sub-system:
+-
+-
+-                                                     Operator Log    Page 33
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-             ATTACH        Reserve tape unit for Netval slot
+              DETACH        Free tape unit from slot
+              DISPLAY       Type Netval tape id
+              RESTORE       Copy file(s) from tape to disk
+              RETURN        Return to system level
+              REWIND        Return magnetic tape to beginning of reel
+-        5.5.1.1 ATTACH Command
++                ______ _______
+0        Syntax:  Attach u
+0        The ATTACH  command reserves  a magnetic  tape unit  for the  Netval
+         slot, and prevents any other slots in the Netval Engine from access-
+         ing the tape unit.   The unit is reserved for the  Netval slot until
+         the DETACH (Section 5.5.1.2) command is executed.
+0        "u" must specify the tape unit.
+-        A sample command/response sequence is:
+0                  arch> attach 0
+0                  tape attached
+0                  arch>
+-        5.5.1.2 DETACH Command
++                ______ _______
+0        Syntax:  DEtach u
+0        The DETACH  command frees  the tape  unit from  the Netval  slot and
+         makes it available to other slots in the Netval Engine.
+0        "u" must specify the tape unit.
+-        A sample command/response sequence is:
+0                  arch> detach 0
+0                  tape detached
+0                  arch>
+-        5.5.1.3 DISPLAY Command
++                _______ _______
+-
+-
+0                                                     Operator Log    Page 34
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Syntax:  DIsplay u
+0        The DISPLAY command allows the user to identify a magnetic tape as a
+         Netval backup  tape, and to display  its creation date  and version.
+         The tape is rewound initially, to read the first record.
+0        "u" must specify the tape unit.
+-        A sample command/response sequence is:
+0                  arch> display 0
+0                  tape rewinding
+0                  mta is not a Netval tape
+0                  arch> display 1
+0                  tape rewinding
+0                  Netval tape (Version 03.07) created on: 02/08/83
+0                  arch>
+-        5.5.1.4 RESTORE Command
++                _______ _______
+0        Syntax:  REStore [All|CUD <Block b1<-b2>>|Mudupdate|Node|Operlog] u
+0        The RESTORE command rewinds the  tape unit specified, identifies the
+         tape as a Netval  tape, asks the user to confirm,  then restores one
+         or more tape files to the disk.
+0        "u" must specify the tape unit.
+0        If the parameter ALL is entered, all files on the tape will be writ-
+         ten to the disk.
+0        If the  parameter CUD  is entered without  the BLOCK  parameter, the
+         entire CUD  and CUD parameter  files will  be restored from  tape to
+         disk.  If  the BLOCK parameter is  included, only the CUD  blocks in
+         the range "b1"  through "b2" will be restored; a  single block, "b1"
+         may be specified.
+0        If the  parameter MUDUPDATE  is entered,  the MUDUPDATE  header only
+         will be written to the disk.
+0        If the parameter NODE is entered, the file describing the named node
+         and host  lists and class and  group definitions will be  written to
+         the disk.
+-
+-                                                     Operator Log    Page 35
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        If the parameter OPERLOG is entered, the file containing system mes-
+         sages will be written to the disk.
+0        NOTE:  Restoring the CUD file may be very time consuming; interrupt-
+         ing any restore will have uncertain results.
+0        Since the  RESTORE command  should only  be used  under catastrophic
+         circumstances, some  effort has  been taken to  help the  user avoid
+         errors:
+0             - All Supervisors  are set  to OFF when  the MUDUPDATE  file is
+                restored.  They must be redefined with  the Netval SET SUPER-
+                VISOR    command.     If    the    configuration    parameter
+                RUN_AUTO_CONSISTENCY_ON_SUP_INIT is set to TRUE, an automatic
+                consistency is run when the SET  SUPERVISOR command is execu-
+                ted.   The restored  CUD SHOULD  BE  CHECKED FOR  CORRECTNESS
+                BEFORE ANY  SUPERVISORS ARE TURNED ON,  or any errors  in the
+                CUD will be transferred to each MUD.  Since the usernames UN2
+                and SYSMSG1 are required to be  valid for the successful run-
+                ning of Netval,  one check is that these two  names are valid
+                in the CUD.
+0               If           the            configuration           parameter
+                RUN_AUTO_CONSISTENCY_ON_SUP_INIT is FALSE,  manual consisten-
+                cies should be run on each MUD.
+0             - The ARCHIVE STORE/RESTORE operation does not maintain the CUD
+                changes stored in  the MUD CHANGE file.   Since consistencies
+                are run, all  changes made to the CUD will  be transmitted to
+                each MUD, but of course, any changes made after the STORE and
+                before the RESTORE will be lost.
+0             - The  CLASS/GROUP TABLE  LAST CREATED  date  is cleared.   The
+                ARCHIVE system does not record the Class and Group table from
+                Netval's disk  to the ARCHIVE tape  (the named node  and host
+                lists  and   Class  and   Group  definitions,   however,  are
+                recorded).  After the RESTORE operation, Class, Group, nodel-
+                ist and hostlist  definitions should be checked  for validity
+                and a SEND command executed.
+-
+-
+-
+-
+-
+-                                                     Operator Log    Page 36
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0        arch> restore all 0
+0        tape rewinding
+0        Netval tape (Version 03.07) created on: 02/08/83
+0        okay? y
+0        restoring node_host(header): records read: 1  records written: 1
+         restoring node_host(hostlists): records read: 45  records written: 45
+         restoring node_host(nodelists): records read: 55  records written: 55
+         restoring node_host(classes): records read: 23  records written: 23
+         restoring node_host(groups): records read: 8  records written: 8
+         restoring oper_log: records read: 256  records written: 256
+         restoring mud_update: records read: 1  records written: 1
+         restoring CUD: records read: 2039  records written: 2039
+         restoring CUD_PARAMETER: records read: 1  records written: 1
+         tape rewinding
+0        arch>
+-        5.5.1.5 RETURN Command
++                ______ _______
+0        Syntax:  RETurn
+0        The RETURN command takes the user  back to system command level.  Be
+         sure to DETACH any tape units no longer needed.
+-        A sample command/response sequence is:
+0                  arch> return
+0                  *
+-        5.5.1.6 REWIND Command
++                ______ _______
+0        Syntax:  REWind u
+0        The REWIND command  allows the user to  position a tape unit  to the
+         beginning of the reel.
+0        "u" must specify the tape unit
+-
+-
+-
+                                                      Operator Log    Page 37
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0                  arch> rewind 0
+0                  tape rewinding
+0                  tape rewound
+0                  arch>
+-        5.5.2 File Restore Procedure
++              ____ _______ _________
+0        Tape file restores are obtained by  executing the RESTORE command in
+         the NVDM archive sub-system.
+0        The following describes the process in more detail:
+0        1.  Determine the tape unit number to be  used, and mount the appro-
+             priate backup tape on the drive.
+0        2.  Enter the NVDM archive  sub-system by entering the  ARCHIVE Com-
+             mand.
+0        3.  If NVDM is the only slot running in the Engine, there is no need
+             to reserve a tape unit for NVDM.  If there is other code running
+             in the  Engine that might access  the tape unit during  a backup
+             operation,  it is  safest  to use  the  ATTACH Command  (Section
+             5.5.1.1) to reserve the tape unit for the NVDM slot.
+0        4.  Execute the  RESTORE Command  (Section 5.5.1.4)  to restore  the
+             file(s) required.
+0        5.  If the ATTACH Command was used, execute the DETACH Command (Sec-
+             tion 5.5.1.2).
+-        SECTION 5.6 Logical Volumes
++        _______ _ _ _______ _______
+0        Note:  If the configuration parameter  LOGICAL_VOLUMES is ENabled in
+         the Netval configuration  file, NVAL03.A##, the information  in this
+         Section applies to Netval.
+-        5.6.1 Logical Volume Overview
++              _______ ______ ________
+-
+0                              Physical Layout of Files
+0        If logical volumes are used in  Netval (enabled in the Configuration
+         file, and defined in the TYM file),  the Engine must have 2 physical
+-
+                                                      Operator Log    Page 38
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        disk drives.  An ISIS logical unit is defined on each physical drive
+         for the CUD and file system.  The  CUD logical units include the CUD
+         and the  CUD parameter file; the  FILE SYSTEM logical  units include
+         all other Netval files.  The 2 CUD units must be defined as the same
+         number of cylinders in the DSC file; the 2 file system units must be
+         defined as the same number of cylinders in the DSC file.
+-                Physical Drive 0                  Physical Drive 1
+                  (incarnation 0)                   (incarnation 1)
+             _________________________          ________________________
+            /  UNIT 0       UNIT 1    \        /  UNIT 2       UNIT 3   \
+            |           |             |        |           |             |
+            |    CUD,      Config,    |        |    CUD       Config,    |
+            | CUD param |  Node/host, |        | CUD param |  Node/host, |
+            |             Class/group,|        |             Class/group,|
+            |           | Mud change, |        |           | Mud change, |
+            |             Operator Log|        |             Operator Log|
+            \___________|_____________/        \ __________|_____________/
+                |              |                        ^           ^
+                |              |                        |           |
+                |               \______________________ |  _________/
+                \ ______________________________________/
+-
+                                  Logical Volume I/O
+0        Each physical drive  is referred to as an INCARNATION  of the Netval
+         files.  The  logical volume system  normally performs  all requested
+         writes to  each incarnation;  reads are  normally executed  from the
+         more efficient copy.  In  this way, 2 copies of  all Netval informa-
+         tion is maintained.
+-
+                                  Incarnation States
+0        Incarnations are defined to  be in one of a number  of states, which
+         indicates the I/O operations which are currently sent to it:
+0             unknown        the initial state of both incarnations
+              read/write     the normal UP state; reads  and writes may occur
+                             on the incarnation
+              write only     the state of an incarnation being copied to
+              read only      the state  of an incarnation with  write errors;
+                             only read operations  may occur on  the incarna-
+                             tion
+              down           the incarnation  is physically down; no  read or
+                             write operations may occur on the incarnation
+              offline        set by the SET DRIVE OFFLINE Command; no read or
+                             write operations may occur on the incarnation
+-
+0                                                     Operator Log    Page 39
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Under  normal  conditions,   all  incarnations  should  be   in  the
+         read/write state.  If the system has  been unable to complete a read
+         or write operation to a logical disk  unit on a particular drive, it
+         will change  the logical  disk unit's  state to  down.  When  Netval
+         detects that a  logical disk unit is down it  will automatically set
+         the other logical disk unit from the same drive to offline.  At this
+         time the entire drive  is considered to be down by  Netval.  The SET
+         DRIVE OFFLINE  Command allows a user  to specify an entire  drive to
+         offline.
+0        The system  will send no  further I/O requests  to a drive  which is
+         down or offline.  Once a drive is  down or offline, the COPY Command
+         must be  executed in order  to restore  the drive to  the read/write
+         state.
+-
+                                System Initialization
+0        When Netval first comes up, it  must be determined which incarnation
+         is the most recent.  There is a time stamp recorded on each writable
+         incarnation periodically.   Initially, both incarnations are  set to
+         the unknown state.
+0        If the  time stamps are the  SAME on both incarnations,  then Netval
+         makes the arbitrary  decision that incarnation 0  will be considered
+         the most reliable; incarnation 0 is set to read/write, incarnation 1
+         is set to write only, Netval is initialized, validators may start to
+         log in, and all information is copied from incarnation 0 to incarna-
+         tion 1.  This guarantees  that Netval starts up  with exactly dupli-
+         cate information on both incarnations.
+0        If the time  stamps recorded are NOT the same  on both incarnations,
+         Netval will not  make a decision about which is  the more up-to-date
+         copy.  This  is because there  may be an  offline disk pack  that is
+         more recent than those on the system, and Netval will give the oper-
+         ator the chance to decide which disks Netval will come up with.
+-        5.6.2 Logical Volume Commands
++              _______ ______ ________
+0        The COPY, DISPLAY VOLUMES, and SET DRIVE OFFLINE Commands are avail-
+         able to the operator for maintaining the logical volume system.  The
+         following Sections describe these commands.
+-        5.6.2.1 COPY Command
++                ____ _______
+-
+-
+-
+                                                      Operator Log    Page 40
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        Syntax:  COPy
+0        The COPY Command causes  data to be read from one  physical disk (in
+         the read/write  state) and copied to  the same sectors on  the other
+         physical disk (in the down or offline  state).  Once the copy opera-
+         tion starts,  the state of  the disk being  copied TO is  changed to
+         write only.  At the  end of the COPY Command, the  state of the disk
+         being copied  TO is  changed to read/write.   Execution of  the COPY
+         Command is the only  way that a drive that is not  being used by the
+         logical volume system can be brought back to the read/write state.
+0        If neither disk is down or offline, the user receives the error mes-
+         sage:
+0                          one disk must be down or offline
+0        If  a copy  is  already  being performed  on  the  system, the  user
+         receives the message:
+0                           A copy is already in progress
+0        If the above criteria are satisfied, the COPY Command displays logi-
+         cal volume information, and  prompts for confirmation of  the direc-
+         tion of the copy.  The logical  volume information includes informa-
+         tion from  the DISPLAY VOLUMES Command,  the direction of  the copy,
+         and the age of the FROM disk.  The age should always be CURRENT.
+0        When Netval  receives confirmation,  the copy  will be  TO the  disk
+         which Netval detects is down or offline.
+0        Periodically, the number of the sector being copied is displayed.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-
+-
+-
+-
+-
+-
+-
+0                                                     Operator Log    Page 41
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0        * copy
+0        Drive 0    Legal: yes   State: read/write  Time Stamp: 1/22/85 08:40
+         Drive 1    Legal: no    State: offline     Time Stamp: unknown
+0        the direction of the copy will be from drive 0 to drive 1
+         the source Netval disk is 1 hour 20 minutes old
+         continue? y
+0        copying to unit: 2
+         10000 20000 30000 . . . (etc.)
+0        copying to unit: 3
+         10000 20000 30000 . . . (etc.)
+0        Copy complete
+0        *
+-        5.6.2.2 DISPLAY VOLUMES Command
++                _______ _______ _______
+0        Syntax:  DIsplay Volumes
+0        The DISPLAY VOLUMES  Command types  current logical  volume informa-
+         tion.  It can be used to monitor the current drive states.
+-        A sample command/response sequence is:
+0        * display volumes
+0        Drive 0:   legal: yes  State: read/write  Time Stamp: 1/22/85 08:40
+         Drive 1:   legal: yes  State: read/write  Time Stamp: 1/22/85 08:40
+0        *
+0        A description of the terminology follows:
+0        legal
+              A legal disk is one which has  a Netval identifier and the cur-
+              rent Netval configuration.
+-
+-
+-
+-
+                                                      Operator Log    Page 42
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        State
+              Logical volume disk states are as follows:
+              unknown          when Netval comes up, state is unknown
+              down             the disk is not sent any requests (set by
+                                  the Pascal Nucleus)
+              read/write       the disk is sent read and write requests
+              read only        the disk is only sent read requests
+              write only       the disk is only sent write requests
+              offline          the disk is not sent any requests (set by
+                                  the SET DRIVE OFFLINE Command)
+0        Time Stamp
+              The Time Stamp  identifies the last moment at  which the system
+              verified the legitimacy of the disk's database.  When a disk is
+              down or offline the Time Stamp is not updated; otherwise, it is
+              updated at 30 second intervals.  If a disk is not legal, it has
+              no Time Stamp.
+-        5.6.2.3 SET DRIVE OFFLINE Command
++                ___ _____ _______ _______
+0        Syntax:  SET Drive d OFFLine
+0        The SET DRIVE  OFFLINE Command sets drive "d" to  the offline state;
+         it should be used by an operator when a drive is known to be faulty,
+         the data on  a disk is suspect,  or when preparing to  remove a pack
+         from the system.  Normally, the  system will detect error conditions
+         and respond by bringing the problem drive down.
+0        Once the command has been executed, the old pack may be removed, and
+         a new pack mounted  on the drive.  The COPY Command  is then used to
+         bring  the pack  up-to-date  and to  change the  drive  back to  the
+         read/write state.
+0        One  Netval drive  must always  be on-line  for the  system to  run;
+         therefore, if  one drive is  already in  the down or  offline state,
+         when the command is entered, Netval responds:
+0                        one drive is already down or offline
+0        This command MUST be used before changing Netval disk packs.
+0        Note:  Never power a  disk down before executing the  SET DRIVE OFF-
+         LINE Command.
+0        A message is written to the operator log specifying that the command
+         was executed by the operator.
+-
+-
+-
+                                                      Operator Log    Page 43
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        A sample command/response sequence is:
+0        * set drive 1 offline
+0        restoration to read/write state requires execution of the COPY command
+         continue? y
+0        entry completed
+0        *
+-        5.6.3 STATISTICS Command
++              __________ _______
+0        In addition to the specific logical volume commands described in the
+         preceding Sections,  the Netval  STATISTICS  command displays  addi-
+         tional information if logical volumes are used.  Syntax:  STAtistics
+0        The Netval program maintains a histogram  of recent disk activity in
+         5 minute intervals; the STATISTICS Command displays this information
+         to the user.
+-        A sample command/response sequence is:
+0        * statistics
+         since 1/31/84 19:46:55 GMT
+0        read   total: 8742   pages: 816291
+         3     4     3     3     4     3     3     4     6     3     4     21
+0        write   total: 8304   pages: 813823
+         3     4     3     3     4     3     3     4     7     3     4     6
+0        drive 0:
+          unit 0:   reads: 1010   writes: 86   state: read/write
+                    errors: 0   last error: 0   last isis: 0
+0         unit 1:   reads: 7732   writes: 81   state: read/write
+                    errors: 0   last error: 0   last isis: 0
+         drive 1:
+          unit 2:   reads: 5   writes: 1073   state: read/write
+                    errors: 0   last error: 0   last isis: 0
+0         unit 3:   reads: 91   writes: 7231   state: read/write
+                    errors: 0   last error: 0   last isis: 0
+0        *
+-        The output of the STATISTICS Command displays information on I/O for
+         EACH logical unit.  The error information can be used to help deter-
+         mine the state of a drive or disk pack.
+-
+                                                      Operator Log    Page 44
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        5.6.4 System Start-Up
++              ______ ________
+0        When the Netval  slot is loaded or restarted,  Netval determines the
+         most up-to-date drive by comparing the time stamps on the two incar-
+         nations.  The  most recent  time stamp  should be  approximately the
+         time when the engine  or slot was last brought down.   If it is not,
+         then it is  possible that a disk  pack was removed while  Netval was
+         down.
+-        5.6.4.1 Automatic Start-up
++                _________ ________
+0        If the time stamps are the same, the system is initialized, an auto-
+         matic copy is started, and users may login.  Messages about the copy
+         are written to the operator log.
+-        5.6.4.2 Operator Assisted Start-up
++                ________ ________ ________
+0        If the  time stamps are  not the same,  only the programmer  or NVDM
+         operator  may  login;  other validators  attempting  to  login  will
+         receive the message:
+0          Netval has not been initialized, no unprivileged logins allowed
+0        When the  programmer or NVDM operator  logs in, they will  receive a
+         message  specifying information  about  the  current status  of  the
+         disks, the proposed direction of the copy, and a request for confir-
+         mation.  For example:
+0             logical volumes have not been initialized, current status is:
+0             Drive 0   legal: yes   State: unknown   Time Stamp: 6/28/85 16:20
+              Drive 1   legal: yes   State: unknown   Time Stamp: 6/28/85 18:24
+0             the direction of the copy will be from drive 1 to drive 0
+              the source Netval disk is 1 hour 22.32 minutes old
+              continue?
+-        5.6.4.2.1 Confirmation Procedure
++                  ____________ _________
+0        If the  operator determines that  the latest  Netval data is  on the
+         FROM drive, a "yes"  should be entered.  In this case,  the TO drive
+         will be set to write only, the FROM drive will be set to read/write,
+         Netval will be initialized so that  other validators may log in, and
+         a copy operation will begin.
+0        Netval will notify  the user of its  progress with output as  in the
+         COPY Command.
+0        When the copy  is complete, the TO  disk will be set  to read/write,
+         and the user will be logged out.
+-
+                                                      Operator Log    Page 45
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        The following is a sample sequence:
+0        logical volumes have not been initialized, current status is:
+0        Drive 0    legal: yes   State:  unknown   Time Stamp:  6/28/85 16:20
+         Drive 1   legal: yes   State: unknown   Time Stamp: 6/28/85 18:24
+0        the direction of the copy will be from drive 1 to drive 0 the source
+         Netval disk is 1 hour 22.32 minutes old continue? yes
+0        Netval initializing
+0        copying to unit: 0
+         10000 20000 30000 . . . (etc.)
+0        copying to unit: 1
+         10000 20000 30000 . . . (etc.)
+0        Copy complete
+         Netval initialized
+0        please login:
+-        5.6.4.2.2 Change Disk Pack Procedure
++                  ______ ____ ____ _________
+0        If the operator determines that there is another disk pack that con-
+         tains more recent Netval data, he  should enter "no."  In this case,
+         a disk pack  may be removed and  another mounted which has  the more
+         current Netval data.  THIS IS THE ONLY  TIME IT IS CORRECT TO REMOVE
+         A DISK PACK WHICH IS NOT IN THE DOWN OR OFFLINE STATE.
+0        When the new pack is mounted and  ready for Netval to access it, the
+         operator should press <carriage  return> to have the  disks reevalu-
+         ated.  If the dates reported are  more reasonable, a "yes" should be
+         entered, and Netval will proceed as in the preceding Section.
+-
+-
+-
+-
+-
+-
+-                                                     Operator Log    Page 46
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        The following is a sample sequence:
+0        logical volumes have not been initialized, current status is:
+0        Drive 0   legal: yes   State: unknown   Time Stamp: 6/28/85 16:20
+         Drive 1   legal: yes   State: unknown   Time Stamp: 6/28/85 18:24
+0        the direction of the copy will be from drive 1 to drive 0
+         the source Netval disk is 1 hour 22.32 minutes old
+         continue? no
+0        If it is necessary to bring the system up with a single disk,
+         press the escape key.
+0        THIS IS ONLY A CORRECT PROCEDURE IF ONE DRIVE IS UNUSABLE.
+0        Else, press carriage return when you are ready to have the disks
+         reevaluated.
+0        <carriage return>
+0        logical volumes have not been initialized, current status is:
+0        Drive 0   legal: yes   State: unknown     Time Stamp: 6/28/85 19:31
+         Drive 1   legal: yes   State: unknown     Time Stamp: 6/28/85 18:24
+0        the direction of the copy will be from drive 0 to drive 1
+         the source Netval disk is 19 minutes old
+         continue? y
+0        Netval initializing
+0        copying to unit: 0
+         10000 20000 30000 . . . (etc.)
+0        copying to unit: 1
+         10000 20000 30000 . . . (etc.)
+0        Copy complete
+         Netval initialized
+0        please login:
+-        5.6.4.2.3 Come Up With One Disk Procedure
++                  ____ __ ____ ___ ____ _________
+0        If one drive  is unusable and it  is impractical to keep  the system
+         down until  the problem  is corrected,  the operator  may decide  to
+         bring the system  up with a single  drive.  In this case,  he should
+         enter "no," then press an <escape> to indicate that Netval should be
+         initialized and come up with a single drive.
+-
+-                                                     Operator Log    Page 47
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-        The following is a sample sequence:
+0        logical volumes have not been initialized, current status is:
+0        Drive 0   legal: yes   State: unknown   Time Stamp: 6/28/85 16:20
+         Drive 1   legal: yes   State: unknown   Time Stamp: 6/28/85 18:24
+0        the direction of the copy will be from drive 1 to drive 0
+         the source Netval disk is 1 hour 22 minutes old
+         continue? no
+0        If it is necessary to bring the system up with a single disk,
+         press the escape key.
+0        THIS IS ONLY A CORRECT PROCEDURE IF ONE DRIVE IS UNUSABLE.
+0        Else, press carriage return when you are ready to have the disks
+         reevaluated.
+0        <escape>Netval initializing
+         Netval initialized
+0        please login:
+-        The drive  with the  more recent  data on  it will  be put  into the
+         read/write state; the other drive will remain in the unknown state.
+0        Bringing Netval up with  a single drive will cause response  to be a
+         little slower, and  the system is more vulnerable  to disk failures.
+         The second drive should be brought up as soon as possible.
+0        When it is  time to bring up the  second drive, and the  drive has a
+         pack mounted and ready, the COPY Command  is used to copy all Netval
+         data to  the pack  and the  drive is  brought up  to the  read/write
+         state.
+-        5.6.5 Disk Pack Backup Procedure
++              ____ ____ ______ _________
+0        In order to retrieve a backup disk pack, a drive is set offline, the
+         pack is physically  switched with a new  pack and a COPY  Command is
+         executed.  IT IS VERY IMPORTANT TO SET A DRIVE OFFLINE BEFORE REMOV-
+         ING ITS DISK PACK.
+0        The following describes the process in more detail:
+-        1.  Enter the DISPLAY VOLUMES Command to determine the current state
+             of the  drives.  In order to  retrieve a backup disk  pack, both
+             drives must be in the read/write state.
+-
+-                                                     Operator Log    Page 48
+0
+0
+1        Netval Operator's Guide                             November 3, 1986
+
+
+-            If one drive  is not in the  read/write state, it may  have been
+             brought down by  the system because of a read  or write failure.
+             A backup pack may not be retrieved at this point, since the down
+             pack  is  probably  out-of-date.   A   COPY  Command  should  be
+             attempted in order to bring the  down pack back into the system;
+             if it fails or the integrity of  the drive or pack is questiona-
+             ble, the hardware problems should be checked out.
+0        2.  If  both drives  are in  the read/write  state, set  one of  the
+             drives offline with the SET DRIVE  OFFLINE Command.  The pack on
+             the drive that is set offline will  be the backup pack; it is an
+             arbitrary decision as to which pack is chosen.
+0        3.  Remove the disk  pack from the drive which has  been set offline
+             and replace it with a new pack.
+0        4.  Enter the COPY Command.  The copy  will be in the direction from
+             the current  read/write drive to  the offline drive.   As Netval
+             executes the copy  it will report its progress  to the terminal.
+             The start and  end of the Copy  command is also reported  to the
+             operator log,  and can be seen  by entering the  Message command
+             (Section 5.0).
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+0                                                     Operator Log    Page 49
+0
+    g@BÐ
