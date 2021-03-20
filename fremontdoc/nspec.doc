@@ -1,0 +1,2773 @@
+
+
+
+
+
+
+
+
+
+
+                                      TYMNET
+
+                        ADVANCED COMMUNICATIONS TECHNOLOGY
+
+                              NETWORK SPECIFICATIONS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  Tymshare, Inc.
+                              Data Networks Division
+
+
+
+
+                                   July 11, 1980
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+                                 Table of Contents                                 _________________
+
+
+          1.0 PURPOSE..................................................1
+
+          2.0 NETWORK OVERVIEW.........................................2
+
+             2.1 General Description...................................2
+
+                2.1.1 Network Supervisor...............................4
+
+                2.1.2 Terminal Interface...............................4
+
+                2.1.3 Host Interface...................................5
+
+                2.1.4 Network Control Center...........................6
+
+                2.1.5 Virtual Circuits in a TYMNET Network.............6
+
+                2.1.6 Data Within a TYMNET Network.....................7
+
+                2.1.7 Network Security.................................7
+
+             2.2 Performance Criteria..................................9
+
+                2.2.1 Network Delay....................................9
+
+                2.2.2 Access Time......................................9
+
+                2.2.3 Network Availability.............................10
+
+                2.2.4 CPU Loading Considerations.......................11
+
+             2.3 Network Monitoring and Control........................13
+
+                2.3.1 PROBE............................................13
+
+                2.3.2 Accounting Information...........................13
+
+                2.3.3 Network Monitoring...............................14
+
+                2.3.4 Network Simulation...............................14
+
+          3.0 NETWORK COMPONENTS.......................................15
+
+             3.1 Hardware Components - The TYMNET Engine...............15
+
+                3.1.1 Basic Package....................................15
+
+                3.1.2 Basic System Boards..............................16
+
+                3.1.3 Memory Access Controller Board...................17
+
+
+
+                                                                   Page i
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+                3.1.4 Synchronous Interface Board......................17
+
+                3.1.5 Asynchronous Interface Board.....................18
+
+                3.1.6 Connector Panel..................................18
+
+                3.1.7 Synchronous/Asynchronous Cables..................19
+
+                3.1.8 Printer Interface Board..........................20
+
+                3.1.9 Expansion Chassis................................20
+
+                3.1.10 Extended Selector Channel (ESELCH)..............20
+
+                3.1.11 Disk Support....................................20
+
+                3.1.12 Tape Support....................................21
+
+                3.1.13 Serial Input-Output Board (SIO).................21
+
+                3.1.14 Power Consumption...............................22
+
+             3.2 Network Software......................................23
+
+                3.2.1 Node Code........................................23
+
+                3.2.2 Supervisor Nodes.................................25
+
+                3.2.3 TYMSATs..........................................30
+
+                3.2.4 Host Interfaces..................................31
+
+                3.2.5 Network Gateways.................................33
+
+                3.2.6 ISIS.............................................33
+
+          4.0 NETWORK CONTROL CENTER COMPONENTS........................38
+
+             4.1 Accounting............................................38
+
+             4.2 User Validation.......................................38
+
+             4.3 Network Assembler and Debugger........................38
+
+             4.4 Downline Loader.......................................39
+
+             4.5 Network Simulator (SIMNET)............................39
+
+          5.0 AREAS OF REPONSIBILITY...................................40
+
+             5.1 Tymshare..............................................40
+
+             5.2 Customer..............................................41
+
+
+                                                                  Page ii
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 1.0 PURPOSE          ___________________
+
+
+          The purpose  of these  network specifications  is to  provide a
+          detailed description of the customer's network from an external
+          viewpoint.  This includes the operational and performance char-
+          acteristics of the network.  These specifications are the basis
+          for the acceptance criteria and the acceptance test procedure.
+
+          A TYMNET network provides tools, technology, and flexibility to
+          enhance, develop and implement a  customer's current and future
+          network requirements.  These tools provide  the network manage-
+          ment staff  with the information  necessary to  monitor network
+          problems in real time,  and the ability to plan  for the expan-
+          sion of the network.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        PURPOSE    Page 1
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 2.0 NETWORK OVERVIEW          ____________________________
+
+
+
+
+          SECTION 2.1 General Description          _______________________________
+
+
+          A  TYMNET network  consists of  a  collection of  minicomputers
+          (nodes) interconnected by communication lines to allow informa-
+          tion to  travel along  alternative paths  between nodes  in the
+          network.  The primary  function of a  node is to  pass informa-
+          tion.   The nodes,  typically, do  little or  no processing  of
+          application tasks.  Nodes  have buffers which are  used to hold
+          data en route to another node or to a terminal or host port.
+
+          TYMNET  technology provides  the flexibility  of designing  and
+          building a network  in a nearly  infinite number  of configura-
+          tions.  Customers may  choose to configure the  network to suit
+          their  particular needs.   A TYMNET  network  consists of  four
+          major types of components, examples of  which are shown in Fig-
+          ure 1 and which are described below.
+
+          In general, all  nodes are switchers and  contain basic routing
+          and flow control.   They may  also contain  one of  these func-
+          tions:  terminal interface, host interface,  gateway, or Super-
+          visor.  However, in the case of  an ISIS node, several of these
+          functions may run concurrently in one  network node.  (See Sec-
+          tion 3.2.6 for more detail on ISIS.)
+
+          Additionally, a fifth  network support function is  provided in
+          the form of  the optional Network Control  Center (NCC).  Refer
+          to Section 4.0 for more details on NCC components.
+
+          The TYMNET  Engine is  used as  the processor  for the  network
+          node.  Its configuration can be tailored  to match the applica-
+          tion.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            General Description    Page 2
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+                          TO ANOTHER NETWORK
+                                 |
+                                 |
+                                 |
+                               |\|
+                               |
+                               |                    NODE B
+                               |
+                               |
+                               *********          *********
+                              *         *        *         *
+                     NODE A  * Gateway   *      * Terminal  *
+                     (ISIS)  *           *------*           *
+                             * Interface *      * Interface *
+                              *         *        *         *
+                               *********          *********
+                                                    / |
+                                                  /   |
+                                                /     |
+                                              /       |
+                                            /         |
+                        NODE C        NODE D          |NODE E
+                                        /             |
+                      *********      *********       *********
+                     *         *    *         *     *         *
+                    * Terminal  *  *           *   * Terminal  *
+                    *           *--* Supervisor*---*           *
+                    * Interface *  *           *   * Interface *
+                     *         *    *         *     *         *
+                      *********      *********       ********* \
+                                        /                       \*********
+                                      /                         *         *
+                                    /                  NODE G  *    Host   *
+                                  /                            *           *
+                                /                             /* Interface *
+                              /                             /   *         *
+                           ---------             ---------/      *********
+                          |         |           |         |
+                          | NETWORK |           |         |
+                          | CONTROL |           |  HOST   |
+                          | CENTER  |           |         |
+                          |         |           |         |
+                           ---------             ---------
+
+
+
+
+                             A Typical TYMNET Network
+
+                               Functional Components
+
+
+                                     Figure 1
+
+
+                                            General Description    Page 3
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.1.1 Network Supervisor                __________________
+
+
+          The network  Supervisor is the heart  of a TYMNET  network.  It
+          performs the following functions within the network.
+
+          A)   It controls user login.  This  includes verifying that the
+               user is a valid network user,  limiting the user access to
+               certain nodes or hosts, issuing  network messages at login
+               time about the availability of nodes  or hosts, and build-
+               ing a  circuit for each  session through the  network from
+               the point of origination to the point of termination.
+
+          B)   The Supervisor  collects accounting  information for  each
+               circuit which is built in the network and stores it onto a
+               disk file on the Supervisor machine.
+
+          C)   The Supervisor  receives error  messages from  the various
+               network nodes  and interfaces and stores  this information
+               on a disk file.
+
+          D)   The Supervisor monitors the state of all nodes in the net-
+               work, and maintains a current image  of the network topol-
+               ogy and resource utilization.
+
+          E)   A process  called PROBE  exists on  each Supervisor  node.
+               PROBE allows a network operator to  inquire about the con-
+               dition of each node and host on the network, their associ-
+               ated circuits,  if any, and  provides commands  to control
+               access as required.   In addition, PROBE allows  a user to
+               monitor the error log information in real time.
+
+
+          2.1.2 Terminal Interface                __________________
+
+
+          The TYMNET terminal interface is referred  to as a TYMSAT.  The
+          Asynchronous TYMSAT provides  the interface to a  large variety
+          of ASCII asynchronous  devices.  This module exists  both under
+          ISIS and  as a stand-alone  node.  The Asynchronous  TYMSAT can
+          also provide control  of a local line  printer device operating
+          as a high speed  ASCII output terminal with  special host soft-
+          ware  support.  The  Asynchronous TYMSAT  provides the  control
+          which is specific to the  type of asynchronous device attached.
+          It detects connect  and disconnect of the  device.  It performs
+          serialization/deserialization of  the characters  going to  and
+          coming from the device.  It also  echoes most of the characters
+          it receives  from the  device.  In  some cases  of full  duplex
+          operation,  the Asynchronous  TYMSAT  must  defer to  the  host
+          interface to determine  how characters should be  echoed.  (See
+          Section 3.2.3 for more detail on TYMSATs.)
+
+
+
+
+                                            General Description    Page 4
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.1.3 Host Interface                ______________
+
+
+          The TYMNET host interfaces  include Asynchronous TYMCOMs, X.25,
+          X.75,  3270, and  2780/3780.   The  typical customer's  network
+          includes two types of host interfaces - Asynchronous TYMCOM and
+          X.25.
+
+          The Asynchronous  TYMCOM appears to  the host  as a set  of low
+          speed  asynchronous modems.   This module  runs  on the  TYMNET
+          Engine under ISIS.   (See Section 3.2.4 for more  detail on the
+          host interfaces.)
+
+          The TYMNET  X.25 interface serves as  a network interface  to a
+          host, and provides access to a  host on a TYMNET public network
+          or a customer  host in a private network.   It allows terminals
+          on the network  to build circuits to the host  computer, and it
+          also allows the host computer to  build circuits to other hosts
+          on the network.
+
+          The  TYMNET X.75  interface  allows  two public  data  networks
+          (PDNs) to transmit data.  The  process involves the transfer of
+          information between two signalling terminals, each within a PDN
+          and connected by an international link.
+
+          The 3270  interface provides  the  interface  between the  cus-
+          tomer's IBM 3270  terminal and  support host  through the  cus-
+          tomer's   TYMNET   network.   The   3270   interface   provides
+          3270-terminal   access   to  computers   with   3270   support,
+          3270-terminal access to computers with ASCII support, and ASCII
+          CRT access to computers with  3270 support.  The interface also
+          provides  multi-host/multi-application support  for 3270  users
+          connected to a TYMNET network.
+
+          The 2780/3780 interface provides  data communication for remote
+          batch terminals (RBTs)  to host computers with  2780, 3780, and
+          3770 series RJE terminal support through a TYMNET network.
+
+          ISIS  nodes have special  host-like characteristics.  A circuit
+          can  be built  to  the Kernel  of the  ISIS  node.  The  Kernel
+          inspects the user name in the login stream and routes data from
+          that circuit  to a  subprocess which  runs on  the node.   This
+          function is described  in more detail in Section  3.2.6 of this
+          document.
+
+
+
+
+
+
+
+
+
+
+
+                                            General Description    Page 5
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.1.4 Network Control Center                ______________________
+
+
+          A TYMNET network may contain a set of functions that comprise a
+          Network Control  Center (NCC).   This set  of functions  may be
+          programs running on TYMNET Engines  within the private network.
+          A  customer may  choose to  perform  network control  functions
+          directly from dedicated  equipment (TYMNET Engines) or  to have
+          Tymshare Operations  personnel perform  some of  the monitoring
+          functions from the public network.
+
+          The NCC programs are used to perform the following network-rel-
+          ated functions.
+
+          A)   The  accounting  programs collect  accounting  information
+               from  the network  Supervisor nodes.   The programs  merge
+               this data and reformat it into one record for each network
+               session.
+
+          B)   The validation  programs create or  modify records  in the
+               Central User Directory  (CUD).  These records are  used to
+               provide access for  new network users or  to modify access
+               rights for existing network users.
+
+          C)   The NCC also can be used to  monitor the network.  It pro-
+               vides access to PROBE and the Error Logger information.
+
+
+          2.1.5 Virtual Circuits in a TYMNET Network                ____________________________________
+
+
+          All communications  in a TYMNET  network are done  over virtual
+          circuits.  For  example, a port  on a TYMSAT  node communicates
+          with a port on  a TYMCOM node via a circuit which  is set up by
+          the Supervisor.  A  TYMSAT port or a TYMCOM port  may request a
+          circuit from  the Supervisor.  If  the circuit requested  is an
+          auxy circuit,  no password  is required.   Otherwise, when
+          the request is made, the requestor  sends the Supervisor a user
+          name, an optional  password, an optional destination  host num-
+          ber, and a character indicating what  type of terminal or pseu-
+          do-terminal is  making the  request.  The  Supervisor maintains
+          tables  which  indicate  the current  network  topology.   This
+          includes information for each node indicating what its neighbor
+          nodes are,  what type and  what speed  lines connect it  to its
+          neighbors, whether or  not any lines  are in  overloaded condi-
+          tions, what hosts are connected to the node, etc.  The Supervi-
+          sor uses this information to build  a circuit for the requestor
+          through the network to the required destination.  Once the cir-
+          cuit is built, data is sent through the network along this cir-
+          cuit without further Supervisor intervention.
+
+
+
+
+
+                                            General Description    Page 6
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.1.6 Data Within a TYMNET Network                ____________________________
+
+
+          The basic unit of  data is the character or byte  of 8 bits.  A
+          circuit within  a TYMNET  network is  a fixed  path over  which
+          bytes are transferred in both directions  in a first-in, first-
+          out manner.   The content of the  data bytes is  transparent to
+          the network and is the responsibility  of the interface at each
+          end of  the circuit.  Because  the sequence is  maintained, the
+          actual data  need not really  be in  8 bit quantities,  but may
+          instead be  in quantities of anywhere  from 1 bit  to 1,000,000
+          bits or more.   The only constraint is that  the total transfer
+          (including  padding, if  necessary) be  a multiple  of 8  bits.
+          (See Section 3.2.1 for more detail on packet construction.)
+
+
+          2.1.7 Network Security                ________________
+
+
+          There  are many  levels of  security within  a TYMNET  network.
+          Each is discussed briefly below.
+
+          A)   Network Logon
+
+               In order to log in to a  TYMNET network, a user must enter
+               a user name  which is  valid on the  network and  a corre-
+               sponding password.   Only the user  name is echoed  to the
+               terminal during logon  on a  full duplex  terminal.  Addi-
+               tionally, the password is stored in the Master User Direc-
+               tory (MUD) on the Supervisor's  disk in its encrypted form
+               so someone having access  to the MUD would  find the pass-
+               word illegible.
+
+               In the standard (prompted) login mode, the password is not
+               echoed to  full duplex  terminals and  is masked  for half
+               duplex  terminals.   In the  optional  (unprompted)  login
+               mode, the password is not masked on half duplex terminals.
+
+          B)   Multiplexed Packets
+
+               Packets sent  over links  between network  nodes typically
+               contain data  for a  number of  circuits using  that link.
+               Also, packets typically have only a  small number of char-
+               acters for  a given virtual  circuit.  This  increases the
+               difficulty of tracing data going  over any particular cir-
+               cuit.
+
+
+
+
+
+
+
+
+
+                                            General Description    Page 7
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          C)   Closed User Groups
+
+               One of the characteristic  requirements of networks having
+               large numbers of users is the ability to limit user access
+               to only certain parts of the  network.  That is, it may be
+               important to limit any given network user to access from a
+               small set of entry nodes and to a small set of hosts.
+
+               A TYMNET network  provides this capability in  the form of
+               Closed User Groups.  In the MUD entry for every user is an
+               access profile which indicates the set of nodes from which
+               the user  may originate circuits and  the set of  hosts to
+               which he may build circuits.
+
+          D)   Gateway
+
+               A gateway is a logical method  of interconnecting two dis-
+               tinct networks.  Within a network,  the Gateway appears as
+               a host.  Any and all security may be applied to its access
+               as to any other host on the network.
+
+               Logins received by the Gateway  from a foreign network are
+               subject to all normal TYMSAT login restrictions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            General Description    Page 8
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 2.2 Performance Criteria          ________________________________
+
+
+
+
+          2.2.1 Network Delay                _____________
+
+
+          The network  delay for a  circuit is  the algebraic sum  of the
+          delays for each  process through which the data  must pass.  At
+          the end  points, the amount of  delay depends on  the interface
+          process.  For  the links along the  path, it is  almost totally
+          dependent on  the line speed,  except for  anomalous situations
+          involving line errors requiring  retransmissions.  Following is
+          a table containing the average delay times for links of various
+          speeds.  These numbers assume the line  is not completely satu-
+          rated.  They  include both transmission  time for a  packet and
+          holding time within a node until a  new packet can be transmit-
+          ted.
+
+
+                         LINK SPEED        AVERAGE ONE WAY DELAY
+                          (KB/SEC)                 (MS.)
+                         ----------        ---------------------
+                            2.4                    220
+                            4.8                    110
+                            9.6                     55
+                           56                       9
+
+
+          2.2.2 Access Time                ___________
+
+
+          Network access time  is defined as the time from  when the user
+          types the  character terminating the  password entry  until the
+          host  receives an  indication that  a  circuit to  it has  been
+          built.  Assuming that no anomalies such as node outages or link
+          outages occur  during the circuit  building process,  this time
+          for a typical  Network (one of 100  nodes or less with  a login
+          rate less than or equal to 60 per minute) is less than two sec-
+          onds 90%  of the time,  and less than  four seconds 99%  of the
+          time.
+
+          The login  response time will  include both the  network access
+          time and the time required for the  host to respond to the user
+          login.  The apparent delay to the user may be much greater than
+          the network access time.
+
+
+
+
+
+
+
+
+                                           Performance Criteria    Page 9
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.2.3 Network Availability                ____________________
+
+
+          Network availability is  a function of network  node, line, and
+          Supervisor availability.  Availability is  thus affected by the
+          design of the network hardware,  the networking technology, the
+          reliability of the communication lines, and the particular net-
+          work configuration.  Tymshare is able  to control the first two
+          of these areas.   We have designed many features  into both the
+          network hardware and software  to assure a high  degree of net-
+          work availability.  Also, by use  of the network simulator, the
+          customer  can analyze  network  configurations  to provide  for
+          optimum network resource availability.
+
+          A)   The TYMNET Engine
+
+               The TYMNET Engine has been designed by Tymshare for use in
+               TYMNET as well as private networks.   To this end, we have
+               used over ten years  of experience to design  and manufac-
+               ture hardware  that is both unlikely  to fail and  easy to
+               repair if it does fail.  For more information on the reli-
+               ability and availability of the TYMNET Engine, see Section
+               3.1.
+
+          B)   Alternate Pathing
+
+               A TYMNET network is designed to allocate an available path
+               when a circuit is to be built in the network.  Normally, a
+               TYMNET network  is configured so  every node has  at least
+               two connections to  other nodes in the  network.  Thus, if
+               one  link fails,  circuits can  be built  across the  link
+               which is still available.
+
+               In TYMNET  I, if a link  or intermediate node goes  out of
+               service, all the  active circuits using that  link will be
+               broken and  the user will be  forced to log in  again.  In
+               TYMNET II, when such an  event occurs, the Supervisor will
+               automatically build a new circuit  if a path is available.
+               Other than a  hesitation due to the  circuit building, the
+               user will be unaware of the occurence of the link outage.
+
+               When a link fails, the network can take up to 8 seconds to
+               determine that the failure has  occurred.  The delay expe-
+               rienced by  the user  will include this  8 seconds  plus 2
+               seconds for each  50 circuits which were  using the failed
+               link.
+
+          C)   Supervisor Backup
+
+               As is explained in Section 3.2.2, a Supervisor outage in a
+               TYMNET network is not a catastrophe since currently active
+               circuits are  unaffected, and multiple Supervisors  may be
+
+
+
+                                          Performance Criteria    Page 10
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               provided.  In the case of a Supervisor failure in a TYMNET
+               network,  a backup  Supervisor  wakes  up within  a  short
+               period of time and takes over the network.  The supervisor
+               can complete takeover  of 1 to 20 nodes in  30 seconds, 21
+               to 100 nodes  in one minute, and  101 to 200 nodes  in two
+               minutes.
+
+
+          2.2.4 CPU Loading Considerations                __________________________
+
+
+          The following CPU load characteristics must  be taken into con-
+          sideration when configuring  or expanding a network  node.  The
+          necessary calculations have  been automated in the  PRICER pro-
+          gram.  This  program may  be used  by TYMNET  to verify  that a
+          given node configuration is supportable.
+
+          A)   Constant System Overhead
+
+               The ISIS operating environment and several of the hardware
+               devices create a constant system overhead on the CPU.  The
+               ISIS system  imposes an overhead of  up to 25% of  the CPU
+               depending on the particular configuration.  The ISIS over-
+               head will vary according  to the number of  job slots con-
+               figured, the types of interfaces running in each job slot,
+               and the aggregate data throughput.
+
+          B)   Protocol Handlers
+
+               Network Links -
+
+               The CPU load  imposed by network link  handling depends on
+               the number of channels per  link (set at system generation
+               time) and  on the  amount of  user data  passing over  the
+               link.  Up  to 3.0% of the  CPU is required to  support 160
+               channels.  Up to 2.5% of the  CPU is required to pass 1000
+               cps  of user  data through  a node  (in one  link and  out
+               another).
+
+               Asynchronous TYMSAT -
+
+               CPU utilization by the Asynchronous TYMSAT code depends on
+               the number of ports and  the average input/output rates of
+               these ports.   For an average of  one cps in and  four cps
+               out on 256 ports, 30% of the CPU is needed.  The relation-
+               ships tend to be linear so that  256 ports running at dou-
+               ble the above  I/O rates use about 60% of  the CPU.  Input
+               and output create approximately the same  load on the net-
+               work.  Thus, I/O  rates of 4 cps  in and 1 cps  out create
+               loads equivalent to 1 cps in and 4 cps out.
+
+
+
+
+
+                                          Performance Criteria    Page 11
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               Non-TYMNET Synchronous Protocols -
+
+               For  X.25, the  CPU utilization  per line  depends on  the
+               amount of  user traffic transmitted  over the  line.  This
+               figure is about 1.5% per 100 cps of user data.
+
+               Supervisor -
+
+               CPU utilization by  the network Supervisor is  nearly com-
+               pletely  dependent on  the login  rate and  the number  of
+               nodes in the network.  CPU  utilization for the Supervisor
+               increases with  the login rates and  with the size  of the
+               network.  The impact of network size  is a function of how
+               long the average  virtual circuit becomes.  For  a 20 node
+               network and a login rate of one per second, the Supervisor
+               requires 5%  of the  CPU.  For  a 20  node network  with a
+               login rate of 3 per second, the supervisor requires 15% of
+               the CPU.  For networks of up to  100 nodes, the CPU utili-
+               zation will not increase significantly  if sufficient net-
+               work links are added to minimize  the number of intermedi-
+               ate nodes for most user circuits.
+
+          C)   Constant Communication Device Overhead.
+
+               In addition to the constant system  overhead and the over-
+               head  of the  protocol handlers,  a  constant overhead  is
+               incurred  to  service  the  hardware  interrupts  for  the
+               asynchronous  and  synchronous   communications  interface
+               hardware.  This overhead  depends on the number  of lines,
+               and the transmission speeds of the lines.
+
+               The following loads are  imposed for communications device
+               overhead, not  including any  additional overhead  for the
+               protocol handler which services the device:
+
+            Device            # of Lines       Line Speed       CPU Load
+            ------            ----------       ----------       --------
+
+            Sync Board (1)          1          9600 bps           3.0%
+            Sync Board (1)          1          4800 bps           1.5%
+            Async Board (8)       256          110 - 1200 bps    25.0%
+            Async Board (4)       128          110 - 1200 bps    12.5%
+            SIO Board (1)          16          110 - 56 Kbps     cycle
+                                                                 steals
+
+
+
+
+
+
+
+
+
+
+
+                                          Performance Criteria    Page 12
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 2.3 Network Monitoring and Control          __________________________________________
+
+
+          The active network  Supervisor is aware of the  status of every
+          node, communication link, computer, any equipment in operation,
+          errors occurring on  the communication  lines, and  load condi-
+          tions of each  node in the network.   Additionally, the network
+          Supervisor maintains a  complete chronological log of  all sig-
+          nificant events in the  network.  This log is in the  form of a
+          disk file which is maintained on the Supervisor node and can be
+          read by building a circuit to the Supervisor node.  Examples of
+          conditions reported are:
+
+               o  any host computer down
+               o  any node failure - such as power failure
+               o  communication lines inoperative (unable to
+                  pass data correctly)
+               o  communication lines out of channels (capacity)
+               o  communication line error rates (number of
+                  retransmissions)
+
+
+          2.3.1 PROBE                _____
+
+
+          The Supervisor also permits manual  intervention and inquiry as
+          to the status of any point  in a TYMNET network.  This function
+          is referred to  as PROBE.  Examples of  PROBE functions include
+          the ability to:
+
+               o  examine network topology
+               o  monitor login rate
+               o  examine host conditions
+               o  determine how many users are connected to a host
+               o  determine where host users have originated a call
+                  and which nodes they pass through en route
+               o  stop new use of poor quality communication lines and
+                  route new circuits over alternate paths
+
+
+          2.3.2 Accounting Information                ______________________
+
+
+          For monitoring purposes, a TYMNET network has available a chro-
+          nological listing of each login that  shows the node from which
+          the user  called, type of terminal,  user ID, port on  the host
+          machine, time  on and off,  characters transmitted in  and out,
+          and seconds connected.  A sort of this information gives valua-
+          ble statistics about effectiveness of  the user's data communi-
+          cations.
+
+
+
+
+
+                                Network Monitoring and Control    Page 13
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          2.3.3 Network Monitoring                __________________
+
+
+          The network  constantly performs  checks on  its resources  and
+          monitors performance.  If any anomolies occur, they are immedi-
+          ately reported  to PROBE where  simple language  messages alert
+          personnel to the  situation.  Network operations can  then per-
+          form inspection and  analysis of the situation  remotely and/or
+          dispatch maintenance personnel as  appropriate.  The conditions
+          reported include:  line  errors on links, temperature  of proc-
+          essor in each node, interface ports running open, cross-talk on
+          long-lines, loss of or illegal interrupts, and many others.
+
+          A complete summary of network  monitoring messages is contained
+          in the PROBE User's Guide.                 __________________
+
+
+          2.3.4 Network Simulation                __________________
+
+
+          TYMNET  provides a  network  simulation  program called  SIMNET
+          which can be used to simulate network activity for various net-
+          work  configurations.  Expected  network  traffic patterns  are
+          passed to the simulator in the form  of a session file contain-
+          ing records similar to those in the accounting information men-
+          tioned above.  A  network topology is specified  as input files
+          to the simulator.  Using this tool, it is possible to plan net-
+          work expansion intelligently and  with a high degree  of confi-
+          dence.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                Network Monitoring and Control    Page 14
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 3.0 NETWORK COMPONENTS          ______________________________
+
+
+          The customer's network components consist of TYMNET Engines and
+          the software  modules running on  them.  These  components have
+          been mentioned in previous sections but are described here sep-
+          arately in more detail.
+
+
+          SECTION 3.1 Hardware Components - The TYMNET Engine          ___________________________________________________
+
+
+          The TYMNET Engine  is the  standard computer  used in  the cus-
+          tomer's network.   It is a  high performance  micro-code driven
+          processor with sixteen sets of sixteen registers.  The internal
+          cycle time is 125 nanoseconds.  Each  register is 32 bits wide.
+          The processor has 3 I/O interrupt levels plus system interrupts
+          and can contain up to a megabyte of memory.
+
+          The TYMNET Engine is designed for  high reliability and ease of
+          maintenance.  Its  modular design allows  expedient replacement
+          of  the sub-assembly  components, resulting  in minimum  repair
+          time should a failure occur.   When proper configuration guide-
+          lines are  followed, the  TYMNET Engine  will provide  the user
+          with at least 98% system  availability, excluding exterior com-
+          munication components and environmental conditioning.
+
+          Operational diagnostics are fully  integrated with the software
+          components which run in the TYMNET  Engine.  This allows detec-
+          tion of problems  and provides data for easy  analysis prior to
+          serious impact on user throughput or availability.
+
+          A site documentation  package including  Engine schematic  dia-
+          grams is provided at each installation site.
+
+          Following are  descriptions of  the various  components of  the
+          TYMNET  Engine.   Configuration  limitations  are  noted  where
+          applicable.
+
+
+          3.1.1 Basic Package                _____________
+
+
+          Following is  a list of all  the basic packaging,  cooling, and
+          monitoring equipment needed with a TYMNET Engine.
+
+             Cabinet, Blower, 16 Slot Chassis
+             Power Supply
+             EIA Monitor Panel
+             System console
+             Internal Cable Set
+             Connector panel
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 15
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          The power supply  is adequate for  a maximum  system configura-
+          tion.  It can  provide up to 120  amps at +5 volts,  45 amps at
+          +16.5 volts, and 45 amps at - 16.5 volts.
+
+          The chassis provided contains 16 slots, the first four of which
+          are used  for the  CPU board, the  ROM and  I/O board,  the MAC
+          board, and the multifunction board.  The  other 12 slots may be
+          used for memory or I/O boards which do not need to interface to
+          the  DMA bus.   If  more  than 16  boards  are  needed for  any
+          configuration,  or if  DMA  is required,  an  optional 16  slot
+          expansion chassis must be installed.
+
+          The Engine contains  two major busses: the I/O bus  and the DMA
+          bus.  Their  throughput rates  are described  in the  following
+          table:
+
+                I/O Bus      Minimum     250K     Bytes/Sec
+                             Typical     550K     Bytes/Sec
+
+                DMA Bus      Typical     1.2 Meg  Bytes/Sec
+                             Max         1.33 Meg Bytes/Sec
+
+
+          3.1.2 Basic System Boards                ___________________
+
+
+          Following  is a  list of  all the  boards, other  than the  I/O
+          boards, which are needed to configure a TYMNET Engine.
+
+             CPU Board
+             ROM and I/O Board
+             Memory Access Controller Board
+             Multifunction Board
+             64 Kb Memory Board(s)
+
+          The  number of  memory boards  needed depends  on the  software
+          which the  system must run.   The maximum  memory configuration
+          currently possible on an Engine is 1024Kb (16 boards).
+
+          The multifunction board contains the following:
+
+             Teletype Interface (speed selectable 75-9600 baud)
+             A.C. Line Voltage Sensor
+             Watchdog Timer
+             Temperature Sensor
+             PROM Loader
+             WWVB Interface (not the receiver)
+             Power Fail/Restart Detection
+             Interrupts for Real Time Reference
+
+
+
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 16
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          3.1.3 Memory Access Controller Board                ______________________________
+
+
+          The Memory Access Controller board (MAC) provides protection of
+          memory by controlling access to it.
+
+          The MAC partitions  physical memory address space  into logical
+          address space.  At  system generation, each process  running in
+          the node is  assigned its  own logical  address space.   There-
+          after, the  process has access to,  and awareness of,  only its
+          own  logical address  space.  The  same is  true of  peripheral
+          devices attached to  the node.  Since the MAC  has control over
+          the mapping of logical addresses  to physical memory locations,
+          the process (or  device) is prevented, in  case of malfunction,
+          from obtaining access  to, or writing over,  any memory address
+          space not allocated to it.
+
+          Two independent processes  might have the same  logical address
+          for different real memory  locations.  Similarly, two processes
+          might have  different logical addresses  for the  same physical
+          memory area, to permit shared memory access.
+
+          The MAC's handling of address  space enables selectable control
+          of execute  inhibit access,  read only  access, and  read/write
+          access.   Thus, the  MAC is  capable  of two  types of  address
+          instruction checking.  Each addressing  instruction is screened
+          to determine that it falls within  the range of logical address
+          space allocated to the process  (or device) making the request.
+          In addition, each such instruction  is checked for access type.
+          The type of  access must correspond to the  access permitted to
+          the process within the allowed logical address space.
+
+
+          3.1.4 Synchronous Interface Board                ___________________________
+
+
+          The synchronous  interface board provides  control of up  to 16
+          synchronous lines.   Half of these  lines can contain  the data
+          set control signals: Data Term Ready, Data Set Ready, and Clear
+          to Send.  The other half  cannot.  Receive Data, Transmit Data,
+          Receive Clock, Transmit Clock and Request to Send are supported
+          on all lines.
+
+          The maximum  speed of  any of these  synchronous lines  is 9600
+          bits per  second.  The  board is capable  of supporting  all 16
+          lines at 9600 bits per second.
+
+          The interface signals provided conform to the EIA RS232C inter-
+          face standards,  and are compatible  with CCITT  V.24 interface
+          standards.
+
+
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 17
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          If internal clocking is necessary, 4800 and 9600 bps clocks are
+          available on all lines.
+
+          The synchronous board interfaces to a  connector panel via rib-
+          bon cables.   Cables which connect  to the terminals  or modems
+          being controlled are connected via this connector panel.
+
+          The synchronous board interfaces to the  I/O bus.  A maximum of
+          two boards can be  installed in an Engine for a  capacity of 32
+          synchronous lines in an Engine.
+
+
+          3.1.5 Asynchronous Interface Board                ____________________________
+
+
+          The asynchronous interface board provides  control for up to 32
+          asynchronous communications  lines which  can be  in duplex  or
+          half-duplex operation.
+
+          Clocking for  all lines must  be done internally.   The maximum
+          speed for any line is 1200 baud.
+
+          In accordance with RS-232C signal protocol, control of six sig-
+          nals is  provided for each line.   The signals provided  in the
+          standard cables are  Carrier Detect, Data Term  Ready, Data Set
+          Ready, Req to Send, Recv Data, and Xmit Data.
+
+          The asynchronous board connects to the connector panel via rib-
+          bon cables.
+
+          The asynchronous board interfaces to the I/O bus.  A maximum of
+          8 boards can be installed into an  Engine for a capacity of 256
+          asynchronous lines.
+
+
+          3.1.6 Connector Panel                _______________
+
+
+          The cables  carrying the data set  signals to the  terminals or
+          modems do not connect directly to  the synchronous or asynchro-
+          nous boards, but connect to a panel called the connector panel.
+          Signals from the synchronous  and asynchronous interface boards
+          reach the connector panel via ribbon cables.
+
+          A connector panel provides  connections for up to  13 asynchro-
+          nous cables (64 ports or 2  asynchronous cards) and four synch-
+          ronous cables (16 ports or 1 synchronous card).
+
+          The connector panel also has facilities to allow one to monitor
+          any signal on any line (going through that panel) via the moni-
+          tor panel.
+
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 18
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          Connector panels are  mounted on the back of  the TYMNET Engine
+          cabinet.  Up to four connector panels may be mounted on a given
+          TYMNET Engine.
+
+
+          3.1.7 Synchronous/Asynchronous Cables                _______________________________
+
+
+          Four basic kinds of  cables are provided for  connecting termi-
+          nals and modems  to the TYMNET Engine  connector panels.  These
+          cables are  designed with one  connector which attaches  to the
+          Engine and  one or more connectors  on the opposite end  of the
+          cable for terminal  connections.  This enables one  cable to be
+          connected to several devices.  The four kinds of cables are:
+
+             Asynchronous Cable (5 ports)
+             Synchronous Cable (4 ports)
+
+             Asynchronous Crossover Cable ASC140-12 (1 Port)
+             Synchronous Crossover Cable ASC140-13 (1 Port)
+
+          The synchronous  cable can  connect up to  four devices  to the
+          connector panel.  The first two devices receive signals on five
+          leads (normally Recv  Data, Xmit Data, Recv Clk,  Xmit Clk, and
+          Req to Send).  The second two devices receive the above signals
+          plus three more  (normally Clear to Send, Data  Term Ready, and
+          Data Set Ready).
+
+          The asynchronous  cable can connect up  to five devices  to the
+          connector panel.   Each device  receives signals  on six  leads
+          (normally Carrier Detect, Data Term  Ready, Data Set Ready, Req
+          to Send, Recv Data, and Xmit Data).
+
+          Both the synchronous  and asynchronous cables may  be purchased
+          in lengths of 25 or 50 feet.
+
+          The  ASC140-12  interconnects the  following  signals:   RD-TD,
+          TD-RD, SG-SG, DTR-DSR + CTS + DCD, DSR + CTS + DCD - DTR.
+
+          The  ASC140-13  interconnects the  following  signals:   RD-TD,
+          TD-RD, SG-SG, RC-TC, TC-RC.
+
+          The standard length of the  synchronous and asynchronous cross-
+          over cables is one foot.
+
+          Other cables  may be used  for special applications.   Refer to
+          the Cable Ordering/Installation Guide and  Catalog for descrip-              ______________________________________________
+          tions of these cables.
+
+
+
+
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 19
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          3.1.8 Printer Interface Board                _______________________
+
+
+          The printer interface board can interface  with up to four par-
+          allel printer  mechanisms running on  CDC protocol and  all are
+          optically isolated.  The interface consists of:
+
+             Printer Interface Controller
+             Cables
+             Data Printer - 600 LPM, 64 character chain
+             Data Printer - 430 LPM, 96 character chain
+
+          The printer interface board does not use the DMA bus.
+
+
+          3.1.9 Expansion Chassis                _________________
+
+
+          An expansion chassis is needed if more than 16 slots are needed
+          to configure a  given system and/or if any devices  in a system
+          need the use of the DMA  bus.  The expansion chassis is divided
+          into two sets of  eight slots each.  A set of  eight slots must
+          contain either all DMA devices or all non-DMA devices.
+
+          As an example,  if a system needs 17 slots  for non-DMA devices
+          and 3 slots for  DMA-type devices, it will need a  total of two
+          chassis.  One chassis will house 16 of the non-DMA boards.  The
+          first group of 8 slots in  the expansion chassis will house the
+          other non-DMA board.   The 3 DMA boards would be  housed in the
+          second group of 8 slots in the expansion chassis.
+
+
+          3.1.10 Extended Selector Channel (ESELCH)                 __________________________________
+
+
+          The ESELCH provides  control of up to 8  DMA-type devices.  The
+          ESELCH is  normally used with disk  and tape units.   An ESELCH
+          can control up to 8 devices --  only one of which may be active
+          at any given  time.  The ESELCH must be housed  in an expansion
+          chassis for DMA-type boards.
+
+
+          3.1.11 Disk Support                 ____________
+
+
+          Support for  up to 4  disk drives can  be provided on  a TYMNET
+          Engine.  This support consists of the following:
+
+             Disk Controller
+             Disk Drive (10 Megabyte - 2 platters) Ampex DM448
+             Cables
+
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 20
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          The  disk  controller  connects  to the  DMA  channel  via  the
+          Extended  Selector Channel.   This  implies  that an  expansion
+          chassis for DMA-type devices must be included in the system.
+
+          A maximum of one disk controller  can be configured in a TYMNET
+          Engine.  It can control up to four disk drives.  One disk drive
+          may be mounted  with the basic Engine.   Additional drives must
+          be mounted in  expansion cabinets.  The expansion  cabinet con-
+          tains room for up to four disk drives.
+
+
+          3.1.12 Tape Support                 ____________
+
+
+          Support for  up to 4  tape drives can  be provided on  a TYMNET
+          Engine.  The  Engine will support  the following kinds  of tape
+          drives:
+
+             45 IPS 9 track, 800/1600 BPI Kennedy 9000
+             75 IPS 9 track, 800/1600 BPI Kennedy 9100
+
+          The tape  controller must  connect to the  DMA channel  via the
+          ESELCH.  This  implies that an  expansion chassis  for DMA-type
+          devices must be included in the system.
+
+          A maximum of one tape controller  can be configured in a TYMNET
+          Engine.  This can control up to  four tape drives.  Tape drives
+          must be  mounted in  expansion cabinets with  a maximum  of two
+          tape drives per cabinet.
+
+
+          3.1.13 Serial Input-Output Board (SIO)                 _______________________________
+
+
+          A  board is  available  which provides  control  of high  speed
+          synchronous and asynchronous lines.   This control requires the
+          following hardware:
+
+             SIO board
+             Line interface chassis
+             Line Interface Boards (V.24, V.35, optically coupled)
+             Cables
+
+          The SIO controller  board attaches to the DMA  channel and thus
+          requires a DMA expansion chassis in the system.
+
+          The SIO  controller board can control  up to 16  synchronous or
+          asynchronous lines at a maximum aggregate speed of 480,000 bps.
+
+          In synchronous mode,  the controller board supports  either the
+          bit stuffing  (SDLC/HDLC) protocol  or byte  synchronous (e.g.,
+          BSC) protocols.
+
+
+
+                       Hardware Components - The TYMNET Engine    Page 21
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          Up to four SIO controller boards may be included in any system.
+          It should be noted, however, that the total throughput capabil-
+          ities  of  the  hardware/software must  be  considered  in  any
+          configuration.
+
+          The SIO  controller board  uses small  interface boards  in its
+          connector panel.  Each of these line adapter boards handles two
+          lines.  The  line interface boards perform   protocol interface
+          (e.g., bit stuffing) and also convert  the TTL level signals to
+          the appropriate  standards.  These line  adapter boards  may be
+          randomly mixed for any given SIO controller board.
+
+          There are, currently, four line interface boards:
+
+               1) V.24  Asynchronous  -  handles   two  lines  using  the
+                  V.24/RS232  standard interface  at  speeds  up to  9600
+                  baud.
+
+               2) Optically coupled  - for hardwired  connections between
+                  machines within  a few  hundred feet  of each  other at
+                  speeds up to 162,500 bps.
+
+               3) V.24  Synchronous   -  handles  two  lines   using  the
+                  V.24/RS232 standard  interface at  speeds up  to 20,000
+                  bps.
+
+               4) V.35 Synchronous  - handles  two lines  using the  V.35
+                  standard interface at speeds up to 160,000 bps.
+
+          Two input control leads and two output control leads are avail-
+          able on each port.  The default  signals provided are Data Ter-
+          minal  Ready, Request  to  Send, Data  Set  Ready, and  Carrier
+          Detect.  Coding of these signals is inverse.
+
+
+          3.1.14 Power Consumption                 _________________
+
+
+          The components of the Engine consume power as shown in the fol-
+          lowing table:
+
+                                      AMPS       AMPS         AMPS
+          COMPONENT                +5 VOLTS   +16 VOLTS    -16 VOLTS
+          ---------                --------   ---------    ---------
+          Chassis, Monitor Panel      4           .2           .4
+           & System Console
+          CPU Board                   8           --           --
+          ROM and I/O Board          10           --           --
+          MAC                         6           --           --
+          Multifunction Board         3           .1           --
+          64Kb Memory Board           5          2.5          2.75
+          Asynchronous Board          2           .5           .5
+          Synchronous Board           3           .5           .5
+
+
+                       Hardware Components - The TYMNET Engine    Page 22
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          ESELCH                      6           --           --
+          Disk Controller             6           --           --
+          Tape Controller             6           --           --
+          200 Megabyte Controller     6           --           .5
+          SIO Mother Board            7           --           --
+          O.C. Daughter Board         1           --           --
+          Async Daughter Board        1           .1           .1
+          RS232 Sync Daughter Board   1           .1           .1
+          V.35 Sync Daughter Board    1           .2           .2
+          Printer Mother Board with   1           --           --
+           one DC/DC Converter
+          Printer Mother Board with   2           --           --
+           two DC/DC Converters
+          Printer Daughter Board      1           --           --
+
+
+          SECTION 3.2 Network Software          ____________________________
+
+
+          As  was mentioned  earlier, TYMNET  software  consists of  five
+          basic functions.  These are the  Node Code, the Supervisor, the
+          TYMCOM, the  TYMSAT, and  the Gateway.   A network  node always
+          contains the Node  Code function.  In stand-alone  systems, the
+          node also  contains one  of the  other functions.   In an  ISIS
+          node, the node will contain the Node Code functions plus one or
+          more  of the  other functions.   These functions  and ISIS  are
+          described below.
+
+
+          3.2.1 Node Code                _________
+
+
+          Each network  node contains  routines to  perform the  function
+          known as  the Node Code.  The  node code handles  the internode
+          protocol, the tearing  down and building of  packets, modifica-
+          tion of the permuter tables upon the command of the Supervisor,
+          and the flow control of data across network links.
+
+
+          A)   Internode Protocol
+
+               Tymshare has developed its own  internal node-to-node pro-
+               tocol for  intra-net data  transfers.  The  protocol is  a
+               full duplex, error checking, ACK-with-data design which is
+               much like X.25  level 2 only  highly tuned and  more effi-
+               cient.  The protocol is described  in detail in supporting
+               documentation.
+
+               Data travels in the form of packets between network nodes.
+               Each packet  may contain data  for several of  the network
+               circuits using the link.  Each  packet is checksummed with
+               a 32 bit checksum.  When a  packet is received with a good
+
+
+
+                                              Network Software    Page 23
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               checksum, a  corresponding acknowledgement  is sent  along
+               with data  in the  next packet  transmitted back  over the
+               link.  This TYMNET technology tends to reduce the overhead
+               of data packets by multiplexing data traveling in the same
+               direction into single packets.
+
+               The TYMNET  I packet format  is indicated  below.  Several
+               different TYMNET II  packet formats also exist.   A packet
+               can consist of several logical records relating to differ-
+               ent users.  The  maximum length of the packet  is 66 bytes
+               and  the fixed  overhead  is 6  bytes.   Each user's  data
+               within a packet has a two byte header.  The header is fol-
+               lowed by the  data.  The packet can consist of  at most 20
+               different users' data (one character per user).
+
+               +-----------------------------//--------------------------+
+               |         |       |       |       |       |       |       |
+               |  2 byte | 2 byte|       |       | 2 byte|       | 4 byte|
+               |  packet | header| data  | ----- | header| data  | check-|
+               |  header |  for  |  for  |  ...  |  for  |  for  | sum   |
+               |         | user 1| user 1|       | user N| user N|       |
+               +----|----|---|---|---|---|---//--|---|---|---|---|-|-|-|-+
+
+          B)   Buffer and Channel Allocation
+
+               A circuit going into a network node is allocated one logi-
+               cal channel  on the link  it uses  to "enter" the  node in
+               TYMNET I.  Each link in a TYMNET  network has a fixed num-
+               ber of channels  which are assigned when the  Node Code is
+               generated.
+
+               In TYMNET II,  the number  of links  is dynamically  allo-
+               cated.  A channel is  assigned to a circuit  when the cir-
+               cuit is built,  and the circuit retains  the exclusive use
+               of that channel until the circuit is torn down.  If a cir-
+               cuit passes through a node, it  is also assigned a channel
+               on the  link it uses to  "exit" the node.  Enter  and exit
+               are misnomers  in that the  circuit is full  duplex.  They
+               are used here simply for descriptive purposes.
+
+               Additionally, each circuit in a  network node is allocated
+               a pair of buffers when the  circuit is built.  Each buffer
+               handles the data  flowing in one  direction over  the cir-
+               cuit.  These buffers are dynamic and require no space when
+               empty.
+
+               In TYMNET I, these channels and  buffers are assigned spe-
+               cifically by the Supervisor.  In  TYMNET II, the Node Code
+               allocates its resources dynamically.   The Supervisor sim-
+               ply indicates  the nodes  through which  the circuit  must
+               pass.
+
+
+
+
+                                              Network Software    Page 24
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          C)   Tearing Down and Building Packets
+
+               When a packet is received with a good checksum, it is torn
+               down by  the Node Code, and  the data for each  circuit is
+               placed into the  buffer dedicated to that  circuit.  Like-
+               wise, when  a packet is  being assembled  for transmission
+               over a link, data  is removed from the  buffers which con-
+               tain data to be transmitted across the link.
+
+               A round  robin algorithm is  used to build  records.  That
+               is, once  a logical  record is made  for a  given channel,
+               that channel  will not be  serviced again until  all other
+               channels with data present have been serviced.
+
+          D)   Flow Control
+
+               Flow control in  a TYMNET network  is performed on  a per-
+               channel basis.  Periodically, each node examines the buff-
+               ers  associated with  each  input  process.  If  a  buffer
+               exceeds  a threshold,  the  process  is informed  to  stop
+               inputting for that port until further notice.
+
+               For the link control process, a passive flow control tech-
+               nique is used.  Periodically, each node informs its neigh-
+               bors on  which channel it  is permitted to  transmit data.
+               Each  time permission  is given,  a fixed  amount of  data
+               (based on the throughput class of this circuit) is allowed
+               to be transmitted.
+
+
+          3.2.2 Supervisor Nodes                ________________
+
+
+          Supervisor nodes in a TYMNET network  perform a variety of con-
+          trol and data collection functions.  A Supervisor node contains
+          the Supervisor and PROBE programs, a  number of disk files, and
+          several "slave" programs  which are used to  transfer data from
+          the data  files over  network circuits  to the  Network Control
+          Center.  This  section discusses  all the  program modules  and
+          data files  on the  Supervisor node.  It  should be  noted that
+          Supervisor nodes have disk storage capabilities because some of
+          the files maintained are very large.
+
+
+          A)   Supervisor Backup
+
+               Since a  TYMNET network is centrally  directed, provisions
+               must be  made for  backup if  the network  Supervisor goes
+               down.   (It should  be  noted that  in  a TYMNET  network,
+               existing paths are not affected in the event of a Supervi-
+               sor going  down.)  The solution  to the  Supervisor backup
+               problem is to provide a  hierarchy of several Supervisors.
+
+
+
+                                              Network Software    Page 25
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               Up to seven  supervisor nodes may  exist in a  TYMNET net-
+               work.
+
+               Only one Supervisor is active at  a time, and it keeps the
+               others dormant  by sending them messages  called "sleeping
+               pills".  If  the active Supervisor  goes down, one  of the
+               dormant Supervisors will  awaken without any  human inter-
+               vention and take  control of the network.   Although sleep
+               times are staggered, it  is possible to have  two Supervi-
+               sors trying to take control of the network simultaneously.
+               This  solution  is  handled gracefully  by  assigning  the
+               Supervisors  numbers indicating  their  priority.  In  the
+               case of a Supervisor fight, the one with the lowest prior-
+               ity will put itself to sleep.
+
+          B)   Network Takeover
+
+               In order to  control nodes and carry  out the Supervisor's
+               function of building virtual circuits, the Supervisor must
+               know the capacity of all nodes, their link capacities, the
+               network topology  and (for  TYMNET I  nodes) the  value of
+               every permuter table entry.
+
+               A Supervisor starting network takeover has no prior knowl-
+               edge of the network topology.   The Supervisor first sends
+               a takeover  command to  its own node,  and learns  of that
+               node's capacity, the capacity of its links, every permuter
+               table entry in that node and the neighbors of that node on
+               each link.  The latter is the  basis on which the Supervi-
+               sor discovers the topology of the network.  The Supervisor
+               now sends  takeover commands to  each neighbor of  its own
+               node.  As each of these nodes comes under complete control
+               of the  Supervisor, each  of its  neighbors is  checked to
+               discover previously unknown  nodes, and these are  in turn
+               taken over.
+
+               In this way the Supervisor learns the topology of the net-
+               work, all  its capacities and  (from the  permuter tables)
+               which resources are  in use.  The node  takeover times are
+               approximately 4 seconds  for a TYMNET I node  and 1 second
+               for a  TYMNET II node.   The time determining  factors are
+               the number of nodes, the bandwidth  of links in the vicin-
+               ity  of  the  Supervisor, the  number  of  permuter  table
+               entries and the connectivity of  the network vis-a-vis the
+               Supervisor's  own node.   From  a  control standpoint  the
+               Supervisor views the network as  a tree.  The control tree
+               comprises a subset of the links  in the network.  The bal-
+               ance and depth of this tree is the measure of connectivity
+               of the network in relation to the Supervisor's own node.
+
+               If a  previously non-operational link  becomes operational
+               it may reveal one or more nodes that were previously inac-
+
+
+
+                                              Network Software    Page 26
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               cessible.  The  Supervisor would  then extend  the control
+               tree by taking over these  newly discovered nodes.  On the
+               other hand,  if a link  that is  part of the  control tree
+               goes out,  the Supervisor  loses control  of the  nodes in
+               that subtree.  The control tree  is then rebuilt to regain
+               control of  all the lost  nodes that are  still accessible
+               through the network topology.
+
+          C)   Circuit Building
+
+               The primary job of the Supervisor  is to build circuits in
+               the network.   Either a TYMSAT port  or a TYMCOM  port can
+               request the  Supervisor to build  a circuit.   The request
+               contains   a  user   name,  a   destination  host   number
+               (optional), the origination node and  port, and a password
+               (optional).  The Supervisor verifies the  user name in the
+               Master User Directory (MUD).  See the MUD record format in
+               the  ISIS Validation  User's Guide.   The Supervisor  then                    _____________________________
+               checks for the correct password, if any.  To check a pass-
+               word at login,  it is ciphered and compared  to the cipher
+               in the MUD.  If no host  number is specified, the Supervi-
+               sor uses the "home" host from the MUD as the host.
+
+               The Supervisor now knows the node  number of the originat-
+               ing port and the node number  of the destination port.  It
+               then computes the minimum  cost path for the  virtual cir-
+               cuit.  Each link has a cost associated with it.  This cost
+               is a  function of the link  bandwidth and the  presence of
+               overload conditions as  shown in  the table  below.  Addi-
+               tionally, the  TYMCOM (host interface program)  may report
+               an arbitrary host cost factor which  can be used to effect
+               load balancing across hosts.
+
+                             LINK COSTS IN A TYMNET NETWORK
+
+                  LINE          NORMAL       1-WAY         2-WAY
+                  SPEED          COST      OVERLOADED     OVERLOADED
+
+                  56000 bps       10           26            42
+                   9600 bps       11           27            43
+                   4800 bps       12           28            44
+                   2400 bps       16           32            48
+
+               The minimum cost path as computed  by the Supervisor is an
+               optimization  of network  resources rather  than a  dollar
+               cost.
+
+               Once a  path has  been plotted,  the Supervisor  allocates
+               buffer pairs  and network link  channels on each  node and
+               link over which the virtual  circuit will pass.  In TYMNET
+               I, messages are sent to each node along the path to inform
+               the node code  to allocate the appropriate  resources.  In
+
+
+
+                                              Network Software    Page 27
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               TYMNET II, a "needle" is sent  to the node of origination.
+               The needle contains the node number of the nodes which the
+               virtual circuit is  to pass through.  This  needle threads
+               its way through the TYMNET II nodes.  As it passes through
+               a  node, the  node code  allocates  the needed  resources.
+               Once the circuit  is built, the Supervisor  sends the user
+               name, originating node and port numbers, a session number,
+               and the terminal characteristics  to the destination node.
+               It also sends a message to  the destination host to inform
+               it that there is a new login.
+
+          D)   Closed User Groups
+
+               Any user  can be restricted as  to where he may  enter the
+               network and what facilities he may  reach.  An access pro-
+               file is used by the Supervisor  to determine which hosts a
+               user may access.  The access profile  consists of a set of
+               definitions  each specifying  a class  of permitted  entry
+               points and set of valid destinations.
+
+               A class describes a set of  node numbers.  A user may have
+               more than one class assigned.  A  group describes a set of
+               hosts.   Each class  may have  one or  more groups  and/or
+               hosts associated with it.  (A class must have at least one
+               group or host.)
+
+               At login time, the Supervisor checks  the node the user is
+               logging in through  against the classes in  the user's MUD
+               entry and  determines the legal destinations  according to
+               the groups and hosts assigned to those classes.  Access to
+               a host  or from a  node may be barred  to the user  if the
+               right information  is not found.   In this way,  access to
+               hosts from various locations by users  may be tightly con-
+               trolled.
+
+               Default (or  home) groups and/or  hosts must  be specified
+               (at least one per definition).  If a user does not request
+               a specific  host at  login time, the  user will  be logged
+               into the default  host, according to the  definition.  For
+               even greater control, there is also a flag in the MUD that
+               forces a user to  the home group or  host.  Access defini-
+               tion can  also be used  to create prioritized  routing and
+               multi-target routing.
+
+          E)   PROBE
+
+               A special program called PROBE runs  on the network Super-
+               visor node.  PROBE  can be logged  into directly  and pro-
+               vides the user  a means of monitoring  and controlling the
+               network.  The PROBE commands are  discussed in more detail
+               in the PROBE  User's Guide.  In general,  PROBE allows the                      ___________________
+               user to check the status of the network or a network node.
+
+
+
+                                              Network Software    Page 28
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               For example, PROBE can be used to find the number of orig-
+               inations, terminations,  and pass-throughs  for any  node.
+               PROBE can also be used to shut  a link or host so that new
+               circuits will not  be built over the link or  to the host.
+               Finally, PROBE can  be used to inspect the  error log file
+               on the network  Supervisor.  Using the log  command, PROBE
+               can be used  to monitor significant events  on the network
+               in real time.
+
+          G)   Error Log
+
+               The  Supervisor maintains  a circular  file  on disk  into
+               which it stores special messages received from the various
+               network  nodes  or  hosts.  These  messages  include  such
+               things as  duplicate hosts in  the network,  node takeover
+               errors, host down, link down,  permuter table errors, link
+               retransmission  errors,  MUD  error  found,  and  operator
+               retake requests.   The error log  data may be  examined in
+               real time by PROBE.
+
+          H)   Accounting Information
+
+               The TYMCOM  program controlling  the termination  port for
+               any  circuit periodically  sends the  Supervisor a  record
+               containing  accounting information.   In particular,  when
+               the circuit is built, the originating  node and port, ter-
+               minating node  and port,  user name,  session number,  and
+               terminal type  are sent to the  Supervisor.  Approximately
+               every 15 minutes another record is sent which contains the
+               session number and the numbers of input and output charac-
+               ter sent over the circuit since the last update.  Finally,
+               when the  session is terminated,  a record  containing the
+               reason for  termination is sent  to the Supervisor.   If a
+               session is not terminated normally because of a failure of
+               the node at  which the circuit terminates,  the session is
+               treated (after an 8 hour wait)  as if it had terminated at
+               the time the last update record was received.
+
+               Accounting data  is received  by the  Supervisor in  frag-
+               ments, not as complete records.   Each fragment is identi-
+               fied  by a  session number.   The Supervisor  puts a  time
+               stamp on  each fragment  as it  is received,  but does  no
+               sorting of data fragments.
+
+               The accounting data is sorted by the Raw Accounting Merger
+               program (RAM).  RAM builds a  circuit to the slave program
+               ACCOUNT,  which resides  on the  network Supervisor  node.
+               ACCOUNT accesses and  reads the accounting data  file, and
+               sends the data to RAM.  RAM sorts the accounting fragments
+               into complete  session records,  and writes  the completed
+               records to  tape.  Refer to the  RAM User's Guide  for the                                                ________________
+               format of accounting records.
+
+
+
+                                              Network Software    Page 29
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               As with the error log file, the  accounting file is a cir-
+               cular file and thus the data  must be read before the file
+               wraps around  and data  is lost.   This does  not normally
+               pose a problem because the file is  very large, and a TYM-
+               NET network can currently store up  to seven days worth of
+               data before any is lost.  Also, to prevent loss of inform-
+               ation, messages are stored in  the error log file whenever
+               the  accounting file  exceeds 50  percent  of its  storage
+               capacity.
+
+
+          3.2.3 TYMSATs                _______
+
+
+          Terminal control processes in a  TYMNET network are referred to
+          as TYMSATs.  One of these processes  in the the customer's net-
+          work is  the asynchronous  terminal controller  or Asynchronous
+          TYMSAT.  There is both  a stand-alone version of  the Asynchro-
+          nous TYMSAT and version which runs under ISIS.
+
+          The Asynchronous  TYMSAT runs in  conjunction with  the 32-port
+          Asynchronous board and is used  to handle asynchronous terminal
+          ports which can run at speeds of 110 to 1200 baud.  The Asynch-
+          ronous  TYMSAT can  control both  ASCII  type teleprinters  and
+          2741-type terminals.
+
+          A)   Terminal Identifier
+
+               When the Asynchronous TYMSAT detects  the physical connec-
+               tion of the terminal  (DSR and CAR high) it  prints a mes-
+               sage asking the user to type a terminal identifier charac-
+               ter (TID).  This message is printed  at either 300 or 1200
+               baud depending on  the system  generation.  The  TID indi-
+               cates the terminal speed and carriage return delay charac-
+               teristics of the terminal.
+
+          B)   Terminal Logon
+
+               Once the terminal  type is determined, the  TYMSAT prompts
+               the user for the login character stream.  This it sends to
+               the network Supervisor for verification.
+
+          C)   Control Characters
+
+               A TYMNET network initially assumes that terminals are full
+               duplex, odd parity, and cannot  respond to X-ON/X-OFF flow
+               control characters.  To change  these characteristics, the
+               user  may type  certain control  characters  in the  logon
+               stream.   These characters  and  the  Auto-TID option  are
+               explained in more detail in the TYMSAT Reference Manual.                                               _______________________
+
+
+
+
+
+                                              Network Software    Page 30
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          D)   Echo Control in the TYMSAT
+
+               The Asynchronous TYMSAT echoes most characters back to the
+               terminal  unless the  terminal has  indicated  it is  half
+               duplex by entering the appropriate  control character dur-
+               ing logon.
+
+               For full duplex terminals,  the Asynchronous TYMSAT echoes
+               most characters  to the terminal.  For  certain characters
+               such as the tab character,  however, the Asynchronous TYM-
+               SAT defers the echoing to the host.
+
+          E)   Automated Logon Facility
+
+               The Asynchronous TYMSAT  design provides for a  user to be
+               automatically connected to his destination  with no inter-
+               action or  address selection on  his part.   This provides
+               service for the specialized user who has no need to access
+               multiple hosts.  This facility is described in more detail
+               in the TYMSAT Reference Manual.                      _______________________
+
+
+          3.2.4 Host Interfaces                _______________
+
+
+          Host  interface programs  which run  in  network nodes  include
+          Asynchronous TYMCOMs, X.25, X.75, 3270, and 2780/3780/ The typ-
+          ical network contains  two types of host  interfaces; Asynchro-
+          nous TYMCOM and  X.25 Each of the host  interfaces is discussed
+          in general  terms here  and explained  in more  detail in  host
+          interface supporting documentation.
+
+          A)   Asynchronous TYMCOM
+
+               The Asynchronous TYMCOM is  the simplest interface between
+               a host  system and  a TYMNET network.   It appears  to the
+               host system  as a bank  of low speed  asynchronous modems.
+               This program runs under ISIS on the TYMNET Engine and uses
+               the Asynchronous Board as its  I/O interface card.  It can
+               emulate ASCII  teleprinter or EBCD or  correspondence code
+               2741 devices.   The Asynchronous TYMCOM can  handle speeds
+               of up to 1200 baud.  Refer  to the TYMCOM Reference Manual                                                  _______________________
+               for more detail on the TYMCOM.
+
+          B)   X.25 Host Interface
+
+               The network connects to a customer  host's front end proc-
+               essor over  a synchronous  link using  the X.25  protocol.
+               This protocol is  handled by a program running  in an ISIS
+               job slot and using the Synchronous  Card as its I/O inter-
+               face.  The  X.25 program  conforms to  the CCITT  standard
+               X.25 specifications.  Over  this link, it is  possible for
+
+
+
+                                              Network Software    Page 31
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               programs running on the customer's  host to build circuits
+               to hosts  on the network.  This  is done, for  example, by
+               the accounting collection program  on the customer's host.
+               It is also possible for terminals  on the network to build
+               circuits through the network and over the X.25 link to the
+               customer hosts.   The SIO card is  used as the  I/O device
+               for HDLC framing.  Bisync framing  can be done through the
+               SIO  card   or  the  synchronous   card.   Refer   to  the
+               X.25_Interface_Reference_Manual  for more  information  on               ____ _________ _________ ______
+               the X.25 interface.
+
+          C)   3270 Host and Terminal Interface
+
+               The 3270 Interface  is a host and  terminal interface that
+               provides a 3270 connection for  TYMNET network users.  The
+               interface provides services in  three basic modes:  native
+               mode,  virtual  terminal  mode,  and  virtual  host  mode.
+               Native mode provides a 3270 terminal user with access to a
+               3270  support host  through the  network, eliminating  the
+               need for dedicated leased long  distance lines.  In native
+               mode, the 3270  terminal user  also has  multi-host/multi-
+               application access on 3270 support computers.  This elimi-
+               nates the need for duplicate  lines or equipment to access
+               separate applications on the same or separate 3270 support
+               computers.  Virtual terminal mode provides a 3270 terminal
+               user  access to  any computer  on a  TYMNET network,  even
+               ASCII support hosts.   The virtual host mode  provides the
+               users of  certain ASCII CRTs  access to  computers running
+               3270 applications.   This provides economical  dial access
+               to both 3270  hosts and ASCII time sharing  systems from a
+               single terminal.   The 3270  host and  terminal interfaces
+               each   run    in   an   ISIS    slot.    Refer    to   the
+               3270_Reference_Manual and  the 3270 User's Guide  for more               ____ _________ ______          _________________
+               detail on the 3270 interface.
+
+          D)   2780/3780 Interface
+
+               The 2780/3780 interface  is a host and  terminal interface
+               which provides  the 2780, 3780,  and 3770  series terminal
+               user with access to host computers with 2780/3780 terminal
+               support.  This service functions only in native mode, pro-
+               viding an  economical connection between  remote terminals
+               and hosts through  a TYMNET network.  This  eliminates the
+               need  for  dedicated  leased  long  distance  lines.   The
+               2780/378o host and terminal interfaces each run in an ISIS
+               slot.  Refer  to the  2780/3780_Reference_Manual for  more                                     _________ _________ ______
+               information on the 2780/3780 interface.
+
+
+
+
+
+
+
+
+                                              Network Software    Page 32
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          3.2.5 Network Gateways                ________________
+
+
+          Another type  of interface program in  a TYMNET network  is the
+          network Gateway.
+
+          A)   TYMNET to TYMNET Gateway
+
+               The typical  customer network contains the  TYMNET gateway
+               program.  This  program runs  in a  job slot  on a  TYMNET
+               Engine and uses the ports on  the Synchronous Board as its
+               I/O interface.  The TYMNET Gateway  appears to the network
+               in which it  resides (i.e., the network in  which the ISIS
+               node resides) as a host on the node.  This node may origi-
+               nate and  terminate circuits.  The TYMNET  Gateway appears
+               to the network which it talks to over the synchronous line
+               as a dead-ended node which controls a host.  That host may
+               both originate and terminate circuits.
+
+               As  is typical  of network  gateways,  the TYMNET  Gateway
+               forces the  user to  go through a  logon procedure  to get
+               access to the second network.  If the user had to logon to
+               the first network, it appears to him as a double logon.
+
+          B)   X.75 Network Interface
+
+               A TYMNET network  may be connected to  another Public Data
+               Network (PDN)  over a full  duplex, synchronous  data link
+               using the  X.75 protocol.  This  protocol conforms  to the
+               CCITT X.75 standard,  and is a program running  in an ISIS
+               slot using the  SIO Card as its I/O  interface.  Using the
+               X.75 link, a  customer logged in to a host  in another PDN
+               may build  circuits to  a host in  a TYMNET  network.  The
+               X.75 architecture is almost identical to that of X.25, and
+               is an extension  of X.25.  For further  information, refer
+               to the X.75_Interface_Reference_Manual.                      ____ _________ _________ _______
+
+
+
+          3.2.6 ISIS                ____
+
+
+          ISIS has been mentioned several  times in this specification as
+          an operating environment which allows  a node to contain TYMNET
+          Node Code plus  one or more of the  TYMSAT, TYMCOM, Supervisor,
+          or Gateway functions.   This section provides a  description of
+          the purpose, usages,  and external design  of the  ISIS (Inter-
+          nally Switched Interface System) system.
+
+          ISIS was  defined in  order to develop,  debug, and  deploy new
+          interfaces on network  nodes while protecting these  nodes from
+          possible faults in these interfaces.
+
+
+
+                                              Network Software    Page 33
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          ISIS is an  operating system:  it is  a set of rules  as to how
+          the interfaces are to be constructed, and  how they are to com-
+          municate with each other.  ISIS is not a network node or imple-
+          mentation of TYMNET technology.
+
+          ISIS divides the machine into partitions,  or slots.  Slot 0 is
+          expected to  have special  properties and  abilities, including
+          the routing of circuits within  the machine, and the collection
+          of  diagnostic and  accounting information  (i.e., the  network
+          node code).
+
+          ISIS treats  the network node  code as just  another interface.
+          The node  code has  special properties  only when  executing in
+          slot 0.   These properties include  the routing  and monitoring
+          functions relating  to the network supervisor.   When executing
+          in a slot other  than slot 0, the interface  performs the func-
+          tion of a gateway to a TYMNET network.
+
+          A)   The Kernel
+
+               The control center of ISIS is  the Kernel, a process which
+               provides  ultimate  control  of  hardware,  including  the
+               scheduling of other processes.
+
+               Interrupts have absolute priority  in the machine.  During
+               intervals when  no interrupts are active,  other processes
+               are active.  These are either  the Kernel, or some process
+               to which the Kernel has temporarily assigned the machine.
+
+               These processes are, for the purposes of scheduling, inde-
+               pendent jobs, even though a set  of processes may be work-
+               ing together, as  a slot.   These processes  form a  hier-
+               archy.
+
+               The top level consists of foreground processes.  These are
+               intended to  communicate with  the  interrupt level  proc-
+               esses, and thus  must be scheduled at  frequent intervals,
+               to permit timely responses.  To accomplish this, each time
+               the Kernel tries to schedule a  job, it first searches the
+               queue  of foreground  jobs to  find which  one should  run
+               next.  If none should go  immediately, the time, until the
+               next foreground process is to run,  is made available to a
+               background process.
+
+               At the  bottom level are  the background jobs.   These are
+               the  work-horses, which  perform the  major  effort of  an
+               interface.   Background jobs  actually  fall into  several
+               categories, which  the Kernel's  scheduler treats  identi-
+               cally.
+
+               The true background job, as already mentioned, is the main
+               effort of a given interface.  In addition, there are a set
+
+
+
+                                              Network Software    Page 34
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               of System Debugging Tool (SDT) jobs.  Each of these can be
+               logged into  through the  network or  locally and  used to
+               control, modify, debug, or reload a given set of processes
+               (a slot).
+
+               Each slot has  an SDT, a foreground, and  a background job
+               associated with it  (NOTE: not all jobs  associated with a
+               slot need be active concurrently).
+
+               An intermediate  level job  is the  DISPATCHER.  The  Dis-
+               patcher is run each time a non-SDT background job runs and
+               is used to set up that background  job for its next use of
+               the machine.   In particular, the Dispatcher  switches the
+               output which was produced by  that slot to the appropriate
+               destination slots.
+
+          B)   The Dispatcher
+
+               The heart of ISIS is the dispatcher.  The primary function
+               of  the Dispatcher  is to  act in  a manner  similar to  a
+               switching node, except that, instead of talking to several
+               network lines, it talks to several interfaces.  Subsidiary
+               functions  are to  perform  network  accounting, and  such
+               other functions  which are  conveniently centralized.   It
+               does not  have any knowledge  of the unique  properties of
+               specific interfaces, except that  the interface associated
+               with slot 0 has the capability  to perform routing, and is
+               the repository for diagnostic, accounting,  and other mes-
+               sages.
+
+               Each interface has  a set of descriptors which  it uses to
+               talk to the Dispatcher, and may  have a translator to con-
+               vert its  requests and  messages to  the standard  format.
+               Each interface runs as one  or more independent jobs under
+               the  Kernel, sharing  time-slices  with  the rest  of  the
+               interfaces.  The  Memory Access Controller  (MAC) prevents
+               each interface  from destroying another  interface because
+               of illegal memory stores.  The  Dispatcher checks the data
+               flow to insure that if the interface  is in error, it dam-
+               ages only its own subset of circuits.
+
+          C)   Inter-Process Communications
+
+               The Dispatcher and  any particular interface must  talk to
+               each other.   Because the  processes  are running  concur-
+               rently, the Dispatcher  may interrupt a process  after any
+               instruction.  The intercommunication  has, therefore, been
+               designed such that  this is expected.  The  two directions
+               of traffic must also be independent.
+
+               The buffering mechanism  used is a ring  buffer, which one
+               process fills and  the other empties.  No  specific const-
+
+
+
+                                              Network Software    Page 35
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               raint is  placed on the  size of  the buffer by  ISIS, and
+               there is  no reason that an  interface input ring  must be
+               the same size as its output ring.
+
+               The slot 0 interface includes the  set of functions relat-
+               ing  to inter-node  communications,  circuit routing,  and
+               diagnostic information.  Each interface, including slot 0,
+               has a  set of  permuter  tables,  controlled by  the  Dis-
+               patcher,  which tell  the  Dispatcher  which port  of  one
+               interface is connected to what port of another.
+
+               The Dispatcher receives commands and  data from slot 0 and
+               forwards them  to the appropriate  interface, constructing
+               internal circuits as necessary.  The  Dispatcher also per-
+               forms the internal accounting function.
+
+               If an  interface requests a  circuit to another  host, the
+               Dispatcher will make a connection to the slot 0 interface.
+               If that circuit  turns out to be an  internal circuit, the
+               Dispatcher  will  do the  necessary  interconnection  from
+               source to  destination such that  the data  flows entirely
+               within the Dispatcher without bothering  the slot 0 inter-
+               face.
+
+               The internal format of data being transmitted must be uni-
+               form for all interfaces.  To this end, a message format is
+               used.   Each message  originating at  an  interface has  a
+               header.  The header specifies the port number and the mes-
+               sage type.  For  each message type, the  message length is
+               fixed.  One class  of messages would  be pure  data trans-
+               fers:  type 1 means 1 character follows, 2 = 2, ..., 80x =
+               128d; others mean specific control  messages, such as DIS-
+               CONNECT,  etc.   Since  the  predominance  of  traffic  is
+               expected to be data, a receiver  can eliminate much of the
+               normal logic  required to examine each  character, because
+               this information  is incorporated  into the  message type.
+               In  particular, the  Dispatcher  (and  other processes  as
+               well)  can process,  or  move messages  from  one ring  to
+               another, with the  major overhead occurring in  looking at
+               the message  header and  determining the  destination.  If
+               there is room at the destination, the message can be moved
+               very quickly without  excess character-by-character  over-
+               head.
+
+          D)   Routing
+
+               Slot 0, as  noted above, has special  properties involving
+               routing,  accounting,  and   diagnostic  collection.   The
+               actual implementation  is dependent  on the  usage of  the
+               particular ISIS configuration.
+
+
+
+
+
+                                              Network Software    Page 36
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+               In a self-contained configuration, all circuits are inter-
+               nal and the routing algorithm may be very simple.
+
+               When the slot  0 interface is part of  an external network
+               (as in  a gateway), circuits  may originate  and terminate
+               both internally and externally.  The interface is now more
+               complex since, in  addition to internal circuits,  it must
+               also  perform some  measure of  external  routing and  may
+               additionally support external traffic which passes through
+               the interface, but which is not terminated (in the view of
+               the external network) there.
+
+               In  a network  with centralized  control,  all routing  is
+               deferred to the control of the Supervisor, which also pro-
+               vides  centralized accounting  and diagnostic  collection.
+               Use is also  made of the Supervisor's  ability to validate
+               requests  and  to  permit or  reject  certain  connections
+               (Closed User Groups).
+
+          E)   External Communications
+
+               Each logical interface  may require some sort  of hardware
+               driver  (although this  is not  strictly necessary)  which
+               could imply  loss of security  (memory violation  of other
+               jobs)  for each  new  interface  generated.  However,  the
+               majority of  drivers would seem to  fall into one  of four
+               communication  classes:   asynchronous,  synchronous,  bit
+               stuffing (SDLC), and channel or  alternately, some sort of
+               special  I/O device  driver (printer,  disk, etc.).   ISIS
+               supports drivers for all these devices.  The value of cen-
+               tralized hardware  drivers, although  less efficient  than
+               allowing each process to drive  its own devices, outweighs
+               efficiency considerations.   The inter-process  protection
+               afforded, the ability  to change or share  devices without
+               rewriting each process using that  device, and the lack of
+               specialized knowledge  (on the part  of the  process) make
+               the processes much easier to develop.  Details of specific
+               logical  interfaces relate,  not  to  the actual  transfer
+               mechanism used, but  to the buffer format,  a detail which
+               is protectable, under the MAC,  from inter-process corrup-
+               tion.   An interface  which corrupts  its buffer  handling
+               hurts only itself, not  the hardware, or the  other inter-
+               faces with which  it is sharing the  hardware.  Thus, each
+               interface is constrained to  request actual data transfers
+               from the drivers, through the Kernel.
+
+
+
+
+
+
+
+
+
+
+                                              Network Software    Page 37
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 4.0 NETWORK CONTROL CENTER COMPONENTS          _____________________________________________
+
+
+          The NCC  hardware configuration  consists of  a combination  of
+          TYMNET Engines  in the  private network  with special  ISIS job
+          slots, and limited support from NCC programs running on a Tyms-
+          hare PDP-10 through a network gateway from TYMNET.
+
+          The purpose  of the NCC system  is to provide a  monitoring and
+          control facility for the customer's network.
+
+
+          SECTION 4.1 Accounting          ______________________
+
+
+          The accounting function of  the NCC consists of  a process run-
+          ning on an ISIS node.
+
+          The Raw Accounting  Merger (RAM) program runs in a  job slot on
+          an ISIS node.  RAM collects accounting information from network
+          Supervisor nodes,  sorts the information into  complete session
+          records, and records them on magnetic tape.  For more detail on
+          this program refer to the RAM User's Guide.                                    ________________
+
+
+          SECTION 4.2 User Validation          ___________________________
+
+
+          The user validation programs are used to  add a new user to the
+          CUD or  to modify the  information concerning an  existing user
+          entry in  the CUD.  The  ISIS Validation Program  (VAL) updates
+          the CUD residing on a network  Supervisor node and copies these
+          updates to  the MUDs for  the other network  Supervisors.  This
+          program     is      described     in     detail      in     the
+          ISIS_Validation_Program_(VAL)_User's_Guide.          ____ __________ _______ _____ ______ _____
+
+
+          SECTION 4.3 Network Assembler and Debugger          __________________________________________
+
+
+          The Network Assembler  and Debugger (NAD) is  a cross assembler
+          used to assemble, load, and debug  network code running on TYM-
+          NET  Engines.  Normally,  NAD is  used to  create binary  files
+          which are then loaded by the LOADII program.
+
+          NAD also  provides the  user with the  ability to  log in  to a
+          debug module in  any network node.   The symbol table  is main-
+          tained on  the NCC  host computer and  thus accessible  to NAD.
+          Using the symbol table and the circuit to the network node, the
+          user has  the ability to  perform online symbolic  debugging in
+          any network node which runs on a TYMNET Engine.
+
+
+
+
+                                Network Assembler and Debugger    Page 38
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          This program is currently only available  on a TYMNET host com-
+          puter.   A detailed  description of  NAD  can be  found in  the
+          ISIS_Programmers_Reference_Manual.          ____ ___________ _________ ______
+
+
+          SECTION 4.4 Downline Loader          ___________________________
+
+
+          The program LOADII which  runs on the NCC can be  used to down-
+          line load or upline  dump network nodes.  This  program is cur-
+          rently only available on a TYMNET host computer.  The operation
+          of  this program  is explained  in  more detail  in the  LOADII                                                                   ______
+          User's_Guide.          ______ _____
+
+
+          SECTION 4.5 Network Simulator (SIMNET)          ______________________________________
+
+
+          SIMNET is a model of a TYMNET network which is designed to help
+          the user configure  their network through optimal  placement of
+          nodes and lines.  This program only runs  on a TYMNET host com-
+          puter.  It  is used  mostly for  monitoring network  growth and
+          planning for network expansion.  It is not a real-time model of
+          the  network but  runs from  a session  file which  is used  to
+          describe network  traffic.  Typically, this  session file  is a
+          derivative of  the network  accounting information  produced by
+          the Accounting Merger program on the NCC host computer.
+
+          The Network Simulator gives you the  ability to make trial net-
+          work configuration changes, try  them out with a  fully config-
+          ured network, and then try taking  different links or nodes out
+          of the network to determine what  would actually happen to net-
+          work  traffic  if  that  event   really  occurred.   SIMNET  is
+          described in more detail in supporting documentation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                    Network Simulator (SIMNET)    Page 39
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 5.0 AREAS OF REPONSIBILITY          __________________________________
+
+
+
+
+          SECTION 5.1 Tymshare          ____________________
+
+
+          It is the  responsibility of Tymshare to  perform the following
+          tasks:
+
+          o  Install hardware  and software systems  as described  in the
+             Pilot Test Procedure.
+
+          o  Install additional  hardware and software systems  which are
+             ordered  by the  customer according  to  the guidelines  set
+             forth in the delivery and installation agreement.
+
+          o  Provide classes for  customer personnel as set  forth in the
+             training procedures  agreement.  These classes  are intended
+             to teach customer  personnel the  TYMNET software  architec-
+             ture, the  hardware architecture of  the TYMNET  Engine, and
+             the skills needed to maintain and operate a private network.
+
+          o  Assist the  customer in  performing the  Pilot Test  and the
+             Acceptance Tests.
+
+          o  Make any changes necessary to systems  installed in the net-
+             work so that these systems meet the Network Specifications.
+
+          o  Tymshare will provide ongoing procedures that allow the cus-
+             tomer to keep current on Tymshare hardware/software.
+
+              (1) Distribution and installation of software releases.
+              (2) Distribution and installation of software patches.
+              (3) System generation procedures
+              (4) Problem  reporting  procedures   for  hardware/software
+                  problems.
+              (5) A procedure for requesting software enhancements.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                      Tymshare    Page 40
+
+
+
+          Network Specifications                            July 11, 1980
+
+
+
+          SECTION 5.2 Customer          ____________________
+
+
+          It is the responsibility of the customer to perform the follow-
+          ing tasks:
+
+            o  Prepare sites for the installation of network equipment in
+               accordance with Tymshare's written specifications at least
+               thirty calendar days before the installation date.
+
+            o  Provide  all communication  line  facilities, modems,  and
+               host ports needed to  implement the pilot network  as con-
+               figured in the  Pilot Test Procedure, and,  thereafter, as
+               mutually agreed to by the customer and Tymshare.
+
+            o  Perform,  with the  aid of  Tymshare, the  Pilot Test  and
+               Acceptance Tests.   The customer will supervise  the Pilot
+               Test and Acceptance  Tests and may request  the assistance
+               of Tymshare in performing these tests.
+
+            o  Provide all the operational functions required by the net-
+               work such as operation of the Network Control Center, user
+               validation, communication  line maintenance,  and software
+               generation and loading.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                      Customer    Page 41
+
+
+   -&*˜
