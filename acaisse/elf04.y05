@@ -1,0 +1,560 @@
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+        
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  1  OF  2
+        ==================================================================
+        DESCR FILE   :  ELF04.Y05
+        PRODUCT ID   :  ELF                    VERSION:  04.05
+        PRODUCT NAME :  Engine Load Facility
+        RELEASED BY  :  Nancy Holt                DATE:  Mar 08, 1990
+        ==================================================================
+        
+
+        A)   DESCRIPTION OF PROGRAM CORRECTIONS: (INCLUDE NSR NUMBERS)
+
+        A.1  REFERENCE PREVIOUS RELEASE: 04.04
+
+        A.2  NSR 584 - An error in the Create command which caused the error
+             message "Data error with file header" has been fixed. It
+             occurred when the Create command was interrupted with an escape.
+
+        A.3  NSR 693 - An error in use of tape file in both the Copy and
+             Create commands has been fixed.
+
+        A.4  NSR 793 - A time out has been added to the wait for
+             acknowledgement of the start up message in the Load Node
+             command. In version 4.00, if an acknowledgement was not
+             received, the user needed to interrupt the command with an
+             escape.
+
+        A.5  NSR 808 - A change was made to insure that the auxiliary circuit
+             used by the Load, Dump, Restart and Create command was cleared
+             whenever the user circuit was cleared.
+
+        A.6  NSR 887 - A change was made to eliminate a range error which
+             occurred when a Load command was interrupted with an escape.
+
+        A.7  A problem with copying large files from tape to disk has been
+             fixed. The checksums for the data records was not being saved.
+
+	A.8  Corrects defects in Load Slot command where more than two
+	     segments were loaded with a single DDT W command. This
+	     caused the entire engine to crash. The Load Slot command
+	     is now limited to load no more than two segments for each
+	     W command.
+
+	A.9  NSR 2851 - Changes CMF SUBNETWORK prompt to PARTITION,
+	     CLUSTER prompt to CLUSTER (OR NODE) and USERNAME ,HOST
+	     prompt to USERNAME (:HOST).
+
+	A.10 Corrected defect in the Create command to allow building
+	     curcuit to UNIX system through X.25 interface. A Leave
+	     Deferred Echo Mode message is initially sent to the X.25
+	     interface.
+
+	A.11 NSR 1607 - Corrected Locate command to use all eight disk
+	     units.
+
+        =================================================================
+                     TYMNET NETWORK TECHNOLOGY DIVISION
+        
+                       SOFTWARE RELEASE DESCRIPTION       PAGE  2  OF  2
+        ==================================================================
+        DESCR FILE   :  ELF04.Y05
+        PRODUCT ID   :  ELF                    VERSION:  04.05
+        PRODUCT NAME :  Engine Load Facility
+        RELEASED BY  :  Romolo Raffo              DATE:  Mar 08, 1990
+        ==================================================================
+        
+        B)   CHANGES TO EXTERNAL FUNCTIONS (INCLUDE SCR NUMBERS) VISIBLE TO
+             THE USER (I.E. PERFORMANCE, FUNCTION, ETC.):
+
+        B.1  The ability to load TYMSTAR nodes has been added. A new command,
+             Load Tymstar has been added. It functions like the Load Node
+             command with the addition of a prompt for the Target Node
+             number. An alternative command Load Node Tymstar has also been
+             included.
+
+        B.2  The Load Node MXP command can also be entered as Load Mxp.
+
+        B.3  If the second parameter in the Load Node Mxp and Load Node
+             Tymstar commands is incorrectly entered, the error message
+             "Unrecognized command parameter" is displayed.
+
+        B.4  Correct recognition of Mag Tape after release from other slot.
+
+	B.5  Add access to UNIX files for create commands.  If the user
+	     enters a UNIX username to the CMF USERNAME prompt, files
+	     transfered will be from UNIX directory.  (See E summary of
+	     TESTS below for user interface and protocol information).
+	     Compatible with Netport version 2.00 only.  PIR 2752.
+
+        C)   CHANGES TO INTERNAL FUNCTIONS (INCLUDE SCR NUMBERS) INVISIBLE TO
+             THE USER WHICH CAN AFFECT OTHER INTERFACE CODES:
+
+        C.1  None
+
+
+        D) CHANGES TO SYSTEM GENERATION PARAMETERS:
+
+        D.1  The sample command and parameter files (elf04.c05 and elf04.t05)
+	     have been modified to use Pascal Nucleus 12.03 rather than
+ 	     10.07. When updating to use 12.03, both the command and the
+	     parameter files MUST be changed.
+
+	D.2 NSR 2926 - To use the ELF Backup Facility, the user name
+	    ELFBACKUP must be validated in the network. It must be
+	    validated with the colon option (answer NO to "ignore host?"
+	    in Netval).  Its access profile must allow origination from
+	    all the ELF hosts, and must allow all the hosts to be
+	    destinations.
+
+        E)   RELIABILITY OF THE RELEASE: (SUMMARY OF TESTS, DEFICIENCIES)
+
+        E.1  Alphatested in Bubbnet.
+
+		ELF 4.05/Netport 2.00 Tested as follows
+
+	Purpose:  To test protocol between ELF 4.05 and Netport 2.00 and verify
+	  functionality of NODE merge and slot object copies by Netport
+	  from CMF and UNIX to ELF.  Also, test username COMMON protocol.
+
+	Network tested in:  BUBBNET
+
+	Installation as tested:
+	  ELF 4.04 - slot 1 on node 2100, host 806
+	  ELF 4.05 - slot 1 on node 2115, host 805
+
+	  Netport 2.00 on CALVIN
+
+	  CMF structure for file copies:
+			NETWORK:  comnet
+			PARTITION:  c3
+			NODE:  2650
+			PROCESSOR:  p000
+			DIRECTORIES/SLOTS:
+				isis:  image file compiled for 11.01
+				s00:   node image file compiled for tii 5.44
+				s01:   slot 1 image file compiled for NEM 4.11
+				s02:   slot 2 image file compiled for NETVAL 6.03
+				s02.i: slot 2 image file compiled for NVDM 6.03
+
+				merge: slots isis, s00 and s01
+
+
+	Test Objective A:  Netport 2.00 backward compatible with ELF prior to 4.05
+
+	Host 806, ELF 4.04
+
+	1.  Copy CMF slot file from CALVIN
+		Enter CREATE slot command
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  COMMON
+		    password:  (CR)
+			answer NO to want defaults,
+			change slot from s02 to s01
+			check command copies file
+
+			Expected command sequence:
+			: create slot
+			DEVICE UNIT ID: d0
+			FILE ID:
+			slot 1 on n 2650
+			CMF HOST USERNAME ( :HOST ): calvin
+			PASSWORD: 
+			BUILDING CIRCUIT TO CMF HOST 
+			CIRCUIT BUILT TO CMF HOST
+			CMF USERNAME: common
+			PASSWORD: 
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet 
+			  PARTITION        : c3 
+			  CLUSTER (or NODE): nd2650 
+			  PROCESSOR        : p000 
+			  SLOT             : s02 
+			DO YOU WANT IT? RESPOND YES FOR DEFAULTS,NO OTHERWISE:  ? n
+			ENTER NETWORK           ( OR (CR) FOR comnet)
+			   NAME:  
+			ENTER PARTITION         ( OR (CR) FOR c3)
+			   NAME:  
+			ENTER CLUSTER (or NODE) ( OR (CR) FOR nd2650)
+			   NAME:  
+			ENTER PROCESSOR         ( OR (CR) FOR p000)
+			   NAME:  
+			ENTER SLOT              ( OR (CR) FOR s02)
+			   NAME:  s01
+			TRANSFER STARTING
+
+
+	2.  Copy CMF node file from CALVIN with compression
+		Enter CREATE node command
+		Respond 'NO' to IMAGE format
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  COMMON
+		    password:  (CR)
+			change defaults node to nd2345
+			check command copies file
+			Expected command sequence:
+			: create node
+			DEVICE UNIT ID: d0
+			SHOULD FILE BE WRITTEN IN IMAGE FORMAT ? n
+			FILE ID:
+			node 2345
+			CMF HOST USERNAME ( :HOST ): calvin
+			PASSWORD: 
+			BUILDING CIRCUIT TO CMF HOST 
+			CIRCUIT BUILT TO CMF HOST
+			CMF USERNAME: common
+			PASSWORD: 
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet
+			  PARTITION        : c3
+			  CLUSTER (or NODE): nd2650
+			  PROCESSOR        : p000
+			DO YOU WANT IT? RESPOND YES FOR DEFAULTS,NO OTHERWISE:  ? n
+			ENTER NETWORK           ( OR (CR) FOR comnet)
+			  NAME:  
+			ENTER PARTITION         ( OR (CR) FOR c3)
+			  NAME:  
+			ENTER CLUSTER (or NODE) ( OR (CR) FOR nd2650)
+			  NAME:  nd2345
+			ENTER PROCESSOR         ( OR (CR) FOR p000)
+			  NAME:  
+			TRANSFER STARTING
+
+	Test Objective B:  ELF 4.05 to Netport 2.00 protocol to copy CMF files
+		 and use of name COMMON only on CMF, not a UNIX user
+		 (expect prompts for COMMON username to be CMF defaults)
+
+	Host 805, ELF 4.05
+
+	1.  Copy CMF slot file from CALVIN defaults for COMMON
+		 Enter CREATE slot command
+		 CMF hostname: CALVIN
+		     password: CR
+		 CMF username: COMMON
+		     password: CR
+			 use defaults, check command copies file
+			 Expected command sequence:
+  			: create slot
+  			DEVICE UNIT ID:  d1
+  			FILE ID:
+  			slot 2 on n 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet
+			  PARTITION        : c3
+			  CLUSTER (or NODE): nd2650
+			  PROCESSOR        : p000
+			  SLOT		   : s02
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE:? y
+			TRANSFER STARTING
+
+	2.  Copy CMF slot file from CALVIN, change COMMON defaults
+		 Repeat above CREATE slot command
+		 Except:  select NO to defaults,
+			re-enter slot as s02.i
+			Expected defaults entry sequence:
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE:? n
+			ENTER NETWORK           ( OR (CR) FOR comnet)
+			   NAME:  
+			ENTER PARTITION         ( OR (CR) FOR c3)
+			   NAME:  
+			ENTER CLUSTER (or NODE) ( OR (CR) FOR nd2650)
+			   NAME:  
+			ENTER PROCESSOR         ( OR (CR) FOR p000)
+			   NAME:  
+			ENTER SLOT              ( OR (CR) FOR s02)
+			   NAME: s02.i
+
+	3.  Copy CMF node bound file in IMAGE format, use COMMON defaults
+		 Enter CREATE node command
+		 Respond 'YES' to IMAGE format
+		 CMF hostname: CALVIN
+		     password: CR
+		 CMF username: COMMON
+		     password: CR
+			 use defaults, check command copies file
+			 Expected command sequence:
+  			: create node
+  			DEVICE UNIT ID:  d1
+  			SHOULD FILE BE WRITTEN IN IMAGE FORMAT? y
+  			FILE ID:
+  			node 2650 bound file
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet
+			  PARTITION        : c3
+			  CLUSTER (or NODE): nd2650
+			  PROCESSOR        : p000
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE:? y
+			TRANSFER STARTING
+
+	3.  Copy CMF node bound file compressed use COMMON defaults
+		 Repeat above
+		 Except answer NO to IMAGE format
+
+	Test Objective C:  ELF 4.05 to Netport 2.00 protocol to copy CMF files
+		 and use of name COMMON as both CMF and UNIX names
+		 (when COMMON is both expect prompt to select CMF or UNIX,
+		 selection of CMF, is followed by defaults prompts)
+
+		 	Answer YES, COMMON is CMF
+
+	Host 805, ELF 4.05
+
+	1.  Copy CMF slot file from CALVIN defaults for COMMON
+		 Enter CREATE slot command
+		 CMF hostname: CALVIN
+		     password: CR
+		 CMF username: COMMON
+		     password: CR
+			 use defaults, check command copies file
+			 Expected command sequence:
+  			: create slot
+  			DEVICE UNIT ID:  d1
+  			FILE ID:
+  			slot 2 on n 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			USER COMMON IS CMF AND UNIX, SELECT CMF OR UNIX
+			RESPOND YES TO SELECT CMF, NO FOR UNIX? y
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet 
+			  PARTITION        : c3 
+			  CLUSTER (or NODE): nd2650 
+			  PROCESSOR        : p000 
+			  SLOT             : s02 
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE? y
+			TRANSFER STARTING
+
+	2.  Copy CMF slot file from CALVIN, change COMMON defaults
+		 Repeat above CREATE slot command
+		 Except:  select NO to defaults,
+			re-enter slot as s02.i
+			Expected defaults entry sequence:
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE:? n
+			ENTER NETWORK           ( OR (CR) FOR comnet)
+			   NAME:  
+			ENTER PARTITION         ( OR (CR) FOR c3)
+			   NAME:  
+			ENTER CLUSTER (or NODE) ( OR (CR) FOR nd2650)
+			   NAME:  
+			ENTER PROCESSOR         ( OR (CR) FOR p000)
+			   NAME:  
+			ENTER SLOT              ( OR (CR) FOR s02)
+			   NAME: s02.i
+
+	3.  Copy CMF node bound file in IMAGE format, use COMMON defaults
+		 Enter CREATE node command
+		 Respond 'YES' to IMAGE format
+		 CMF hostname: CALVIN
+		     password: CR
+		 CMF username: COMMON
+		     password: CR
+			 use defaults, check command copies file
+			 Excpected command sequence:
+  			: create node
+  			DEVICE UNIT ID:  d1
+  			SHOULD FILE BE WRITTEN IN IMAGE FORMAT? y
+  			FILE ID:
+  			node 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			USER COMMON IS CMF AND UNIX, SELECT CMF OR UNIX
+			RESPOND YES TO SELECT CMF, NO FOR UNIX? y
+			YOUR DEFAULT FILE IS  :
+			  NETWORK          : comnet 
+			  PARTITION        : c3 
+			  CLUSTER (or NODE): nd2650 
+			  PROCESSOR        : p000 
+			DO YOU WANT IT,
+			RESPOND YES FOR DEFAULTS, NO OTHERWISE? y
+			TRANSFER STARTING
+
+	4.  Copy CMF node bound file compressed, use COMMON defaults
+		 Repeat above CREATE node command
+		 Except:  Respond 'NO' to IMAGE format
+
+	Test Objective D:  ELF 4.05 to Netport 2.00 protocol to copy UNIX files
+		 for COMMON username, selecting UNIX name, correct
+		 UNIX system password for COMMON must be entered
+		 (ELF prompts for UNIX files, not defaults)
+
+		 	Answer NO, COMMON is UNIX
+
+	Host 805, ELF 4.05
+
+	1.  Copy slot file from UNIX, use relative path
+		Enter CREATE slot command
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  COMMON
+		    password:  XXXXXXX
+			Expected command sequence:
+  			: create slot
+  			DEVICE UNIT ID:  d1
+  			FILE ID:
+  			slot 2 on n 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			USER COMMON IS CMF AND UNIX, SELECT CMF OR UNIX
+			RESPOND YES TO SELECT CMF, NO FOR UNIX? n
+  			IS FILE ENGINE CODE,ANSWER Y FOR ENGINE,NO FOR PICO? y
+  			UNIX FILE TO COPY: ../netval/2650/bb2650.ni2
+  			ENTER OBJECT FILE NAME: bb2650.ni2
+			TRANSFER STARTING
+
+	2.  Copy slot file from UNIX, path preceeded by ~
+		Repeat above upt ot UNIX FILE TO COPY
+			Expected command sequence:
+  			UNIX FILE TO COPY: ~net/elf2100/n01
+  			ENTER OBJECT FILE NAME: bb2100.n01
+			TRANSFER STARTING
+
+	3.  Copy node bound file from UNIX, use relative path
+		Enter CREATE slot command
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  COMMON
+		    password:  XXXXXXX
+		Equivalence file: common/../netval/bb2650.eq
+			Contents:
+				  2650/2650.nib  ff
+				  2650/2650.n00  00
+				  2650/2650.n01  01
+
+			Expected command sequence:
+  			: create node
+  			DEVICE UNIT ID:  d1
+  			SHOULD FILE BE WRITTEN IN IMAGE FORMAT? n
+  			FILE ID:
+  			node 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: common
+  			PASSWORD:
+			USER COMMON IS CMF AND UNIX, SELECT CMF OR UNIX
+			RESPOND YES TO SELECT CMF, NO FOR UNIX? n
+  			IS FILE ENGINE CODE,ANSWER Y FOR ENGINE,NO FOR PICO? y
+  			UNIX EQUIVALENCE FILE TO COPY: ../netval/bb2650.eq
+  			ENTER OBJECT FILE NAME: bb2650.bnd
+			TRANSFER STARTING
+
+	4.  Copy node bound file from UNIX, use path preceeded by ~
+		Repeat above to UNIX EQUIVALENCE FILE
+		Equivalence file: ~net/elf2100/elf.eq
+			Contents:
+				  nib  ff
+				  n00  00
+				  n01  01
+
+			Expected command sequence:
+  			UNIX EQUIVALENCE FILE TO COPY: ~net/elf2100/elf.eq
+  			ENTER OBJECT FILE NAME: bb2100.bnd
+			TRANSFER STARTING
+
+	Test Objective E:  ELF 4.05 to Netport 2.00 protocol to copy UNIX files
+		 from UNIX username NET, name is only a UNIX user,
+		 correct password of UNIX user must be entered
+		 (ELF prompts only for UNIX files)
+
+	Host 805, ELF 4.05
+
+	1.  Copy slot file from UNIX
+		Enter CREATE slot command
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  NET
+		    password:  XXXXXXX
+			Expected command sequence:
+  			: create slot
+  			DEVICE UNIT ID:  d1
+  			FILE ID:
+  			slot 2 on n 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: net
+  			PASSWORD:
+  			IS FILE ENGINE CODE,ANSWER Y FOR ENGINE,NO FOR PICO? y
+  			UNIX FILE TO COPY: ~common/../netval/2650/bb2650.ni2
+  			ENTER OBJECT FILE NAME: bb2650.ni2
+			TRANSFER STARTING
+
+
+	2.  Copy node bound file from UNIX
+		Enter CREATE slot command
+		CMF hostname:  CALVIN
+		    password:  (CR)
+		CMF username:  NET
+		    password:  XXXXXXX
+		Equivalence file: common/../netval/bb2650.eq
+			Expected command sequence:
+  			: create node
+  			DEVICE UNIT ID:  d1
+  			SHOULD FILE BE WRITTEN IN IMAGE FORMAT? n
+  			FILE ID:
+  			node 2650
+  			CMF HOST USERNAME ( :HOST): calvin
+  			PASSWORD:
+  			BUILDING CIRCUIT TO CMF HOST
+  			CIRCUIT BUILT TO CMF HOST
+  			CMF USERNAME: net
+  			PASSWORD:
+  			IS FILE ENGINE CODE,ANSWER Y FOR ENGINE,NO FOR PICO? y
+  			UNIX EQUIVALENCE FILE TO COPY: ~common/../netval/bb2650.eq
+  			ENTER OBJECT FILE NAME: bb2650.bnd
+			TRANSFER STARTING
+
+	Test Objective F:  Netport 2.00 installed outside CMF as UNIX
+	
+	Create Standard UNIX name for Netport,
+	remove from CMF installation.
+	Install Netport program in standard UNIX home
+	directory of username NETPORT then repeat
+	Test Objectives D and E.
+
+	Test Objective G:  Load slot with file copied from CALVIN to ELF 4.05
+		 
+		 Verify slot loads and comes up
+
+	Test Objective H:  node with file copied from CALVIN to ELF 4.05
+		 
+		 Verify node loads and comes up
+        ==================================================================
+
+    1d+JÁ
