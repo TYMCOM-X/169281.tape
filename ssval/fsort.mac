@@ -1,0 +1,251 @@
+SUBTTL  SORT
+
+        ARGP==  1               ; ARGUMENT POINTER
+        FD==    2               ; CHILD FRAME DESCRIPTOR
+        T1==    3               ; TEMPS
+        T2==    4
+        T3==    5
+        P1==    6
+        P==    17               ; STACK POINTER
+
+        ENTRY   SORT
+
+SORT:   MOVE    ARGP,16         ; GET ADDRESS OF ARGUMENT
+        PUSHJ   P,CREFRM        ; CREATE A FRAME
+        POPJ    P,              ; CANNOT CREATE FRAME, RETURN
+        PUSHJ   P,WTF           ; WRITE TEMP DISK FOR CHILD
+        JRST    RTN3            ; CANNOT WRITE FILE, CLEANUP AND RETURN
+        PUSHJ   P,GIVTTY        ; GIVE TTY TO CHILD FRAME
+        JRST    RTN3
+        PUSHJ   P,GETPRG        ; GET (SYS)SORT IN CHILD
+        JRST    RTN2
+        PUSHJ   P,STARTC        ; START CHILD FRAME
+        JRST    RTN1
+        PUSHJ   P,FWAIT         ; WAIT FOR CHILD FRAME TO HALT
+        JFCL                    ; TIME OUT
+        PUSHJ   P,CHKSTS        ; CHECK CHILD TERMINATION STATUS
+        JFCL
+RTN1:   PUSHJ   P,CLRFRM        ; CLEAR CHILD FRAME (TO GET WRITE RIGHT)
+        JFCL
+RTN2:   PUSHJ   P,TAKTTY        ; GET TTY BACK FROM CHILD
+        JFCL
+RTN3:   PUSHJ   P,KILFRM        ; KILL CHILD FRAME
+        JFCL
+        POPJ    P,
+
+CREFRM: MOVSI   T1,1            ; .FOCFM= 1
+        FRMOP   T1,[0]          ; DEFAULT ALL PARAMETERS
+        JRST    FOERR
+        MOVEM   T1,FD           ; SAVE FRAME DESCRIPTOR
+        MOVE    T1,[400,,1]     ; WAIT FOR CHILD TO HALT OR 1 mS
+        HIBER   T1,             ; CLEAR "CHILD HALTED" CONDITION
+        JFCL
+        MOVEI   T1,7            ; SETUP HSB LENGTH COUNT
+        MOVEM   T1,FRMHSB
+        MOVE    T1,FD
+        HRLI    T1,23           ; .FOHST= 23
+        FRMOP   T1,FRMHSB       ; READ INITIAL HALT STATUS
+        JRST    FOERR
+        AOS     (P)
+        POPJ    P,
+
+GETPRG: MOVE    T1,FD
+        HRLI    T1,32           ; PREPARE TO DO THE GET COMMAND (.FOGET= 32)
+        FRMOP   T1,PRGBLK       ; GET COMMAND
+        JRST    FOERR
+        PUSHJ   P,FWAIT         ; WAIT
+        POPJ    P,
+        MOVE    T1,FRMHSB+1     ; GET CLASS,,TYPE
+        CAME    T1,[4,,4]       ; [HC.EXI,,HT.JSU]
+        JRST    HSERR
+        AOS     (P)
+        POPJ    P,
+
+STARTC: HRRE    T2,[-2]         ; CCL START ADDRESS (SV.CCL= -2)
+        MOVE    T1,FD
+        HRLI    T1,22           ; .FOSVA= 22
+        FRMOP   T1,T2           ; START AT VECTOR ADDRESS
+        JRST    FOERR
+        AOS     (P)
+        POPJ    P,
+
+CLRFRM: MOVE    T1,FD           ; CLEAR CHILD FRAME
+        HRLI    T1,14           ; .FOCLR= 14
+        FRMOP   T1,             ; REQUEST CHILD TO CLEAR
+        JRST    FOERR
+        PUSHJ   P,FWAIT         ; WAIT FOR FRAME TO CLEAR
+        POPJ    P,
+        AOS     (P)
+        POPJ    P,
+
+KILFRM: MOVE    T1,FD           ; TERMINATE THE CHILD FRAME
+        HRLI    T1,33           ; .FORUN= 33
+        FRMOP   T1,LOGOUT
+        JRST    FOERR
+        AOS     (P)
+        POPJ    P,
+
+FWAIT:  MOVSI   T1,400          ; WAIT FOR CHILD FRAME TO HALT
+        HIBER   T1,
+        JRST    FERR1
+        MOVS    T1,FD
+        HRRI    T1,0            ; .GTSTS= 0
+        GETTAB  T1,             ; GET CHILD'S RUN STATE
+        JRST    FERR2
+        JUMPL   T1,FWAIT        ; TRY AGAIN - STILL RUNNING
+        MOVE    T2,FRMHSB       ; GET OLD HALT COUNT
+        MOVE    T1,FD
+        HRLI    T1,23           ; .FOHST= 23
+        FRMOP   T1,FRMHSB       ; READ HALT STATUS
+        JRST    FOERR
+        CAMN    T2,FRMHSB+2     ; DID COUNT INCREMENT?
+        SETOM   FRMHSB+1        ; SET CLASS,,TYPE = -1 FOR ^C(ASSUMED)
+        AOS     (P)
+        POPJ    P,
+FERR1:  MOVEI   T1,6            ; HIBER FAILED, SHOULD NEVER HAPPEN
+        JRST    FERR2+1
+FERR2:  MOVEI   T1,5            ; GETTAB FAILED (FRAME PROBABLY VANISHED)
+        MOVEM   T1,@MERR(ARGP)
+        POPJ    P,
+
+CHKSTS: MOVE    T1,FRMHSB+1     ; GET CLASS,,TYPE
+        CAMN    T1,[-1]         ; ^C
+        JRST    CKERR1
+        CAMN    T1,[4,,0]       ; [HC.EXI,,HT.EXI]
+        JRST    CKRTN
+        CAMN    T1,[4,,1]       ; [HC.EXI,,HT.EX1]
+        JRST    CKRTN
+        CAMN    T1,[4,,2]       ; [HC.EXI,,HT.FEX]
+        JRST    CKERR2
+HSERR:  HRRZM   T1,T2           ; SAVE ERROR CODE FROM HSB IN 1CCTT FORMAT
+        HLRZ    T1,T1
+        IMULI   T1,^D100
+        ADD     T1,T2
+        ADDI    T1,^D10000      ; HALT STATUS (CHILD FRAME HALTED UNEXPECTEDLY)
+        MOVEM   T1,@MERR(ARGP)
+        POPJ    P,
+CKERR1: MOVEI   T1,1            ; CHILD FRAME HALTED WITH NO HALT STATUS (^C)
+        MOVEM   T1,@MERR(ARGP)
+        POPJ    P,
+CKERR2: MOVE    T2,FRMHSB+6
+        MOVEM   T2,@PERR(ARGP)
+        JRST    HSERR
+CKRTN:  SETZM   @MERR(ARGP)     ; NORMAL TERMINATION - NO ERRORS
+        SETZM   @PERR(ARGP)
+        AOS     (P)
+        POPJ    P,
+
+FOERR:  ADDI    T1,^D20000      ; FRMOP FAILED, CODE IN eXXXX
+        MOVEM   T1,@MERR(ARGP)
+        POPJ    P,
+
+GIVTTY: HRRO    T1,FD           ; SOURCE,,TARGET
+        HRLOI   T2,(3B2)        ; USER MODE,,CMD PORT
+        JRST    TTYMOV
+
+TAKTTY: HRLO    T1,FD
+        HRLOI   T2,0            ; SAVED MODE,,CMD PORT
+
+TTYMOV: MOVEI   T3,T1
+        RETACH  T3,
+        JRST    TTYERR
+        AOS     (P)
+        POPJ    P,
+TTYERR: ADDI    T3,^D30000      ; RETACH UUO FAILED, CODE IN eXXXX
+        MOVEM   T3,@MERR(ARGP)
+        POPJ    P,
+
+WTF:    MOVE    T1,FD           ; PREPARE TO MAKE TEMP DISK NAME
+        ANDI    T1,7777         ; ISOLATE ABSOLUTE FRAME NUMBER
+        MOVSI   T3,(SIXBIT "SOR")
+        MOVEI   P1,3            ; NUMBER OF DIGITS TO DO
+WTF1:   IDIVI   T1,12           ; GET DIGIT IN T2
+        ADDI    T2,20           ; CONVERT TO SIXBIT
+        LSHC    T2,-6
+        SOJG    P1,WTF1
+        MOVEM   T3,TMPNAM
+        HRLOI   T1,13           ; OPEN CHANNEL (.CHOPN= 13)
+        CHANIO  T1,OPNBLK
+        JRST    OCERR           ; OPEN CHANNEL ERROR
+        HRLI    T1,5            ; ENTER FILE (.CHENT= 5)
+        CHANIO  T1,TMPNAM
+        JRST    ENTERR          ; ENTER ERROR
+        MOVE    P1,OUTFIL(ARGP) ; GET ADDRESS OF OUTPUT FILE
+        MOVEI   T2,^D10         ; MAX OF FILENAME
+        PUSHJ   P,STROUT        ; WRITE OUTPUT FILENAME TO TEMP FILE
+        JRST    WTFERR          ; ERROR DURING TO FREE UP A BUFFER
+        MOVEI   T3,137          ; WRITE CHAR "_"
+        PUSHJ   P,CHROUT
+        JRST    WTFERR
+        MOVE    P1,INFIL(ARGP)  ; ADDRESS OF INPUT FILE
+        MOVEI   T2,^D10
+        PUSHJ   P,STROUT        ; WRITE INPUT FILENAME TO TEMP FILE
+        JRST    WTFERR
+        MOVE    P1,CMD(ARGP)    ; GET ADDRESS OF DATA
+        SETO    T2,
+        PUSHJ   P,STROUT
+        JRST    WTFERR
+        HRLI    T1,0            ; RELEASE CHANNEL (.CHREL= 0)
+        CHANIO  T1,
+        AOS     (P)
+        POPJ    P,
+OCERR:  MOVEI   T1,2            ; OPEN FAILURE FOR DEVICE DISK
+        JRST    WTFERR
+ENTERR: MOVEI   T1,3            ; ENTER FAILURE FOR TEMP FILE (ON DISK)
+WTFERR: MOVEM   T1,@MERR(ARGP)
+        POPJ    P,
+
+STROUT: HRLI    P1,(POINT 7)    ; MAKE BYTE POINTER FOR OUTPUT STRING
+        ILDB    T3,P1           ; GET A CHARACTER
+        JUMPE   T3,STRRTN       ; RETURN IF CHAR IS NULL
+        CAIN    T3,40           ; SKIP IF NOT SPACE
+        JRST    STRRTN
+        PUSHJ   P,CHROUT        ; OUTPUT A CHAR
+        POPJ    P,              ; NON-SKIP RETURN
+        JUMPL   T2,STROUT+1
+        SOJG    T2,STROUT+1
+STRRTN: AOS     (P)             ; SKIP RETURN
+        POPJ    P,
+
+CHROUT: SOSG    OBCT            ; UPDATE BUFFER POINTER
+        JRST    CHR2            ; FLUSH OUTPUT BUFFER
+CHR1:   IDPB    T3,OBPTR        ; DEPOSIT BYTE
+        AOS     (P)
+        POPJ    P,
+CHR2:   HRLI    T1,15           ; .CHOUT= 15
+        CHANIO  T1,             ; OUTPUT DATA IN BUFFER TO TEMP FILE
+        JRST    CHR1            ; NORMAL RETURN
+        MOVEI   T1,4            ; ERROR CODE FOR OUTPUT ERROR
+        POPJ    P,              ; ERROR RETURN
+
+OPDEF   RETACH  [47B8   0,-135]
+INFIL== 0
+OUTFIL==1
+CMD==   2
+MERR==  3
+PERR==  4
+FRMHSB: BLOCK   10
+INTERN  FRMHSB
+LOGOUT: XWD     1,3
+        SIXBIT  /SYS/
+        0
+        SIXBIT  /LOGOUT/
+OPNBLK: 0
+        SIXBIT  /DSK/
+        XWD     OBUF,0
+OBUF:   0
+OBPTR:  0
+OBCT:   0
+TMPNAM: 0
+        SIXBIT  /TMP/
+        0
+        0
+PRGBLK: 5
+        SIXBIT  /DSK/
+        XWD     1,4
+        SIXBIT  /SORT/
+        0
+        0
+
+        END
+ 
