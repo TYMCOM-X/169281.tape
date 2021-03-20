@@ -1,0 +1,4033 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                ISIS Asynchronous TYMCOM
+                                    Reference Manual
+
+                                    January 4, 1983
+                                       Version 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     Tymshare, Inc.
+
+                              Network Technology Division
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        PREFACE
+
+
+
+
+          This manual is designed to aid the user in tailoring an ISIS Asynch-
+          ronous TYMCOM to  meet the needs of his environment.   The manual is
+          organized in nine major sections.
+
+          The first  section provides background on  the basic functions  of a
+          TYMCOM and an introduction to the remainder of the manual.
+
+          The second  section describes  the TYMCOM options  that are  used to
+          define the hardware environment in which  the TYMCOM will be operat-
+          ing.
+
+          The third  section describes options  that affect  the accessibility
+          and functions of the TYMCOM Operations Manager.
+
+          The fourth section describes global options for the TYMCOM software.
+
+          The fifth section describes host level  options for the TYMCOM soft-
+          ware.
+
+          The sixth  section describes  subhost level  options for  the TYMCOM
+          software.
+
+          The  seventh section  describes port  level options  for the  TYMCOM
+          software.
+
+          The eighth section is a summary of all the options that may be spec-
+          ified for a TYMCOM.
+
+          The  ninth  section  contains  a  sample  ISIS  Asynchronous  TYMCOM
+          Tymfile.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+                                        CONTENTS                                        ________
+
+
+          1.0 INTRODUCTION ................................................. 1
+
+             1.1 Overview .................................................. 1
+
+             1.2 Signal Protocol ........................................... 2
+
+                1.2.1 Software Signal Protocol ............................. 2
+
+                1.2.2 Hardware Signal Protocol and Cable Options ........... 4
+
+             1.3 Format .................................................... 6
+
+             1.4 Syntax .................................................... 7
+
+                1.4.1 Message Text Syntax .................................. 7
+
+                1.4.2 Parameter Value Syntax ............................... 8
+
+          2.0 HARDWARE OPTIONS ............................................. 9
+
+             2.1 Number of Async Logical Units (NALU) ...................... 9
+
+             2.2 Number of SIO Port Logical Units (NMLU) ................... 9
+
+             2.3 TYMNET Node Code Level (TYMNET) .......................... 10
+
+          3.0 TOM OPTIONS ................................................. 11
+
+             3.1 Number of TOM Users (MUTOM) .............................. 11
+
+             3.2 Number of Minutes Between Timestamp (TOMTR) .............. 11
+
+             3.3 TOM Time Zone (TOMTZ) .................................... 12
+
+             3.4 NHA Message Repetition Rate (NHAMT) ...................... 12
+
+             3.5 TOM Change License Password (TOMPW) ...................... 13
+
+             3.6 TOM Command Level (TOMCL) ................................ 13
+
+             3.7 TOM Good Guy (TOMGG) ..................................... 14
+
+          4.0 GLOBAL OPTIONS .............................................. 15
+
+             4.1 Port Number Radix (PNRADX) ............................... 15
+
+             4.2 Message Text (MTEXT) ..................................... 15
+
+             4.3 Project Code Accounting (PCODE) .......................... 17
+
+          5.0 HOST OPTIONS ................................................ 18
+
+
+                                                                        Page i
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+             5.1 Host Number (HST) ........................................ 18
+
+             5.2 Subhost Index Starting Position (SINDXP) ................. 18
+
+          6.0 SUBHOST OPTIONS ............................................. 19
+
+             6.1 Subhost Definition (SHST) ................................ 19
+
+             6.2 Switch Options (SOPT) .................................... 20
+
+                6.2.1 Character Echo (ECHO) ............................... 20
+
+                6.2.2 Echo of Linefeed (ELFCR) ............................ 21
+
+                6.2.3 Echo of Carriage Return (ECRLF) ..................... 21
+
+                6.2.4 Echo of Control I (ECTLI) ........................... 21
+
+                6.2.5 Echo of Control H (ECTLH) ........................... 21
+
+                6.2.6 Carriage Return Delay (CRDLY) ....................... 21
+
+                6.2.7 Echo Half Duplex (LCTLH) ............................ 22
+
+                6.2.8 Send Gobbler on Break (BKGOB) ....................... 22
+
+                6.2.9 Disconnect on Break (BKDSC) ......................... 22
+
+                6.2.10 TIC on Fixed Speed Ports (TICAP) ................... 22
+
+                6.2.11 ISIS Needle Sent to Host (GINDL) ................... 23
+
+                6.2.12 Username Passed to Host (GUNAM) .................... 23
+
+                6.2.13 Ring Toggle (RNGTG) ................................ 23
+
+                6.2.14 Ring Drop (RNGDR) .................................. 24
+
+                6.2.15 Release Port if Drop Not Acknowledged (RLSPT) ...... 24
+
+                6.2.16 Capitalize Output from Terminal (CAPFT) ............ 24
+
+                6.2.17 Capitalize Output from Host (CAPFH) ................ 24
+
+                6.2.18 Buffer Zap Messages (BZAPM) ........................ 24
+
+             6.3 Single Value Options ..................................... 25
+
+                6.3.1 Parity Bit Value (PARITY) ........................... 25
+
+                6.3.2 Delay after DTR Raised (DTRP) ....................... 25
+
+                6.3.3 Seconds to Ring Before Disconnect (RINGTO) .......... 26
+
+
+
+                                                                       Page ii
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+                6.3.4 Host Drop Wait in Seconds (HDROP) ................... 26
+
+                6.3.5 Minutes of Inactivity Before Drop (INACT) ........... 26
+
+                6.3.6 Break Sent to Host (BKSND) .......................... 27
+
+                6.3.7 End of Transmission Character (EOTC) ................ 27
+
+                6.3.8 Host Transparency Mode (HETM) ....................... 28
+
+                6.3.9 Terminal Transparency Mode (UETM) ................... 28
+
+                6.3.10 Character Preceding Special Characters (CTLESC) .... 28
+
+                6.3.11 Abnormal Disconnect Message Text (ABNDM) ........... 29
+
+                6.3.12 Login String Sent to Host (LOGINS) ................. 30
+
+             6.4 Multiple Value Options ................................... 30
+
+                6.4.1 Backpressure of Host Output (XON) ................... 30
+
+                6.4.2 Backpressure of TYMCOM Output (RXON) ................ 31
+
+                6.4.3 Host Backpressure Using Polling (POLFLO) ............ 31
+
+                6.4.4 Host Deferred Echo Mode (HOSTDE) .................... 32
+
+                6.4.5 Host Control of Echo (HOSTEC) ....................... 32
+
+                6.4.6 Terminal Control of Echo (TERMEC) ................... 33
+
+                6.4.7 2741 Transparency Mode (T2741) ...................... 33
+
+             6.5 Variable Multiple Value Options .......................... 33
+
+                6.5.1 User Disconnect Characters (UDCHAR) ................. 34
+
+                6.5.2 Characters That Initiate Gobblers (GOBBLE) .......... 34
+
+                6.5.3 Characters Filtered from Terminal (FLTRFT) .......... 35
+
+                6.5.4 Characters Filtered from Host (FLTRFH) .............. 35
+
+                6.5.5 Characters to Echo in Deferred Echo Mode (DEMEC) .... 35
+
+                6.5.6 Terminal Identification Characters (STIC) ........... 36
+
+                6.5.7 Login from Node Not Allowed (BARNOD) ................ 37
+
+                6.5.8 Login from Node Allowed (OKNODE) .................... 37
+
+          7.0 PORT OPTIONS ................................................ 39
+
+
+
+                                                                      Page iii
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+             7.1 Port Numbers (PN) ........................................ 39
+
+             7.2 Port Terminal Types Allowed (PTYP) ....................... 40
+
+             7.3 Port Speed (PSPD) ........................................ 41
+
+             7.4 Port Candidate Type (PCAN) ............................... 42
+
+          8.0 TYMCOM OPTIONS SUMMARY ...................................... 43
+
+          9.0 SAMPLE TYMCOM TYMFILE ....................................... 47
+
+          Index ........................................................... 51
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                       Page iv
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 1.0 INTRODUCTION          ________________________
+
+          This manual describes the  features available on the  ISIS Asynchro-
+          nous TYMCOM.  The features and options  described in this manual are
+          set at system generation.  Interactive access  to the TYMCOM when it
+          is  running is  provided  by the  TYMCOM  Operations Manager  (TOM).
+          Refer to the TOM User's Guide for details on the options that may be                       ________________
+          changed while the TYMCOM is running.
+
+          A concise sysgen command language has  been developed for the TYMCOM
+          which provides the user with complete  control over the tailoring of
+          the TYMCOM to suit his environment.   Most options have defaults and
+          need not be  specified unless they are to be  changed.  This feature
+          enables a user to create a TYMCOM  ranging from the fastest and most
+          efficient one, to  one well suited for a field  test environment, in
+          which all  options are specified to  allow high visibility  of minor
+          changes.
+
+
+          SECTION 1.1 Overview          ____________________
+
+          An ISIS Asynchronous TYMCOM  provides a set of  individual asynchro-
+          nous line interfaces to an attached  host computer.  It appears to a
+          host computer as a bank of  asynchronous dial-up modems or asynchro-
+          nous terminals, depending on the  configuration.  The TYMCOM runs in
+          a job slot on an ISIS node,  and communicates with the host computer
+          over asynchronous lines using asynchronous I/O cards (called asynch-
+          ronous ports) and SIO motherboard cards (called SIO ports).  Asynch-
+          ronous ports  use EIA RS-232 signal  protocol supporting 8 bit  or 5
+          bit characters.  SIO ports use EIA RS-232 signal protocol supporting
+          8 bit characters or using a subset of X.20 protocol supporting 5 bit
+          characters.
+
+          The speed a TYMCOM can support is selected in one of the two follow-
+          ing ranges:
+
+               (1)  50 - 75   baud Baudot
+                    75 - 1200 baud ASCII
+                    75 - 9600 baud SIO ASCII or Baudot
+
+                             or
+
+               (2)  300 - 4800 baud ASCII
+                    75  - 9600 baud SIO ASCII or Baudot
+
+          On heavily loaded machines the  overall throughput capability of the
+          slot may occasionally  limit the character rate  of individual ports
+          to less than  full capacity.  Also, the  origination (terminal), and
+          the network access to  it may limit the  overall throughput capabil-
+          ity.  The TYMCOM is normally located  on-site with the host computer
+          hardware.
+
+
+
+
+
+                                                        INTRODUCTION    Page 1
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Under TYMNET II, the TYMCOM allows  definitions of up to 128 network
+          hosts, though the Supervisor may restrict  this to a smaller number.
+          When operating under  TYMNET I, ISIS only allows one  host per slot,
+          limiting each TYMCOM to one host.
+
+          Up to 128 subhosts may be specified for the entire TYMCOM.  The num-
+          ber of subhosts  may be greater than  the total number of  ports, as
+          ports may be  reassigned dynamically by using  the TYMCOM Operations
+          Manager  (TOM) while  the  TYMCOM is  running  (see  the TOM  User's
+          Guide).
+
+          The ISIS  TYMCOM allows up  to a total  of 128 asynchronous  and SIO
+          ports to be specified.   Ports can be grouped in a  number of useful
+          ways, allowing  great flexibility.  For example,  asynchronous ports
+          and SIO ports can be configured on the same job slot.
+
+          The ISIS  TYMCOM provides  a stored message  facility that  allows a
+          customer to specify a message to be printed on user terminals when a
+          host is down, or when a port does not answer.
+
+          Many of  the ISIS  TYMCOM options may  be displayed  and manipulated
+          using the TOM, which is an  interactive monitoring and control proc-
+          ess within the TYMCOM.  The TOM  can be accessed through a hardwired
+          port on the TYMNET Engine or through a normal virtual circuit in the
+          network.
+
+
+          SECTION 1.2 Signal Protocol          ___________________________
+
+          The ISIS Asynchronous  TYMCOM  is designed to  communicate with host
+          computers at speeds of 75 to  4800 baud over asynchronous lines, and
+          at speeds of 75 to 9600 baud  using SIO lines employing certain sub-
+          sets of the EIA  RS-232C signal protocol and  X.20 signalling stand-
+          ards.  Some capabilities of these subsets are provided by the use of
+          various cable  pin configurations which  must be specified  when the
+          Engine hardware is ordered.  Some capabilities  are provided by TYM-
+          COM options chosen when the TYMCOM  software is generated.  Some may
+          be changed dynamically   while the TYMCOM is running, by  the use of
+          TOM  commands.   The  initial values  of these  dynamic options  are
+          chosen when the TYMCOM is generated.
+
+
+          1.2.1 Software Signal Protocol                ________________________
+
+          The TYMCOM  has the ability to  detect two control signals  from the
+          host, and to manipulate two control signals toward the host for each
+          port.   The control  signals that  are detected  and controlled  are
+          selected by the cable pin configuration on a port by port basis, and
+          are determined by the  mode in which the TYMCOM  will operate.  Nor-
+          mally, the TYMCOM is used as a  DCE (Data Circuit Terminating Equip-
+          ment), and appears to the host as  a bank of modems.  The TYMCOM can
+          also be used as a DTE (Data  Terminal Equipment), and will appear to
+          the host as several hardwired terminals.
+
+
+
+                                                        INTRODUCTION    Page 2
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          In the following description of the TYMCOM software signal protocol,
+          it is assumed  that the TYMCOM is  functioning as a DCE  using cable
+          option one (see below).  For ASCII ports,  the signals from the TYM-
+          COM are  DSR (Data  Set Ready)  and RI  (Ring Indicator).   If cable
+          option one is chosen, the signal from the host is DTR (Data Terminal
+          Ready).  Two leads  are present, but the  second is tied to  the DTR
+          lead.   The TYMCOM  software  actually uses  both  input signals  to
+          determine the  current signal state.  If  either signal is  low, the
+          signal state is considered low.  Both input signals must be high for
+          the signal state to be high.
+
+          Initially, with no call  active, DSR and RI are low,  and DTR may be
+          either low or high.  When the TYMCOM has  a call for a port, it will
+          set RI high, and will expect DTR to come high in response.  The TYM-
+          COM samples input signals approximately  every 50 milliseconds.  The
+          state of the input leads is the value in effect at the time the sam-
+          ple occurs.   Two consecutive matching  samples are  required before
+          the signal state is considered stable.   This requires that a change
+          in signal  state must  be presented  for more  than 50  milliseconds
+          before the TYMCOM will detect the change.
+
+          Several  TYMCOM  sysgen options  affect  this  stage of  the  signal
+          sequence, as follows:
+
+               - RINGTO specifies the number of seconds the TYMCOM will ring a
+                 port before disconnecting the user.
+
+               - RNGTG specifies  whether the  TYMCOM will  toggle ring  every
+                 half second,  or will keep  ring high throughout  the ringing
+                 period.
+
+               - PCAN specifies the procedure used to determine if a port is a
+                 candidate for ringing.  The two  candidate types are IFUP and
+                 SIGNAL.  An IFUP  port is considered available  unless it has
+                 been declared SHUT  or DOWN by a TOM command.   A SIGNAL port
+                 is considered availabnly when DTR is high,  and the port
+                 has not been declared SHUT or DOWN  by a TOM command.  Candi-
+                 date type may be changed dynamically while the TYMCOM is run-
+                 ning.
+
+               - Once DTR is detected, RI is dropped and DSR is set high.  DSR
+                 and DTR will both remain high throughout the remainder of the
+                 call.
+
+               - Setting the RNGTG and RNGDR options  off at Sysgen allows the
+                 RI  signal to  be  used for  a  private  line protocol  which
+                 requires a signal to be raised  to indicate an incoming call,
+                 and to remain high until the call is terminated.
+
+               - As soon as the host detects DSR high, it may send data on the
+                 line (TD, Transmitted  Data).  The DTRP option  specifies how
+                 long the  TYMCOM will  delay sending data  to the  host, thus
+                 allowing the host time to recognize the DSR signal.
+
+
+
+                                                        INTRODUCTION    Page 3
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               - If a call is terminated from  the caller's side (for example,
+                 the user  hangs up or the  circuit is lost), the  TYMCOM will
+                 drop  DSR.   The port  will  not  normally be  available  for
+                 another call until the host drops DTR in response.  The HDROP
+                 option specifies the  maximum length of time  that the TYMCOM
+                 will wait for  this response.  If the host  does not normally
+                 drop DTR, the value of this option should be zero.
+
+               - The RLSPT option specifies whether  the port will be released
+                 for reassignment or  declared hung if the  time limit expires
+                 before DTR is dropped.
+
+          When the  host wishes to  terminate a call,  it must drop  DTR.  The
+          circuit to the caller will then be cleared, and DSR will be set low.
+          DSR will  remain low  until the  next call  is presented.   The port
+          should be available for the next call one half second after the TYM-
+          COM detects the dropping of DTR.
+
+          For SIO  ports using 5 bit  characters (Baudot ports),  separate DTR
+          and DSR signals are  not used.  Instead, the data lines  are used to
+          signal call creation  and termination.  In the idle  state, both the
+          RD and TD lines are in the spacing state.  When a call comes in, the
+          TYMCOM changes RD to the marking state.  The host then changes TD in
+          response, and data transfer can begin.   The TYMCOM will terminate a
+          call by setting RD  to spacing;  the host is expected  to respond by
+          doing the same to  TD.  The host can terminate a  call by setting TD
+          to spacing and the TYMCOM will respond on RD.
+
+
+          1.2.2 Hardware Signal Protocol and Cable Options                __________________________________________
+
+          The signals  that are  actually presented to  and received  from the
+          host can be varied by the selection of cable options.  There are two
+          standard pin configurations  available, and special cables  or cable
+          adapters may be ordered to suit customer requirements as long as the
+          software protocol described in the previous section is satisfied.
+
+          Cable Option 1          ______________
+
+          The first  pin configuration  is used for  host ports  that normally
+          expect  to communicate  with  a terminal  using  a  modem.  In  this
+          configuration, the TYMCOM appears to the host as a modem.
+
+          For asynchronous  ports with  an ASB211  asynchronous card  using an
+          ASP74-1 connector  panel, the TYMCOM  is normally interfaced  to the
+          host by the following cable combination:
+
+               ASC117-1, and ASC140-20JJ or ASC140-20JP
+
+          The ASC117-1 cable is  available in 15, 25, 35, or  50 foot lengths.
+          When ordering, specify  the length needed.  One end  is connected to
+          the Engine  hardware with a  37 pin  male connector.  The  other end
+          terminates in five male 25 pin EIA connectors, for five ports.
+
+
+
+                                                        INTRODUCTION    Page 4
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          One ASC140-20  adapter must be ordered  for each of the  five ports.
+          Ports  that do  not use  the adapter  will be  configured for  cable
+          option two, described below.  The ASC140-20JJ provides a female con-
+          nector to the host equipment; ASC140-20JP provides a male connector.
+
+          The TYMCOM will ring  the host by raising pin 25  (BUSY), which con-
+          nects to pin 22 (RI).
+
+          Ring response will be expected on pin 20 (DTR) at the host.
+
+          The TYMCOM will respond  to DTR from the host by  raising DTR at the
+          TYMCOM, which connects to  pin 5 (CTS, Clear To Send),  pin 6 (DSR),
+          and pin 8 (CD, Carrier Detect) simultaneously at the host.
+
+          The TYMCOM will send data on pin 2 (TD, Transmit Data) which is con-
+          nected to pin  3 (RD, Received Data)  at the host.  The  TYMCOM will
+          receive data from the host on pin 3 (RD) which is connected to pin 2
+          (TD) at the host.
+
+
+               TYMCOM Operating as a DCE with an ASB211 Async ASCII Port               _________________________________________________________
+                     Using an ASC140-20 Universal Cross-over Cable                     _____________________________________________
+
+               TYMCOM                                          HOST               ______                                          ____
+
+           Data Terminal Ready (20) ----------------> (5)  Clear To Send
+           Data Terminal Ready (20) ----------------> (6)  Data Set Ready
+           Data Terminal Ready (20) ----------------> (8)  Data Carrier Detect
+           Busy                (25) ----------------> (22) Ring Indicator
+          *Ring Indicator      (22) <---------------- (25) Busy
+          *Clear To Send       (5)  <---------------- (20) Data Terminal Ready
+           Data Set Ready      (6)  <---------------- (20) Data Terminal Ready
+           Data Carrier Detect (8)  <---------------- (20) Data Terminal Ready
+           Transmit Data       (2)  ----------------> (3)  Receive Data
+           Receive Data        (3)  <---------------- (2)  Transmit Data
+           Signal Ground       (7)  <---------------> (7)  Signal Ground
+
+                * Signal ignored by the Tymcom.
+
+
+          For SIO ports operating  as a modem to the host,  the ASC117-1 cable
+          must be  replaced with  a special  cable that  connects pin  4 (RTS,
+          Request To Send) to pin 22 (RI),  since SIO generates a ring indica-
+          tion on pin 4 (RTS) of the TYMCOM.
+
+
+          Cable Option 2          ______________
+
+          Cable option two is used for host ports that normally expect to com-
+          municate with a terminal over a hardwired connection.  Note that the
+          software is operating exactly as  described in the previous section;
+          the only difference is in the cable.
+
+
+
+
+                                                        INTRODUCTION    Page 5
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          In the second  configuration the TYMCOM will  ring a port,  but nor-
+          mally the  host does not  use this  signal.  Instead, the  host will
+          present continuous signals (DSR  and CD) whenever a  port is availa-
+          ble.  The TYMCOM  will ring the host  on pin 25 (BUSY),  rather than
+          pin 22 (RI),  since the cable is used in  multiple applications, and
+          the host is not expected to look at RI at all.
+
+          The TYMCOM will expect to see signals on  pin 6 (DSR) and pin 8 (CD)
+          if the port is available.  The  TYMCOM will respond to these signals
+          with pin  20 (DTR) when  a call is ready  for the port.   The TYMCOM
+          will send data to the host on pin  2 (TD), and receive data from the
+          host on pin 3 (RD).
+
+          For asynchronous ports, this configuration  can be achieved by using
+          the following cable:
+
+               ASC117-1
+
+          This cable is used as described in cable option one, but without the
+          ASC140-20 adapter.
+
+          For SIO ports operating with the host as a directly connected termi-
+          nal, special  cables are not  required.  Standard 25  pin connectors
+          are used.
+
+
+          SECTION 1.3 Format          __________________
+
+          There are a variety of options that may be specified when the TYMCOM
+          is  generated.  In  most  cases if  an option  is  not specified,  a
+          default value will be used.
+
+          The ports on a  TYMCOM may be grouped so that more  than one host or
+          subhost may be accessed using the same  TYMCOM.  When a user logs in
+          through the  network, the  desired host is  determined by  using two
+          criteria.   First, the  network  host number  given  with the  colon
+          option is used (or the default, home host, if none was given).  Sec-
+          ond, two characters of the  username (position determined by SINDXP)
+          are examined to select the subhost.  (See the Glossary for an expla-
+          nation of  the Subhost  Index.)  In the  TYMCOM, these  subhosts are
+          referred to as subhost ordinals (SORDS) and the network host numbers
+          are referred  to as hosts.   SORD numbers are  assigned sequentially
+          from zero.  A host is a collection of one or more subprocesses which
+          have SORD numbers that are in sequential order.
+
+          The TYMCOM has four different levels  of options.  These levels are:
+          global, host, subhost,  and port.  Global options  affect the entire
+          TYMCOM.  Host options affect all  subhosts associated with a network
+          host number.  Subhost  options affect only the  given subhost.  Port
+          options may be specified individually for each port on the TYMCOM.
+
+
+
+
+
+
+                                                        INTRODUCTION    Page 6
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          The order in which the different  levels of options are specified in
+          the sysgen  directive file (Tymfile)  is significant.  If  a subhost
+          option is  defined before the first  host is defined, it  applies to
+          all  hosts and  subhosts (it  is global).   If a  subhost option  is
+          defined immediately following  a host definition, it  applies to all
+          subhosts of that host  only.  A subhost option  that appears immedi-
+          ately following a subhost definition applies only to that subhost.
+
+          Subhost options specified at the global or host level are overridden
+          if another subhost option is specified at a lower level.
+
+
+          SECTION 1.4 Syntax          __________________
+
+          The parameters described in this manual  are all specified by state-
+          ments of the form:
+
+               SSSS(p1,p2,...,p10)
+
+          where SSSS is the  name of the statement and p1  through p10 are the
+          parameters for the statement.
+
+          The name of  the statement may start  anywhere on a line.   The open
+          parenthesis "(" must immediately follow the name.  Values p1 through
+          p10 are separated by commas, and may not contain spaces except where
+          spaces are  actually part of  the value  (as in message  text).  The
+          close parenthesis ")" must follow the last statement parameter with-
+          out any spaces.
+
+          Statements may be separated from each other by any number of spaces,
+          tabs, carriage returns,  or semicolons.  A comment  may be specified
+          anywhere after the close parenthesis by preceding the comment with a
+          colon and terminating it with a semicolon or carriage return.
+
+          For statements with multiple  values, only ten values  may be speci-
+          fied per statement, but statements may  be repeated as many times as
+          necessary if more than ten values are needed.
+
+
+          1.4.1 Message Text Syntax                ___________________
+
+          Some of the  statements specify message text which  requires the use
+          of hexadecimal numbers representing special characters.  All charac-
+          ters for message text must be  specified, including any desired car-
+          riage  returns and  linefeeds.  All  displayable characters  (except
+          those  indicated below)  may  be specified  as  they would  normally
+          appear.  The  maximum length is  157 characters,  including carriage
+          returns.  All  characters  with  a hexadecimal  value  in  the range
+          00 - 1F,  or 80 - 9F  must be immediately  preceded  by  a quotation
+          mark in the message text (for example, "8D).  Three of the most com-
+          mon of these characters and their hexadecimal values are:
+
+
+
+
+
+                                                        INTRODUCTION    Page 7
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               8D (or 0D)     carriage return
+               8A (or 0A)     linefeed
+               BB (or 3B)     semicolon
+
+          A comma, an unmatched close parenthesis, a quote, or an accent grave
+          (`), must be preceded by an accent grave.
+
+
+          1.4.2 Parameter Value Syntax                ______________________
+
+          Some parameter  values may  be specified  in ranges.   A range  must
+          begin with the  lowest value and end with the  highest value.  These
+          values must  be separated by  a hyphen  and no spaces  (for example,
+          1-20).  Each  range will be treated  as one parameter field.   Up to
+          ten ranges may be specified per statement.
+
+          Parameters that specify ASCII characters will use hexadecimal values
+          to  represent those  characters  in the  ranges  specified for  each
+          option.
+
+          A vertical  bar (|) represents a  choice in parameter  values.  Only
+          one  of the  values may  be specified.   The vertical  bar is  never
+          entered.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        INTRODUCTION    Page 8
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 2.0 HARDWARE OPTIONS          ____________________________
+
+          This section describes the global  statements detailing the hardware
+          environment in which the TYMCOM is to operate.
+
+
+          SECTION 2.1 Number of Async Logical Units (NALU)          ________________________________________________
+
+          Syntax:  NALU(count)
+          Default:  1
+          Description:  This  statement specifies  the number  of asynchronous
+               logical units (in  decimal) assigned to a TYMCOM  slot by ISIS.
+               Each logical unit is 16 asynchronous ports.  The range of logi-
+               cal units that may be specified is  from zero to eight, but the
+               number cannot  exceed the number assigned  by ISIS or  the slot
+               will be halted.
+
+          Example:
+
+               NALU(2)
+
+               Assigns two logical units, or 32 ports.
+
+
+          SECTION 2.2 Number of SIO Port Logical Units (NMLU)          ___________________________________________________
+
+          Syntax:  NMLU(count)
+          Default:  0
+          Description:  This statement specifies the number  of SIO port logi-
+               cal units  (in decimal) assigned to  a TYMCOM slot by  ISIS.  A
+               logical unit is one port.
+
+               Note:  SIO ports  always follow the normal  asynchronous ports.
+               For  example, a  configuration  of  NALU(2)  and  NMLU(3)  will
+               result in  ports 0 - 31   being normal asynchronous,  and ports
+               32 - 34 being SIO, regardless of the order in which the logical
+               units are defined.
+
+          Example:
+
+               NMLU(3)
+
+               Specifies three SIO port logical units.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                    HARDWARE OPTIONS    Page 9
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 2.3 TYMNET Node Code Level (TYMNET)          ___________________________________________
+
+          Syntax:  TYMNET(level)
+          Default:  2
+          Description:  This statement specifies the  level of the TYMNET node
+               code running  in the machine.  A  1 is specified for  TYMNET I,
+               and a 2 is specified for TYMNET II.
+
+               TYMNET I  restricts the  TYMCOM in two  ways.  First,  only one
+               network host number may be specified (defined by HST).  Second,
+               the number of asynchronous ports  is restricted as follows.  If
+               the TYMCOM is the only slot specified in the ISIS system gener-
+               ation (in addition  to the slot 0 network  interface), then 128
+               ports are available for host and TOM use.  If the TYMCOM is not
+               the  only slot  specified in  the ISIS  system generation  (for
+               example, if two or three slots are specified in addition to the
+               slot 0 network interface), then 64 ports are available for host
+               and TOM use.
+
+          Example:
+
+               TYMNET(2)
+
+               Specifies TYMNET II node code is running in the machine.
+
+               Note:  TYMNET II node code should be used for all new installa-
+               tions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                   HARDWARE OPTIONS    Page 10
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 3.0 TOM OPTIONS          _______________________
+
+          This section describes  the Tymfile options defining  access limita-
+          tions for  the TYMCOM  Operations Manager and  sets some  basic time
+          definitions for the TOM (see the TOM User's Guide).                                           ________________
+
+
+          SECTION 3.1 Number of TOM Users (MUTOM)          _______________________________________
+
+          Syntax:  MUTOM(count)
+          Default:  14
+          Description:  This statement specifies the  number of TOM users that
+               may be  logged in  to the  TOM  at any  one time  in the  range
+               1 - 14.  This includes users  logging in from hardwired asynch-
+               ronous terminals and users logging in through the network.
+
+          Example:
+
+               MUTOM(4)
+
+               Allows up to four concurrent TOM users.
+
+
+          SECTION 3.2 Number of Minutes Between Timestamp (TOMTR)          _______________________________________________________
+
+          Syntax:  TOMTR(minutes)
+          Default:  15
+          Description:  This statement specifies the number of minutes between
+               timestamps output to the TOM  console.  A timestamp consists of
+               the date and time in the following format:
+
+                    ddmmyy hh:mm:ss
+
+               where ddmmyy is  the day, month, and year, and  hh:mm:ss is the
+               hour, minute, and second.
+
+               The value  for this statement  must be  in the range 1 - 59,652
+               minutes.
+
+          Example:
+
+               TOMTR(60)
+
+               Specifies 60 minutes between timestamps output  to the TOM con-
+               sole.
+
+
+
+
+
+
+
+
+
+
+
+                                                        TOM OPTIONS    Page 11
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 3.3 TOM Time Zone (TOMTZ)          _________________________________
+
+          Syntax:  TOMTZ(bias)
+          Default:  0
+          Description:  This statement  specifies the time zone (as  a bias to
+               Greenwich Mean Time)  that should be used  for timestamp output
+               to the  TOM console.  The bias  must be specified in  number of
+               hours, preceded by a plus sign (+) or  no plus sign for a posi-
+               tive number, or by  a minus sign (-) for a  negative number.  A
+               positive number designates  a time differential for  a location
+               East of  Greenwich, England.   A negative  number designates  a
+               time differential  for a location  West of  Greenwich, England.
+               This value may be changed while  the TYMCOM is running by using
+               the TOM Zone command.
+
+          Example:
+
+               TOMTZ(-8)
+
+               Sets TOM time zone to Pacific Standard Time.
+
+
+          SECTION 3.4 NHA Message Repetition Rate (NHAMT)          _______________________________________________
+
+          Syntax:  NHAMT(minutes)
+          Default:  5
+          Description:  This statement specifies the number of minutes between
+               occurrences of the No Host  Acknowledgement (NHA) message being
+               sent to  the TOM console.   This value may  be from one  to 546
+               minutes.  The default message for the MTEXT(NHA) option message
+               is:
+
+                          HOST DID NOT ACKNOWLEDGE USER DISCONNECT
+
+               It may  be suppressed  or altered by  the MTEXT  statement (see
+               Section 4.2),  and will  not be repeated  if the  RLSPT subhost
+               option is set to  on (see Section 6.2.15).  If RLSPT  is set to
+               off, the  message will  be repeated until  the port  is brought
+               down by the TOM operator.
+
+          Example:
+
+               NHAMT(15)
+
+               Specifies 15 minutes between NHA messages.
+
+
+
+
+
+
+
+
+
+
+
+                                                        TOM OPTIONS    Page 12
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 3.5 TOM Change License Password (TOMPW)          _______________________________________________
+
+          Syntax:  TOMPW(password)
+          Default:  Null (no password given with the TOM "GRAB" command)
+          Description:   This statement  sets  the  initial password  for  TOM
+               change license.  Up to seven characters may be specified in the
+               password. The  password may not  contain any  carriage returns,
+               spaces, question marks,  escape characters, or lower  case let-
+               ters.  Refer  to the TOM User's  Guide for a definition  of the                                    _________________
+               escape characters and the "GRAB" command.
+
+          Example:
+
+               TOMPW(LUCKY)
+
+               Sets the initial password for change license to LUCKY.
+
+
+          SECTION 3.6 TOM Command Level (TOMCL)          _____________________________________
+
+          Syntax:  TOMCL(#,cm)
+          Default:  See the TOM User's Guide                            ________________
+          Description:  This statement is used to increase the level of a com-
+               mand.  The value  "#" is the new  level; "cm" is the  first two
+               characters  of  the  command  for which  the  level  change  is
+               desired.
+
+               Note:  TOM  commands are  divided into  three levels:   level 0
+               commands are always accessible, level 1 commands are accessible
+               after assuming change license via the Grab command, and level 2
+               commands are only  accessible by logging in to the  TOM using a
+               particular username and  assuming change license.  See  the TOM                                                                           ___
+               User's Guide  for a description of  the initial level  for each               ____________
+               command.
+
+               Level 0 commands may be changed to level  1 or 2.  Level 1 com-
+               mands may be changed to level  2 only.  Level 2 commands cannot
+               be changed.
+
+          Example:
+
+               TOMCL(2,DO)
+
+               Makes TOM Down command level 2 (allows only TOM Good Guy to use
+               Down).
+
+
+
+
+
+
+
+
+
+
+
+                                                        TOM OPTIONS    Page 13
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 3.7 TOM Good Guy (TOMGG)          ________________________________
+
+          Syntax:  TOMGG(username)
+          Default:  !##TOM## (the username ##TOM## with shut override status)
+          Description:  The TOM Good Guy statement is  used to change the spe-
+               cial TOM username.   If the username has  SHUT override status,
+               the name must be preceded by  an exclamation point.  The excla-
+               mation point is not  part of the username, but is  added to the
+               login data  by the  network Supervisor.   The username  may not
+               contain any  carriage returns,  spaces, question  marks, escape
+               characters, or lower case letters.
+
+          Example:
+
+               TOMGG(WINNER)
+
+               Changes the special TOM username to WINNER.  This username does
+               not have shut override status.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        TOM OPTIONS    Page 14
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 4.0 GLOBAL OPTIONS          __________________________
+
+          This section describes the Tymfile options  which must be defined at
+          the global level.  Subhost options may also be defined at the global
+          level but are described at the  subhost level.  Refer to Section 1.3
+          for an explanation of the ordering of options.
+
+
+          SECTION 4.1 Port Number Radix (PNRADX)          ______________________________________
+
+          Syntax:  PNRADX(DEC|OCT|HEX)
+          Default:  Decimal
+          Description:  This statement specifies the radix  in which port num-
+               bers will be output  to a user's terminal.  The  choice of rad-
+               ices is:   decimal, octal, or  hexadecimal.  It  is recommended
+               that this option be left at the default.
+
+          Example:
+
+               PNRADX(OCT)
+
+               Specifies the port number radix in octal.
+
+
+          SECTION 4.2 Message Text (MTEXT)          ________________________________
+
+          Syntax:  MTEXT(mname,mtext,position)
+          Default:  The default for MTEXT is the  message text as shown in the
+               second column of the following chart.
+
+               mname     mtext                                     position               _____     _____                                     ________
+
+               APD      "8D"8AALL PORTS DOWN                              -
+
+               NPA      "8D"8ANO PORTS AVAILABLE                          -
+
+               RNA      "8D"8ARING NO ANSWER ON PORT nnn                 26
+                             Note:  3 characters (nnn) of message
+                             will be replaced by a port number if
+                             this is not suppressed.
+
+               PN       Pnnn"8D"8A                                        2
+                             Note:  3 characters (nnn) of message
+                             will be replaced by a port number if
+                             this is not suppressed.
+
+               GRT      xxxx IS ON LINE"8D"8A                             1
+                             Note:  4 characters (xxxx) will be
+                             replaced with the host greeting name
+                             from the SHST macro if this is not
+                             suppressed.
+
+               IUN      "8D"8AUSERNAME INVALID`, DISCONNECTING            -
+
+
+
+                                                     GLOBAL OPTIONS    Page 15
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               ANP      "8D"8AACCESS FROM THIS NODE IS NOT PERMITTED      -
+
+               INA      "8D"8ADROPPED FOR INACTIVITY                      -
+
+               DBH      "8D"8ADROPPED BY HOST                             -
+
+               NHA      HOST DID NOT ACKNOWLEDGE USER DISCONNECT"8D"8A    -
+
+               HDN      "8D"8Axxxx IS DOWN                                3
+                             Note:  4 characters (xxxx) will be
+                             replaced with the host greeting
+                             name from the SHST macro if it
+                             exists, otherwise the characters
+                             HOST will be used.
+
+               HSH      "8D"8Axxxx IS SHUT                                3
+                             Note:  4 characters (xxxx) will be
+                             replaced with the host greeting
+                             name from the SHST macro if it
+                             exists, otherwise the characters
+                             HOST will be used.
+
+               LOFF     DISCONNECTING                                     -
+
+               BZFT     "07"07 DATA LOST FROM TERMINAL                    -
+
+               BZTT     "07"07 DATA LOST TOWARD TERMINAL                  -
+
+          Description:  This statement defines the  text of messages generated
+               by the TYMCOM.  The value for mname is one of the message names
+               preceding the  default message  text.  The  entry for  mtext is
+               text to substitute for the default message.  This must be spec-
+               ified in the format described in  Section 1.4.1.  If no text is
+               specified after  the message  name, the  message  will be  sup-
+               pressed.  Some of  the message texts have  variable portions as
+               noted in the default messages.   The decimal character position
+               at which the  variable will be substituted is  specified by the
+               position value  (position) as  shown in  the chart  above.  The
+               first character of the message ("8D)  is defined as position 1.
+               A value of zero specifies no substitution and is the default if
+               position is  not specified  at all.   The number  of characters
+               specified must be the same as shown for the substitutable char-
+               acters illustrated in the default messages.
+
+          Examples:
+
+               MTEXT(RNA,"8D"8APORT nnn NOT RESPONDING,8)
+
+               Changes the  "RING NO ANSWER ON PORT nnn"  message to "PORT nnn
+               NOT RESPONDING", with "nnn" replaced by a port number.
+
+               MTEXT(LOFF)
+
+               Supresses the disconnecting message.
+
+
+                                                     GLOBAL OPTIONS    Page 16
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 4.3 Project Code Accounting (PCODE)          ___________________________________________
+
+          Syntax:  PCODE(character1,...,character10)
+          Default:  No project code is sent to the accounting data base
+          Description:  This statement  specifies a list of  8 bit termination
+               characters for the login string.  If PCODE is specified without
+               any termination character, the username,  the password termina-
+               tion character,  and any  following characters  entered by  the
+               user (up  to a maximum  of 12 characters)  will be sent  to the
+               accounting data base.  If  termination characters are specified
+               following the  PCODE statement, the  accounting data  base will
+               receive the  username, password terminator, and  any characters
+               preceding the  project code terminator (up  to a maximum  of 12
+               characters).  The  project code  termination character  must be
+               specified in hexadecimal.  A range of  characters may be speci-
+               fied by entering  the beginning and ending  hexadecimal numbers
+               separated by a  hyphen.  It may also be necessary  to specify a
+               character by more than  one hexadecimal number so  that charac-
+               ters from  various terminal types  can be  identified correctly
+               (for example, a carriage return could be specified as 0D and 8D
+               to account for either possible parity bit setting).
+
+          Example:
+
+               PCODE(8D,0D)
+
+               Collects the project code until a  carriage return or a maximum
+               of 12 characters have been reached.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     GLOBAL OPTIONS    Page 17
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 5.0 HOST OPTIONS          ________________________
+
+          This section describes  the Tymfile options which may  be defined at
+          the host level.   This level defines a host number  and the position
+          of the  characters in the  username that will  be used as  a subhost
+          index.
+
+          Note:  If the  TYMCOM is to  run on a TYMNET  I node, only  one host
+               declaration is  allowed.  This requires  at least  two subhosts
+               (TOM and  any customer  hosts), and requires  all but  the last
+               subhost to have a subhost index specified.
+
+
+          SECTION 5.1 Host Number (HST)          _____________________________
+
+          Syntax:  HST(number)
+          Default:  None - This option must be specified.
+          Description:  This statement specifies a network host number in dec-
+               imal.  Each network host on the TYMCOM must be specified.
+
+          Example:
+
+               HST(321)
+
+               Specifies host number 321.
+
+
+          SECTION 5.2 Subhost Index Starting Position (SINDXP)          ____________________________________________________
+
+          Syntax:  SINDXP(position)
+          Default:  1
+          Description:  This statement specifies the  starting position of the
+               two character subhost index in the username.  A negative number
+               indicates the count for the starting position is the count from
+               the end of the username.  The starting  position will be a sin-
+               gle decimal number starting with 1  if counting from the begin-
+               ning of the  username, and -2 if  counting from the end  of the
+               username.  SINDXP can be specified at the global or host level,
+               but never at the subhost level.
+
+               Note:  The  shut override  character (!)  is not  counted as  a
+               character in the username.
+
+          Example:
+
+               SINDXP(-2)
+
+               The subhost index is the last two characters of the username.
+
+
+
+
+
+
+
+
+                                                       HOST OPTIONS    Page 18
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 6.0 SUBHOST OPTIONS          ___________________________
+
+          This section describes the Tymfile options  that may be specified at
+          the subhost  level.  All of the  statements except SHST may  also be
+          specified  at  the global  or  host  levels.   This set  of  options
+          includes four  groups of  options:  the  switch options,  the single
+          value options, the multiple value options, and the variable multiple
+          value options.
+
+
+          SECTION 6.1 Subhost Definition (SHST)          _____________________________________
+
+          Syntax:  SHST(gggg,x0,...,x9)
+          Default:  No greeting message will be sent to the user, and the host
+               will only have one, unindexed subhost
+          Description:  This statement  defines the host greeting,  the number
+               of subhosts per network host,  and the two character identifier
+               for each of the subhosts.  One  subhost per network host number
+               may have  a null identifier.  If  this subhost is  defined, any
+               usernames that do not contain  a valid two character identifier
+               will be  assigned to  ports associated  with this  subhost.  If
+               this is the only subhost defined  for this network host number,
+               all  users that  specify this  network  host at  login will  be
+               assigned to this subhost.
+
+               The first subhost of the first host is always used for the TOM.
+               To disallow access to the TOM  subhost through the network, the
+               TOM subhost  should be  declared with a  statement of  the form
+               SHST(TOM,"01"01).  The  "01"01 declares  the hexadecimal  value
+               0101 (Control A, Control A) as  the TOM subhost index.  Control
+               A, Control A is not valid  in a username; therefore, no network
+               logins can occur.
+
+               The parameter "gggg" specifies a  four character greeting to be
+               used in the  MTEXT(GRT) message "gggg IS ON  LINE" (see Section
+               4.2).  This message is sent to  the user's terminal when he has
+               successfully logged in if the MTEXT  parameter GRT has not been
+               suppressed.  The greeting will be  left justified unless blanks
+               are included  in the  statement.  The greeting  is not  sent if
+               this parameter is not specified, but  the comma must remain for
+               the subhost index to be specified.
+
+               The parameter, "x0,...,x9", specifies the two character subhost
+               indexes to be extracted from the username to address this host.
+               Up to  ten indexes may be  specified.  If these  parameters are
+               omitted, the  subhost must be  the last  one for this  host and
+               will be the only unindexed subhost.
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 19
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Example:
+
+               SHST(HSTA,AA,AB)
+
+               Users whose subhost index is AA or  AB will be assigned to this
+               subhost and the subhost greeting sent to the user will be "HSTA
+               IS ON LINE".
+
+
+          SECTION 6.2 Switch Options (SOPT)          _________________________________
+
+          Syntax:  SOPT(option1,...,option10)
+          Default:  Not specifying SOPT has the same defaults as specified for
+               each SOPT option
+          Description:  This statement defines the  switch options allowed for
+               a subhost.   If an option  is preceded by  a minus sign,  it is
+               turned off.   A switch option may  be specified at  the global,
+               HST or subhost levels.  If a switch  option has been set at the
+               global or HST level, and the user wishes to turn it off for one
+               subhost, the option must be specifed as off immediately follow-
+               ing the  SHST statement to  be effected (or  HST if no  SHST is
+               specified).
+
+          Example:
+
+               SOPT(GUNAM,-ECHO)
+
+               Give the username to the host  and turn off the network echoing
+               of characters.
+
+
+          The following sections describe the subhost options and the defaults
+          that will be used if they are not specified.
+
+
+          6.2.1 Character Echo (ECHO)                _____________________
+
+          Syntax:  ECHO
+          Default:  On
+          Description:  When  set to  on, the  network will  provide character
+               echoing.  If  set to  off (-ECHO), the  user's terminal  or the
+               customer's host is responsible for echoing all characters.  Off
+               is not the usually recommended setting  as the user will not be
+               aware of transmission  errors caused by telephone  lines if the
+               terminal is echoing,  and if the host is echoing,  a delay will
+               be experienced in character echoing.
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 20
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.2.2 Echo of Linefeed (ELFCR)                ________________________
+
+          Syntax:  ELFCR
+          Default:  On (ignored if ECHO is off)
+          Description:  When  set to on,  this parameter specifies  a linefeed
+               from  the  terminal will  be  echoed  as a  linefeed,  carriage
+               return, and  rubout.  This parameter  only applies if  the ECHO
+               switch is on.
+
+
+          6.2.3 Echo of Carriage Return (ECRLF)                _______________________________
+
+          Syntax:  ECRLF
+          Default:  On (ignored if ECHO is off)
+          Description:  When  set to on,  this parameter specifies  a carriage
+               return from the  terminal will echo as a carriage  return and a
+               linefeed.  This  parameter only applies  if the ECHO  switch is
+               on.
+
+
+          6.2.4 Echo of Control I (ECTLI)                _________________________
+
+          Syntax:  ECTLI
+          Default:  Off (ignored if ECHO is off)
+          Description:  When set to  on, this parameter specifies  that a Con-
+               trol I  (tab) from the  terminal will  be echoed by  the TYMSAT
+               instead of  putting the TYMSAT into  deferred echo mode.   A 09
+               (Control I)  should also be  specified with the  DEMEC multiple
+               variable statement if this parameter is specified as on.
+
+
+          6.2.5 Echo of Control H (ECTLH)                _________________________
+
+          Syntax:  ECTLH
+          Default:  Off (ignored if ECHO is off)
+          Description:  When set to  on, this parameter specifies  that a Con-
+               trol H (backspace) will be echoed by the TYMSAT instead of put-
+               ting the  TYMSAT into  deferred echo  mode.  A  08 (Control  H)
+               should also be specified for the DEMEC multiple variable state-
+               ment if this parameter is specified as on.
+
+
+          6.2.6 Carriage Return Delay (CRDLY)                _____________________________
+
+          Syntax:  CRDLY
+          Default:  On
+          Description:  When set  to on, this parameter  specifies that delays
+               will occur after a carriage return.  If set to Off, delays will
+               occur before a linefeed.  The default for this option is recom-
+               mended.
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 21
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.2.7 Echo Half Duplex (LCTLH)                ________________________
+
+          Syntax:  LCTLH
+          Default:  Off
+          Description:  When set  to on, this parameter enables  the ELFCR and
+               ECRLF  options for  half  duplex  terminals.  Thus,  when  this
+               option is on, network  echoing of all characters  except a car-
+               riage return for a linefeed (if ELFCR is on), or a linefeed for
+               a carriage return (if ECRLF is  on) is disabled for half duplex
+               terminals.  When  this option  is off,  all network  echoing is                                                       ___
+               disabled for half duplex terminals.   A half duplex terminal is
+               specified by entering Control H during username entry at logon.
+
+
+          6.2.8 Send Gobbler on Break (BKGOB)                _____________________________
+
+          Syntax:  BKGOB
+          Default:  Off
+          Description:  When  set to  on, this parameter  specifies that  if a
+               break is encountered from the  terminal, the TYMCOM will remove
+               all characters currently in the network buffers which are wait-
+               ing to print at the terminal.
+
+
+          6.2.9 Disconnect on Break (BKDSC)                ___________________________
+
+          Syntax:  BKDSC
+          Default:  Off
+          Description:  When set  to on, this parameter specifies  that if the
+               user enters  a break at  the terminal, a  disconnecting message
+               (as specified by the MTEXT(LOFF) parameter) will be sent to the
+               terminal.  The  user will be  disconnected from the  TYMCOM and
+               sent a "please log in:" prompt from the TYMSAT.
+
+
+          6.2.10 TIC on Fixed Speed Ports (TICAP)                 ________________________________
+
+          Syntax:  TICAP
+          Default:  Off (TIC sent only to autospeed ports)
+          Description:  When set to on, this parameter specifies that the Ter-
+               minal  Identification Character  generated by  the STIC  option
+               will be sent  to all ports, both autospeed and  fixed speed, on
+               the  customer  host.  Port  speed  is  determined by  the  PSPD
+               option.
+
+
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 22
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.2.11 ISIS Needle Sent to Host (GINDL)                 ________________________________
+
+          Syntax:  GINDL
+          Default:  Off (no needle sent)
+          Description:  When set to on, this parameter specifies that the TYM-
+               COM will send  a copy of the  ISIS needle it encounters  at the
+               start of  the user session to  the host.  Everything up  to but
+               not including the username is sent.  These are sent to the host
+               8 bits at a  time.  The PARITY statement has no  affect on this
+               option.  This includes:
+
+                    16 bit ISIS port number
+                    16 bit length of remaining needle (including username)
+                    32 bit invoice number
+                    16 bit destination host number
+                    16 bit originating node number
+                    16 bit originating host number
+                    16 bit originating port number
+                    24 bit reserved field (for future expansion)
+                    8 bit throughput class (gouging level)
+                    16 bit dialect code
+                    8 bit terminal identifier
+                    8 bit size of username (including carriage return or
+                    semicolon)
+
+
+          6.2.12 Username Passed to Host (GUNAM)                 _______________________________
+
+          Syntax:  GUNAM
+          Default:  Off
+          Description:   When set  to on,  this parameter  specifies that  the
+               username entered  at the  TYMSAT will  be passed  to the  host,
+               along with the  delimiter (carriage return or  semicolon).  The
+               username may be preceded by a string specified using the LOGINS
+               statement.
+
+
+          6.2.13 Ring Toggle (RNGTG)                 ___________________
+
+          Syntax:  RNGTG
+          Default:  On
+          Description:  When set to on, this parameter specifies that the ring
+               should  be  toggled  every  half  second  until  the  port  has
+               answered.  If this  is set to off, the ring  signal will remain
+               high until the  port answers.  This parameter should  be set to
+               off to be compatible with 103F modem protocol.
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 23
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.2.14 Ring Drop (RNGDR)                 _________________
+
+          Syntax:  RNGDR
+          Default:  On
+          Description:  When set to on, this parameter specifies that the ring
+               should be dropped after the  port has answered.  This parameter
+               should be  set to off to  be compatible with 103F  modem signal
+               protocol.
+
+
+          6.2.15 Release Port if Drop Not Acknowledged (RLSPT)                 _____________________________________________
+
+          Syntax:  RLSPT
+          Default:  On (releases port)
+          Description:  When set  to on, this parameter specifies  that a port
+               which has had its circuit dropped  from the network side (indi-
+               cated by the  TYMCOM dropping signals on this  port), which has
+               not received  any host acknowledgement  (indicated by  the host
+               not dropping signals  on this port for  at least one  half sec-
+               ond), may  be released after a  time interval set by  the HDROP
+               option.  If it is  set to off, the port will  remain hung until
+               it receives  a host response.   In either case,  the MTEXT(NHA)
+               message will be sent to the TOM repeatedly, as specified by the
+               NHAMT statement, for as long as the port is hung.
+
+
+          6.2.16 Capitalize Output from Terminal (CAPFT)                 _______________________________________
+
+          Syntax:  CAPFT
+          Default:  Off (doesn't convert)
+          Description:  When set  to on, this statement  specifies that output
+               from a terminal to the host will be converted to uppercase.
+
+
+          6.2.17 Capitalize Output from Host (CAPFH)                 ___________________________________
+
+          Syntax:  CAPFH
+          Default:  Off (doesn't convert)
+          Description:  When set  to on, this statement  specifies that output
+               from a host will be converted to upper case.
+
+
+          6.2.18 Buffer Zap Messages (BZAPM)                 ___________________________
+
+          Syntax:  BZAPM
+          Default:  Off (no message sent)
+          Description:  When set to on, this parameter specifies that if char-
+               acters  are lost  in the  network  buffers for  a terminal  (in
+               either  direction),  one  of  the  messages  specified  by  the
+               MTEXT(BZFT) statement or the MTEXT(BZTT) statement will be sent
+               to the terminal.
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 24
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 6.3 Single Value Options          ________________________________
+
+          The following options may be specified at  the global, host, or sub-
+          host levels.  They  have one parameter in addition  to the statement
+          which must be specified to set the option.
+
+          Note:  Character value parameters  may be specified as  "OFF" at the
+               subhost level if  they have also been defined at  the global or
+               host level.   The "OFF"  value should never  be used  except to
+               override the value of a higher level.
+
+
+          6.3.1 Parity Bit Value (PARITY)                _________________________
+
+          Syntax:  PARITY(SAVE|SPACE|MARK|ODD|EVEN)
+          Default:  SAVE
+          Description:  This statement specifies what  the TYMCOM will do with
+               the parity  bit before sending a  character to the  host.  Only
+               one value may be specified.  The values are:
+
+                    SAVE  -  leave as is
+                    SPACE -  set to zero
+                    MARK  -  set to one
+                    ODD   -  set to ODD parity
+                    EVEN  -  set to EVEN parity
+
+          Example:
+
+               PARITY(ODD)
+
+               The TYMCOM will output ODD parity to the host.
+
+
+          6.3.2 Delay after DTR Raised (DTRP)                _____________________________
+
+          Syntax:  DTRP(seconds)
+          Default:  1
+          Description:  This  statement specifies  the number  of seconds  the
+               TYMCOM should wait  after setting DTR high  before sending data
+               to the host, in the range 0 - 255 seconds.
+
+          Example:
+
+               DTRP(4)
+
+               The TYMCOM will wait 4 seconds before sending data to the host.
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 25
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.3.3 Seconds to Ring Before Disconnect (RINGTO)                __________________________________________
+
+          Syntax:  RINGTO(seconds)
+          Default:  4
+          Description:  This statement specifies the number of seconds to ring
+               a  port before  disconnecting a  user  when the  host does  not
+               answer the ring signal,  in the range 0 - 255  seconds.  If the
+               host does not  answer the ring signal, the  RNA message (either
+               the one specified, or  the default) will be sent  to the termi-
+               nal.
+
+          Example:
+
+               RINGTO(7)
+
+               The TYMCOM will ring a port for 7 seconds before disconnect.
+
+
+          6.3.4 Host Drop Wait in Seconds (HDROP)                _________________________________
+
+          Syntax:  HDROP(seconds)
+          Default:  4
+          Description:  This  statement specifies  the number  of seconds  the
+               TYMCOM will wait for host acknowledgement  after a user discon-
+               nect occurs  before releasing a  port for reassignment,  in the
+               range  0 - 255 seconds.  Host acknowledgement  is indicated  by
+               the host  dropping signals on this  port for at least  one half
+               second.   If  the  specified number  of  seconds  pass  without
+               acknowledgement, a message  is sent to the TOM and  the port is
+               made available  for reassignment or  is hung (depending  on the
+               SOPT(RLSPT) setting).  If the TOM  operator determines the port
+               is  malfunctioning, the  port  can be  disabled  using the  TOM
+               "DOWN" command.  If  the port is not released  or brought down,
+               the operator  will be informed  repeatedly as specified  by the
+               NHAMT statement.
+
+          Example:
+
+               HDROP(10))
+
+               The TYMCOM will wait up to 10  seconds after attempting to dis-
+               connect a port before sending a message  to the TOM and releas-
+               ing the port (if RLSPT is on).
+
+
+          6.3.5 Minutes of Inactivity Before Drop (INACT)                _________________________________________
+
+          Syntax:  INACT(minutes)
+          Default:  No hang
+          Description:   This statement  specifies the  number  of minutes  of
+               inactivity to occur before the user  will be sent a message and
+               dropped.  Inactivity is defined as  no characters having passed
+               through the TYMCOM  in either direction for a  port.  The range
+               that may be specified in INACT is 0 - 255 minutes.
+
+
+                                                    SUBHOST OPTIONS    Page 26
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Example:
+
+               INACT(20)
+
+               The TYMCOM will drop a port that has had no traffic in the past
+               20 minutes.
+
+
+          6.3.6 Break Sent to Host (BKSND)                __________________________
+
+          Syntax:  BKSND(count)
+          Default:  0
+          Description:  For  asynchronous ports, this statement  specifies the
+               number of increments  of 83.3 milliseconds of break  to be sent
+               to the host.  For SIO ports,  this statement specifies the num-
+               ber of increments  of 25.0 milliseconds of break to  be sent to
+               the host.  The range that may be  specified in BKSND is 0 - 255
+               increments.
+
+          Example:
+
+               BKSND(3)
+
+               Sends 250 milliseconds of break to the host (on an asynchronous
+               port).
+
+
+          6.3.7 End of Transmission Character (EOTC)                ____________________________________
+
+          Syntax:  EOTC(character)
+          Default:  None will be specified
+          Description:  This statement specifies the end of transmission (EOT)
+               character to be received from the  host by the TYMCOM before it
+               will return  a green  ball to the  TYMSAT.  The  standard green
+               ball logic which returns a green  ball after a one second pause
+               in host  output will not  be disabled  for a session  until the
+               host sends the first EOT character  for that session.  (See the
+               Glossary  for an explanation of  Green  Ball Logic.)  The char-
+               acter  must be specified  as a  hexadecimal value  in the range
+               00 - 7F.  This option may be  turned off by specifying "OFF" if
+               the statement was specified at a higher level.
+
+          Example:
+
+               EOTC(04)
+
+               The host  can use an EOT  character (04) to control  the TYMCOM
+               green ball logic.
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 27
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.3.8 Host Transparency Mode (HETM)                _____________________________
+
+          Syntax:  HETM(character)
+          Default:  No character specified
+          Description:  This  statement specifies  the character  sent by  the
+               host to place the TYMCOM in transparency mode.  After receiving
+               this character,  the TYMCOM  will pass  all characters  in both
+               directions without inspection or modification  until the end of
+               the session.  The transparency character must be specified as a
+               hexadecimal  value in the range  00  - 7F.  This option  may be
+               turned off by  specifying "OFF" if the  parameter was specified
+               at a higher level.
+
+          Example:
+
+               HETM(0B)
+
+               The TYMCOM  will enter  transparency mode  when a  VT character
+               (0B) is received from the host.
+
+
+          6.3.9 Terminal Transparency Mode (UETM)                _________________________________
+
+          Syntax:  UETM(character)
+          Default:  No character specified
+          Description:  This  statement specifies the  character that  must be
+               sent by the terminal to place  the TYMCOM in transparency mode.
+               After receiving this character, the TYMCOM  will pass all char-
+               acters without inspection or modification  until the end of the
+               session.  The  transparency character  must be  specified as  a
+               hexadecimal value  in the range  00  - 7F.  This option  may be
+               turned off by  specifying "OFF" if the  parameter was specified
+               at a higher level.
+
+          Example:
+
+               UETM(0C)
+
+               The  TYMCOM will  enter  transparency mode  when  Control L  is
+               entered at the terminal.
+
+
+          6.3.10 Character Preceding Special Characters (CTLESC)                 _______________________________________________
+
+          Syntax:  CTLESC(character)
+          Default:  No character specified
+          Description:  This statement specifies a character that must precede
+               special characters to the TYMCOM from the host or from the TYM-
+               COM to the host.  This character must be specified as a hexade-
+               cimal value in  the range 00 -  7F.  This option may  be turned
+               off by specifying "OFF" if the  parameter has been specified at
+               a higher level.
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 28
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               The characters that  will be preceded by  this escape character
+               when sent  from the  TYMCOM to  the host  are as  specified by:
+               XON, HOSTDE,  HOSTEC (acknowledgement characters  only), POLFLO
+               (acknowledgement character only),  and T2741  (host initializa-
+               tion character only).  See Sections 6.4.1, 6.4.4, 6.4.5, 6.4.3,
+               and 6.4.7.  The characters that must  be preceded by this char-
+               acter to  be recognized when sent  from the host to  the TYMCOM
+               are as specified by:  EOTC,  HETM, RXON, POLFLO (poll character
+               only), and HOSTEC  (on and off characters  only).  See Sections
+               6.3.7, 6.3.8, 6.4.2, 6.4.3, and  6.4.5.  Any unrecognized char-
+               acter following the escape character will be passed to the ter-
+               minal after  stripping off  the escape  character.  The  escape
+               character may be sent from the host  to the terminal by preced-
+               ing it with an escape character.
+
+               Note that for SIO ports, the use  of this option will cause the
+               response time to an XOFF character  to be rather slow.  As many
+               as 128 characters could be output at 9600 baud.
+
+          Example:
+
+               CTLESC(1B)
+
+               The TYMCOM will  use an ESC character (1B)  for special control
+               functions.
+
+
+          6.3.11 Abnormal Disconnect Message Text (ABNDM)                 ________________________________________
+
+          Syntax:  ABNDM(text)
+          Default:  No message sent
+          Description:  This statement  specifies the message text  to be sent
+               to the host when a circuit is zapped by a source other than the
+               host.  The text of the message  may be from  0 - 255 characters
+               long and follows  the message text syntax  described in Section
+               1.4.1.  A  null character in  the text  must be entered  as two
+               null characters ("00"00).
+
+          Example:
+
+               ABNBM(DETACH)
+
+               The message  "DETACH"  will be sent to the host  on an abnormal
+               disconnect.
+
+
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 29
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.3.12 Login String Sent to Host (LOGINS)                 __________________________________
+
+          Syntax:  LOGINS(text)
+          Default:  No message sent
+          Description:  This statement specifies a string to be sent to a sub-
+               host at  login.  The username typed  by the user at  login will
+               immediately follow this string if  the SOPT(GUNAM) statement is
+               specified (see Section 6.2.12).  The text of the message may be
+               from 0 - 255 characters long and  follows the message text syn-
+               tax described in  Section 1.4.1.  A null character  in the text
+               must be entered as two null characters ("00"00).
+
+          Example:
+
+               LOGINS(LOGON )
+
+               When a user logs  in, the message "LOGON " will  be sent to the
+               host.  If the GUNAM option is also set to on, the username will
+               be sent to the host immediately following this message.
+
+
+          SECTION 6.4 Multiple Value Options          __________________________________
+
+          The following  statements define  options which  have more  than one
+          value that may be specified.  The  order in which the parameters are
+          defined on a multiple value option cannot be changed.  These options
+          may be specified at the global, host, or subhost level.
+
+          Note:  Character values  may be  specified as  "OFF" at  the subhost
+               level if  they have  also been  defined at  the global  or host
+               level.  The "OFF" value should never be used except to override
+               the character value of a higher level.
+
+
+          6.4.1 Backpressure of Host Output (XON)                _________________________________
+
+          Syntax:  XON(on_character,off_character)
+          Default:  No XON = not enabled
+                    No parameters = Control Q and Control S
+          Description:  This statement specifies the X-on and X-off characters
+               (in hexadecimal)  the TYMCOM  will use to  start and  stop host
+               output.  If  this option  is selected,  the host  may run  at a
+               higher baud rate than the  user's terminal will accept, without
+               losing data.  The   characters  may be specified   in the range
+               01 - 7F.  The  option may be turned off by  specifying "OFF" if
+               the parameter has been specified at  a higher level.  These are
+               not to be confused with characters  typed at a user's terminal.
+               A terminal  user who  wishes to  control character  flow should
+               specify a  Control R at  login, and  use the standard  X-on and
+               X-off characters.
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 30
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Example:
+
+               XON(0E,0F)
+
+               The TYMCOM will use a SO character (0E) to turn on host output,
+               and a SI character (0F) to turn it off.
+
+
+          6.4.2 Backpressure of TYMCOM Output (RXON)                ____________________________________
+
+          Syntax:  RXON(on_character,off_character)
+          Default:  No RXON = not enabled
+                    No parameters = Control Q and Control S
+          Description:  This statement specifies the X-on and X-off characters
+               (in hexadecimal) to be used to  start and stop TYMCOM output to
+               the host.  This  allows the user's terminal to run  at a faster
+               rate than the host.
+
+               Any X-on  characters sent  after the first  X-on and  before an
+               X-off will be passed to the terminal.  Any X-off sent after the
+               first X-off and before an X-on will  also be passed to the ter-
+               minal.  The characters  may be specified in the range  01 - 7F.
+               The option may be turned off by  specifying "OFF" if the param-
+               eter has been specified at a higher level.
+
+          Example:
+
+               RXON
+
+               The TYMCOM will respond to a DC3 (13) to enable the TYMCOM out-
+               put, and will respond to a DC1 (11) to halt it.
+
+
+          6.4.3 Host Backpressure Using Polling (POLFLO)                ________________________________________
+
+          Syntax:  POLFLO(poll_character, ack_character)
+          Default:  No POLFLO = not enabled
+                    No parameters = ENQ and ACK
+          Description:  This  statement specifies that host  backpressure will
+               be controlled by  a special protocol in which the  host sends a
+               polling character periodically, and stops  output to the TYMCOM
+               until an acknowledgement character is received from the TYMCOM.
+               The characters must  be specified as hexadecimal  values in the
+               range  01  - 7F.  This option  may be turned off  by specifying
+               "OFF" if the parameter has been specified at a higher level.
+
+          Example:
+
+               POLFLO(05,15)
+
+               The TYMCOM will expect an  ENQ (05) as a polling character from
+               the host, and will use a NAK (15) as an acknowledgement.
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 31
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.4.4 Host Deferred Echo Mode (HOSTDE)                ________________________________
+
+          Syntax:  HOSTDE(ede character,lde character)
+          Default:  No deferred echo characters sent to host
+          Description:   This statement  specifies the  characters the  TYMCOM
+               will send to  the host when the leave deferred  echo mode (LDE)
+               and  enter  deferred  echo  mode  (EDE)  network  commands  are
+               received from the  TYMSAT.  These characters must  be specified
+               as hexadecimal values in the range  01 - 7F.  The option may be
+               turned off by specifying "OFF" if the parameter has been speci-
+               fied at a higher level.
+
+          Example:
+
+               HOSTDE(02,03)
+
+               The TYMCOM will send an  STX (02) for enter deferred echo mode,
+               and an ETX (03) for leave deferred echo mode.
+
+
+          6.4.5 Host Control of Echo (HOSTEC)                _____________________________
+
+          Syntax:  HOSTEC(neonc,neoffc,neona,neoffa)
+          Default:  No network echo mode characters  will be expected from the
+               customer host by the TYMCOM
+          Description:   This statement  specifies the  characters a  customer
+               host may send to turn echo on  and off in the network.  Charac-
+               ters the TYMCOM  will send to acknowledge  these characters may
+               also be specified,  provided the host supports  an acknowledge-
+               ment facility, to let the host  know exactly when the state was
+               changed.  The characters must be  specified as hexadecimal val-
+               ues in  the range  01 - 7F.   The option may  be turned  off by
+               specifying  "OFF" if  the  parameter has  been  specified at  a
+               higher level.
+
+          Example:
+
+               HOSTEC(12,14)
+
+               The host can  turn network echo off by sending  a DC4 character
+               (14) to the  TYMCOM, and can turn  it back on by  sending a DC2
+               character (12)  to the  TYMCOM.  No  acknowledgement characters
+               will be sent to the host.
+
+          Example:
+
+               HOSTEC(1C,1D,1E,1F)
+
+               The echo off character is GS (1D)  and the echo on character is
+               FS (1C).   The TYMCOM will acknowledge  an echo off  command by
+               sending a US (1F), and will acknowledge an echo on command with
+               a RS (1E).
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 32
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.4.6 Terminal Control of Echo (TERMEC)                _________________________________
+
+          Syntax:  TERMEC(neonc, neoffc)
+          Default:  The terminal cannot control network echo
+          Description:  This statement specifies the characters a terminal may
+               send to  turn echo on and  off in the network.   The characters
+               will be sent  on to the host  unless they are specified  in the
+               FLTRFT statement (Section 6.5.3).  The characters must be spec-
+               ified  as hexadecimal values  in the range 01 - 7F.  The option
+               may be turned off by specifying "OFF" if the parameter has been
+               specified at a higher level.
+
+          Example:
+
+               TERMEC(1E,12)
+
+               The terminal can turn network echo off by sending a DC2 charac-
+               ter (12),  and can turn  it back on  by sending a  RS character
+               (1E).
+
+
+          6.4.7 2741 Transparency Mode (T2741)                ______________________________
+
+          Syntax:  T2741(tic,hic)
+          Default:  No T2741 = not transparent
+                    No parameters = transparent
+          Description:  If the  TYMSAT is not translating  2741 communications
+               to the  host it is  said to  be operating in  transparent mode.
+               This statement specifies whether or not  the TYMSAT will trans-
+               late a 2741  device's communication to ASCII  before passing it
+               to the host. If set to  transparent, this statement also speci-
+               fies characters  that the  TYMCOM will  send to  initialize the
+               2741 terminal and the host.   The terminal initialization char-
+               acter (TIC) and the host initialization character (HIC) must be
+               specified  as hexadecimal values  in the  range 01 - 0FF.  Both
+               TIC and HIC need not be  specified; either one may be specified
+               singly if only  one is desired.  This option may  be turned off
+               by specifying  "OFF" if the parameter  has been specified  at a
+               higher level.
+
+          Example:
+
+               T2741(0FC,0B4)
+
+               The TYMCOM will  put 2741's into transparent mode,  send an EOT
+               (0FC) to the terminal, and an EOA (0B4) to the host.
+
+
+          SECTION 6.5 Variable Multiple Value Options          ___________________________________________
+
+          The following Tymfile options may be  specified at the global, host,
+          or subhost levels.  Each statement  has multiple possible parameters
+          which may be specified and do not have to be specified in a specific
+          sequence unless otherwise noted.
+
+
+                                                    SUBHOST OPTIONS    Page 33
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.5.1 User Disconnect Characters (UDCHAR)                ___________________________________
+
+          Syntax:  UDCHAR(character1,...,character10)
+          Default:  No character specified
+          Description:  This statement  specifies the user  disconnect charac-
+               ters which, when entered  at a terminal, will  cause a "discon-
+               necting" message (specified with  the MTEXT(LOFF) parameter) to
+               be sent  to the  terminal and the  terminal to  be disconnected
+               from the  TYMCOM.  The  MTEXT(LOFF) parameter  can be  found in
+               Section 4.2 This is  useful for the user on a  host that cannot
+               disconnect a  terminal.  The  characters must  be specified  as
+               hexadecimal values  in  the range 00 - 7F.  The  option  may be
+               turned off by specifying "OFF" if the parameter has been speci-
+               fied at a  higher level.  These characters may  be specified in
+               ranges as well as individually.
+
+          Example:
+
+               UDCHAR(1A)
+
+               The TYMCOM will  disconnect the terminal when the  user types a
+               Control Z character (1A).
+
+
+          6.5.2 Characters That Initiate Gobblers (GOBBLE)                __________________________________________
+
+          Syntax:  GOBBLE(character1,...,character10)
+          Default:  No gobblers will occur
+          Description:  This  statement specifies characters which,  when sent
+               by the user,  will clear all characters which  are currently in
+               network buffers waiting to be sent to the user's terminal.  The
+               character is  also sent  to the  host unless  specified in  the
+               FLTRFT statement (see  Section 6.5.3).  The characters  must be
+               specified as  hexadecimal  values  in the range  00  - 7F.  The
+               option may be  turned off by specifying "OFF"  if the parameter
+               has been specified at a higher  level.  These characters may be
+               specified in ranges as well as individually.
+
+          Example:
+
+               GOBBLE(03,1F)
+
+               The TYMCOM will clear terminal output whenever the user types a
+               Control C (03) or a Control O (1F).
+
+
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 34
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          6.5.3 Characters Filtered from Terminal (FLTRFT)                __________________________________________
+
+          Syntax:  FLTRFT(character1,...,character10)
+          Default:  No characters will be filtered
+          Description:  This statement specifies the characters to be filtered
+               by the TYMCOM and  not allowed to reach the  host.  The charac-
+               ters  must be  specified  as hexadecimal  values  in the  range
+               00 - 7F.   This  option  may  be  specifically  turned  off  by
+               specifying "OFF".  The parameters may be specified in ranges as
+               well as individually.
+
+          Example:
+
+               FLTRFT(0-7,0B-0C,0E-1F,7F)
+
+               The TYMCOM  will filter out  RUBOUT and all  control characters
+               typed by the  user except carriage return  (0D), linefeed (0A),
+               horizontal tab (09), and backspace (08).
+
+
+          6.5.4 Characters Filtered from Host (FLTRFH)                ______________________________________
+
+          Syntax:  FLTRFH(character1,...,character10)
+          Default:  No characters will be filtered
+          Description:  This statement specifies the characters to be filtered
+               by the TYMCOM and not allowed to reach the user's terminal from
+               the host.   These characters must  be specified  as hexadecimal
+               values in the range 00 - 7F.   This option may be turned off by
+               specifying  "OFF" if  the  parameter has  been  specified at  a
+               higher level.   The parameters  may be  specified in  ranges as
+               well as individually.
+
+          Example:
+
+               FLTRFH(1B)
+
+               The TYMCOM will filter out any  escape (1B) characters the host
+               sends.
+
+
+          6.5.5 Characters to Echo in Deferred Echo Mode (DEMEC)                ________________________________________________
+
+          Syntax:  DEMEC(character1,...,character10)
+          Default:  0A, 0D, 20-7D (all  displayed characters + carriage return
+               and linefeed)
+          Description:   This statement  specifies the  characters the  TYMCOM
+               will echo when in deferred echo mode.  These characters must be
+               specified  as  hexadecimal values  in the  range  00 - 7F.  The
+               parameters may be specified in ranges as well as individually.
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 35
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Example:
+
+               DEMEC(08-0A,0D,20-7D)
+
+               This is the same as the  default except that backspace (08) and
+               horizontal tab (09) will also be echoed.
+
+
+          6.5.6 Terminal Identification Characters (STIC)                _________________________________________
+
+          Syntax:  STIC(type1,...,typen,tic,type,tic,...)
+          Default:  No characters will be sent to the subhost
+          Description:   This statement  defines  the terminal  identification
+               character or character  pair that will identify  terminal types
+               to the customer host.  The terminal types must immediately pre-
+               cede the terminal  identification character to be  specified by
+               that character.   These characters must  be specified  by their
+               hexadecimal values in the range 01 - 0FFFF.  When one character
+               is sent, then a zero character should precede it.  The terminal
+               types are as follows:
+
+                    Type   TIC     Speed                    ____   ___     _____
+
+                    T0     aux       *
+                    T1     A       300 baud
+                    T2     C       300 baud
+                    T3     E       300 baud
+                    T4     G       300 baud
+                    T5     B       150 baud
+                    T6     F       150 baud
+                    T7     J       150 baud
+                    T8     P<cr>   300 baud (3767 in 2741 mode)
+                    T9     P<cr>   134.5 baud (2741)
+                    T10    D       110 baud
+                    T11            2780
+                    T12    A       1200 baud
+                    T13            Burroughs polled terminal
+                    T14            Reserved
+                    T15            Baudot
+                    T16    A       2400 baud
+                    T17            3270
+                    T18            Reserved
+                    T19    A       4800 baud
+                    T20    A       9600 baud
+                    T21            Multiplexed PVC
+                    T22            Audio response
+                    T23            Videotex
+                    T24-T31        Reserved for future assignment
+
+               *   Indicates the  speed is set to 1200 baud  on variable speed
+               ports.
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 36
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               Terminal types may be specified  individually or in ranges.  If
+               terminal type numbers  11 and 13 fall within  a specified range
+               they will be ignored.  If they are specified individually, they
+               will result  in an  error message.  If  the parameter  has been
+               specified at a  higher level, this option may be  turned off by
+               specifying the number "00" in the TIC field following the types
+               that are to be disabled, for example, STIC(type1,type2,00).
+
+               Note that the TIC will only be  sent to autospeed ports for the
+               specified  subhost, unless  the switch  option  TICAP has  been
+               turned on.  If TICAP has been set on, the TIC will also be sent
+               to fixed speed ports on the subhost.
+
+          Example:
+
+               STIC(T10,418D,T1-T4,428D,T0,T12,8D,T16,438D)
+
+               Send an "A" and CR for 110 baud terminals, a "B" and CR for 300
+               baud terminals, send  only a CR for 1200 baud  terminals, and a
+               "C" and CR for 2400 baud terminals.
+
+
+          6.5.7 Login from Node Not Allowed (BARNOD)                ____________________________________
+
+          Syntax:  BARNOD(node1,...,node10)
+          Default:  All nodes allowed
+          Description:  This statement  specifies a list of  nodes (octal node
+               numbers) from which  logins to the defined subhost  will not be
+               allowed.  Any valid node number or  list of node numbers may be
+               specified.  This statement  and the OKNODE statement  are mutu-
+               ally exclusive for the same subhost.
+
+          Example:
+
+               BARNOD(2030,2033,2166)
+
+               The TYMCOM will not allow logins from nodes 2030, 2033, 2166.
+
+
+          6.5.8 Login from Node Allowed (OKNODE)                ________________________________
+
+          Syntax:  OKNODE(node1,...,node10)
+          Default:  All nodes allowed
+          Description:  This statement  specifies a list of  nodes (octal node
+               numbers)  from  which  logins  to a  defined  subhost  will  be
+               allowed.  No other nodes will be  allowed.  Any valid node num-
+               ber or list  of node numbers may be  specified.  This statement
+               and the  BARNOD statement are  mutually exclusive for  the same
+               subhost.
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 37
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Example:
+
+               OKNODE(2067,2165,2166)
+
+               The TYMCOM  will only allow logins  from nodes 2067,  2165, and
+               2166.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                    SUBHOST OPTIONS    Page 38
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 7.0 PORT OPTIONS          ________________________
+
+          This section contains  a description of the port  options.  With the
+          exception of the PN  option, the port options may  be specified any-
+          where in the Tymfile.
+
+
+          SECTION 7.1 Port Numbers (PN)          _____________________________
+
+          Syntax:  PN(port1,port2,...,port10)
+          Default:  No ports assigned to a subhost
+          Description:  This statement  defines the port numbers  (in decimal)
+               which are assigned to a subhost.   Up to 10 single port numbers
+               and/or ranges of port numbers may  be specified for each state-
+               ment.  Port numbers  may be assigned from 0  to whatever number
+               of ports  has been  assigned to the  slot.  Ports  are numbered
+               sequentially starting from  zero.  These are logical  port num-
+               bers.  Their relationship to the  physical port numbers associ-
+               ated with the hardware depends on the ISIS configuration.  Each
+               asynchronous logical unit is 16 ports and each SIO logical unit
+               is one port.   SIO ports always follow  the asynchronous ports.
+               (See  NALU  and NMLU,  Sections  2.1  and 2.2,  for  additional
+               information on hardware options.)
+
+               PN must be specified at the subhost level.
+
+               Ports may be changed or assigned dynamically when the TYMCOM is
+               running by using  the TOM "ASSIGN" command.   The ports defined
+               for the TOM subhost are used  as the hardwired asynchronous TOM
+               ports.  As many hardwired ports as desired may be assigned, but
+               the MUTOM option will determine the maximum number of terminals
+               that can be connected to the TOM at any one time.
+
+          Example:
+
+               PN(1-3,7-9)
+
+               Port  numbers  1 - 3, and  7 - 9  are assigned  to the  current
+               subhost.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       PORT OPTIONS    Page 39
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 7.2 Port Terminal Types Allowed (PTYP)          ______________________________________________
+
+          Syntax:  PTYP(type1,...,typen,port1,...,portn)
+          Default:  All types allowed for any port not listed
+          Description:  This statement  specifies the terminal  types (associ-
+               ated with the TID typed at  the user's terminal) allowed to log
+               in to  a TYMCOM port  or range of  ports.  The total  number of
+               terminal type  ranges and port  ranges specified  cannot exceed
+               10.  The types are:
+
+                    Type   TID     Speed                    ____   ___     _____
+
+                    T0     aux     1200 baud
+                    T1     A       300 baud
+                    T2     C       300 baud
+                    T3     E       300 baud
+                    T4     G       300 baud
+                    T5     B       150 baud
+                    T6     F       150 baud
+                    T7     J       150 baud
+                    T8     P<cr>   300 baud (3767 in 2741 mode)
+                    T9     P<cr>   134.5 baud (2741)
+                    T10    D       110 baud
+                    T11            2780
+                    T12    A       1200 baud
+                    T13            Burroughs polled terminal
+                    T14            Reserved
+                    T15            Baudot
+                    T16    A       2400 baud
+                    T17            3270
+                    T18            Reserved
+                    T19    A       4800 baud
+                    T20    A       9600 baud
+                    T21            Multiplexed PVC
+                    T22            Audio response
+                    T23            Videotex
+                    T24-T31        Reserved for future assignment
+
+               Port types may be changed dynamically  by using the TOM "TYPES"
+               command.
+
+          Example:
+
+               PTYP(T0-T4,T12,1-31)
+
+               Allows only 300 baud and 1200 baud terminals on ports 1 - 31.
+
+
+
+
+
+
+
+
+
+
+                                                       PORT OPTIONS    Page 40
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 7.3 Port Speed (PSPD)          _____________________________
+
+          Syntax:  PSPD(speed,port1,...,port10)
+          Default:  SF for all unmentioned ports
+          Description:  This  statement specifies  the speed  at which  a port
+               will communicate with a host.  The speeds are:
+
+                    Speed                                Data        Signal                    _____                                ____        ______
+                    Type      Speed                      Bits       Protocol                    ____      _____                      ____       ________
+
+                     S0       110 baud                    8          RS-232
+                     S1       150 baud                    8          RS-232
+                     S2       300 baud                    8          RS-232
+                     S3       400 baud                    8          RS-232
+                     S4       600 baud                    8          RS-232
+                     S5       1200 baud                   8          RS-232
+                     S6       300 baud (3767)             6          RS-232
+                     S7       134.5 baud (2741)           6          RS-232
+                     S8       300 baud 10 cps             8          RS-232
+                     S9       1200 baud 10 cps            8          RS-232
+                     S10      2400 baud                   8          RS-232
+                     S11      4800 baud                   8          RS-232
+                     S12      9600 baud (SIO only)        8          RS-232
+                     S13      50 baud Baudot              5          RS-232
+                     S14      75 baud Baudot              5          RS-232
+                     S15      75 baud                     8          RS-232
+                     SB       Variable Baudot (SIO only)  5          X.20
+                     SF       Variable                    8          RS-232
+
+               SF allows  the port to  run at  the speeds associated  with the
+               terminal types specified by the PTYP option.  In this case, the
+               STIC option  specifies the characters  to send to  the customer
+               host for  each terminal type.   Port values  (p1 - p10)  may be
+               specified individually  or in ranges.   This statement  must be
+               repeated for each speed.
+
+               A port defined as SF, whether  by default or by specifying this
+               statement, is called an autospeed port.   A fixed speed port is
+               one  which has  one  of  the  speeds   in  the  range  S0 - S12
+               explicitly specified.
+
+               For SIO  ports, the baud rate  is determined by  the thumbwheel
+               switch on  the interface  card.  Use  of this  statement serves
+               only to indicate  a fixed port (and whether a  Baudot port) and
+               to document the proper thumbwheel setting.
+
+               Port speeds  can be  changed dynamically  with the  TOM "SPEED"
+               command.
+
+          Examples:
+
+               PSPD(S5,1-20)
+
+               Ports 1 - 20 will communicate with the host at 1200 baud.
+
+
+                                                       PORT OPTIONS    Page 41
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+               PSPD(SF,21-31,46-47)
+
+               Ports 21 - 31 and 46 - 47 will do speed matching and send TIC.
+
+
+          SECTION 7.4 Port Candidate Type (PCAN)          ______________________________________
+
+          Syntax:  PCAN(type,port1,...,port10)
+          Default:  IFUP for all unmentioned ports
+          Description:  This statement specifies the port candidate type.  The
+               port type may  be SIG, for signal candidate type,  or IFUP, for
+               "ifup" candidate types.   The types may be  changed dynamically
+               with the TOM "CANDIDATE" command.
+
+               The TYMCOM can determine whether or not a port is available for
+               assignment (that is,  if it is "up") using one  of two methods.
+               The first method (SIG) is the  signal candidate method.  If DSR
+               and CD (DTR from the host) are usually held high by the host on
+               an active port,  the TYMCOM can use these  signals to determine
+               if the  port is available.  If  host signals only come  high in
+               response to a  ring signal from the TYMCOM, a  TOM command must
+               have declared a port  up for the TYMCOM to recognize  it as up.
+               In this case, the "ifup" method must be used.
+
+               Ports are candidates for assignment  if they have been declared
+               UP with the TOM "UP" command.  They are no longer candidates if
+               they have been declared DOWN with  the TOM "DOWN" command.  All
+               ports are considered UP when the TYMCOM is initialized.
+
+          Example:
+
+               PCAN(SIG,1-31)
+
+               Ports 1 - 31 will use the signal candidate method.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                       PORT OPTIONS    Page 42
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 8.0 TYMCOM OPTIONS SUMMARY          __________________________________
+
+          The following  summary lists all the  TYMCOM options, gives  a brief
+          description of each  option, indicates the default  for each option,
+          and the section number where it can be found.
+
+          Option          Description                    Default       Section          ______          ___________                    _______       _______
+
+          ABNDM(text)     Abnormal disconnect message.   No message.    6.3.11
+
+          BARNOD(node1,...,node10)                       All nodes      6.5.7
+                          Nodes not allowed to log in.   allowed.
+
+          BKSND(count)    Length of break sent to host.  0              6.3.6
+
+          CTLESC(character)                              No character   6.3.10
+                          Character preceding special    specified.
+                          character.
+
+          DEMEC(character1,...,character10)              0A, 0D, 20-7D  6.5.5
+                          Deferred echo mode characters.
+
+          DTRP(seconds)   Delay before sending data to   1              6.3.2
+                          the host.
+
+          EOTC(character) End of transmission character. Not enabled.   6.3.7
+
+          FLTRFH(character1,...,character10)             No characters  6.5.4
+                          Characters filtered from host. filtered.
+
+          FLTRFT(character1,...,character10)             No characters  6.5.3
+                          Characters filtered from       filtered.
+                          terminal.
+
+          GOBBLE(character1,...,character10)             No gobblers.   6.5.2
+                          Characters that initiate
+                          gobblers.
+
+          HDROP(seconds)  Wait time for host drop.       4              6.3.4
+
+          HETM(character) Host enter transparency mode.  No character.  6.3.8
+
+          HOSTDE(ede_character,lde_character)            Not enabled.   6.4.4
+                          Host deferred echo mode.
+
+          HOSTEC(neonc,neoffc,neona,neoffa)              Not enabled.   6.4.5
+                          Host control of echo.
+
+          HST(number)     Specifies the host number.     No default.    5.1
+
+          INACT(minutes)  Inactivity timer.              No hang.       6.3.5
+
+          LOGINS(text)    Login string sent to host.     No message.    6.3.12
+
+
+
+                                             TYMCOM OPTIONS SUMMARY    Page 43
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Option          Description                    Default       Section          ______          ___________                    _______       _______
+
+          MTEXT(mname,mtext,position)                    See section.   4.2
+                          Defines message text.
+
+          MUTOM(count)    Number of TOM users allowed.   14             3.1
+
+          NALU(count)     Number of async logical units. 1              2.1
+
+          NMLU(count)     Number of SIO logical units.   0              2.2
+
+          NHAMT(minutes)  NHA message frequency.         5              3.4
+
+          OKNODE(node1,...,node10)                       All nodes      6.5.8
+                          Only nodes allowed to log in.  allowed.
+
+          PARITY(parity value)                           SAVE           6.3.1
+                          Parity bit value.
+
+          PCAN(type, port1,...,port10)                   Ifup           7.4
+                          Port candidate type.
+
+          PCODE(character1,...,character10)              No project     4.3
+                          Collect the project code.      code sent.
+
+          PN(port1,port2,...,port10)                     No ports       7.1
+                          Port numbers assigned.         assigned.
+
+          PNRADX(DEC|OCT|HEX)                            Decimal        4.1
+                          Specifies port number radix.
+
+          POLFLO(poll_character, ack_character)          Not enabled.   6.4.3
+                          Host backpressure using
+                          polling.
+
+          PSPD(speed,port1,...,port10)                   Variable       7.3
+                          Specifies port speed.          speed.
+
+          PTYP(type1,...,typen,port1,...,portn)          All types      7.2
+                          Terminal types allowed on      allowed.
+                          port.
+
+          RINGTO(seconds) Ring time out.                 4              6.3.3
+
+          RXON(on_character,off_character)               Not enabled.   6.4.2
+                          Backpressure of TYMCOM output.
+
+          SHST(gggg,x0,...,x9)                           No default.    6.1
+                          Defines a subhost.
+
+          SINDXP(position)                               1              5.2
+                          Subhost index position.
+
+
+
+
+                                             TYMCOM OPTIONS SUMMARY    Page 44
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Option          Description                    Default       Section          ______          ___________                    _______       _______
+
+          SOPT(option1,...,option10)                     See below.     6.2
+                          Subhost switch options.
+
+               BKDSC      Disconnect on break.           Off            6.2.9
+
+               BKGOB      Send gobbler on break.         Off            6.2.8
+
+               BZAPM      Enables buffer zap messages.   Off            6.2.18
+
+               CAPFH      Capitalize output from host.   Off            6.2.17
+
+               CAPFT      Capitalize output from         Off            6.2.16
+                          terminal.
+
+               CRDLY      Sets delay after carriage      On             6.2.6
+                          return.
+
+               ECHO       Character echoing.             On             6.2.1
+
+               ECRLF      Echo carriage return as        On             6.2.3
+                          carriage return and linefeed.
+
+               ECTLH      Echo Control H.                Off            6.2.5
+
+               ECTLI      Echo Control I.                Off            6.2.4
+
+               ELFCR      Echo linefeed as linefeed,     On             6.2.2
+                          carriage return, and rubout.
+
+               GINDL      Send ISIS needle to host.      Off            6.2.11
+
+               GUNAM      Give username to host.         Off            6.2.12
+
+               LCTLH      Echo half duplex.              Off            6.2.7
+
+               RLSPT      Release port on NHA.           On             6.2.15
+
+               RNGDR      Ring drop.                     On             6.2.14
+
+               RNGTG      Ring toggle.                   On             6.2.13
+
+               TICAP      TIC on fixed speed ports.      Off            6.2.10
+
+          STIC(type1,...,typen,tic,type,tic,...)         No characters  6.5.6
+                          Terminal identification        sent.
+                          characters.
+
+          TERMEC(neonc, neoffc)                          Not enabled.   6.4.6
+                          Terminal control of echo.
+
+          TOMCL(#,cm)     TOM command level.             See section.   3.6
+
+
+
+                                             TYMCOM OPTIONS SUMMARY    Page 45
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Option          Description                    Default       Section          ______          ___________                    _______       _______
+
+          TOMGG(username) Special TOM username.          !##TOM##       3.7
+
+          TOMPW(password) Password for change license.   No password.   3.5
+
+          TOMTR(minutes)  Timestamp output frequency.    15             3.2
+
+          TOMTZ(bias)     TOM time zone.                 0              3.3
+
+          TYMNET(level)   Level of TYMNET node code.     2              2.3
+
+          T2741(tic,hic)  2741 transparency mode.        Not enabled.   6.4.7
+
+          UDCHAR(character1,...,character10)             Not enabled.   6.5.1
+                          User disconnect characters.
+
+          UETM(character) Terminal enter transparency    Not enabled.   6.3.9
+                          mode.
+
+          XON(on_character,off_character)                Not enabled.   6.4.1
+                          Backpressure of host output.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             TYMCOM OPTIONS SUMMARY    Page 46
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SECTION 9.0 SAMPLE TYMCOM TYMFILE          _________________________________
+
+          The examples in this file are  for illustrative purposes only.  This
+          file should  not be used  as a template  for an actual  sysgen file.
+          The sysgen  for each installation  should be coded  separately after
+          reviewing each of the options described in this manual.
+
+          The colon  (:) and double colon  (::) precede comments that  are not
+          read by the assembler.  Use of comments is optional.
+
+
+          ::********************    ISIS ASYNC TYMCOM    *********************
+          :***************    SAMPLE SYSGEN DIRECTIVE FILE    ****************
+
+          ::      ENVIRONMENT OPTIONS DEFINITIONS
+
+          NALU(2)         :assign 2 logical units = 32 ports
+
+          ::      TOM OPTION DEFINITIONS
+
+          MUTOM(4)        :allow up to 4 concurrent TOM users
+          TOMTZ(-8)       :set TOM time zone to PST
+
+          ::      GLOBAL TYMCOM OPTION DEFINITIONS
+
+          MTEXT(RNA,"8D"8APORT NNN NOT RESPONDING`, call (777)123-4567,8)
+
+          PCODE(8D,0D)    :collect project code until CR or max 12 chars
+
+          ::      GLOBAL SUBHOST OPTION DEFINITIONS
+
+          PARITY(ODD)     :output odd parity
+          BKSND(3)        :send 3 * 83.3 = 250.0 MS of break to host
+          HETM(0B)        :enter transparency if 0B received from host
+
+          ::      HOST DEFINITIONS
+
+          HST(321)        :HOST 0
+
+                  HETM(OFF)         :turn off global value for this host
+                  BKSND(2)          :only 2 * 83.33 = 166.67 MS break for this
+                                    :host
+                  LOGINS(LOGON )    :logon string sent before username
+                  SOPT(GUNAM,-ECHO) :give username to host, turn off net echo
+
+                  SHST(TOM,##)      :subhost 0 is always the TOM
+                          SOPT(ECHO)       :override host echo off
+                          PN(0)            :assign port 0 to TOM
+
+
+
+
+
+
+
+
+                                              SAMPLE TYMCOM TYMFILE    Page 47
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+                  SHST(HSTZ)        :subhost 1
+                          SOPT(-CRDLY)     :host provides nulls for CR delay
+                          UETM(0C)         :user initiates transparency with
+                                           :control L
+                          PN(1-3,7-9)      :port assignment
+
+          HST(323)        :host 1 (uses global values)
+                  SINDXP(-2)        :look for subhost index in last 2 chars
+                                    :of username
+
+                  SHST(HSTA,AA)     :subhost 2
+                          SOPT(GINDL)      :give ISIS needle to host
+                          PN(4-6)
+
+                  SHST(HSTB,AB,BB)  :subhost 3
+                          PN(10-15)
+
+                  SHST(HSTC)        :subhost 4
+                          STIC(T1-T4,8D,T0,T12,8A)     :send carriage return
+                                                       :for 300 baud and
+                                                       :linefeed for 1200
+                                                       :baud
+                          PN(16-31)
+
+          ::      PORT OPTION DEFINITIONS
+
+          PTYP(T0-T4,T12,1-31)      :allow 300 baud and 1200 baud terminals
+                                    :on ports 1 - 31
+          PSPD(S5,1-20)             :communicate with host at 1200 baud on
+                                    :ports 1 - 20
+          PSPD(SF,21-31)            :ports 21 - 31 do speed matching and send
+                                    :TIC
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                              SAMPLE TYMCOM TYMFILE    Page 48
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+                                        GLOSSARY
+
+
+          Deferred Echo Mode          __________________
+
+          If the  switch option  ECHO is  set on,  characters sent  by a  full
+          duplex terminal are echoed by the  TYMSAT.  However, when the TYMSAT
+          receives a character it cannot echo (such as a character that is not
+          a carriage  return, a linefeed, or  a printable character),  or when
+          the host is  outputting to the terminal, the  TYMSAT enters deferred
+          echo mode.   While the  TYMSAT is in  deferred echo  mode, character
+          echoing is  provided by  the host  or the  TYMCOM, depending  on the
+          value of the  HOSTDE statement.  Deferred echo  mode continues until
+          the TYMSAT sends a  green ball (see Green Ball Logic)  to the TYMCOM
+          and receives a return green ball in acknowledgement.
+
+
+          EIA RS-232          __________
+
+          The Electonics  Industry Association publishes standards  for signal
+          protocol.  The TYMCOM utilizes a subset  of these standards known as
+          EIA RS-232C.
+
+
+          Green Ball Logic          ________________
+
+          The TYMSAT stops echoing characters from the terminal when it enters
+          deferred echo mode.  When the TYMSAT is ready to leave deferred echo
+          mode and  resume echoing characters,  it sends  a green ball  to the
+          TYMCOM.  The TYMCOM returns a green ball to the TYMSAT as soon as it
+          receives an end  of transmission character (EOTC) from  the host, or
+          when it detects  a one second pause  in host output (if  EOTC is not
+          defined).  This assures  that the host has caught up  with the input
+          character stream and has echoed all echoable characters.  The TYMSAT
+          usually leaves deferred  echo mode as soon as the  return green ball
+          is received, although the return green  ball may be cancelled by the
+          TYMSAT if deferred  echo mode should continue (for  example, if more
+          unechoed characters  have been  sent in the  meantime).  A  red ball
+          from the  TYMSAT to the  TYMCOM cancels  the return green  ball, and
+          causes deferred echo mode to continue.
+
+
+          ISIS Needle          ___________
+
+          The dispatcher in the ISIS node in  which a TYMCOM is running gener-
+          ates an ISIS needle  whenever a new circuit is built  to the TYMCOM.
+          The needle contains information about  the origin and destination of
+          the circuit which is used by the  TYMCOM to complete the building of
+          the circuit.  If the information is also required by the destination
+          host, the TYMCOM switch option GINDL (set to on) will cause the TYM-
+          COM to forward a copy of the needle  to the host when the circuit to
+          the host is built.
+
+
+
+
+                                                           GLOSSARY    Page 49
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Subhost Index          _____________
+
+          A subhost  index is a  two character  string imbedded in  a username
+          that determines the  subhost the user will access.   The position of
+          the index within a  username is determined by the value  of the host
+          option SINDXP.  The subhost referenced by a subhost index is defined
+          by the subhost option SHST.
+
+
+          Transparency Mode          _________________
+
+          In transparency mode,  the TYMCOM does not  inspect, filter, modify,
+          or translate to ASCII any characters sent  on a circuit between ter-
+          minal and host.  This mode allows for the transmission of characters
+          that would otherwise be interpreted by the TYMCOM as having specific
+          meaning.  Once invoked, transparency mode continues until the end of
+          the session.
+
+          The value of the statement T2741 determines  whether or not the TYM-
+          SAT will handle translation of characters  sent from a 2741 terminal
+          to a host, to ASCII.  If no translation is being done, the TYMSAT is
+          in transparency mode.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                           GLOSSARY    Page 50
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+                                         INDEX                                         _____
+
+
+          Abend .................................................. 29
+          ABNDM .................................................. 29
+          Abnormal Disconnect Message Text (ABNDM) ............... 29
+          Acknowledgement characters ............................. 28
+          ANP .................................................... 15
+          APD .................................................... 15
+          ASCII .................................................. 33
+          ASC117 ................................................. 4, 6
+          ASC140-20 .............................................. 5
+          ASC140-20JJ ............................................ 4
+          ASC140-20JP ............................................ 4
+          Asynchronous logical units ............................. 9, 39
+          Asynchronous ports ..................................... 1, 2, 4, 5,
+           6, 9, 10, 27, 39
+
+          Backpressure of Host Output (XON) ...................... 30
+          Backpressure of TYMCOM Output (RXON) ................... 31
+          BARNOD ................................................. 37
+          Baudot ports ........................................... 4, 41
+          BKDSC .................................................. 22
+          BKGOB .................................................. 22
+          BKSND .................................................. 27
+          Break Sent to Host (BKSND) ............................. 27
+          Buffer Zap Messages (BZAPM) ............................ 24
+          BUSY ................................................... 5, 6
+          BZAPM .................................................. 24
+          BZFT ................................................... 16, 24
+          BZTT ................................................... 16, 24
+
+          Cable adapters ......................................... 4
+          Cable options .......................................... 4, 5
+          Cable pin configuration ................................ 2, 4
+          Candidate type ......................................... 3, 42
+          CAPFH .................................................. 24
+          CAPFT .................................................. 24
+          Capitalize Output from Host (CAPFH) .................... 24
+          Capitalize Output from Terminal (CAPFT) ................ 24
+          Carriage Return Delay (CRDLY) .......................... 21
+          CD ..................................................... 5, 6, 42
+          Change license ......................................... 13
+          Changing the level of a command ........................ 13
+          Character conversion to uppercase ...................... 24
+          Character Echo (ECHO) .................................. 20
+          Character echoing ...................................... 20, 32, 49
+          Character filtering .................................... 34, 35
+          Character flow control ................................. 30
+          Character Preceding Special Characters (CTLESC) ........ 28
+          Characters Filtered from Host (FLTRFH) ................. 35
+          Characters Filtered from Terminal (FLTRFT) ............. 35
+
+
+
+
+                                                                       Page 51
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Characters That Initiate Gobblers (GOBBLE) ............. 34
+          Characters to Echo in Deferred Echo Mode (DEMEC) ....... 35
+          Circuit zap ............................................ 29
+          Clear To Send (CTS) .................................... 5
+          Command levels ......................................... 13
+          Control H .............................................. 21, 22
+          Control I .............................................. 21
+          Control Q .............................................. 30
+          Control R .............................................. 30
+          Control S .............................................. 30
+          Control signals ........................................ 2
+          CRDLY .................................................. 21
+          CTLESC ................................................. 28
+          CTS .................................................... 5
+
+          Data Circuit Terminating Equipment (DCE) ............... 2
+          Data Set Ready (DSR) ................................... 3
+          Data Terminal Equipment (DTE) .......................... 2
+          Data Terminal Ready (DTR) .............................. 3
+          DBH .................................................... 15
+          DCE .................................................... 2
+          Decimal radix .......................................... 15
+          Default MTEXT messages ................................. 15, 16
+          Deferred echo characters ............................... 35
+          Deferred echo mode ..................................... 21, 32, 35,
+           49
+          Delay After DTR Raised (DTRP) .......................... 25
+          DEMEC .................................................. 21, 35
+          Disconnect on break (BKDSC) ............................ 22
+          DSR .................................................... 3, 5, 6, 42
+          DTE .................................................... 2
+          DTR .................................................... 3, 5, 6, 42
+          DTRP ................................................... 3, 25
+
+          ECHO ................................................... 20, 21, 49
+          Echo Half Duplex (LCTLH) ............................... 22
+          Echo mode .............................................. 32
+          Echo of Carriage Return (ECRLF) ........................ 21
+          Echo of Control H (ECTLH) .............................. 21
+          Echo of Control I (ECTLI) .............................. 21
+          Echo of Linefeed (ELFCR) ............................... 21
+          ECRLF .................................................. 21, 22
+          ECTLH .................................................. 21
+          ECTLI .................................................. 21
+          EIA RS-232C protocol ................................... 1, 2, 49
+          ELFCR .................................................. 21, 22
+          End Of Transmission (EOT) .............................. 27
+          End of Transmission Character (EOTC) ................... 27, 49
+          Engine hardware ........................................ 2, 4
+          Enter Deferred Echo Mode (EDE) ......................... 32
+          EOT .................................................... 27
+          EOTC ................................................... 27, 28, 49
+
+
+
+
+                                                                       Page 52
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          Escape character ....................................... 28
+          EVEN PARITY ............................................ 25
+
+          FLTRFH ................................................. 35
+          FLTRFT ................................................. 34
+          Format ................................................. 6
+
+          GINDL .................................................. 23
+          Global options ......................................... 15
+          Global statements ...................................... 9
+          GLOSSARY ............................................... 49
+          GOBBLE ................................................. 34
+          Gobble on break ........................................ 22
+          Green ball ............................................. 49
+          Green ball logic ....................................... 27, 49
+          GRT .................................................... 15
+          GUNAM .................................................. 23, 30
+
+          Hardware options ....................................... 9
+          Hardware signal protocol ............................... 4
+          HDN .................................................... 16
+          HDROP .................................................. 4, 24, 26
+          HETM ................................................... 28
+          Hexadecimal radix ...................................... 15
+          HIC .................................................... 33
+          High signal ............................................ 3
+          Host acknowledgement ................................... 24, 26
+          Host Backpressure Using Polling (POLFLO) ............... 31
+          Host Control of Echo (HOSTEC) .......................... 32
+          Host Deferred Echo Mode (HOSTDE) ....................... 32
+          Host Drop Wait in Seconds (HDROP) ...................... 26
+          Host greeting name ..................................... 15, 19
+          Host initialization character .......................... 33
+          Host Number (HST) ...................................... 18
+          Host options ........................................... 18
+          Host transparency character ............................ 28
+          Host Transparency Mode (HETM) .......................... 28
+          HOSTDE ................................................. 28, 32
+          HOSTEC ................................................. 28, 32
+          HSH .................................................... 16
+          HST .................................................... 18, 20
+
+          IFUP ................................................... 3, 42
+          Ifup candidate ......................................... 42
+          INA .................................................... 15
+          INACT .................................................. 26
+          Introduction ........................................... 1
+          ISIS needle ............................................ 23, 49
+          ISIS Needle Sent to Host (GINDL) ....................... 23
+
+
+
+
+
+
+
+                                                                       Page 53
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          IUN .................................................... 15
+
+          LCTLH .................................................. 22
+          Leave Deferred Echo Mode (LDE) ......................... 32
+          Level 0 commands ....................................... 13
+          Level 1 commands ....................................... 13
+          Level 2 commands ....................................... 13
+          Levels of options ...................................... 6, 7, 13
+          LOFF ................................................... 16
+          Logical port numbers ................................... 39
+          Logical unit ........................................... 9
+          Login from Node Allowed (OKNODE) ....................... 37
+          Login from Node Not Allowed (BARNOD) ................... 37
+          Login String Sent to Host (LOGINS) ..................... 30
+          LOGINS ................................................. 23, 30
+          Low signal ............................................. 3
+
+          MARK PARITY ............................................ 25
+          Message Text (MTEXT) ................................... 15
+          Message text syntax .................................... 7
+          Minutes of Inactivity Before Drop (INACT) .............. 26
+          MTEXT .................................................. 12, 15, 19,
+           24, 34
+          Multiple value options ................................. 30
+          MUTOM .................................................. 11, 39
+
+          NALU ................................................... 9
+          Network buffer zap ..................................... 24
+          Network buffers ........................................ 22
+          NHA .................................................... 15
+          NHA Message Repetition Rate (NHAMT) .................... 12
+          NHAMT .................................................. 12, 24, 26
+          NMLU ................................................... 9
+          NPA .................................................... 15
+          Number of Async Logical Units (NALU) ................... 9
+          Number of Minutes Between Timestamp (TOMTR) ............ 11
+          Number of SIO Port Logical Units (NMLU) ................ 9
+          Number of TOM Users (MUTOM) ............................ 11
+
+          Octal radix ............................................ 15
+          ODD PARITY ............................................. 25
+          OKNODE ................................................. 37
+          Options summary ........................................ 43
+          Overview ............................................... 1
+
+          Parameter value syntax ................................. 8
+          PARITY ................................................. 23, 25
+          Parity Bit Value (PARITY) .............................. 25
+          PCAN ................................................... 3, 42
+          PCODE .................................................. 17
+          Physical port numbers .................................. 39
+          Pins ................................................... 6
+
+
+
+
+                                                                       Page 54
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          PN ..................................................... 15, 39
+          PNRADX ................................................. 15
+          POLFLO ................................................. 31
+          Polling characters ..................................... 31
+          Port Candidate Type (PCAN) ............................. 42
+          Port number definition ................................. 39
+          Port Number Radix (PNRADX)) ............................ 15
+          Port Numbers (PN) ...................................... 39
+          Port options ........................................... 39
+          Port Speed (PSPD) ...................................... 41
+          Port Terminal Types Allowed (PTYP) ..................... 40
+          Project Code Accounting (PCODE) ........................ 17
+          Project code termination character ..................... 17
+          Protocol for 103F modem ................................ 23
+          PSPD ................................................... 41
+          PTYP ................................................... 40, 41
+
+          Radix .................................................. 15
+          RD ..................................................... 3, 5
+          Red ball ............................................... 49
+          Release Port if Drop Not Acknowledged (RLSPT) .......... 24
+          RI ..................................................... 3, 5
+          Ring Drop (RNGDR) ...................................... 24
+          Ring Indicator ......................................... 3
+          Ring signal ............................................ 23, 26, 42
+          Ring Toggle (RNGTG) .................................... 23
+          RINGTO ................................................. 3, 26
+          RLSPT .................................................. 4, 12, 24,
+           26
+          RNA .................................................... 15
+          RNGDR .................................................. 24
+          RNGTG .................................................. 3, 23
+          RS-232C protocol ....................................... 1, 2, 49
+          RXON ................................................... 28, 31
+
+          Sample TYMCOM Tymfile .................................. 47
+          SAVE PARITY ............................................ 25
+          Seconds to Ring Before Disconnect (RINGTO) ............. 26
+          Send Gobbler on Break (BKGOB) .......................... 22
+          SHST ................................................... 19, 20, 50
+          SIG .................................................... 42
+          SIGNAL ................................................. 3
+          Signal candidate ....................................... 42
+          Signal names ........................................... 2
+          Signal protocol ........................................ 2
+          SINDXP ................................................. 6, 18, 50
+          Single value options ................................... 25
+          SIO logical unit ....................................... 9, 39
+          SIO ports .............................................. 1, 2, 5, 9,
+           27, 29, 39, 41
+          Software signal protocol ............................... 2
+          SOPT ................................................... 20, 26, 30
+
+
+
+
+                                                                       Page 55
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          SORD ................................................... 6
+          SPACE PARITY ........................................... 25
+          STIC ................................................... 36, 41
+          Subhost Definition (SHST) .............................. 19
+          Subhost index .......................................... 18, 50
+          Subhost Index Starting Postion (SINDXP) ................ 18
+          Subhost options ........................................ 19
+          Subhost ordinal ........................................ 6
+          Switch Options (SOPT) .................................. 20
+          Syntax ................................................. 7
+
+          TD ..................................................... 3, 5
+          TERMEC ................................................. 33
+          Terminal Control of Echo (TERMEC) ...................... 33
+          Terminal echo .......................................... 33
+          Terminal Identification Characters (STIC) .............. 36
+          Terminal initialization character ...................... 33
+          Terminal Transparency Mode (UETM) ...................... 28
+          Terminal types ......................................... 36, 37, 40
+          TIC .................................................... 33
+          TIC on Fixed Speed Ports (TICAP) ....................... 22
+          TICAP .................................................. 22
+          TID .................................................... 36, 37, 40
+          Timestamp .............................................. 11
+          TOM .................................................... 1
+          TOM "ASSIGN" command ................................... 39
+          TOM "CANDIDATE" command ................................ 42
+          TOM "DOWN" command ..................................... 26, 42
+          TOM "Good Guy" command ................................. 14
+          TOM "GRAB" command ..................................... 13
+          TOM "TYPES" command .................................... 40
+          TOM "UP" command ....................................... 42
+          TOM "ZONE" command ..................................... 12
+          TOM Change License Password (TOMPW) .................... 13
+          TOM Command Level (TOMCL) .............................. 13
+          TOM level change command ............................... 13
+          TOM options ............................................ 11
+          TOM Time Zone (TOMTZ) .................................. 12
+          TOMCL .................................................. 13
+          TOMGG .................................................. 14
+          TOMPW .................................................. 13
+          TOMTR .................................................. 11
+          TOMTZ .................................................. 12
+          Transparency character ................................. 28
+          Transparency mode ...................................... 28, 33, 50
+          TYMCOM Operations Manager (TOM) ........................ 1
+          TYMCOM options summary ................................. 43
+          Tymfile ................................................ 7, 39, 47
+          TYMNET I ............................................... 1, 18
+          TYMNET II .............................................. 1, 18
+          TYMNET level ........................................... 10
+          TYMNET Node Code Level ................................. 10
+
+
+
+
+                                                                       Page 56
+
+
+          ISIS Asynchronous TYMCOM Reference Manual            January 4, 1983
+
+
+
+          T2741 .................................................. 33, 50
+
+          UDCHAR ................................................. 34
+          UETM ................................................... 28
+          User Disconnect Characters (UDCHAR) .................... 34
+          Username Passed to Host (GUNAM) ........................ 23
+
+          Variable multiple value options ........................ 34
+
+          X-off characters ....................................... 30
+          X-on characters ........................................ 30
+          XON .................................................... 28, 30
+
+          103F modem protocol .................................... 24
+
+          2741 ................................................... 33
+          2741 terminal communications ........................... 33
+          2741 terminal initialization character ................. 33
+          2741 Transparency Mode (T2741) ......................... 33, 50
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                       Page 57
+
+
+
+
+
+
+                                 READER'S COMMENT FORM
+
+                       ISIS Asynchronous TYMCOM Reference Manual
+                             Publications Order Number 437
+
+
+          How was this document used?
+
+          _____    Marketing tool
+
+          _____    Technical reference
+
+          _____    Other ____________________________________________________
+
+
+                         ____________________________________________________
+
+
+          Your comments on this  document are welcome.  Please  list page num-
+          bers where appropriate and any suggestions for further improvement.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          Please send this form to: Network Technology Division
+                                    Documentation
+                                    TYMSHARE, Inc.
+                                    10261 Bubb Road
+                                    Cupertino, CA  95014
+
+
+
+
+
+ MERxT
