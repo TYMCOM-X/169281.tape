@@ -1,0 +1,345 @@
+
+begin "OPRBLD"
+
+require 1 lsh 24 lor 0 version;
+
+require "(SAILIB)SAIL.DEF"   source!file;
+require "(SAILIB)UUOSYM.DEF" source!file;
+
+require "(CARL)OPRPKG.REQ"   source!file;
+require "(CARL)LICSUB.REQ"   source!file;
+require "(CARL)DAYTIM.REQ"   source!file;
+require "(CARL)VMFILE.REQ"   source!file;
+
+require "(SPL)LEXSUB.REQ"    source!file;
+
+define SystemDevice = {"SYS"};		! {"SYS"};
+define pswSiz = 7;
+define pswMax = 1500;
+
+define L!SU           = '400000000000;	! setop utility license ;
+define L!SM           = '200000000000;	! setop manager license ;
+define L!LG           = '100000000000;	! license-grant license ;
+define L!MG           =      '1000000;	! manager license ;
+define L!CAP          = L!SU lor L!SM lor L!LG lor L!MG;
+
+define nam1 = 0, nam2 = 1, psw = 2, lic = 3, dst = 4, man1 = 5, man2 = 6;
+define pswOpr(x) = { OTree[ (x)   ] }
+,      pswOp1(x) = { OTree[ (x)+1 ] }
+,      pswCph(x) = { OTree[ (x)+2 ] }
+,      pswLic(x) = { OTree[ (x)+3 ] }
+,      pswDat(x) = { OTree[ (x)+4 ] }
+,      pswMan(x) = { OTree[ (x)+5 ] }
+,      pswMa1(x) = { OTree[ (x)+6 ] }
+;
+
+
+define
+	ErrNone   =   0			! bad name or password ;
+,	ErrInit   =   ErrNone + 1	! cannot init SYS ;
+,	ErrFNF    =   ErrInit + 1	! oper file not found ;
+,	ErrFML    =   ErrFNF  + 1	! oper file missing license ;
+,	ErrCCF    =   ErrFML  + 1	! cannot dump file ;
+;
+
+define spaces = 
+    {"                                                                "};
+define lpad(x,y) = {(spaces[1 for y]&(x))[inf-(y-1) to inf]};
+
+
+!	Record declarations and Data storage
+;
+
+record!class O( r!p (O)	Man;		! Manager record pointer ;
+		r!p (O)	Sub;		! First subordinate opername ;
+		r!p (O)	Sib;		! Next opername at this level ;
+		r!p (O) Gni;		! Previous opername at this level ;
+		Integer Idx;		! Array index of block ;
+		String	Opr		! Opername ;
+    );
+
+
+r!p (O) Head, Link;
+integer PTR,OP,WT,BUF,PAG;
+
+integer Good, ITree;
+integer Array OTree[ 0:(pswSiz*pswMax)-1 ];
+
+
+simple integer procedure FindEntry( integer Start; string Oper );
+begin "find entry"
+    integer Index;
+    own safe integer array Name[ 0:1 ];
+
+    OprHsh( Name[0], Oper );
+
+    for Index_ Start step pswSiz until pswSiz*Good
+     do if ( Name[0] = pswOpr( Index ) ) and
+	   ( Name[1] = pswOp1( Index ) )
+	 then return( Index );
+
+
+    return( -1 );			! not found ;
+
+end "find entry";
+
+
+
+simple integer procedure FindManager( integer Start; string Oper );
+begin "find manager"
+    integer Index;
+    own safe integer array Name[ 0:1 ];
+
+    OprHsh( Name[0], Oper );
+
+    for Index_ Start step pswSiz until pswSiz*Good
+     do if ( Name[0] = pswMan( Index ) ) and
+	   ( Name[1] = pswMa1( Index ) )
+	 then return( Index );
+
+    return( -1 );			! not found ;
+
+end "find manager";
+
+
+simple procedure ReadTreePages;
+begin "read tree"
+
+    if ( ITree geq pswSiz*pswMax )
+     then begin
+	print( "pswMax needs increasing..."&crlf );
+	return;
+     end;
+
+    for PTR_ BUF step pswSiz until BUF+'770
+     do if ( memory[ PTR+nam1 ] )
+	 then begin "good record"
+
+	    arrBlt( OTree[ ITree ], memory[ PTR ], pswSiz );
+	    Good_ Good + 1;
+
+	    if ( pswSiz*pswMax leq ITree_ ITree + pswSiz )
+	     then begin
+		print( "pswMax needs increasing..."&crlf );
+		return;
+	     end;
+
+	 end "good record";
+
+end "read tree";
+
+
+procedure Insert( integer ix; r!p (O) r );
+begin "insert entry"
+    r!p (O) i, t, v;
+    string  s;
+
+    i_ new!record( O );
+    arrBlt( OTree[ ITree ], OTree[ ix ], pswSiz );
+    arrBlt( OTree[ ix ], OTree[ ITree+pswSiz ], pswSiz );
+    O:Opr[ i ]_ s_ OprTxt( pswOpr( O:Idx[ i ]_ ix_ ITree ) );
+    ITree_ ITree + pswSiz;
+
+    if ( t_ O:Sub[ r ] )		! any subordinates? ;
+     then begin "sort subordinates"
+	while ( t )			! check order of existing names ;
+	 do begin "real checks"
+	    if ( kequ( O:Opr[ t ], s ) )
+	     then begin
+		print( "Duplicate opernames: ",O:Opr[ t ]," ",O:Idx[ t ],"<>",ix,crlf );
+		return;			! if equal, we are already here;
+	     end;
+	    if ( Llt( O:Opr[ t ], s ) )
+	     then t_ O:Sib[ v_ t ]	! try next subordinate ;
+	     else done;			! we are in front ;
+	 end "real checks";
+
+	if ( t )
+	 then begin "insert new subordinate"
+	    O:Gni[ i ]_ v_ O:Gni[ t ];	! set my previous to his previous ;
+	    O:Sib[ i ]_ t;		! set my next to him ;
+	    O:Gni[ t ]_ i;		! set his previous to me ;
+	    if ( v )			! if he had a previous ;
+	     then O:Sib[ v ]_ i		!  set his previous' next to me ;
+	     else O:Sub[ r ]_ i;	!  else make me the first one ;
+	 end "insert new subordinate"
+	 else begin "tack on the end"
+	    O:Sib[ v ]_ i;		! add me to the end of list ;
+	    O:Gni[ i ]_ v;		! point back to previous entry ;
+	 end "tack on the end";
+
+     end "sort subordinates"
+     else O:Sub[ r ]_ i;		! set as only subordinate ;
+
+    O:Man[ i ]_ r;			! set as manager ;
+
+!	print( ">", O:Opr[ v_ i ] );
+!	while ( v_ O:Man[ v ] )
+!	 do print( OprTxt( pswOpr( O:Idx[ v ] ) ) );
+!	print( crlf );
+
+end "insert entry";
+
+
+simple r!p (O) procedure Next( r!p (O) r );
+begin "next link"
+    own r!p (O) v;
+
+    if ( v_ O:Sub[ r ] )		! any subordinates first ;
+     then return( v );			! return first subordinate ;
+
+    if ( v_ O:Sib[ r ] )		! no, any others next ;
+     then return( v );			! return next subordinate ;
+
+    while ( r_ O:Man[ r ] )		! no, next go up to manager ;
+     do if ( v_ O:Sib[ r ] )		! and check for siblings ;
+	 then return( v );		! return first sibling of manager ;
+
+    return( null!record )		! no more in tree ;
+
+end "next link";
+
+
+procedure SortTree;
+begin "sort tree"
+    integer Root, idx;
+
+    if ( 0 > Root_ FindEntry( 0, "ROOT        " ) )
+     then begin "bad data"
+	print( "Cannot find ROOT!"& crlf );
+	start!code calli 1,calli!EXIT end;
+	start!code calli 0,calli!EXIT end;
+     end "bad data";
+
+    print( "Sorting..." );
+
+    Head_ Link_ new!record( O );
+    arrBlt( OTree[ ITree ], OTree[ Root ], pswSiz );
+    arrBlt( OTree[ Root ], OTree[ ITree+pswSiz ], pswSiz );
+    O:Idx[Link]_ Root_ ITree;
+    O:Opr[Link]_ OprTxt( pswOpr( O:Idx[Link] ) );
+    ITree_ ITree + pswSiz;
+
+    while ( Link )
+     do begin "managed by"
+	r!p (O) rec;
+	string s;
+
+	idx_ ITree + pswSiz;		! initial value for scan ;
+	s_ O:Opr[Link];
+
+	while ( idx geq 0 )		! Findmanager returns -1 at end ;
+	 do begin
+	    if ( 0 leq idx_ FindManager( idx, s ) )
+	     then begin "update tracker"
+		Insert( idx, Link );	! insert this entry ;
+		idx_ idx + pswSiz;	! increment to next ;
+	     end "update tracker";
+	 end;
+
+	Link_ Next( Link );
+
+     end "managed by";
+
+!	print( "< ", ((Good*pswSiz)-ITree) div pswSiz, " records left?"&crlf );
+!	for idx_ ITree step pswSiz until Good*pswSiz
+!	 do print( "...",
+!		OprTxt( pswOpr( idx ) ),
+!		OprTxt( pswMan( idx ) ),
+!		crlf );
+
+    print( "done!"& crlf );
+
+end "sort tree";
+
+
+procedure WriteTree;
+begin "write tree"
+    r!p (O) t;
+
+    print( "Writing..." );
+
+    Link_ Head;				! this is the ROOT link ;
+    while ( Link_ Next( Link ) )
+     do if ( OprTxt( pswOpr( O:Idx[Link] ) ) neq " " )
+	 then begin "each node"
+
+!	    print( OprTxt( pswOpr( O:Idx[Link] ) ),
+!		    " ^:", (if (t_ O:Man[Link])
+!			then OprTxt(pswOpr(O:Idx[t])) else "-none-      " ),
+!		    " v:", (if (t_ O:Sub[Link])
+!			then OprTxt(pswOpr(O:Idx[t])) else "-none-      " ),
+!		    " <:", (if (t_ O:Gni[Link])
+!			then OprTxt(pswOpr(O:Idx[t])) else "-none-      " ),
+!		    " >:", (if (t_ O:Sib[Link])
+!			then OprTxt(pswOpr(O:Idx[t])) else "-none-      " ),
+!		    Crlf );
+
+	    VMText( WT,
+		OprTxt( pswOpr( O:Idx[Link] ) ) &
+		OprTxt( pswMan( O:Idx[Link] ) ) &
+		lpad( cvos( pswCph( O:Idx[Link] ) ), 12 ) &
+		lpad( cvs(ldb(point(8,pswDat( O:Idx[Link] ),35))), 4) &
+		lpad( cvOS( CvDay(
+		      CvDDat(ldb(point(15,pswDat(O:Idx[Link]),27)))&" 00:00:00"
+			    ) ), 12 ) &
+		lpad( cvos( if ( L!MG land pswLic(O:Idx[Link]) )
+		     then ((pswLic(O:Idx[Link]) land L!CAP) lor L!LG) lsh -18
+		     else  (pswLic(O:Idx[Link]) land L!CAP) lsh -18  ), 6 ) &
+		lpad( cvos( 0 ), 12 ) &	! ** in lieu of any license ** ;
+!		lpad( cvos( pswLic(O:Idx[Link]) land lnot L!CAP ), 12 ) & ;
+		crlf );
+
+	 end "each node";
+
+    print( "grants..." );		! write grant records now ;
+    VMText( WT, crlf );
+
+    Link_ Head;				! this is the ROOT link ;
+    while ( Link_ Next( Link ) )
+     do if ( OprTxt( pswOpr( O:Idx[Link] ) ) neq " " )
+	 then VMText( WT,
+		OprTxt( pswMan( O:Idx[Link] ) ) &
+		OprTxt( pswOpr( O:Idx[Link] ) ) &
+		lpad( cvos( pswLic( O:Idx[Link] ) land lnot L!CAP ), 12 ) &
+
+!	    lpad( cvos( Gdt( g ) ), 6 ) & ;
+!	    lpad( cvos( Rdt( g ) ), 6 ) & ;
+!	    lpad( cvos( Gix( g ) ), 6 ) & ;
+!	    lpad( cvos( Rix( g ) ), 6 ) & ;
+
+		crlf );
+
+    print( "done!"&crlf );
+
+end "write tree";
+
+
+    OP_ VMFile( "("& SystemDevice &")DRWSPR.EPO", VM$Read );
+    if ( OP < 0 )
+     then usererr( 0,ErrInit, "?Can't init password file", "X" );
+
+    WT_ VMFile( "DRWSPR.DMP", VM$Write );
+    if ( WT < 0 )
+     then usererr( 0,ErrCCF, "?Can't write file", "X" );
+
+    if not( VMGetC( OP,VM$Lic ) land '400000 )
+     then usererr( 0,ErrFML, "?OPER password file has no license", "X" );
+
+    BUF_ VMGetC( OP, VM$Base ) lsh 9;	! remember base address ;
+    PAG_ 0;				! start clear at the beginning ;
+
+    ITree_ pswSiz;			! start with 1st entry ;
+    while ( VMPMap( OP, PAG_ PAG+1 ) )	! while file has pages ;
+     do ReadTreePages;			!  scan through them ;
+    Print( crlf, Good, " records read." & crlf );
+
+    ITree_ 0;				! reset index into table ;
+    SortTree;				! sort table ;
+
+    WriteTree;				! write dump of records ;
+
+    VMFree(OP);				! close reading channel ;
+    VMFree(WT);				! close writing channel ;
+
+end "OPRBLD";
