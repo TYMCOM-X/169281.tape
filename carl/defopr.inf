@@ -1,0 +1,439 @@
+
+define SETOP!MAJOR   = '1;
+define SETOP!MINOR   = '1;
+define SETOP!EDIT    = '112;
+
+require
+ ifcr OPPS
+  thenc "  OPPS %"
+  elsec "  SETOP %"
+ endc & cvos( SETOP!MAJOR )
+	ifcr SETOP!MINOR
+	 thenc & ( "@"+SETOP!MINOR ) & null
+	endc
+	ifcr SETOP!EDIT
+	 thenc & "(" & cvos( SETOP!EDIT ) & ")"
+	endc
+    & " Revision History  " message;
+
+require (SETOP!MAJOR lsh 24) lor (SETOP!MINOR lsh 18) lor SETOP!EDIT version;
+
+comment
+!
+!			*** SETOP Revision History ***
+!
+!  %1  (112)	24-Apr-91 /Carl
+!		Added code to build command to ignore questionable links
+!		to username "1,1" and blank opernames.
+!		Fixed a long-standing bug with transferring users to
+!		their own subordinates, thereby making entire sections
+!		of the tree disappear.
+!		Added new WITHDRAW command which allows users with SU to
+!		remove license from a name (from all grantors at once)
+!		without having to imitate individual grantors.
+!
+!  %1  (111)	25-Jan-91 /Carl
+!		Cleaned up a questionable piece of cancel code and set
+!		the FileModified flag when a user is placed on hold or
+!		is restored to normal status.
+!
+;
+
+
+comment
+!
+!  %1  (110)	22-May-90 /Carl
+!		Obliterate 105, 107 and take 106 with minor additions to
+!		checking the tree structure and clearing entries.
+!		Modified Subordiate, Traverse and LTake to check more of
+!		the links before proceeding.
+!
+!  %1  (107)	23-May-89 /Carl
+!		Check .jbddt and fall into DDT if loaded when a duplicate
+!		entry is seen while setting allocation table bits.
+!		If nothing in .jbddt, exit instead of looping forever.
+!
+!  %1  (106)	??-???-89 /Carl
+!		Add code to 104 source to clear out more of the entry blocks
+!		when they are obtained, rather than when utilized.
+!
+!  %1  (105)	04-Mar-89 /Carl
+!		Clear out any previous links in new entry blocks to insure
+!		that we don't create accidental loops.
+!
+!  %1  (104)	22-Feb-89 /Carl
+!		Add timeout support and all the gory tty stuff needed to
+!		make it work correctly.
+!
+!  %1  (103)	22-Feb-89 /Carl
+!		If change-capabilities results in no-capabilities then
+!		prompt user "Are you sure?" so capabilities are NOT
+!		taken away accidentally.
+!
+!  %1  (102)	16-Feb-89 /Carl
+!		Fix security *bug* in license grant code which didn't
+!		validate license being granted.  Also remove the FIXUP
+!		command from the table of commands.
+!
+!  %1  (101)	10-Feb-89 /Carl
+!		Modify grant routines to clear previous links so new grant
+!		blocks don't point off to the middle of nowhere.  Change
+!		ALLLIC to only use license in grant blocks that have valid
+!		self/gift pointers.
+!
+;
+
+
+comment
+!
+!  %1  (100)	08-Feb-89 /Carl
+!		Add the FIND command and check the requirements for some
+!		functions that require various capabilities.
+!
+!  %1  (77)	07-Feg-89 /Carl
+!		Don't ask the user to specify a password on the REQUEST
+!		command to eliminate plain-text passwords over the mail
+!		system.
+!
+!  %1  (76)	07-Feb-89 /Carl
+!		Install TYMNET password standard into password changing code
+!		to increase user security by disallowing trite passwords.
+!
+!  %1  (75)	06-Feb-89 /Carl
+!		Use the same source for both SETOP and OPPS using conditional
+!		compilation to require the appropriate definition file.
+!
+!  %1  (74)	06-Feb-89 /Carl
+!		Fix problem in Ok2See which prevented SM/BM managers from
+!		using C$$SVC commands because C$$PRV bit was set.  Now uses
+!		C$$SUP and the ordering of the checks is right.  Also, move
+!		LG check just prior to all manager checks.
+!
+!  %1  (73)	05-Feb-89 /Carl
+!		Move capability bits with Fixup command, add L!BM for the
+!		branch-manager and shift responsibility down from L!SU
+!		for all.  Check places that check these capabilities to
+!		make sure everything still works.
+!
+!  %1  (72)	05-Feb-89 /Carl
+!		When writing the password file, only pass license for those
+!		opernames that have an employee number.
+!
+!  %1  (71)	04-Feb-89 /Carl
+!		Update file change dates and version number whenever any
+!		changes are made to the database.
+!
+;
+
+
+comment
+!
+!  %1  (70)	04-Feb-89 /Carl
+!		Install DATES and NODATES commands to control printing of
+!		the password change dates for the specified entries.
+!
+!  %1  (67)	29-Jan-89 /Carl
+!		Modify setop code to produce OPPS which simply does the
+!		"PASSWORD" command for a single user.
+!
+!  ********	Begin OPPS using SETOP %1(66)	********
+!
+!  %1  (66)	20-Jan-89 /Carl
+!		Start writing the password file on (SYS) with this version.
+!		Deregulate the ADD command to allow managers to say "ADD"
+!		but instead remind them about REQUEST and tell them about
+!		** LICENSE.REQ available to NSC. and MDCMS. Ontyme users.
+!
+!  %1  (65)	15-Jan-89 /Carl
+!		Modify VMSPEC to accept {license}<protection> preceeding
+!		the filespec and store it in spec[ S!lic ] so that VMFILE
+!		can access this information for an ENTER.
+!
+!  %1  (64)	15-Jan-89 /Carl
+!		Moved exit function into C.QUIT to write password file
+!		upon exit.  Currently in user directory until testing
+!		is completed.
+!
+!  %1  (63)	15-Jan-89 /Carl
+!		Separate APPEND from ADD and clean up the code in that
+!		general area.
+!
+!  %1  (62)	14-Jan-89 /Carl
+!		Revise BUILD to handle opername structure followed by all
+!		the grant records.  Provide for the grant date-time to be
+!		supplied (for a rebuild) instead of current date-time.
+!
+!  %1  (61)	14-Jan-89 /Carl
+!		Implement BUILD command and modify DUMP command to match
+!		the data expected for BUILD.  Initial input from OPRBLD
+!		program which dumps DRWSPR.EPO into the correct format.
+!
+;
+
+
+comment
+!
+!  %1  (60)	13-Jan-89 /Carl
+!		Use InitialSelf instead of Myself if not SuperUser for
+!		tree traversing for SuperManager segmentation.
+!		Have FndName report if not found in tree or on branch.
+!
+!  %1  (57)	12-Jan-89 /Carl
+!		Implement SM license (capability) which is similar to SU
+!		except it only works on your own tree.
+!
+!  %1  (56)	07-Jun-88 /Carl
+!		Change Audit to call LOGPKG routine LOGONLY which does NOT
+!		make the log entry to the attached terminal.  Also modify
+!		the command output routines to put in some needed CRLFs.
+!
+!  %1  (55)	01-Jun-88 /Carl
+!		Have AUDIT function call LOGPKG routine LOGINFO to date-time
+!		stamp and log each audit entry.
+!
+!  %1  (54)	26-Apr-88 /Carl
+!		Add CHANGE functionality.  If change is in the text file
+!		the entry is rewritten in the same location or a duplicate
+!		entry is written at the end.
+!
+!  %1  (53)	04-Apr-88 /Carl
+!		Add routines to lock, unlock and wait for unlock on each of
+!		the binary and text files.  Remove all superflous SuperUser
+!		checks (normally caught in command processor).
+!
+!  %1  (52)	01-Apr-88 /Carl
+!		Add flags C$$MAN and C$$LIC to check L!MG and L!LG for
+!		execution of various commands.  C$$MAN is also used to
+!		determine if certain change options may be performed.
+!		Change all references to ISG to ISC as per MDC directive.
+!		Begin work on implementing Change command.
+!
+!  %1  (51)	29-Mar-88 /Carl
+!		Add code to prevent grant loops by not allowing anyone to
+!		grant license to someone that granted the same license.
+!
+;
+
+
+comment
+!
+!  %1  (50)	22-Mar-88 /Carl
+!		Fix empty file build to order the records properly.  Add
+!		the ability for endless comments in the text records.
+!
+!  %1  (47)	16-Mar-88 /Carl
+!		Add rudimentary ADD command.  Allow request command to share
+!		common code for obtaining information on the user.
+!
+!  %1  (46)	16-Mar-88 /Carl
+!		Make LIST output more readable.  VERBOSE now means listing
+!		all the employee info from the text file (BRIEF will not
+!		print this info).  Added check for I!LOCK leq 0 in TRAVERSE
+!		so all traversing routines will wait while the lock is in
+!		effect.  CAVEAT: Do not traverse while holding the lock!!!
+!		Fix GRANT code to not overwrite previous grant record info.
+!		Fix REMOVE code to clear the correct bit in the SAT table.
+!
+!  %1  (45)	15-Mar-88 /Carl
+!		Fixup output for LIST command.  Make sure employee info is
+!		correct before printing.  Add development command INDEX to
+!		reset the the text file pointers to 0 then install all real
+!		entries in the binary file.  (This allows editing of the
+!		text file by hand if necessary).
+!
+!  %1  (44)	11-Mar-88 /Carl
+!		Fix problems with LTAKE routine.  Add TOKNAM routine to get
+!		a TYMCOM-X username for use when specifying opernames.
+!		This new routine will not be used for ADDing new names.
+!
+!  %1  (43)	08-Mar-88 /Carl
+!		Implement CANCEL command.  Requires SU license.  When an
+!		opername is cancelled, all subordinates are transferred to
+!		his manager and all license grants are removed.
+!
+!  %1  (42)	03-Mar-88 /Carl
+!		Change format of entries (to make things easier for later).
+!
+!  %1  (41)	02-Mar-88 /Carl
+!		Implement HOLD and RELEASE commands.  Requires MG license.
+!		If a user is on hold, his opername will be removed from
+!		the next day's password file and he may not utilize SETOP.
+!
+;
+
+
+comment
+!
+!  %1  (40)	29-Feb-88 /Carl
+!		Implement REMOVE command to remove license granted to
+!		another name.  Requires SU or LG license.
+!
+!  %1  (37)	26-Feb-88 /Carl
+!		Implement GRANT command to grant license to another name.
+!		Requires Setop-Utility or License-Grant license.
+!
+!  %1  (36)	26-Feb-88 /Carl
+!		Add SAT allocation: (Fnd4wd, FndEwd, FndGwd) in OPRSUB.
+!		Add license accumulation: (AllLic(r)) in OPRSUB.
+!		(New routines to be used in GRANT and ADD commands).x
+!
+!  %1  (35)	25-Feb-88 /Carl
+!		Prevent stupid transfers.  Cannot transfer self and an
+!		opername may not manage itself.  Transfer command requires
+!		license L!MG to work.
+!
+!  %1  (34)	23-Feb-88 /Carl
+!		When the master files do not exist create them with the
+!		initial system entries for ROOT and ROOT's manager.
+!
+!  %1  (33)	23-Feb-88 /Carl
+!		Added password verification to the validate routine.
+!		Allow imitate to not require password.
+!
+!  %1  (32)	23-Feb-88 /Carl
+!		Modify index page to reserve first 12 words for header
+!		information and future expansion.  This leaves room for
+!		500 words of SAT info (approx 4500 entries).
+!
+!  %1  (31)	09-Feb-88 /Carl
+!		Implement the DUMP command to dump enough information from
+!		the binary file to reconstruct it.  Needed for archive and
+!		merging facility later.
+!
+;
+
+
+comment
+!
+!  %1  (30)	08-Feb-88 /Carl
+!		Implement VERIFY command which verifies the data structure
+!		and SAT bits.
+!
+!  %1  (27)	05-Feb-88 /Carl
+!		Implement TRANSFER command to transfer an entry to another
+!		manager name.  This command does not affect license grants
+!		in any way, shape or form.
+!
+!  %1  (26)	04-Feb-88 /Carl
+!		Add routine NOSP which trims trailing spaces from strings
+!		saving the user from putting up wth useless network i/o.
+!		Removed unimplemented commands not listed in the newest
+!		specification.
+!
+!  %1  (25)	19-Jan-88 /Carl
+!		Add privileged Statistics command to runs some statistics
+!		against the data.  Initially this will count and possibly
+!		verify the entry fields against the bitmap.  (Now that the
+!		bitmap is accurate).
+!
+!  %1  (24)	18-Jan-88 /Carl
+!		Print "#" for 0=St. Louis payroll, "I" for 1=Irvine payroll.
+!
+!  %1  (23)	14-Jan-88 /Carl
+!		Rearrange ISGDST format to allow for proper expansion for
+!		various payroll centers, possibly including customers.  The
+!		new format is [byte (10) Dist (6) Payroll (20) Id-Number].
+!
+!  %1  (22)	13-Jan-88 /Carl
+!		Define the sign bit in the license word to be SETOP license
+!		which indicates the user may perform privileged functions
+!		ADD, DEBUG(goes to DDT), IMITATE, OPEN, TRACE and WRITE.
+!
+!  %1  (21)	13-Jan-88 /Carl
+!		Allow LIST command to list any individual in the tree.  A
+!		LIST command without any arguments will continue to list
+!		the current entry and all those reporting.  Similar changes
+!		to the SHOW command.
+!
+;
+
+
+comment
+!
+!  %1  (20)	13-Jan-88 /Carl
+!		Introduce new version of VMFILE package which understands
+!		that programs will want multiple pages for some file which
+!		allows us to designate the size and page range to use for
+!		the master file.  VML contains the length of the data in
+!		pages (if none, empty 1 page data portion created).
+!
+!  %1  (17)	07-Aug-87 /Carl
+!		Save %0(16) with grant hack to setup grant links for D34.
+!		Replace GRANT hack with "SHOW<cr>" to show grants.
+!
+!  %1  (16)	06-Aug-87 /Carl
+!		Revamp entire program to use new binary format and keep
+!		DRWSPR.SAB/.BIN as a converter program %0(15) to copy the
+!		text format into binary and text.
+!		Add placeholders for new commands.  Add GRANT hack.
+!
+!  %1  (15)	24-Jul-87 /Carl
+!		Introduce TChr and Tlxs routines to reduce concatenation
+!		in string space.  Add require-1024*64-string-space clause.
+!
+!  %1  (14)	23-Jul-87 /Carl
+!		Revamp manager hash algorithm.  Cleanup unknown managers.
+!		Remove more string concatenations to try to prevent string
+!		collections from happenning too often.
+!
+!  %1  (13)	23-Jul-87 /Carl
+!		Put managers in hash table if L!MG is set.
+!		Add routine to cull string info into constant area for
+!		all VMTEXT output to reduce output calls and string
+!		space garbage-collects (a possible slow down area).
+!
+!  %1  (12)	22-Jul-87 /Carl
+!		Change format of dates, in three passes to the octal
+!		representation of the date-time for easy read/write.
+!
+!  %1  (11)	16-Jul-87 /Carl
+!		Extensive rewrite of read record routines to handle sorting
+!		unsorted records into tree order.
+!
+;
+
+
+comment
+!
+!  %1  (10)	07-Jul-87 /Carl
+!		Limit the (get next record) routine used by LIST and other
+!		commands to only view those opernames managed by the user
+!		running the program.  Superprivileged users will issue a
+!		command (or check licenses -future) to see everything.
+!
+!  %1  (7)	07-Jul-87 /Carl
+!		Finish building manager tree and add routines for finding
+!		root and managers (so traversals will be easier via links).
+!
+!  %1  (6)	01-Jul-87 /Carl
+!		Make EXIT write out any changes to the master file.  Change
+!		WRITE function to a subroutine and make it more secure about
+!		specifying the file being written.  Check links for correct
+!		tree traversal order.
+!
+!  %1  (5)	01-Jul-87 /Carl
+!		Implement LIST (for LIST ALL and LIST INDIVIDUAL).
+!
+!  %1  (4)	01-Jul-87 /Carl
+!		Built manager, subordinate, next, link, back pointer tree
+!		without any major incidents.
+!
+!  %1  (3)	01-Jul-87 /Carl
+!		Added padding to the WRITE fuction to make a copy in the
+!		same format as the master file on SYS.
+!
+!  %1  (2)	30-Jun-87 /Carl
+!		Fixed CvDay routine to call CvDate correctly.
+!
+!  %1  (1)	30-Jun-87 /Carl
+!		Fixed bugs in C.READ which clipped district and manager
+!		names while reading the master data file.
+!
+!  %1  (0)	30-Jun-87 /Carl
+!		Created initial version from various routines developed
+!		to read the old master file.  This is the base upon which
+!		everything else will be designed and built.
+!
+;
+
+    
