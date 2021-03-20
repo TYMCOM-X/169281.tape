@@ -1,0 +1,177 @@
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+<><><><><>           T E C H   A L E R T                    <><><><><>
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+
+TechAlert Number: NTS-001
+
+Product Code    : PXL  (PXL-100x-0x)
+
+Version         : PXL-I
+
+Author          : Bruce Shepherd
+
+OnTyme ID       : NSC.B/SHEPHERD
+Dialcom ID      : shepherd@dialcom 98
+Unix ID         : bruces@gemini
+
+Subject         : PXL Product Documention and Information
+
+
+****************************************************************************
+****						          	        ****
+****    This TECH ALERT refers to the PXL Product line which is to      ****
+****   available in LIMITED release shortly.			        ****
+****						  	                ****
+****************************************************************************
+
+
+The  PXL product  line will  be available  in  LIMITED  release  shortly and
+the  purpose of  this Tech  Alert  is  to  provide  some  basic  information
+on the  PXL product.   Product  Marketing  issues (such as  availability and
+pricing) should be  referred to  Thom Kelley (tom.kelley@dialcom)  or  Frank
+Cabri (frank.cabri@dialcom).   Any issues  relating to techincal  aspects or
+configurations can be addressed to either Thom, Frank or myself.
+
+Essentially  the PXL is a repackaging of the Compact XL into a significantly
+smaller  package.  PXL-I has 1 megabyte of memory and communications options
+equivalent  to a  single SIO motherboard, 8 standard sync ports and up to 32
+standard  low speed  async ports depending upon the selected  configuration.
+The PXL utilizes  logic cell  arrays and  surface mount technology to reduce
+real  estate  and  power  consumption.  There  is  NO parity error detection
+circuitry on the PXL-I.
+
+The bus slots on the PXL look like this:
+
+      +---+---+---+---+---+---+---+---+---+---+
+      | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+      +---+---+---+---+---+---+---+---+---+---+
+      
+        |   |  |______________||______________|
+	|   |         |                |
+	|   |         |                |
+	|   |         |                 ----------  NON-DMA expansion
+	|   |          ---------------------------  DMA expansion
+	|    -------------------------------------  Reserved for TTY/V.24
+	 -----------------------------------------  Reserved for SIO MB
+
+
+
+    Slot 0:  PXL-1  requires  that  slot  0  be  reserved  for  the   SIO 
+             Motherboard  card. 
+
+    Slot 1:  Reserved for the SCV24 card which contains the multifunction
+             logic and two (2) V.24 ports.  These  V.24 ports can be used
+	     for any application (node code, X.25,  SDLC, etc).   This is
+	     considered one of the 5 DMA capable slots.
+
+    Slot 2 - Slot 5:
+             Are the ONLY  DMA capable  expansion  slots.   These can run
+	     any combination of OCL, V.24, V.35 or SIO ASYNC  cards.  The
+	     restriction is the current SIO motherboard  guidelines.   In
+	     addition, the non-SIO async cards can run in these slots.
+
+    Slot 6 - Slot 9: 
+             Are NON-DMA capable  expansion slots.   These  slots can  be
+	     configured for ASYNC or a MAXIMUM of 8 sync ports.  The sync
+	     ports can ONLY be configured to run in these four slots.
+
+
+Key items to remember on the PXL configuration:
+
+When  ordering or  configuring  the  PXL  it  is extremely important to note
+that  the SIO  motherboard on  the  PXL  MUST conform to  the  published SIO
+Guidelines  in  CFB  168,  NO  EXCEPTIONS.    Orders  that  exceed  the  SIO
+Guidelines may be held up in Manufacturing.
+
+Only  8  total  standard   SYNC  ports  are  available, and  these  are  the
+non-primitive  ports  (2, 3, 6, 7, 10, 11, 14 and 15).   When all  ports are
+configured the tymfile NSYNC must be  set to 16d.  Sync  ports are available
+via two  seperate cards:  SP  and  SE.  The  SP card (Sync Primary) containS
+all  necessary  logic for  driving  all  8  ports  but  only has room on the
+connector edge  for 4  ports.  The SE (Sync Extender) contains only  drivers
+for the additional  4 ports.  The SP card when installed MUST be followed by
+the SE card or an EMPTY  bus slot AND can  only be installed  in the non-DMA
+bus slots (slot 6-9).
+
+Up  to  32 standard  ASYNC ports  can  be  configured into the PXL, but this
+leaves  ONLY  two (2) 19.2  SIO V.24 network connections.    Async ports are
+available  via two seperate cards:  AP and AE.   The AP card  (Aync Primary)
+contains all necessary logic for driving up  to  8 ports  but only  has room
+on the  connector edge for 4  ports.  The AE (Async  Extender) contains only
+drivers for  the additional  4 ports.  The AP  card when  installed MUST  be
+followed  by the AE  card or  an EMPTY bus  slot if installed in the non-DMA
+bus slots (slot 6-9).  The AP/AE cards can also  be installed in the DMA bus
+slots (2-4) and in these slots the AP need  not be  followed by  an AE or an
+empty slot, UNLESS and AE is required as  an extension fo the AP.  The AP/AE
+set  can NOT  cross  the DMA/non-DMA  bus boundary (ie, AP in bus slot 4 and
+AP in bus slot 5).
+
+Due to the addressing change for the MAC V,  the PXL requires new verison of
+all code.   At the present time  the ONLY released  products (outside of the
+hardware diagnostics) are:
+
+    o  ISIS 13.02
+    o  Node Code 5.61
+    o  XCOM 4.05
+    o  CONSAT
+
+NO  other products are  available  although several are in the  QA loop  but
+not scheduled for release until later this year.
+
+The PXL code can NOT be generated or loaded via the PDP  or ELF and requires
+all code maintenance to be done under the SUN systems.
+
+When ordering V.35 connections,  a seperate Winchester to Winchester pigtail
+cable  (part number 160615-001)  is required as the V.35 DB15  to Winchester
+PXL  cable (160602-TAB) requires  a shroud for compliance  that will not fit
+on  all standalone or rack mount V.35 modems.  The pigtail cable is simply a
+entension  of the  PXL cable but insure the PXL cable remains FCC compliant.
+The pigtail is a Winchester to Winchester cable  with a  FEMALE shrouded end
+that connects  to the  PXL V.25 cable and a MALE unshrouded end for external
+connections.
+
+There  are 3  forms of  documentation on  the  PXL  which  are  or  will  be
+available in the next few weeks:
+
+    o  TTT Product Familiarization Video
+    o  Technical Publications PXL Maintenance Manual
+    o  NTS On-Line Documentation:
+       o  Field Service Manual
+       o  CFB
+
+Of  the above,  only the  NTS portion is available to the field at the  time
+of this writing, the others should be  available  shortly.   For information
+on the  Video or  Tech Pubs Manual  contact  those groups directly.
+
+The NTS Field Service  manual is currently available under the public network
+UNIX  or PDP systems.  On the  SUN systems  the path  and file name is:
+
+    server: GEMINI   path: /home/nts/nts    file: pxl.doc
+
+On the PDP systems the file can be found under  (NTS)PXL.DOC.
+
+The current document is  dated 05 April 1991  and is subject  to change daily
+as is becomes necessary.
+
+The on-line documentation covers  all  aspects of the PXL: hardware overview,
+code  generation  and  management,  configuration  guidelines,  installation,
+part numbers, cable and  loopback specifications,  sample files  and a  brief
+outline of ISIS crash codes.
+
+The  CFB for PXL installation is complete and is pending  incorporation  into
+the CFB library.   It should  be available  within the next week.  The CFB is
+simply an excerpt from the Field Service manual.
+
+
+*****************************************************************************
+****								         ****
+****   This TECHALERT  will  be  available  in TECHTIPS:38  with the     ****
+****   TECHALERT  number as  the filename.  A  list of all available     ****
+****   TECHALERTS can be found in the same directory  and is labeled     ****
+****   INDEX.NTS.                                                        ****
+****								         ****
+*****************************************************************************
+
+    
