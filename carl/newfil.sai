@@ -1,0 +1,110 @@
+simple procedure Commands( reference integer r );
+begin
+    Boolean Flag;
+    Integer Cdx, Cmd;
+    String  Name;
+
+    Define All.Entries = {
+
+    !C!!( Command, "  One-line help text.",
+	0, [
+	! code for this command ;
+	] )
+    !C!!( Help, "       Print this text.",
+	0, [
+	for Index_ 1 upto Len.Commands
+	 do if ( Ok2See( 0, CmdFlag[ Index ] ) )
+	 then if not( CmdFlag[ Index ] land C$$Inv )
+	       then print( "  ", CmdText[ Index ], Crlf );
+	print( Crlf );
+	] )
+
+    };
+
+    require crlf message;
+    Redefine !C!!(Nam,Hlp,Flg,Cod) = {
+    require
+	ifcr length(cvps(flg))
+	 thenc ("000000"&cvos(!lh(flg)))[inf-5 to inf-3] &
+	       ("000000"&cvos(!lh(flg)))[inf to inf] &
+	 elsec  "    " & endc " " &
+    cvps(Nam) & Hlp &
+    crlf message;
+    };
+    All.Commands
+    require crlf message;
+
+    Redefine Len.Commands = 0;
+    Redefine !C!!(Nam,Hlp,Flg,Cod) = {
+	Ifcr Len.Commands > 0 thenc , endc CvPS(Nam)
+	Redefine Len.Commands = Len.Commands + 1;};
+    Preset!with All.Commands;
+    Own safe string array CmdName[1:Len.Commands];
+
+    Redefine Len.Commands = 0;
+    Redefine !C!!(Nam,Hlp,Flg,Cod) = {
+	Ifcr Len.Commands > 0 thenc , endc
+	Ifcr Length(CvPS(Flg)) thenc Flg elsec 0 endc
+	Redefine Len.Commands = Len.Commands + 1;};
+    Preset!with All.Commands;
+    Own safe integer array CmdFlag[1:Len.Commands];
+
+    Redefine Len.Commands = 0;
+    Redefine !C!!(Nam,Hlp,Flg,Cod) = {
+	Ifcr Len.Commands > 0 thenc , endc Cvps(Nam) & Hlp
+	Redefine Len.Commands = Len.Commands + 1;};
+    Preset!with All.Commands;
+    Own safe string array CmdText[1:Len.Commands];
+
+    Redefine !C!!(Nam,Hlp,Flg,Cod) = { begin Cod end; };
+
+
+! *** do stuff here with entry *** ;
+
+    while true
+     do begin "Commands are coming"
+
+	if not( length( Line ) )			! if no line ;
+	  or not( length( Command_ Token( Line ) ) )	!  or blank, get one ;
+	 then Command_ Token( Line_ Prompt( "Change: " ) );
+
+	if not( length( Command ) )			! no response? ;
+	 then done "Commands are coming";		! ignore blank lines ;
+
+	if kequ(Command, "?") then Command_ "HELP";	! "?" means "HELP";
+
+	Cdx_ 0;
+	for Cmd_ 1 step 1 until Len.Commands
+	 do if ( Ok2See( 0, CmdFlag[ Cmd ] ) )
+	     then if kequ( Command, CmdName[ Cmd ][1 for length(Command)] )
+		   then if Cdx neq 0
+			 then print( "Ambigious change."&crlf )
+			 else Cdx_ Cmd;
+
+	if 0 < Cdx leq Len.Commands
+	 then begin "setup change defaults"
+
+	    scan( Line, BrkWht, Brk );		! remove any whitespace;
+	    if Line = "?"			! if first character is "?";
+	     then bomb( CmdText[ Cdx ] );	! give an help message ;
+
+	    Command_ CmdName[ Cdx ];		! copy name for later;
+	    Flag_ CmdFlag[ Cdx ];
+
+	    MessageText_ null;			! default message is null ;
+	    Case Cdx-1 of begin All.Commands end; ! perform command ;
+
+	 end "setup change defaults"
+	 else print( "?OPRINV Invalid change."& crlf &
+		    "  please type ""?"" for help, " &
+		    "<RETURN> to finish Commands."& crlf );
+
+     end "Commands are coming";
+
+end;
+
+simple procedure C.Change;
+itemize( L!MG, true, (if SuperUser then 0 else MySelf), E!Change,
+	 "Opername to change: ",
+	 "?OPRCCP cannot change opername" );
+
