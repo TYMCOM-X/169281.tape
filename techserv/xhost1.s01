@@ -1,0 +1,3200 @@
+
+:=====================================================================
+:=
+:=                        T H E   X H O S T
+:=                        -----------------
+:= DATE: AUGUST 11, 1988
+:= WRITTEN BY: KEN STONE
+:=
+:======================================================================
+
+         SEG A.DATA
+
+         GL IMORG,GOTZAP,LENGTH,INPTSW,REST,HPORT,GOTORG
+         GL NOTNDL,CONT1A,CONT18,CONT15,CONT4,CONTB,CONT6,CONTC,CONT16
+         GL RPORT,MAXCIR,CONT10,CONT14,CONT12,CONT1
+OBSIZE   EQ 2*PKTSIZ
+IBUFSZ   EQ PKTSIZ*8+10
+STSSIZ   EQ 0E
+IDXWRP   EQ (PKTSIZ*8+10)-(PKTSIZ+4)  :POINT IN SIO INBUF TO WRAP INDEX
+LUN      EQ 0
+CONMOM   EQ 90
+FRCMBO   EQ 0B0
+FRCMBI   EQ 0A0
+
+
+
+ZAPMSG   SC /"9E/                     :DETACH
+SETECH   SC /"B1"00"01/
+PROMPT   SC /"8D"DB"BE/
+BKSPC    SC /"88"A0"88/               :BACKSPACE AND ERASE
+PUSFE    SC / IDLE/
+PUSFF    SC / POLLING/
+PUS0     SC / INACTIVE/
+PUS12    SC / IN FLUX/
+PUS3     SC / PENDING/
+PUS4     SC / ACTIVE/
+BOOTMG   SC /"8D"8A"8ANO PORTS AVAILABLE [STONKY INC.]"8D"8A/
+DROPMG   SC /"8D"8A"8ADROPPED BY XHOST [STONKY INC.]"8A"8D"87/
+BNR1     SC /"8D"8A"8A"8A"8A"87/
+BNR2     SC /                                  /
+BNR3     SC /* WELCOME TO  *"8D"8A"8A/
+BNR4     SC /                                /
+BNR5    SC / T H E   X H O S T"8D"8A/
+BNR6     SC /-----------------"8D"8A/
+BNR7     SC /   VERSION 1.01"8D"8A/
+HLP1     SC /"8A"8D               XHOST COMMANDS"BA"8D"8A/
+HLP2     SC /               -------------------"8A"8D/
+HLPA     SC /              "DEA - ANNOUNCEMENTS NEW FEATURES"8A"8D/
+HLPX     SC /              "DEX - LINK CONTROL COMMANDS"8A"8D/
+HLPF     SC /              "DEF - FRAME CREATION"8A"8D/
+HLPP     SC /              "DEP - PACKET CREATION"8A"8D/
+HLPD     SC /              "DED - TOGGLE RESPONSE TO CALL REQUEST"8A"8D/
+HLPR     SC /              "DER - TOGGLE XHOST EMULATING DTE OR DCE"8A"8D/
+HLPT     SC /              "DET - TOGGLE RESPONSE TO CLEAR REQUEST"8A"8D/
+HLPK     SC /              "DEK - CURRENT HOST STATUS"8A"8D/
+HLPL     SC /              "DEL - SEND OUT CANNED HOST CALL"8A"8D/
+HLPV     SC /              "DEV - CLEAR CALL MOST RECENT CHANNEL"8A"8D/
+HLPZ     SC /              "DEZ - LOGOFF"8A"8D/
+LFLFLF   SC /"8A"8A"8A"8A"8A"8A"8A"8A"8A"8A"8A"8A"8D/
+LFLF     SC /"8A"8A"8A"8A"8A"8A"8A"8D/
+PPP001   SC /                WELCOME TO PACKET CREATION"8D"8A"8A/
+FFF001   SC /                WELCOME TO FRAME CREATION"8D"8A"8A/
+ASTAT1   SC /"8D"8A"8A     XHOST ANNOUNCEMENTS AND NEW FEATURE INFORMATION   KEN "8D"8A        STONE 7-25-90"8D"8A"8A/
+ASTAT2   SC /     THE XHOST CODE WILL CONTINUE TO BE MAINTAINED ON SYSTEM 33."8D"8A        IT ALSO RESIDES IN THE XCOMPAT DIRECTORY ON UNIX.   "8D"8A"8A/
+ASTAT3   SC /     I AM BEGINNING AN UPGRADE TO SUPPORT LOWER CASE. "8D"8A"8A/
+ASTAT4   SC /     ONTYME ME WITH ANY INQUIRIES -- NSC.K"2FSTONE.  "8D"8A"8A/
+ASTAT5   SC /     FOR DOCUMENTATION, SEE SYSTEM 38, TECHTIPS DIRECTORY, FILE CALLED 022 "8D"8A/
+AZSTAT   SC /"8D"8A"8A     TYPE "DEZ TO RETURN TO MAIN MENU"8D"8A/
+TSTAT1   SC /"8D"8A"8A     USE ^T TO TOGGLE BETWEEN ASCII HEX AND ALPHABETIC"8D"8A/
+PPP002   SC /     INPUT YOUR PACKET TO BE SENT.  THE FOLLOWING INFORMATION"8D"8A/
+FFF002   SC /     INPUT YOUR FRAME TO BE SENT.  NO INFORMATION WILL BE"8D"8A/
+PPP003   SC /     HAS BEEN PREASSIGNED FOR YOU"3A PRIMARY"2FSECONDARY 01 OR 03"8D"8A/
+FFF003   SC /     PREASSIGNED FOR YOU.  ENTER 4 DIGITS, THE FIRST 2 NORMALLY"8D"8A/
+PPP004   SC /     NR"2FNS AND LCGN.  END THE  (Y OR N)  QUESTIONS WITHOUT  A"8D"8A/
+FFF004   SC /     REPRESENTING PRI"2FSEC 01 OR 03, THE SECOND REPRESENT THE"8D"8A/
+PPP005   SC /     IS THIS A Q-BIT PACKET (Y OR N)?--> /
+PPP006   SC /"8D"8A     CHANNEL? (END WITH CR, DEFAULT IS LAST ON LINK)--> /
+FFF005   SC /     THE 2 DIGIT COMMAND OR RESPONSE."8D"8A/
+FFF006   SC /     DO YOU WISH FUTURE FRAMES TO BE IGNORED AFTER YOUR FRAME"8D"8A/
+FFF007   SC /     IS SENT OUT? (Y OR N)--> /
+FFF065   SC /     OF COURSE ^Z TO RETURN TO MENU IF YOU ARE LOST..."8D"8A/
+PPP007   SC /"8D"8A     NEED HELP WITH PR AND PS (Y OR N)?--> /
+PPP008   SC /     CARRIAGE RETURN.   HIT "5EZ ON LAST LINE TO CANCEL PACKET."8D"8A/
+PPP009   SC /     HIT ^R AFTER THE PACKET IS SENT TO TRANSMIT IT AGAIN."8D"8A/
+XXX010   SC /              "DEF - IGNORE ALL DATA IN INFO TRANSFER"8D"8A/
+XXX011   SC /              "DEP - BEGIN TO REPROCESS DATA FROM XCOM"8A"8D/
+XXX001   SC /              "DEU - BRING UP A LAPB LINK"8A"8D/
+XXX00A   SC /              "DEA - BRING UP A LAP LINK"8A"8D/
+XXX002   SC /              "DED - SEND DISC AND IRNORE FUTURE FRAMES"8A"8D/
+XXX003   SC /              "DEK - CURRENT HOST STATUS"8A"8D/
+T20SPS   SC /                    /
+T10SPS   SC /          /
+CWARP3   SC /PLEASE STAND BY WHILE CIRCUIT IS BUILT/
+CWARP6   SC /LOOPBACK (^L) CIRCUIT HAS BEEN COMPLETED./
+CSTATA   SC /SARM SENT.  HIT ^K FOR STARTUP STATUS/
+CSTAT0   SC /LINK IS DOWN./
+FSTAT1   SC /FRMR RECEIVED.  CHECK TRAPPED INFORMATION"8D"8A/
+CSTAT1   SC /LINK DOWN. NO RESPONSE TO OUR SABM'S/
+CSTAT3   SC /FRAME LEVEL UP - AWAITING RESTART CONF./
+OSTAT4   SC /CALL HAS BEEN CLEARED BY THE NETWORK./
+OSTAT5   SC /CALL HAS BEEN CLEARED BY THE HOST (C0, D0)/
+CSTAT4   SC /LINK IS UP - IDLE.  NO CHANNELS IN USE./
+CHTAT1   SC /LINK UP.  XXXX/
+CHTAT2   SC / CHANNELS IN USE./
+CSTAT6   SC /RECEIVED CALL REQUEST FROM LINK./
+CSTAT7   SC /LINK IS UP - ONE CHANNEL IN USE./
+CSTAT8   SC /DISC SENT.  IGNORING FUTURE FRAMES./
+CSTAT9   SC /SABM SENT.  HIT ^K FOR STARTUP STATUS/
+DSTAT1   SC /ALL CALL REQUEST PACKETS WILL BE IGNORED/
+DSTAT2   SC /WE WILL AUTOMATICALLY RESPOND TO CALL REQUESTS/
+RRTAT1   SC /THE XHOST WILL EMULATE X.25 DTE HOST/
+RRTAT2   SC /THE XHOST WILL EMULATE X.25 DCE HOST/
+TTTAT1   SC /ALL CLEAR REQUEST WILL BE IGNORED/
+TTTAT2   SC /WE WILL RESPOND TO CLEAR REQUEST/
+FFF010   SC /ALL INFO TRANSFER PACKETS WILL BE IGNORED/
+FFF011   SC /ALL INFO TRANSFER PACKETS WILL BE ACKNOWLEDGED/
+ZZZPRV   SC /              "DEZ - FOR PREVIOUS SCREEN"8A"8D/
+PUPRMP   SC /"8D"8AELSE ENTER P.U. ADDRESSES SEPARATED BY COMMAS"BA /
+RWARP1   SC /LAST PACKET HAS BEEN RESENT AGAIN/
+STAT2    SC /"8D"8AL.U. ADDR"BA/
+STAT3    SC /                                                               /
+STAT4    SC /"8D"8AL.U. STAT"BA/
+STAT5    SC /                                                               "8A/
+ACTMSG   SC /"8A"8D L.U. ACTIVATIONS HAVE BEEN SENT"8A"8D/
+POLMSG   SC /"8A"8DPHYSICAL UNIT IS NOW POLLING"87"8A"8D/
+LEFTAR   SC /"08"20"08/
+
+ZERSTR  HC 0
+
+HLDPTR  HC 0
+ISLAP   HC 0
+HLDSNS  HC 0                          :TEMP STORAGE FOR POSSIBLE SENSE DATA
+HLDSNF  HC 0                          :TEMP STORAGE FOR SEQ NUM FIELD
+HLDBYT  BC 0
+HLDBIT  BC 0
+CURPU   HC 0
+SAV3BS  WC 0                          :TEMP STORAGE FOR FIRST 3 BYTES OF PKT
+BONBAL  HC 0                          : BOUNCING BALL POINTER
+AOUTBF  BS 110
+SAOUTF  BS 40
+SOUTBF  BS 40
+SUMTOT  HC 0                          : SUM TOTAL
+HPORT   HC 0                          :TEMP STORAGE FOR GUY TO GET BOOTED
+ENDSW   HC 0                          :END OF ADDRESS INPUT SWITCH
+JAIL0   WS 1                          :STORAGE FOR R0
+HLDR5   WS 1
+HLDR7   WS 1
+ECHST   WS 10                         :ECHO STORE AREA
+INPTSW  HC 0                          :BACKGROUND INPUT SWITCH
+BITSIZ  HC 0                          :TEMP STORAGE FOR ISIS DATA LENGTH
+CHARIX  HC 0                          :PU AND LU INPUT INDEX
+TESTSW  HC 0                          :MISC TEST SWITCH
+LUPUNM  HC 0                          :STORAGE FOR NUMBER OF LU'S PER PU
+CURLU   HC 0                          :HOLDER FOR CURRENT LU #
+HLDCNT  HC 0
+HLDHEX  WC 0                          :BINHEX HOLD AREA
+: @@@@
+PSADR  HC  0
+LAP     HC  0
+SARMM   HC  0
+CALLCL  HC  0
+DEFINI  HC  0
+IGNORR  HC  0
+COULDQ  HC  0
+BIGCHN  HC  0
+PFBIT   HC  0
+NO0F    HC  0
+CHANS   HC  0
+IGNIY   HC  0
+NEWPEZ  HC  0
+FUKPEZ  HC  0
+TOGGLE  HC  0
+PRCHN   HC  0
+FRECHN  HC  0
+NQBIT   HC  0
+AQBIT   HC  0
+FLIP    HC  0
+DATLNG  HC  0
+OWERR   HC  0
+OWEPR   HC  0
+GOOFC   HC  0
+CHNNUM  HC  0
+POLLRR  HC  0
+JAIL4   WC  0
+JAIL8   WC  0
+JAIL9   WC  0
+WARP    HC  0
+SWARP   HC  0
+OURNS   HC  0
+OURNR   HC  0
+OURPR   HS  40
+OURPS   HS  40
+STATX   HC  0                          : STATUS OF CONDITION
+SSTATX  HC  0
+RPORT   HS  MAXCIR
+PCKSTE  HS  100
+LNKTIM  WC  0
+
+
+
+
+
+ZERHLT  HC 0
+ZERLEN  EQ ZERHLT-ZERSTR
+
+CDADR   WC   CLDADR
+CGADR   WC   CLGADR
+
+SABM    HC 013F                       : SABM
+PPSABM  HC 033F                       : SABM
+SARM    HC 011F                       : SARM
+PPSARM  HC 031F                       : SARM
+DISK    HC 0153
+PPDISK  HC 0353
+DISC    HC 0153                       : DISC
+PPDISC  HC 0353                       : DISC
+ADM     HC 031F                       : A DM
+AUA     HC 0373                       : A UA
+PPAUA   HC 0173                       : A UA
+        BND 4
+RESTRT  XC 01001000FB0000
+MARKER  HC 0FFFF                      :INPUT BUFFER MARKER
+
+NUMCHN   HC 4
+
+:-----------------   S I O    A R E A   ------------------
+
+         BND 10
+SIOSTR
+OUTBUF   HC  OBSIZE
+         RE  OBSIZE
+         BC  0FF
+         ER
+
+:--  SETUP CHANNEL COMMAND PROGRAM  --
+
+         BND 100
+SETUP    WC  30018
+         WC  31420
+         WC  31100
+         WC  303D8
+         WC  305EB
+         WC  3877E
+         WC  313D9
+         WC  0
+
+:--  OUTPUT CHANNEL COMMAND PROGRAM  --
+
+         BND 10
+SIOOUT   HC  8,OUTBUF/10
+         HC  0,0
+
+:--  INPUT CHANNEL COMMAND PROGRAM  --
+
+         BND 10
+SIOIN    HC  3,IBUFSZ/2
+         HC  1,INBUF/10
+
+:--  SIO STATUS AREA  --
+
+         BND 10
+SIOSTS   BS  STSSIZ
+
+:--  SIO INPUT BUFFER  --
+
+         BND 10
+INBUF    BS  IBUFSZ
+
+:--  SIO END  --
+
+         BND 10
+SIOEND   EQ  .
+
+:--------------------  E N D   O F   S I O   A R E A  ---------------
+
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::                                                                    ::::
+::::                 B  A  C  K  G  R  O  U  N  D                       ::::
+::::                                                                    ::::
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+         SEG A.CODE
+START    LIS R1,0
+         LIS R0,0
+START2   STB R0,ZERSTR,R1               : FOR HALT AND RESTARTS
+         AIS R1,1
+         CHI R1,ZERLEN
+         JL  START2
+         LIS R1,0
+
+         LA  R0,STRFGN
+         SVC SYS,1
+         JAL R7,HSTNUM
+THRASH   JAL R4,LOOK         :CHECK FOR MSG IN IRING
+         J   REST            :NO MSG IN RING
+         JE  CNTMSG          :GO PROCESS CONTROL MSG
+         CHI R2,0            :IS THIS MESSAGE A NEEDLE
+         JE  GOTNDL          :GOT A NEEDLE
+         J   NOTNDL
+
+REST     SVC DISMIS
+         LIS R2,0
+         LH  R5,TESTSW
+         CHI R5,1
+         JE CONT15
+         J   BGFGST
+REST4    J   THRASH
+
+GOTDAT   J   REST
+
+GOTNDL   LH  R8,RPORT
+         CHI R8,0
+         JN  BOOTEM                   :GET RID OF THIS GUY CUZ PORT IN USE
+         STH R1,RPORT
+         JAL R4,GETH
+         JAL R4,FLUSH                 :CHUCK REST OF NEEDLE
+         LH  R2,RPORT
+         LA  R3,SETECH                :TURN ON CONSAT ECHO
+         JAL R5,OCM
+         JAL R8,SNDBNR                :SEND "SNOST BANNER"
+         JAL R8,HLPLST                :SEND LIST OF SNOST COMMANDS
+         J   REST
+
+:--------------------------------------------------------------------------
+: THIS ROUTINE CLEARS RPORT WHEN OPERATOR CIRCUIT IS ZAPPED OR DETACHED
+
+GOTZAP   LH  R2,RPORT                 :GET OPERATOR PORT
+         JE  REST
+         LIS R2,0
+         STH R2,RPORT                 :PUT HIM TO REST
+         STH R2,HPORT
+         STH R2,WARP
+         J   REST
+
+:--------------------------------------------------------------------------
+: COME HERE IF THERE IS ALREADY AN OPERATOR LOGGED ON
+
+BOOTEM   STH R1,HPORT
+         LR  R2,R1
+         LA  R3,BOOTMG                :SEND GET LOST MESSAGE
+         JAL R5,OCS
+         LH  R2,HPORT
+         LA  R3,ZAPMSG
+         JAL R5,OCM
+         JAL R4,GETH
+         JAL R4,FLUSH
+         J   REST
+
+
+
+
+:--------------------------------------------------------------------------
+: THIS ROUTINE SENDS OUT THE GREETING MESSAGE TO THE OPERATOR
+
+SNDBNR   LH  R2,RPORT
+         LA  R3,BNR1
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR2
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR3
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR4
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR5
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR4
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR6
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR4
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,BNR7
+         JAL R5,OCS
+         JR  R8
+
+:-------------------------------------------------------------------------
+: THIS ROUTINE SENDS THE LIST OF COMMANDS TO THE OPERATOR
+
+HLPLST   LH  R2,RPORT
+         LA  R3,HLP1
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLP2
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPA
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPX
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPF
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPP
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPD
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPT
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPR
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPK
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPL
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPV
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,HLPZ
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         LIS R2,1
+         STH R2,WARP
+         LIS R2,0
+         STH R2,INPTSW
+         JR  R8
+
+
+:========================================================================
+: THIS ROUTINE IS CALLED IF A CHARACTER NEEDS TO BE ECHOED.
+ 
+CHKECH   ST  R0,JAIL0                 :SAVE R0
+         LIS R2,1
+         STB R2,ECHST                 :PUT IN LENGTH TO BE ECHOED
+         STB R0,ECHST,R2              :PUT IN CHARACTER TO ECHO
+         LH  R2,RPORT
+         LA  R3,ECHST
+         JAL R5,OCS
+         L   R0,JAIL0
+         JR  R10
+
+:=========================================================================
+
+CNTMSG   J   REST
+
+:-----------------------------------------------------------------------
+
+GOTORG   J   REST
+GOTORG   J   REST
+
+:-----------------------------------------------------------------------
+: INSERT STONKY'S "ISICOP" ROUTINE HERE
+        MO  .,ISICOP
+
+        SEG A.DATA
+
+        GL  DOECHO,NOTNDL,CURIN,DETCH
+ECHBUF  BS 50
+DATLEN  HC 0
+DOECHO  HS MAXCIR
+CURIN   HC 0
+ALEFT   HC 0
+FINDED  HC 0
+GRBALL  SC/"AA/
+RDBALL  SC/"AB/
+ORBALL  SC/"AD/
+DETCH   SC/"9E/
+
+        SEG A.CODE
+
+NOTNDL  LIS R8,0
+FINPOR  LH  R7,RPORT,R8
+        CR  R7,R1
+        JE  OPNING      : MATCHED RPORT
+        AIS R8,2
+        CHI R8,MAXCIR*2 : MORE RPORTS TO EXAMINE?
+        JE  ADDPR       : NO RPORT MATCHED
+        J   FINPOR      : FIND THAT PORT
+
+ADDPR   LIS R8,0
+TRYGIN  LH  R7,RPORT,R8 : FIND FIRST OPENING IN TABLE
+        CHI R7,0        : BY LOOKING FOR ZERO
+        JE  OPNING      : OPENING FOUND
+        AIS R8,2
+        J   TRYGIN      : LOOK AGAIN
+
+OPNING  STH R8,CURIN    : STORE INDEX
+        STH R1,RPORT,R8 : STORE RPORT, POSSIBLY REPETITIVE
+
+        CHI R2,$009D
+        JG  NONDAT      : BIGGER THAN 9D ISIS
+        LH  R7,INPTSW
+        CHI R7,0        : RETURN TO PHIL IF NOT ZERO
+        JN  IMORG       : RETURN TO PHIL IF NOT 0
+        JAL R4,GETCH    : BOOT THE ISIS DATA MSG LENGTH
+        STH R0,DATLEN   : STORE LEN OF MESSAGE IN THERE
+
+BOBUNG  LIS R8,1
+        STH R8,ALEFT
+BAGOFR  JAL R4,GETCH    : GET FIRST CHARACTER
+
+KCS     EQ  1
+        RE  $A26
+        IF  \CTL|KCS|
+         NHI  R0,7F          : AND OFF PARITY
+         CHI  R0,CTL|KCS|
+         JN   .+$A12
+         LA   R13,CONT|KCS|  : LOAD REG WITH ADDRESS OF JUMP
+         J    CONTRL
+        EI
+KCS     EQ  KCS+1
+        ER
+
+        J   HOP1         : NO CONTROL CHARACTERS FOUND NEEDED BY IMORG
+
+: A CONTROL CHARACTER WAS FOUND IN THE REPEAT NEEDED BY IMORG
+
+CONTRL  LIS R5,1
+        STH R5,FINDED     : SET FINDED TO 1 CUZ WE FOUND CONTROL WE NEED
+        LH  R8,ALEFT
+        LH  R7,DATLEN
+        SR  R7,R8
+        CHI R7,0
+        JE  MORG         :LAST DATA OF MESSAGE WAS CONTROL NOW ELIR
+        LR  R0,R8
+        JAL R4,FLUSH      :DATA FOLLOWED CONTROL, SO THROW IT AWAY
+        J   DPLUS
+
+HOP1    STB R0,ECHBUF,R8
+        LH  R8,ALEFT
+        AIS R8,1
+        STH R8,ALEFT
+        LH  R7,DATLEN
+        CR  R7,R8
+        JGE BAGOFR
+        JAL R4,ELIR
+
+: ALL THE DATA HAS BEEN YANKED OUTTA THIS ISIS MESSAGE.  IF IT NEEDS TO
+: BE ECHOED SHIP IT BACK
+
+HOP2    LH  R8,CURIN
+        LH  R7,DOECHO,R8
+        CHI R7,0
+        JE  DPLUS       :WE HAVE TAKEN IN FULL ISIS DATA MSG.  NONE OF IT
+                       :IS NEEDED BY PHIL OR NEEDS TO ECHOED OR IS CNTRL
+        LH  R8,ALEFT   :GET LEN OF NECESSARY DATA
+        SIS R8,1
+        LIS R7,0
+        STB R8,ECHBUF,R7   :STORE NEW VALUE IN ECHBUF FOR LEN
+        LH  R8,CURIN       :GET INDEX
+        LH  R2,RPORT,R8
+        LA  R3,ECHBUF
+        JAL R5,OCS
+DPLUS   LH  R5,FINDED
+        CHI R5,0
+        JE  REST           :CONTROL CHARS NOT FOUND
+        LIS R5,0
+        STH R5,FINDED
+        JR  R13
+
+MORG    JAL R4,ELIR
+        J   DPLUS
+
+: ALL NON DATA NON NEEDLES PASS THRU HERE.  AFTER PROCESSING THE MESSAGE
+: IS FLUSHED AWAY.  UNKNOWN BALLS AND MESSAGE ARE FLUSHED BUT CAN BE ADDED.
+
+NONDAT  CHI R2,$0 0AA              :GREEN?
+       GREENR
+        CHI R2,$0 0AB              :RED?
+        JE  REDRET
+        CHI R2,$0 0AC              :YELLOW?
+        JE  YELLA
+        CHI R2,$0 0AD              :ORANGE?
+        JE  ORANGA
+        CHI R2,$0 0A6              :EDEM?
+        JE  XEDEM
+        CHI R2,$0 0A7              :LDEM?
+        JE  XLDEM
+        CHI R2,$0 9E               :DETACH?
+        JE  ADETCH
+        CHI R2,$0 9F               :A ZAP?
+        JE  ADETCH
+        CHI R2,$0 0AF              :HANG?
+        JE  ADETCH
+        LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        J   REST
+
+GREENR  LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        LA  R3,GRBALL
+        LH  R8,CURIN
+        LH  R2,RPORT,R8
+        JAL R5,OCM
+        LHI R8,0          :BEFORE REST REMEMBER DON'T ECHO
+        LH  R7,CURIN
+        STH R8,DOECHO,R7
+        J   REST
+
+REDRET  LB  R0,LENGTH,R2, :RED FOUND AND SHIPPED
+        JAL R4,FLUSH
+        LA  R3,RDBALL
+        LH  R8,CURIN
+        LH  R2,RPORT,R8
+        JAL R5,OCM
+        LHI R8,1          :BEFORE WE REST REMEMBER TO ECHO
+        LH  R7,CURIN
+        STH R8,DOECHO,R7
+        J   REST
+
+YELLA   LB  R0,LENGTH,R2, :YELLOW FOUND ORANGE SHIPPED
+        JAL R4,FLUSH
+        LA  R3,ORBALL
+        LH  R8,CURIN
+        LH  R2,RPORT,R8
+        JAL R5,OCM
+        J   REST
+
+ORANGA  LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        J   GOTORG        :ALERT ORANGE BALL FOUND
+
+XEDEM   LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        LHI R8,1
+        LH  R7,CURIN
+        STH R8,DOECHO,R7     :MUST ECHO WHEN CONSAT DEFERS
+        J   REST
+
+XLDEM   LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        LHI R8,0
+        LH  R7,CURIN
+        STH R8,DOECHO,R7     :CONSAT LEFT DO NOT ECHO
+        J   REST
+
+ADETCH  LB  R0,LENGTH,R2,
+        JAL R4,FLUSH
+        J   GOTZAP        :ZAP OR DETACH FOUND
+
+
+        EM
+
+
+
+
+
+
+:========================================================================
+: THIS ROUTINE EXAMINES THE INPUT SWITCH (INPTSW) TO SEE WHICH ROUTINE
+: TO JUMP TO.
+
+IMORG   LH  R5,INPTSW                 :GET INPUT SWITCH
+        CHI R5,3                      : THIS GUY INVOLVED WITH FRAME CRE
+        JE  IN3FCR
+        CHI R5,33
+        JE  IN33CR
+        CHI R5,4                      : THIS GUY IS INVOLVED WITH PACKET CRE
+        JE  IN4PCR                    : INPUT TYPE 4 PACKET CREATION
+        CHI R5,42                     : BUT FIRST IS HE Q BIT
+        JE  IN42CR
+        CHI R5,43
+        JE  IN43CR                    : NEEDS CHANNEL
+        CHI R5,44
+        JE  IN44CR                    : NEEDS PRPS
+        J   REST                      : NONE
+
+:=========================================================================
+: ((((((((((((((((((((((((((((((((((WARPS))))))))))))))))))))))))))))))))
+: (((((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))))
+: WARP -  0 CODE LOADED.
+: WARP -  1 FRONT BANNER WELCOME IS PRESENTED
+: WARP -  2 ^X STATE
+: WARP - 21 ^X^U SEND SABM STATE
+: WARP - 22 ^X^D SEND DISC STATE
+: WARP -  4 ^P PACKET CREATION STATE
+: WARP -  5 ^L THE CANNERY
+: WARP -  6 TRIP WIRE FOR CANNERY
+: WARP - 11 ^A ANNOUNCEMENTS AND FEATURES
+
+
+: ***********************************************************
+: ^AAAAAAAAAAAAAAAAAA
+: ***********************************************************
+CONT1   LH  R2,WARP
+        CLHI R2,1
+        JE   CCT111
+        CLHI R2,2
+        JE   CCT112
+        CLHI R2,4
+        JE   CCT111
+        J    REST
+
+CCT111  LHI  R2,11
+        STH  R2,WARP
+        JAL  R8,HALFS
+        LH   R2,RPORT
+        LA   R3,ASTAT1
+        JAL  R5,OCS
+        LH   R2,RPORT
+        LA   R3,ASTAT2
+        JAL  R5,OCS
+        LH   R2,RPORT
+        LA   R3,ASTAT3
+        JAL  R5,OCS
+        LH   R2,RPORT
+        LA   R3,ASTAT4
+        JAL  R5,OCS
+        LH   R2,RPORT
+        LA   R3,ASTAT5
+        JAL  R5,OCS
+        LH   R2,RPORT
+        LA   R3,AZSTAT
+        JAL  R5,OCS
+        JAL  R8,HALFS
+        LH   R2,RPORT
+        LA   R3,PROMPT
+        JAL  R5,OCS
+        J    REST
+
+CCT112  LHI  R2,21
+        STH  R2,WARP
+        LHI  R2,0A
+        STH  R2,STATX
+        LIS  R2,1
+        STH  R2,ISLAP                 : MARKING THIS IS A LAP INTERFACE
+        JAL  R8,BUN20S
+        LH   R2,RPORT
+        LA   R3,CSTATA
+        JAL  R5,OCS
+        JAL  R8,BUN10S
+        LH   R2,RPORT
+        LA   R3,PROMPT
+        JAL  R5,OCS
+        J     REST
+
+: ***********************************************************
+: ^DDDDDDDDDDDDDDDDD
+: ***********************************************************
+CONT4  LH  R2,WARP
+       CLHI R2,1
+       JN  CCT041
+       LH  R2,NO0F
+       JE  CCT042
+       LIS R2,0
+       STH R2,NO0F
+       JAL R8,BUN20S
+       LH  R2,RPORT
+       LA  R3,DSTAT2
+       JAL R5,OCS
+       JAL R8,BUN10S
+       LH  R2,RPORT
+       LA  R3,PROMPT
+       JAL R5,OCS
+       J   REST
+CCT041 LHI R2,22
+       STH R2,WARP
+       LIS R2,8
+       STH R2,STATX
+       JAL R8,BUN20S
+       LH  R2,RPORT
+       LA  R3,CSTAT8
+       JAL R5,OCS
+       JAL R8,BUN10S
+       LH  R2,RPORT
+       LA  R3,PROMPT
+       JAL R5,OCS
+       J   REST
+
+CCT042 LIS R2,1
+       STH R2,NO0F
+       JAL R8,BUN20S
+       LH  R2,RPORT
+       LA  R3,DSTAT1
+       JAL R5,OCS
+       JAL R8,BUN10S
+       LH  R2,RPORT
+       LA  R3,PROMPT
+       JAL R5,OCS
+
+       J   REST
+
+: ***********************************************************
+: ^FFFFFFFFFFFFFFFF
+: ***********************************************************
+CONT6  LH  R2,WARP
+       CLHI R2,1
+       JE  CCT061
+       CLHI R2,2
+       JE   CCT062
+       CLHI R2,3
+       JE  CCT061
+       J   REST
+
+CCT061 JAL R8,SUMLFS
+       LH  R2,RPORT
+       LA  R3,FFF001
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF002
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF003
+       JAL R5,OCS
+       LIS R2,3
+       STH R2,WARP                     : NOW AT WARP 3-
+       LH  R2,RPORT
+       LA  R3,FFF004
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF005
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF065
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF006
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,FFF007
+       JAL R5,OCS
+       LIS R2,3
+       STH R2,INPTSW
+       LIS R2,0
+       STH R2,SUMTOT
+       STH R2,GOOFC
+       STH R2,DATLNG
+       STH R2,FLIP
+       J   REST
+
+CCT062 JAL R8,BUN10S
+       LH  R2,RPORT
+       LA  R3,FFF010
+       JAL R5,OCS
+       LIS R8,1
+       STH R8,IGNORR
+       JAL R8,BUN20S
+       LH  R2,RPORT
+       LA  R3,PROMPT
+       JAL R5,OCS
+       J   REST
+: ***********************************************************
+:
+: * INPUT SWITCH = 3, YES IGNORE FUTURE FRAMES, NO DON'T
+:
+: ***********************************************************
+IN3FCR  JAL  R4,GETCH                  : BAD EVIL CODE
+        JAL  R4,GETCH
+        NHI  R0,7F
+        ohi  r0,20
+        CHI  R0,6E
+        JE   IN31CR
+        CHI  R0,79
+        JE   IN32CR
+        LH   R2,RPORT
+        LA   R3,LEFTAR
+        JAL  R5,OCS
+        JAL  R4,ELIR
+        J    REST
+
+IN31CR  JAL  R4,ELIR
+        LHI  R4,33
+        STH  R4,INPTSW                  :INPUT SWITCH = 31
+        J    INFF07
+
+IN32CR  JAL  R4,ELIR
+        LHI  R4,33
+        STH  R4,INPTSW
+        LIS  R4,1
+        STH  R4,IGNIY                   : STATX = 0
+        J    INFF07
+
+INFF07  JAL  R8,HALFS
+        LIS  R8,2
+        STH  R8,BONBAL
+        LH   R2,RPORT
+        LA   R3,PROMPT
+        JAL  R5,OCS
+        J    REST
+
+IN33CR  JAL  R4,GETCH
+        STH  R0,DATLNG
+IN33C1  JAL  R4,GETCH
+        STB  R0,HLDBIT
+        NHI  R0,7F
+        CHI  R0,$0 1A
+        JE   CHAMIN
+        CHI  R0,$0 0D
+        JE   FGOT0D
+        CHI  R0,$0 46
+        JG   LEFARO
+        CHI  R0,$0 30
+        JL   LEFARO
+        CHI  R0,$0 39
+        JG   CHIPWA
+        LB   R0,HLDBIT
+        NHI  R0,0F
+        STB  R0,HLDBIT
+        J    SOFAR
+
+FGOT0D  JAL  R4,ELIR
+        LIS  R4,0
+        STH  R4,INPTSW
+        LHI  R4,19
+        STH  R4,STATX
+        J    REST
+
+: ***********************************************************
+: ^KKKKKKKKKKKKKKKKK
+: ***********************************************************
+CONTB   LH  R2,STATX
+        JE  CCT0B0
+        CLHI R2,1
+        JE  CCT0B1
+        CLHI R2,2
+        JE  CCT0B3
+        CLHI R2,3
+        JE  CCT0B4
+        CLHI R2,4
+        JE  CCT0B4
+        CLHI R2,6
+        JE  CCT0B6
+        CLHI R2,7
+        JE  CCT0B4
+        CLHI R2,8
+        JE  CCT0B8
+        CLHI R2,9
+        JE  CCT0B1
+        HC  0,0
+
+CCT0B0  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT0
+        JAL R5,OCS
+        JAL R8,BUN20S
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B1  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT1
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B3  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT3
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B4  JAL R8,BUN20S
+        ST  R4,JAIL4
+        LH  R8,RPORT
+        LH  R9,CHANS
+        LIS R10,4
+        LA  R11,CHTAT1+0B
+        JAL R4,BINDEC
+        LH  R2,RPORT
+        LA  R3,CHTAT1
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,CHTAT2
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B6  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT6
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B7  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT7
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+
+CCT0B8  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT8
+        JAL R5,OCS
+        JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT0B9  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CSTAT9
+        JAL R5,OCS
+        JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+: ***********************************************************
+: ^LLLLLLLLLLLLLL
+: ***********************************************************
+CONTC   LH  R2,WARP
+        CLHI R2,1
+        JE  CCT0C1
+        J   REST
+
+CCT0C1  JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,CWARP3
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        LIS R2,5                       : ^L WARP 5
+        STH R2,WARP
+        LH  R2,STATX
+        CLHI R2,4                      : IS THE LINK ALREADY UP?
+        JE  REST                       : YES FOREGROUND WILL HANDLE
+        LIS R2,9
+        STH R2,STATX
+        J   REST
+
+: ***********************************************************
+: ^PPPPPPPPPPPPPPPPPP
+: ***********************************************************
+CONT10  LH  R2,WARP
+        CLHI R2,1
+        JE  CCT101
+        CLHI R2,2
+        JE   CCT102
+        CLHI R2,4
+        JE  CCT101
+        CLHI R2,5
+        JE  CCT101
+        CLHI R2,6
+        JE  CCT101
+        J   REST
+
+CCT102  JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,FFF011
+        JAL R5,OCS
+        LIS R8,0
+        STH R8,IGNORR
+        JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+
+CCT101  JAL R8,SUMLFS
+        LH  R2,RPORT
+        LA  R3,PPP001
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP002
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP003
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP004
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP008
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP009
+        JAL R5,OCS
+        LH  R2,RPORT
+        LA  R3,PPP005
+        JAL R5,OCS
+        LHI R2,42
+        STH R2,INPTSW
+        LIS R2,4
+        STH R2,WARP                    : SPEED AND INPUTSWITCH AT 4
+
+: BEFORE REST, GET PACKET CREATION BUFFERS READY
+
+MRREST  LIS R2,0
+        STH R2,NEWPEZ
+        STH R2,FUKPEZ
+        STH R2,GOOFC
+        STH R2,DATLNG
+        STH R2,FLIP
+        STH R2,AOUTBF
+        STH R2,SUMTOT
+        LIS R2,6
+        STH R2,BONBAL
+
+        J   REST
+
+: NEW TKON
+
+IN42CR  JAL R4,GETCH
+        JAL R4,GETCH                   : BE NICE I AM BAD CODE 
+        NHI R0,7F
+        ohi r0,20
+        CHI R0,6E
+        JE  IN42C1
+        CHI R0,79
+        JE  IN42C2
+
+        LH  R2,RPORT
+        LA  R3,LEFTAR
+        JAL R5,OCS
+        JAL R4,ELIR
+        J   REST
+IN42C1  JAL R4,ELIR
+        LHI R4,43                      : INPUTSW = 43
+        STH R4,INPTSW                  : THE Q QUESTION IS SETTLED
+        LIS R4,0
+        STH R4,AQBIT
+        LH  R2,RPORT
+        LA  R3,PPP006
+        JAL R5,OCS
+        J   REST
+
+IN42C2  JAL R4,ELIR
+        LIS R4,1
+        STH R4,AQBIT
+        LHI R4,43                      : SEE ABOVE
+        STH R4,INPTSW
+        LH  R2,RPORT
+        LA  R3,PPP006
+        JAL R5,OCS
+        J   REST
+
+: ******************************************************************
+: 
+: INPUT SWITCH IS 43 WE NEED CHANNEL NUMBER
+:
+: ******************************************************************
+IN43CR  JAL R4,GETCH
+        STH R0,DATLNG
+IN43C1  JAL R4,GETCH
+        NHI R0,7F
+        CHI R0,$0 1A
+        JE  CHAMIN
+        CHI R0,$0 0D
+        JE  ZGOT0D
+        CHI R0,$0 46
+        JE  ZLEFAR
+        CHI R0,$0 30
+        JL  ZLEFAR
+        CHI R0,$0 39
+        JG  ZCHIPW
+        NHI R0,0F
+        J   ZSOFAR
+
+ZCHIPW  NHI R0,0F
+        AIS R0,9
+
+        J   ZSOFAR
+
+ZGOT0D  JAL R4,ELIR
+        LHI R4,44
+        STH R4,INPTSW
+        LH  R2,RPORT
+        LA  R3,PPP007
+        JAL  R5,OCS
+        LH  R5,FLIP
+        CLHI R5,1
+        JN  MRREST
+        LH  R5,FRECHN
+        JN  ZGOT1
+        LH  R5,CHNNUM
+ZGOT1   SRLS R5,4
+        STH R5,FRECHN
+        J   MRREST
+        J   MRREST
+
+ZLEFAR  LH  R2,RPORT
+        LA  R3,LEFTAR
+        JAL R5,OCS
+
+        LH  R5,GOOFC
+        AIS R5,1
+        LH  R7,DATLNG
+        CR  R5,R7
+        JL  IN43C1
+        LIS R4,0
+        STH R4,GOOFC
+        JAL R4,ELIR
+        J   REST
+
+ZSOFAR  LH  R7,FLIP
+        CLHI R7,1
+        JE  ZRELFA
+        SLLS R0,4
+        STH R0,FRECHN
+        LIS R7,1
+        STH R7,FLIP
+        J   ZSOFR2
+ZRELFA  LH  R5,FRECHN
+        AR  R0,R5
+        STH R0,FRECHN
+        LIS R5,0
+        STH R5,FLIP
+        J   ZSOFR2
+ZSOFR2  LH  R7,GOOFC
+        AIS R7,1
+        STH R7,GOOFC
+        LH  R5,DATLNG
+        CR  R7,R5
+        JL  IN43C1
+        JAL R4,ELIR
+        LIS R4,0
+        STH R4,GOOFC
+        J   REST
+
+        
+: *******************************************************************
+:
+: INPUT SWITCH = 44
+:
+: *******************************************************************
+IN44CR  JAL R4,GETCH
+        JAL R4,GETCH
+        NHI R0,7F
+        ohi r0,20
+        CHI R0,6E
+        JE  IN44C1
+        CHI R0,79
+        JE  IN44C2
+       
+        LH  R2,RPORT
+        LA  R3,LEFTAR
+        JAL R5,OCS
+        JAL R4,ELIR
+        J   REST
+
+IN44C1  JAL R4,ELIR
+        LH  R2,RPORT
+        LA  R3,TSTAT1
+        JAL R5,OCS
+        LIS R4,4
+        STH R4,INPTSW
+        LIS R4,1
+        STH R4,FUKPEZ
+        JAL R8,HALFS
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST
+IN44C2  JAL R4,ELIR
+        LH R2,RPORT
+        LA R3,TSTAT1
+        JAL R5,OCS
+        LIS R4,4
+        STH R4,INPTSW
+        LIS R4,7
+        STH R4,BONBAL
+        LH  R4,SUMTOT
+        AIS R4,1
+        STH R4,SUMTOT
+        LIS R4,1
+        STH R4,NEWPEZ
+        JAL R8,HALFS
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        J   REST                       : WIMP NEEDS HELP
+
+: ***************************************************************
+:
+: INPUT SWITCH = 4, LOOKING FOR THE PACKET TO BE INPUT
+:
+: ***************************************************************
+
+IN4PCR  JAL R4,GETCH
+        STH R0,DATLNG
+IN4PC1  JAL R4,GETCH
+        STB R0,HLDBIT
+:       NHI R0,7F                      : JRPARITY
+        LH  R4,TOGGLE
+        JN  TSOFR2
+        NHI R0,7F
+        CHI R0,$0 14
+        JE  TSOFAR
+:       LB  R0,HLDBIT                  : JRPARITY
+IN4PC2  CHI R0,$0 1A
+        JE  CHAMIN                     : CHANGED MIND FOR NOW
+        CHI R0,$0 0D
+        JE  GOT0D                      : FOUND CR
+        CHI R0,$0 46
+        JG  lownib                     : GIVA LEFT ARROW
+in4pc3  CHI R0,$0 30
+        JL  LEFARO
+        CHI R0,$0 39
+        JG  CHIPWA                     : CHIP AWAY
+        LB  R0,HLDBIT
+        NHI R0,0F
+        STB R0,HLDBIT
+        J   SOFAR
+
+: try to handle the lower case input
+
+lownib  chi r0,$0 66
+        jg  lefaro
+        chi r0,$0 61
+        jl  lefaro
+        j   in4pc3
+
+
+CHIPWA  LB  R0,HLDBIT
+        NHI R0,0F
+        AIS R0,9
+        STB R0,HLDBIT
+        J   SOFAR
+
+CHAMIN  JAL R4,ELIR
+        J   CCT1A2                     : ^Z ENDS THE GAME
+
+GOT0D   JAL R4,ELIR                    : CR RECEIVED SHIP THIS PACKET
+GOT0D1  LIS R4,0
+        STH R4,INPTSW
+        LHI R4,18
+        STH R4,STATX
+        LH  R4,FRECHN
+        JE  GOT0D5
+        STH R4,CHNNUM
+GOT0D5  LH  R4,AQBIT
+        STH R4,NQBIT
+        LH  R2,NEWPEZ
+        JE  NNREST
+        LIS R2,1                         :PRPS STILL CALC NEEDED
+        STH R2,NEWPEZ
+        LH  R2,FRECHN
+        LH  R3,OURPR,R2
+        SLLS R3,5
+        LH  R4,OURPS,R2
+        SLLS R4,1
+        AR  R3,R4
+        LIS R2,6
+        STB R3,AOUTBF,R2
+NNREST  LIS R2,6
+        LB  R3,AOUTBF,R2
+        CLHI R3,0B
+        JE  NNRESR
+        CLHI R3,0FB
+        JN  NNRESY
+        LIS  R4,0
+        STH  R4,CHNNUM
+NNRESY  NHI R3,01
+        JN  REST
+        JAL R9,IOURPS                  : WE ARE GOING TO INCREMENT P(S)
+        J   REST
+
+NNRESR  LH  R9,CHANS
+        AIS R9,1
+        STH R9,CHANS
+        J   NNRESY
+
+LEFARO  LH  R2,RPORT
+        LA  R3,LEFTAR
+        JAL R5,OCS
+        LH  R5,GOOFC
+        AIS R5,1
+        LH  R7,DATLNG
+        CR  R5,R7
+        JL  IN4PC1                     : MORE TO GO
+        LIS R4,0
+        STH R4,GOOFC
+        JAL R4,ELIR
+        J   REST                       : GOT ALL THE CHARS
+
+SOFAR   LH  R7,FLIP
+        CLHI R7,1
+        JE  RELFAR
+        LH  R7,BONBAL
+        LB  R0,HLDBIT
+        SLLS R0,4
+        STB R0,AOUTBF,R7
+        LIS R7,1
+        STH R7,FLIP
+        J   SOFAR1
+RELFAR  LH  R7,BONBAL
+        LB  R5,AOUTBF,R7
+        SLLS R5,8
+        LB   R0,HLDBIT
+        SLLS R0,8
+        AR  R0,R5
+        SRLS R0,8
+        STB R0,AOUTBF,R7
+        LIS R5,0
+        STH R5,FLIP
+        LH  R5,BONBAL
+        AIS R5,1
+        STH R5,BONBAL
+        J   SOFAR2
+
+SOFAR2  LH  R7,SUMTOT
+        AIS R7,1
+        STH R7,SUMTOT
+SOFAR1  LH  R7,GOOFC
+        AIS R7,1
+        STH R7,GOOFC
+        LH  R5,DATLNG
+        CR  R7,R5
+        JL  IN4PC1
+        JAL R4,ELIR
+        LIS R4,0
+        STH R4,GOOFC
+        J   REST
+
+
+        J   REST
+
+: ***************************************************************
+:
+: USER ^T AND IS USING ALPHABETIC INPUT
+:
+: ***************************************************************
+TSOFAR  LH  R7,TOGGLE
+        CLHI R7,0
+        JN  TSOFR1
+        LIS R7,1
+        STH R7,TOGGLE
+        JAL R4,ELIR
+        J   REST
+
+TSOFR2  LH  R4,BONBAL
+        CLHI R0,14
+        JE   TSOFR1
+        STB R0,AOUTBF,R4
+        LH  R4,SUMTOT
+        AIS R4,1
+        STH R4,SUMTOT
+        LH  R4,BONBAL
+        AIS R4,1
+        STH R4,BONBAL
+        LH  R4,GOOFC
+        AIS R4,1
+        STH R4,GOOFC
+        LH  R3,DATLNG
+        CR  R4,R3
+        JL  IN4PC1                     : MORE DATA TO RETRIEVE
+        JAL R4,ELIR
+        LIS R4,0
+        STH R4,GOOFC
+        J   REST
+TSOFR1   LIS  R7,0
+       STH  R7,TOGGLE
+        JAL  R4,ELIR
+        J    REST
+
+
+: ***********************************************************
+: ^RRRRRRRRRRRRRRRRRR
+: ***********************************************************
+
+CONT12   LH  R2,WARP
+         CLHI R2,1
+         JE   CCT121
+         CLHI R2,4
+         JN  REST
+
+         JAL R8,BUN20S
+         LH  R2,RPORT
+         LA  R3,RWARP1
+         JAL R5,OCS
+         JAL R8,BUN10S
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         LH  R3,FUKPEZ
+         JN  GOT0D1                    : NEED NO HELP WITH PRPS SO DON'T CHANGE
+         LIS R3,1
+         STH R3,NEWPEZ                 : A NEW P(S) WILL BE NEEDED FOR RESEND
+         LIS R3,0
+         STH R3,FUKPEZ
+         J   GOT0D1
+
+CCT121   JAL R8,BUN20S
+         LH  R2,RPORT
+         LH  R3,PSADR
+         JE  CCT122
+         LIS R3,0
+         STH R3,PSADR
+         LA  R3,RRTAT1
+         J   CCT123
+CCT122   LIS R3,1
+         STH R3,PSADR
+         LA  R3,RRTAT2
+CCT123   JAL R5,OCS
+         JAL R8,BUN10S
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+
+         J   REST
+: ******************************************************
+: ^TTTTTTTTTTTTTTTTTT
+: ******************************************************
+CONT14   LH  R2,WARP
+         CLHI R2,4
+         JE  CCT141
+         CLHI R2,1
+         JE  CCT144
+         J   REST
+CCT141   LH  R2,TOGGLE
+         JE  TNEGS
+         LIS R2,1
+         STH R2,TOGGLE
+         J   REST
+TNEGS    LIS R2,0
+         STH R2,TOGGLE
+         J   REST
+
+CCT144   LH  R2,CALLCL
+         JE  CCT145
+         LIS R2,0
+         STH R2,CALLCL
+         JAL R8,BUN20S
+         LH  R2,RPORT
+         LA  R3,TTTAT2
+         JAL R5,OCS
+         JAL R8,BUN10S
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         J   REST
+
+CCT145   LIS R2,1
+         STH R2,CALLCL
+         JAL R8,BUN20S
+         LH  R2,RPORT
+         LA  R3,TTTAT1
+         JAL R5,OCS
+         JAL R8,BUN10S
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         J   REST
+
+: ******************************************************
+: ^UUUUUUUUUUUUUUU
+: ******************************************************
+CONT15   LH   R2,WARP
+         CLHI R2,1
+         JN   CCT151
+         J    REST
+CCT151   LHI  R2,21
+         STH  R2,WARP
+         LIS  R2,9
+         STH  R2,STATX
+         JAL  R8,BUN20S
+         LH   R2,RPORT
+         LA   R3,CSTAT9
+         JAL  R5,OCS
+         JAL  R8,BUN10S
+         LH   R2,RPORT
+         LA   R3,PROMPT
+         JAL  R5,OCS
+         J    REST
+
+: ******************************************************
+: ^VVVVVVVVVVVVVVV
+: ******************************************************
+CONT16   LH  R2,WARP
+         CLHI R2,1
+         JE  CCT161
+         CLHI R2,6
+         JE  CCT161
+         J   REST
+
+CCT161   LHI  R2,17
+         STH  R2,STATX
+         LIS  R2,1
+         STH  R2,WARP
+         J    REST
+
+         
+: ******************************************************
+: ^XXXXXXXXXXXXXXX
+: ******************************************************
+CONT18   LH  R2,WARP
+         CLHI R2,1
+         JE  CCT181                    : GOING WARP 1 FRONT HIT ^X - GOOD!
+         CLHI R2,6
+         JE  CCT181
+         JE  KSTAT0                    : NOTHING IN AT WARP 0
+         J   REST
+CCT181   JAL R8,SUMLFS
+         LH  R2,RPORT
+         LA  R3,XXX001
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,XXX00A
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,XXX002
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,XXX003
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,XXX010
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,XXX011
+         JAL R5,OCS
+         LIS R2,2
+         STH R2,WARP                   : NOW AT WARP 2
+         LH  R2,RPORT
+         LA  R3,ZZZPRV
+         JAL R5,OCS
+         JAL R8,ONELFS
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         J   REST
+: *********************************************************
+: ^YYYYYYYYYYYYYYYYY
+: **********************************************************
+: ***********************************************************
+: ^ZZZZZZZZZZZZZZZZZ
+: ***********************************************************
+CONT1A   LH  R2,WARP
+         CLHI R2,1
+         JE   CCT1A1                   : SPEED WARP 1, USER IS LOOKING AT FRONT
+         CLHI R2,6
+         JE   CCT1A1                   : WARP 6
+         CLHI R2,2
+         JE   CCT1A2                   : ^Z AT ^X SCREEN
+         CLHI R2,3
+         JE   CCT1A2
+         CLHI R2,11
+         JE   CCT1A2
+         CLHI R2,21
+         JE   CCT1A2
+         CLHI R2,22
+         JE   CCT1A2
+         CLHI R2,23
+         JE   CCT1A2
+         CLHI R2,4
+         JE   CCT1A2
+         J    REST                     : ?
+
+CCT1A1   LH  R2,RPORT
+         LA  R3,DROPMG
+         JAL R5,OCS
+         LH  R2,RPORT
+         LA  R3,ZAPMSG
+         JAL R5,OCM
+         LIS R5,0
+         STH R5,RPORT
+         STH R5,WARP
+         J   REST
+
+CCT1A2   JAL R8,SUMLFS
+         JAL R8,SNDBNR
+         JAL R8,HLPLST
+         LIS  R8,0
+         STH  R8,FUKPEZ
+         J   REST
+
+
+: **********************************************************
+: BACKGROUND WARP AND STATE CRASHES
+: **********************************************************
+KSTAT0 HC 0,0
+KSTAT1 HC 0,0
+KSTAT2 HC 0,0
+KSTAT3 HC 0,0
+KSTAT4 HC 0,0
+KSTAT5 HC 0,0
+KSTAT6 HC 0,0
+KSTAT7 HC 0,0
+KSTAT8 HC 0,0
+KSTAT9 HC 0,0
+: **********************************************************
+: DISPLAYS
+: **********************************************************
+SUMLFS LH  R2,RPORT
+       ST  R8,JAIL8
+       LA  R3,LFLFLF
+       JAL R5,OCS
+       LH  R2,RPORT
+       LA  R3,LFLFLF
+       JAL R5,OCS
+       L   R8,JAIL8
+       JR  R8
+ONELFS LH  R2,RPORT
+       ST  R8,JAIL8
+       LA  R3,LFLFLF
+       JAL R5,OCS
+       L   R8,JAIL8
+       JR  R8
+HALFS  LH  R2,RPORT
+       ST  R8,JAIL8
+       LA  R3,LFLF
+       JAL R5,OCS
+       L   R8,JAIL8
+       JR  R8
+BUN10S LH  R2,RPORT
+       ST  R8,JAIL8
+       LA  R3,T10SPS
+       JAL R5,OCS
+       L   R8,JAIL8
+       JR  R8
+
+BUN20S LH  R2,RPORT
+       ST  R8,JAIL8
+       LA  R3,T20SPS
+       JAL R5,OCS
+       L   R8,JAIL8
+       JR  R8
+:---------------------------------------------------------------------------
+:---------------------------------------------------------------------------
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:::                                                                     :::
+:::                 F  O  R  E  G  R  O  U  N  D                        :::
+:::                                                                     :::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+STRFGN   LIS R1,LUN          :START FOREGROUND, LOAD LOGIC UNIT NUM
+         LA  R2,SIOSTR,,     :GET BEGINNING OF SIO AREA
+         LA  R3,SIOEND,,     :GET END OF SIO AREA
+         LA  R4,SIOSTS,,
+         SVC IO,CONMOM+R1
+         HC  0,0
+         SVC DISMIS,1
+CHOUT    LIS R1,LUN          :OUTPUT SETUP CHANNEL COMMAND PROG
+         LA  R2,SETUP,,
+         SVC IO,FRCMBO+R1
+         HC  0,0
+         SVC DISMIS,1
+STINP    LIS R1,LUN            :START INPUT
+         LA  R2,SIOIN
+         SVC IO,FRCMBI+R1
+         HC  0,0
+         LIS R2,0
+         SVC DISMIS,1
+
+
+
+
+:<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+:<><>                                                                  <><>
+:<><> THIS IS WHERE THE VARIOUS PUSTATES ARE HANDLED                   <><>
+
+FGLOOP   LH  R5,STATX
+         CHI R5,9             :IS IT READY TO SEND A SABM
+         JE  SNDSAB           :GO SEND SABM
+         CHI R5,0A
+         JE  SNDSAR
+         CHI R5,6             :RECEIVED CALL REQUEST IN A FRAME
+         JE  SHI0FF           : SEND CALL ACCEPT IN FRAME
+         CHI R5,8             :ORDER TO SEND DISCONNECT THEN CUT TO 0
+         JE  SNDDSC
+         CHI R5,13
+         JE  SNDA17           :CLEAR REQUEST RECEIVED SEND CLEAR CONF
+         CHI R5,17
+         JE  SNDA13           :NEED TO SEND CLEAR REQUEST
+         CHI R5,18
+         JE  CONSHI           :CONSTRUCT AND SHIP
+         CHI R5,19
+         JE  CONFHI
+         CHI R5,1F
+         JE  SHI1FF
+         CHI R5,27
+         JE  SHI27F
+
+
+         CHI R5,4
+         JN  FGNRST
+         LH  R2,WARP
+         CLHI R2,5
+         JN  FGNRST
+
+         J   SNDIDL           : LINK IS UP AND IDLE, WE HAVE BEEN ORDERED..
+
+
+FGNRST   LIS R2,0
+FGNRS2   JAL R12,CKSIN
+         J   FGNRS5
+         J   PULSIO
+FGNRS5   LIS R1,0
+         J   LUSTLP                   :GO RUN THROUGH LU STATE LOOP
+FGNRS6   SVC DISMIS
+         LIS R2,0
+         J   FGLOOP
+
+:--------------------------------------------------------------------------
+: THIS ROUTINE SENDS A SABM.  IT ALSO STARTS A RETRY COUNTER
+: STATUS OF STATX MOVES TO 1 AND WE MIGHT SEND A RESTART IN AWHILE.
+
+SNDSAB   LIS R5,1
+         STH R5,STATX
+         L   R5,FASTC,,
+         ST  R5,LNKTIM                :SAVE CURRENT TIME
+SNDSN2   LH  R5,SIOOUT                :SEE IF SIO SENT PREVIOUS PACKET
+         LA  R10,SNDSN2
+         CHI R5,1
+         JE  SIOWAT
+         JAL R9,RSTNZZ
+         LH  R8,SABM
+         LH  R5,PSADR
+         JEFS SNDSN3
+         LH  R8,PPSABM
+SNDSN3   LIS R5,2
+         STH R5,OUTBUF
+         STH R8,OUTBUF,R5
+         J   GOOUT
+                    
+: -------------------------------------------------------------------
+:
+: SEND A SARM A PRAY.
+:
+: -------------------------------------------------------------------
+SNDSAR    LIS  R5,1
+          STH  R5,STATX
+          L    R5,FASTC,,
+          ST   R5,LNKTIM
+SNDSA2    LH   R5,SIOOUT
+          LA   R10,SNDSA2
+          CHI  R5,1
+          JE   SIOWAT
+          JAL  R9,RSTNZZ
+          LH   R8,DISK
+          LH   R5,PSADR
+          JEFS SSDDDD
+          LH   R8,PPDISK
+SSDDDD    LIS  R5,2
+          STH  R5,OUTBUF
+          STH  R8,OUTBUF,R5
+          LIS  R8,1
+          STH  R8,SARMM
+          J    GOOUT
+
+:--------------------------------------------------------------------------
+: THIS ROUTINE SENDS A DISCONNECT AND THEN IGNORES ALL FUTURE FRAME
+: WE ARE UNDER ^D ORDERS
+:---------------------------------------------------------------------------
+SNDDSC   LIS R5,0
+         STH R5,STATX
+SNDDS1   LH  R5,SIOOUT
+         LA  R10,SNDDS1
+         CHI R5,1
+         JE  SIOWAT
+         JAL R9,RSTNZZ
+         LH  R8,DISC
+         LH  R5,PSADR
+         JEFS SNDDS2
+         LH  R8,PPDISC
+SNDDS2   LIS R5,2
+         STH R5,OUTBUF
+         STH R8,OUTBUF,R5
+         J   GOOUT
+:--------------------------------------------------------------------------
+: THIS ROUTINE CALLS SIOSND WHICH SENDS THE SDLC FRAME.
+
+GOOUT    LIS R5,1
+         STH R5,SIOOUT
+         JAL R13,SIOSND
+         J   FGNRST
+
+GOOUT2   LIS R5,1
+         STH R5,SIOOUT
+         JAL R13,SIOSND
+GOOUT3   LH  R5,SIOOUT
+         LA  R10,GOOUT3
+         CHI R5,1
+         JE  SIOWAT
+         LH  R8,SARM
+         LH  R5,PSADR
+         JEFS GOOUT4
+         LH  R8,PPSARM
+GOOUT4   LIS R5,2
+         STH R5,OUTBUF
+         STH R8,OUTBUF,R5
+         LIS R8,0
+         STH R8,ISLAP
+         STH R8,DEFINI
+         STH R8,SARMM
+         J   GOOUT
+
+         J   FGNRST
+
+:--------------------------------------------------------------------------
+: THIS ROUTINE IS CALLED IF THE A NEW SDLC FRAME NEEDS TO BE SENT BUT THE
+: SIO SUBSYSTEM HASN'T SENT THE PREVIOUS FRAME YET.
+
+SIOWAT   SVC DISMIS,1
+         JR  R10
+:==========================================================================
+: THIS ROUTINE RUNS THROUGH EACH LU'S STATE IN PCKSTE AND TAKES THE APPROPRIATE
+: ACTION WHERE NECESSARY.
+
+LUSTLP   LH  R5,ISLAP
+         JN  GOOUT2
+         LH  R5,STATX
+         CHI R5,2
+         JE  SNDFBR                   : SEND RESTART
+         LH  R5,OWERR
+         CLHI R5,1   
+         JE  SHIRRF
+         LH  R5,OWEPR
+         JN  SHIARR
+:        CHI R5,5                     :USER LOGGING IN?
+:        JE  SNDFBR : UNKNOWN
+:        CHI R5,7                     :TIME TO SEND LU STATUS
+:        JE  SNDFBR : TBA
+         
+LUSTL4   AIS R1,1
+         CHI R1,1
+         JL  LUSTLP
+         J   FGNRS6
+
+:============================================================================
+
+
+SIOSND   LIS R1,LUN          :SIO OUTPUT ROUTINE
+         LA  R2,SIOOUT
+         SVC IO,FRCMBO+R1
+         HC  0,0
+         JR  R13
+
+
+:========================================================================
+:= THIS ROUTINE CHECKS THE SIO INPUT BUFFER.  IF NO DATA HAS COME IN,
+:= IT HAS A NORMAL RETURN (J=R12).  IF THERE IS DATA IN THE BUFFER IT
+:= RETURNS R12+4.  WHEN THE POINTER (HLDPTR) => IDXWRP THE POINTER IS 
+:= RESET TO THE TOP OF THE BUFFER AND WHEN THE POINTER IS BETWEEN 100x
+:= AND 200x IT WRITES A HALFWORD OF FFFF INTO THE FIRST HALFWORD OF THE
+:= BUFFER.
+
+CKSIN    LH  R4,HLDPTR                :GET INBUF INDEX
+         LH  R7,INBUF,R4
+         CHI R4,IDXWRP                :SEE IF ROOM FOR 1 MORE FULL PACKET
+         JL  CKSIN2
+         LIS R4,0
+         LH  R7,INBUF,R4
+CKSIN2   CHI R4,100
+         JL  CKSIN3
+         CHI R4,200                   :IF POINTER IS BETWEEN 100 & 200
+         JG  CKSIN3                   :SET FIRST HALFWORD OF INBUF =FFFF
+         LH  R9,MARKER
+         STH R9,INBUF
+CKSIN3   CHI R7,0FFFF
+         JE  CKSIN4                   :NORMAL RETURN = NO INPUT
+         CHI R7,0
+         JE  CKSIN4
+         AIS R12,4
+         JR  R12
+CKSIN4   JR  R12
+
+
+
+:=========================================================================
+:= THIS ROUTINE GETS THE CONTROL FIELD OUT OF THE SIO INPUT BUFFER AND
+:= SENDS THE PROGRAM TO THE APPROPRIATE ROUTINE.  IF THE CONTROL BYTE
+:= DOESN'T MATCH ANYTHING CURRENTLY IN THE PROGRAM, THIS ROUTINE THEN
+:= FLUSHES THE INPUT BUFFER.
+
+PULSIO   AIS R4,2                     :ADVANCE POINTER PAST BYTE COUNT
+         STH R7,HLDCNT                :SAVE BYTE COUNT
+         LB  R8,INBUF,R4              :GET ADDRESS
+         LH  R1,PSADR                 :HAS ADDRESSING BEEN REVERSED?
+         JNFS PULAG1                  :ASSUME NOT LAP
+         CHI R8,03
+         JE  ALAPCO                   :NOTICE A LAP COMMAND POTENTIAL
+         LIS R1,0
+         STH R1,LAP
+         JFS PULAGO
+ALAPCO   LIS R1,1
+         STH R1,LAP
+PULAG1   LIS R1,0
+PULAGO   SIS R7,1                     :DECREMENT BYTE COUNT
+PULSI1   AIS R4,1                     :INCREMENT INDEX
+         LB  R8,INBUF,R4              :GET CONTROL FIELD
+         SIS R7,1
+         STB R8,HLDBYT
+         CHI R8,3F                    : SABM WITH POLL?
+         JE  GOTSBM
+         CHI R8,1F 
+         JE  GOTDM
+         CHI R8,53                    :IS IT A DISCONNECT?
+         JE  GOTDSC                   : DISC RECEIVED
+         CHI R8,73                    : UA RECEIVED
+         JE  GOTUA                    : GET EM
+         CHI R8,87
+         JE  GOTFRM
+         NHI R8,9
+         CHI R8,1                     :IS IT A RECEIVE READY?
+         JE  FNDRR
+         LB  R8,HLDBYT                :RESTORE ANDED OFF BITS
+         NHI R8,1
+         JE  FNDINF                   :FOUND INFORMATION FRAME
+         LB  R8,HLDBYT
+         NHI R8,0F
+         CLHI R8,9
+         JE  GOTREJ
+         JG  FGNRS2
+PULSI2   AIS R4,1
+         AR  R4,R7
+:        LB  R8,INBUF,R4
+:        SIS R7,1
+:        CHI R7,0
+:        JG  PULSI2
+:        AIS R4,1
+:        STH R4,HLDPTR                :SAVE INDEX
+         LH  R7,HLDCNT                :SEE IF ODD NUMBER OF BYTES, IF SO
+         NHI R7,0001                  :MUST UPDATE HLDPTR
+:        CHI R7,0
+:        JE  FGNRS2
+         JEFS .+4
+         AIS R4,1
+         STH R4,HLDPTR
+         J   FGNRS2
+
+         SEG A.CODE
+
+BGFGST   LH  R5,STATX
+         CHI R5,1
+         JE  CKSNTM                   :SEE IF SABM TIMER EXPIRED
+:        CHI R5,9
+:        JE  CKRRTM                   :SEE IF RR TIMER EXPIRED
+:        CHI R5,9
+:        JE  CKRRNR
+:        CHI R5,9
+:        JE  CKRRNR
+BGFGS2   LIS R2,0
+         J   REST4
+
+:=                                                                        =:
+:==========================================================================:
+
+SETACP   LIS R5,8                     :SET PU STATE TO "ACTIVATE THIS PU"
+         STH R5,STATX
+         J   BGFGS2
+CKRRNR   HC 0,0                        : RNR TIMER EXPIRED
+CKRRTM   HC 0,0                        : RR RECEIVED
+CKSNTM  L  R1,LNKTIM
+         L  R8,FASTC,,
+         SR R8,R1                      : HAS 3 X 600 PASSED?
+         CHI R8,$A1800                 : 3 SECONDS?
+         JL BGFGS2
+         LH  R9,STATX
+         CLHI R9,0
+         JE  BGFGS2
+         LIS R8,9
+         STH R8,STATX                  : STAT OF LINK X IS NOW 0
+         J  BGFGS2
+
+
+GOTREJ   AIS R4,1
+         STH R4,HLDPTR
+         LH  R9,STATX
+         JE  FGNRST
+         LH  R5,OURNR
+         SLLS R5,5
+         LH  R13,OURNS
+         SIS R13,1
+         JGE GOTRJ9
+         LIS R13,7
+GOTRJ9   STH  R13,OURNS
+GOTRJ1   SLLS R13,1
+         AR   R5,R13
+         LIS  R2,3
+         STB  R5,OUTBUF,R2
+GOTRJ2   LH   R5,SIOOUT
+         LA   R10,GOTRJ2
+         CHI  R5,1
+         JE   SIOWAT
+         J    GOOUT
+: WE HAVE RECEIVED A DISC, WE WILL DM AND RETURN SABM, EXPECTING SABM
+: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GOTDSC   AIS R4,1
+         STH R4,HLDPTR
+         LH  R9,STATX
+         JE  FGNRST
+         JAL R9,RSTNZZ                : RESET NR NS
+GOTDS1   LH  R5,SIOOUT
+         LA  R10,GOTDS1
+         CHI R5,1 
+         JE  SIOWAT
+         LH  R8,AUA
+         LH  R5,PSADR
+         JEFS GOTDS2
+         LH  R8,PPAUA
+GOTDS2   LIS R5,2
+         STH R5,OUTBUF
+         STH R8,OUTBUF,R5
+         J   GOOUT
+
+GOTSBM   AIS R4,1
+         STH R4,HLDPTR
+         LH  R9,STATX
+         JE  FGNRST
+         LIS R5,2
+         STH R5,STATX                  : GOT A SABM, WHETHER SENT ONE OR NOT
+         JAL R9,RSTNZZ                 : RESET NR NS
+         LIS R5,1
+         STH R5,PCKSTE
+GOTSB1   LH  R5,SIOOUT
+         LA  R10,GOTSB1
+         CHI R5,1
+         JE  SIOWAT
+         LH  R8,AUA
+         LH  R5,PSADR
+         JEFS GOTSB3
+         LH  R8,PPAUA
+GOTSB3   LIS R5,2
+         STH R5,OUTBUF
+         STH R8,OUTBUF,R5
+         LH  R5,SARMM
+         JGFS GOTSB2
+         LH  R5,DEFINI
+         JG   GOOUT2
+GOTSB2   LIS R5,2
+         STH R5,PCKSTE
+         J   GOOUT
+
+: ************************************************************
+:
+: JUST RECEIVED FRMR REJECT (87).
+: WE WILL TRY AND BRING LINK BACK SETTING STATX TO 9.
+: WE WILL STORE THE FOLLOWING INFO FOR TRAP ANALYSIS.
+:
+: STATX --> SSTATX (2 BYTES)
+: WARP  --> SWARP  (2 BYTES)
+: OUTBUF--> SOUTBF (40 X BYTES)
+: AOUTBF--> SAOUTF (40 X BYTES)
+:
+: ************************************************************
+GOTFRM   AIS  R4,2
+         STH  R4,HLDPTR
+         LH   R9,STATX
+         JE   FGNRST
+         LH   R9,STATX
+         STH  R9,SSTATX
+         LH   R9,WARP
+         STH  R9,SWARP
+         LIS  R9,9
+         STH  R9,STATX
+         LIS  R9,0
+         LIS  R5,0
+GOTFR1   L    R5,OUTBUF,R9
+         ST   R5,SOUTBF,R9
+         L    R5,SAOUTF,R9
+         ST   R5,AOUTBF,R9
+         AIS  R9,4
+         CLHI R9,40
+         JL   GOTFR1
+         JAL  R8,BUN20S
+         LH   R2,RPORT
+         LA   R3,FSTAT1
+         JAL  R5,OCS
+         LH   R2,RPORT
+         LA   R3,PROMPT
+         JAL  R5,OCS
+         LH   R4,HLDPTR
+         J    DBURNR
+
+: ************************************************************
+: JUST GOT DM FROM TYMNET.  CERTAINLY TYMNET WANTS TO COME UP 
+: WE WILL IGNORE AND RETRY THE SABM
+: ************************************************************
+GOTDM  AIS R4,1
+       STH R4,HLDPTR
+       LH  R9,STATX
+       JE  FGNRST
+       LH  R5,LAP
+       JE  FGNRST
+       LIS R5,1
+       STH R5,DEFINI
+       J   GOTSB1
+: ************************************************************
+: JUST GOT UA FINAL FROM TYMNET
+: ************************************************************
+GOTUA    AIS R4,1
+         STH R4,HLDPTR
+         LH  R2,STATX
+         CLHI R2,0
+         JE  FGNRST
+         LIS R5,2
+         STH R5,STATX
+         J   FGNRST
+MCHCHN   CLHI R8,0                    : PROBABLY CHANNEL COMING IN R8
+         JE   MAYFBB
+         JR   R9                      : BACK TO MCHCHN
+
+: **********************************************************************
+: PROCESS RESTART OR RESTART CONFIRMATION
+: CALLED FROM MCHCHN
+: **********************************************************************
+MAYFBB   SIS R7,1
+         JE  KILLFB                   : CHANNEL 0 ILLEGAL FRAME
+         LH  R8,BIGCHN
+         JGR R9
+         LB  R8,INBUF,R4
+         STB R8,HLDBYT
+         AIS R4,1
+         STH R4,HLDPTR
+         CLHI R8,0FB
+         JN  MAYBEF                   : MAYBE AN FF
+MAYBE1   SIS R7,1
+         CLHI R7,1
+         JGE MAYBRI                   : MAY BRISE THROUGH THESE THINGS
+         JAL R9,BWLIR                 : PLACE POINTER FOR ODD
+         JAL R9,SHIRRF                : SHIP OUT RR FRAME
+         J   FGNRS2                   : WE ARE DONE FB FOUND
+MAYBRI   LB  R8,INBUF,R4
+         AIS R4,1
+         STH R4,HLDPTR
+         SIS R7,1
+         CLHI R7,1
+         JGE MAYBRI
+         CLHI R8,0FF
+         JE   MAYBR1
+         JAL R9,BWLIR                 : ALIGN
+MAYBR1   JAL R9,SHIRRF
+         J   FGNRS2                   : UNLOADED REMAINDER, SHIP RR BACK FG
+
+MAYBEF   CLHI R8,0FF                  : RESTART CONFIRMATION?
+         JN   KILLFB                  : CHANNEL 00 NON FB OR FF
+         J    MAYBE1                  : NOT INTERESTED IN C OR D YET
+
+: ***********************************************************
+: INFO FRAME HAS ARRIVED.  PTYPE WILL TABLE US STONKY STYLE
+: TO THE APPROPRIATE ROUTINE.
+: ***********************************************************
+PTYPE    CLHI R8,0B
+         JE   ITSA0B                  : ITS A CALL REQUEST
+         CLHI R8,0F 
+         JE   ITSA0F                  : ITS A CALL ACCEPT
+         CLHI R8,13                   : ITS A CLEAR REQUEST
+         JE   ITSA13
+         CLHI R8,17
+         JE   ITSA17
+         CLHI R8,1B
+         JE   ITSA1B
+         clhi r8,1f
+         je   itsa1f
+         CLHI R8,23
+         JE   ITSA23
+         CLHI R8,27
+         JE   DBURNR
+         NHI  R8,0F
+         CLHI R8,5
+         JE   DBURNR                   : RNR PACKET, JUST EAT FOR NOW
+         LB   R8,HLDBYT
+         NHI  R8,0E
+         CLHI R8,1
+         JG   RITSA0
+         LB   R8,HLDBYT
+         NHI  R8,01
+         CLHI R8,1
+         JE   ITSA17
+
+
+RITSA0   ST   R9,JAIL9
+: **************************************************************
+:
+: IT IS A DATA PACKET
+:
+: **************************************************************
+DATAPK    LH   R8,COULDQ                : IS THIS Q BIT?
+          JG   SERCHQ                   : SEARCH THIS Q BIT BOY.
+
+ITSA00    SIS  R7,1
+ITS000   JG   CALD1
+ITMPFC   JAL  R9,BWLIR
+         LIS  R9,7
+         STH  R9,STATX
+         L    R9,JAIL9
+         JR   R9
+
+CALD1    AR  R4,R7                    : USED TO BE AIS R4,1
+         STH R4,HLDPTR
+         LIS R7,0                     : USED TO  NOT BE HERE
+         J   ITMPFC                   : ONCE ITSA00
+
+
+: ***************************************************************
+:
+: WE ARE GOING TO SEARCH THIS Q BIT PACKET.  PROPER RETURN
+: ADDRESS IS LOCATED IN JAIL9, LINK TO R9.
+:
+: ***************************************************************
+SERCHQ    LIS  R8,0
+          STH  R8,COULDQ
+          SIS  R7,1
+          JLE  ITS000
+          LB   R8,INBUF,R4               : GET NEXT CHAR
+          AIS  R4,1
+          STH  R4,HLDPTR
+          CLHI R8,6                      : 00-06?
+          JG   ITSQLC                    : WILL ASSUME IS QLLC
+          CLHI R8,0                      : PARM IND
+          JE   QB00
+          CLHI  R8,1
+          JE   QB01                    : INV TO CLEAR
+          CLHI R8,2
+          JE   QB02                    : SET
+          CLHI R8,3
+          JE   QB03                    : BREAK
+          CLHI R8,4      
+          JE   QB04                    : READ
+          CLHI R8,5
+          JE   QB05                    : PARM ERROR
+          CLHI R8,6
+          JE   QB06                    : SET AND READ
+
+          HC   0,0                     : REALLY BAD PARM.
+: ***************************************************************
+:
+: DATA PACKET QBIT / VALUE 00 
+: INDICATION
+:
+: ***************************************************************
+QB00     J   ITSA00
+
+: ***************************************************************
+:
+: DATA PACKET QBIT / VALUE 01
+: INVITATION TO CLEAR
+:
+: ***************************************************************
+
+QB01     J   ITSA01
+
+ITSA01   SIS R7,1
+ITS010   JN  A01PAD
+         JAL R9,BWLIR
+         J   SNDA13                    : RECEIVED INV TO CLEAR PAD
+A01PAD   AIS R4,1
+         STH R4,HLDPTR
+         J   ITSA01
+
+: ***************************************************************
+:
+: DATA PACKET QBIT / VALUE 02
+: SET
+:
+: ***************************************************************
+
+QB02      J   ITSA00
+
+: ****************************************************************
+:
+: DATA PACKET QBIT / VALUE 03
+: BREAK
+:
+: ***************************************************************
+
+QB03      J    ITSA00
+
+: ***************************************************************
+:
+: DATA PACKET QBIT / VALUE 4
+: READ
+:
+: **************************************************************
+QB04      J    ITSA00
+
+: ***************************************************************
+:
+: DATA PACKET QBIT / VALUE 05
+: PARM ERROR
+:
+: **************************************************************
+QB05      J    ITSA00
+
+: **************************************************************
+:
+: DATA PACKET QBIT / VALUE 06
+: SET AND READ
+:
+: **************************************************************
+QB06      J    ITSA00
+
+: **************************************************************
+:
+: DATA PACKET
+: LOOKS A BIT LIKE QLLC...LET'S CHECK
+:
+: **************************************************************
+
+ITSQLC     SIS  R7,1
+           JLE  ITS000
+           LB   R8,INBUF,R4
+           AIS  R4,1
+           STH  R4,HLDPTR
+           CLHI R8,93
+           JN   ITSA00                  : NOT SNRM FLUSH AND GO
+ITSQL1     SIS  R7,1
+           CLHI R7,0
+           JN   CAQQ1
+           JAL  R9,BWLIR
+           LHI  R9,73
+           STH  R9,STATX
+           L    R9,JAIL9
+           JR   R9
+
+
+CAQQ1      AIS  R4,1
+           STH  R4,HLDPTR
+           J    ITSQL1
+
+: ***************************************************************
+: 
+: CALL REQUEST
+:
+: ***************************************************************
+ITSA0B   SIS  R7,1
+         JN   CALR1
+         LH   R9,CHANS
+         AIS  R9,1
+         STH  R9,CHANS
+         JAL  R9,BWLIR
+         LIS  R9,7                          : SHOULD BE 6 FOR AUTO CALL ACCEPT
+         STH  R9,STATX
+         LH   R9,NO0F
+         JE   ITS10B
+         J     SHIRRF                      : SHOULD BE FGNRS2 FOR AUTO 0F
+ITS10B   LIS   R9,6
+         STH   R9,STATX
+         J     FGNRS2
+
+CALR1    AIS  R4,1
+         STH  R4,HLDPTR
+         J    ITSA0B
+
+: *****************************************************************
+:
+: CALL ACCEPT
+:
+: *****************************************************************
+ITSA0F   SIS  R7,1
+         JN   CALA1
+         JAL  R9,BWLIR
+         J    WOOPS
+: ************************************************************************
+:
+: CLEAR REQUEST
+:
+: ************************************************************************
+ITSA13   SIS  R7,1
+         JN   CALC1
+         LH   R9,CHANS
+         CLHI R9,0
+         JE   ITSA14
+         SIS  R9,1
+         STH  R9,CHANS
+ITSA14   JAL  R9,BWLIR
+         LHI  R9,13
+         STH  R9,STATX
+         LH   R9,CALLCL
+         JE   SHIRRF
+         LIS  R9,4
+         STH  R9,STATX
+         J    SHIRRF
+
+CALC1    AIS  R4,1
+         STH  R4,HLDPTR
+         J    ITSA13
+
+: *********************************************************************
+:
+: CLEAR CONFIRMATION
+:
+: *********************************************************************
+ITSA17   SIS  R7,1
+         JN   CALF1
+         LH   R9,CHANS
+         JLEFS ITSA18
+         SIS  R9,1
+         STH  R9,CHANS
+ITSA18   JAL  R9,BWLIR
+         LIS  R9,7
+         STH  R9,STATX
+         J    SHIRRF
+
+CALF1    AIS  R4,1
+         STH  R4,HLDPTR
+         J    ITSA17
+
+ITSA1B   LHI  R8,1F
+         STH  R8,STATX
+         J    DBURNR
+
+itsa1f   jal  r9,rstpzz
+         j    dburnr
+
+
+ITSA23   J    DBURNM
+: *********************************************************************
+:
+: WE ARE BURNING DATA HERE, PRETTY ALL-PURPOSE PLACE TO JUMP
+:
+: *********************************************************************
+DBURNM   SIS  R7,1
+         JN   BURNMM
+         JAL  R9,BWLIR
+         J    SHI27F
+
+BURNMM   AIS  R4,1
+         STH  R4,HLDPTR
+         J    DBURNM
+
+DBURNR   SIS  R7,1
+         JN   BURNMO                   : BURNMO
+         JAL  R9,BWLIR
+         J    SHIRRF                   : J FGNRST HUNG WHEN UNSOL 27 1/11/89
+
+BURNMO   AIS  R4,1
+         STH  R4,HLDPTR
+         J    DBURNR
+
+
+: ***********************************************************
+: 
+: CALL ACCEPT HAS BEEN PICKED UP AND STRIPPED.  WAS IT
+: IN RESPONSE TO OUR ^L CANNED STRING?  IF SO SEND A MESSAGE
+: TO CONTROLLER'S BRAIN.
+:
+: ***********************************************************
+WOOPS    LH  R7,WARP
+         CLHI R7,6
+         JN  SHIRRF
+
+         JAL R8,BUN20S
+         LH  R2,RPORT
+         LA  R3,CWARP6
+         JAL R5,OCS
+         JAL R8,BUN10S
+         LH  R2,RPORT
+         LA  R3,PROMPT
+         JAL R5,OCS
+         J   SHIRRF
+
+
+CALA1    AIS  R4,1
+         STH  R4,HLDPTR
+         J    ITSA0F
+
+: ***********************************************************************
+:             ((((((((((( THE CANNERY )))))))))))))))
+: 
+: THE USER HIT ^L, THE LINK CAME UP AND WE ARE TO SEND A CANNED CALL RE-
+: QUEST INTO THE NETWORK.  IT COULD BE ANY STRING BUT THIS APPEARS TO
+: BE A FUNCTION I NEED NOW, BUT WAS NOT SCHEDULED FOR SEVERAL WEEKS...
+:
+: ***********************************************************************
+
+SNDIDL   LIS  R2,6
+         STH  R2,CHNNUM
+SNDID1   LH   R5,SIOOUT
+         LA   R10,SNDID1
+         CHI  R5,1
+         JE   SIOWAT
+         JAL  R9,IOURNS
+         LHI  R2,10                  : 31060008233106000824..ZZZZ...
+         STH  R2,OUTBUF
+         LIS  R3,1
+         JAL  R9,SHIFTP
+         LIS  R2,2
+         STB  R3,OUTBUF,R2
+         JAL  R9,BLNRNS              : ATTACH NR NS GFI LCGN LCN
+
+         LI   R3,0BAA3106
+         ST   R3,OUTBUF,R2
+         L    R3,CDADR
+         AIS  R2,4
+         ST   R3,OUTBUF,R2
+         L    R3,CGADR
+         AIS  R2,4
+         ST   R3,OUTBUF,R2
+         LIS  R2,6
+         STH  R2,WARP                  : NO LONGER..
+         LIS  R2,7
+         STH  R2,STATX
+         LIS  R5,1
+         STH  R5,SIOOUT
+         JAL  R13,SIOSND
+         J    FGNRST
+
+: WHAT A HIDEOUS MESS KIDS......JUST SAY NO!!!!!!!!!!!!!!
+CONSHI  LH  R5,SIOOUT
+        LA  R10,CONSHI
+        CHI R5,1
+        JE  SIOWAT
+        JAL R9,IOURNS
+        LHI R9,4
+        STH R9,STATX
+        LIS R4,0
+        STH R4,INPTSW
+        LH  R4,SUMTOT                  : TOTAL NEW CHARS
+        AIS R4,4
+        STH R4,OUTBUF                  : ADD NRNS GFI LCGN...
+        LIS R3,1
+        JAL R9,SHIFTP
+        LIS R2,2
+        STB R3,OUTBUF,R2
+        JAL R9,BLNRNS
+
+        LH  R5,SUMTOT
+        SRLS R5,1
+        AIS R5,1                       : DIVIDE BY 2 AND ROUND UP
+
+REMIX   LH  R3,AOUTBF,R2
+        STH R3,OUTBUF,R2
+        SIS R5,1
+        JLE HELPER
+        AIS R2,2
+        J   REMIX                      : PAD COULD BE UP TO 3 BYTES...
+
+: *********************************************************************
+:
+: CONSTRUCTION OF A FRAME, BORROW HELPER TO SHIP.
+: FRAME HAS BEEN CONSTRUCTED VIA ^F
+:
+: *********************************************************************
+CONFHI  LH   R5,SIOOUT
+        LA   R10,CONFHI
+        CHI  R5,1
+        JE   SIOWAT
+        LIS  R8,4
+        STH  R8,STATX
+        LH   R8,IGNIY
+        JE   CONFH1
+        LIS  R8,0
+        STH  R8,STATX
+        STH  R8,IGNIY
+        JAL  R9,RSTNZZ
+CONFH1  LIS  R8,0
+        STH  R8,INPTSW
+        LH   R8,SUMTOT
+        STH  R8,OUTBUF
+        LIS  R2,2
+        LH   R5,SUMTOT
+        SRLS R5,1
+        AIS  R5,1
+
+        J    REMIX
+
+
+: **********************************************************
+:
+: CLEAR REQUEST RECEIVED.  WE WILL RESPOND WITH A CCONF
+: CUT THE LINK BACK TO STATX 4, UP BUT NO CIRCUITS
+:
+: **********************************************************
+: WE'LL EVEN SHIP A MESSAGE BACK TO THE USER
+: **********************************************************
+
+SNDA17  LH  R5,SIOOUT
+        LA  R10,SNDA17
+        CHI R5,1
+        JE  SIOWAT
+        JAL R9,IOURNS
+        LIS R2,5
+        STH R2,OUTBUF
+        LIS R3,1
+        JAL R9,SHIFTP
+        LIS R2,2
+        STB R3,OUTBUF,R2
+
+        JAL R9,BLNRNS
+
+        LHI R3,17
+        STB R3,OUTBUF,R2
+        LIS R5,4
+        STH R5,STATX
+:       LIS R5,4
+:       STH R5,WARP
+        LH  R2,RPORT
+        JE  SNDA18
+        JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,OSTAT4
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+SNDA18  LH  R9,CHNNUM                  : WHAT IF CONTROLLER IS GONE?
+        STH R9,FRECHN
+        JAL R9,RSTPZZ
+        LIS R5,1
+        STH R5,SIOOUT
+        JAL R13,SIOSND
+        J   FGNRST
+
+: ****************************************************************
+:
+: USER HAS HIT ^V AND IT HAVING THE MOST RECENT CALL CLEARED
+:
+: ****************************************************************
+SNDA13  LIS R5,4
+        STH R5,STATX
+        LH  R5,CHNNUM
+        JE  FGNRST                     :  NO CHANNEL (OR 0) DON`T SEND 13
+        LH  R5,SIOOUT
+        LA  R10,SNDA13
+        CHI R5,1
+        JE  SIOWAT
+        JAL R9,IOURNS
+        LIS R2,7
+        STH R2,OUTBUF
+        LIS R3,1
+        JAL R9,SHIFTP
+        LIS R2,2
+        STB R3,OUTBUF,R2
+
+        JAL R9,BLNRNS
+
+        LI  R3,13000000
+        ST  R3,OUTBUF,R2
+        LIS R5,4
+        STH R5,STATX
+        LIS R5,1
+        STH R5,WARP
+        JAL R8,BUN20S
+        LH  R2,RPORT
+        LA  R3,OSTAT5
+        JAL R5,OCS
+        JAL R8,BUN10S
+        LH  R2,RPORT
+        LA  R3,PROMPT
+        JAL R5,OCS
+        JAL R9,RSTPZZ
+        LIS R5,1
+        STH R5,SIOOUT
+        JAL R13,SIOSND
+        J   FGNRST
+
+: **********************************************************************
+: ***********************************************************************
+: HERE WE ARE TO SHIP THE CURRENT RR FRAME TO TYMNET
+: ***********************************************************************
+SHIRRF   LH  R5,IGNORR
+         JEFS SHIR99
+         J   FGNRS6
+SHIR99   LH  R5,SIOOUT
+         LA  R10,SHIR99
+         CHI R5,1
+         JE  SIOWAT
+         LH  R5,OURNR
+         SLLS R5,5
+         AIS R5,1
+         LH  R13,PFBIT
+         JE  SHIRR1
+         OHI R5,10
+         LIS R13,0
+         STH R13,PFBIT
+SHIRR1   LIS R2,2
+         STH R2,OUTBUF
+         LIS R3,3                      : PRIMARY RESPONSE
+         JAL R9,SHIFTP
+         LIS R2,2
+         STB R3,OUTBUF,R2
+         AIS R2,1
+         STB R5,OUTBUF,R2
+         LIS R5,0
+         STH R5,OWERR
+SHIRR2   LIS R5,1
+         STH R5,SIOOUT
+         JAL R13,SIOSND
+         J   FGNRS5
+         HC  0,0
+: **********************************************************************
+:
+: HERE WE ARE SHIPPING A PACKET RR TO TYMNET
+:
+: **********************************************************************
+SHIARR   LH  R5,SIOOUT
+         LA  R10,SHIARR
+         CHI R5,1
+         JE  SIOWAT
+         JAL R9,IOURNS
+         LIS R2,5
+         STH R2,OUTBUF
+         LIS R3,1
+         JAL R9,SHIFTP
+         LIS R2,2
+         STB R3,OUTBUF,R2
+         LH  R9,CHNNUM
+         STH R9,JAIL9
+         LH  R13,PRCHN
+         STH R13,CHNNUM
+
+         JAL R9,BLNRNS
+
+         LH  R9,JAIL9
+         STH R9,CHNNUM
+         LH  R9,PRCHN
+         LH  R3,OURPR,R9
+         LIS R9,0
+         STH R9,OWEPR
+         SLLS R3,5
+         AIS R3,1
+         STB R3,OUTBUF,R2
+         J   HELPER                    : STATX =7 SHIP FRAME J FGNRST
+: **********************************************************************
+: CALL REQUEST HAS COME IN.  STATX = 6
+: CALL ACCEPT WILL BE RETURNED, P(S) P(R) NOT IMPORTANT
+: **********************************************************************
+SHI0FF   LH  R5,SIOOUT
+         LA  R10,SHI0FF
+         CHI R5,1
+         JE  SIOWAT
+         JAL R9,IOURNS
+         LIS R2,5
+         STH R2,OUTBUF
+         LIS R3,1
+         JAL R9,SHIFTP
+         LIS R2,2
+         STB R3,OUTBUF,R2
+: **********************************************************
+: LENGTH PLUS PRIMARY COMMAND STORED
+: BLNRNS WILL BUILD NR NS AND ADD CHANNEL NUMBER
+: **********************************************************
+
+         JAL R9,BLNRNS
+         J   BLTA0F
+
+BLNRNS   LH  R5,OURNR
+         SLLS R5,5
+         LH  R13,OURNS
+         SLLS R13,1
+         AR   R5,R13
+         AIS  R2,1
+         LH   R13,PFBIT
+         JE   BLPF
+         OHI  R5,10
+         LIS  R13,0
+         STH  R13,PFBIT
+BLPF     STB  R5,OUTBUF,R2
+         AIS  R2,1
+         LH   R13,NQBIT
+         CLHI R13,1
+         JN   XYZ1
+         LHI  R3,90
+         J    XYZ2
+XYZ1     LHI  R3,10
+XYZ2     STB  R3,OUTBUF,R2
+         LIS  R13,0
+         STH  R13,NQBIT
+         AIS  R2,1
+         LH   R3,CHNNUM
+         STB  R3,OUTBUF,R2
+         AIS  R2,1
+         JR   R9
+
+: **************COMPLETE BLNRNS***********************************
+
+BLTA0F   LHI  R3,0F
+HELPS1   STB  R3,OUTBUF,R2
+         LIS  R5,7
+         STH  R5,STATX
+HELPER   LIS  R5,1
+         STH  R5,SIOOUT
+         JAL  R13,SIOSND
+         J    FGNRST
+
+: *******************************************************************
+:
+: RESET (1B) HAS COME.  CERTAINLY NOTHING THAT WE DID.
+: RESPOND WITH A (1F). AND RESET PS PR COUNTERS.
+:
+: *******************************************************************
+SHI27F    LH  R5,SIOOUT
+          LA  R10,SHI27F
+          CHI R5,1
+          
+          JE  SIOWAT
+          JAL R9,IOURNS
+          LIS R2,5
+          STH R2,OUTBUF
+          LIS R3,1
+          JAL R9,SHIFTP
+          LIS R2,2
+          STB R3,OUTBUF,R2
+          JAL R9,BLNRNS
+          LHI R3,27
+          J   HELPS1
+
+SHI1FF    LH  R5,SIOOUT
+          LA  R10,SHI1FF
+          CHI R5,1
+          JE  SIOWAT
+          JAL R9,IOURNS
+          JAL R9,RSTPZZ
+          LIS R2,5
+          STH R2,OUTBUF
+          LIS R3,1
+          JAL R9,SHIFTP
+          LIS R2,2
+          STB R3,OUTBUF,R2
+
+          JAL R9,BLNRNS
+
+          LHI R3,1F
+
+          J   HELPS1
+
+
+         
+: **********************************************************************
+: GOT AN RR FRAME
+: **********************************************************************
+FNDRR    AIS R4,1
+         STH R4,HLDPTR
+         LH  R9,STATX
+         CLHI R9,0
+         JE  FGNRST
+         LB  R8,HLDBYT
+         NHI R8,0E0                   : GET RID OF "1"
+         SRLS R8,5                    : DIVIDE BY 2 KINDA
+         LH  R6,OURNS 
+         AIS R6,1
+         CLHI R6,8
+         JN  FNDRR1
+         LIS R6,0
+FNDRR1   CR  R8,R6
+         JG  K2BINR                   : KRASH NR TOO BIG FROM TYMNET
+         JL  FSLOW                    : SLOW TRASMISSION
+         JE  FIDLE                    : ALL ACKED
+
+K2BINR   LH  R5,STATX
+         CLHI R5,4
+         JLE  FGLOOP                  : NR NOT TOO BIG IF LINK UP-IGNORE
+         J    FIDLE                   : LINK IS UP STATX 5 OR BIGGER KRASH
+
+FSLOW    J   FIDLE
+
+FIDLE    CLHI R9,7
+         JE  FIDLE1
+         LIS R5,4
+         STH R5,STATX                 : TOO OUR OUTBOUND ALL IS WELL
+FIDLE1   LB  R8,HLDBYT
+         NHI R8,10
+         CLHI R8,0
+         JE  FGNRST
+         LIS  R8,1
+         STH  R8,PFBIT
+         J   SHIRRF
+: *********************************************************************
+:
+: GOT AN INFO FRAME
+:
+: *********************************************************************
+FNDINF   AIS R4,1
+         STH R4,HLDPTR
+         LH  R9,STATX
+         JE  DBURNR                   : BURN THIS INFO FRAME, STATX=0
+         JAL R9,IOURNR
+         LB  R8,HLDBYT
+         NHI R8,10
+         JE  FINP
+         LIS R8,1
+         STH R8,PFBIT
+FINP     LB  R8,INBUF,R4
+         STB R8,HLDBYT
+         CLHI R8,90
+         JN  VOHOP
+         LIS  R8,1
+         STH  R8,COULDQ
+:        CLHI R8,10
+:        JN  KILLFD                    : D BIT MAYBE ILLEGAL
+VOHOP    AIS R4,1
+         STH R4,HLDPTR
+         SIS R7,1
+         JE  KILLFR                    : ILLEGAL I FRAME
+         NHI R8,0F
+         JLE VOHOP1
+         LIS R8,1
+         STH R8,BIGCHN
+VOHOP1   LB  R8,INBUF,R4
+         STB R8,HLDBYT
+         AIS R4,1
+         STH R4,HLDPTR
+         JAL R9,MCHCHN                : FIND THE CHANNEL NUMBER
+         LIS R9,0
+         STH R9,BIGCHN
+         SIS R7,1
+         JE  KILLFR                    : KRASH ILLEGAL FRAME
+         STH R8,CHNNUM
+         LB  R8,INBUF,R4
+         STB R8,HLDBYT
+         AIS R4,1
+         STH R4,HLDPTR
+         JAL R9,PTYPE                 : FIND PACKET TYPE
+         JAL R9,IOURPR
+         LIS R9,1
+         STH R9,OWERR
+         LH  R9,OWEPR
+         AIS R9,1
+         STH R9,OWEPR
+         LH  R9,CHNNUM
+         STH R9,PRCHN
+SHIAD    J   FGNRST
+         J   SHIARR                    : PACKET RECEIVED SEND RR
+
+: ***************************************************************
+: MUST BE INFO PACKET NOW
+: ***************************************************************
+
+SNDFBR   LH  R5,SIOOUT
+         LA  R10,SNDFBR
+         CHI R5,1
+         JE  SIOWAT
+         LIS R5,1
+         STH R5,PCKSTE
+         LIS R5,3
+         STH R5,STATX
+         LIS R5,7
+         STH R5,OUTBUF
+         LIS R7,2
+         LIS R3,0
+YBYBYB   L   R8,RESTRT,R3
+         ST  R8,OUTBUF,R7
+         AIS R7,4
+         AIS R3,4
+         SIS R5,4
+         CLHI R5,4
+         JGE YBYBYB
+         LIS R2,0
+         STB R2,OURNS
+:        JAL R9,IOURNS                : FRAME GOING OUT INCREMENT OUR N(S)
+YUBYUB   LB  R8,RESTRT,R3
+         STB R8,OUTBUF,R7
+         SIS R5,1
+         CLHI R5,0
+         JLE  YUBOUT
+         AIS R3,1
+         AIS R7,1
+         J   YUBYUB
+YUBOUT   LH  R2,PSADR
+         JE  GOOUT
+         LIS R2,2
+         LIS R8,3
+         STB R8,OUTBUF,R2
+         J   GOOUT
+SNDRR    HC  0,0                       : SEND FRAME RR
+: *******************************************************************
+: INCREMENT!
+: *******************************************************************
+: WE ARE PRETTY SURE WE ARE GOING TO SEND A FRAME INCREMENT OUR N(S)
+IOURNS   LH   R2,OURNS
+         AIS  R2,1
+         STH  R2,OURNS
+         CLHI R2,8
+         JNR  R9
+         LIS  R2,0
+         STH  R2,OURNS
+         JR   R9
+
+: ********************************************************************
+: FRAME RECEIVED INCREMENT N(R)
+: ********************************************************************
+IOURNR   LH   R2,OURNR
+         AIS  R2,1
+         STH  R2,OURNR
+         CLHI R2,8
+         JNR  R9
+         LIS  R2,0
+         STH  R2,OURNR
+         JR   R9
+: *******************************************************************
+: INCREMENT OUR P(S)
+: *******************************************************************
+IOURPS   LH   R3,FRECHN
+         LH   R2,OURPS,R3
+         AIS  R2,1
+         STH  R2,OURPS,R3
+         CLHI R2,8
+         JNR  R9
+         LIS  R2,0
+         STH  R2,OURPS,R3
+         JR   R9
+
+: *******************************************************************
+: INCREMENT OUR P(R)
+: *******************************************************************
+IOURPR   LH   R3,CHNNUM
+         LH   R2,OURPR,R3
+         AIS  R2,1
+         STH  R2,OURPR,R3
+         CLHI R2,8
+         JNR  R9
+         LIS  R2,0
+         STH  R2,OURPR,R3
+         JR   R9
+
+: *******************************************************************
+: PUSHES POINTER R4 TO BOUNDARY
+: *******************************************************************
+
+BWLIR    LHI R8,0F
+         TBT R8,HLDCNT
+         JN  BWLOR
+         JR  R9
+BWLOR    AIS R4,1
+         STH R4,HLDPTR
+         JR  R9
+
+: ***** END OF POINTER PUSHER ****************
+: ******************************************************************
+: RECEIVED SOMETHING WHICH TELLS US TO RESET N(R) N(S) COUNTERS
+: USES R5 CALLED BY R9
+: ******************************************************************
+RSTNZZ   LIS  R5,0
+         STH  R5,CHANS
+         STH  R5,OURNS
+         STH  R5,OURNR
+         ST   R9,JAIL9
+         LHI  R9,40
+RSTJMP   STH  R5,OURPS,R9
+         STH  R5,OURPR,R9
+         SIS  R9,1
+         JGE  RSTJMP
+         L    R9,JAIL9
+         JR   R9
+         JR   R9
+: *********************************RETURN***************************
+: ******************************************************************
+: RESET OUR P(R) P(S)
+: ******************************************************************
+RSTPZZ   LIS  R5,0
+         LH   R3,CHNNUM
+         STH  R5,OURPS,R3
+         STH  R5,OURPR,R3
+         LIS  R6,6
+         LB   R5,AOUTBF,R6
+         NHI  R5,01
+         JNR  R9
+         LIS  R5,0
+         STB  R5,AOUTBF,R6,
+         JR   R9
+: *******************************RETURN*****************************
+:
+: CHANGES PSADR IF NECESSARY
+: R3 IS PROBABLE DTE STATE
+: R9 IS RETURN
+
+SHIFTP   LH  R2,PSADR
+         JER R9
+         CLHI R3,1
+         JEFS SHIFT3
+         LIS R3,1
+         JR  R9
+SHIFT3   LIS R3,3
+         JR  R9
+
+KILLFR   HC  0,0                       : SOME KIND OF ILLEGAL FRAME
+KILLFB   HC  0,0                       : ILLEGAL FRAME DURING RESTARTS
+KILLEI   HC  0,0                       : EMPTY I FRAME FROM FNDINF
+KILLFD   HC  0,0                       : D BIT
+KILLFQ   HC  0,0                       : Q BIT
+
+
+
+
+
+
+
+    )Hc
