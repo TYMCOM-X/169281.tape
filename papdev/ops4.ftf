@@ -1,0 +1,355 @@
+C**********************************************************************
+C
+C                            OPSDAY.FTF
+C
+C          GENERATES REPORT ON ELAPSED TIME GOAL FOR DSO          
+C          11/06/94                                  jlm
+C
+C***********************************************************************
+C
+C
+        INTEGER START
+        INTEGER END
+        INTEGER TNUM
+        INTEGER STDAT
+        INTEGER CLDAT
+        INTEGER SM
+        INTEGER SD
+        INTEGER SY
+        INTEGER EM
+        INTEGER ED
+        INTEGER EY
+        INTEGER IERT
+        INTEGER IERC
+        INTEGER NUMBER
+        INTEGER I
+        INTEGER ONUM
+        INTEGER SDAT
+        INTEGER CDAT
+        INTEGER B1
+        INTEGER OM
+        INTEGER OD
+        INTEGER OY
+        INTEGER CM
+        INTEGER CD
+        INTEGER CY
+        INTEGER HOST
+        INTEGER NODE
+        INTEGER TIME
+        INTEGER TUP
+        INTEGER TNUM
+        INTEGER HRGN
+        INTEGER SVE
+        INTEGER COC(2)
+        INTEGER RE(2)
+        INTEGER STAT(2)
+        INTEGER CNAM(3)
+        INTEGER DISC(169)
+        INTEGER TOTV
+        INTEGER V
+        INTEGER CTOT
+        INTEGER V6
+        INTEGER SDAT
+        INTEGER DUP
+        INTEGER TIM1
+        INTEGER TUP
+        INTEGER TLMT
+        INTEGER NODE
+        INTEGER HOST
+        INTEGER MAINT
+        INTEGER SEVR
+        INTEGER HN
+        INTEGER N
+        INTEGER I
+        INTEGER L
+        INTEGER M
+        INTEGER SEVX
+
+        REAL UNDR5
+        REAL UNDR10
+        REAL UN5
+        REAL UN10
+        REAL OVR
+        REAL UNDR
+        REAL ELM
+        REAL OV
+        REAL UN
+        REAL ELM
+        REAL TOT
+        REAL AVG
+        REAL AAVG
+        REAL HOUR
+
+
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     TYPE 102
+102     FORMAT(/2X,'MCI',$)
+        TYPE 106
+106     FORMAT(/2X,'Data Service Division',$)
+        TYPE 110
+110     FORMAT(/2x,'Data Service Operations',$)
+        TYPE 104
+104     FORMAT(/2X,'Sver. Lvl. I, II, III & IV',$)
+        TYPE 105
+105     FORMAT(/2X,'-----------------------------------------------',$)
+
+        OPEN(8,'OPS.RPT',OUTPUT)
+
+601     WRITE(8,602)
+602     FORMAT(/2X,'MCI',$)
+        WRITE(8,606)
+606     FORMAT(/2X,'Data Service Division',$)
+        WRITE(8,610)
+610     FORMAT(/2x,'Data Service Operations',$)
+        WRITE(8,604)
+604     FORMAT(/2X,'Sver. Lvl. I, II, III & IV',$)
+
+        WRITE(8,605)
+605     FORMAT(/2X,'-----------------------------------------------',$)
+
+        CALL DBOPEN('(TNT)BASE1')
+        CALL DBFIND('HN','LE',4,1,'SVER','LE',3)
+        CALL DBSRCH('PROD','NE','FRE')
+        CALL DBSRCH('NET','NE','FRAMERELAY')
+        
+        
+C-----------------------------------------------------
+ 
+
+
+        CALL DBSAVE('XXXXX')
+        CALL DBNREC(NUMBER)
+        IF (NUMBER.EQ.0) GOTO 8000
+        
+        
+
+        DO 200 I=1,NUMBER
+        CALL DBGREC($9000,I)
+
+
+        CALL DBVAL(5,SDAT)
+        CALL DBVAL(6,TIM1)
+        CALL DBVAL(49,DUP)
+        CALL DBVAL(50,TUP)
+        CALL DBVAL(52,SEVR)
+        CALL DBVAL(54,ELM)
+        CALL DBVAL(35,V6)
+
+        CALL MYTTR(SDAT,DUP,TIM1,TUP,ELM,HOUR,V6)
+
+        
+
+        IF(V6.NE.0)CTOT=CTOT+1
+        IF(ELM.LE.120)UNDR5=UNDR5+1
+        IF(ELM.LE.300)UNDR10=UNDR10+1
+
+        TOTV=TOTV+V6
+        TOT=TOT+ELM
+
+
+
+200     CONTINUE
+        TOT=TOT/60 
+
+
+        TYPE 210,NUMBER
+210     FORMAT(/2X,'Total # of tickets                =      ',I4)
+
+        WRITE(8,215)NUMBER
+215     FORMAT(/2X,'Total # of tickets                =      ',I4)
+
+        TYPE 300,CTOT
+300     FORMAT(/2X,'Total tickets with Customer time  =      ',I4)
+
+        WRITE(8,302)CTOT
+302     FORMAT(/2X,'Total tickets with Customer time  =      ',I4)
+
+
+
+        
+
+        TYPE 227,TOT
+227     FORMAT(/2X,'Total outage time (HRS)           = ',F12.2)
+
+        WRITE(8,228)TOT
+228     FORMAT(/2X,'Total outage time (HRS)           = ',F12.2)
+
+        TYPE 226,TOTV
+226     FORMAT(/2X,'Total customer time (HRS)         = ',I8)
+
+        WRITE(8,229)TOTV
+229     FORMAT(/2X,'Total customer time (HRS)         = ',I8)
+
+        AVG=TOT/NUMBER
+        TYPE 230,AVG
+230     FORMAT(/2X,'Average outage time  (HRS)        =     ',F8.2)
+
+        WRITE(8,235)AVG
+235     FORMAT(/2X,'Average outage time (HRS)         =     ',F8.2)
+
+        AAVG=TOTV/CTOT
+        TYPE 237,AAVG
+237     FORMAT(/2X,'Average customer time (HRS)       =     ',F8.2)
+
+        WRITE(8,238)AAVG
+238     FORMAT(/2X,'Average customer time (HRS)       =     ',F8.2)
+
+        TYPE 240
+        TYPE 239
+239     FORMAT(/2X,'OUTAGES > 2 HOUR MTTR',$)
+
+        WRITE(8,245)
+        WRITE(8,241)
+241     FORMAT(/2X,'OUTAGES > 2 HOUR MTTR',$)
+ 
+
+        TYPE 240
+240     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,245)
+245     FORMAT(/2X,'-----------------------------------------------',$)
+
+        UN5=100*(UNDR5/NUMBER)
+        TYPE 250,UN5
+250     FORMAT(/2X,'% <= 2 Hrs. =  ',F8.2)
+
+        WRITE(8,255)UN5
+255     FORMAT(/2X,'% <= 2 Hrs. =  ',F8.2)
+
+        TYPE 260
+260     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,265)
+265     FORMAT(/2X,'-----------------------------------------------',$)
+
+        UN10=100*(UNDR10/NUMBER)
+        TYPE 270,UN10
+270     FORMAT(/2X,'% < 5 Hrs. =  ',F8.2)
+
+        WRITE(8,275)UN10
+275     FORMAT(/2X,'% < 5 Hrs. =  ',F8.2)
+
+        TYPE 280
+280     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,285)
+285     FORMAT(/2X,'---------------------------------------',$)
+
+500     WRITE(8,510)
+510     FORMAT(/2X,'Customer',T20,'Tkt #',T30,'Duration',T40,
+     1  'Severity',T50,'Reason for Outage',$)
+
+        WRITE(8,520)
+520     FORMAT(/2X,'--------',T20,'----',T30,'--------',T40,
+     1  '--------',T50,'----------------',$)
+
+        TYPE 530
+530     FORMAT(/2X,'Customer',T20,'Tkt #',T30,'Duration',T40,
+     1  'Severity',T50,'Reason for Outage',$)
+
+
+        TYPE 531
+531     FORMAT(/2X,'--------',T20,'----',T30,'--------',T40,
+     1  '--------',T50,'----------------',$)
+
+        CALL DBNREC(NUMBER)
+
+        IF (NUMBER.EQ.0) GOTO 8000
+
+        CALL DBSORT('ELM','ASCEN')
+
+        DO 600 I=1,NUMBER
+
+        CALL DBGREC($9000,I)
+
+        CALL DBVAL(1,TNUM,5,SDAT,6,TIM1,14,PROD,31,CNAM,40,NODE,
+     1  42,HOST,49,DUP,50,TUP,51,MAINT,52,SEVR,53,HN,54,ELM,35,
+     2  V6,15,STAT,31,CNAM,55,COC,57,RE,16,DISC)
+        CALL MYTTR(SDAT,DUP,TIM1,TUP,ELM,HOUR,V6)
+
+        
+
+532     IF(ELM.LE.120) GOTO 600
+536     ELM=ELM/60
+
+        WRITE(8,540)CNAM,TNUM,ELM,SEVR,RE,COC
+540     FORMAT(/2X,3A5,T18,I8,T28,F8.1,T42,I2,T50,2A5,2X,2A5)
+
+        TYPE 550,CNAM,TNUM,ELM,SEVR,RE,COC
+550     FORMAT(/2X,3A5,T18,I8,T28,F8.1,T42,I2,T50,2A5,2X,2A5)
+
+        TYPE 644,DISC
+644     FORMAT(/1X,16A5)
+
+        WRITE(8,646)DISC
+646     FORMAT(1X,14A5)
+
+
+600     CONTINUE
+
+
+
+
+
+
+700     GOTO 9990
+8000    TYPE 8001
+8001    FORMAT(/5X,'NO RECORDS FOUND')
+        GOTO 9990
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO CRC (800-628-3497!')
+9990    TYPE 9995
+9995    FORMAT(/,2X,'>> REPORT GENERATED -- OPS.RPT <<',$)
+        CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
+
+
+        SUBROUTINE MYTTR(SDAT,DUP,TIM1,TUP,ELM,HOUR,V6)
+C
+        INTEGER SDAT,TIM1,TUP,DUP,EH,EM,SH,SM,V6
+        INTEGER NDUP,NTUP
+        REAL HOUR,ELM
+        IF (ELM.GT.0) GOTO 905
+        CALL RTIM(NTUP,NDUP)
+        DECODE(5,900,NTUP)EH,EM
+900     FORMAT(I2,1X,I2)
+975     DECODE(5,900,TIM1)SH,SM
+        IF (NDUP.GT.SDAT) GOTO 920
+        IF (EH.GT.SH) ELM=(60-SM)+EM+((EH-SH)*60)-60
+        IF (EH.EQ.SH) ELM=EM-SM
+        IF ((EH.EQ.SH).AND.(EM.EQ.SM)) ELM=1
+        IF (ELM.LT.6) ELM=6
+905     HOUR=ELM/60
+        HOUR=HOUR-V6
+        RETURN
+920     ELM=(((NDUP-SDAT)-1)*1440)+(EH*60)+EM+((23-SH)*60)+(60-SM)
+        IF (ELM.LT.0) ELM=0
+925     HOUR=ELM/60
+        RETURN
+        END
+
+        SUBROUTINE RTIM(TIM1,SDAT)
+C
+        INTEGER IA1,IA2,IA3,IA4,IA5,IA6,TIM1,SDAT,NDAT
+C
+        CALL FGMT(IA1,IA2,IA3,IA4,IA5,IA6)
+        IF (IA5.GT.9) ENCODE(5,50,TIM1)IA4,IA5
+        IF (IA5.LT.10)ENCODE(5,52,TIM1)IA4,IA5
+52      FORMAT(I2,2H:0,I1)
+50      FORMAT(I2,1H:,I2)
+        IA3=IA3+1900
+        CALL DBDATN(SDAT,IA1,IA2,IA3)
+        RETURN
+        END
+
+    
