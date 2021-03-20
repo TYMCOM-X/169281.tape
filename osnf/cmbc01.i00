@@ -1,0 +1,565 @@
+	
+        SUBTTL INIT ... CMT initialisation parameters
+
+:
+:|--------------------------------------------------------------------|
+:|                           H I S T O R Y                            | 
+:|--------------------------------------------------------------------|
+:| NSR NUMBER | INIT | VERSION |   DATE   |         REASON            |
+:|------------|------|---------|----------|---------------------------|
+:|            | PHH  | V01     |  9 MAR 87|  Origin                   |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|--------------------------------------------------------------------|
+:
+        GL      HMASK,ASMTIM
+:       MO      .,INIT                  :Delimit module
+:
+: This is the initialisation module which is assembled before the user
+: TYM file. It initialises certain variables and sets up symbols required
+: by the TYM file and by the library routines.
+:
+: The following general macro is defined:
+:
+:       DEFGEQ - Define an equated symbol and make global
+:
+: The following macros which are used in the TYM file are defined:
+:
+:       DEFHST - Define host number, number of channels and printers
+:       DEFHDR - Define a header for menu screen
+:       DEFUSR - Define valid user of CMT
+:       DEFTTY - Define user terminal type
+:       DEFELE - Define login string element
+:       DEFSTR - Define login string
+:       DEFMEN - Define a user menu
+:       DEFMAN - Define manual login entry for menu
+:       MANPTR - Define manual login with printer entry for menu
+:       MENUSR - Define menu associated with username
+:
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFGEQ
+:
+: Description   Define equate and make global
+:
+: Parameters    SYMB Symbol of equate
+:               Value to be applied
+:
+: ----------------------------------------------------------------------
+:
+DEFGEQ  MACRO(SYMB,VX) [
+        GL      SYMB
+SYMB    EQ      VX
+]
+:
+: ----------------------------------------------------------------------
+:
+: Product identification
+:
+        DEFGEQ(PRODID,88)               :Product identification code
+        DEFGEQ(VERSION,01)              :Version number
+        DEFGEQ(REVLEV,01)               :Revision level
+ASMTIM	CURGMT				:Assembly time
+:
+: ----------------------------------------------------------------------
+:
+: Standard Tymnet parameter definitions
+:
+:       
+: Required by START.LIB
+:
+        DEFGEQ(MAXHST,1)                :Only one host in CMT
+        DEFGEQ(ENGINE,1)                :Only use Engine
+        DEFGEQ(IRSIZE,1000)             :Use a large IRING
+        DEFGEQ(ORSIZE,1000)             :Use a large ORING
+:
+: Required by TIMOUT.LIB
+:
+        DEFGEQ(NTOUT,5)                 :No. of timeouts that can be
+                                        :active concurrently
+:
+: Required by CRASH.LIB 
+:
+        DEFGEQ(CRSTOP,0)                :Default do not stop on crash
+:
+: Required by FRNTND.LIB
+:
+        DEFGEQ(ECHO,1)                  :Echoing done by Consat
+        DEFGEQ(AUTOBP,0)                :Auto backpressure not required
+        DEFGEQ(PTIMEO,0)                :Port timeouts not required
+        DEFGEQ(OUTPROC,0)               :FRNTND output not required
+        DEFGEQ(WAITZA,1)                :Zapper acknowledgement required
+        DEFGEQ(FWPTAB,1)                :Using FW port table
+        DEFGEQ(ACTIVT,0)                :Not used but needed by FRNTND
+:
+: Required by PATCH.LIB
+:
+        DEFGEQ(P0SIZE,40)               :No. of halfwords for PATCH0
+        DEFGEQ(P1SIZE,120)              :No. of halfwords for PATCH1
+:
+: Internal memory layout
+:
+        DEFGEQ(A.DATA,0)                :Default data segment
+        DEFGEQ(A.CODE,1)                :Default code segment
+        DEFGEQ(A.RING,2)                :Ring segment
+        DEFGEQ(A.TRAC,2)                :Trace segment
+        DEFGEQ(A.CBLK,3)                :Control block segment
+        DEFGEQ(A.ELE,0D)                :User login string elements
+:
+: Test switches
+:
+                :Check for overflow and underflow of stack
+        DEFGEQ(TSSTCK,1)                :Stack checks on
+                :Track path of code in circular buffer
+        DEFGEQ(TSTRAK,1)                :TRACK macro on
+	DEFGEQ(TSPAUS,1)
+	IF TSPAUS
+	DEFGEQ(A.BPTS,4)
+	DEFGEQ(BP.SNT,40400)
+	DEFGEQ(BP.TNT,40000)
+	EI
+                :Enter TSTMEN in TEST when host DCB created in TERM
+        DEFGEQ(TSHDCB,0)
+:
+: Back pressure limits
+:
+        DEFGEQ(BPONL,0FF)               :Backpressure on at 256 characters
+        DEFGEQ(BPOFFL,09D)              :Backpressure off at X'9D characters
+:
+:	Device and Mainframe definitions
+:
+:	DEFGEQ(VME,1)
+:	DEFGEQ(DME,2)
+:
+	DEFGEQ(DVLPTR,1)
+	DEFGEQ(DVCRDR,2)
+	DEFGEQ(DVOPER,3)
+:
+: Card Buffer limit
+:
+	DEFGEQ(CRBSIZ,$A 250)
+:
+: ----------------------------------------------------------------------
+:
+: Macro         LETDEF
+:
+: Description   Define symbols for all the letters in ASCII and ICL
+:               codes and make global
+:
+: Parameters    SYM - Symbollic name of character
+:
+: ----------------------------------------------------------------------
+:
+LETDEF  MACRO(SYM) [
+        GL      SYM
+SYM     EQ      VAL
+VAL     EQ      VAL+1
+]
+:
+:
+: ASCII symbol table
+:
+
+VAL     EQ      0
+        LETDEF(A.NUL);  LETDEF(A.SOH);  LETDEF(A.STX);  LETDEF(A.ETX);
+        LETDEF(A.EOT);  LETDEF(A.ENQ);  LETDEF(A.ACK);  LETDEF(A.BEL);
+        LETDEF(A.BS);   LETDEF(A.HT);   LETDEF(A.LFED); LETDEF(A.VT);
+        LETDEF(A.FF);   LETDEF(A.CR);   LETDEF(A.SO);   LETDEF(A.SI);
+        LETDEF(A.DLE);  LETDEF(A.DC1);  LETDEF(A.DC2);  LETDEF(A.DC3);
+        LETDEF(A.DC4);  LETDEF(A.NAK);  LETDEF(A.SYN);  LETDEF(A.ETB);
+        LETDEF(A.CAN);  LETDEF(A.EM);   LETDEF(A.SUB);  LETDEF(A.ESC);
+        LETDEF(A.FS);   LETDEF(A.GS);   LETDEF(A.RS);   LETDEF(A.US);
+        LETDEF(A.SP);   LETDEF(A.EXCL); LETDEF(A.DQT);  LETDEF(A.PND);
+        LETDEF(A.DOL);  LETDEF(A.PCT);  LETDEF(A.AND);  LETDEF(A.SQT);
+        LETDEF(A.LPAR); LETDEF(A.RPAR); LETDEF(A.STAR); LETDEF(A.PLUS);
+        LETDEF(A.COM);  LETDEF(A.DASH); LETDEF(A.PER);  LETDEF(A.SLSH);
+        LETDEF(A.0);    LETDEF(A.1);    LETDEF(A.2);    LETDEF(A.3);
+        LETDEF(A.4);    LETDEF(A.5);    LETDEF(A.6);    LETDEF(A.7);
+        LETDEF(A.8);    LETDEF(A.9);    LETDEF(A.COLN); LETDEF(A.SEMI);
+        LETDEF(A.LTH);  LETDEF(A.EQ);   LETDEF(A.GT);   LETDEF(A.QUE);
+        LETDEF(A.AT);   LETDEF(A.A);    LETDEF(A.B);    LETDEF(A.C);
+        LETDEF(A.D);    LETDEF(A.E);    LETDEF(A.F);    LETDEF(A.G);
+        LETDEF(A.H);    LETDEF(A.I);    LETDEF(A.J);    LETDEF(A.K);
+        LETDEF(A.L);    LETDEF(A.M);    LETDEF(A.N);    LETDEF(A.O);
+        LETDEF(A.P);    LETDEF(A.Q);    LETDEF(A.R);    LETDEF(A.S);
+        LETDEF(A.T);    LETDEF(A.U);    LETDEF(A.V);    LETDEF(A.W);
+        LETDEF(A.X);    LETDEF(A.Y);    LETDEF(A.Z);    LETDEF(A.LBKT);
+        LETDEF(A.BSLH); LETDEF(A.RBKT); LETDEF(A.CART); LETDEF(A.UNDR);
+        LETDEF(A.GRAV); LETDEF(A.LA);   LETDEF(A.LB);   LETDEF(A.LC);
+        LETDEF(A.LD);   LETDEF(A.LE);   LETDEF(A.LF);   LETDEF(A.LG);
+        LETDEF(A.LH);   LETDEF(A.LI);   LETDEF(A.LJ);   LETDEF(A.LK);
+        LETDEF(A.LL);   LETDEF(A.LM);   LETDEF(A.LN);   LETDEF(A.LO);
+        LETDEF(A.LP);   LETDEF(A.LQ);   LETDEF(A.LR);   LETDEF(A.LS);
+        LETDEF(A.LT);   LETDEF(A.LU);   LETDEF(A.LV);   LETDEF(A.LW);
+        LETDEF(A.LX);   LETDEF(A.LY);   LETDEF(A.LZ);   LETDEF(A.LBRC);
+        LETDEF(A.VIRT); LETDEF(A.RBRC); LETDEF(A.TLDE); LETDEF(A.DEL);
+:
+: ICL symbol table
+:
+
+VAL     EQ      0
+        LETDEF(I.NUL);  LETDEF(I.SOH);  LETDEF(I.STX);  LETDEF(I.ETX);
+        LETDEF(I.EOT);  LETDEF(I.ENQ);  LETDEF(I.ACK);  LETDEF(I.BEL);
+        LETDEF(I.BS);   LETDEF(I.HT);   LETDEF(I.NL);   LETDEF(I.VT);
+        LETDEF(I.FF);   LETDEF(I.CR);   LETDEF(I.SO);   LETDEF(I.SI);
+        LETDEF(I.DLE);  LETDEF(I.DC1);  LETDEF(I.DC2);  LETDEF(I.DC3);
+        LETDEF(I.DC4);  LETDEF(I.NAK);  LETDEF(I.SYN);  LETDEF(I.ETB);
+        LETDEF(I.CAN);  LETDEF(I.EM);   LETDEF(I.SUB);  LETDEF(I.ESC);
+        LETDEF(I.IS4);  LETDEF(I.GS);   LETDEF(I.MSP);  LETDEF(I.MNL);
+	LETDEF(I.IS2);
+:
+: ICL presets and masks
+:
+        DEFGEQ(ITQMSK,0C0)      :ALP prefix text qualifier mask
+        DEFGEQ(IALPDA,40)       :Data ALP prefix
+        DEFGEQ(ISUPPF,0AB)      :Program function supervisory ALP prefix
+				:Top bit set to indicate categary 1
+        DEFGEQ(ISUPDS,13)
+        DEFGEQ(ISUPST,21)       :Status report supervisory ALP prefix
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFHST
+:
+: Description   Define host number, number of channels and number of
+:               printers supported. This controls the number of CCBs
+:               screen buffers and I/O buffers
+:
+: Parameters    HST - Host number
+:               NCHN - Number of channels
+:               NPRT - Number of printers
+:
+: ----------------------------------------------------------------------
+:
+DEFHST  MACRO(HST,NCHN,NPRT) [
+        DEFGEQ(HOSTNO,$A HST)           :Host number
+        DEFGEQ(HOST0,HOSTNO)
+        DEFGEQ(NCCB,$A NCHN)            :Number of channel control blocks
+        DEFGEQ(HPRT0,NCCB)
+        DEFGEQ(NPRINT,$A NPRT)          :Number of printers
+:
+        DEFGEQ(NCRB,$A NCHN-NPRINT)	:Number of card record buffers
+					:**** Ensure that NCHN-NPRINT is
+					:a decimal value.-L.Hughes-13/11/89****
+        DEFGEQ(MAXPRT,NCCB*2+NPRT)      :Highest numbered port
+                                        :Two dispatcher ports for each
+                                        :channel and one for each printer
+        DEFGEQ(NPORT,MAXPRT+1)          :Number of ports
+        DEFGEQ(NIOB,NPORT*2+5)          :Number of I/O buffers =
+                                        :       two for each port
+                                        : + 5 for small configurations
+	DEFGEQ(IOBMIN,5)
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFHDR
+:
+: Description   Define a header for the menu screen
+:
+: Parameters    STRING - Characters to replace default heading on menu
+:
+: ----------------------------------------------------------------------
+:
+        DEFGEQ(USRHDR,0)                :Flag default header
+DEFHDR  MACRO(STRING) [
+USRHDR  EQ      1                       :Flag user header
+DUHDR   MACRO [                         :Don't know why we do this!
+MENUHD  SC      \'STRING'\
+]
+]
+:
+: Macros for the construction of a user profile
+:
+:
+:
+: Generated symbol conventions
+:
+: Let (M) be the relative username entry
+:
+:TM(M)          is the menu for this user
+:DV(M)		is the device type
+:DC(M)		indicates if a printer should deallocate on DC4
+:CMP(M)		is the compression code in use
+:USNM(M)        is the username string macro
+:EN             count of elements defined
+:DLE(ELENO)     macro for element # eleno
+:E(ELENO)       address of string for eleno
+:SN             count of logon strings
+:LBL(LSTRNO)    macro for label for logon string LSTRNO
+:SL(LSTRNO)N(Q) elements Q=1-5 for logon string LSTRNO
+:CE(LSTRNO)     count of elements in logon string LSTRNO
+:MN             count of menues
+:PM(MENUQ)      count of logon strings in menu # MENUQ
+:PU(MENUQ)N(MS) string number for relative element MS menu MENUQ
+:L(LSTRNO)      address of label string
+:
+EN      EQ      0
+SN      EQ      0
+MX      EQ      0
+MN      EQ      0
+UN      EQ      0
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFCRD
+:
+: Description   Define a username that is valid on the CMT. 
+:
+: Parameters    STRING - Up to 8 character (mark parity) username.
+:               Space parity (eg "00) implies wild card. 
+:
+: ----------------------------------------------------------------------
+:
+DEFCRD  MACRO(STRING,LOGSTR,SELECT,CMPTYP) [
+UN      EQ      UN+1
+        GL      TP|UN|,AL|UN|,ALI|UN|,TM|UN|,DV|UN|,DC|UN|
+TM|UN|  EQ      -1              :Default no menu
+TP|UN|  EQ      0               :Default type zero
+AL|UN|  EQ      0               :No login strings available
+USNM|UN| MACRO [
+        AC      \`STRING`\
+]
+ALI|UN| EQ      0
+	DEFELE(EL|UN|A,LOGSTR)
+	DEFELE(EL|UN|B,SELECT)
+	DEFSTR(STNG|UN|,DEVICE |UN|,EL|UN|A,EL|UN|B)
+	DEFMEN(MENU|UN|,STNG|UN|)
+	MENUSR(MENU|UN|)
+DV|UN|	EQ	DVCRDR
+CMP|UN|	EQ	CMPTYP
+DC|UN|	EQ	0
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFLPT
+:
+: Description   Define a username that is valid on the CMT. 
+:
+: Parameters    STRING - Up to 8 character (mark parity) username.
+:               Space parity (eg "00) implies wild card. 
+:
+: ----------------------------------------------------------------------
+:
+DEFLPT  MACRO(STRING,LOGSTR,SELECT,DEALL) [
+UN      EQ      UN+1
+        GL      TP|UN|,AL|UN|,ALI|UN|,TM|UN|,DV|UN|,DC|UN|
+TM|UN|  EQ      -1              :Default no menu
+TP|UN|  EQ      0               :Default type zero
+AL|UN|  EQ      0               :No login strings available
+USNM|UN| MACRO [
+        AC      \`STRING`\
+]
+ALI|UN| EQ      0
+	DEFELE(EL|UN|A,LOGSTR)
+	DEFELE(EL|UN|B,SELECT)
+	DEFSTR(STNG|UN|,DEVICE |UN|,EL|UN|A,EL|UN|B)
+	DEFMEN(MENU|UN|,STNG|UN|)
+	MENUSR(MENU|UN|)
+DV|UN|	EQ	DVLPTR
+CMP|UN|	EQ	0E
+DC|UN|	EQ	DEALL
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFOPR
+:
+: Description   Define a username that is valid on the CMT. 
+:
+: Parameters    STRING - Up to 8 character (mark parity) username.
+:               Space parity (eg "00) implies wild card. 
+:
+: ----------------------------------------------------------------------
+:
+DEFOPR  MACRO(STRING,LOGSTR,SELECT) [
+UN      EQ      UN+1
+        GL      TP|UN|,AL|UN|,ALI|UN|,TM|UN|,DV|UN|,DC|UN|
+TM|UN|  EQ      -1              :Default no menu
+TP|UN|  EQ      0               :Default type zero
+AL|UN|  EQ      0               :No login strings available
+USNM|UN| MACRO [
+        AC      \`STRING`\
+]
+ALI|UN| EQ      0
+	DEFELE(EL|UN|A,LOGSTR)
+	DEFELE(EL|UN|B,SELECT)
+	DEFSTR(STNG|UN|,DEVICE |UN|,EL|UN|A,EL|UN|B)
+	DEFMEN(MENU|UN|,STNG|UN|)
+	MENUSR(MENU|UN|)
+DV|UN|	EQ	DVOPER
+CMP|UN|	EQ	0E
+DC|UN|	EQ	0
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFELE
+:
+: Description   Define an element of a logon string and a label to
+:               reference it by.
+:
+: Parameters    LABEL - Label by which this element will be referred.
+:                       (Max 6 chars)
+:               STRING - Characters of element (max 255)
+:
+: ----------------------------------------------------------------------
+:
+DEFELE  MACRO(LABEL,STRING) [
+        DEFLBL(LABEL,EN)
+DLE|EN| MACRO [
+E|ELENO|        SC      /`STRING`/
+]
+EN      EQ      EN+1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFSTR
+:
+: Description   Define a logon string and a label to reference it by.
+:
+: Parameters    NAME - label by which this login string will be 
+:                       referenced. (Max 6 chars)
+:               LABEL - Text describing this logon string to be used as
+:                       an entry  on menu screen. (Max 76 chars)
+:               E1-E5 - Element labels as defined in DEFELE which make
+:                       up login string. At least one must be specified.
+:
+: ----------------------------------------------------------------------
+:
+DEFSTR  MACRO(NAME,LABEL,E1,E2,E3,E4,E5) [
+        DEFLBL(NAME,SN)
+LBL|SN| MACRO [
+L|LSTRNO| SC /`LABEL`/
+]
+SL|SN|N1        EQ      E1 -1
+SL|SN|N2        EQ      E2 -1
+SL|SN|N3        EQ      E3 -1
+SL|SN|N4        EQ      E4 -1
+SL|SN|N5        EQ      E5 -1
+SN      EQ      SN+1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MANUAL
+:
+: Description   Specify a manual login option for use in menues.
+:
+: Parameters    LABEL - Label by which the manual login option will be
+:                       referenced. (Max 6 chars)
+:
+: ----------------------------------------------------------------------
+:
+MANUAL  MACRO(LABEL)[
+        DEFSTR(LABEL,MANUAL LOGON)
+        ]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MANPTR
+:
+: Description   Specify a manual login option with printer for use in
+:               menues.
+:
+: Parameters    LABEL - Label by which the manual login option will be
+:                       referenced. (Max 6 chars)
+:
+: ----------------------------------------------------------------------
+:
+MANPTR  MACRO(LABEL)[
+        DEFSTR(LABEL,MANUAL LOGON WITH PRINTER,0)
+        ]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFMEN
+:
+: Description   Define a set of login strings to create a menu.
+:
+: Parameters    LABEL - Label used to refence this menu. (Max 6 chars)
+:               S0-S14 - Labels of login strings which constitute this
+:                       menu. At least one must be specified.
+:
+: ----------------------------------------------------------------------
+:
+DEFMEN  MACRO(LABEL,S0,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12,S13,S14) [
+        DEFLBL(LABEL,MN)
+P0      EQ      S0
+P1      EQ      S1 -1
+P2      EQ      S2 -1
+P3      EQ      S3 -1
+P4      EQ      S4 -1
+P5      EQ      S5 -1
+P6      EQ      S6 -1
+P7      EQ      S7 -1
+P8      EQ      S8 -1
+P9      EQ      S9 -1
+P10     EQ      S10 -1
+P11     EQ      S11 -1
+P12     EQ      S12 -1
+P13     EQ      S13 -1
+P14     EQ      S14 -1
+Q       EQ      0
+        RE      $A15
+        IF      P|$AQ|+1
+PU|MN|N|MX| EQ  P|$AQ|
+MX      EQ      MX+1
+Q       EQ      Q+1
+        EI
+        ER
+PM|MN|  EQ      MX
+MN      EQ      MN+1
+MX         0
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MENUSR
+:
+: Description   Assign a menu to a previously specified  username.
+:
+: Parameters    MNU - Label of a menu defined by DEFMEN
+:
+: ----------------------------------------------------------------------
+:
+MENUSR  MACRO(MNU) [
+TM|UN|  EQ      MNU
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFLBL
+:
+: Description   Define and check symbols used as labels in the above
+:               macros. This also creates a macro for deleting these
+:               labels.
+:
+: Parameters    LABEL - Label to be checked
+:               VALUE - value to be assigned to this label
+:
+: ----------------------------------------------------------------------
+:
+DEFLBL  MACRO(LABEL,VALUE) [
+        IF \LABEL
+        REMARK  %SYMBOL `LABEL` MULTIPLY DEFINED%
+        ELSE
+DM|QDN| MACRO [
+        KILL    LABEL
+]
+QDN     EQ      QDN+1
+LABEL   EQ      VALUE 
+        EI
+]
+QDN     EQ      0
+
+
+:
+        EM
+ &{û
