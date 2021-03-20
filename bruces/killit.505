@@ -1,0 +1,28 @@
+:*********************************************************************
+: Patch name: KILLIT.505                 Product and Version: PBT 5.05
+:     Author: Bruce Shepherd                   Organization: NTS
+:   Customer: HSBC                             Date Written: 10/16/90
+: Description of Problem:  
+:
+: This patch is intended to force a stop on crash condition regardless
+: of the crash cause value.  In the original code if the crash code is
+: less  than or equal to 1 (power failure or manual restart)  the slot
+: will RESTART.  Several HSBC crashes appear to  be protocol violation
+: related but due to the crash code being a 0 (power failure) the slot
+: restarts and relative trap information is lost.
+:
+: This patch simply  changes  the  condition  for  a  slot  restart to 
+: restart ONLY if the crash code is a 1 (manual restart).
+
+	IF	CRSTOP
+	LO	CRASH
+
+PATCH(901016,1934,BSHEPHERD,ENTRY1+0C,,4)
+	JE	ENTRY2		:  Only restart on CC=2 (manual restart)
+ENDPATCH(Patch to force halt on any crash other than manual restart)
+
+	FO	CRASH
+	EI	:CRSTOP
+
+:*********************************************************************
+
