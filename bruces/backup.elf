@@ -1,0 +1,605 @@
+
+PROCEDURE FOR BACKING UP ELF DISK FILES				     30-NOV-88
+
+
+The following procedures will outline those steps necessary to store ELF files
+on  magnetic tape  and restore  files  from  magnetic  tape.   This file  will
+describe the following steps:
+
+     o  Storing all files on a disk device to magnetic tape
+     o  Restoring all files from magnetic tape to disk
+     o  Restoring a single file from all files magnetic tape to disk
+
+     o  Storing a single file on a disk to magnetic tape
+     o  Restoring a single file from magnetic tape to disk
+
+
+In  each of  the following sections the ELF "COPY"  command will  be used  for
+reading or writing from disk or magnetic tape.    For more information  on the
+"COPY" command see the ELF Reference  manual under Section 2 COMMANDS.  In the
+following sections  (except the  SAMPLE  OUTPUT section at the end),  the user
+input will be lowercase, while the ELF output will be in uppercase.
+
+1.  STORING ALL FILES ON A DISK DEVICE TO MAGNETIC TAPE.
+
+The  method of  storing all  files from a specific ELF disk device (ie: D0) to
+magnetic tape is via the ELF "COPY ALL" command.  The "COPY ALL"  command will
+duplicate  all  files on the user specified input device on the user specified
+output  device.  The input and output devices can be any combination  of  disk 
+or tape.    When backing up  all files  on a  disk device to magnetic tape the
+input device is the disk device id, and the output device is the magnetic tape
+device id.   The first step is to insure that the initial magnetic tape starts
+at the beginning of the tape (as the COPY command will not rewind the tape) by
+issuing the REWIND command.  The the COPY ALL command is issued to store a new
+copy of the disk device to magnetic tape.    The ELF interaction for this disk
+to tape backup of ALL disk files is as follows:
+
+     :rew
+     DEVICE UNIT ID: m0
+     DEVICE REWOUND
+
+     :copy all
+     OUTPUT DEVICE ID: m0
+     INPUT DEVICE ID: d0
+     6 FILES COPIED
+     
+     :
+
+If  any errors  are encountered in writing the files to the magnetic tape, the 
+COPY ALL  command will abort with an error message indicating the cause of the
+failure.
+
+
+
+
+2.  RESTORING ALL FILES FROM MAGNETIC TAPE TO DISK.
+
+The  method of restoring  all  files  from magnetic  tape to  a specific  disk
+device  is  also  via  the COPY ALL command, except the input device id is the
+magnetic   tape and the output device id is the disk.   The  first step  is to
+insure that the initial magnetic tape starts  at the beginning of the tape (as
+the COPY command will not rewind the tape) by issuing the REWIND command.  The
+the COPY ALL command is issued to restore the magnetic tape copy of  the files
+to  the disk device.     The ELF interaction  for this  magnetic tape  to disk
+recovery is as follows:
+
+
+     :rew
+     DEVICE UNIT ID: m0
+     DEVICE REWOUND
+
+     :copy all
+     OUTPUT DEVICE ID: d0
+     INPUT DEVICE ID: m0
+     6 FILES COPIED
+     
+     :
+
+
+If  any errors  are encountered in writing the files to the disk device,   the 
+COPY ALL  command will abort with an error message indicating the cause of the
+failure.
+
+
+
+3.  RESTORING A SINGLE FILE FROM ALL FILES MAGNETIC TAPE TO DISK.
+
+Restoring  a single  file from  a   magnetic tape  containing all of the  disk
+files is done using the COPY command, coupled with the SCAN command.  In order
+to restore a single file a directory of the magnetic tape is  needed,  this is
+done with the DIR command and  the device  unit is  the magnetic tape.   After
+locating  the desired file in the  directory output,  the user must  count how
+many files to skip over before the actual file recovery is started.   The skip
+value  is necessary because ELF can not locate a file on the magnetic  tape by
+either it's name or file address, but ELF requires  the tape to  be positioned
+to the  end  of  the last  file before the  desired one.   Following  the SKIP
+command, the  user issues  the COPY  command and  ELF will  respond  with  the
+specifics  of  the  file  starting  at the position the tape is at.   The user
+is then  prompted for  an OK  if  the  file  is  the  requested one.   The ELF
+interaction  for this  magnetic tape  to disk recovery is as follows:
+
+
+     :rew
+     DEVICE UNIT ID: m0
+     DEVICE REWOUND
+     
+     :skip
+     DEVICE UNIT ID: m0
+     NUMBER OF FILES TO SKIP: 5
+     FILES SKIPPED
+
+
+     : copy
+     OUTPUT DEVICE UNIT ID: d0
+     INPUT DEVICE UNIT ID: m0
+
+     OBJECT FILE: (HSBCNET)HS2042.BND
+     FILE ID
+     HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                       
+
+     OKAY ? y
+     FILE ADDRESS: 816
+     PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+     
+     :
+
+
+If  any errors  are encountered in writing the files to the disk device,   the 
+COPY  command will  abort with  an error  message indicating  the cause of the
+failure.
+
+
+
+4.  STORING A SINGLE FILE ON A DISK TO MAGNETIC TAPE.
+
+Storing a single file from a disk device to magnetic tape is done via the COPY
+command BUT it is important to note that  ELF will  begin writing the file  to
+tape  at  the  point  where the magnetic tape was left.   If the user wants to
+start at the beginning of the tape,  the rewind  command should be issued.  If
+the  user wishes to  append to the  end of a  tape , the appropriate number of 
+files should be skipped.   The ELF interaction  for this  single disk file  to
+magnetic tape  operation is as follows:
+
+
+     :rew
+     DEVICE UNIT ID: m0
+     DEVICE REWOUND
+     
+     :copy
+     OUTPUT DEVICE UNIT ID: m0
+     INPUT DEVICE UNIT ID: d0
+     FILE ADDRESS: 108
+     OBJECT FILE: (HSBCNET)HS2002.N01
+     FILE ID:
+     HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION               
+     OK? y
+     FILE ADDRESS: 108
+     PHYSICAL SECTOR ADDRESS: 20A28    NUMBER OF SECTORS: 88
+     
+
+
+If any errors are encountered in writing the files to the magnetic tape,   the 
+COPY  command will abort  with an  error message  indicating the  cause of the
+failure.
+
+
+5.  RESTORING A SINGLE FILE FROM MAGNETIC TAPE TO DISK.
+
+Restoring  a single  file from magnetic tape to a disk device is done via  the
+COPY  command BUT  it is  important to note  that  ELF  will begin reading the 
+magnetic at  the  point  where the magnetic tape was left.   If the user wants
+to  start at the beginning of the tape,  the rewind  command should be issued.
+If the  user wishes to  start somewhere other than the beginning of the  tape,
+the appropriate number of  files should be skipped.   The ELF interaction  for
+this  single disk file  recovery  operation is as follows:
+
+
+     : skip
+     DEVICE UNIT ID: m0
+     NUMBER OF FILES TO SKIP: 5
+     FILES SKIPPED
+
+    : copy
+    OUTPUT DEVICE UNIT ID: d0
+    INPUT DEVICE UNIT ID: m0
+
+    OBJECT FILE: (HSBCNET)HS2042.BND
+    FILE ID
+    HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                         
+
+    OKAY ? y
+    FILE ADDRESS: 816
+    PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+    
+    :
+
+If any errors are encountered in writing the files to  the disk device,   the 
+COPY  command will abort  with an error  message indicating  the cause of the
+failure.
+
+
+6.  SAMPLE OUTPUT.
+
+This section contains sample output of the above commands.    The logic  flow
+through this section is as follows:
+
+     o  directory of the disk device (D0)
+     o  rewinding of the magnetic tape (M0)
+     o  storing a copy of the disk device on the magnetic tape
+     o  directory of the magnetic tape
+     o  deleting all of the disk files (D0)
+     o  condensing the disk device (D0) to insure that no gaps exist
+     o  restoring all of the magnetic tape files to disk
+     o  directory of the disk device to insure all files were restored
+     o  deleting a single file from the disk device
+     o  restoring a single file from the magnetic tape
+
+
+
+: DIR
+DEVICE UNIT ID: D0
+
+
+FILE ADDRESS: 108
+PHYSICAL SECTOR ADDRESS: 20A28    NUMBER OF SECTORS: 88
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/01/87  23:34    
+ELF FILE CREATED: 10/28/87  14:05    OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                      
+
+FILE ADDRESS: 200
+PHYSICAL SECTOR ADDRESS: 20A84    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/24/88  17:59    
+ELF FILE CREATED: 12/01/88  07:03    OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                      
+
+FILE ADDRESS: 448
+PHYSICAL SECTOR ADDRESS: 20B7C    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+FILE ADDRESS: 508
+PHYSICAL SECTOR ADDRESS: 20BB8    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/09/88  19:45    
+ELF FILE CREATED: 11/30/88  22:47    OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                    
+
+FILE ADDRESS: 756
+PHYSICAL SECTOR ADDRESS: 20CB0    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+FILE ADDRESS: 816
+PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+FILE TYPE: NODE LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 10/18/88  01:30    
+ELF FILE CREATED: 12/01/88  07:24    OBJECT FILE: (HSBCNET)HS2042.BND
+START ADDRESS:       70
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                             
+
+NUMBER OF FILES: 6    UNUSED SECTORS:61880
+
+: REW
+DEVICE UNIT ID: M0
+DEVICE REWOUND
+
+: COPY ALL
+OUTPUT DEVICE UNIT ID: M0
+INPUT DEVICE UNIT ID: D0
+6 FILE(S) COPIED
+
+: DIR
+DEVICE UNIT ID: M0
+
+
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/01/87  23:34    
+ELF FILE CREATED: 10/28/87  14:05    OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                      
+
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/24/88  17:59    
+ELF FILE CREATED: 12/01/88  07:03    OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                      
+
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/09/88  19:45    
+ELF FILE CREATED: 11/30/88  22:47    OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                    
+
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+FILE TYPE: NODE LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 10/18/88  01:30    
+ELF FILE CREATED: 12/01/88  07:24    OBJECT FILE: (HSBCNET)HS2042.BND
+START ADDRESS:       70
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                             
+
+
+
+: REW
+DEVICE UNIT ID: M0
+DEVICE REWOUND
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 108
+
+OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                      
+
+OKAY ? Y
+FILE deleted
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 200
+
+OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                      
+
+OKAY ? Y
+FILE deleted
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 448
+
+OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+OKAY ? Y
+FILE deleted
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 508
+
+OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                    
+
+OKAY ? Y
+FILE deleted
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 756
+
+OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                    
+
+OKAY ? Y
+FILE deleted
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 816
+
+OBJECT FILE: (HSBCNET)HS2042.BND
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                             
+
+OKAY ? Y
+FILE deleted
+
+: DIR
+DEVICE UNIT ID: D0
+
+
+NUMBER OF FILES: 0    UNUSED SECTORS:63492
+
+: CON
+DEVICE UNIT ID: D0
+THIS COMMAND WILL PHYSICALLY MOVE DATA ON THE DISK
+CONTINUE ? Y
+
+
+NUMBER OF FILES: 0    UNUSED SECTORS:63492
+
+
+: COPY ALL
+OUTPUT DEVICE UNIT ID: D0
+INPUT DEVICE UNIT ID: M0
+6 FILE(S) COPIED
+
+: DIR
+DEVICE UNIT ID: D0
+
+
+FILE ADDRESS: 108
+PHYSICAL SECTOR ADDRESS: 20A28    NUMBER OF SECTORS: 88
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/01/87  23:34    
+ELF FILE CREATED: 10/28/87  14:05    OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                      
+
+FILE ADDRESS: 200
+PHYSICAL SECTOR ADDRESS: 20A84    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/24/88  17:59    
+ELF FILE CREATED: 12/01/88  07:03    OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                       
+
+FILE ADDRESS: 448
+PHYSICAL SECTOR ADDRESS: 20B7C    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+FILE ADDRESS: 508
+PHYSICAL SECTOR ADDRESS: 20BB8    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/09/88  19:45    
+ELF FILE CREATED: 11/30/88  22:47    OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                     
+
+FILE ADDRESS: 756
+PHYSICAL SECTOR ADDRESS: 20CB0    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+FILE ADDRESS: 816
+PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+FILE TYPE: NODE LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 10/18/88  01:30    
+ELF FILE CREATED: 12/01/88  07:24    OBJECT FILE: (HSBCNET)HS2042.BND
+START ADDRESS:       70
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                              
+
+NUMBER OF FILES: 6    UNUSED SECTORS:61880
+
+: DEL
+DEVICE UNIT ID: D0
+FILE ADDRESS: 816
+
+OBJECT FILE: (HSBCNET)HS2042.BND
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                              
+
+OKAY ? Y
+FILE deleted
+
+: DIR
+DEVICE UNIT ID: D0
+
+
+FILE ADDRESS: 108
+PHYSICAL SECTOR ADDRESS: 20A28    NUMBER OF SECTORS: 88
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/01/87  23:34    
+ELF FILE CREATED: 10/28/87  14:05    OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                       
+
+FILE ADDRESS: 200
+PHYSICAL SECTOR ADDRESS: 20A84    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/24/88  17:59    
+ELF FILE CREATED: 12/01/88  07:03    OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                       
+
+FILE ADDRESS: 448
+PHYSICAL SECTOR ADDRESS: 20B7C    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+FILE ADDRESS: 508
+PHYSICAL SECTOR ADDRESS: 20BB8    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/09/88  19:45    
+ELF FILE CREATED: 11/30/88  22:47    OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                     
+
+FILE ADDRESS: 756
+PHYSICAL SECTOR ADDRESS: 20CB0    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+NUMBER OF FILES: 5    UNUSED SECTORS:62784
+
+: REW
+DEVICE UNIT ID: M0
+DEVICE REWOUND
+
+: SKIP
+DEVICE UNIT ID: M0
+NUMBER OF FILES TO SKIP: 5
+FILES SKIPPED
+
+: COPY
+OUTPUT DEVICE UNIT ID: D0
+INPUT DEVICE UNIT ID: M0
+
+OBJECT FILE: (HSBCNET)HS2042.BND
+FILE ID
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                            
+
+OKAY ? Y
+FILE ADDRESS: 816
+PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+
+: DIR
+DEVICE UNIT ID: D0
+
+
+FILE ADDRESS: 108
+PHYSICAL SECTOR ADDRESS: 20A28    NUMBER OF SECTORS: 88
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/01/87  23:34    
+ELF FILE CREATED: 10/28/87  14:05    OBJECT FILE: (HSBCNET)HS2002.N01
+FILE ID:
+HS2002.N01   CKSUM - MOJRAR   28OCT87   RAM INSTALLATION                       
+
+FILE ADDRESS: 200
+PHYSICAL SECTOR ADDRESS: 20A84    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE ED: 11/24/88  17:59    
+ELF FILE CREATED: 12/01/88  07:03    OBJECT FILE: (HSBCNET)HS2042.N01
+FILE ID:
+HS2042.N01  /  CKSUM - HIDXAF  /  1DEC88                                       
+
+FILE ADDRESS: 448
+PHYSICAL SECTOR ADDRESS: 20B7C    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+FILE ADDRESS: 508
+PHYSICAL SECTOR ADDRESS: 20BB8    NUMBER OF SECTORS: 244
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 11/09/88  19:45    
+ELF FILE CREATED: 11/30/88  22:47    OBJECT FILE: (HSBCNET)HS2062.N01
+FILE ID:
+HS2062.N01                                                                     
+
+FILE ADDRESS: 756
+PHYSICAL SECTOR ADDRESS: 20CB0    NUMBER OF SECTORS: 56
+FILE TYPE: SLOT LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 02/09/87  23:11    
+ELF FILE CREATED: 11/30/88  22:27    OBJECT FILE: (HSBCNET)HS2061.N04
+FILE ID:
+HS2061.N04                                                                     
+
+FILE ADDRESS: 816
+PHYSICAL SECTOR ADDRESS: 20CF0    NUMBER OF SECTORS: 896
+FILE TYPE: NODE LOAD                 ELF VERSION 4.01
+NIB FILE CREATED: 10/18/88  01:30    
+ELF FILE CREATED: 12/01/88  07:24    OBJECT FILE: (HSBCNET)HS2042.BND
+START ADDRESS:       70
+FILE ID:
+HS2042.BND  /  CKSUM  -  KAVHUL  /  PPCR#  1DEC88                              
+
+NUMBER OF FILES: 6    UNUSED SECTORS:61880
+
+
+:    #@3š
