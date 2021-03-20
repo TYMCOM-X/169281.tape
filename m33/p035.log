@@ -1,0 +1,2090 @@
+.WATCH DAY
+
+.GFD OSP
+[20:00:12]
+
+.PSP
+[20:00:13]
+DSKB:	4378
+
+.DIRECT P034.*,P035.*
+[20:00:14]
+
+P035    CTL       3  12-NOV-86 1957    ALL RD  NO       853
+P035    LOG       1  12-NOV-86 1953    ALL RD  NO      2048
+P035    OUT       2   7-NOV-86 1807    ALL RD  NO       503
+P035    COM       2   7-NOV-86 1312    ALL RD  NO       344
+P035    MEM       2   5-NOV-86 2016    ALL RD  NO        42
+P034    MEM      90  28-OCT-86 2007    ALL RD  NO     45145
+
+.
+.;Create all the REL files
+.
+.COMPILE @MONF3
+[20:00:46]
+MACRO: COMTXT
+X930-P035
+11-5-86
+M01861 (id)
+6 = CPU serial number
+Pacific Standard Time
+32 frames
+32 network ports
+16 pairs of PTYs
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[CPU status variables at .CPSLF:: need to be defined by a macro]
+[Requesting supervisor clock from base at startup]
+[LINKDB: Store STRNAM of only STR in QUESTR]
+[Need to change SKIP to SKIPA at TTY0: for CTY]
+[RSVDPG - reserving pages at 1 meg boundries for SA10 bug]
+[ODEBUG routine could use more work]
+[CRSDEV should be replaced by RCDSTB]
+[MONCRS check DSKCLN completed only SYSTEM structure?]
+[MONCRS @MONCR2+5 Save STRPID in inter-monitor area REPSID]
+[Need a SYSTEM structure to check BOOTS options?]
+MACRO: COMMOD
+[STRDDB is vestigal.  Should the actual data block be in COMMON?]
+[4 units on APA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: MONBTS
+[Need to implement BUGDMP for CRASH.EXE]
+[F3 disk definitions are duplicated in COMMON and APXKON]
+MACRO: FILUUO
+[DSKCLR This entire UUO needs work, maybe a STRUUO function]
+[NAMSTR Ought to return STRNAM( DRBSTR( DEVDRB(F) ) ) as name]
+[UENTR++ ROOM ON DSK?  DRBALC(P4) + SKIPG STRTAL(DRBSTR(P4))]
+[Including HACK at CHKPP1 that makes SYS:[1,1] work for accounting]
+[RENM4A++ STROVR check for room in dir, must check file STR+STROVR]
+[DSKCHR @DSKFND setup P2 with default DSK structure, for this job.]
+MACRO: FILIO
+:    FTDPAG set for blocks
+[SEKPTS+5: Check need to use DRBSTR instead of STRDDB]
+[SEKPTS+6: Uses STRPPU as divisor - all units must be same size!!!]
+[SWPFNP Checking DSKCLN done should use DRBSTR for file]
+MACRO: FRMSER
+[FRMGTP Needs to use DRBSTR for free disk page for CREFRM UUO]
+MACRO: PCBIO
+[PCBCLR @PCBCL3+1 Clearing STT tables for one/all structures?]
+[PCBCLR Called by DSKCLN UUO - should have STR setup as argument]
+MACRO: SWAMP
+[KEPPAG,GETPAG,GETAPG Need DRBSTR setup to check DSKCLN done]
+[GTSPAG,GTSAPG Check for DSKCLN done needs DRBSTR setup for user]
+[GTSA48+4 Checking for space should use STR for this unit]
+[GTSA70+7 Use right structure or DRBSTR block to look for SAT space]
+[MOSPAU Most space on unit n - Needs STRucture DDB DRBSTR?]
+[RPTSAT+3++ Check-Clear STRBTS for bad SATs needs STRucture loop]
+[FPCSET Another DSKCLN UUO routine needs STR setup right]
+[CHKQTA needs STR data block setup - F/DDB already for DRBSTR?]
+MACRO: MAPIO
+[MAPUS1+5 Can't have different size units in structure?]
+[SPRBNS STR inited? Does U already have a STR pointer?]
+[SUPBEG++ Check STRNAM - Why bother if DSKB is only STR]
+[Need to convert KCREAT code at CREAT2 to use LOKHPW routine.]
+MACRO: CLUBS
+MACRO: FILFND
+[PPBBIT Why must the STR name be DSKB here?  If DRBSTR setup?]
+MACRO: FILRIB
+MACRO: APXKON
+MACRO: CLOCK1
+[CIP5B: Check out ERRTLE, cause may want 1/sec or 1/minute]
+[BIGBEN Check DRBSTR instead of STRDDB?]
+[Need to use STRNXT at WDOG]
+[Need to define other bits for RH of CTYBLF, SET HAPPY]
+[What do we do on FOONLY for accounting?]
+MACRO: COMCON
+[Need to teach ENABLE/DISABLE/SETE how to parse license names]
+[COR4+1 Loop through STRs for STRTAL - Is STRNXT defined?]
+[USESTA can't print PC until JBTPC(J) is defined]
+[VERPR does not print version number of HISEG]
+[SKEDUL @SKDCOM checks DSKCLN done in fixed STRDDB -- needs thought]
+MACRO: CORE1
+[CORUUO @SIZCOR+5 Use DRBSTR instead of STRDDB]
+[VCREATE @VCREA2+5 checking for DSKCLN -- Use DRBSTR not STRDDB]
+[REMOVE +++ Checking DSKCLN done flag for error log - use DRBSTR]
+[PGFSP Setup U/STRNAM -- USE proper DRBSTR instead of STRDDB]
+MACRO: ERRCON
+MACRO: JOBDAT
+MACRO: ACTSER
+MACRO: PICON
+[Need more work at EXCPAR - typeout info on EXEC parity error]
+[APRTXT macro needs to be moved into K?SYM]
+[APRXXX should be removed]
+[Need symbol for KI WRPI 1B21]
+[SNNMI: SNOOP has not been written for FOONLY]
+MACRO: F3TSER
+[F3TRWC+0: Check for drive dropping off line during rewind check]
+[WRERR: What happens on memory parity?]
+[WRLOSE+2: Are there any detectable device errors?]
+[SRFX: Word count not stored in buffer]
+MACRO: NO.LPT
+MACRO: SCHED1
+MACRO: SCNSER
+[LDBSTR needs to be GETTABable]
+[TTYBPN needs filter to skip multi-word IRING messages to continue]
+[Need to put host number somewhere, @LOGIN and RCVAUX]
+%BUG at LDEC has not been completely fixed, causes TTYNNC
+[STTLK to job 0 goes to CTY only, not OPR, job -1 does not SEND ALL]
+[EBUS02.J01 translates PARM-D(15.) to KATAKANA(16.) for ISIS]
+[Need to set WIDTH, ERASE, etc at ACTTYP]
+[Need to make SVPPC work on KS]
+MACRO: CIOPR
+MACRO: CTYSIM
+MACRO: SEGCON
+[SAVJB3+10: Page 400 (locations 400000 and 377777) hardcoded in SAVE]
+[INIJDA: Page 400 (locations 400000 and 377777) hardcoded in GET]
+[UGTSEG: Page 400 (locations 400000 and 377777) hardcoded in GETSEG]
+[USTUWP: Page 400 (locations 400000 and 377777) hardcoded in SETUWP]
+MACRO: TMPUUO
+MACRO: SIMIO
+[SIMIOY Check DRBSTR instead of STRDDB?]
+MACRO: IOCSS
+[Need to add ersatz devices at DEVPHY]
+MACRO: UUOCON
+[F3 does not execute ADJBP correctly, it does IBP ignoring nonzero AC]
+[DEVTYP uuo is not implemented]
+MACRO: DEBUG
+MACRO: EDDT
+[Sense switch tests %%SS1 thru %%SS6 work only on a KI]
+[TINSTR routine does not check for type-ahead on KL]
+MACRO: ONCE
+[Need to preserve THSDAT across monitor loads]
+MACRO: ONCDSK
+[All references to STRPPU should be eliminated]
+MACRO: REFSTR
+[KS-FEFILE not allocated on ADD PACK]
+% BAT conflict - SCNBAT uses page entries, PAKCOPY does not
+[Should allocate all 14. data pages in UFDSET for UFD project]
+
+.DELETE CMNF3F.REL,CMDF3F.REL,CMTF3F.REL,SETF3F.REL
+[20:49:20]
+
+
+.COMPILE @MONKI
+[20:49:24]
+MACRO: COMTXT
+KI00-P035
+11-5-86
+M01824 (id)
+512 = CPU serial number
+Pacific Standard Time
+64 frames
+128 network ports
+64 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[16 units on BPB]
+[16 units on BPC]
+[16 units on BPD]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: MONBTS
+MACRO: FILUUO
+MACRO: FILIO
+:    FTDPAG set for blocks
+MACRO: FRMSER
+MACRO: PCBIO
+MACRO: SWAMP
+MACRO: MAPIO
+MACRO: CLUBS
+MACRO: FILFND
+MACRO: FILRIB
+MACRO: CPXKON
+MACRO: BOTLOD
+MACRO: CLOCK1
+MACRO: COMCON
+MACRO: CORE1
+MACRO: ERRCON
+MACRO: JOBDAT
+MACRO: ACTSER
+MACRO: PICON
+MACRO: FTASER
+MACRO: LPTSER
+MACRO: PTPSER
+MACRO: PTRSER
+MACRO: SCHED1
+MACRO: SCNSER
+[Need to put host number somewhere, @LOGIN and RCVAUX]
+%BUG at LDEC has not been completely fixed, causes TTYNNC
+MACRO: CTYSIM
+MACRO: SEGCON
+MACRO: TMPUUO
+MACRO: SIMIO
+MACRO: IOCSS
+MACRO: UUOCON
+MACRO: DEBUG
+MACRO: ONCE
+MACRO: ONCDSK
+MACRO: REFSTR
+
+.DELETE CMNKII.REL,CMDKII.REL,CMTKII.REL,SETKII.REL
+[21:23:47]
+
+
+.COMPILE @MONKL
+[21:23:50]
+MACRO: COMTXT
+KL00-P035
+11-5-86
+M01823 (id)
+1024 = CPU serial number
+Pacific Standard Time
+64 frames
+128 network ports
+64 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[16 units on BPB]
+[16 units on BPC]
+[16 units on BPD]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: MONBTS
+MACRO: FILUUO
+MACRO: FILIO
+:    FTDPAG set for blocks
+MACRO: FRMSER
+MACRO: PCBIO
+MACRO: SWAMP
+MACRO: MAPIO
+MACRO: CLUBS
+MACRO: FILFND
+MACRO: FILRIB
+MACRO: CPXKON
+MACRO: BOTLOD
+MACRO: CLOCK1
+MACRO: COMCON
+MACRO: CORE1
+MACRO: ERRCON
+MACRO: JOBDAT
+MACRO: ACTSER
+MACRO: PICON
+MACRO: FTASER
+MACRO: LPTSER
+MACRO: PTPSER
+MACRO: PTRSER
+MACRO: CDRSER
+MACRO: PLTSER
+MACRO: SCHED1
+MACRO: SCNSER
+[Need to put host number somewhere, @LOGIN and RCVAUX]
+%BUG at LDEC has not been completely fixed, causes TTYNNC
+MACRO: CTYSIM
+MACRO: SEGCON
+MACRO: TMPUUO
+MACRO: SIMIO
+MACRO: IOCSS
+MACRO: UUOCON
+MACRO: DEBUG
+MACRO: ONCE
+MACRO: ONCDSK
+MACRO: REFSTR
+
+.DELETE CMNKLL.REL,CMDKLL.REL,CMTKLL.REL,SETKLL.REL
+[22:12:33]
+
+
+.COMPILE @MONKS
+[22:12:36]
+MACRO: COMTXT
+KS00-P035
+11-5-86
+M01819 (id)
+4267 = CPU serial number
+Pacific Standard Time
+32 frames
+32 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: MONBTS
+MACRO: FILUUO
+MACRO: FILIO
+:    FTDPAG set for blocks
+MACRO: FRMSER
+MACRO: PCBIO
+MACRO: SWAMP
+MACRO: MAPIO
+MACRO: CLUBS
+MACRO: FILFND
+MACRO: FILRIB
+MACRO: RMXKON
+MACRO: CLOCK1
+MACRO: COMCON
+MACRO: CORE1
+MACRO: ERRCON
+MACRO: JOBDAT
+MACRO: ACTSER
+MACRO: PICON
+MACRO: MAGSER
+MACRO: LPTSRS
+MACRO: SCHED1
+MACRO: SCNSER
+[Need to put host number somewhere, @LOGIN and RCVAUX]
+%BUG at LDEC has not been completely fixed, causes TTYNNC
+MACRO: CTYSIM
+MACRO: DZKON
+MACRO: DR11C
+MACRO: KMCSER
+MACRO: CIOPR
+CIOPR  PAGE 2
+Q				> ;END IFCPU (KS) STARTING PAGE 1.
+
+?1 ERROR DETECTED
+MACRO: SEGCON
+MACRO: TMPUUO
+MACRO: SIMIO
+MACRO: IOCSS
+MACRO: UUOCON
+MACRO: DEBUG
+MACRO: ONCE
+MACRO: ONCDSK
+MACRO: REFSTR
+
+.DELETE CMNKSS.REL,CMDKSS.REL,CMTKSS.REL,SETKSS.REL
+[22:52:27]
+
+
+..;Now build the individual monitors
+.
+.LOAD/SAVE:22035 @MON22
+[22:52:31]
+MACRO: COMTXT
+C22-P035
+11-5-86
+M01827 (id)
+641 = CPU serial number
+Pacific Standard Time
+108 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: BPXKON
+LOADING
+204 PAGES CORE
+22035 SAVED
+
+.R CKSUM
+[22:58:09]
+INPUT: 22035.SAV,MON22.CMD,CNFN22.MAC,(M33)CONF22.MAC
+YURQAQ 22035.SAV
+CUFLEV MON22.CMD
+TISLOR CNFN22.MAC
+POFNEB (M33)CONF22.MAC
+INPUT:
+
+.LOAD/SAVE:23035 @MON23
+[22:58:18]
+MACRO: COMTXT
+D23-P035
+11-5-86
+M01828 (id)
+1275 = CPU serial number
+Central Standard Time
+110 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: BPXKON
+LOADING
+208 PAGES CORE
+23035 SAVED
+
+.R CKSUM
+[23:04:18]
+INPUT: 23035.SAV,MON23.CMD,CNFN23.MAC,(M33)CONF23.MAC
+ZAXHEL 23035.SAV
+RAWWOD MON23.CMD
+PARMAK CNFN23.MAC
+YERHOS (M33)CONF23.MAC
+INPUT:
+
+.LOAD/SAVE:24035 @MON24
+[23:04:28]
+NO SUCH FILE - MON24
+.R CKSUM
+[23:04:29]
+INPUT: 24035.SAV,MON24.CMD,CNFN24.MAC,(M33)CONF24.MAC
+XUKLOL 24035.SAV
+FILE NOT FOUND: MON24.CMD
+YEWREM CNFN24.MAC
+HUNQAD (M33)CONF24.MAC
+INPUT:
+
+.LOAD/SAVE:25035 @MON25
+[23:04:42]
+MACRO: COMTXT
+D25-P035
+11-5-86
+M01830 (id)
+1460 = CPU serial number
+Central Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+25035 SAVED
+
+.R CKSUM
+[23:10:57]
+INPUT: 25035.SAV,MON25.CMD,CNFN25.MAC,(M33)CONF25.MAC
+MURFAS 25035.SAV
+XUYLAC MON25.CMD
+CETPAV CNFN25.MAC
+PIFKOF (M33)CONF25.MAC
+INPUT:
+
+.LOAD/SAVE:26035 @MON26
+[23:11:07]
+MACRO: COMTXT
+C26-P035
+11-5-86
+M01831 (id)
+1286 = CPU serial number
+Pacific Standard Time
+100 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+206 PAGES CORE
+26035 SAVED
+
+.R CKSUM
+[23:16:29]
+INPUT: 26035.SAV,MON26.CMD,CNFN26.MAC,(M33)CONF26.MAC
+TOLZAK 26035.SAV
+GITNUZ MON26.CMD
+MAKFOD CNFN26.MAC
+QOYXIN (M33)CONF26.MAC
+INPUT:
+
+.LOAD/SAVE:27035 @MON27
+[23:16:38]
+MACRO: COMTXT
+D27-P035
+11-5-86
+M01832 (id)
+666 = CPU serial number
+Central Standard Time
+108 frames
+128 network ports
+8 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[8 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+200 PAGES CORE
+27035 SAVED
+
+.R CKSUM
+[23:21:34]
+INPUT: 27035.SAV,MON27.CMD,CNFN27.MAC,(M33)CONF27.MAC
+FIGFUB 27035.SAV
+DAWDIZ MON27.CMD
+GOPRUL CNFN27.MAC
+WESKAM (M33)CONF27.MAC
+INPUT:
+
+.LOAD/SAVE:28035 @MON28
+[23:21:44]
+MACRO: COMTXT
+F28-P035
+11-5-86
+M01833 (id)
+1427 = CPU serial number
+Pacific Standard Time
+110 frames
+128 network ports
+32 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[16 units on BPB]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+214 PAGES CORE
+28035 SAVED
+
+.R CKSUM
+[23:27:47]
+INPUT: 28035.SAV,MON28.CMD,CNFN28.MAC,(M33)CONF28.MAC
+FEVMIW 28035.SAV
+COGCIM MON28.CMD
+NEQKAJ CNFN28.MAC
+QOKFIX (M33)CONF28.MAC
+INPUT:
+
+.LOAD/SAVE:29035 @MON29
+[23:27:57]
+MACRO: COMTXT
+C29-P035
+11-5-86
+M01834 (id)
+1307 = CPU serial number
+Pacific Standard Time
+80 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+202 PAGES CORE
+29035 SAVED
+
+.R CKSUM
+[23:33:33]
+INPUT: 29035.SAV,MON29.CMD,CNFN29.MAC,(M33)CONF29.MAC
+XEDNOY 29035.SAV
+WIPKIF MON29.CMD
+LAQBOB CNFN29.MAC
+MUDTIN (M33)CONF29.MAC
+INPUT:
+
+.LOAD/SAVE:30035 @MON30
+[23:33:43]
+MACRO: COMTXT
+F30-P035
+11-5-86
+M01835 (id)
+1388 = CPU serial number
+Pacific Standard Time
+108 frames
+128 network ports
+24 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[8 units on BPB]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+30035 SAVED
+
+.R CKSUM
+[23:39:29]
+INPUT: 30035.SAV,MON30.CMD,CNFN30.MAC,(M33)CONF30.MAC
+NONWUG 30035.SAV
+DUHGIW MON30.CMD
+MADMIM CNFN30.MAC
+GEBFED (M33)CONF30.MAC
+INPUT:
+
+.LOAD/SAVE:31035 @MON31
+[23:39:39]
+MACRO: COMTXT
+D31-P035
+11-5-86
+M01836 (id)
+761 = CPU serial number
+Central Standard Time
+60 frames
+128 network ports
+24 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[8 units on BPB]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+200 PAGES CORE
+31035 SAVED
+
+.R CKSUM
+[23:45:11]
+INPUT: 31035.SAV,MON31.CMD,CNFN31.MAC,(M33)CONF31.MAC
+WIJFAQ 31035.SAV
+CICJIW MON31.CMD
+DAHHOQ CNFN31.MAC
+RIWXEP (M33)CONF31.MAC
+INPUT:
+
+.LOAD/SAVE:32035 @MON32
+[23:45:21]
+NO SUCH FILE - MON32
+.R CKSUM
+[23:45:56]
+INPUT: 32035.SAV,MON32.CMD,CNFN32.MAC,(M33)CONF32.MAC
+CIBPUP 32035.SAV
+FILE NOT FOUND: MON32.CMD
+BUHRIH CNFN32.MAC
+VUMYIG (M33)CONF32.MAC
+INPUT:
+
+.LOAD/SAVE:33035 @MON33
+[23:46:13]
+MACRO: COMTXT
+C33-P035
+11-5-86
+M01838 (id)
+1081 = CPU serial number
+Pacific Standard Time
+108 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+206 PAGES CORE
+33035 SAVED
+
+.R CKSUM
+[23:51:35]
+INPUT: 33035.SAV,MON33.CMD,CNFN33.MAC,(M33)CONF33.MAC
+GAQZAP 33035.SAV
+SAFHIG MON33.CMD
+DAPZUK CNFN33.MAC
+DUYPEJ (M33)CONF33.MAC
+INPUT:
+
+.LOAD/SAVE:34035 @MON34
+[23:51:45]
+MACRO: COMTXT
+D34-P035
+11-5-86
+M01839 (id)
+574 = CPU serial number
+Central Standard Time
+60 frames
+128 network ports
+16 disk drives
+4 tape dr
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+196 PAGES CORE
+34035 SAVED
+
+.R CKSUM
+[23:56:53]
+INPUT: 34035.SAV,MON34.CMD,CNFN34.MAC,(M33)CONF34.MAC
+WUJQAL 34035.SAV
+QUQFIM MON34.CMD
+XAZCOM CNFN34.MAC
+JOPDUZ (M33)CONF34.MAC
+INPUT:
+
+.LOAD/SAVE:35035 @MON35
+[23:57:03]
+MACRO: COMTXT
+C35-P035
+11-5-86
+M01840 (id)
+1386 = CPU serial number
+Pacific Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+35035 SAVED
+
+.R CKSUM
+[00:02:40]
+INPUT: 35035.SAV,MON35.CMD,CNFN35.MAC,(M33)CONF35.MAC
+BIDZIT 35035.SAV
+NIKNEP MON35.CMD
+WAPXUJ CNFN35.MAC
+JEGTIT (M33)CONF35.MAC
+INPUT:
+
+.LOAD/SAVE:36035 @MON36
+[00:02:49]
+MACRO: COMTXT
+B36-P035
+11-5-86
+M01841 (id)
+1415 = CPU serial number
+Pacific Standard Time
+80 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+202 PAGES CORE
+36035 SAVED
+
+.R CKSUM
+[00:08:58]
+INPUT: 36035.SAV,MON36.CMD,CNFN36.MAC,(M33)CONF36.MAC
+LECDAJ 36035.SAV
+NEJQUJ MON36.CMD
+RESDID CNFN36.MAC
+HILYUJ (M33)CONF36.MAC
+INPUT:
+
+.LOAD/SAVE:37035 @MON37
+[00:09:08]
+MACRO: COMTXT
+D37-P035
+11-5-86
+M01842 (id)
+1461 = CPU serial number
+Central Standard Time
+110 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+208 PAGES CORE
+37035 SAVED
+
+.R CKSUM
+[00:17:19]
+INPUT: 37035.SAV,MON37.CMD,CNFN37.MAC,(M33)CONF37.MAC
+MUBBOC 37035.SAV
+CORBEG MON37.CMD
+WIRQUT CNFN37.MAC
+BACGAL (M33)CONF37.MAC
+INPUT:
+
+.LOAD/SAVE:38035 @MON38
+[00:17:35]
+MACRO: COMTXT
+F38-P035
+11-5-86
+M01843 (id)
+1405 = CPU serial number
+Pacific Standard Time
+80 frames
+128 network ports
+32 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[16 units on BPB]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+38035 SAVED
+
+.R CKSUM
+[00:25:11]
+INPUT: 38035.SAV,MON38.CMD,CNFN38.MAC,(M33)CONF38.MAC
+SUKXAC 38035.SAV
+WAGDEL MON38.CMD
+NISCEV CNFN38.MAC
+JUFLUV (M33)CONF38.MAC
+INPUT:
+
+.LOAD/SAVE:39035 @MON39
+[00:25:21]
+MACRO: COMTXT
+B39-P035
+11-5-86
+M01844 (id)
+1354 = CPU serial number
+Pacific Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+39035 SAVED
+
+.R CKSUM
+[00:30:47]
+INPUT: 39035.SAV,MON39.CMD,CNFN39.MAC,(M33)CONF39.MAC
+QUTMEV 39035.SAV
+CEDROR MON39.CMD
+ZIGJUM CNFN39.MAC
+ZOQCAS (M33)CONF39.MAC
+INPUT:
+
+.LOAD/SAVE:54035 @MON54
+[00:30:56]
+MACRO: COMTXT
+D54-P035
+11-5-86
+M01845 (id)
+1376 = CPU serial number
+Central Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+54035 SAVED
+
+.R CKSUM
+[00:36:19]
+INPUT: 54035.SAV,MON54.CMD,CNFN54.MAC,(M33)CONF54.MAC
+YIBGAK 54035.SAV
+NIYGOV MON54.CMD
+HIZQAG CNFN54.MAC
+HORJAG (M33)CONF54.MAC
+INPUT:
+
+.LOAD/SAVE:55035 @MON55
+[00:36:29]
+MACRO: COMTXT
+C55-P035
+11-5-86
+M01846 (id)
+1336 = CPU serial number
+Pacific Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+55035 SAVED
+
+.R CKSUM
+[00:42:12]
+INPUT: 55035.SAV,MON55.CMD,CNFN55.MAC,(M33)CONF55.MAC
+YUNXEN 55035.SAV
+PANHIY MON55.CMD
+FAZGAM CNFN55.MAC
+JALGER (M33)CONF55.MAC
+INPUT:
+
+.LOAD/SAVE:56035 @MON56
+[00:42:21]
+MACRO: COMTXT
+D56-P035
+11-5-86
+M01847 (id)
+1383 = CPU serial number
+Central Standard Time
+127 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+56035 SAVED
+
+.R CKSUM
+[00:47:45]
+INPUT: 56035.SAV,MON56.CMD,CNFN56.MAC,(M33)CONF56.MAC
+FORJIP 56035.SAV
+DOJJUW MON56.CMD
+TIWMAC CNFN56.MAC
+TASZAZ (M33)CONF56.MAC
+INPUT:
+
+.LOAD/SAVE:57035 @MON57
+[00:47:55]
+MACRO: COMTXT
+C57-P035
+11-5-86
+M01848 (id)
+542 = CPU serial number
+Pacific Standard Time
+110 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+204 PAGES CORE
+57035 SAVED
+
+.R CKSUM
+[00:53:16]
+INPUT: 57035.SAV,MON57.CMD,CNFN57.MAC,(M33)CONF57.MAC
+TAYWUM 57035.SAV
+MOSNEY MON57.CMD
+GUYQOF CNFN57.MAC
+HUGBIR (M33)CONF57.MAC
+INPUT:
+
+.LOAD/SAVE:58035 @MON58
+[00:53:26]
+MACRO: COMTXT
+F58-P035
+11-5-86
+M01849 (id)
+1332 = CPU serial number
+Pacific Standard Time
+80 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+202 PAGES CORE
+58035 SAVED
+
+.R CKSUM
+[00:58:48]
+INPUT: 58035.SAV,MON58.CMD,CNFN58.MAC,(M33)CONF58.MAC
+FERMUV 58035.SAV
+HIWVOH MON58.CMD
+DOHKIR CNFN58.MAC
+ZAQKEP (M33)CONF58.MAC
+INPUT:
+
+.LOAD/SAVE:59035 @MON59
+[00:58:58]
+MACRO: COMTXT
+S59-P035
+11-5-86
+M01850 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+1 printer
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+MACRO: RMXKON
+LOADING
+192 PAGES CORE
+59035 SAVED
+
+.R CKSUM
+[01:05:05]
+INPUT: 59035.SAV,MON59.CMD,CNFN59.MAC,(M33)CONF59.MAC
+KEMJOS 59035.SAV
+XECKIB MON59.CMD
+LITTEH CNFN59.MAC
+MEPDIN (M33)CONF59.MAC
+INPUT:
+
+.LOAD/SAVE:60035 @MON60
+[01:05:15]
+MACRO: COMTXT
+S60-P035
+11-5-86
+M01851 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+1 printer
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+60035 SAVED
+
+.R CKSUM
+[01:10:11]
+INPUT: 60035.SAV,MON60.CMD,CNFN60.MAC,(M33)CONF60.MAC
+HUJTOF 60035.SAV
+FAMRIW MON60.CMD
+MUHSEF CNFN60.MAC
+QODZAN (M33)CONF60.MAC
+INPUT:
+
+.LOAD/SAVE:62035 @MON62
+[01:10:20]
+MACRO: COMTXT
+X62-P035
+11-5-86
+M01852 (id)
+5 = CPU serial number
+Pacific Standard Time
+32 frames
+32 network ports
+16 pairs of PTYs
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[CPU status variables at .CPSLF:: need to be defined by a macro]
+[Requesting supervisor clock from base at startup]
+[LINKDB: Store STRNAM of only STR in QUESTR]
+[Need to change SKIP to SKIPA at TTY0: for CTY]
+[RSVDPG - reserving pages at 1 meg boundries for SA10 bug]
+[ODEBUG routine could use more work]
+[CRSDEV should be replaced by RCDSTB]
+[MONCRS check DSKCLN completed only SYSTEM structure?]
+[MONCRS @MONCR2+5 Save STRPID in inter-monitor area REPSID]
+[Need a SYSTEM structure to check BOOTS options?]
+MACRO: COMMOD
+[STRDDB is vestigal.  Should the actual data block be in COMMON?]
+[4 units on APA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+62035 SAVED
+
+.R CKSUM
+[01:15:46]
+INPUT: 62035.SAV,MON62.CMD,CNFN62.MAC,(M33)CONF62.MAC
+KIDCOY 62035.SAV
+JIRNAW MON62.CMD
+SIWWUQ CNFN62.MAC
+RUJYIY (M33)CONF62.MAC
+INPUT:
+
+.LOAD/SAVE:65035 @MON65
+[01:15:56]
+MACRO: COMTXT
+D65-P035
+11-5-86
+M01853 (id)
+1380 = CPU serial number
+Central Standard Time
+108 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+206 PAGES CORE
+65035 SAVED
+
+.R CKSUM
+[01:22:04]
+INPUT: 65035.SAV,MON65.CMD,CNFN65.MAC,(M33)CONF65.MAC
+WOWXAN 65035.SAV
+MOGCEC MON65.CMD
+XAZLER CNFN65.MAC
+GAWREJ (M33)CONF65.MAC
+INPUT:
+
+.LOAD/SAVE:70035 @MON70
+[01:22:14]
+MACRO: COMTXT
+C70-P035
+11-5-86
+M01854 (id)
+532 = CPU serial number
+Pacific Standard Time
+108 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+204 PAGES CORE
+70035 SAVED
+
+.R CKSUM
+[01:27:49]
+INPUT: 70035.SAV,MON70.CMD,CNFN70.MAC,(M33)CONF70.MAC
+YAYVEV 70035.SAV
+TIKSUH MON70.CMD
+XESGIR CNFN70.MAC
+YUQWAB (M33)CONF70.MAC
+INPUT:
+
+.LOAD/SAVE:72035 @MON72
+[01:27:59]
+MACRO: COMTXT
+D72-P035
+11-5-86
+M01855 (id)
+657 = CPU serial number
+Central Standard Time
+60 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+196 PAGES CORE
+72035 SAVED
+
+.R CKSUM
+[01:33:43]
+INPUT: 72035.SAV,MON72.CMD,CNFN72.MAC,(M33)CONF72.MAC
+VEDRAS 72035.SAV
+TOJWIK MON72.CMD
+NUKDIH CNFN72.MAC
+YIFXIG (M33)CONF72.MAC
+INPUT:
+
+.LOAD/SAVE:74035 @MON74
+[01:33:55]
+MACRO: COMTXT
+F74-P035
+11-5-86
+M01856 (id)
+1421 = CPU serial number
+Pacific Standard Time
+80 frames
+128 network ports
+32 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+[16 units on BPB]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+74035 SAVED
+
+.R CKSUM
+[01:40:39]
+INPUT: 74035.SAV,MON74.CMD,CNFN74.MAC,(M33)CONF74.MAC
+YIKQUZ 74035.SAV
+NODQIS MON74.CMD
+VASLIV CNFN74.MAC
+NOYLIG (M33)CONF74.MAC
+INPUT:
+
+.LOAD/SAVE:79035 @MON79
+[01:40:50]
+MACRO: COMTXT
+D79-P035
+11-5-86
+M01857 (id)
+565 = CPU serial number
+Central Standard Time
+60 frames
+128 network ports
+16 disk drives
+4 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on FTA]
+[16 units on BPA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+196 PAGES CORE
+79035 SAVED
+
+.R CKSUM
+[01:47:16]
+INPUT: 79035.SAV,MON79.CMD,CNFN79.MAC,(M33)CONF79.MAC
+HUWBUG 79035.SAV
+ZUMXIV MON79.CMD
+HIMJEK CNFN79.MAC
+JEDWIB (M33)CONF79.MAC
+INPUT:
+
+.LOAD/SAVE:83035 @MON83
+[01:47:29]
+MACRO: COMTXT
+S83-P035
+11-5-86
+M01858 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+1 printer
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+83035 SAVED
+
+.R CKSUM
+[01:52:53]
+INPUT: 83035.SAV,MON83.CMD,CNFN83.MAC,(M33)CONF83.MAC
+DAZHAC 83035.SAV
+QOBYOR MON83.CMD
+HEVYOB CNFN83.MAC
+CIMFOF (M33)CONF83.MAC
+INPUT:
+
+.LOAD/SAVE:92035 @MON92
+[01:53:07]
+MACRO: COMTXT
+S92-P035
+11-5-86
+M01859 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+1 printer
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+92035 SAVED
+
+.R CKSUM
+[01:57:59]
+INPUT: 92035.SAV,MON92.CMD,CNFN92.MAC,(M33)CONF92.MAC
+KIYREC 92035.SAV
+XIVPEQ MON92.CMD
+XOMBAK CNFN92.MAC
+NELTES (M33)CONF92.MAC
+INPUT:
+
+.LOAD/SAVE:95035 @MON95
+[01:58:12]
+MACRO: COMTXT
+X95-P035
+11-5-86
+M01860 (id)
+4267 = CPU serial number
+Pacific Standard Time
+32 frames
+32 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+95035 SAVED
+
+.R CKSUM
+[02:05:19]
+INPUT: 95035.SAV,MON95.CMD,CNFN95.MAC,(M33)CONF95.MAC
+NICKOF 95035.SAV
+ZATJAV MON95.CMD
+CIMKAN CNFN95.MAC
+BIKGUX (M33)CONF95.MAC
+INPUT:
+
+.LOAD/SAVE:F3035 @MONF3
+[02:05:33]
+MACRO: COMTXT
+X930-P035
+11-5-86
+M01861 (id)
+6 = CPU serial number
+Pacific Standard Time
+32 frames
+32 network ports
+16 pairs of PTYs
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[CPU status variables at .CPSLF:: need to be defined by a macro]
+[Requesting supervisor clock from base at startup]
+[LINKDB: Store STRNAM of only STR in QUESTR]
+[Need to change SKIP to SKIPA at TTY0: for CTY]
+[RSVDPG - reserving pages at 1 meg boundries for SA10 bug]
+[ODEBUG routine could use more work]
+[CRSDEV should be replaced by RCDSTB]
+[MONCRS check DSKCLN completed only SYSTEM structure?]
+[MONCRS @MONCR2+5 Save STRPID in inter-monitor area REPSID]
+[Need a SYSTEM structure to check BOOTS options?]
+MACRO: COMMOD
+[STRDDB is vestigal.  Should the actual data block be in COMMON?]
+[4 units on APA]
+MACRO: SETETY
+Defining SETE01 for Bill Soley
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+210 PAGES CORE
+F3035 SAVED
+
+.R CKSUM
+[02:14:38]
+INPUT: F3035.SAV,MONF3.CMD,CNFNF3.MAC,(M33)CONFF3.MAC
+QEBDIW F3035.SAV
+QADHOJ MONF3.CMD
+LUFQUP CNFNF3.MAC
+TEWGOH (M33)CONFF3.MAC
+INPUT:
+
+.LOAD/SAVE:FZ035 @MONFZ
+[02:14:51]
+MACRO: COMTXT
+H370-P035
+11-5-86
+M01862 (id)
+4097 = CPU serial number
+Central Standard Time
+30 frames
+100 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+FZ035 SAVED
+
+mail waiting
+.R CKSUM
+[02:21:27]
+INPUT: FZ035.SAV,MONFZ.CMD,CNFNFZ.MAC,(M33)CONFFZ.MAC
+ZADCUM FZ035.SAV
+VIJXUZ MONFZ.CMD
+RACTOZ CNFNFZ.MAC
+RADHIH (M33)CONFFZ.MAC
+INPUT:
+
+.LOAD/SAVE:MA035 @MONMA
+[02:21:42]
+MACRO: COMTXT
+M169-P035
+11-5-86
+M01863 (id)
+4097 = CPU serial number
+Central Standard Time
+32 frames
+109 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+MA035 SAVED
+
+.R CKSUM
+[02:27:06]
+INPUT: MA035.SAV,MONMA.CMD,CNFNMA.MAC,(M33)CONFMA.MAC
+ZIKRON MA035.SAV
+WUYJES MONMA.CMD
+FAHHEP CNFNMA.MAC
+QEMWAP (M33)CONFMA.MAC
+INPUT:
+
+.LOAD/SAVE:RB035 @MONRB
+[02:27:17]
+MACRO: COMTXT
+W1051-P035
+11-5-86
+M01864 (id)
+4097 = CPU serial number
+Pacific Standard Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+RB035 SAVED
+
+.R CKSUM
+[02:32:28]
+INPUT: RB035.SAV,MONRB.CMD,CNFNRB.MAC,(M33)CONFRB.MAC
+ZUCTEX RB035.SAV
+PIDPAK MONRB.CMD
+MUGJIP CNFNRB.MAC
+TIRPUN (M33)CONFRB.MAC
+INPUT:
+
+.LOAD/SAVE:S1035 @MONS1
+[02:32:39]
+MACRO: COMTXT
+S170-P035
+11-5-86
+M01865 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+S1035 SAVED
+
+.R CKSUM
+[02:37:35]
+INPUT: S1035.SAV,MONS1.CMD,CNFNS1.MAC,(M33)CONFS1.MAC
+VAPNOG S1035.SAV
+SEZCUW MONS1.CMD
+PASKOS CNFNS1.MAC
+PABNEN (M33)CONFS1.MAC
+INPUT:
+
+.LOAD/SAVE:S2035 @MONS2
+[02:37:50]
+MACRO: COMTXT
+S184-P035
+11-5-86
+M01866 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+S2035 SAVED
+
+.R CKSUM
+[02:43:02]
+INPUT: S2035.SAV,MONS2.CMD,CNFNS2.MAC,(M33)CONFS2.MAC
+BEKQOV S2035.SAV
+ROCHEV MONS2.CMD
+HIZFAY CNFNS2.MAC
+RESCIB (M33)CONFS2.MAC
+INPUT:
+
+.LOAD/SAVE:S3035 @MONS3
+[02:43:14]
+MACRO: COMTXT
+S264-P035
+11-5-86
+M01867 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+S3035 SAVED
+
+.R CKSUM
+[02:47:52]
+INPUT: S3035.SAV,MONS3.CMD,CNFNS3.MAC,(M33)CONFS3.MAC
+FUBSAX S3035.SAV
+YICMUY MONS3.CMD
+YODNOW CNFNS3.MAC
+TUQHUM (M33)CONFS3.MAC
+INPUT:
+
+.LOAD/SAVE:S4035 @MONS4
+[02:48:02]
+MACRO: COMTXT
+S301-P035
+11-5-86
+M01868 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+S4035 SAVED
+
+.R CKSUM
+[02:52:39]
+INPUT: S4035.SAV,MONS4.CMD,CNFNS4.MAC,(M33)CONFS4.MAC
+SOPLER S4035.SAV
+GILQOK MONS4.CMD
+DEGCUZ CNFNS4.MAC
+LILKUC (M33)CONFS4.MAC
+INPUT:
+
+.LOAD/SAVE:S5035 @MONS5
+[02:52:49]
+MACRO: COMTXT
+S443-P035
+11-5-86
+M01869 (id)
+4097 = CPU serial number
+Central European Time
+30 frames
+64 network ports
+4 disk drives
+1 tape drive
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+S5035 SAVED
+
+.R CKSUM
+[02:57:27]
+INPUT: S5035.SAV,MONS5.CMD,CNFNS5.MAC,(M33)CONFS5.MAC
+YOVCOM S5035.SAV
+XIZNIR MONS5.CMD
+LODMAG CNFNS5.MAC
+XIJTUF (M33)CONFS5.MAC
+INPUT:
+
+.LOAD/SAVE:TW035 @MONTW
+[02:57:37]
+MACRO: COMTXT
+S33-P035
+11-5-86
+M01870 (id)
+4097 = CPU serial number
+Pacific Standard Time
+30 frames
+64 network ports
+4 disk drives
+2 tape drives
+MACRO: COMMON
+[Will reload on JOB/DEBUG stopcodes]
+[Requesting supervisor clock from base at startup]
+MACRO: COMMOD
+[4 units on RMA]
+MACRO: SETETY
+Defining SEPW00 for TRW password
+Defining SETE00 for this machine
+Defining SETE04 for Dennis Coffey
+Defining SETE05 for Osman Guven
+Defining SETE06 for Joe Smith
+Defining SETE07 for Carl Baltrunas
+LOADING
+192 PAGES CORE
+TW035 SAVED
+
+.R CKSUM
+[03:02:32]
+INPUT: TW035.SAV,MONTW.CMD,CNFNTW.MAC,(M33)CONFTW.MAC
+CONRAW TW035.SAV
+GUYYUT MONTW.CMD
+YAXKAS CNFNTW.MAC
+XAHMEG (M33)CONFTW.MAC
+INPUT:
+
+.R CKSUM
+[03:02:42]
+INPUT: @MONED.DIR
+BUVXIN ACTSER.MAC
+VUKNOD APXKON.MAC
+METDUV BOTLOD.MAC
+JINVAT BPXKON.MAC
+VADVAG CDRSER.MAC
+MAZJIZ CIOPR.MAC
+FIMLEL CLOCK1.MAC
+FOBCER CLUBS.MAC
+PAMYOS COMCON.MAC
+YERWED COMMOD.MAC
+DUKPAF COMMON.MAC
+HABZAL COMTXT.MAC
+BITSOY CORE1.MAC
+RUBWUC CPXKON.MAC
+MAQMOT CTYSIM.MAC
+SAVPOM DDT.MAC
+DOHPOF DEBUG.MAC
+ZOZLEF DR11C.MAC
+LIVVOG DZKON.MAC
+QAYDOX EDDT.MAC
+VOWBUJ ERRCON.MAC
+ZOMYOR F3TSER.MAC
+LIWZIK FILFND.MAC
+JEFRUT FILIO.MAC
+LISDOR FILRIB.MAC
+VIVLUL FILUUO.MAC
+VATZED FRMSER.MAC
+DOJHOH FTASER.MAC
+KOVBIN IOCSS.MAC
+PAJYEX JOBDAT.MAC
+PIQTON KISYM.MAC
+QUGKIL KLSYM.MAC
+ZUDRAW KMCDDT.MAC
+JOKDOZ KMCSER.MAC
+YOMROR KSCOMM.MAC
+DITKAQ KSIORG.MAC
+KONBUB KSSYM.MAC
+XOPHOT LPTSER.MAC
+DANHAV MAGSER.MAC
+XAMJAQ MAPIO.MAC
+HAHKAZ MONBTS.MAC
+GEWGUC MTASER.MAC
+JEQJAC ONCDSK.MAC
+PEBSUC ONCE.MAC
+DIXQOK PATCH.MAC
+KIHMES PCBIO.MAC
+ZIGBID PICON.MAC
+VUXBAR PLTSER.MAC
+SUVCAR PTPSER.MAC
+VILSOB PTRSER.MAC
+BIGKIB REFSTR.MAC
+ZEYSIS RMXKON.MAC
+CIVTAQ S.MAC
+TUYSOZ SCHED1.MAC
+SEBNUB SCNSER.MAC
+RUBTIJ SEGCON.MAC
+HIVMIJ SETEKS.MAC
+NELVAP SETETY.MAC
+YECMEB SIMIO.MAC
+SOMDEL SWAMP.MAC
+ROZJUK TMPUUO.MAC
+XUYKAM UUOCON.MAC
+INPUT:
+
+.R QUOLST
+[03:04:22]
+Disk quotas (number of pages available) for [3,140674]
+Str	 FCFS	LOGOUT	 used	left:(in) (out)	 (sys)
+-----	------	------	------	------	------	------
+DSKB:	 20000	 20000	 11536	  8464	  8464	  2897    (OSP)
+
+.DIRECT *.MAC/TOTAL/NOPRINT
+[03:04:52]
+TOTAL PAGES 1510 FILES 113
+
+.DIRECT *.CMD/TOTAL/NOPRINT
+[03:05:02]
+TOTAL PAGES 90 FILES 45
+
+.DIRECT *.REL/TOTAL/NOPRINT
+[03:05:07]
+TOTAL PAGES 2207 FILES 318
+
+.DIRECT *.SAV/TOTAL/NOPRINT
+[03:05:35]
+TOTAL PAGES 7420 FILES 46
+
+.DIRECT *.*-*.MAC-*.CMD-*.REL-*.SAV/TOTAL
+[03:05:42]
+
+MONED   XMT       4  14-NOV-86 1236    ALL RD  NO      1508
+MONED   DIR       2  14-NOV-86 1235    ALL RD  NO       144
+MONED   FIL       2  14-NOV-86 1049    ALL RD  NO       429
+P035    CTL       3  14-NOV-86 1041    ALL RD  NO       857
+P035    LOG      22  12-NOV-86 2000    ALL RD  NO     10529
+STOPCD  MEM      14   9-NOV-86 2049    ALL RD  NO      6568
+P035    OUT       2   7-NOV-86 1807    ALL RD  NO       503
+P035A   LOG      15   7-NOV-86 1803    ALL RD  NO      7163
+P035    COM       2   7-NOV-86 1312    ALL RD  NO       344
+P035    MEM       2   5-NOV-86 2016    ALL RD  NO        42
+MONED1  CTL       2   5-NOV-86 1012    ALL RD  NO        30
+P034    MEM      90  28-OCT-86 2007    ALL RD  NO     45145
+DIRIT   INI       2  22-JAN-86 1848    ALL RD  NO         3
+
+TOTAL PAGES 162 FILES 13
+
+.SEND JMS
+[03:06:22]
+TYPE LETTER:
+; PCOM v1.63 - processed: (OSP)P035.LOG = (OSP)P035.CTL
+; Options: DETACH  LOG NOAPPEND SUPERSEDE LICENSE
+; Limits: TIME:60 TRULIMIT:0
+; Status: completed.
+; Output recorded in file (OSP)P035.LOG.
+
+mail waiting
+.LOGOUT
+[03:06:25]
+8601.45 tru
+terminal time: 7:05:56
+   1d-ê
