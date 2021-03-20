@@ -1,0 +1,27 @@
+:********************************************************************
+: Patch name: DDTSIO.603             Product and Version: ISCS 6.03
+:     Author: JCR                           Organization: STS
+:   Customer: TRW                           Date Written: 7/29/88
+: Description of Problem:  
+:
+:	This patch causes SIO port EIA signals to be correctly
+:	displayed in the X-DDT 'PORT' command.
+
+	LO	STATUS
+
+PATCH(880729,1620,JREILLY,DPORT7+8,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,1C)
+	LHL	R7,DPRTAR,R6,		: from source
+	JE	DPORT9,,		: from source
+	CLHI	RP,.SPORT		: SIO port?
+	JL	DPORT7+0E,,		: no, check array
+	J	DPORT8,,		: yes, use FF
+
+ENDPATCH(Patch to correctly display SIO EIA leads through X-DDT)
+
+	FO	STATUS
+
+:********************************************************************
+
