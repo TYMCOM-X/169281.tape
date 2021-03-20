@@ -1,0 +1,426 @@
+Please refer to (TECHTIPS:38)INDEX.ALT for update information, if any.  
+  
+TechAlert Number:022
+  
+Product Code    :XCOM
+  
+Version         :ALL VERSIONS
+  
+Author          :KEN STONE
+  
+OnTyme ID       :NSC.K/STONE
+  
+Subject         :XHOST DOCUMENTATION
+  
+Description of Techalert      :
+
+
+
+
+
+
+    I have developed a software tool for troubleshooting X.25 problems
+in a lab environment.  Below is the documentation for the implementation
+and use of this tool.  The documentation will be updated and maintained
+on (techref:38)xhost.doc.
+
+
+
+
+                                                 September 15, 1989
+
+     The XHOST, pronounced x-host or zost (as in host), is a pro-
+gram that was developed for testing X.25 without the need for
+an X.25 host and without the limitation of a loopback configuration.
+The XHOST is an excellent lab tool for the communication specialist
+to test various problems, new tymfile configurations, or perhaps a
+patch.  It can also be used to lab test a gen for a new installation.
+
+     The XHOST is a program that can be genned and loaded into a slot.  
+This program emulates the functions of an X.25 host.  The XHOST
+slot requires approximately 30k of memory and one SIO M.REF.  
+The source program for the XHOST resides on both the PDP-10 and 
+Sun systems.
+
+     In addition to the hardware mentioned above, a crossover cable
+is also required to attach the XHOST slot hardware to the X.25 dce
+slot.  Clocking for the link can be provided by the daughter
+card.  A valid host number is required for the XHOST.  The slot
+code for the XHOST is genned using NAD and loaded into the slot
+with LOADII (or BITS) like any other slot.
+     
+     A sample tymfile and command file are available to copy
+and use to gen a XHOST slot.  The XHOST slot can be logged into
+remotely through the network, much like the XOM for an X.25 slot.
+
+     The XHOST is usually trouble free.  Many problems encountered
+while in use can be corrected by entering a ^Z to clear a hung 
+condition.  If that does not clear the problem, halting and
+re-enabling the slot, or reloading the slot can correct most
+
+problems.
+
+     Any questions or comments about this document or the XHOST and
+its use should be directed to Ken Stone at 408-922-8157, or ontyme
+nsc.k/stone.
+
+
+
+
+
+     To gen the XHOST, copy the tymfile (techserv:25,33,54)xhost1.t01 into
+your directory, and edit it.  The following changes must be made. Change
+the OPTION(HOST....) to your lab XHOST host number.  Also change the
+CLDADR and CLGADR statements as defined below.  Copy the file
+(techserv:25,33,54)xhost1.c01 into your directory and edit it to
+include your new tymfile.  Below is a sample of the tymfile, marking where
+some changes need to be made.
+
+
+:---- XHOST SPECIFIC PARAMETERS ----:
+
+: CHANGE THE HOST NUMBER BELOW
+                                      : CHANGE 1
+         OPTION(HOST0,$A824)          :PUT YOUR HOST NUMBER HERE $AXXXX
+PKTSIZ   EQ 110
+MAXCIR   EQ 1                         
+
+:---- END OF XHOST SPECIFIC PARAMETERS ----:
+
+MAXHST   EQ     1                      :  N
+ENGINE   EQ     1                      :   O
+CNTRL    EQ     0C                     :
+MAXPRT   EQ     $A 32                  :     C
+IRSIZE   EQ     400                    :      H
+ORSIZE   EQ     400                    :       A
+PMAXO    EQ     $A 32                  :        N
+CRSTOP   EQ     1                      :         G
+PRODID   EQ     99                     :          E
+                                       :           S
+
+: THE TWO OPTIONS BELOW CONTROL THE ^L OPTION FOR THE MOST COMMONLY
+: USED OUTBOUND CALL THE SLOT WILL SEND 0BAA31"CLDADR"CLGADR"
+: OR 0BAA31060008233106000824
+: CHANGE CLDADR TO REFLECT THE DESTINATION THAT IS MOST COMMON
+: AND THE XHOST CALLING ADDRESS.
+: CLDADR EQ     00XXXX31
+: CLGADR EQ     0600HHHH
+
+
+CLDADR   EQ     00082331               : CHANGE 2
+CLGADR   EQ     06000824               : CHANGE 3
+: - EOF
+
+
+
+     After the XHOST and the X.25 slots are loaded, the XHOST will report
+answered.  The communication specialist can then log into the XHOST slot
+and get the first menu screen of the XHOST.  Through the menu one can
+control frames, packets and functions of the host and its link.
+
+
+:file * trash
+
+There is also a status command, a status line and a new information screen.
+Below is a sample logon into the XHOST.  The main menu will appear as below.
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+-7363-021-
+please log in: username:824;               : your XHOST host number
+
+
+
+                                 * WELCOME TO  *
+
+                               T H E   X H O S T
+                               -----------------
+                                 VERSION 1.01
+
+
+               XHOST COMMANDS:
+               -------------------
+              ^A - ANNOUNCEMENTS NEW FEATURES
+              ^X - LINK CONTROL COMMANDS
+              ^F - FRAME CREATION
+              ^P - PACKET CREATION
+              ^D - TOGGLE RESPONSE TO CALL REQUEST
+              ^K - CURRENT HOST STATUS
+              ^L - SEND OUT CANNED HOST CALL
+              ^V - CLEAR CALL MOST RECENT CHANNEL
+              ^Z - LOGOFF
+[>
+
+
+     The user can now follow the menus of the XHOST, entering
+control characters and information as prompted for by the XHOST.
+
+     The XHOST can build frames and packets from the ground up and
+send them out over the link to the X.25 slot.  Some common frames and
+packets have been abbreviated into one function on the XHOST.  Instead
+of building a SABM frame, UA and restart packet, this entire function
+could be handled under ^X - LINK CONTROL COMMANDS.
+
+     The XHOST also automatically processes all incoming X.25 data.
+Once the link is established and the X.25 slot is answered, the
+XHOST will accept any call request, and properly acknowledge the
+frame and packet layer traffic.
+
+
+
+     Here is an overview of functions available from the main menu.
+
+              ^A - ANNOUNCEMENTS NEW FEATURES
+    
+     Each time the source code changes for the XHOST, there might
+be some additional information located here as to a new feature,
+a fix, or perhaps some new documentation.  The XHOST revision can
+be seen on the main menu, or through ?vern in the slot.
+
+              ^X - LINK CONTROL COMMANDS
+
+     The XHOST can bring the X.25 link up and down, or freeze the
+link and respond to no more data, as if the line went out.
+
+              ^F - FRAME CREATION
+
+     At any time the XHOST can send a frame down the link to
+the X.25.  The tech logged into the XHOST will have to enter
+the frame and address and all applicable hex control bytes.
+
+              ^P - PACKET CREATION
+
+     This is the same function as frame creation, except frame
+information is already canned into the packet.  Packet building
+is much simplier because of quick user-friendly prompts from
+the XHOST.
+
+              ^D - TOGGLE RESPONSE TO CALL REQUEST
+
+     The XHOST will perform as usual, except that call request
+packets sent from the X.25 slot to the XHOST will be ignored.
+Entering another ^D will change this option back.  The status line
+will let the user know which state has just been entered.
+
+              ^K - CURRENT HOST STATUS
+
+     On most screens a ^K will perform much the same function
+as ?HOST when logged into an X.25 slot.  ^K will show the
+number of users and status of the link.
+
+              ^L - SEND OUT CANNED HOST CALL
+
+     The XHOST tymfile has the called and calling addresses of
+the most frequently used outbound call into the network from the
+XHOST.  The is a convenient timesaver.
+
+              ^V - CLEAR CALL MOST RECENT CHANNEL
+
+     The XHOST will transmit a clear request to the X.25 host on the
+last channel in use, with a cause of zero, diagnostic zero.
+
+              ^Z - LOGOFF
+
+     The tech can log off of the XHOST.  On many menu screens the
+^Z will drop the user back to the previous menu.
+
+
+
+
+
+     Here is a sample session using the XHOST to bring up a link,
+and place a call into the network.
+
+     The prompts received from the XHOST will be displayed below
+in upper case.  I have added comments in lower case.
+
+     Any input typed into the XHOST must be entered in upper case.
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+-7363-021-
+please log in: xray:824;
+
+
+
+                                 * WELCOME TO  *
+
+                               T H E   X H O S T
+                               -----------------
+                                 VERSION 1.01
+
+
+
+               XHOST COMMANDS:
+               -------------------
+              ^A - ANNOUNCEMENTS NEW FEATURES
+              ^X - LINK CONTROL COMMANDS
+              ^F - FRAME CREATION
+              ^P - PACKET CREATION
+              ^D - TOGGLE RESPONSE TO CALL REQUEST
+              ^K - CURRENT HOST STATUS
+              ^L - SEND OUT CANNED HOST CALL
+              ^V - CLEAR CALL MOST RECENT CHANNEL
+              ^Z - LOGOFF
+
+     At the main menu I issue a ^K to get the link status
+
+[>^K
+
+
+[>                    LINK IS DOWN.                              
+
+
+     Next I issue a ^X to change the link status
+
+[>^X
+
+
+
+
+
+
+              ^U - BRING UP THE LINK WITH SABM
+              ^A - BRING UP THE LINK WITH SARM
+              ^D - SEND DISC AND IRNORE FUTURE FRAMES
+              ^K - CURRENT HOST STATUS
+              ^F - IGNORE ALL DATA IN INFO TRANSFER
+              ^P - BEGIN TO REPROCESS DATA FROM XCOM
+              ^Z - FOR PREVIOUS SCREEN
+
+
+      Next I enter a ^U to bring the lapb link up
+
+
+
+
+[>^U                  SABM SENT.  HIT ^K FOR STARTUP STATUS          
+
+
+      Then a ^K to get the new status.
+
+
+[>^K                  LINK UP.  0000 CHANNELS IN USE.          
+
+      And then ^Z to get back to the main menu.
+
+[>^Z
+
+
+
+
+
+
+
+
+                                 * WELCOME TO  *
+
+                               T H E   X H O S T
+                               -----------------
+                                 VERSION 1.01
+
+
+
+               XHOST COMMANDS:
+               -------------------
+              ^A - ANNOUNCEMENTS NEW FEATURES
+              ^X - LINK CONTROL COMMANDS
+              ^F - FRAME CREATION
+              ^P - PACKET CREATION
+              ^D - TOGGLE RESPONSE TO CALL REQUEST
+              ^K - CURRENT HOST STATUS
+              ^L - SEND OUT CANNED HOST CALL
+              ^V - CLEAR CALL MOST RECENT CHANNEL
+              ^Z - LOGOFF
+
+    Now entering a ^P to build a packet.
+
+
+[>^P
+
+
+
+
+
+    Below one can see that the user must respond to each prompt
+from the XHOST that is followed by -->
+
+                WELCOME TO PACKET CREATION
+
+     INPUT YOUR PACKET TO BE SENT.  THE FOLLOWING INFORMATION
+     HAS BEEN PREASSIGNED FOR YOU: PRIMARY/SECONDARY 01 OR 03
+     NR/NS AND LCGN.  END THE  (Y OR N)  QUESTIONS WITHOUT  A
+     CARRIAGE RETURN.   HIT ^Z ON LAST LINE TO CANCEL PACKET.
+     HIT ^R AFTER THE PACKET IS SENT TO TRANSMIT IT AGAIN.
+     IS THIS A Q-BIT PACKET (Y OR N)?--> N
+     CHANNEL? (END WITH CR, DEFAULT IS LAST ON LINK)--> 04
+
+     NEED HELP WITH PR AND PS (Y OR N)?--> N
+
+     USE ^T TO TOGGLE BETWEEN ASCII HEX AND ALPHABETIC
+
+
+
+     
+
+     Next I enter a call request packet.  It was sent from the
+XHOST to the X.25 slot.  The slot build an X250 username that
+was rejected by the SUP because of validations.  A message is
+returned to status line, when the clear request is received by the
+XHOST.
+
+
+
+
+[>0BAA31060044443106000824
+                    CALL HAS BEEN CLEARED BY THE NETWORK.          
+
+
+     A ^Z will return us to the main menu.
+
+[>^Z
+
+
+
+
+
+
+
+
+                                 * WELCOME TO  *
+
+                               T H E   X H O S T
+                               -----------------
+                                 VERSION 1.01
+
+
+
+               XHOST COMMANDS:
+               -------------------
+
+              ^A - ANNOUNCEMENTS NEW FEATURES
+              ^X - LINK CONTROL COMMANDS
+              ^F - FRAME CREATION
+              ^P - PACKET CREATION
+              ^D - TOGGLE RESPONSE TO CALL REQUEST
+              ^K - CURRENT HOST STATUS
+              ^L - SEND OUT CANNED HOST CALL
+              ^V - CLEAR CALL MOST RECENT CHANNEL
+              ^Z - LOGOFF
+   A ^z is entered...
+
+[>^Z
+
+DROPPED BY XHOST [STONKY INC.]
+
+please log in: 
+
+
+
+
+
+
+-
+
+
+    
