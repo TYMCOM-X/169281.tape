@@ -1,0 +1,317 @@
+
+Additions to PICO Documentation:
+
+1.  Description of boot strategy
+
+2.  BBU Installation
+
+3.  Port weighting factors:
+
+    o  Inclusion of 64Kb
+    o  Revisions for Bisync
+
+4.  Expand upon ENGBug and IOCBug commands
+
+5.  FSC Updates/Quick Check List
+
+6.  Template setups for DSIO on Async, TYMSYNC and HDLC
+
+7.  Revised TYMFILE with N.NAM documentation
+
+8.  1.7 versus 1.6 changes
+
+#.  Corrections:
+
+    o  No RC on port 0
+
+    o  Page 5-1 Tools Required  
+
+         Micro ECO/FCO form   should be PICO FCO/ECO form
+	 
+    o  Page 5-3  Baord Maintenance Procedures
+    
+         Update information on the Micro ECO/FOC   should be   PICO FCO/ECO
+
+1.  Description of boot strategy
+
+
+
+2.  BBU Installation
+
+Incorporate FCO 88-176 along with all related diagrams.
+
+
+
+3.  Port weighting factors:
+
+    o  Inclusion of 64Kb
+    o  Revisions for Bisync
+
+
+
+4.  Expand upon ENGBug and IOCBug commands
+
+
+
+5.  FSC Updates/Quick Check List
+
+The following is a list of all current FCO's incorporated in the PICO
+and a quick check for each FCO:
+
+    EP Board
+    -- -----
+    
+      FCO 88-061  [Revisison A artwork only]
+        DESCRIPTION:
+          Corrects artwork errors and circuit improvements.
+
+        QUICK CHECK:
+          Check to see if I.C. chips at locations 8L and 8M are 74LS374's.
+
+      FCO 88-154  [Revision B artwork only]
+        DESCRIPTION:
+	  Circuit improvements.
+
+        QUICK CHECK:
+	  Check for jumper from location 7F pin 13 to location 7M pin 20
+	  on the component side.
+
+      FCO 88-184 
+        DESCRIPTION:
+          To improve signal timing tolerance.	  
+
+        QUICK CHECK:
+	  Check for 100 Pf capacitor at location C101, approximate board
+	  location H2.
+
+      FCO 89-122
+	DESCRIPTION:
+	  Prevent IOC card from shorting on the EP stiffener bar.
+
+        QUICK CHECK:
+	  Check for grommet installed on board stiffener directly behind
+	  connectors J3, J4 and J5.
+      
+
+    ICO Board
+    --- -----
+
+      FCO 89-140
+	DESCRIPTION:
+	  To eliminate noise on the transmit clock lines at power up.
+
+        QUICK CHECK:
+	  Check to see if there is a resisitor pack installed at
+	  location 5D.
+
+      FCO 89-123
+	DESCRIPTION:
+	  Prevents the IOC from bowing in the center and shorting out on
+	  the EP board.
+
+        QUICK CHECK:
+	  Check to see if the IOC front panel is attached to the board with
+	  screws.
+
+      FCO 89-096
+	DESCRIPTION:
+	  Corrects problem of IOC reset not operating reliably on
+	  power up.
+
+        QUICK CHECK:
+	  Check for a 3.3uF capacitor betweens pins 7A-3 and 7A-8.
+
+      FCO 89-038
+	DESCRIPTION:
+	  Firmware upgrade 1.7.
+          Corrects interrupt handling of reveive aborts, reqrite of queueing
+	  mechanism for all ports, and corrects a false error reported
+	  when running the SIO diagnostic.
+
+        QUICK CHECK:
+	  Check that IOC EPROM at location 5H is part number 790278-6F 
+	  (checksum 56B8) and that IOC EPROM at location 5L is part number
+	  790278-6F (checksum 61AE).
+
+      FCO 88-327  [Revision B artwork only]
+	DESCRIPTION:
+	  Removes a double termination on the signal IRQ6 signal, adds
+	  a missing trace from IRQ6 and corrects a problem with floating
+	  output during Self Test.
+
+        QUICK CHECK:
+	  Check for jumper wire from location RP3-8 to location 9C-8 on
+	  solder side.
+
+      FCO 88-270
+	DESCRIPTION:
+	  To correct DMA arbitration and other problems.
+
+        QUICK CHECK:
+	  Check for  74LS74 I.C. at location 2F and and 74LS241 I.C.
+	  at location 2H.
+
+
+
+    SCC Daughtercard
+    --- ------------
+
+      FCO 89-204
+	DESCRIPTION:
+	  Add split speed capability.
+
+        QUICK CHECK:
+	  Check to see if a 16-pin dip switch has been added to location 4A.
+
+
+
+6.  Template setups for DSIO on Async, TYMSYNC and HDLC
+
+7.  Revised TYMFILE with N.NAM documentation
+
+:               Hardware Configuration
+
+	if	\patact		: TYMNET PICO (Node code reference)
+MACHIN  EQ      3               : 4 port TSI
+	else			: TYMNET PICO (ISIS reference)
+MACHIN	EQ	4		: 8 port PICO
+	ei
+
+
+SILINS  EQ      $A 1    :  SIO Node Code v.35 OR V.24
+NSYNC   EQ      3       :  No. of ESYNC lines                     N890162
+NLINES  EQ      1       :  SYNC lines for NodeCode                N890115
+M.NCARD EQ      1       :  Number of SIO mother-boards
+M.DA0   EQ      80      :  Device address for mother-board 0
+M.NP0   EQ      $A 5    :  Number of ports for mother-board 0     N890162
+
+:               ISIS Configuration Constraints
+NSLOT   EQ      1       :  Number of application/interface slots  N890162
+NLU     EQ      $A 2    :  Max. number of logical units per slot  N890115
+
+:               Node Configuration
+MACHNM  EQ      $8 2144 :  Node number
+HST0    EQ      $A  244 :  ISIS Kernel host number
+NETID   EQ      $A   56 :  Network Identifier (NTSNet)
+SUP     EQ      0       :  1 if a SUPERVISOR resides on node
+TII     EQ      1       :  1 if using TYMNET-II on this node
+LBOOT   EQ      0       :  Do not reserve 4K of memory for bootstrap
+NOSEG   EQ      0	:  No segmentation optimization
+PTHRU   EQ      0       :  1 if passthroughs inhibitted
+NPTHR   EQ      $A 256  :  Number of passthroughs (default 256)
+XLINKS  EQ      1       :  Number of wild card neighbors (must be WS8)
+IKNRNG  EQ      1       :  ISIS kernel Neg index-ver 7.0+
+OLDSUP  EQ      0       :  Does not talk to version 41.01 SUP
+
+:       Network Configuration - Neighbor, groups, window size
+:       * - Remote site has PSM - Only ONE of these neighbors
+:           will be connected to this node at any given time.
+
+TIILNK(2167,16,8,,)             : 
+TIILNK(2133,16,8,,)             : 
+
+
+	if	1-\patact	: ISIS definitions (ignored by Node Code)
+	
+:***********************************************************************
+:*************************  PICO SCC VALUES  ***************************
+:***********************************************************************
+
+:  NON-default SCC values (overrides the default SCC values).
+:
+:  NAN.M(a,b,c,d,e,f,g)
+:        | | | | | | |
+:        | | | | | |  -- Transmit clock line source (TRC)
+:        | | | | |  ---- Transmit clock line IN/OUT (input or output)
+:        | | | |  ------ Transmit clock source (TRC, BRG)
+:        | | |  -------- Receive clock source (RTC, BRG)
+:        | |  ---------- Channel baud rate (2400,4800,9600,14K,19K,64K)
+:        |  ------------ Channel type (DMA,HDL,ASY,ESY)
+:         -------------- Channel # (0-7)
+
+	
+	NAN.M(0,DMA,1200)
+	NAN.M(1,DMA,1200)
+	NAN.M(2,HDL,4800,RTC,BRG,OUT,TRC)       : Node Code Line to 2167
+	NAN.M(3,ESY,4800,RTC,BRG,OUT,TRC)	: Node Code Line to 2133
+	NAN.M(4,ESY,2400,RTC,TRC,IN,TRC)	: 3270T  line    
+	NAN.M(5,ESY,2400,RTC,TRC,IN,TRC)	: 3270T  line    
+	NAN.M(6,ASY,300)
+	NAN.M(7,ASY,300)
+
+:
+:  Hardware straps for ports =
+:
+:    Port 0	= Jumpers at  E24-E25, E13-E14, E81-E82, E16-E17, E10-E11
+:		  Removed at  E95-E96  
+:
+:    Port 1	= Jumpers at  E29-30, E35-E36, E78-E79, E38-E39, E26-E27
+:		  Removed at  E97-E98
+:
+:    Port 2	= Jumpers at  E8-E9, E91-E92, E93-E94
+:		  Removed at  E85-E86
+:
+:    Port 3	= Jumpers at  E4-E5, E87-E88, E89-E90
+:		  Removed at  E83-E84
+:
+:    Port 4	= Jumpers at  E2-E3
+:                 Switch  2B-1 Closed
+:                         2B-2 Open
+:                         2D-4 Open
+:                         4A-1 Closed
+:                         4A-2 Open
+:
+:    Port 5	= Jumpers at  E5-E6
+:                 Switch  2B-3 Closed
+:                         2B-4 Open
+:                         2D-5 Open
+:                         4A-3 Closed
+:                         4A-4 Open
+:
+:    Port 6	= Jumpers at  E7-E8
+:                 Switch  2B-6 Open
+:                         2B-5 Closed
+:                         2D-6 Open
+:                         4A-5 Closed
+:                         4A-6 Open
+:
+:    Port 6	= Jumpers at  E11-E12
+:                 Switch  2B-7 Open
+:                         2B-8 Closed
+:                         2D-7 Open
+:                         4A-7 Closed
+:                         4A-8 Open
+:
+
+	ei
+
+
+
+:       SLOT 0 --- NODE CODE
+S0CORE  EQ      $A 230
+NLUS0   EQ      $A 2                                             
+S0L0    S.REF(3)                 : To 2133 SYNC port 2           
+S0L1    M.REF(0,2)               : To 2167 SIO  port 3           
+
+:       SLOT 1 --- 3270T                                         
+S1CORE  EQ      $A 200                                           
+NLUS1   EQ      $A 2                                             
+S1L0    S.REF(4)                                                 
+S1L1    S.REF(5)                                                 
+
+
+
+P1SIZE  EQ      800			: Increase size of patch areas
+PHSIZE  EQ      $0 400
+
+        END
+
+
+
+
+
+8.  1.7 versus 1.6 changes
+
+
+
+   
