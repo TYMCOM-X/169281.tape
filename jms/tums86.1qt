@@ -1,0 +1,251 @@
+From: FLETCHERC@X930.Tymnet 
+Date: Thu, 9 Jan 86 8:50:55 PST 
+To: jms 
+Subject: dual kl10 in st. louis 
+
+Kl10 smp system in st. louis has been down since Monday January 6th
+and Ray Donahue is working on it.  Would you call Brett Fairchild
+at 314/233-4849 just to talk with him about problems and possible
+to talk with Donahue?
+
+Also, according to Ted Atkinson SMP only supports 4 front ends.
+Is that true according to your understanding?  Brett wants to
+add a DN20 with leased lines for remote concentrators but has
+been told that will exceed the maximum allowable number of
+frontends.
+
+	Craig
+From: FLETCHERC@X930.Tymnet 
+Date: Thu, 9 Jan 86 11:12:50 PST 
+To: jms 
+Subject: courses 
+
+
+Here are the courses and dates for TYMNET training:
+
+502 Network Operations and Control	2/19-2/28
+
+400 Intro to ISIS software		3/3-3/7
+
+235 Async TYMCOM/CONSAT			3/31-4/4
+
+
+Classes begin at 8:30 at 2665 N. FIrst St. in San Jose.
+
+
+	Craig
+From: Joe Smith <JMS@X930.Tymnet> (Liberty Street in Fremont 116-2512) 
+Date: Thu, 9 Jan 86 13:05:42 PST 
+To: Craig Fletcher <fletcherc@X930.Tymnet>, Brett Fairchild
+	<IPC.B/FAIRCHILD@ONTYME.tymnet> 
+Subject: FEs on dual KL. 
+
+The dual KL in St. Louis currently has 6 front-ends, 5 of which are active
+(the 6th is used only if one KL is down).
+
+TOPS-10 supports 8 front-ends, 4 per CPU in a dual system.
+
+CPU0 DTE0 = RSX20F console front end on the "boot" CPU
+CPU0 DTE1 = DN87S  ASYNC interface for ANF10 network (connected to TYMNET)
+CPU0 DTE2 = DN61S  IBM BISYNC line (only this one on CPU0 works in 7.01)
+CPU0 DTE3 = available, can be a DN20 acting as a DN87S or talking to a DN200
+CPU1 DTE0 = RSX20F console front end on the "slave" CPU
+CPU1 DTE1 = DN87S  ASYNC interface for ANF10 network (connected to TYMNET)
+CPU1 DTE2 = DN61S  IBM BISYNC (TOPS10 7.01 cannot access DN61 in CPU1)
+CPU1 DTE3 = available, can be a DN20 acting as a DN87S or talking to a DN200
+
+The dual KL can have two more front ends connected to it, but that is not
+necessary.  You can run a leased line from either DN87S to a remote
+concentrator.
+
+	 +======+======+	+======+
+to IBM --|DN61 0| KL 0 |	| KL 1 |
+	 +======+======+  (C)	+======+
+		|DN87 0|--------|DN87 1|
+		+=.==.=+	+=.==.=+
+		 /    \		 /    \
+             (D)/      \(A)  (B)/      \(E)
+	       /	\      /	\
+	leased line    +=.====.=+    leased line
+		       |TYMCOMs |
+		       +========+
+
+Link (A) consists of 32 async lines connected to TYMNET.  Link (B) is 24 lines.
+Line (C) is a sync line which allows link (B) to continue working even if KL 1
+goes down, and allows link (A) to continue working even if KL 0 goes down.
+(Link (C) was not installed in October, and should be run from one DQ11 to the
+other.)  Each DN87 can have up to 12 sync lines (DQ11).  The sync lines can
+be connected to a DN80, DN81, DN82, DN200, or to another DN87.
+
+I recommend sync lines between all the DN87s in St. Louis and to any new
+remote concentrator.  The link between DEC1 and DEC2 would allow files to
+be transferred over the network (instead of having to write them to tape).
+
+Joe
+Received: From EMSTXS.Ontyme.Tymnet by X930.Tymnet; Tue, 14 Jan 86 18:01:06 UT
+From: IPC.B/FAIRCHILD@Ontyme.Tymnet 
+Date: 14 JAN 86 07:26:25 
+To: TXS.J/SMITH@Ontyme.Tymnet 
+Message-id: A99447@Ontyme.Tymnet 
+Subject: "JOe, Thanks for the info re: formatting"... 
+
+JOe,
+
+Thanks for the info re: formatting diwsk poacks. We also have to change the
+sa10 address and do some other weird things to get it to run. Also, can you
+tell me more about the bat block initiator in the sa10 diag? |Ted and Barbara
+always initiate them before running twice or once on the packs.
+
+Following up on our conversation of a couple of days ago... Can a dn87s take
+the place of a dn20 in a network type connection? ie anf10 connection from
+dn20 to remote concentrators? Do you need any other info to find out? And
+will it cost me to find out? if so let me know and i will get an mcn fior you
+to charge it to.
+Also I am trying to get MDCIS to take you and Craig as limited software support.
+example, x hours per week to enable us to ask you questions. Barbara and Ted
+are just not reliable enough.
+
+Brett
+From: FLETCHERC@X930.Tymnet 
+Date: Mon, 20 Jan 86 16:53:09 PST 
+To: carl, osman, jms 
+Subject: timecards 
+
+Would you enter standby time with sub-account 6024 in the future.
+I think the other directions are in error.
+
+	Craig
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Fri, 28 Feb 86 16:58:59 PST 
+To: Joe Smith <jms@X930.Tymnet> 
+Subject: Please DOCUMENT your changes!!! 
+
+Please!!!
+  Especially any changes which affect how things work.  There isn't any
+thing mentioned about making it IMPOSSIBLE to GFD to [1,1] except in the
+sources.  I didn't have TSTSUP and I needed to look at some stuff in
+[1,1] on 24 and couldn't... 'cause I didn't have a lot of stuff and did
+NOT know that you had put in that check.
+
+  I also think that if you have JL you should be able to GFD to [1,1]!!
+  ..or WA  ...what do you think? ...  if I can scribble anywhere, I ought
+  to be able to get around the software locks so I can see what I want to
+  scribble on withot lots of difficulty!
+
+/Carl
+From: Joe Smith <JMS@X930.Tymnet> (Liberty Street in Fremont 116-2512) 
+Date: Sat, 1 Mar 86 12:01:43 PST 
+To: Carl A Baltrunas <Carl@X930.Tymnet> 
+Subject: Re: Please DOCUMENT your changes!!! 
+In-reply-to: your message of Fri, 28 Feb 86 16:58:59 PST
+
+Sorry about that.  The change that made SYS: be [1,4] always was a result of
+trying to avoid the problem that output messages to the CTY constantly when
+at detached job, GFD'd to [1,1] could not run SYS:LOGOUT.  When the patch was
+removed, I put in the CHGPPN to [1,1] check.
+
+1) No one is allowed to LOGIN to [1,1].
+2) No one is allowed to GFD to [1,1].  If you need to look at files in [1,1],
+   put the PPN in the LOOKUP block.  Relying on the default is wrong.
+3) No one is allowed to create files in [1,1] without the extension of UFD.
+
+The latter point may be debated, but if you have WF and JL you don't need to
+use GFD, just reference the PPN [1,1] explicitly.
+
+What was it that you needed to do what required GFDing to UFD?
+From: DENCOFF@X930.Tymnet 
+Date: Sun, 2 Mar 86 15:04:38 PST 
+To: Joe Smith <JMS@X930.Tymnet> 
+Subject: Thanks! 
+~rFrom: Dennis Coffey Tymcom-X <DENCOFF@C36>
+
+      Thanks, to you and Sally for being with us.  Your being among our
+official Quaker witnesses have made you two part of our marriage, and your
+celebration with us and our families and friends added to our joy and
+celebration.  See you in a week!
+
+
+      Your friends,
+      Dennis and Nancy
+
+
+P.S.  Nancy says "Thank you" cards will follow the honeymoon.
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Tue, 18 Mar 86 0:13:14 PST 
+To: Carl A Baltrunas <Carl@X930.Tymnet>, Osman Guven <osman@X930.Tymnet>, Joe
+	Smith <jms@X930.Tymnet> 
+Cc: Craig Fletcher <fletcherc@X930.Tymnet>, Dennis Coffey
+	<dencoff@X930.Tymnet>, Bruce Ring <bring@C26.Tymnet> 
+Subject: Re: PAKCOP 3675 blocks/pages 
+
+It might be a nice idea to "read-only" blocks and "write-only" pages with
+a version of PAKCOP... Yes, I realize we will have extra pages after just
+such a transfer, and that SAT.SYS would need to be fixed up, but it might
+well be worth doing the formatting to pages and using only the same size
+in blocks until the next REFRESH. That way, we save having to do a reformat
+and a full-rebuild at the same time.
+/Carl
+From: FSC.SUP@Ontyme.Tymnet 
+Date: 15 JAN 86 16:28:54 
+To: FSC.JM/SMITH@Ontyme.Tymnet 
+Subject: Bulletin Board. 
+
+A bulletin board has been added to the FSC OnTyme account.  Items
+of  general interest will be placed on the bulletin board instead
+of in your individual mailbox.
+
+To  use  the bulletin board,  log into OnTyme with  the  username
+FSC.NEWS and a key of WEL COME
+
+If  you  have any items of general interest that you  would  like
+placed on the bulletin board,  send them to FSC.SUP along with  a
+request that it be put on the bulletin board.
+
+Hopefully,  this  will  further  cut down on  'junk'  mail.   Any
+problems  or questions,  contact Carmen Reyes  (FSC.SUP)  - (415)
+794-2546.
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Wed, 22 Jan 86 15:20:52 PST 
+To: Joe Smith <jms@X930.Tymnet>, William R Soley <wrs@C39.Tymnet> 
+Subject: FLEXIT reliability 
+
+I have a test program put together to test Bill's FRMRUN routine, but I
+think that he's using a newer SAIL version than I have.  I need to obtain
+the source that he's using and incorporate it into the test program to
+reliably attempt to simulate the same environment MAIL is using.
+
+I'd take a look at the crashes and try to determine which locks were NOT
+released and see where they were gotten.  Apparently someone called by
+FLEXIT isn't following convention.  Or FLEXIT isn't!
+
+If Bill responds today and I get back on tonight, I will put together the
+test code so that we can test FLEXIT.
+
+Bill,
+  Can you "guess" at what environment we are looking at?  Things such as
+what files were open at the time, in what mode(s), etc...  Since we're
+getting used to SUMUUF dying with bad file info, maybe someone else isn't
+releasing locks for the same kind of causes...
+
+  Are you using (SAILIB)FRMRUN  or ?????
+
+/Carl
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Wed, 22 Jan 86 15:29:37 PST 
+To: Joe Smith <jms@X930.Tymnet> 
+Subject: BIONIC on (SYS) 
+
+I want to wait a week (total of 2 weeks) from the time it was put on
+(FTSYS).   If ONLY system 55 is affected, and Terry wants to inform
+people that she's asked for a pre-release and to contact her in case
+of problems, then it is OK for Dennis Coffey to move it to (SYS) on
+that system, (or for Dennis to have Ingrid "officially" move it).
+
+My belief is that NONE of Terry's customers are having the zero-records
+problem, and that is the only thing that the new version fixes, that was
+broken.  If ANY of her customers are still getting zero-records when they
+in fact have date, then that too is cause for putting up the new version
+on system 55.  [Most of her support is for people using VS3780].
+
+/Carl
+  
