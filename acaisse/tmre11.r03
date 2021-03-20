@@ -1,0 +1,1100 @@
+program tmre;
+
+const
+  product_max = 256;
+  block_size = 2 (* pages *) ;
+  page_size = 256 (* bytes *) ;
+  basic_set_max = 256;
+  slot_max = 16;
+
+
+
+var
+  number_of_files,
+  btree_max: integer;
+
+
+function even(n: integer): boolean;
+
+begin
+  even := (n mod 2) = 0
+end;
+
+
+function prime(n: integer): boolean;
+
+var
+  i, m: integer;
+  p: boolean;
+
+begin
+  if even(n) or (n < 2)
+  then p := FALSE
+  else
+    begin
+      p := TRUE;
+      m := trunc(sqrt(n));
+      i := 3;
+      while (i <= m) and p do
+	begin
+	  p := (n mod i) <> 0;
+	  i := i+2
+	end (* while *)
+    end;
+  prime := p
+end (* prime *) ;
+
+
+function divide_up(n, d: integer): integer;
+
+begin
+  divide_up := (n+d-1) div d
+end (* divide_up *) ;
+
+
+
+function percent(n, p: integer): integer;
+
+begin
+  percent := divide_up(n*p, 100)
+end (* percent *) ;
+
+
+
+function vfdd_disk_allocation: integer;
+
+const
+  vfdd_entry_max = 16;
+
+begin
+  vfdd_disk_allocation :=
+    divide_up(number_of_files+2, vfdd_entry_max)
+end (* vfdd_entry_max *) ;
+
+
+
+function dir_disk_allocation: integer;
+
+const
+  dir_entry_max = 16;
+
+begin
+  dir_disk_allocation :=
+    divide_up(number_of_files, dir_entry_max)
+end (* dir_disk_allocation *) ;
+
+
+
+function b_tree(entries: integer): integer;
+
+const
+  min_page_entry	= 19;
+  btree_node_block_max	= 3;
+
+var
+  bnodes: integer;
+
+begin
+  bnodes := divide_up(entries, min_page_entry);
+  btree_max := max(btree_max, bnodes);
+  b_tree := btree_node_block_max * bnodes
+end (* b_tree *) ;
+
+
+
+function bucket(host_max: integer): integer;
+
+const
+  buffer_max = 16;
+
+begin
+  bucket := divide_up (host_max, buffer_max)
+end (* bucket *) ;
+
+
+
+function name_file(entries: integer): integer;
+
+const
+  name_entry_max = 25;
+
+begin
+  name_file := divide_up(entries, name_entry_max)
+end (* name_file *) ;
+
+
+
+(*	Name: PROFILE		*)
+
+function user_profiles(
+  alarm		: boolean;
+  usernames	: integer;
+  limits	: integer;
+  node_set_max	: integer;
+  host_set_max	: integer): integer;
+
+var
+  access_max,
+  color_max,
+  ignore_max,
+  alarm_max : integer;
+
+begin
+  number_of_files := number_of_files+1;
+  access_max :=
+    divide_up(146 + 20*limits + 32*(node_set_max + host_set_max), page_size);
+  color_max := 2;
+  ignore_max :=
+    limits *
+    divide_up(3*126 + 32*(4 + host_set_max + node_set_max), page_size);
+  if alarm
+  then alarm_max := divide_up(8, page_size)
+  else alarm_max := 0;
+  user_profiles :=
+    usernames * (access_max + color_max + ignore_max + alarm_max)
+end (* user_profiles *) ;
+
+
+(*	Name: $$$NODES		*)
+
+function node_names(node_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  node_names := name_file(node_max)
+end (* node_names *) ;
+
+
+(*	Name: $$$HOSTS		*)
+
+function host_names(host_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  host_names := name_file(host_max)
+end (* host_names *) ;
+
+
+
+(*	Name: $PRODIDS		*)
+
+function product_names: integer;
+
+begin
+  number_of_files := number_of_files+1;
+  product_names := name_file(product_max)
+end (* product_names *) ;
+
+
+
+(*	Name: $$$PROBE		*)
+
+function probe_passwords(supervisors: integer): integer;
+
+const
+  password_entry_max = 7;
+
+begin
+  number_of_files := number_of_files+1;
+  probe_passwords := divide_up(supervisors, password_entry_max)
+end (* probe_passwords *) ;
+
+
+
+(*	Name: $$$OPLOG		*)
+
+function operator_log(oper_log_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  operator_log := oper_log_max
+end (* operator_log *) ;
+
+
+
+(*	Name: REMOTEDO		*)
+
+function remote_down_messages: integer;
+
+const
+  down_page_max = 64;
+
+begin
+  number_of_files := number_of_files+1;
+  remote_down_messages := down_page_max
+end (* remote_down_messages *) ;
+
+
+
+(*	Name: SHRBUF		*)
+
+function shared_buffers(users, hosts: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  shared_buffers := (1 + (8 * hosts div PAGE_SIZE) ) * users
+end (* shared_buffers *) ;
+
+
+
+(*	Name: UDISBUFx		*)
+
+function display_buffers(users: integer): integer;
+
+const
+  row_max	= 24;
+  column_max	= 80;
+
+var
+  page_offset	: integer;
+
+begin
+  number_of_files := number_of_files+users;
+  page_offset := page_size div column_max;
+  display_buffers := users * divide_up (row_max, page_offset)
+end (* display_buffers *) ;
+
+
+(*	Name: SENDSEND		*)
+
+function send_messages(users, usermessage: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  send_messages := usermessage*users
+end (* send_messages *) ;
+
+
+(*	Name: CLSTRNAM		*)
+
+function cluster_name(cluster : boolean; node_max : integer): integer;
+
+begin
+  if cluster
+  then
+    begin
+      number_of_files := number_of_files+1;
+      cluster_name := divide_up(node_max, page_size div 4)
+    end
+  else cluster_name := 0
+end (* cluster_name *) ;
+
+
+(*	Name: CONDLOG		*)
+
+function condition_log(alarm : boolean; cond_max : integer): integer;
+
+begin
+  if alarm
+  then
+    begin
+      number_of_files := number_of_files+1;
+      condition_log := divide_up(cond_max, page_size div 16)
+    end
+  else condition_log := 0
+end (* condition_log *) ;
+
+
+(*	Name: UPNODE		*)
+
+function up_nodes(nodes: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  up_nodes := b_tree(nodes)
+end (* up_nodes *) ;
+
+
+(*	Name: DOWNNODE		*)
+
+function down_nodes(node_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  down_nodes := b_tree(node_max)
+end (* down_nodes *) ;
+
+
+(*	Name: ACTVNODE		*)
+
+function active_nodes(node_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  active_nodes := b_tree(node_max)
+end (* active_nodes *) ;
+
+
+(*	Name: RECRNODE		*)
+
+function recur_nodes(node_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  recur_nodes := b_tree(node_max)
+end (* recur_nodes *) ;
+
+
+(*	Name: NODEKRNL		*)
+
+function node_kernel(reload : boolean; nodes: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      node_kernel := b_tree(nodes)
+    end
+  else node_kernel := 0
+end (* node_kernel *) ;
+
+
+(*	Name: SHUTLINK		*)
+
+function shut_links(nodes, links, shut_percent: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  shut_links :=
+    b_tree(percent(links*nodes div 2, shut_percent))
+end (* shut_links *) ;
+
+
+
+(*	Name: ACTVLINK		*)
+
+function active_links(nodes, links: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  active_links := b_tree(links*nodes)
+end (* active_links *) ;
+
+
+
+(*	Name: OUTPORT		*)
+
+function out_ports(nodes, ports, out_percent: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  out_ports := b_tree(percent(ports*nodes, out_percent))
+end (* out_ports *) ;
+
+
+
+(*	Name: ACTVPORT		*)
+
+function active_ports(nodes, ports: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  active_ports := b_tree(ports*nodes)
+end (* active_ports *) ;
+
+
+
+(*	Name: RECRLINE		*)
+
+function recur_lines(nodes, ports: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  recur_lines := b_tree(ports*nodes)
+end (* recur_lines *) ;
+
+
+
+(*	Name: EXPCHOST		*)
+
+function exception_hosts(hosts: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  exception_hosts := b_tree(hosts)
+end (* exception_hosts *) ;
+
+
+
+(*	Name: ACTVHOST		*)
+
+function active_hosts(hosts: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  active_hosts := b_tree(hosts)
+end (* active_hosts *) ;
+
+
+
+(*	Name: RECRHOST		*)
+
+function recur_hosts(hosts: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  recur_hosts := b_tree(hosts)
+end (* recur_hosts *) ;
+
+
+
+(*	Name: HOSTSLOT		*)
+
+function host_slot(reload : boolean; hosts: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      host_slot := b_tree(hosts)
+    end
+  else host_slot := 0
+end (* host_slot *) ;
+
+
+
+(*	Name: SLOTNODE		*)
+
+function slot_node(reload : boolean; nodes: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      slot_node := b_tree(slot_max*nodes)
+    end
+  else slot_node := 0
+end (* slot_node *) ;
+
+
+
+(*	Name: SLOTHOST		*)
+
+function slot_host(reload : boolean; hosts: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      slot_host := b_tree(hosts)
+    end
+  else slot_host := 0
+end (* slot_host *) ;
+
+
+
+(*	Name: RELONODE		*)
+
+function reload_node(reload : boolean; nodes: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      reload_node := b_tree(nodes)
+    end
+  else reload_node := 0
+end (* reload_node *) ;
+
+
+
+(*	Name: RELOSLOT		*)
+
+function reload_slot(reload : boolean; nodes: integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      reload_slot := b_tree(slot_max*nodes)
+    end
+  else reload_slot := 0
+end (* reload_slot *) ;
+
+
+
+(*	Name: RELODATA		*)
+
+function reload_data(
+  reload : boolean; node_set_max, host_set_max : integer): integer;
+
+begin
+  if reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      reload_data :=
+	divide_up(32*(node_set_max + host_set_max) + 2*12, page_size)
+    end
+  else reload_data := 0
+end (* reload_data *) ;
+
+
+
+(*	Name: LOCAHOST		*)
+
+function host_locations(hosts: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  host_locations := b_tree(hosts)
+end (* host_locations *) ;
+
+
+(*	Name: LOCABUCK		*)
+
+function host_bucket(host_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+1;
+  host_bucket := bucket(host_max)
+end (* host_bucket *) ;
+
+
+
+(*	Name: THRECOND		*)
+
+function thres_file(alarm : boolean; thres_max: integer): integer;
+
+begin
+  if alarm
+  then
+    begin
+      number_of_files := number_of_files+1;
+      thres_file := thres_max
+    end
+  else thres_file := 0
+end (* thres_file *) ;
+
+
+
+(*	Name: HOSTSTAT		*)
+
+function host_status(host_mess_max: integer): integer;
+
+begin
+  number_of_files := number_of_files+2;
+  host_status := divide_up(host_mess_max, 4) * 5 + b_tree (host_mess_max)
+end (* host_status *) ;
+
+
+
+(*	Name: XOMHOSTS		*)
+
+function xom_hosts(reload, xcom : boolean; hosts: integer): integer;
+
+begin
+  if reload or xcom
+  then
+    begin
+      number_of_files := number_of_files+1;
+      xom_hosts := divide_up(hosts, 16)
+    end
+  else xom_hosts := 0
+end (* xom_hosts *) ;
+
+
+
+(*	Name: BACKGRND		*)
+
+function background(alarm, reload : boolean; users: integer): integer;
+
+begin
+  if alarm or reload
+  then
+    begin
+      number_of_files := number_of_files+1;
+      background := divide_up(users, page_size div (2 + 4 + 20))
+    end
+  else background := 0
+end (* background *) ;
+
+
+(*	Name: MISCDATA		*)
+
+function misc_data: integer;
+
+begin
+  number_of_files := number_of_files+1;
+  misc_data := 1
+end (* misc_data *) ;
+
+
+(*	Name: TIMESTMP		*)
+
+function timestamp (
+      usernames, limits, host_max, node_max, supervisors,
+      hosts, users, xom_host_max : integer;
+      auto_back, reload, alarm, cluster, xom_restore : boolean) : integer;
+
+var
+  entries : integer;
+
+begin
+  if auto_back
+  then
+    begin
+      number_of_files := number_of_files+1;
+      entries := entries + 6*usernames + limits*usernames;
+      entries := entries + 2*host_max+node_max+product_max+supervisors;
+      if reload
+      then entries := entries + hosts;
+      if cluster
+      then entries := entries + node_max;
+      if reload or alarm
+      then entries := entries + users;
+      if xom_restore
+      then entries := entries + 2*xom_host_max;
+      entries := entries + 3;
+      timestamp := divide_up (entries, 32)
+    end
+  else timestamp := 0
+end (* timestamp *) ;
+
+
+(*	Name: TRANSLOG		*)
+
+function translog (auto_back : boolean) : integer;
+
+begin
+  if auto_back
+  then
+    begin
+      number_of_files := number_of_files + 1;
+      translog := 10000
+    end
+  else translog := 0
+end (* translog *) ;
+
+
+(*	Name: ERLOGDAT		*)
+
+function errorlog : integer;
+
+begin
+  number_of_files := number_of_files + 1;
+  errorlog := 85
+end (* errorlog *) ;
+
+
+(*	Name: ALRMDEFS		*)
+
+function alarmdata (
+  node_set_max, host_set_max : integer;
+  node_alarms, host_alarms, link_alarms, slot_alarms, general_alarms : integer;
+  alarm : boolean) : integer;
+
+var
+  header_data,
+  node_data,
+  node_filler,
+  host_data,
+  host_filler : integer;
+
+begin
+  if alarm
+  then
+    begin
+      number_of_files := number_of_files + 1;
+      header_data := page_size div 2;
+      node_filler :=
+	page_size - ((header_data + node_set_max*32) mod page_size);
+      host_filler :=
+	page_size - ((header_data + host_set_max*32) mod page_size);
+      node_data :=
+	divide_up(header_data + node_set_max*32 + node_filler, page_size);
+      host_data :=
+	divide_up(header_data + host_set_max*32 + host_filler, page_size);
+      alarmdata :=
+	node_data * node_alarms + host_data * host_alarms +
+	link_alarms + slot_alarms + general_alarms
+    end
+  else alarmdata := 0
+end (* alarmdata *) ;
+
+
+(*	Name: XOMDATA & XOMREST 		*)
+
+function xomrestfile (
+  xom_host_max, pages_per_xomhost, users : integer;
+  xom_restore : boolean) : integer;
+
+var
+  data_pages,
+  xomdata,
+  xomrest : integer;
+
+begin
+  if xom_restore
+  then
+    begin
+      number_of_files := number_of_files + 1;
+      data_pages :=
+	divide_up(xom_host_max * pages_per_xomhost, basic_set_max)
+	* basic_set_max;
+      xomdata :=
+	2 *  divide_up(xom_host_max, page_size div 4) +
+	data_pages +
+	divide_up(data_pages, 8*basic_set_max);
+
+      number_of_files := number_of_files + 1;
+      data_pages :=
+	divide_up(pages_per_xomhost*users, basic_set_max) * basic_set_max;
+      xomrest :=
+	data_pages + data_pages div (8*basic_set_max) + 1;
+
+      xomrestfile := xomdata + xomrest
+    end
+  else xomrestfile := 0
+end (* xomrestfile *) ;
+
+
+(*	Name: HOSTNBRS 		*)
+
+function nodelist (
+  node_max : integer;
+  xray, xddt : boolean) : integer;
+
+begin
+  if xray or xddt
+  then
+    begin
+      number_of_files := number_of_files + 1;
+      nodelist := divide_up (node_max, 64)
+    end
+  else nodelist := 0
+end (* nodelist *) ;
+
+
+(*	Name: XRAYFILE 		*)
+
+function xrayfile (xray : boolean) : integer;
+
+begin
+  if xray
+  then
+    begin
+      number_of_files := number_of_files + 1;
+      xrayfile := 100
+    end
+  else xrayfile := 0
+end (* xrayfile *) ;
+
+
+procedure read_yes_or_no(var answer : boolean);
+
+var
+  line : char;
+  ok   : boolean;
+
+begin
+  repeat
+    readln(tty);
+    read(tty, line);
+    while not eoln(tty) do get(tty);
+    ok := TRUE;
+    if (line = 'y') or (line = 'Y')
+    then answer := TRUE
+    else if (line = 'n') or (line = 'N')
+    then answer := FALSE
+    else ok := FALSE;
+    if not ok
+    then
+      begin
+	write(tty, '**** Answer Y or N ****   ? '); break
+      end
+  until ok
+end (* read_yes_or_no *) ;
+
+procedure compute;
+
+var
+  alarm,
+  reload,
+  cluster,
+  xcom,
+  xom_restore,
+  auto_back,
+  xddt,
+  shut_main,
+  multi_host,
+  xom,
+  archive,
+  xray : boolean;
+  total,
+  users,
+  usernames,
+  limits,
+  usermessage,
+  supervisors,
+  tymii,
+  hostnummax,
+  nodes,
+  hosts,
+  links,
+  ports,
+  shut_percent,
+  out_percent,
+  oper_log_max,
+  host_mess_max,
+  cond_max,
+  thres_max,
+  xom_host_max,
+  page_xom_host,
+  node_alarms,
+  host_alarms,
+  link_alarms,
+  slot_alarms,
+  general_alarms,
+  node_max,
+  host_max,
+  node_set_max,
+  host_set_max,
+  drive,
+  cyl_pages: integer;
+
+begin
+  writeln(tty);
+  writeln(tty, 'TMCS resources estimater (Product TMRE, Id 73) Version 11.03');
+  writeln(tty);
+  writeln(tty, 'Use only for TMCS version 11.03');
+  writeln(tty);
+  writeln(tty, 'Enter CONFIG file values');
+  write(tty, '  alarm facility enabled          ? ');
+  break; read_yes_or_no(alarm);
+  write(tty, '  reload facility enabled         ? ');
+  break; read_yes_or_no(reload);
+  write(tty, '  cluster names enabled           ? ');
+  break; read_yes_or_no(cluster);
+  write(tty, '  XCOM access enabaled            ? ');
+  break; read_yes_or_no(xcom);
+  write(tty, '  XOM restore enabled             ? ');
+  break; read_yes_or_no(xom_restore);
+  write(tty, '  automatic backup enabled        ? ');
+  break; read_yes_or_no(auto_back);
+  write(tty, '  XDDT access enabled             ? ');
+  break; read_yes_or_no(xddt);
+  write(tty, '  shut link mainteneance enabled  ? ');
+  break; read_yes_or_no(shut_main);
+  write(tty, '  multiple host message enabled   ? ');
+  break; read_yes_or_no(multi_host);
+  write(tty, '  XOM access enabled              ? ');
+  break; read_yes_or_no(xom);
+  write(tty, '  archive enabled                 ? ');
+  break; read_yes_or_no(archive);
+
+  xray := FALSE (* for now *) ;
+
+  write(tty, '  user_max                        = ');
+  break; read(tty, users);
+  write(tty, '  username_max                    = ');
+  break; read(tty, usernames);
+  write(tty, '  limit_set_max                   = ');
+  break; read(tty, limits);
+  write(tty, '  user_message_max                = ');
+  break; read(tty, usermessage);
+  write(tty, '  supervisor_max                  = ');
+  break; read(tty, supervisors);
+  write(tty, '  tymnet_ii_node_max              = ');
+  break; read(tty, tymii);
+  write(tty, '  host_number_max                 = ');
+  break; read(tty, hostnummax);
+  write(tty, '  node_configuration_max          = ');
+  break; read(tty, nodes);
+  write(tty, '  host_configuration_max          = ');
+  break; read(tty, hosts);
+  write(tty, '  links_per_node                  = ');
+  break; read(tty, links);
+  write(tty, '  ports_per_node                  = ');
+  break; read(tty, ports);
+  write(tty, '  link_shut_percentage            = ');
+  break; read(tty, shut_percent);
+  write(tty, '  port_out_percentage        = ');
+  break; read(tty, out_percent);
+  write(tty, '  oper_log_max                    = ');
+  break; read(tty, oper_log_max);
+  write(tty, '  host_status_message_max         = ');
+  break; read(tty, host_mess_max);
+  if alarm
+  then
+    begin
+      write(tty, '  condition_log_length            = ');
+      break; read(tty, cond_max);
+      write(tty, '  threshold_condition_max         = ');
+      break; read(tty, thres_max);
+      write(tty, '  number_of_node_alarms           = ');
+      break; read(tty, node_alarms);
+      write(tty, '  number_of_host_alarms           = ');
+      break; read(tty, host_alarms);
+      write(tty, '  number_of_link_alarms           = ');
+      break; read(tty, link_alarms);
+      write(tty, '  number_of_slot_alarms           = ');
+      break; read(tty, slot_alarms);
+      write(tty, '  number_of_general_alarms        = ');
+      break; read(tty, general_alarms)
+    end
+  else
+    begin
+      cond_max := 0;
+      thres_max := 0;
+      node_alarms := 0;
+      host_alarms := 0;
+      link_alarms := 0;
+      slot_alarms := 0;
+      general_alarms := 0
+    end;
+  if xom_restore
+  then
+    begin
+      write(tty, '  xom_host_max                    = ');
+      break; read(tty, xom_host_max);
+      write(tty, '  pages_per_xomhost               = ');
+      break; read(tty, page_xom_host)
+    end
+  else
+    begin
+      xom_host_max := 0;
+      page_xom_host := 0
+    end;
+
+  repeat
+    writeln(tty);
+    writeln(tty, 'Enter which disk drive used');
+    writeln(tty, '  1 for Ampex 10M byte disk (48 sectors/cylinder)');
+    writeln(tty, '  2 for MSC1400  80M byte disk ( 265 sectors/cylinder)');
+    writeln(tty, '  3 for MSC1400 160M byte disk ( 530 sectors/cylinder)');
+    writeln(tty, '  4 for MSC1400 200M byte disk ( 665 sectors/cylinder)');
+    writeln(tty, '  5 for MSC1400 300M byte disk (1007 sectors/cylinder)');
+    writeln(tty, '  6 to specify sectors/cylinder');
+    write(tty, 'Which drive? ');
+    break; read(tty, drive)
+  until (1 <= drive) and (drive <= 6);
+  case drive of
+    1: cyl_pages := 48;
+    2: cyl_pages := 265;
+    3: cyl_pages := 530;
+    4: cyl_pages := 665;
+    5: cyl_pages := 1007;
+    6:
+      begin
+	write(tty, 'Enter sectors/cylinder: ');
+	break; read(tty, cyl_pages)
+      end
+  end (* case *) ;
+
+  btree_max := 0;
+  number_of_files := 0;
+
+  node_max := 1+tymii;
+  host_max := 1+hostnummax;
+  node_set_max := (node_max+basic_set_max-1) div basic_set_max;
+  host_set_max := (host_max+basic_set_max-1) div basic_set_max;
+
+  total := 0;
+  total := total +
+    user_profiles(alarm, usernames, limits, node_set_max, host_set_max);
+  total := total + node_names(node_max);
+  total := total + host_names(host_max);
+  total := total + product_names;
+  total := total + probe_passwords(supervisors);
+  total := total + operator_log(oper_log_max);
+  total := total + remote_down_messages;
+  total := total + shared_buffers(users, hosts);
+  total := total + display_buffers(users);
+  total := total + send_messages(users, usermessage);
+  total := total + cluster_names(cluster, node_max);
+  total := total + condition_log(alarm, cond_max);
+  total := total + up_nodes(nodes);
+  total := total + down_nodes(node_max);
+  total := total + active_nodes(node_max);
+  total := total + recur_nodes(node_max);
+  total := total + node_kernel(reload, nodes);
+  total := total + shut_links(nodes, links, shut_percent);
+  total := total + active_links(nodes, links);
+  total := total + out_ports(nodes, ports, out_percent);
+  total := total + active_ports(nodes, ports);
+  total := total + recur_lines(nodes, ports);
+  total := total + exception_hosts(hosts);
+  total := total + active_hosts(hosts);
+  total := total + recur_hosts(hosts);
+  total := total + host_slot(reload, hosts);
+  total := total + slot_node(reload, nodes);
+  total := total + slot_host(reload, hosts);
+  total := total + reload_node(reload, nodes);
+  total := total + reload_slot(reload, nodes);
+  total := total + reload_data(reload, node_set_max, host_set_max);
+  total := total + host_locations(hosts);
+  total := total + host_bucket(host_max);
+  total := total + thres_file(alarm, thres_max);
+  total := total + host_status(host_mess_max);
+  total := total + xom_hosts(reload, xcom, hosts);
+  total := total + background(alarm, reload, users);
+  total := total + misc_data;
+  total :=
+    total +
+    timestamp (
+      usernames, limits, host_max, node_max, supervisors,
+      hosts, users, xom_host_max,
+      auto_back, reload, alarm, cluster, xom_restore);
+  total := total + translog (auto_back);
+  total := total + errorlog;
+  total :=
+    total +
+      alarmdata (
+	node_set_max, host_set_max,
+	node_alarms, host_alarms, link_alarms, slot_alarms, general_alarms,
+	alarm );
+  total :=
+    total + xomrestfile (xom_host_max, page_xom_host, users, xom_restore);
+  total := total + nodelist (node_max, xray, xddt);
+  total := total + xrayfile (xray);
+
+  total := total + dir_disk_allocation;
+
+  total := total + vfdd_disk_allocation;
+
+  total := total +1 (* for volume label *) ;
+
+  writeln(tty); writeln(tty); writeln(tty);
+  writeln(tty, 'total cylinders = ', divide_up(total, cyl_pages));
+  writeln(tty);
+  writeln(
+    tty, 'btree_max = ', basic_set_max*divide_up(btree_max, basic_set_max));
+
+  total := 485;
+
+  if cluster	  then total := total +  15;
+  if alarm	  then total := total +  84;
+  if reload	  then total := total +  92;
+  if shut_main	  then total := total +   7;
+  if multi_host	  then total := total +  30;
+  if xom	  then total := total + 149;
+  if xom_restore  then total := total +  78;
+  if xray	  then total := total + 127;
+  if xddt	  then total := total +  52;
+  if archive	  then total := total +  15;
+  if auto_back	  then total := total +  77;
+  if xcom	  then total := total +   5;
+
+  total :=
+    total +
+    10*users + 3*supervisors + users*(node_set_max+host_set_max) +
+    3*(node_set_max+host_set_max);
+
+  writeln(tty);
+  writeln(tty, 'memory = ', total:4, 'K bytes'); break
+
+end (* compute *) ;
+
+
+
+begin
+  compute
+end .
+    } q²
