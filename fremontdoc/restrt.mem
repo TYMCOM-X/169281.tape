@@ -1,0 +1,106 @@
+
+
+
+       
+
+
+
+                                MEMORANDUM
+
+
+
+       DATE:   28 April 1986
+
+       TO:     All Operators
+
+       FROM:   Rick Daniels
+
+       COPIES: Steve Metcalf
+               Cheryl Eldred
+               Sharon Marcotte
+               Jim Wallace
+
+       SUBJ:   Restarting PJ on System 74 or System 30 (BACKUP)
+
+       As everyone is aware of, or should be,  System  74  is  the  primary
+       system  for  running  COLLECTR (the collection of NETWORK accounting
+       data) and  System  30  is  the  BACKUP  system.   This  software  is
+       monitored  by  NETWORK  Control  and  occasionally they will request
+       assistance from the System 74 Operator.
+
+       The System 74 Operator will be called  when  the  accounting  blocks
+       have  dropped  below  2400  or when there is a SUPERVISOR move.  All
+       that they will request is that you restart PJ on the system that  it
+       is currently running on.
+
+       These procedures are ONLY for RESTARTING PJ -  not  moving  COLLECTR
+       from System 74 to System 30 and vice-versa.
+
+       Procedures for moving COLLECTR from  System  74  to  System  30  are
+       detailed  in  the  manual  COLLEC.MEM.   This  manual  is located in
+       (FREMONTDOC:74).  A copy has  also  been  placed  in  the  TYMCOM-10
+       Documentation  Station,  and  filed  in  System  30  and  System  74
+       logbooks.
+
+       This memorandum supersedes my memorandum dated 22 April 1986.
+                                                                     Page 2
+
+
+       "."SYSN (CR)
+       "TYMSHARE F74-PO34/P-4 4-18-86"
+       "."WHO.(CR)
+       "12* OPER +"
+
+       "." O MOST (CR)
+       (YOUR STATUS NAME)(CR)
+
+       "."(YOUR STATUS PASSWORD)(CR)
+
+       "."WHERE PJ (CR)
+        "ON JOB 15 DETACHED"
+
+       "."SYSTAT 15 (CR)
+       "15  DETACHED     PAM    4       SL       2655.40  0:00:00 PJ *+"
+
+       "15  REMCNT     1     DUMP SPOOL      PJ"
+
+       "."R TAKEIT (CR)
+       "TAKEIT Version ## at (TIME/DATE)"
+       "Oper name:"  YOUR NAME (CR)
+       "Password:"  YOUR PASSWORD (CR)
+       "Enter commands (Type "?" for help):"
+       SYS 15 EXEMPT (CR)
+
+        "15  PJ             PAM   SL  DETACH  exempt sldbq"
+
+       KILL 15 EXEMPT (CR)
+
+       "* Killed Job 15, user PJ <PAM> sl"
+
+       SC 400000 (CR)
+
+       "System shut"
+
+        WAIT A FEW MINUTES
+
+       SC 0 (CR)
+       "System answered"
+
+       Q (CR)
+
+       "."SC (CR)
+
+       000000 (CR)
+
+       "."R (UTIL)GOPJ (CR)
+
+       "PJ running PAM in frame #"
+
+       "EXIT"
+
+       "."SYS # (CR)
+
+          # IS FRAME NUMBER MENTIONED ABOVE
+
+        " #  DETACHED     PAM      #     SL     TRU'S    TIME    PJ +"
+
