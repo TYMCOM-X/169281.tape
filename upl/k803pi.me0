@@ -1,0 +1,590 @@
+PROCEDURE SCREEN.LOADMP
+%******************************************************************************%
+%                                                                              %
+%   This procedure was developed as a LOAD/DUMP Utility for the MAGNUM Screen  %
+%   Generator originally developed for the TYMCARE project.  It provides the   %
+%   user with an easy to use tool for moving selected screens from one user    %
+%   area to another without having to 'install' all of the screens.  It will   %
+%   also provide the ability to 'install' the screens into a different schema  %
+%   name.  (eg.  moving some of the screens from schema TYMCARE into the BASE  %
+%   schema of the MANUFACTS system.                                            %
+%                                                                              %
+%   The procedure utilizes a conversational dialogue to determine              %
+%   operation (load/dump), source of screen names (terminal/indirect file),    %
+%   and various run time parameters, including the intermediate file name.     %
+%   The list of screens to be dumped or loaded can come from the terminal or   %
+%   from an inport commands file (DO FILE).  In addition, a screen name can    %
+%   be changed during the load operation by specifying <oldname>=<newname>     %
+%   instead of <oldname>.  (eg. ATD.ADMIT1.BCM=ATD.ADMIT1)                     %
+%                                                                              %
+%   The procedure may be run from a 'DO' file or directly from the terminal.   %
+%                                                                              %
+%   It has the ability to replace an existing screen, or retain an existing    %
+%   screen, or query the terminal for action to be taken on a screen by        %
+%   screen basis.  This parameter is set during the initial dialogue.          %
+%                                                                              %
+%   The procedure also Has the ability to produce an index of a dump file      %
+%   listing SCREEN.NAME, SCREEN.TYPE, source USER.NAME, CREATION.DATE, etc.    %
+%                                                                              %
+%   A load operation will retain the original dates from the source schema or  %
+%   change the creation date to TODAY and default the modify date.             %
+%     Note:  During the load operation, CODE.DATE is always defaulted and the  %
+%            value of SCREEN.STATUS is adjusted whenever required.             %
+%                                                                              %
+%   Error messages will be handled as follows:                                 %
+%   If the message is not present in the new schema, it will be inserted.      %
+%   If the message is already present on the new schema and the texts are not  %
+%   the same, one of the following actions will be taken based on another      %
+%   initialization parameter:                                                  %
+%           a.  Replace old message and report both texts                      %
+%           b.  Type both texts and request selection by the user              %
+%           c.  Report both texts and retain the old text.                     %
+%                                                                              %
+%******************************************************************************%
+%%
+BEGIN
+
+FIELDS
+        AS.SCREEN               SAME AS SCREEN.NAME,
+        CNTR                    AS '1N',
+        CURRENT.DEFAULT         AS '12C',
+        DUMP.DATE               AS DATE 'MM/DD/YY',
+        DUMP.TIME               AS '4N',
+        END.SCREEN              SAME AS SCREEN.NAME,
+        ERR.SW                  AS '1N',
+        HIT.SW                  AS '1C',
+        HRS.                    AS '2N',
+        LITERAL.POOL            AS '100C',
+        LOAD.SW                 AS '1C',
+        LOADMP.ID               AS '26C',
+        MNS.                    AS '2N',
+        POSN                    AS '3N',
+        PROMPT.TEXT             AS '60C',
+        REC.ID                  AS '1N',
+        RESPONSE                AS '3N',
+        RUN.TYPE                AS '1C',
+        TIME.                   AS '5N',
+        SCAN.SW                 AS '1N',
+        SOURCE.USER             AS '12C',
+        SW.DATES                AS '1C',
+        SW.ERRMSG               AS '1C',
+        SW.SCREENS              AS '1C',
+        SYS.NUM                 AS '3N',
+        VALID.ANS               AS '5C',
+        Y.OR.N                  AS '1C'
+
+%%
+
+FORMAT INDEX.LINE
+    @TAB 10,SCREEN.NAME,'  ',SCREEN.TYPE,'   ',STATUS.,'     ',CRE.DATE,'  ',
+    MOD.DATE,'  ',STARTING.LINE.NO.,' - ',ENDING.LINE.NO.,@CR
+
+FORMAT IDENT.LINE
+    SCREEN.NAME,'0',SYS.NUM,SOURCE.USER,DUMP.DATE,DUMP.TIME,@CR
+
+FORMAT ERR.MSG.LINE
+    SCREEN.NAME,'8',ERR.NUM,ERROR.MESSAGE,@CR
+
+FORMAT LOOKUP.LINE
+    SCREEN.NAME,'6',FLD.NO,PRE.SELECT.STMT,RELATION.NAME,VIA.CLAUSE,THEN.STMT,
+    THEN.ERR.NUM,ELSE.STMT,ELSE.ERR.NUM,@CR
+
+FORMAT POST.PROCESS.LINE
+    SCREEN.NAME,'7',FLD.NO,POST.PROCESS.STMT,@CR
+
+FORMAT PRE.PROCESS.LINE
+    SCREEN.NAME,'5',FLD.NO,PRE.PROCESS.STMT1,PRE.PROCESS.STMT2,@CR
+
+FORMAT SCREEN.FLDS.LINE
+    SCREEN.NAME,'3',FLD.NO,X.COR,Y.COR,ACTUAL.FLD,ACTUAL.QFR,REQUIRED.,
+    MIN.LENGTH,FLD.LENGTH,HELP.,DEFAULT.EXPRESSION,FIELD.TYPE,REQ.ERR.NUM,
+    MIN.LEN.ERR.NUM,VERIFY.ERR.NUM,IS.ERR.NUM,@CR
+
+FORMAT SCREEN.KEYS.LINE
+    SCREEN.NAME,'4',FLD.NO,SINK.FLD,SINK.QFR,@CR
+
+FORMAT SCREEN.MASK.LINE
+    SCREEN.NAME,'2',LINE.NO.,LINE.,@CR
+
+FORMAT SCREENS.LINE
+    SCREEN.NAME,'1',X.COR,Y.COR,SCREEN.TYPE,STATUS.,STARTING.LINE.NO.,
+    ENDING.LINE.NO.,SPACE.X,SPACING.,CRE.DATE,MOD.DATE,CODE.DATE,@CR
+%%
+REPORT DATAFILE TO LOADMP.ID PAGE.SIZE 0 LINE.LENGTH 500
+
+REPORT INDEXFILE TO '*'
+    PAGE.TOP @127
+    BOTTOM.MARGIN 3
+    HEADING.SIZE 7
+    PAGE.HEADING
+     PRINT ' ',@FF,@SKIP 2,
+           TRIM(SOURCE.USER),':',SYS.NUM,@TAB TO 34,'DUMPFILE INDEX',
+             @TAB 13,DUMP.TIME,' ',DUMP.DATE,' Pg. ',PAGE.NUM AS 'ZN',@SKIP 1,
+           @TAB 11,'SCREEN NAME     TYPE  STATUS     CREATED  MODIFIED  DISPLAY'
+
+SOURCE LOADMP.FILE FROM LOADMP.ID FIXED FORM LINE.LENGTH 500
+  INPUT SCREEN.NAME,REC.ID,
+  CONDITIONAL ON REC.ID
+   BEGIN
+    0: SYS.NUM,SOURCE.USER,DUMP.DATE,DUMP.TIME,@CR
+    1: X.COR,Y.COR,SCREEN.TYPE,STATUS.,STARTING.LINE.NO.,
+         ENDING.LINE.NO.,SPACE.X,SPACING.,CRE.DATE,MOD.DATE,CODE.DATE,@CR
+    2: LINE.NO.,LINE.,@CR
+    3: FLD.NO,X.COR,Y.COR,ACTUAL.FLD,ACTUAL.QFR,REQUIRED.,
+         MIN.LENGTH,FLD.LENGTH,HELP.,DEFAULT.EXPRESSION,FIELD.TYPE,
+         REQ.ERR.NUM,MIN.LEN.ERR.NUM,VERIFY.ERR.NUM,IS.ERR.NUM,@CR
+    4: FLD.NO,SINK.FLD,SINK.QFR,@CR
+    5: FLD.NO,PRE.PROCESS.STMT1,PRE.PROCESS.STMT2,@CR
+    6: FLD.NO,PRE.SELECT.STMT,RELATION.NAME,VIA.CLAUSE,THEN.STMT,
+         THEN.ERR.NUM,ELSE.STMT,ELSE.ERR.NUM,@CR
+    7: FLD.NO,POST.PROCESS.STMT,@CR
+    8: ERR.NUM,ERROR.MESSAGE,@CR
+   END
+
+RELATION ERR.HOLD IS
+    KEY
+        ERR.NUM
+
+RELATION SCREEN.INDEX IS
+    KEY
+        SCREEN.NAME
+    DATA
+        AS.SCREEN,
+        CNTR,
+        LOAD.SW
+
+%%
+
+PROCEDURE LEFT.SUBSET
+        % This routine will determine if the current value of BUF %
+        % is a left subset of any of the literal strings found in %
+        % LITERAL.POOL.  LITERAL.POOL is a 100 C concatination of %
+        % "10C" strings to be checked.  A unique left subset will %
+        % return a value in RESPONSE which is a SUBSTRING pointer %
+        % into LITERAL.POOL for the argument matched.  A value of %
+        % ZERO is returned for unmatched and ambiguous conditions %
+ BEGIN
+  LET RESPONSE = 0
+  LET POSN = 1
+  LET BUF = UPPER.CASE(BUF)
+  SCAN.POOL:
+   WHILE POSN LT 100 DO
+    BEGIN
+     IF SUBSTR(LITERAL.POOL,POSN,MIN(LENGTH(BUF),10)) EQ
+        SUBSTR(BUF,1,MIN(LENGTH(BUF),10)) THEN
+      IF RESPONSE EQ 0 THEN
+       LET RESPONSE = POSN
+      ELSE
+       BEGIN
+        LET RESPONSE = 0
+        FINISH SCAN.POOL
+       END
+     ADD 10 TO POSN
+    END
+ END
+%%
+
+THE.PROCEDURE:
+ BEGIN
+
+% PARAMETER COLLECTION ROUTINE %
+
+  LET LITERAL.POOL = 'ASK       '+'DUMP      '+'END       '+'INDEX     '+
+        'KEEP      '+'LOAD      '+'ORIGINAL  '+'QUIT      '+'REPLACE   '+
+        'TODAY     '
+  LET CURRENT.DEFAULT = 'INDEX'
+  LET PROMPT.TEXT = 'RUN TYPE (Load/Dump/Index/End/Quit)'
+  LET VALID.ANS = 'DEILQ'
+  LET CNTR = 1
+  LET SCAN.SW = 1
+  GET.PARAM:
+   BEGIN
+    IF ERR.SW NE 0 THEN
+     BEGIN
+      TYPE 'Invalid Response - please re-enter',@CR
+      LET ERR.SW = 0
+     END
+    TYPE 'Please enter ',TRIM(PROMPT.TEXT),': '
+    ACCEPT BUF
+    IF BUF EQ DEFAULT THEN
+     LET BUF = CURRENT.DEFAULT
+    IF SCAN.SW = 1 THEN
+     BEGIN
+      APPLY LEFT.SUBSET
+      IF RESPONSE EQ 0 OR POSITION(VALID.ANS,SUBSTR(BUF,1,1)) EQ 0 THEN
+       BEGIN
+        LET ERR.SW = 1
+        REPEAT GET.PARAM
+       END
+     END
+    CONDITIONAL ON CNTR
+     BEGIN
+      1: BEGIN
+          IF SUBSTR(BUF,1,1) EQ 'E' OR 'Q' THEN
+           FINISH THE.PROCEDURE
+          LET RUN.TYPE = SUBSTR(BUF,1,1)
+          IF RUN.TYPE EQ 'D' THEN
+           LET CURRENT.DEFAULT = 'SCREEN.DAT-A'
+          ELSE
+           LET CURRENT.DEFAULT = 'SCREEN.DAT'
+          LET PROMPT.TEXT = 'intermediate FILE ID'
+          LET SCAN.SW = 0
+         END
+      2: BEGIN
+          LET LOADMP.ID = BUF
+          IF RUN.TYPE EQ 'I' OR 'D' THEN
+           FINISH GET.PARAM
+          LET CURRENT.DEFAULT = 'REPLACE'
+          LET PROMPT.TEXT = 'action taken for dup screen (Ask/Keep/Replace)'
+          LET SCAN.SW = 1
+          LET VALID.ANS = 'AKR'
+         END
+      3: BEGIN
+          LET SW.SCREENS = SUBSTR(BUF,1,1)
+          LET PROMPT.TEXT = 'action on dup error messages(Ask/Keep/Replace)'
+         END
+      4: BEGIN
+          LET SW.ERRMSG = SUBSTR(BUF,1,1)
+          LET CURRENT.DEFAULT = 'ORIGINAL'
+          LET PROMPT.TEXT = 'date option(Original/Today)'
+          LET VALID.ANS = 'OT'
+         END
+      5: BEGIN
+          LET SW.DATES = SUBSTR(BUF,1,1)
+          FINISH GET.PARAM
+         END
+     END
+    ADD 1 TO CNTR
+    REPEAT GET.PARAM
+   END  % GET.PARAM %
+
+% PRINT INDEX ROUTINE %
+
+  IF RUN.TYPE EQ 'I' THEN
+   WRITE REPORT INDEXFILE
+    BEGIN
+     FOR EACH LOADMP.FILE
+      IF REC.ID EQ 0 THEN
+       BEGIN
+        MOVE SYS.NUM TO SYS.NUM OF SCREEN.LOADMP
+        MOVE SOURCE.USER TO SOURCE.USER OF SCREEN.LOADMP
+        MOVE DUMP.DATE TO DUMP.DATE OF SCREEN.LOADMP
+        MOVE DUMP.TIME TO DUMP.TIME OF SCREEN.LOADMP
+       END
+      ELSE
+       IF REC.ID EQ 1 THEN
+        PRINT TO INDEXFILE INDEX.LINE
+     PRINT TO INDEXFILE ' ',@FF
+    END
+
+% DUMP SCREEN ROUTINE %
+
+  IF RUN.TYPE EQ 'D' THEN
+   WRITE REPORT DATAFILE
+    BEGIN
+     TYPE "Please enter this system's HOST NUMBER: "
+     ACCEPT SYS.NUM
+     LET DUMP.DATE = TODAY
+     LET TIME. = TIME
+     LET HRS. = TIME. / 3600
+     LET MNS. = (TIME. MOD 3600) / 60
+     LET DUMP.TIME = 100 * HRS. + MNS.
+     LET BUF = WHO
+     LET SOURCE.USER = SUBSTR(BUF,25,12)
+     PRINT TO DATAFILE IDENT.LINE
+     LET HIT.SW = 'N'
+     DUMP.A.SCREEN:
+      BEGIN
+       IF HIT.SW EQ DEFAULT THEN
+        TYPE 'No screens found in the range specified',@CR
+       TYPE 'Please enter screen.name, range or "END": '
+       ACCEPT BUF
+       IF BUF EQ DEFAULT THEN
+        BEGIN
+         TYPE 'Input is required!',@CR
+         REPEAT DUMP.A.SCREEN
+        END
+       IF BUF EQ 'ALL' THEN
+        BEGIN
+         LET SCREEN.NAME = ' '
+         LET END.SCREEN = 15*'z'
+        END
+       ELSE
+        IF POSITION(BUF,'-') NE 0 THEN
+         BEGIN
+          LET END.SCREEN = SUBSTR(BUF,POSITION(BUF,'-')+1)
+          LET END.SCREEN = TRIM(END.SCREEN) + 15*'z'
+          LET SCREEN.NAME = SUBSTR(BUF,1,POSITION(BUF,'-')-1)
+         END
+        ELSE
+         MOVE BUF TO SCREEN.NAME,END.SCREEN
+       APPLY LEFT.SUBSET
+       IF RESPONSE EQ 21 OR 71 THEN
+        FINISH DUMP.A.SCREEN
+       LET HIT.SW = DEFAULT
+       FOR EACH SCREENS VIA (SCREEN.NAME GE SCREEN.NAME OF SCREEN.LOADMP)
+        IF SCREEN.NAME GT END.SCREEN THEN
+         REPEAT DUMP.A.SCREEN
+        ELSE
+         BEGIN
+          LET HIT.SW = 'Y'
+          TYPE 'Now dumping screen ',TRIM(SCREEN.NAME),@CR
+          PRINT TO DATAFILE SCREENS.LINE
+          DELETE FROM ERR.HOLD ALL
+          FOR EACH SCREEN.MASK VIA (SCREEN.NAME)
+           PRINT TO DATAFILE SCREEN.MASK.LINE
+          FOR EACH SCREEN.FLDS VIA (SCREEN.NAME)
+           BEGIN
+            PRINT TO DATAFILE SCREEN.FLDS.LINE
+            MOVE DEFAULT TO THEN.ERR.NUM,ELSE.ERR.NUM
+            IF FIELD.TYPE EQ 'K' THEN
+             SELECT SCREEN.KEYS VIA KEY THEN
+              PRINT TO DATAFILE SCREEN.KEYS.LINE
+            SELECT PRE.PROCESS VIA KEY THEN
+             PRINT TO DATAFILE PRE.PROCESS.LINE
+            SELECT LOOKUP VIA KEY THEN
+             BEGIN
+              PRINT TO DATAFILE LOOKUP.LINE
+              MOVE THEN.ERR.NUM TO THEN.ERR.NUM OF SCREEN.LOADMP
+              MOVE ELSE.ERR.NUM TO ELSE.ERR.NUM OF SCREEN.LOADMP
+             END
+            LET CNTR = 1
+            ERR.LOOP:
+             BEGIN
+              CONDITIONAL ON CNTR
+               BEGIN
+                1: LET ERR.NUM = REQ.ERR.NUM
+                2: LET ERR.NUM = MIN.LEN.ERR.NUM
+                3: LET ERR.NUM = VERIFY.ERR.NUM
+                4: LET ERR.NUM = IS.ERR.NUM
+                5: LET ERR.NUM = THEN.ERR.NUM
+                6: LET ERR.NUM = ELSE.ERR.NUM
+                7: FINISH ERR.LOOP
+               END
+              IF ERR.NUM NE 0 THEN
+               SELECT ERR.HOLD VIA KEY THEN
+                NOTHING
+               ELSE
+                INSERT INTO ERR.HOLD
+              ADD 1 TO CNTR
+              REPEAT ERR.LOOP
+             END
+            SELECT POST.PROCESS VIA KEY THEN
+             PRINT TO DATAFILE POST.PROCESS.LINE
+           END
+          FOR EACH ERR.HOLD
+           SELECT ERR.MSG VIA KEY THEN
+            PRINT TO DATAFILE ERR.MSG.LINE
+         END
+       REPEAT DUMP.A.SCREEN
+      END  %DUMP.A.SCREEN %
+    END
+
+% LOAD SCREEN ROUTINE %
+
+  IF RUN.TYPE EQ 'L' THEN
+   BEGIN
+    TYPE 'Creating internal index - please wait'
+    DELETE FROM SCREEN.INDEX ALL
+    LET LOAD.SW = 'N'
+    LET CNTR = 1
+    LET AS.SCREEN = DEFAULT
+    FOR EACH LOADMP.FILE
+     IF REC.ID EQ 1 THEN
+      SELECT SCREEN.INDEX VIA KEY THEN
+       BEGIN
+        TYPE @CR,'WARNING!  This file contains multiple copies of the screen ',
+               TRIM(SCREEN.NAME),@CR,
+             '          Only the last copy may be loaded!',@CR,@CR
+        ADD 1 TO CNTR
+        ALTER SCREEN.INDEX
+       END
+      ELSE
+       INSERT INTO SCREEN.INDEX USING (SCREEN.NAME FOR AS.SCREEN)
+    TYPE @CR,'Internal index has been initialized',@CR
+    LET HIT.SW = 'N'
+    LOAD.A.SCREEN:
+     BEGIN
+      IF HIT.SW EQ DEFAULT THEN
+       TYPE 'No screens found in the range specified',@CR
+      MOVE DEFAULT TO SCREEN.NAME,AS.SCREEN,END.SCREEN
+      TYPE 'Please enter screen name, range(-), rename pair(=), or END',@CR,' >'
+      ACCEPT BUF
+      IF BUF EQ DEFAULT THEN
+       BEGIN
+        TYPE 'Input is required!',@CR
+        REPEAT LOAD.A.SCREEN
+       END
+      IF BUF EQ 'ALL' THEN
+       BEGIN
+        LET SCREEN.NAME = ' '
+        LET END.SCREEN = 15*'z'
+       END
+      ELSE
+       IF POSITION(BUF,'-') NE 0 THEN
+        BEGIN
+         LET END.SCREEN = SUBSTR(BUF,POSITION(BUF,'-')+1)
+         LET END.SCREEN = TRIM(END.SCREEN) + 15*'z'
+         LET SCREEN.NAME = SUBSTR(BUF,1,POSITION(BUF,'-')-1)
+        END
+       ELSE
+        IF POSITION(BUF,'=') NE 0 THEN
+         BEGIN
+          LET AS.SCREEN = SUBSTR(BUF,POSITION(BUF,'=')+1)
+          LET SCREEN.NAME = SUBSTR(BUF,1,POSITION(BUF,'=')-1)
+          LET END.SCREEN = SCREEN.NAME
+         END
+        ELSE
+         MOVE BUF TO SCREEN.NAME,END.SCREEN
+      APPLY LEFT.SUBSET
+      IF RESPONSE EQ 71 THEN
+       BEGIN
+        TYPE 'LOAD ABORTED',@CR
+        REPEAT THE.PROCEDURE
+       END
+      IF RESPONSE NE 21 THEN
+       BEGIN
+        LET HIT.SW = DEFAULT
+        FOR EACH SCREEN.INDEX VIA (SCREEN.NAME GE SCREEN.NAME OF SCREEN.LOADMP)
+         IF SCREEN.NAME GT END.SCREEN THEN
+          REPEAT LOAD.A.SCREEN
+         ELSE
+          BEGIN
+           IF AS.SCREEN OF SCREEN.LOADMP EQ DEFAULT THEN
+            LET AS.SCREEN OF SCREEN.LOADMP = AS.SCREEN
+           IF LOAD.SW NE 'Y' THEN
+            BEGIN
+             IF SW.SCREENS EQ 'R' THEN
+              LET LOAD.SW = 'Y'
+             ELSE
+              SELECT SCREENS VIA
+                     (SCREEN.NAME = AS.SCREEN OF SCREEN.LOADMP) THEN
+               IF SW.SCREENS EQ 'K' THEN
+                TYPE TRIM(SCREEN.NAME),' already exists - not loaded',@CR
+               ELSE
+                YES.OR.NO:
+                 BEGIN
+                  TYPE TRIM(SCREEN.NAME),' already exists - replace(Y/N)? '
+                  ACCEPT LOAD.SW
+                  IF LOAD.SW NE 'Y' AND 'N' THEN
+                   BEGIN
+                    TYPE 'Invalid response - Y or N only',@CR
+                    REPEAT YES.OR.NO
+                   END
+                 END
+               ELSE
+                LET LOAD.SW = 'Y'
+            END
+           IF LOAD.SW EQ 'Y' THEN
+            BEGIN
+             IF AS.SCREEN OF SCREEN.LOADMP NE DEFAULT THEN
+              LET AS.SCREEN = AS.SCREEN OF SCREEN.LOADMP
+             LET HIT.SW = 'Y'
+             TYPE TRIM(SCREEN.NAME),' selected to be loaded'
+             IF AS.SCREEN NE SCREEN.NAME THEN
+              TYPE ' as ',TRIM(AS.SCREEN)
+             TYPE @CR
+             ALTER SCREEN.INDEX
+            END
+           LET AS.SCREEN OF SCREEN.LOADMP = DEFAULT
+          END
+        REPEAT LOAD.A.SCREEN
+       END
+      ELSE
+       FOR EACH LOADMP.FILE
+        BEGIN
+         IF REC.ID EQ 1 THEN
+          SELECT SCREEN.INDEX VIA KEY THEN
+           IF CNTR GT 1 THEN
+            BEGIN
+             MOVE 'N' TO LOAD.SW OF SCREEN.LOADMP
+             SUBTRACT 1 FROM CNTR
+             ALTER SCREEN.INDEX
+            END
+           ELS          BEGIN
+             MOVE AS.SCREEN TO AS.SCREEN OF SCREEN.LOADMP
+             MOVE LOAD.SW TO LOAD.SW OF SCREEN.LOADMP
+            END
+         IF LOAD.SW EQ 'Y' THEN
+          BEGIN
+           IF REC.ID EQ 1 THEN
+            BEGIN
+             TYPE 'Loading screen ',TRIM(SCREEN.NAME)
+             IF AS.SCREEN NE SCREEN.NAME THEN
+              TYPE ' as ',TRIM(AS.SCREEN)
+             TYPE @CR
+             SELECT SCREENS VIA (SCREEN.NAME = AS.SCREEN) THEN
+              BEGIN
+               DELETE FROM POST.PROCESS VIA (SCREEN.NAME)
+               DELETE FROM LOOKUP VIA (SCREEN.NAME)
+               DELETE FROM PRE.PROCESS VIA (SCREEN.NAME)
+               DELETE FROM SCREEN.KEYS VIA (SCREEN.NAME)
+               DELETE FROM SCREEN.FLDS VIA (SCREEN.NAME)
+               DELETE FROM SCREEN.MASK VIA (SCREEN.NAME)
+               DELETE FROM SCREENS VIA KEY
+              END
+             LET CODE.DATE = DEFAULT
+             IF SW.DATES EQ 'T' THEN
+              BEGIN
+               LET MOD.DATE = DEFAULT
+               LET CRE.DATE = TODAY
+               IF STATUS. EQ 'MSCRN' THEN
+                LET STATUS. = 'CATTR'
+              END
+             IF STATUS. EQ 'CCODE' THEN
+              LET STATUS. = 'CATTR'
+            END
+           CONDITIONAL ON REC.ID
+            BEGIN
+             1: INSERT INTO SCREENS USING (AS.SCREEN FOR SCREEN.NAME)
+             2: INSERT INTO SCREEN.MASK USING (AS.SCREEN FOR SCREEN.NAME)
+             3: INSERT INTO SCREEN.FLDS USING (AS.SCREEN FOR SCREEN.NAME)
+             4: INSERT INTO SCREEN.KEYS USING (AS.SCREEN FOR SCREEN.NAME)
+             5: INSERT INTO PRE.PROCESS USING (AS.SCREEN FOR SCREEN.NAME)
+             6: INSERT INTO LOOKUP USING (AS.SCREEN FOR SCREEN.NAME)
+             7: INSERT INTO POST.PROCESS USING (AS.SCREEN FOR SCREEN.NAME)
+             8: SELECT ERR.MSG VIA KEY THEN
+                 IF ERROR.MESSAGE EQ ERROR.MESSAGE OF LOADMP.FILE THEN
+                  NOTHING
+                 ELSE
+                  BEGIN
+                   LET Y.OR.N = 'N'
+                   TYPE 'Duplicate Error Message - ERR.NUM = ',ERR.NUM,@CR,
+                        'Old text: ',TRIM(ERROR.MESSAGE),@CR,
+                        'New text: ',TRIM(ERROR.MESSAGE OF LOADMP.FILE),@CR
+                   IF SW.ERRMSG EQ 'K' THEN
+                    TYPE 'Old text retained',@CR,@CR
+                   ELSE
+                    BEGIN
+                     IF SW.ERRMSG EQ 'R' THEN
+                      TYPE 'New text replaces old',@CR,@CR
+                     ELSE
+                      NO.OR.YES:
+                       BEGIN
+                        TYPE 'Replace old with new (Y/N)? '
+                        ACCEPT Y.OR.N
+                        LET Y.OR.N = UPPER.CASE(Y.OR.N)
+                        IF Y.OR.N NE 'Y' AND 'N' THEN
+                         BEGIN
+                          TYPE 'Invalid response - Y or N only',@CR
+                          REPEAT NO.OR.YES
+                         END
+                       END
+                      IF Y.OR.N EQ 'Y' OR SW.ERRMSG EQ 'R' THEN
+                       ALTER ERR.MSG USING
+                        (ERROR.MESSAGE OF LOADMP.FILE FOR ERROR.MESSAGE)
+                     END
+                  END
+                ELSE
+                 INSERT INTO ERR.MSG
+            END
+          END
+       END
+     END  % LOAD.A.SCREEN %
+   END
+
+  REPEAT THE.PROCEDURE
+ END  % THE.PROCEDURE %
+
+END
+ Y"¡
