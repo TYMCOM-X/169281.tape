@@ -1,0 +1,494 @@
+; This file is STOPCD.L00 - Carl's list of STOPCDs with one-liners
+		stopcd	717
+		syscrs	115
+		slocrs	6
+		nocrs	10
+
+S.MAC	{Page 11}...
+	DEFINE STOPCD (A) <sall
+	IFB <A> <IF2,<IFNDEF SYSCRS,<EXTERNAL SYSCRS>>
+		JSR	SYSCRS>
+	IFIDN <A> <SLO> <IF2,<IFNDEF SLOCRS,<EXTERNAL SLOCRS>>
+		JSR	SLOCRS>
+
+	IFIDN <A> <NO> <IF2,<IFNDEF NOCRS,<EXTERNAL NOCRS>>
+		JSR	NOCRS>	;;DON'T RUN DSKCLN
+	IFNB <A> <IFDIF <A> <SLO> <
+		    IFDIF <A> <NO> <
+			IF2,<IFNDEF SYSCRS,<EXTERNAL SYSCRS>>
+			JSR SYSCRS>>>
+>
+
+COMMOD:SAXINT+ 5  SA-10 Interrupt, no flags set, not memory error
+COMMOD:SAXMEM+ 7  SA-10 Interrupt, memory error, no ddb for this channel
+
+COMMON:CRS147+ 1  JSR from 147 restart  [Page 41]
+COMMON:KACRS      Keep alive failure
+COMMON:STOPCN     # time tried to crash - should = 1
+COMMON:STOPPC     Real PC of first STOPCD hit, SYSCRS,SLOWPC,NOCRPC,CRS147
+COMMON:SYSCRS     JSR here on bad error
+COMMON:CRASHX     Actual code for crash
+
+FILUUO:DSKDSP+10  DOU: Buffer output uses DDO, should never use this entry
+FILUUO:DSKDSP+11  DIN: Buffer input uses DDI, should never use this entry
+FILUUO:SWPCL1+26  DECSTP: [SLO] if middle of a UUO, SWAP error cleanup
+FILUUO:SWPUPD+ 4  Updating, [SLO] if decr'd DRBCNT(P4) underflow sets DRPMXC
+FILUUO:SWPLK1+ 2  Lookup, [SLO] if decr'd DRBCNT(P4) underflow sets DRPMXC
+FILUUO:CLRDD1+ 3  CLRDDB [SLO] if reach end of DDB chain without F=DDB found
+FILUUO:CLOSIN+14  F=DDB, [SLO] if no (ATB or DRB), DEVATB(F) or DEVDRB(F)
+FILUUO:CLSN3B+ 5  Ran out of FNB's while looking for this FNB (from CLSIN3)
+FILUUO:CLSXT2+ 2  UPD close, [SLO] if decr'd DRBCNT(P4) underflow sets DRPMXC
+FILUUO:CLOSOU+13  F=DDB, [SLO] if no (ATB or DRB), DEVATB(F) or DEVDRB(F)
+FILUUO:CLORS3+ 2  [SLO] if decr'd DRBCNT(P4) undeflow sets DRPMXC
+FILUUO:CLSOU3+20  [SLO] incr'd max write count in ATB-MWC went to 0
+FILUUO:CLOSU1+ 2  [SLO] if 1 SUP ATB, if any other writers found (own/del ok)
+FILUUO:CLOCOM+15  [SLO] if update count FNBUPD(P3 [FNB]) goes to 0
+FILUUO:CLOCM1+ 5  [SLO] if decr'd DRBCNT(P4) underflow sets DRPMXC
+FILUUO:UFDATB+ 1  [SLO] if RIB ATBRIB(P2) non-0, trying to fill ATB from UFD
+FILUUO:UPDUFD+16  [SLO] skip/errret from DIRSRC, no entry addr
+FILUUO:SLOCLE     [SLO] pushj here to set SLOCRS & popj return to next instr
+FILUUO:SLOCLN     [SLO] jsp t1, here to set SLOCRS & popj return to caller
+FILUUO:FASCLC     Incr to force fast DSKCLN
+FILUUO:SLOCLC     Incr to force slow DSKCLN
+FILUUO:SLOWPC     Holds PC of STOPCD(SLO)
+FILUUO:SLOCRS     JSR here for STOPCD(SLO)
+FILUUO:NOCRPC     Holds PC of STOPCD(NO)
+FILUUO:NOCRS      JSR here for STOPCD(NO)
+FILUUO:TSTRES+10  [SLO] if job has CB [JOB=CBUSER] or directory QUEPCB(JOB)#0
+FILUUO:TSTRES+13  [SLO] if %UPT+UPTRIB or %UPT+UPTRB2 blocks locked
+FILUUO:TSTRES+15  [SLO] if %UPT+UPTSAT locked
+FILUUO:WRTOK2+ 5  [SLO] if incr ATBMWC max write count overflows to 0
+FILUUO:WRTOK2+10  [SLO] if incr'd DRBCNT overflows to DRPMXC
+FILUUO:USRUSI+22  [SLO] if LUD page CHANIO page fails other than FALHOL/FALPHP
+FILUUO:USRUS2+ 2  [SLO] if LUD page PERSET fails (not supposed to)
+FILUUO:SRUSR +14  [SLO] if LUD page VREMOV fails
+FILUUO:BLKLNK+ 2  [SLO] if LUD page VREMOV fails
+FILUUO:FUNM  + 6  [SLO] if LUD page VREMOV fails
+FILUUO:RENAM3+11  [SLO] if incr'd DRBCNT overflows to DRPMXC
+FILUUO:RENM4A+ 1  [SLO] if 0 name when we already knew it was non-0
+FILUUO:RENAM7+11  [SLO] if incr'd new DRBCNT overflows to DRPMXC
+FILUUO:RENAM7+15  [SLO] if decr'd old DRBCNT underflow sets DRPMXC
+FILUUO:RNM7A + 2  [SLO] if run out of ATB's scanning current (adding new)
+FILUUO:RNM7B + 2  [SLO] if run out of ATB's scanning current (add backptr)
+FILUUO:RENAM9+12  [SLO] errret DLTTRC then errret RIBWTL, rib rename checks
+FILUUO:RENSTS+16  [SLO] skip ret from all RIBDIR,DIRBLK,DIRSRC [page 65]
+FILUUO:RENECM+ 2  [SLO] if decr'd DRBCNT underflow sets DRPMXC
+FILUUO:RENNMC+25  [SLO] skip ret from all RIBDIR,DIRBLK,DIRSRC [page 65]
+FILUUO:RENFL2+12  [SLO] if decr'd DRBCNT underflow sets DRPMXC
+FILUUO:SETVL1+ 3  [SLO] can't set ELB,EUN,ALP,SNM,ALT by user (ever) in RIB
+FILUUO:CLRCOM+ 5  [SLO] if decr'd DRBCNT underflow sets DRPMXC
+FILUUO:RENRCM+ 4  [SLO] if decr'd DRBCNT underflow sets DRPMXC
+FILUUO:RENCLR+10  [SLO] if decr'd DRBCNT underflow sets DRPMXC
+FILUUO:DSKCHK+13  [SLO] 6 chrs in arg, can't match, so crash? (T2/SRUNI)
+FILUUO:CMPLOG+13  [SLO] 6 chrs in arg, can't match, so crash? (T2/MSKUNI)
+
+FILIO :POSTS1+ 1  XCT PSTTBL(UNISTS(U)) TWCOD: valid only for non pos units
+FILIO :DTASAT+ 3  PGYSIO null for UNYPAC active page
+FILIO :SWPFIN+15  [SLO] SLOCLE if output error on sat page
+FILIO :SWPPLD+2   Page i/o error count of pages less than 1
+FILIO :SWPFI2+ 2  Page not a PCB page, number too low (MINPCB)
+FILIO :SWPENQ+ 2  Page must be in bounds, MINPCB to MEMSZP
+FILIO :SWPENQ+ 5  PGYADR [PG] not really a disk page
+FILIO :INSOH3+ 1  OHT full, (lots of DP errors errors?)
+FILIO :REMOHT+ 1  DP not in OHT, should be -- so there
+FILIO :REMOH1+ 4  Entry vanished while I was removing it
+
+FRMSER:FRMCR1+25  Error ret from MAPUPX on "new" context pages
+FRMSER:FRMCR1+30  VPROT (write) failure on "new" context pages
+FRMSER:FRMCTP+45  VPROT (read) failure on new setup context pages
+FRMSER:FRMVXM+24  VCLEAR error ret while r/w other frame's addr space
+FRMSER:FDDSP + 6  Frame Desc processing, FILLTB,RCHTAB,RXRTAB,FD2TAB,CHEKTB
+
+PCBIO :MAPALL+ 4  MAPxxx getting a PCB page, T1/disk ptr not in correct form
+PCBIO :MAPAL2+ 3  MAPxxx PG/PCB ctrl blk addr, unknown, not %RIB.C,...,etc.
+PCBIO :MAPAL3+ 3  MAPxxx UPTxxx (%CTUPT) non zero, doesn't have this type pcb
+PCBIO :MAPDIE     MAP(rib/sat) UPTRIB & %RIB slot disagreement both # 0,non-0
+PCBIO :GETPC1+16  Ran out of PCBs while flagging a free one for use
+PCBIO :GTDONE+12  No Primary PCBs found while skipping Secondary PCBs, oops!
+PCBIO :GTDON4+ 4  No PCBs left, searching for this PCB in list
+PCBIO :GTDON6+ 4  PCB addr (index) > %CTAMX ... overflow!
+PCBIO :GTSP65+ 5  No Primary PCBs found while skipping Secondary PCBs, oops!
+PCBIO :GTWTIO+ 7  Ran out of PCBs while flagging a free one for use
+PCBIO :GTPRS4+16  Can't start me, me to ENLOKQ, JOB must be MLOWQ isn't
+PCBIO :TAGON2+ 7  Ran out of PCBs while flagging a free one for use
+PCBIO :MAPRLS+ 4  Attempt to release a PCB with a 0 address
+PCBIO :PAGIMD+12  PAGIN/PAGOUT/PAGIMD - PG/ PCB page out of range
+PCBIO :FINPCB+ 2  PG/ PCB page out of range, finishing up after PCB i/o xfer
+PCBIO :FINPCB+13  Not a read (STDREA) after not a write (STDWRT)
+PCBIO :FNDPRM+ 5  Ran out of PCBs searching for a Primary PCB in list
+PCBIO :GETLRU+ 3  GETLRS[swapper]/GETLRU[norm] not a free[#0] PCB @%CTLRU(PG)
+PCBIO :GETLR1+ 1  GETLRS[swapper]/GeTLRU[norm] zero @%CTLRU(PG)
+PCBIO :GETTR1+ 1  Ran out of PCBs while trying to remove from LRU/MRU list
+PCBIO :UNLNK3+ 5  Ran out of PCBs while unlinking a secondary PCB from list
+PCBIO :ADRUN1+ 4  Ran out of PCBs while skiping secondary PCBs in list
+PCBIO :ADRUN2+ 3  Ran out of PCBs while counting primary PCBs to (T3)
+PCBIO :CTLFN1+ 7  Ran out of PCBs while searching for PCB with T2/address
+PCBIO :PCBSWT+ 3  Ran out of free slots/room for PS/PR/M2 resource lists
+PCBIO :M2HRMV+ 5  Job not in list, removing jobs from M2 list
+PCBIO :SATONC+12  Ran out of PCBs skiping Secondary PCBs, find first SATPCB
+
+SWAMP :GETPA0+ 2  Incorrect mask bits set (RBMASK-RBREAL), contiguious page
+SWAMP :GATPA0+ 5  Neither F nor M bit requested to be set for page, contig pg
+SWAMP :GETA00+ 2  Neither F nor M bit requested to be set for page, any page
+SWAMP :SEAR15+ 1  [SLO] if out of words in sat, if starting from beginning
+SWAMP :SEARC2+ 1  Word contains T3/0, no bits set? [word full] (JFFO non-jump)
+SWAMP :SEADON+ 3  F/M Bits already set (=0)
+SWAMP :SEADON+ 5  Must have FBIT!MBIT set in request field
+SWAMP :SEADON+13  [SLO] Ran out of free pages STTFPC(T2)
+SWAMP :GTSPAG+10  Bad disk retrieval pointer
+SWAMP :GTSPAG+13  Bits other than F,M set in request
+SWAMP :GTSPAG+15  Number of pages too large (lh T3/#0)
+SWAMP :GTSPG2+11  Ran out of PCBs skipping Secondary PCBs, get core page #
+SWAMP :GTSPG3+ 5  Ran out of PCBs searching for STTPTR(T2)=PCBPTR(P2)
+SWAMP :GTSAPG+ 7  Other than F/M bits set in request
+SWAMP :GTSAPG+11  Number of pages too large (lh T3/#0)
+SWAMP :GTSAP0+ 7  Ran out of PCBs skipping Secondary PCBs
+SWAMP :GTSA42+ 4  [SLO] No STT entry address for SAT in this PCB
+SWAMP :GTSA77+ 3  non-skip return from GETLRS
+SWAMP :GTSA77+ 7  T1/ bad disk retrieval pointer for SAT
+SWAMP :GTSA77+13  PCISTS not STDWRT!STDWAG!STDREA
+SWAMP :SSER13+ 7  Ran out of SAT space, when started at beginning of SAT
+SWAMP :SSERC2+ 1  T3/0, full word when free bit was already found
+SWAMP :SSERC3+ 2  MBIT already set (=0)
+SWAMP :SSERC3+ 4  Requested other than MBIT to be set
+SWAMP :SSEFIN+ 4  Page request out of context page range
+SWAMP :SSEFIN+10  [SLO] If free page count STTFPC(T2) goes negative
+SWAMP :GSATST+ 4  [SLO] If STTPTR(UNISTT(UNITBL(RBYUNI))) is zero
+SWAMP :DNDADS+ 5  [SLO] If STTFPC(STT-entry) or UNITAL(unit) went negative
+SWAMP :GIVPGK+ 5  [SLO] If F-BIT off (#0) for page in sat, turning off F bit
+SWAMP :FRMGVP+ 7  [SLO] If F-BIT on (=0) for page in sat, mempage clear M-bit
+SWAMP :FRMGVP+11  [SLO] If M-BIT on (=0) for page in sat, mempage clear M-bit
+SWAMP :FNDSBT+ 2  Bad disk retrieval poiner, zero or not RBREAL
+SWAMP :FPCSET+ 2  Non-zero value for @%SAT.C+%CTLST, DSKCLN UUO code
+SWAMP :FPCPP0+ 4  Non-zero value for DFRLST, DSKCLN UUO code
+
+MAPIO :MAPFI2+ 7  Map file page, Null ATB pointer in DDB, RH DEVATB(F)
+MAPIO :MAPF34+ 4  Map file page, Bad retrieval pntr, SKIPG @DEVRET(F) failed
+MAPIO :MAPUS1+12  SuperMap, ran out of units after page checked in bounds
+MAPIO :KREPLC+ 7  In Replc pages to other frame UPTOFD fails FD2FNO
+MAPIO :KFFIF2+13  FFIFP chanio, Null ATB pointer in DDB, RH DEVATB(F)
+MAPIO :KFFI44+ 4  FFIFP chanio, Bad retr-pntr, not EOF as expecting
+MAPIO :KFFIF6+ 1  FFIFP chanio, ran out of retr-ptrs we counted in %rib
+MAPIO :KFFMTR+12  FFIFP chanio, seting up ptrs in ddb area, PTRINN failed
+MAPIO :KFILCK+ 1  Check if VM page in file, NOT called by user
+MAPIO :KVLRB4+ 2  VALRIB, 0 retr-ptr to prime rib = ATBRIB( RH DEVATB(F) )
+MAPIO :CREA28+3.3 CREPAG fail ret from SWEPPG, not FALAQA/FALRBE error
+MAPIO :KMOVPH+23.3 [SLO] VMOVPG/KMOVPG  SWEPRH fails, not ..AQA/RBE error
+MAPIO :KMOV2N+21  [SLO] VMOVPG/KMOVPG %SAT+400(x) M bit not on (0)
+MAPIO :KMOV3C+23  KMOVPG DECUNS failed disconn DP from old AT, still shared?
+MAPIO :KMOV3C+33  KMOVPG ATBMWC overflowed... sigh
+MAPIO :KMOVVE+ 2  KMOVPG non i-o error detected while processing errors
+MAPIO :DELCRE+ 6  Bad retrieval pointer @DEVRET(F) after W-locking rib
+MAPIO :DELXC4+11  Chking file wrtable,etc, Null ATB pointer, RH DEVATB(F)
+MAPIO :EXCHH6+46  Exch FP, 2 ribs locked... PTRINN fails
+MAPIO :EXCHH7+ 2  Exch FP, One or both retrieval pointers is illegal (LE 0)
+MAPIO :SWEEP + 7  SWEEP/SWEPPG T1 neq 0[stop on ^C] or -1[no stop]
+MAPIO :SWEEP0+ 3  SWEEP/SWEPPG Null ATB pointer, RH DEVATB(F)
+MAPIO :SWEEP2+22  SWEEP/SWEPPG VCLEAR fails on page
+MAPIO :SWEP58+10  SWEEP/SWEPPG PTRINN fails, CALC T4/DEVFLO
+MAPIO :FINDM2+ 1  PG M in T1/DDB ?, ran out of counted DDB retr-ptrs
+MAPIO :FNDDDB+ 4  Next DDB in FNB with DEVRIB, Null ATB ptr RH DEVATB(F)
+MAPIO :FNDADB+ 4  Next other DDB in FNB w/DEVRIB, Null ATB ptr RH DEVATB(F)
+MAPIO :FLUSH + 2  Flush %RIB ptr areas, T1 not -1/0 as should be setup
+MAPIO :FLUSHA+ 5  Flush ptr areas, invalidate ddbs, Null ATB ptr RH DEVATB(F)
+MAPIO :CREPG2+15  CREPAG VP, CLRCOW failed not FALIPE/FALOPE a bug, crash
+MAPIO :CLRCOW+ 5  Clear area VPs not in range, ? > page 777
+MAPIO :CLRCOW+10  Clear area VPs not in range, ? < page 0
+MAPIO :CLRCOW+12  Clear area VP begin not <= end
+MAPIO :CLRCOW+26  Clear COW, PERSET w/ignore fails
+MAPIO :CLRCOW+32  Clear COW, VPGSTS fails
+MAPIO :CLRCOW+44  Clear COW, VREMOV w/ignore fails
+MAPIO :CLRCW6+ 6  Clear COW, VREMOV fails (detect io errors?)
+MAPIO :KILFIL+ 1  Flag file w/bad rib, file not LKP/ENT so die
+MAPIO :KILFIL+ 6  Flag file w/bad rib, file not locked DEVLOK(F)/0
+MAPIO :MAPKRN+ 4  Map DP to VM page kernel, ATBMWC overflowed
+MAPIO :MAPKN3+ 3  Map DP to VM page kernal, SPTUSC overflowed
+MAPIO :MAPFAL+ 5  Map failure, ATBMWC would underflow if DEC
+MAPIO :LOKLES+ 1  Change F queued for lock, Not locked DEVLOK(F)/0
+MAPIO :LOKLES+ 5  Change F queued for lock, DEPFLK clear in DEVBTS(F)
+MAPIO :LOKUM2+ 1  Get lock unmodified, DEVLOK(F/#0 already locked?
+
+CLUBS :KCBME0+ 4  CLBMEM membership list, No club members, not even self!
+CLUBS :KCBHNG+ 4  CLBHNG hang job in club, fail return from HNGMON
+CLUBS :CBCONT+ 2  ILWQ or RNQ check on job continue (SETRUN), LH JBTCLB(J)/0?
+CLUBS :FNDJOB+ 5  Look for Job in Club, No club members, not even self!
+CLUBS :ULKCDB+ 7  Remove CDB from hash chain, end of chain, CDB not found 1st
+CLUBS :ULKCD2+ 4  Remove CDB from hash chain, end of chain, CDB not found Nth
+
+FILFND:SRCFIL+16  [SLO] DRBCNT(P4) increment overflow, too many users
+FILFND:CREMF0+2.1 [SLO] ?No FNB yet & need to create/find one for this?
+FILFND:ERRNC1+ 3  [SLO] DRBCNT(P4) decrement underflow, returning ATBs
+FILFND:ERRTR1+ 5  [SLO] DRBCNT(P4) decrement underflow, returning ATBs
+FILFND:ERRFBM+ 2  [SLO] DRBCNT(P4) decrement underflow, returning ATBs
+FILFND:ERRFNF+ 3  [SLO] DRBCNT(P4) decrement underflow, returning ATBs
+FILFND:INSNAM+ 3  [SLO] Insert name in dir, bad retrieval pointer
+FILFND:FNDFR1+ 4  [SLO] None free after last free was verified, huh?
+FILFND:FREAT1+ 2  [SLO] FREATB, end of ATBLNK list without ATB match
+FILFND:ULKDB0+ 4  [SLO] ULKDBL, end of FNBDBL list without DDB match
+FILFND:LKDATB+ 1  [SLO] Put P2/ATB on dormant list, already on list?
+FILFND:GETCBR+ 3  [SLO] Get CB resource, already have it? bye!
+FILFND:GIVCBR+ 3  [SLO] Give CB resource, don't have it? bye!
+FILFND:CORG5B+ 4  [SLO] Get FC block, end of DRBLNK list removing DRB
+FILFND:CNVATB+ 1  [SLO] Convert ATB ptr to addr, zero pointer impossible
+FILFND:DECRMV+ 2  [SLO] Fixup ATB/SPT/DRB data rem VP, lmap active/super
+FILFND:DECRMV+13  [SLO] Fixup ATB/SPT/DRB data rem VP, ATBMWC over?flow (SOS)
+FILFND:INSSPT+ 1  [SLO] T2/DP addr RBMASK off, RBMASK bits not off
+FILFND:INSSP3+ 3  [SLO] SPYNFE#0 but didn't find free slot in SPT section
+FILFND:REMSPT+10  [SLO] Delete an SPT entry, free count overflow SPTNFE(T4)
+FILFND:SRCSPT+ 1  [SLO] See if DP has SPT entry, T2/DP  RBMASK bits not off!
+FILFND:INCUMC+ 3  [SLO] Increment UMC in ATB, UMC overflowed to 0
+FILFND:INCUMC+12  [SLO] Increment of DRBCNT overflowed to 0
+FILFND:DECUMC+ 4  [SLO] Decrement UMC in ATB, UMC underflow to -1
+FILFND:DECUMC+10  [SLO] Decrement ATBUMC, ATBSPT(P2) # 0 but UMC = 0
+FILFND:DECUM0+ 6  [SLO] Decrement of DRBCNT underflowed to -1
+FILFND:DECMXW+ 3  [SLO] Decrement ATBMWC(P2) overflowed
+
+FILRIB:NXTPT0+ 1  [SLO] Get next retr-ptr in ddb, DEVFLO(F) invalid pointer
+FILRIB:NXTP15+1.2 [SLO] End of ptrs in rib, EOF in prime RIBSZS=TWOLVL
+FILRIB:PTROU2+ 5  [SLO] Xfr changed DDB ptrs to rib, BLT check Beg>End
+FILRIB:USEOUT+ 3  [SLO] Setup DEVRET(F), T3 <= DEVFLO(F) invalid after valid?
+FILRIB:USES55+13  [SLO] Spare rib when RIBSZS=1 impossible?
+FILRIB:USES58+ 7  [SLO] PTRINN fails after flushing ddbs for this rib
+FILRIB:USENUL+ 3  [SLO] Asked for page 0, ATYBSZ is non-null
+FILRIB:RIBERR+ 6  [NO]* Too many rib errors > LBDMAX without IO errors
+FILRIB:DLTSRB+ 2  [SLO] Delete SR ptr, SOSGE %RIB+RIBSNM underflow to -1
+FILRIB:DLTSRB+ 6  [SLO] Delete SR ptr, RIBSZS=1 and RIBSNM was > 0
+FILRIB:FREUP + 5  [SLO] Not only user of PCBUSC/PCBLKQ T2/PCB addr
+FILRIB:DLTTR0+12  [SLO] .CHFTR, got prime rib - RIBRIB # 0 (i.e. spare?)
+FILRIB:DELTR7+26  [SLO] .CHFTR, DEVATB(F) neq ATB addr in P2 (debug check)
+FILRIB:GETPRM+ 6  [SLO] Get prime rib, RIBRIB # 0, ...not prime rib?
+FILRIB:GETPRM+11  [SLO] Get prime rib, DEVPPN(F) neq RIBPPN?
+FILRIB:GETPRM+14  [SLO] Get prime rib, DEVFIL(F) neq RIBNAM?
+FILRIB:GETPRM+20  [SLO] Get prime rib, DEVEXT(F) neq RIBEXT?
+
+APXKON:APXPOS+ 1  Start position, KONCUA(J) not idle, # 0
+APXKON:APXXFL+ 3  No next XFR to start, KONCUA(J) not setup, = 0
+
+F3TSER:BDIO  + 7  Decrease IO use count, @DEVDIO(F) = 0
+F3TSER:DPL   + 4  Decrement lock count for PG, PGYDIO leq 0
+F3TSER:ODD        I.REWI specl handling, illegal to index ODD[lh(DEVFNJ)=1]
+F3TSER:SRFX  +14  Transfer data?, IOWD list @DEVCLS(F)/@DEVCNT(F) is empty
+F3TSER:SRFB1 + 1  Transfer 1 rec / buffer (Binary), Last zero in list neq 0
+F3TSER:OLDMOP+ 6  Old mode, formatter busy, started xfer when going already
+F3TSER:OLDMOP+11  Old mode, XCT XTAB(T1) T1/cmd code 6-7 will crash
+
+CLOCK1:RSCHED+ 1  Reschedule, Job has LMAP slots in acs? %UPT+UPTLDC/#0
+CLOCK1:CIP6D + 6  Non-KI Stack "real" prev-context acs, no room @UPTACP
+CLOCK1:CIP7  + 3  Switch to new UBR using rh[JBTUPM(J)], JBTUPM&17777 = 0
+CLOCK1:STTIOD+ 3  Put in TTY TSQ, job not in SWQ ?
+CLOCK1:SETIOD+ 3  Put in IO WSQ, job not in SWQ ?
+
+COMCON:COMDIS+ 5  Command dispatch, J/0 got clobbered on way here
+COMCON:SETKIL+5.2 Maybe kill, .PVHCN CCONT DETACH illegal condition here
+COMCON:KILUPT+ 1  Kill job context pages, can't lock own UPX (WLKUPX fails)
+COMCON:KILUPT+ 4  Kill job context pages, user space pages exist (LH JBTUPM#0)
+COMCON:KILUP1+ 2  Kill job context pages, found LMAP slots, GETLMA=> P3/LMMEXS
+COMCON:KILUP1+11  Kill job context pages, KCLEAR failed
+COMCON:UMONST+ 4  Start monitor job, not enough room on stack for acs
+
+CORE1 :VCREA2+16  KCREAT create VP, Incr ATBMWC overflowed?
+CORE1 :REMV16+ 7  KREMOV/KCLEAR remove VP, validation failed not VLIOE%/VLNVP%
+CORE1 :REMV21+12  KREMOV/KCLEAR remove VP, GVALID failed not IO VLIOE%
+CORE1 :REMV31+14  [SLO] REMKRN remove VP, FP - %SAT M bit already clear(=1)
+CORE1 :REMV41+ 3  [SLO] REMKRN remove VP, MP - %SAT M bit already clear(=1)
+CORE1 :VALD2A+ 1  VALPAG dirty page, SOSGE UPTLDC negative, bad LMAP count?
+CORE1 :VALID3+ 7  VALPAG dirty page, PGPSOP, SOSGE DFRPGN failed
+CORE1 :VALID6+ 7  VALPAG super page, PGYSOP, SOSGE UPTLDC negative, bad count
+CORE1 :KPFSP + 2  VPGFIL/KPGFIL SP, SOSGE UPTLDC negative, bad LMAP count
+CORE1 :KPFUU1+ 1  VPGFIL/KPGFIL PRIV, SOSGE UPTLDC negative, bad LMAP count
+CORE1 :UPROT1+ 1  VPROT, Get UPT write lock failed WLKUPT
+CORE1 :VPROT1+13  VPROT/KVPROT changrot, SOSGE UPTLDC neg, bad count
+CORE1 :VPROT4+ 1  VPROT/KVPROT prot failure?, SOSGE UPTLDC neg, bad count
+CORE1 :KVDSK1+10  VDSKPT, SOSGE UPTLDC neg, underflow after got T2/DP info
+CORE1 :BLTULP+ 4  BLTPAG, unlocking pages after JBTABT/SUCCESS, PGYDIO le 0
+CORE1 :WLKUPX+ 5  Get write lock on UPX, had someone already locked in UPX
+CORE1 :UNWUPX+ 4  Free write locked UPX, didn't have lock UPTLKJ(x)=UPTJOB
+CORE1 :WENUPX+ 6  WPRUPX/WENUPX write prot/ena UPT/UPX VPROT fails!
+CORE1 :LKDUX4+ 2  LKDUPX lock down UPX/UPT, MAPUPX fails getting own pages
+CORE1 :USRFLT+ 3  User page fault from NULJOB or UPTLDC nonzero
+CORE1 :USRFLT+5.2 User page fault, WLKUPT failure (on own pages?)
+CORE1 :USRCWR+ 5  User page fault, can't write, VP prot = 0
+CORE1 :USRBWR+ 1  User page fault, can't tried write, UPTLDC le 0
+CORE1 :USRRDW+ 1  User page fault, LMPACT off (inactive) PG TBL not cleared?
+CORE1 :USRCOW+13  User page fault, WLKUPX for own pages failed
+CORE1 :USRCOW+17  User page fault, KREPLC of page %COW failed
+CORE1 :USRCOW+23  User page fault, KCLEAR of page failed
+CORE1 :USRCO1+ 2  User page fault, VCREATed %COW page KCLEAR failed
+CORE1 :NOSCOW+ 1  User page fault, write into super %COW, UPTLDC le 0
+CORE1 :COWERR+ 4  IO err on %COW, KCLEAR of PRIV page failed
+CORE1 :COWERR+11  IO err on %COW, KREPLC of original user page failed
+CORE1 :COWERR+14  IO err on %COW, KCLEAR of original user page failed
+CORE1 :NOCREA+ 2  VCREAT error proc, not DISK FULL (CRDFL%)?
+CORE1 :NOCREA+ 6  VCREAT error proc, JBTABT(J)/0 & DRSCHK skips
+CORE1 :NOCREA+13  VCREAT error proc, KREPLC of original page fails
+CORE1 :NOCREA+16  VCREAT error proc, KCLEAR of %COW/REPLC page fails
+CORE1 :PCBFLT+ 4  PCB pg fault, @%CTUPT(PG) empty, bad UPT? pointer
+CORE1 :PCBFLT+15  PCB pg fault, write fault can't write, not WTU/WTL/CML/WLN
+CORE1 :UWSRP5+ 3  UWS replacement, W/oldest page - invalid (le 0) pointer
+CORE1 :ACTLMS+ 4  Activate LMAP slot SW, Non-existent LMMEXS or ACTLM0 failure
+CORE1 :ACTLMA+ 3  Activate LMAP slot, Non-existent LMMEXS or ge VPMAX
+CORE1 :ACTNC1+ 7  Activate LMAP slot, MP LMPVIR, no free pages GETFRE fails
+CORE1 :ACTNCF+ 6  Activate LMAP slot, FP LMPVIR, no free pages GETFRE fails
+CORE1 :ACTNCF+10  Activate LMAP slot, FP LMPVIR, positive CAVPGN not positive
+CORE1 :ACTLM4+14  Activate LMAP slot, Can't find unshr'd slot, SCNLMC fails
+CORE1 :ACTLM4+16  Activate LMAP slot, Found slot but it's shared, LMPSHR
+CORE1 :ACTLM5+12  Activate LMAP slot, active count > VPMAX+1
+CORE1 :DEALMS+ 2  Deactivate LMAP slot, RH W/VP > VPMAX
+CORE1 :DEALMS+10  Deactivate LMAP slot, PGYDIO in prog for core page
+CORE1 :DEALMA+ 2  Deactivate %UPT LMAP slot, RH W/VP > VPMAX
+CORE1 :DEALM1+ 4  Deactivate %UPT LMAP slot, LMPLOK on or JBYACT le 0
+CORE1 :DEALM3+ 1  Deactivate %UPT LMAP slot, ran off end of LMA chain
+CORE1 :SETSHR+ 2  Set active unshared LMA slot shared, oops was super/shared
+CORE1 :SRCCHT+ 1  Search CHT for DP, T2/DP has RBMASK bits still on!!!
+CORE1 :REMCHR+ 4  Remove CP from CHT, PGYUSE incr but noone on LMA chain
+CORE1 :REMCH0+ 3  Remove CP from CHT, PGYUSE/0 STS/SIP!SOP or PGYUSE/#0
+CORE1 :REMCH0+11  Remove CP from CHT, SRCCHT failed DP for CP from CHT
+CORE1 :REMCH0+14  Remove CP from CHT, SRCCHT got DP for CP but not same CP
+CORE1 :INSCHT+ 6  Put CP in CHT, SRCCHT found DB for CP in CHT already
+CORE1 :MAPUPS+ 6  Map UPT/UPX pages for job, Pages don't exist for job!!
+CORE1 :REDLMT+ 3  Read %UPT LMAP slot, RH W/VP > VPMAX
+CORE1 :REDLMS+ 3  Read %UPS LMAP slot, RH W/VP > VPMAX
+CORE1 :REDLMX+ 3  Read %UPX LMAP slot, RH W/VP > VPMAX
+CORE1 :STOLMA+ 1  Store LMAP slots from P3-P4 back to LMAP, %UP?+UPTLDC le 0
+CORE1 :STOLMS+ 1  Store LMAP slots from P3-P4 back to LMAP, %UP?+UPTLDC le 0
+CORE1 :STOLMX+ 1  Store LMAP slots from P3-P4 back to LMAP, %UP?+UPTLDC le 0
+CORE1 :SETLMA+ 3  Store back P3 to LMAP, %UP?+UPTLMA(W), RH W/VP > VPMAX
+CORE1 :SETLMS+ 3  Store back P3 to LMAP, %UP?+UPTLMA(W), RH W/VP > VPMAX
+CORE1 :SETLMX+ 3  Store back P3 to LMAP, %UP?+UPTLMA(W), RH W/VP > VPMAX
+CORE1 :GETDPA+ 1  Get DP from LMAP slot, P3/LMAP non-existent LMMEXS
+CORE1 :GETDP4+ 1  Get DP from LMAP slot, ADRNCT/ neq PGYADR for CP
+CORE1 :GETATB+ 2  Get ATB ptr from LMAP, P3/LMAP non-existent LMMEXS
+CORE1 :GETCPA+ 1  Get CP addr from LMAP, P3/LMAP inactive LMPACT
+CORE1 :GETSPT+ 2  Get SPT adr/ptr from LMAP, P3/LMAP is super or not shared
+CORE1 :GETSPT+14  Get SPT adr/ptr from LMAP, T4/PGYSPT not set (=0)
+CORE1 :GETSP1+ 5  Get SPT adr/ptr from LMAP, T4/LM3SPT not set (=0)
+CORE1 :GETRES+ 7  Reserve a page for swap in, PG/RH CFRLST = 0 free list
+CORE1 :GETRE1+ 4  Reserve a page for swap in, CAPPGN # RIPPGN/le 0
+CORE1 :GETRE1+10  Reserve a page for swap in, PG/RH CFRLST = 0 free list
+CORE1 :GETFRE+ 5  Get a free page in PG, PG/RH CFRLST = 0 free list
+CORE1 :PUTLST+ 1  Remov A, Put B lists, T4/SPR.N illegal list - only SWPENQ
+CORE1 :PUTLSB+ 1  Remov A, Put B lists, T4/SPR.N illegal list - only SWPENQ
+CORE1 :REMLST+ 4  Remove PG from given list, T3/PGYLST = SPR.N - illegal SIP
+CORE1 :INCUSE+ 2  Incr CP use count, @PGYUSE overflow to 0
+CORE1 :INCUS1+ 3  Incr CP use count, CAPPGN was 0 - caller blew it
+CORE1 :DECUSE+ 4  Decr CP use count, @PGYUSE underflow to -1
+CORE1 :DECUS0+ 7  Decr CP use count, PGYDIO on or PGYLMJ slot not active
+CORE1 :SETUWS+ 3  Set UWS Incr, UWS > 1000
+CORE1 :SETMWS+ 5  Set MWS/UWS Incr, JBYPPP > 77
+CORE1 :SETMW2+ 3  Set MWS/UWS Incr, JBYMWS > 1777
+CORE1 :CLRUWS+ 3  Clr UWS Decr, UWS le 0
+CORE1 :CLRMWS+ 5  Clr MWS/UWS Decr, JBYPPP le 0
+CORE1 :CLRMW2+ 2  Clr MWS/UWS Decr, JBYMWS le 0
+CORE1 :FBITWS+ 2  Tst UPTUWB/UPTMWB(T1), UPTUWB/UPTMWB > VPUMAX
+CORE1 :PAGWAT+ 1  Wait for IO complete for PG, J neq JOB!
+CORE1 :GIVCR2+ 1  Clear bit in frecor table, Bit to clear already clear
+CORE1 :GIVCR2+ 7  Clear bit in frecor table, Try to clear past top of table
+CORE1 :SETO1 + 1  Set bit in frecor table, Bit to set already set
+CORE1 :CHKLST+11  Chk phys core list ok, MAXPCB was 0
+CORE1 :CHKLP1+ 7  Chk phys core list ok, PGY data invalid using @INSTYP(T1)
+CORE1 :CHKLP2+ 5  Chk phys core list ok, CFRLST pgs/DFRPGN neq CHKCNT(T1)
+CORE1 :CHKLP3+ 2  Chk phys core list ok, T2/PGYLST neq lst in T1
+CORE1 :CHKLP3+ 5  Chk phys core list ok, T2/PGYBPL neq T3/back link
+CORE1 :CHKLP3+13  Chk phys core list ok, T3/prev pg neq PG/LSTLST(T1)
+CORE1 :AGEPG1+16  Age pages, P3/LMAP not-existent LMMEXS
+
+ERRCON:USRSPF     Page fail XCT UPFTBT(UPTUPF/UPW) (0)=Exec page
+ERRCON:USRSP1     Page fail *New* XCT UPFTAB (1=IMR,2=WrtV,6=AdrBrk)
+ERRCON:USRSP1+ 1  Page fail XCT instruction falls through
+ERRCON:USRMP2     Page fail XCT UPFTAB(UPF/UPW) (0)=Exec page
+ERRCON:USRMP2+ 1  Page fail XCT instruction falls through
+ERRCON:EXCMPE+ 3  Exec Map Err:0 CTX or E>=400,5 exec w s-cow,7 h pag failure
+ERRCON:EXCMPE+ 5  Exec Map Err:1 ill mem ref to usr,2 ill write ref to usr
+ERRCON:EXCPDL     ? Die
+ERRCON:UUOSTR     Supervisor trap, we don't use sup mode
+ERRCON:UUOSNT     Supervisor no-trap, we don't use sup mode
+ERRCON:UUOCTR     Concealed trap, we don't use concealed code
+ERRCON:UUOCNT     Concealed no-trap, we don't use concealed code
+ERRCON:NOCREA+ 5  DSK full error, if not code CRDFL%=1 then crash
+ERRCON:UUOMNR+ 2  Illegal UUO in exec mode (PDNMUP(P) & PC.USR) is 0
+ERRCON:ILLINS+ 2  Illegal instruction in exec mode, PDNMUP(P) & PC.USR is 0
+ERRCON:ERRSE0+ 3  ERRSES/X/T++ %UPS/X/T+UPTJOB =0 or >JOBMAX
+
+ACTSER:ACTWRT+ 2  Record type out of range - must be 0 le type le22 22
+ACTSER:ACTWRT+ 4  Illegal record: 10-XCHG,11-UP,17-TRNS,20-ROY,21-TRU CHKPNT
+ACTSER:WRTACR+13.2 Variable length record, length out of range
+ACTSER:WRTAC1+ 4  Illegal user types: 41-CHKPNT,42-LOGOUT,43-UPTIME,44-TATTLE
+ACTSER:WRTAC1+ 5  Illegal record types: 10,11,17,20,21 as aboven
+
+LPTSER:LPTCVT+ 3  Attempt to move more than ^D1280 bytes into LPT buffer
+LPTSER:LPRINT     KS-only crash if get to this internal loc
+
+PICON :STKAC + 4  KI-only ran out of AC stacking space
+PICON :UUOPTR+ 2  M was 0 at UUO level, only possible for NULJOB
+PICON :STKAC1+11  non KI-only ran out of AC stacking space
+PICON :APRINT+15  KL-only spurious APR error
+PICON :ITMINT+ 2  KL-only timer overflow (TI.TOV) on interval timer
+PICON :APRFAT     KI/KS-only fatal APR error bit set (APFMSK)
+PICON :APRFAT+ 1  KL-only fatal APR error bit set (APFMSK)
+PICON :APRPR4+10  non KL-only CTY char "L" waiting for "R"escan on MPE
+PICON :APRPR4+11  KL-only CTY char "L" waiting for "R"escan on MPE
+PICON :USEPER+ 4  non KL-only got user parity error from NULJOB
+PICON :USEPER+ 5  KL-only got user parity error from NULJOB
+PICON :UPEB1 +11  User parity err, KI-PG has MAP.M, KL-PG has PFW.H
+PICON :UPEH  + 6  KL-only User parity error MAP PG,<x> has PFW.H set
+PICON :BPPG3 + 7  BPPAGE exit, PGYUSE "still" non-zero for page
+PICON :SNOOPI+ 2  SNOOPY Interval timer overflow (same as ITMINT+2)
+
+SCHED1:QXFER + 1  Attempt to reque job 0
+SCHED1:QX1   + 1  Reached end of Q-table looking for jobsiz le lh(tab entry)
+SCHED1:WRSMA1+ 7  In WRSMAP, found -1 state pair transition, so crash
+SCHED1:SIDLP1+ 2  PG < MINPCB, processing swap-in done list
+SCHED1:SIDLP1+ 6  SIPTOT decr past 0, swap-in done list, non-PCB page
+SCHED1:SODLP4+ 1  CAPPGN decr past 0, swap-out done list
+SCHED1:PAGWK1+ 2  Job on PGYPGO list prev state not SWQ  (SWQ==>SSQ)
+SCHED1:SWICC2+ 4  CTX page alloc, mismatched counters -W,+T3 ? one clobbered
+SCHED1:SWICN1+ 1  CTX page alloc/cre pre-DSKCLN, no more core pages [GETFRE]
+SCHED1:SWICSA+13  CTX page in core 1st time, CAPPGN/RIPPGN (<0) disagree
+SCHED1:SWICSC+ 3  Clean core page? use clean reserved, oops ran out, bye
+SCHED1:SWICS3+14  Got clean reserved page, CAVPGN decr past 0, oops!
+SCHED1:MWSMNX+ 1  %UPS+UPTLDC decr past 0, handling MWS pages
+SCHED1:SWILA7+ 6  Safety check, (T1/0) div (T3/JBYMWS) left T1 negative
+SCHED1:SWISW7+21  LMAP slot page, SIPTOT decr past 0
+SCHED1:SWISW7+23  LMAP slot page, RIPPGN decr past 0
+SCHED1:SWIRD0+ 4  LMAP slot page, SIPTOT decr past 0
+SCHED1:SWIRD0+ 6  LMAP slot page, CRSPGN decr past 0
+SCHED1:SWISIN+11  Inactive pg in MWS not in CHT, SIPTOT decr past 0
+SCHED1:SWISN0+ 3  Inactive pg in MWS not in CHT, CAVPGN decr past 0
+SCHED1:SWINJB+ 1  Next job in swap in list, %UPS+UPTLDC decr past 0
+SCHED1:SWICR1+ 4  Have DP# from CTXTAB(W), can't get CP# from SRCCHT
+SCHED1:SWIBK1+13  Stolen page not already active GETLMS | LMPACT
+SCHED1:SWIBAD+10  Mismatch among CRSPGN/RIPPGN/CAVPGN/CAPPGN updating them
+SCHED1:SWOCT1+ 4  Deactivating CTX pages, PGYDIO on for CTX pages
+SCHED1:SWOCT1+ 7  Deactivating CTX pages, PGYSIP on ? SIP on while output ?
+SCHED1:NAILIT+12  Nail a page down, RIPPGN decr past 0 stealing a page
+SCHED1:NAILI2+ 3  Nail a page down, CRSPGN decr past 0 stealing a page
+SCHED1:SWPIO + 5  Start swapping for CP# in PG, both PGYSIP/PGYSOP clear
+SCHED1:SWPIO2+ 2  Start swapping for CP# in PG, swapping a clean page oops!
+SCHED1:SWPIO3+ 2  Swapping code DSKCLN pg check, PGYLMJ inactive & not DSKCLN
+SCHED1:SWPIO3+ 6  Swapping code DSKCLN pg check, not super LMPSUP slot
+SCHED1:SWPSAV+ 4  Stack underflow saving 10 ACs at a time
+SCHED1:SWPSAV+30  Stack overflow restoring 10 ACs at a time
+SCHED1:MPSUP1+ 2  Address LMAPs thru UPT, can't find PG in CHT [SRCCHT]
+
+
+SCNSER:SCNIN0+11  Message type .gt. MXTYPE ['60]
+SCNSER:CNTPRT     Message type not done here 0,4,26,30-37,41,42,44,46,52,54
+SCNSER:BADPRT+ 2  non-KS Bad port # from base, ok on TYPSUR
+SCNSER:BADPRT+ 6  KS-only Bad port # from base, ok on TYPSUR,TYPANS,TYPCRS
+SCNSER:FRCIBF+ 1  Inp buf full from base (type 47), no buffer or req pending
+SCNSER:FRCEOT+ 1  Inp terminated EOT (type 50), no buffer or req pending
+SCNSER:BLKNEG+13  Port count mismatch on type 54,INPCHR/BIOPRT/BIOCNT+0
+SCNSER:RCVTCX+ 1  Port terminal characteristic out of range, way out of range
+SCNSER:CHRMLT+ 2  KS-only KMC IRING overwrite or bad P4
+SCNSER:FULLN3+ 1  Output not done,finished and non-zero W neq 1
+SCNSER:SETPTB+ 4  PTY output, other end in BLK inp wait, no buffer or reqest
+SCNSER:CLSPTB+ 7  PTY input, other end doing BLK inp, no buffer for port
+SCNSER:CLSPTB+17  PTY input, not finished filling buffer, overfilled buffer
+SCNSER:PGSRD      Impossible output of RED BALL
+SCNSER:PGGBF      Impossible output of GREEN BALL
+SCNSER:PGSYL +12  PTY output, Yellow ball - other side BLK inp, no buf or req
+SCNSER:PGTRI + 7  PTY output, fills up BLK inp buffer, no buffer or request
+SCNSER:PGBIN + 6  PTY output, req BLK inp, no buffer address
+SCNSER:PBTIMO+ 7  PTY output, BLK inp times out, no buffer or request pending
+
+  vRG
