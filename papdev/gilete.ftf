@@ -1,0 +1,100 @@
+C**********************************************************************
+C
+C                          GILETE.FTF
+C
+C                                                          1/22/95
+C                                                            JHP
+C
+C***********************************************************************
+C
+C
+        INTEGER START,END,TNUM,STDAT,CLDAT,COC(2),SM,SD,SY,EM,ED,EY
+        INTEGER IERT,IERC,NUMBER,I
+        INTEGER REPROB(2),PROD
+        REAL ELM,TOTIM,AVTIM,PUNDR2,UNDR2
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+        TYPE 20
+20      FORMAT(/5X,'ENTER THE STARTING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 21,SM,SD,SY
+21      FORMAT(I2,1X,I2,1X,I2)
+        SY=SY+1900
+        CALL DBDATN(START,SM,SD,SY)
+        TYPE 30
+30      FORMAT(/5X,'ENTER THE ENDING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 31,EM,ED,EY
+31      FORMAT(I2,1X,I2,1X,I2)
+        EY=EY+1900
+        CALL DBDATN(END,EM,ED,EY)
+
+        EY=EY-1900
+        SY=SY-1900
+        TYPE 50,SM,SD,SY,EM,ED,EY
+50      FORMAT(/1X,T24,'MTTR AND ELAPSED TIME REPORT FOR',/1X,
+     1  T37,'GILLETTE',/1X,T33,'FOR THE PERIOD',/1X,T30,
+     2  I2,'/',I2,'/',I2,' TO ',I2,'/',I2,'/',I2,/1X,
+     3  /1X,T24,'--------------------------------',/1X)
+
+        PUNDR2=0
+        UNDR2=0
+        ELM=0
+        NUMBER=0
+
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     CALL DBOPEN('(TNT)BASE4')
+        CALL DBFIND(26,6,START,1,26,4,END,1,52,'LT',3)
+        CALL DBSRCH(31,'CT','GILLE')
+        CALL DBNREC(NUMBER)
+        DO 200 I=1,NUMBER
+        CALL DBGREC($9000,I)
+        CALL DBVAL(54,ELM)
+        IF(ELM.LE.120)UNDR2=UNDR2+1
+        TOTIM=TOTIM+ELM
+200     CONTINUE
+
+        PUNDR2=UNDR2/NUMBER
+        PUNDR2=PUNDR2*100
+
+        TYPE 210,NUMBER,PUNDR2
+210     FORMAT(/1X,'TOTAL TICKETS = ',I3,/,/1X,'% <= 2 HRS. = ',
+     1  F5.1)
+
+        TYPE 220
+220     FORMAT(/1X,'TICKET #',3X,'SEV.',2X,'PROD/IPX',3X,
+     1  'PROBLEM',6X,'CLOSE CODE',3X,'DURATION(HRS)',/1X,
+     2  '----------------------------------------------------',
+     3  '----------------')
+
+        CALL DBFIND(26,6,START,1,26,4,END,1,52,'LT',3)
+        CALL DBSRCH(31,'CT','GILLET')
+        CALL DBNREC(NUMBER)
+        CALL DBSORT('SVER','TNUM')
+
+        DO 130 I=1,NUMBER
+        CALL DBGREC(I)
+        CALL DBVAL(1,TNUM,55,COC,54,ELM,57,REPROB,14,PROD,52,SVER)
+        ELM=ELM/60
+        TYPE 120,TNUM,SVER,PROD,REPROB,COC,ELM
+120     FORMAT(1X,I6,6X,I1,4X,A5,6X,2A5,3X,2A5,3X,F8.2)
+130     CONTINUE
+
+        GOTO 9990
+
+8990    TYPE 8991
+8991    FORMAT(/1X,'NO TICKETS WERE FOUND FOR THE SPECIFIED ',
+     1  'TIME PERIOD')
+
+        GOTO 9990
+
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO JIM PARKER AT NSSC!')
+9990    CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
+
