@@ -1,0 +1,179 @@
+(n,l)
+(* n,x *)
+!
+(**********************************************************************)
+(* **                  PROPRIETARY INFORMATION                     ** *)
+(* **                                                              ** *)
+(* **  This  source code listing constitutes the proprietary pro-  ** *)
+(* **  perty of TYMNET, Incorporated. The recipient, by receiving  ** *)
+(* **  this program listing, agrees that neither this listing nor  ** *)
+(* **  the   information  disclosed herein nor any  part  thereof  ** *)
+(* **  shall be  reproduced or transferred to other documents  or  ** *)
+(* **  used  or  disclosed to others for manufacturing or for any  ** *)
+(* **  other   purpose except as specifically authorized in  wri-  ** *)
+(* **  ting by  TYMNET, Incorporated.                              ** *)
+(* ****************************************************************** *)
+(* **                   PROGRAM IDENTIFICATION                     ** *)
+(* **                                                              ** *)
+(* **  Version Number     :  4.05         Release Date :           ** *)
+(* **                                                              ** *)
+(* **  File Name          : ELF04.I05                              ** *)
+(* **                                                              ** *)
+(* **  File Description   : Initial part of ELF 4.05 Source        ** *)
+(* **                                                              ** *)
+(* **  File Abstract      : The companion file is ELF04.R05        ** *)
+(* **                                                              ** *)
+(**********************************************************************)
+!
+(************************************************************************)
+(*									*)
+(*                 ELF version and revision				*)
+(*									*)
+(************************************************************************)
+
+$define elfbackup
+$define ebkdebug
+$define ebkdebug_Announce_Command
+$define ebkdebug_Circ_Kill_Crash
+$define ebkdebug_Circ_Report_Errs
+$define ebkdebug_Circ_Report_Msgs
+$define ebkdebug_List_Internal_Files
+$define configuration_management_facility
+$define configuration_management_facility_debug
+$define automatic_login_to_cmf_host
+$define direct_login_to_netport
+$define create_project_code
+$define difference_command
+
+
+const
+  version = 4;
+  revision = 5;
+
+  (* version number and revision number are output to the user on entry	*)
+  (* and stored in elf files.						*)
+
+  (* Version 4.05 -- NEH						*)
+  (*	- add standard UNIX interface to use standard UNIX files	*)
+
+  (* Version 4.04 -- RER						*)
+  (*	- Corrected recognition of MAG TAPES after other slot releases	*)
+
+  (* Version 4.01 -- RER						*)
+  (*	- Added Difference command for CMF.				*)
+
+  (* Version 4.00 -- DLP						*)
+  (*      Added the Automatic backup feature, enabling multiple ELves   *)
+  (*      in a network to keep each other informed of changes to the    *)
+  (*      data base.							*)
+
+  (* Version 3.10, 04/17/85 - jrn					*)
+  (*	- fixed a bug that caused files to be transferred to the ELF	*)
+  (*	  system erroneously; FILES CREATED WITH VERSION 3.09 SHOULD BE	*)
+  (*	  DELETED AND RECREATED WITH VERSION 3.10.;the main repeat loop	*)
+  (*	  for receiving characters and storing them to the ELF device	*)
+  (*	  was modified in version 3.09 to not check for status on each	*)
+  (*	  loop; the check for res_in = COMPLETE needed to remain in	*)
+  (*	  order to not store an extra byte at the end			*)
+  (*	- fixed a bug in the PORTIO routine write_it to set a timeout	*)
+  (*	  of zero seconds on terminal writes				*)
+  (*	- removed debugging code and command				*)
+
+  (* Version 3.09, 02/14/85 - jrn					*)
+  (*	make ELF less piggish and re-work the downline interaction:	*)
+  (*	- replace lots of calls (on EVERY character !!!!!) to		*)
+  (*	  CHECK_FOR_STOP with use of the variable USER_INTERRUPT	*)
+  (*	- replace some calls to ALL_OK with an appropriate one or two	*)
+  (*	  boolean checks						*)
+  (*	- remove incr_dl_index, sm_dl_rec, same_cmp and fll_cmp_ct	*)
+  (*	  routines and code more efficiently inline			*)
+  (*	- add time_sent to dl_recs and use to determine if a record	*)
+  (*	  has timed out and should be resent				*)
+  (*	- replace gt_dl_ans and get_good_dl_answer with real code	*)
+  (*	- change "LOST: " to "RESENT: " when reporting on downline	*)
+  (*	  records resent, and report "LATE: " if any acknowledgements	*)
+  (*	  arrive after a record has been resent				*)
+  (*	- use Pascal Nucleus version 10.07				*)
+
+  (* Version 3.08, 08/10/84 - jnm					*)
+  (*	- remove the sending of the project code to the TYMCOM-X	*)
+  (*	  altogether							*)
+  (*	- add patched nucleus to use send siix message as a send LEM	*)
+  (*	  message							*)
+  (* Version 3.08, 07/18/84 - jnm					*)
+  (*	- add X.25 and Nucleus LDEM patch				*)
+  (*	- remove timeout loop and yellow/green ball exchange on		*)
+  (*	  building circuit to Tymcom-X					*)
+  (*	- fix break out of RENAME bug					*)
+  (*	- add DUMP flavors to HELP command				*)
+  (*	- add LOCATE commnd						*)
+  (*	- add option in DIRECTORY command to output the entry for a	*)
+  (*	  specific file							*)
+  (*	- handle MXP nodes						*)
+
+  (* Version 3.07, 3/29/84 - jnm					*)
+  (*    - Fix bug in breaking out of the CREATE command.		*)
+  (*	- Fix multiple disk access and circuit lost bug that caused	*)
+  (*	  disk corruptions.						*)
+  (*    - Fix crash that was caused by an 80 character or greater	*)
+  (*	  input line.							*)
+  (*	- Fix erroneous error messages on circuit transmission errors.	*)
+  (*	- Changed command file to include a configuration file (sample	*)
+  (*	  is ELF03.A07) and the compilation of the actual ELF code;	*)
+  (*	- use the latest BASELINE release of the Pascal Nucleus and the	*)
+  (*	  patch file (BETATEST)ELF03.P07 which fixes a bug in the	*)
+  (*	  recovery from the receipt of a BLACK ball and a bug in the	*)
+  (*	  checksum routine.						*)
+  (*	- add an option to the SKIP command to skip all ELF files on	*)
+  (*	  a magnetic tape, leaving the tape in the position to append	*)
+  (*	  the next file(s) transferred to the tape.			*)
+  (*	- added tape error recovery; read and write errors are retried	*)
+  (*	  16 times before reporting a failure.				*)
+  (*	- add a new command, COPY.  The COPY command allows the user	*)
+  (*	  to duplicate a single file or ALL files from one ELF device	*)
+  (*	  to another (to specify that ALL files are to be copied, the	*)
+  (*	  command COPY ALL is used).					*)
+
+  (* Version 3.06, 10/31/83 - jnm					*)
+  (*	- Allow CREATES through multiple gateways.			*)
+  (*	- Crash if end page of file is negative (to help find BUG).	*)
+
+  (* Version 3.05, 8/26/83 - jnm					*)
+  (*	Rename command fix - if illegal file address was entered, the	*)
+  (*	change was being made anyway!!! Possibly causing a file header	*)
+  (*	to be written over data...not a good thing to do.		*)
+
+  (* Version 3.04, 8/10/83 - jnm					*)
+  (*    Update to latest Nucleus 8.02:					*)
+  (*	  on needle reads,						*)
+  (*		- set arg1 := 0 for no sub-host			 	*)
+  (*		- set arg2 := 0 for no timeout			 	*)
+
+  (* Version 3.03, 7/28/82 - jnm					*)
+  (*	Run ELFSLV from SOURCE directory.				*)
+
+  (* Version 3.02, 7/14/82 - jnm					*)
+  (*	Fix DUMP NODE command to resend dump request records if not 	*)
+  (*	acknowledged in 20 seconds, and count as lost.			*)
+
+  (* Version 3.01, 6/28/82 - jnm					*)
+  (*	Clear arg2 when term_info call to nucleus is done. V7.01 uses	*)
+  (*	arg2 as a timeout.						*)
+
+  (* Version 3.00, 4/21/82 :						*)
+  (*		1) use call to nucleus checksum to compute checksums 	*)
+  (*		2) store nib file creation date and time in header	*)
+  (*		   and output on directory command.			*)
+  (*		3) decrease global storage in portio and cmn classes	*)
+  (*		   (previously monitors!)				*)
+  (*		4) rewrite int_to_wd and wd_to_int routines		*)
+  (*		5) remove prompt for password if login information	*)
+  (*		   matches previous circuit information			*)
+  (*		6) allow unrecognizable files to be deleted		*)
+  (*		7) fix bug in CONDENSE command				*)
+  (*		8) change CONDENSE command to delete unrecognizable	*)
+  (*		   files						*)
+
+  (*	     2.0 : add DUMP SLOT and DUMP PARTIAL commands 1/11/82	*)
+
+  (*	     1.2 : update to version 6.0 pascal nucleus			*)
