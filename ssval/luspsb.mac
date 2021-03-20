@@ -1,0 +1,141 @@
+        ENTRY   GETNAM,NXTFIL,HSHAKE,G1BYTE,S1BYTE,SLEEPY,SUNAME,S3BYTE,CVTSTR
+        
+GETNAM: DATE    1,              ; get date
+        IDIVI   1,^D31          ; isolate day
+        AOJ     2,
+        MOVE    3,2
+        IDIVI   1,^D12          ; isolate month
+        AOJ     2,
+        IMULI   2,^D100         ; left shift 2 decimal places
+        ADD     3,2
+        ADDI    1,^D64          ; adjust year
+        IMULI   1,^D10000       ; left shift 4 decimal places
+        ADD     1,3
+        MOVEI   6               ; set counter 6
+        MOVE    3,[IOWD 7,STACK]
+        IDIVI   1,^D10
+        ADDI    2,60
+        PUSH    3,2             ; push down an ASCII digit
+        SOJG    .-3
+        SETZ    0,
+        SETZ    1,
+        MOVEI   4,6             ; set counter to 6
+        MOVE    5,[POINT 7,0]   ; set byte pointer
+        POP     3,2             ; pop an ASCII digit
+        IDPB    2,5
+        SOJG    4,.-2
+        MOVEI   2,56
+        IDPB    2,5
+        MOVE    6,@(16)
+        MOVEI   2,103
+        CAIE    6,2
+        AOJ     2,
+        IDPB    2,5
+        MOVEI   2,101
+        IDPB    2,5
+        DMOVEM  @1(16)
+        POPJ    17,
+
+STACK:  BLOCK   6
+
+NXTFIL: DMOVE   @(16)
+        HRRZ    2,1
+        LSH     2,-10
+        ANDI    2,177
+        CAIE    2,132
+        JRST    NXTF1
+        SETOM   @1(16)
+        MOVE    2,[POINT 7,1,20]
+        MOVEI   3,101
+        IDPB    3,2
+        JRST    NXTF2
+NXTF1:  ADDI    1,400
+        SETZM   @1(16)
+NXTF2:  DMOVEM  @(16)
+        POPJ    17,
+
+HSHAKE: MOVEI   1,214           ; SET NO ECHO MODE
+        SETMOD  1,
+        HRROI   1,4             ; PREPARE TO SEND 1,2,3,4
+        AUXCAL  1,1
+        AUXCAL  1,2
+        AUXCAL  1,3
+        AUXCAL  1,4
+        HRROI   1,0             ; PREPARE TO GET 1,2,3,4
+TRYAGN: AUXCAL  1,2             ; FROM THE INPUT PORT
+        JRST    .-1
+        CAIE    2,1
+        JRST    TRYAGN
+        AUXCAL  1,2
+        JRST    .-1
+        CAIE    2,2
+        JRST    TRYAGN
+        AUXCAL  1,2
+        JRST    .-1
+        CAIE    2,3
+        JRST    TRYAGN
+        AUXCAL  1,2
+        JRST    .-1
+        CAIE    2,4
+        JRST    TRYAGN
+        POPJ    17,
+
+G1BYTE: SETZ    2,
+        HRROI   1,0
+        AUXCAL  1,2
+        JRST    .-1
+        MOVEM   2,@(16)
+        POPJ    17,
+
+S1BYTE: MOVE    2,@(16)
+        HRROI   1,3
+        AUXCAL  1,2
+        POPJ    17,
+
+SLEEPY: MOVE    1,@(16)
+        CAILE   1,104
+        JRST    SLEEP2
+SLEEP1: SLEEP   1,
+        POPJ    17,
+SLEEP2: MOVEI   0,104
+        SLEEP   0,
+        SUBI    1,104
+        CAIG    1,104
+        JRST    SLEEP1
+        JRST    SLEEP2
+
+SUNAME: MOVE    1,(16)          ; get address of string
+        HRLI    1,(POINT 7)     ; make byte pointer
+        HRROI   2,3             ; get command port and prepare for auxcal
+        MOVEI   3,^D12          ; number of bytes is 12
+SUNAM1: ILDB    4,1             ; get one byte
+        SUBI    4,40
+        AUXCAL  2,4             ; send it
+        SOJG    3,SUNAM1        ; do the rest
+        POPJ    17,
+
+S3BYTE: MOVEI   3,3             ; set 3 bytes to be sent
+        MOVE    2,@(16)         ; get content of 3 bytes
+        LSH     2,^D12          ; left justify
+        HRROI   4,3             ; prepare for auxcal
+        SETZ    1,              ; clear AC 1
+        LSHC    1,^D8           ; get left 8-bit of AC 2 and put into AC 1
+        AUXCAL  4,1             ; send a byte (8-bit)
+        SOJG    3,.-3           ; continue if AC 3 is greater than zero
+        POPJ    17,             ; return to caller
+
+CVTSTR: MOVE    1,(16)          ; get address of string
+        HRLI    1,(POINT 7)     ; make byte pointer
+        SETZ    3,              ; zero result field
+        MOVEI   6               ; max char
+CVTST1: ILDB    2,1             ; get a char
+        CAIN    2,40            ; is a char 40?
+        JRST    CVTST2          ; yes, end of string
+        SUBI    2,60            ; yes, convert ascii to numeric
+        LSH     3,3             ; shift previous value
+        OR      3,2             ; include current value
+        SOJG    CVTST1          ; do the rest
+CVTST2: MOVEM   3,@1(16)        ; return the result
+        POPJ    17,
+
+        END
