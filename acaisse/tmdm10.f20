@@ -1,0 +1,6039 @@
+!
+(**********************************************************************)
+(* **                  PROPRIETARY INFORMATION                     ** *)
+(* **                                                              ** *)
+(* **  This  source  code  listing  constitutes  the proprietary   ** *)
+(* **  property of MDC-TYMNET.  The recipient, by receiving this   ** *)
+(* **  program listing, agrees that neither this listing nor the   ** *)
+(* **  information disclosed herein nor any part thereof shall be  ** *)
+(* **  reproduced or transferred to other documents or used or dis-** *)
+(* **  closed to others for manufacturing or for any other purpose ** *)
+(* **  except as specifically authorized in writing by MDC-TYMNET. ** *)
+(* ****************************************************************** *)
+(* **                   PROGRAM IDENTIFICATION                     ** *)
+(* **                                                              ** *)
+(* **  Version Number     : 10.20         Release Date : 10/31/86  ** *)
+(* **                                                              ** *)
+(* **  File Name          : TMDM10.F20                             ** *)
+(* **                                                              ** *)
+(* **  File Description   : Final part of TMDM 10.20 Source        ** *)
+(* **                                                              ** *)
+(* **  File Abstract      : The companion files are: 		   ** *)
+(* **				TMDM10.I20			   ** *)
+(* **				TMDM10.R20			   ** *)
+(* **                                                              ** *)
+(**********************************************************************)
+!
+(************************************************************************)
+(*									*)
+(*	LOCAL.TDR Updated 16-Jan-86 at 17:56 by Hueyma			*)
+(*									*)
+(*			local tmcs types/definitions			*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*	11Jul84 Added constant alarm_feature and reload_feature -- ahm	*)
+(*	10Jan85 Added constant multiple_host_message_feature -- ahm	*)
+(*	16Jan86 Added node_mask, host_mask -- ahm			*)
+(*									*)
+(************************************************************************)
+
+$if alarm
+$enable condition
+$endif
+
+$ifnot alarm
+$disable condition
+$endif
+
+$ifany (alarm, reload)
+$enable background
+$endif
+
+const
+$if alarm alarm_feature      = TRUE;
+$ifnot alarm alarm_feature   = FALSE;
+
+const
+$if reload reload_feature    = TRUE;
+$ifnot reload reload_feature = FALSE;
+
+$ifnot condition
+const
+  threshold_condition_max    = 0;
+  condition_log_length	     = 0;
+
+$endif
+
+$ifnot tymnetone
+const
+  tymnet_I_tymcom_max		  = 0;
+  tymnet_I_tymsat_max		  = 0;
+  tymnet_I_node_configuration_max = 0;
+$endif not tymnetone
+
+
+const
+$if shut_link_table_maintenance  shut_link_table_feature 	= TRUE;
+$ifnot shut_link_table_maintenance  shut_link_table_feature	= FALSE;
+
+const
+$if multiple_host_message multiple_host_message_feature		= TRUE;
+$ifnot multiple_host_message multiple_host_message_feature	= FALSE;
+
+
+(*  user parameters  *)
+
+const
+  user_limit = user_max - 1;
+
+type user_index = 0..user_limit;
+
+(* supervisor parameters *)
+
+type supervisor_state = (unknown, awake, sleeping, frozen);
+
+const
+  supervisor_limit = supervisor_max-1;
+
+type supervisor_index = 0..supervisor_limit;
+
+(* 	The internal index for all node numbers.			*)
+
+const
+  node_max   = 1 + tymnet_ii_node_max;
+  node_limit = node_max-1;
+
+type
+  node_index = 0..node_limit;
+
+(*	The set of all node numbers.				*)
+
+const
+  node_set_max   = (node_max+basic_set_limit) div basic_set_max;
+  node_set_limit = node_set_max-1;
+
+type
+  node_set_index = 0..node_set_limit;
+
+type
+  node_set = array[node_set_index] of node_subset;
+
+
+(*	The internal index for hosts.				*)
+
+const
+  host_max   = host_number_max+1;
+  host_limit = host_max-1;
+
+type
+  host_index = 0..host_limit;
+
+
+(*	A host set for all host numbers.				*)
+
+const
+  host_set_max   = (host_max+basic_set_limit) div basic_set_max;
+  host_set_limit = host_set_max-1;
+
+type
+  host_set_index = 0..host_set_limit;
+
+type
+  host_set = array[host_set_index] of host_subset;
+
+
+(*	Conversion and range checking constants.			*)
+
+$if tymnetone
+const
+  first_tymnet_i_tymcom       = 1;
+  last_tymnet_i_tymcom        = first_tymnet_i_tymcom+tymnet_i_tymcom_max-1;
+  tymnet_i_tymcom_offset      = 0;
+  first_tymnet_i_tymcom_index = 1;
+
+const
+  first_tymnet_i_tymsat       = 512 (* octal 1000 *) ;
+  last_tymnet_i_tymsat        = first_tymnet_i_tymsat+tymnet_i_tymsat_max-1;
+  tymnet_i_tymsat_offset      = tymnet_i_tymcom_offset+
+			        first_tymnet_i_tymsat-last_tymnet_i_tymcom-1;
+  first_tymnet_i_tymsat_index = first_tymnet_i_tymcom_index+
+				tymnet_i_tymcom_max;
+
+const
+  first_tymnet_ii_node       = 1025 (* octal 2001 *) ;
+  last_tymnet_ii_node        = first_tymnet_ii_node+tymnet_ii_node_max-1;
+  tymnet_ii_node_offset      = tymnet_i_tymsat_offset+
+			       first_tymnet_ii_node-last_tymnet_i_tymsat-1;
+  first_tymnet_ii_node_index = first_tymnet_i_tymsat_index+
+			       tymnet_i_tymsat_max;
+$endif tymnetone
+$ifnot tymnetone
+const
+  first_tymnet_ii_node       = 1025 (* octal 2001 *) ;
+  last_tymnet_ii_node        = first_tymnet_ii_node + tymnet_ii_node_max - 1;
+  tymnet_ii_node_offset      = first_tymnet_ii_node - 1;
+  first_tymnet_ii_node_index = 1;
+$endif not tymnetone
+
+
+(* position of host on base *)
+
+const
+  host_position_max   = 8 (* positions *) ;
+  host_position_limit = host_position_max-1;
+
+type host_position_index = 0..host_position_limit;
+
+const
+  username_limit = username_max-1;
+
+type username_index = 0..username_limit;
+
+const
+  node_mask	= 0;
+  host_mask	= 0;
+
+!
+(************************************************************************)
+(*									*)
+(*	RESTR2.TDR Updated 8-Jan-86 at 11:49 by Hueyma			*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	31Oct83 Original -- ahm						*)
+(*	 1Mar84 Convert to TMDM version 1.01 -- ahm			*)
+(*		<> modified procedure fill_old_configuration_params,	*)
+(*		   added oper_log_page_max into old config_list		*)
+(*		<> removed restructure_703 and extend_btree		*)
+(*		<> added restructure_705				*)
+(*		<> added compact_profile				*)
+(*	11Jul84 Convert to TMDM version 1.03 for TMCS version 10.0 - ahm*)
+(*		<> modified procedure fill_old_configuration_params,	*)
+(*		   added node_mask, reload_feature, alarm_feature and	*)
+(*		   threshold_condition_max to old_config_list		*) 
+(*		<> added initial_profile_external_alarm			*)
+(*		<> added read_profile_record_705			*)
+(*		<> added restructure_profiles_with_profile_alarm	*)
+(*		<> modified start_reconfig_profile_records to fit	*)
+(*		   the alarm_feature and threshold condition		*)
+(*		<> added convert_profile_alarm				*)
+(*		<> added start_reconfig_threshold_conditions		*)
+(*		<> added read_reload_data_file				*)
+(*		<> added convert_reload_hosts, convert_reload_nodes	*)
+(*		<> converted convert_profile_hosts to convert_host_set	*)
+(*		<> converted convert_profile_nodes to convert_node_set	*)
+(*	11Oct84 <> added start_reconfig_xom_host_data			*)
+(*	25Oct84 <> added start_reconfig_cluster_names			*)
+(*	15Mar85 <> modified restructure_disk				*)
+(*		<> added write_erlog_file				*)
+(*	10Jun85 <> modified start_reconfig_profile_records, profile	*)
+(*		   allowed_license field will be reconfigured		*)
+(*		<> added convert_allowed_license			*)
+(*	20Oct85 <> restructured LOCABUCK				*)
+(*									*)
+(************************************************************************)
+
+(* user profile definitions *)
+(*	This is the user license that is stored in user profile record. *) 
+
+type
+  license = (
+    no_license,		p00_license,		p01_license,
+    p02_license,	p10_license,		p20_license,
+    upd_license,	hang_license,		who_license,
+    setn_license,	setp_license,		inact_license,
+    dev_license,	operator_license,	hst_license,
+    grt_license,	
+$if reload
+    rellst_license,	relset_license,		relexe_license,
+$endif reload
+$if condition
+    thrlst_license,	thrset_license,
+$endif condition
+$if alarm
+    almlst_license,	almset_license,		almexe_license,
+$endif alarm
+$if background
+    attach_license,
+$endif background
+$if shut_link_table_maintenance
+    autolog_license,	shtlnk_license
+$endif shut_link_table_maintenance
+$ifnot shut_link_table_maintenance
+    autolog_license
+$endif
+  );
+
+const
+  first_license = p00_license;
+$if shut_link_table_maintenance
+  last_license  = shtlnk_license;
+$endif shut_link_table_maintenance
+$ifnot shut_link_table_maintenance
+  last_license  = autolog_license;
+$endif
+
+type license_set = set of license;
+
+
+(*  Limit set definitions/declarations  *)
+
+const
+  limit_set_limit        = limit_set_max - 1;
+
+type limit_set_index     = 0..limit_set_limit;
+
+type limit_names = array[limit_set_index] of symbol;
+
+const
+  clusion_byte_max   = 126 (* bytes *) ;
+  limit_set_byte_max =
+    (event_set_max+node_set_max+host_set_max)*32 +2*clusion_byte_max;
+  limit_set_page_max = (limit_set_byte_max + page_limit) div page_size;
+  limit_filler_max   = (limit_set_page_max*page_size)-limit_set_byte_max;
+
+type
+  limit_set_record    = 
+    record
+      limit_events    : event_set;
+      limit_nodes     : node_set;
+      limit_hosts     : host_set;
+      limit_links     : clusion_list;
+      limit_lines     : clusion_list;
+      filler          : array [1..limit_filler_max] of char
+    end  (* limit_set_record *) ;
+
+
+const
+  limit_set_page_limit   = limit_set_page_max - 1;
+
+type
+  limit_set_page_index   = 0..limit_set_page_limit;
+  limit_set_page_buffer  = array [limit_set_page_index] of page;
+
+(*	This is the access rights for a user. All of this		*)
+(*	portion of the profile is resident when the user is logged in.	*)
+
+
+const
+  profile_access_byte_max =
+    (symbol_text_max+4) +		(* name *)
+    4+4+2+4+4+4+			(* password..line_threshold *)
+    14+					(* filler_1 *)
+    4+2+				(* time_zone..terminal_used *)
+    (2*basic_set_max) div 8+		(* allowed_license..allowed_events *)
+    limit_set_max*(symbol_text_max+4)+	(* limit_set_names *)
+    (symbol_text_max+4)+		(* default_limit_set *)
+    (node_set_max+host_set_max)*32	(* allowed_nodes..allowed_hosts *) ;
+
+const
+  profile_access_page_max =
+    (profile_access_byte_max+page_limit) div page_size;
+
+const
+  filler_2_max = profile_access_page_max*page_size-profile_access_byte_max;
+
+type
+  profile_access =
+    record
+      header	  	  : profile_access_header;
+      allowed_license	  : license_set;
+      allowed_events	  : main_event_subset;
+      limit_set_names     : limit_names;
+                            (*  name of initial login/default limit set  *)
+      default_limit_set   : symbol;
+      filler_2            : array[1..filler_2_max] of char;
+      allowed_nodes       : node_set (* nodes accessable by user *) ;
+      allowed_hosts       : host_set (* hosts accessable by user *)
+    end (* profile_access *) ;
+
+const
+  profile_access_page_limit    = profile_access_page_max-1;
+
+type profile_access_page_index = 0..profile_access_page_limit;
+
+type
+  profile_access_page_buffer =
+    array [profile_access_page_index] of page;
+
+(*	These are the ignore files.                                	*)
+(*	Each consists of three files, each five pages long.		*)
+(*	Each file contains a node_set, host_set, event_set and   	*)
+(*	two clusion_list's for lines and links.				*)
+
+type
+  profile_ignore =
+    record
+      limit_sets : array [limit_set_index] of limit_set_record
+    end (* profile_ignore *) ;
+
+const
+  profile_ignore_page_max   = limit_set_max*limit_set_page_max (* pages *) ;
+  profile_ignore_page_limit = profile_ignore_page_max-1;
+
+type profile_ignore_page_index = 0..profile_ignore_page_limit;
+
+
+
+(*	These are the user alarms.					*)
+(*	Each consists of one external_alarm     			*)
+
+$if alarm
+type
+  external_alarm_system =
+    record
+      host		: host_index;
+      address		: integer
+    end (* external_alarm_system *) ;
+
+
+const
+  profile_alarm_byte_max =
+    4 +					(* host number *)
+    4 					(* host sub address *) ;
+
+const
+  profile_alarm_page_max   =
+    (profile_alarm_byte_max + page_limit) div page_size;
+
+  profile_alarm_page_limit = profile_alarm_page_max - 1;
+
+type
+  profile_alarm_page_index = 0..profile_alarm_page_limit;
+
+const
+  alarm_filler_max =
+    profile_alarm_page_max*page_size - profile_alarm_byte_max;
+
+type
+  profile_alarm_record =
+    record
+      alarm_data: external_alarm_system;
+      filler	: array [1..alarm_filler_max] of char
+    end (* profile_alarm_record *) ;
+
+$endif
+
+
+(*	This is a complete profile record as it appears on the disk.	*)
+(*	It must consist of an integral number of disk pages and hence	*)
+(*	each field must also be integral.				*)
+
+type
+  profile_record_705 =
+    record
+      access: profile_access;
+      colors: profile_color;
+      ignore: profile_ignore
+    end (* profile_record_705 *) ;
+
+type
+  profile_record =
+    record
+      original_profile_record: profile_record_705
+$if alarm
+;     alarms		     : profile_alarm_record
+$endif
+    end (* profile_record *) ;
+
+const
+  profile_record_page_max_705   =
+    profile_access_page_max+profile_color_page_max+profile_ignore_page_max;
+  profile_record_page_limit_705 = profile_record_page_max_705-1;
+
+const
+  profile_record_page_max     = profile_record_page_max_705
+$if alarm + profile_alarm_page_max
+;
+  profile_record_page_limit   = profile_record_page_max-1;
+
+
+
+!
+(* node_names_file *)
+
+const
+  node_name_page_page_max   = (node_max+name_page_limit) div name_page_max;
+  node_name_page_page_limit = node_name_page_page_max-1;
+
+type 
+  node_name_page_page_index = 0..node_name_page_page_limit;
+  node_names_file	    = array [node_name_page_page_index] of name_page;
+
+
+(* host_names_file *)
+ 
+const
+  host_name_page_page_max   = (host_max+name_page_limit) div name_page_max;
+  host_name_page_page_limit = host_name_page_page_max-1;
+
+type 
+  host_name_page_page_index = 0..host_name_page_page_limit;
+  host_names_file	    = array [host_name_page_page_index] of name_page;
+
+
+(* probe_passwords_file *)
+
+const
+  password_page_max   = 
+    (supervisor_max+page_password_limit) div page_password_max;
+  password_page_limit = password_page_max-1;
+    
+type 
+  password_page_index = 0..password_page_limit;
+  probe_passwords_file = array [password_page_index] of password_page;
+
+  
+(* remote_down_file *)
+
+type
+  remote_greeting_entry =
+    record
+      key: integer (* node and slot numbers packed *) ;
+      kernel_host: host_index;
+      start_time: integer (* time entry was set *) ;
+      clear_time: integer (* time entry should be cleared *)
+    end (* remote_greeting_entry *) ;
+
+type 
+  remote_down_page = array[remote_greeting_entry_index] of remote_greeting_entry;
+  remote_down_file = array[remote_greeting_page_index] of remote_down_page;
+
+
+(* host_bucket_file *)
+
+const
+  host_bucket_page_max   = host_max div bucket_entry_max;
+  host_bucket_page_limit = host_bucket_page_max-1;
+  host_location_max	 = host_bucket_page_max*bucket_entry_max;
+  host_location_limit	 = host_location_max - 1;
+
+type
+  host_bucket_page_index = 0..host_bucket_page_limit;
+  host_location_index	 = 0..host_location_limit;
+
+type 
+  bucket_entry	=
+    record
+      node	: node_index;
+      host	: host_index;
+      position	: host_position_index;
+      time	: integer
+    end (* bucket_entry *) ;
+
+type 
+  host_bucket_page = array[bucket_entry_index] of bucket_entry;
+  host_bucket_file = array [host_bucket_page_index] of host_bucket_page;
+
+
+(* host_status_file *)
+
+const
+$if multiple_host_message
+  host_status_entry_max   = 4 (* host_status_entry's in a page *) ;
+$endif multiple_host_message
+$ifnot multiple_host_message
+  host_status_entry_max   = 8 (* host_status_entry's in a page *) ;
+$endif not multiple_host_message
+  host_status_entry_limit = host_status_entry_max - 1;
+
+  entry_page_max	=
+    (host_status_message_max+host_status_entry_limit) div host_status_entry_max;
+  entry_page_limit	= entry_page_max - 1;
+
+type
+  host_status_entry_index	= 0..host_status_entry_limit;
+  entry_page_index		= 0..entry_page_limit;
+
+const
+  host_status_text_page_max   = entry_page_max*host_status_entry_max;
+  host_status_text_page_limit = host_status_text_page_max-1;
+
+type
+  host_status_text_page_index = 0..host_status_text_page_limit;
+
+
+const
+$if multiple_host_message
+  filler_limit = 23-(2*supervisor_max);
+$endif multiple_host_message
+$ifnot multiple_host_message
+  filler_limit = 15-(2*supervisor_max);
+$endif not multiple_host_message
+
+type
+  host_status_entry =
+    record
+      host_number	: host_index;
+      start_time	: integer (* time entry was set *) ;
+      clear_time	: integer (* time entry should be cleared *);
+      operation		: array[supervisor_index] of sup_host_status_operation;
+      size		: host_text_size;
+$if multiple_host_message
+      msg_active	: boolean;
+      msg_name		: symbol;
+      clear_state	: clear_operation;
+$endif multiple_host_message
+      filler		: array [0..filler_limit] of char
+    end (* host_status_entry *) ;
+
+type 
+  host_status_page = array[host_status_entry_index] of host_status_entry;
+
+type 
+  host_status_entry_file = array[entry_page_index] of host_status_page;
+
+
+$if condition
+(* threshold_condition_file *)
+
+const
+  threshold_condition_limit = threshold_condition_max - 1;
+
+type
+  threshold_condition_index = 0..threshold_condition_limit;
+
+type
+  threshold_condition_file = array [threshold_condition_index] of threshold_condition_page;
+$endif
+
+$if reload
+(* reload_data_file *)
+const
+  bytes_per_reload_data	  = 12 (* 3 integers *);
+
+  reload_data_byte_max    =
+    (node_set_max + host_set_max) * bytes_per_basic_set + (2 * bytes_per_reload_data) ;
+
+  reload_data_page_max    = (reload_data_byte_max + page_limit) div page_size;
+  
+  reload_data_page_limit  = reload_data_page_max - 1;
+ 
+  reload_filler_size	  = page_size - (reload_data_byte_max mod page_size);
+
+type
+  reload_data_page_index  = 0..reload_data_page_limit;
+
+type
+  reload_data_file = array [reload_data_page_index] of page;
+
+
+type
+  reload_data_record =
+    record
+      reload_hosts	: host_set;
+      reload_nodes	: node_set;
+      reload_value	: reload_outage_value;
+      filler		: array [1..reload_filler_size] of char
+    end (* reload_data_record *) ;  
+
+(*  xom_host_file  *)
+
+const
+  xom_host_page_max	= 
+    (HOST_CONFIGURATION_MAX + xom_host_entry_limit) div xom_host_entry_max;
+  xom_host_page_limit	= xom_host_page_max - 1;
+
+type
+  xom_host_page_index	= 0..xom_host_page_limit;
+
+type
+  xom_host_entry =
+    record
+      host		: host_index;
+      node		: node_index;
+      mxp		: mxp_index;
+      slot_restore	: integer
+    end (* xom_host_entry *) ;
+
+type
+  xom_host_page = array [xom_host_entry_index] of xom_host_entry;
+  xom_host_file	= array [xom_host_page_index] of xom_host_page;
+
+$endif
+
+
+(*  cluster_names_file  *)
+
+const
+  cluster_name_page_max		=
+    (NODE_MAX + cluster_entry_limit) div cluster_entry_max;
+  cluster_name_page_limit	= cluster_name_page_max - 1;
+
+type
+  cluster_name_page_index	= 0..cluster_name_page_limit;
+  cluster_names_file		= array [cluster_name_page_index] of cluster_page;
+!
+
+var
+  master_name		: symbol;
+  entry config	  	: config_list;
+
+
+(***************************  restructure  ****************************)
+(*                                                                    *)
+(*                           decode_node                              *)
+(*                                                                    *)
+(*    Convert a node_index to external representation.		      *)
+(*                                                                    *)
+(**********************************************************************)
+
+
+function decode_node(node: integer): integer;
+
+begin
+  if node >= FIRST_TYMNET_II_NODE_INDEX
+  then decode_node := node+TYMNET_II_NODE_OFFSET
+  else decode_node := 0
+end (* decode_node *) ;
+
+
+
+
+(***************************  restructure  ****************************)
+(*                                                                    *)
+(*                           decode_host                              *)
+(*                                                                    *)
+(*    Convert a host_index to external representation.		      *)
+(*                                                                    *)
+(**********************************************************************)
+
+
+function decode_host(host: integer): integer;
+
+begin
+  decode_host := host
+end (* decode_host *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			      check_master				*)
+(*									*)
+(*	Check if user is MASTER.					*)
+(*									*)
+(************************************************************************)
+
+
+function check_master(username: symbol): boolean;
+
+begin
+  check_master :=  misc_operator.match(username, master_name)
+end (* check_master *) ;
+
+
+                
+(****************************  restructure  *****************************)
+(*									*)
+(*		      fill_old_configuration_params			*)
+(*									*)
+(*	Put old configuration parameters into a record.			*)
+(*									*)
+(************************************************************************)
+                
+
+procedure fill_old_configuration_params;
+
+begin
+  config.user_max 		 	 := USER_MAX;
+  config.username_max 			 := USERNAME_MAX;
+  config.limit_set_max 		 	 := LIMIT_SET_MAX;
+  config.user_message_max 		 := USER_MESSAGE_MAX;
+  config.supervisor_max 		 := SUPERVISOR_MAX;
+  config.node_configuration_max 	 := NODE_CONFIGURATION_MAX;
+  config.tymnet_i_node_configuration_max := TYMNET_I_NODE_CONFIGURATION_MAX;
+  config.host_configuration_max 	 := HOST_CONFIGURATION_MAX;
+  config.node_mask		 	 := NODE_MASK;
+  config.links_per_node 		 := LINKS_PER_NODE;
+  config.ports_per_node 		 := PORTS_PER_NODE;
+  config.link_shut_percentage 		 := LINK_SHUT_PERCENTAGE;
+  config.port_out_percentage 		 := PORT_OUT_PERCENTAGE;
+  config.tymnet_i_tymcom_max 		 := TYMNET_I_TYMCOM_MAX;
+  config.tymnet_i_tymsat_max 		 := TYMNET_I_TYMSAT_MAX;
+  config.tymnet_ii_node_max 		 := TYMNET_II_NODE_MAX;
+  config.host_mask		 	 := HOST_MASK;
+  config.host_number_max 		 := HOST_NUMBER_MAX;
+  config.oper_log_page_max 		 := OPER_LOG_PAGE_MAX;
+  config.reload_feature 		 := RELOAD_FEATURE;
+  config.alarm_feature 			 := ALARM_FEATURE;
+  config.threshold_condition_max 	 := THRESHOLD_CONDITION_MAX;
+  config.condition_log_length 	 	 := CONDITION_LOG_LENGTH;
+  config.shut_link_table_feature	 := SHUT_LINK_TABLE_FEATURE;
+  config.host_status_message_max	 := HOST_STATUS_MESSAGE_MAX;
+  config.multiple_host_message_feature   := MULTIPLE_HOST_MESSAGE_FEATURE
+end (* fill_old_configuration_params *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			   read_profile_record				*)
+(*									*)
+(*	Read one profile record.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure read_profile_record(
+  (* input *) pageaddr  : integer;
+  (* input *) length    : integer;
+  (* output *) var data : profile_record);
+
+var
+  call_param  : disk_param;
+  value_param : disk_param;
+  ok	      : boolean;
+
+begin
+$if debug
+  format.simple_message('page addr \ ');	
+  format.number(pageaddr, 10);			
+  format.write_line(user_terminal);		
+$endif
+
+  with call_param do
+    begin
+      operation := disk_read;
+      start_addr := pageaddr;
+      byte_count := length*page_size
+    end (* with *) ;
+  value_param := call_param;
+  io(data, value_param, disk, file_system_disk);
+  ok := value_param.status = complete;
+  if not ok
+  then io_report.disk_error_check(call_param, value_param)
+end (* read_profile_record *) ;
+
+
+    
+(****************************  restructure  *****************************)
+(*									*)
+(*			  write_profile_record				*)
+(*									*)
+(*	Write one profile record.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure write_profile_record(
+  (* input *) pageaddr  : integer;
+  (* input *) length    : integer;
+  (* output *) var data : profile_record);
+
+var
+  call_param  : disk_param;
+  value_param : disk_param;
+  ok	      : boolean;
+
+begin
+$if debug
+  format.simple_message('page addr \ ');	
+  format.number(pageaddr, 10);			
+  format.write_line(user_terminal);		
+$endif
+
+  with call_param do
+    begin
+      operation := disk_write;
+      start_addr := pageaddr;
+      byte_count := length*page_size
+    end (* with *) ;
+  value_param := call_param;
+  io(data, value_param, disk, file_system_disk);
+  ok := value_param.status = complete;
+  if not ok
+  then io_report.disk_error_check(call_param, value_param)
+end (* write_profile_record *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			   restructure_header				*)
+(*									*)
+(*	Print the restructure message (from 6 to 7) to user terminal.	*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure restructure_header;
+
+begin
+  format.simple_message('TMCS 10.20 disk restructure:\ ');
+  format.newline;
+  format.skip(6);
+  format.string('added HOST_STATUS_MESSAGE_MAX, MULTIPLE_HOST_MESSAGE_FEATURE to VAT\');
+  format.write_line(user_terminal);
+  format.start;
+  format.skip(6);
+  format.string('modified erlog table of event 80, 99-113, 4.24\ ');
+  format.write_line(user_terminal)
+end (* restructure_header *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			      restructure_disk				*)
+(*									*)
+(*	Incarnation from 6 to 7.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry restructure_disk;
+
+var
+ok	: boolean;
+
+begin
+  restructure_header
+end (* restructure_disk *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			    compare_configs				*)
+(*									*)
+(*	Read volume label from disk then comparing with user supplied	*)
+(*	old configuration parameters.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry compare_configs(var ok: boolean);
+
+begin
+  ok := extend_operator.label.config_params = config
+end (* compare_configs *) ;
+
+
+    
+(****************************  restructure  *****************************)
+(*									*)
+(*			 convert_allowed_license			*)
+(*									*)
+(*	Transfer allowed_license to new configuration profile record.	*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure convert_allowed_license(user_license: license_set);
+
+var
+  l: license;
+
+begin
+  for l := NO_LICENSE to LAST_LICENSE do
+    if l in user_license
+    then
+      case l of 
+	NO_LICENSE	: new.put_allowed_license(STD_NO_LICENSE);
+	P00_LICENSE	: new.put_allowed_license(STD_P00_LICENSE);
+	P01_LICENSE	: new.put_allowed_license(STD_P01_LICENSE);
+	P02_LICENSE	: new.put_allowed_license(STD_P02_LICENSE);
+	P10_LICENSE	: new.put_allowed_license(STD_P10_LICENSE);
+	P20_LICENSE	: new.put_allowed_license(STD_P20_LICENSE);
+	UPD_LICENSE	: new.put_allowed_license(STD_UPD_LICENSE);
+	HANG_LICENSE	: new.put_allowed_license(STD_HANG_LICENSE);
+	WHO_LICENSE	: new.put_allowed_license(STD_WHO_LICENSE);
+	SETN_LICENSE	: new.put_allowed_license(STD_SETN_LICENSE);
+	SETP_LICENSE	: new.put_allowed_license(STD_SETP_LICENSE);
+	INACT_LICENSE	: new.put_allowed_license(STD_INACT_LICENSE);
+	DEV_LICENSE	: new.put_allowed_license(STD_DEV_LICENSE);
+	OPERATOR_LICENSE: new.put_allowed_license(STD_OPERATOR_LICENSE);
+	HST_LICENSE	: new.put_allowed_license(STD_HST_LICENSE);
+	GRT_LICENSE	: new.put_allowed_license(STD_GRT_LICENSE);
+$if reload
+	RELLST_LICENSE	: new.put_allowed_license(STD_RELLST_LICENSE);
+	RELSET_LICENSE	: new.put_allowed_license(STD_RELSET_LICENSE);
+	RELEXE_LICENSE	: new.put_allowed_license(STD_RELEXE_LICENSE);
+$endif
+$if condition
+	THRLST_LICENSE	: new.put_allowed_license(STD_THRLST_LICENSE);
+	THRSET_LICENSE	: new.put_allowed_license(STD_THRSET_LICENSE);
+$endif
+$if alarm
+	ALMLST_LICENSE	: new.put_allowed_license(STD_ALMLST_LICENSE);
+	ALMSET_LICENSE	: new.put_allowed_license(STD_ALMSET_LICENSE);
+	ALMEXE_LICENSE	: new.put_allowed_license(STD_ALMEXE_LICENSE);
+$endif
+$if background
+	ATTACH_LICENSE	: new.put_allowed_license(STD_ATTACH_LICENSE);
+$endif
+$if shut_link_table_maintenance
+	AUTOLOG_LICENSE	: new.put_allowed_license(STD_AUTOLOG_LICENSE);
+	SHTLNK_LICENSE  : new.put_allowed_license(STD_SHTLNK_LICENSE)
+$endif
+$ifnot shut_link_table_maintenance
+	AUTOLOG_LICENSE	: new.put_allowed_license(STD_AUTOLOG_LICENSE)
+$endif
+      end (* case *) 
+end (* convert_allowed_license *) ;
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			 convert_limit_set_names			*)
+(*									*)
+(*	Transfer limit_set_names to new configuration profile record.	*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure convert_limit_set_names(names: limit_names);
+
+var
+  i: limit_set_index;
+
+begin
+  for i := 0 to limit_set_limit do
+    new.put_limit_set_names(names[i], i)
+end (* convert_limit_set_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*				check_node				*)
+(*									*)
+(*	Check if node_index in node_set.				*)
+(*									*)
+(************************************************************************)
+
+
+function check_node(node: node_index; check_set: node_set): boolean;
+
+begin
+  check_node := (node mod node_subset_max) in 
+    check_set[node div node_subset_max]
+end (* check_node *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			       check_host				*)
+(*									*)
+(*	Check if host_index in host set.				*)
+(*									*)
+(************************************************************************)
+
+
+function check_host(host: host_index; check_set: host_set): boolean;
+
+begin
+  check_host := (host mod host_subset_max) in 
+    check_set[host div host_subset_max]
+end (* check_host *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			       check_event				*)
+(*									*)
+(*	Check if event_index in event_set.				*)
+(*									*)
+(************************************************************************)
+
+
+function check_event(event: event_index; check_set: event_set): boolean;
+
+begin
+  check_event :=
+    (event mod event_subset_max) in check_set[event div event_subset_max]
+end  (* check_event *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			    put_reload_nodes				*)
+(*									*)
+(*	Dummy procedure if reload flag is disabled.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure put_reload_nodes(first: integer;
+			   last : integer;
+			   full : boolean);
+
+begin
+$if reload new.put_reload_nodes(first, last, full)
+end (* put_reload_nodes *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			     convert_node_set				*)
+(*									*)
+(*	Transfer node set into new configured profile record. 		*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_node_set(nodes           : node_set;
+			   limit_set_number: integer;
+			   operate_on	   : node_or_host_set_operation;
+			   test	   	   : boolean);
+
+const
+  set_full_constant = first_tymnet_ii_node;
+
+var
+  n: node_index;
+  first_found: boolean;
+  decoded_first: integer;
+  decoded_last: integer;
+  full: boolean;
+
+begin
+  first_found := FALSE;
+  full := FALSE;
+  for n := 0 to node_limit do
+    if check_node(n, nodes) = test
+    then
+      begin
+	if not first_found
+	then
+	  begin
+	    first_found := TRUE;
+	    decoded_first := decode_node(n)
+	  end
+      end
+    else
+      begin
+	if first_found
+	then
+	  begin
+	    decoded_last := decode_node(n-1);
+
+	    case operate_on of
+	      profiles_convert:
+	        new.put_profile_nodes(decoded_first, decoded_last, 
+	          limit_set_number, full);
+
+	      reload_data_file_convert:
+	        put_reload_nodes(decoded_first, decoded_last, full)
+	    end (* case *) ;
+
+	    first_found := FALSE
+	  end
+      end;
+  if first_found 
+  then 
+    begin
+      full := decoded_first = SET_FULL_CONSTANT;
+
+      case operate_on of
+	profiles_convert:
+	  new.put_profile_nodes(decoded_first, decode_node(node_limit),
+	    limit_set_number, full);
+
+	reload_data_file_convert:
+	  put_reload_nodes(decoded_first, decode_node(node_limit), full)
+      end (* case *) 
+
+    end
+end (* convert_node_set *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			    put_reload_hosts				*)
+(*									*)
+(*	Dummy procedure if reload flag is disabled.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure put_reload_hosts(first: integer;
+			   last : integer;
+			   full : boolean);
+
+begin
+$if reload new.put_reload_hosts(first, last, full)
+end (* put_reload_hosts *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			    convert_host_set				*)
+(*									*)
+(*	Transfer host set into new configured profile record.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_host_set(hosts    	   : host_set;
+			   limit_set_number: integer;
+			   operate_on	   : node_or_host_set_operation;	
+			   test		   : boolean);
+
+var
+  n: host_index;
+  first_found: boolean;
+  decoded_first: integer;
+  decoded_last: integer;
+  full: boolean;
+
+begin
+  first_found := FALSE;
+  full := FALSE;
+  for n := 0 to host_limit do
+    if check_host(n, hosts) = test
+    then
+      begin
+	if not first_found
+	then
+	  begin
+	    first_found := TRUE;
+	    decoded_first := decode_host(n)
+	  end
+      end
+    else
+      begin
+	if first_found
+	then
+	  begin
+	    decoded_last := decode_host(n-1);
+
+	    case operate_on of
+	      profiles_convert:
+	        new.put_profile_hosts(decoded_first, decoded_last, 
+	          limit_set_number, full);
+
+	      reload_data_file_convert:
+	        put_reload_hosts(decoded_first, decoded_last, full)
+	    end (* case *) ;
+
+	    first_found := FALSE
+	  end
+      end;
+  if first_found 
+  then
+    begin
+      if decoded_first = 1
+      then full := TRUE;
+
+      case operate_on of
+	profiles_convert:
+	  new.put_profile_hosts(decoded_first, decode_host(host_limit),
+	    limit_set_number, full);
+
+	reload_data_file_convert:
+	  put_reload_hosts(decoded_first, decode_host(host_limit), full)
+      end (* case *) 
+
+    end
+end (* convert_host_set *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  convert_allowed_nodes				*)
+(*									*)
+(*	Convert the allowed_nodes field.				*)
+(*									*)
+(************************************************************************)
+	
+
+
+procedure convert_allowed_nodes(nodes: node_set);
+
+begin
+  convert_node_set(nodes, -1, PROFILES_CONVERT, TRUE)
+end (* convert_allowed_nodes *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  convert_allowed_hosts				*)
+(*									*)
+(*	Convert the allowed_hosts field.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_allowed_hosts(hosts: host_set);
+
+begin
+  convert_host_set(hosts, -1, PROFILES_CONVERT, TRUE)
+end (* convert_allowed_hosts *) ;
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  convert_profile_ignore			*)
+(*									*)
+(*	Convert limit_events, limit_nodes, limit_hosts fields.		*)
+(*	Pass limit_events, limit_links and limit_lines to new 		*)
+(*	configuration profile record.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_profile_ignore(ignore_buffer: profile_ignore);
+
+var
+  i: limit_set_index;
+
+begin
+  for i := 0 to limit_set_limit do
+    with ignore_buffer.limit_sets[i] do
+      begin
+        convert_node_set(limit_nodes, i, PROFILES_CONVERT, TRUE);
+	convert_host_set(limit_hosts, i, PROFILES_CONVERT, TRUE);
+	new.put_limit_events_links_and_lines(limit_events,
+	  limit_links, limit_lines, i)
+      end (* with *)  
+end (* convert_profile_ignore *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  profile_record_length				*)
+(*									*)
+(*	Return the profile reord length.				*)
+(*									*)
+(************************************************************************)
+
+
+
+function entry profile_record_length: integer;
+
+begin
+  profile_record_length := PROFILE_RECORD_PAGE_MAX
+end (* profile_record_length *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			print_pack_profile_message			*)
+(*									*)
+(*	Print the number of lost profiles.				*) 
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_pack_profile_message(old_profile_number: integer);
+
+begin
+  format.simple_message('Lost \');
+  format.number(old_profile_number-new.config.username_max, 10);
+  format.string(' profiles\');
+  format.write_line(user_terminal)
+end (* print_pack_profile_message *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			    compact_profile				*)
+(*									*)
+(*	Pack the good profile records.					*)
+(*	Clean the after packed 'PROFILES' by zeroing out the		*)
+(*	user name size field of those unuseful profile records.		*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry compact_profile;
+
+var
+  faddr		: integer;
+  length	: integer;
+  i		: integer;
+  j		: integer;
+  old_rec_buffer: profile_record;
+  ok 		: boolean;
+
+begin
+  extend_operator.get_file_information('PROFILES', faddr, length, ok);
+  if ok
+  then
+    begin
+      j := 0;
+      for i := 0 to USERNAME_LIMIT do
+	begin
+	  read_profile_record(faddr+i*PROFILE_RECORD_PAGE_MAX, 
+	    PROFILE_RECORD_PAGE_MAX, old_rec_buffer);
+	  if old_rec_buffer.original_profile_record.access.header.name.size > 0
+	  then
+	    begin
+	      if j < new.config.username_max
+	      then
+		write_profile_record(
+		  faddr+j*PROFILE_RECORD_PAGE_MAX, 
+		  PROFILE_RECORD_PAGE_MAX,
+		  old_rec_buffer);
+	      j := j +1
+	    end
+	end;
+      if j > new.config.username_max
+      then print_pack_profile_message(j);
+      old_rec_buffer.original_profile_record.access.header.name.size := 0;
+      for i := j to USERNAME_LIMIT do
+        write_profile_record(faddr+i*PROFILE_RECORD_PAGE_MAX,
+	  PROFILE_RECORD_PAGE_MAX, old_rec_buffer)
+    end
+end (* compact_profile *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		      start_reconfig_profile_records			*)
+(*									*)
+(* 	Extend the 'PROFILES' if it is needed. Read one profile record	*)
+(*	then write this record to disk after it is reconfigured. The	*)
+(*	read and write sequence are depending on whether the new record *)
+(*	length is expanded or shrinked. If the new record is expanded	*)
+(*	then read and write backwards, otherwise read and write forward.*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_profile_records(
+  (* input *) new_allocation : integer;
+  (* input *) new_length     : integer;
+  (* input *) used_rec_limit : integer;
+  (* input *) new_rec_pages  : integer);
+
+var
+  i		: integer;
+  faddr		: integer;
+  length	: integer;
+  size		: integer;
+  read_write_seq: integer;
+  old_rec_buffer: profile_record;
+  ok		: boolean;
+
+begin
+  extend_operator.get_file_information('PROFILES', faddr, length, ok);
+  if ok
+  then
+    begin
+      size := new_allocation-PROFILE_RECORD_PAGE_MAX*USERNAME_MAX;
+
+$if debug
+      format.simple_message('size \');	
+      format.number(size, 10);		
+      format.write_line(user_terminal);	
+$endif
+
+      if size > 0
+      then extend_operator.expand_profile(size, new_length);
+      for i := 0 to used_rec_limit do
+	begin
+	  if new_rec_pages > PROFILE_RECORD_PAGE_MAX  (* record expanded *)
+	  then read_write_seq := used_rec_limit-i
+	  else read_write_seq := i;
+	  read_profile_record(faddr+read_write_seq*PROFILE_RECORD_PAGE_MAX, 
+	    PROFILE_RECORD_PAGE_MAX, old_rec_buffer);
+	  with old_rec_buffer do 
+	    begin
+	      new.put_access_header(original_profile_record.access.header);
+	      if original_profile_record.access.header.name.size > 0
+	      then
+		begin
+		  if check_master(original_profile_record.access.header.name)
+		  then new.put_master_allowed_license
+		  else convert_allowed_license(original_profile_record.access.allowed_license);
+		  new.put_allowed_events(original_profile_record.access.allowed_events);
+		  convert_limit_set_names(original_profile_record.access.limit_set_names);
+		  new.put_default_limit(original_profile_record.access.default_limit_set);
+		  if check_master(original_profile_record.access.header.name)
+		  then new.put_master_allowed_nodes
+		  else convert_allowed_nodes(original_profile_record.access.allowed_nodes);
+		  convert_allowed_hosts(original_profile_record.access.allowed_hosts);
+$if alarm
+		  new.put_external_alarm(alarms.alarm_data.host,
+		    alarms.alarm_data.address);
+$endif
+$ifnot alarm
+		  new.put_external_alarm(0, 0);
+$endif
+		  new.put_profile_color(original_profile_record.colors);
+		  convert_profile_ignore(original_profile_record.ignore)
+		end
+	    end (* with *) ;
+	  new.write_profile(read_write_seq)
+	end;
+      if size < 0
+      then extend_operator.move_operation('PROFILES', new_allocation, 
+	new_length, faddr, ok);
+      new.initial_unused_profile_record(used_rec_limit+1)
+    end
+end (* start_reconfig_profile_records *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			     xmit_node_names				*)
+(*									*)
+(*	Pass decoded node names one at a time to reconfigure class.	*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_node_names(
+  var buffer		: node_names_file);
+
+var
+  pageno	 	: integer;
+  i		 	: name_page_index;
+  next_write_index	: integer;
+
+begin
+  new.clear_node_name_file;
+  pageno := 0;
+  repeat
+    for i := 0 to NAME_PAGE_LIMIT do
+      if pageno*NAME_PAGE_MAX+i <= NODE_LIMIT
+      then new.put_node_names(decode_node(pageno*NAME_PAGE_MAX+i),
+	buffer[pageno].names[i], next_write_index);
+    pageno := pageno+1
+  until pageno > NODE_NAME_PAGE_PAGE_LIMIT;
+  new.write_file_last_page(NODESNAM, next_write_index)
+end (* xmit_node_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			start_reconfig_node_names			*)
+(*									*)
+(*	Read '$$$NODES' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_node_names.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_node_names;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : node_names_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('$$$NODES', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := NODE_NAME_PAGE_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_node_names(file_buffer)
+    end
+end (* start_reconfig_node_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			     xmit_host_names				*)
+(*									*)
+(*	Pass decoded host names one at a time to reconfigure class.	*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_host_names(
+  var buffer		: host_names_file);
+
+var
+  pageno		: integer;
+  i	 		: name_page_index;
+  next_write_index	: integer;
+
+begin
+  new.clear_host_name_file;
+  pageno := 0;
+  repeat
+    for i := 0 to NAME_PAGE_LIMIT do
+      if pageno*NAME_PAGE_MAX+i <= HOST_LIMIT
+      then new.put_host_names(decode_host(pageno*NAME_PAGE_MAX+i),
+	buffer[pageno].names[i], next_write_index);
+    pageno := pageno+1
+  until pageno > HOST_NAME_PAGE_PAGE_LIMIT;
+  new.write_file_last_page(HOSTSNAM, next_write_index)
+end (* xmit_host_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			start_reconfig_host_names			*)
+(*									*)
+(*	Read '$$$HOSTS' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_host_names.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_host_names;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : host_names_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('$$$HOSTS', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := HOST_NAME_PAGE_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_host_names(file_buffer)
+    end
+end (* start_reconfig_host_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			     xmit_probe_passwords			*)
+(*									*)
+(*	Pass probe password one at a time to reconfigure class.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_probe_passwords(
+  var buffer		: probe_passwords_file);
+
+var
+  pageno : integer;
+  i	 : page_password_index;
+
+begin
+  new.clear_probe_password_file;
+  pageno := 0;
+  repeat
+    for i := 0 to PAGE_PASSWORD_LIMIT do
+      new.put_probe_passwords(pageno*PAGE_PASSWORD_MAX+i,
+	buffer[pageno].passwords[i]);
+    pageno := pageno+1
+  until pageno > PASSWORD_PAGE_LIMIT
+end (* xmit_probe_passwords *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			start_reconfig_probe_passwords			*)
+(*									*)
+(*	Read '$$$PROBE' file into file_buffer, if ok then process	*)
+(*	the file_buffer.						*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_probe_passwords;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : probe_passwords_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('$$$PROBE', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := PASSWORD_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_probe_passwords(file_buffer)
+    end
+end (* start_reconfig_probe_passwords *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			         key_node				*)
+(*									*)
+(*	Return the node from a file key.				*)
+(*									*)
+(************************************************************************)
+
+
+
+function key_node(key: integer): node_index;
+
+begin
+  key_node := key div slot_max
+end (* key_node *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*				key_slot				*)
+(*									*)
+(*	Return the slot from a file key.				*)
+(*									*)
+(************************************************************************)
+
+
+
+function key_slot(key: integer): slot_index;
+
+begin
+  key_slot := key mod slot_max
+end (* key_slot *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			xmit_remote_down_messages			*)
+(*									*)
+(*	Pass remote down message entry one at a time to reconfigure 	*)
+(*	class.								*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_remote_down_messages(
+      file_length	: remote_greeting_page_index;
+  var buffer		: remote_down_file);
+
+var
+  pageno		: integer;
+  next_write_index	: remote_greeting_index;
+  i		 	: remote_greeting_entry_index;
+
+begin
+  new.clear_remote_down_file;
+  pageno := 0;
+  next_write_index := 0;
+  if file_length > 0
+  then
+    begin
+      repeat
+	for i := 0 to REMOTE_GREETING_ENTRY_LIMIT do
+	  with buffer[pageno][i] do
+	    if key <> EMPTY_KEY
+	    then new.put_remote_down_entries(
+	      decode_node(key_node(key)),
+	      decode_host(kernel_host),
+	      key_slot(key), 
+	      start_time, clear_time,
+	      next_write_index);
+	pageno := pageno+1
+      until pageno >= file_length;
+      new.write_file_last_page(REMOTEDO, next_write_index-1);
+      new.adjust_remote_down_file_length(next_write_index)
+    end
+end (* xmit_remote_down_messages *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		    start_reconfig_remote_down_messages			*)
+(*									*)
+(*	Read 'REMOTEDO' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_remote_down_messages.		*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_remote_down_messages;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : remote_down_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('REMOTEDO', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := REMOTE_GREETING_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_remote_down_messages(length, file_buffer)
+    end
+end (* start_reconfig_remote_down_messages *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			   xmit_location_buckets			*)
+(*									*)
+(*	Pass location bucket one at a time to reconfigure class.	*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_location_buckets(
+      file_length	: host_bucket_page_index;
+  var buffer		: host_bucket_file);
+
+var
+  pageno	 	: integer;
+  next_write_index	: integer;
+  i		 	: bucket_entry_index;
+
+begin
+  new.clear_host_bucket_file;
+  pageno := 0;
+  next_write_index := 0;
+  if file_length > 0
+  then
+    begin
+      repeat
+	for i := 0 to BUCKET_ENTRY_LIMIT do
+	  if buffer[pageno][i].node <> NULL_WORD
+	  then new.put_location_buckets(
+	    decode_node(buffer[pageno][i].node), 
+	    decode_host(buffer[pageno][i].host),
+	    buffer[pageno][i].position, buffer[pageno][i].time, next_write_index);
+	pageno := pageno+1
+      until pageno >= file_length;
+      new.write_file_last_page(LOCABUCK, next_write_index-1);
+      new.adjust_host_bucket_file_length(next_write_index)
+    end
+end (* xmit_location_buckets *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		      start_reconfig_location_bucket			*)
+(*									*)
+(*	Read 'LOCABUCK' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_location_buckets.		*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_location_bucket;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : host_bucket_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('LOCABUCK', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := HOST_BUCKET_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_location_buckets(length, file_buffer)
+    end
+end (* start_reconfig_location_bucket *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*				get_text				*)
+(*									*)
+(*	Read one page host status text.					*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure get_text(
+  (* input *) pageaddr	  : integer;
+  (* output *) var data   : page;
+  (* output *) var success: boolean);
+
+begin
+  dsksys.read_page(pageaddr, data, success)
+end(* get_text *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		     transfer_one_host_status_entry			*)
+(*									*)
+(************************************************************************)
+
+
+procedure transfer_one_host_status_entry(
+$ifnot multiple_host_message
+      noname		: symbol;
+$endif not multiple_host_message
+      one_entry		: host_status_entry;
+      text		: page;
+  var next_write	: integer);
+
+var
+  sup_status	: sup_operation_record;
+  s		: supervisor_index;
+
+begin
+  for s := 0 to SUPERVISOR_LIMIT do
+    sup_status[s] := one_entry.operation[s];
+  new.put_host_status_entry(
+    SUPERVISOR_MAX, 
+    decode_host(one_entry.host_number),
+    one_entry.start_time,
+    one_entry.clear_time,
+    sup_status,
+    one_entry.size, 
+$if multiple_host_message
+    one_entry.msg_active,
+    one_entry.msg_name,
+    one_entry.clear_state,
+$endif multiple_host_message
+$ifnot multiple_host_message
+    TRUE, NONAME, CLEAR_SAVE,
+$endif not multiple_host_message
+    text, next_write)
+end (* transfer_one_host_status_entry *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  xmit_host_status_entry			*)
+(*									*)
+(*	Pass host status entry one at a time to reconfigure class.	*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_host_status_entry(
+      file_address	: integer;
+  var buffer		: host_status_entry_file);
+
+var
+  text_top_address	: integer;
+  pageno		: integer;
+  i			: host_status_entry_index;
+  entry_file_differ	: integer;
+  textpage		: integer;
+  text			: page;
+  next_write_index	: integer;
+  ok			: boolean;
+$ifnot multiple_host_message
+  noname		: symbol;
+$endif not multiple_host_message
+		
+begin
+  text_top_address := file_address + ENTRY_PAGE_MAX;
+  new.clear_host_status_entry_file(ENTRY_PAGE_MAX, text_top_address,
+    text_top_address+HOST_STATUS_TEXT_PAGE_LIMIT, HOST_STATUS_ENTRY_MAX, 
+    entry_file_differ);
+  pageno := 0;
+$ifnot multiple_host_message
+  noname.size := 8;
+  noname.text := 'STANDARD        ';
+$endif not multiple_host_message
+  next_write_index := 0;
+  repeat
+    for i := 0 to HOST_STATUS_ENTRY_LIMIT do
+      begin
+	textpage := 
+	  pageno*HOST_STATUS_ENTRY_MAX + i + ENTRY_PAGE_MAX + file_address +
+	  entry_file_differ;
+	get_text(textpage, text, ok);
+	if ok
+	then transfer_one_host_status_entry(
+$ifnot multiple_host_message
+	  noname,
+$endif not multiple_host_message
+	  buffer[pageno][i], text, next_write_index)
+      end;
+    pageno := pageno+1
+  until pageno > ENTRY_PAGE_LIMIT;
+  new.write_file_last_page(HOSTSTAT, next_write_index-1)
+end (* xmit_host_status_entry *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			start_reconfig_host_status			*)
+(*									*)
+(*	Read host_status_entry part of 'HOSTSTAT' file into a file 	*)
+(*	buffer.  Pass one host_status entry and it's matched text	*)
+(*	to Reconfigure class.						*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_host_status(
+  var old_host_status_page_max: integer);
+
+var
+  address	: integer;
+  length	: integer;
+  call_param	: disk_param;
+  value_param	: disk_param;
+  file_buffer	: host_status_entry_file;
+  ok		: boolean;
+
+begin
+  old_host_status_page_max := ENTRY_PAGE_MAX;
+  extend_operator.get_file_information('HOSTSTAT', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := ENTRY_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_host_status_entry(address, file_buffer)
+    end
+end (* start_reconfig_host_status *) ;
+
+
+$if condition
+(****************************  restructure  *****************************)
+(*									*)
+(*			xmit_threshold_condition			*)
+(*									*)
+(*	Pass threshold condition one at a time to reconfigure class.	*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_threshold_condition(
+  var buffer		: threshold_condition_file);
+
+var
+  pageno	 	: threshold_condition_index;
+
+begin
+  new.clear_threshold_condition_file;
+  for pageno := 0 to THRESHOLD_CONDITION_LIMIT do
+    with buffer[pageno].condition_head do
+      new.put_threshold_conditions(pageno, 
+				   name,
+				   describe_text,
+				   event_or_isis,
+				   alarm_class,
+				   external_recurring_data,
+				   bound,
+				   alarm,
+				   create_time)
+end (* xmit_threshold_condition *) ;
+$endif
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		   start_reconfig_threshold_conditions			*)
+(*									*)
+(*	Read 'THRECOND' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_threshold_condition.		*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_threshold_conditions;
+
+$if condition
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : threshold_condition_file;
+  ok		 : boolean;
+$endif
+
+begin
+$if condition
+  extend_operator.get_file_information('THRECOND', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := THRESHOLD_CONDITION_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_threshold_condition(file_buffer)
+    end
+$endif
+end (* start_reconfig_threshold_conidtions *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  convert_reload_nodes				*)
+(*									*)
+(*	Convert the reload_nodes field.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_reload_nodes(nodes: node_set);
+
+begin
+$if reload convert_node_set(nodes, -1, RELOAD_DATA_FILE_CONVERT, TRUE)
+end (* convert_reload_nodes *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			  convert_reload_hosts				*)
+(*									*)
+(*	Convert the reload_hosts field.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure convert_reload_hosts(hosts: host_set);
+
+begin
+$if reload convert_host_set(hosts, -1, RELOAD_DATA_FILE_CONVERT, TRUE)
+end (* convert_reload_hosts *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		        start_reconfig_reload_data			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_reload_data;
+
+$if reload
+var
+  address	: integer;
+  length	: integer;
+  call_param	: disk_param;
+  value_param	: disk_param;
+  reload_buffer	: reload_data_record;
+  ok		: boolean;
+$endif
+
+begin
+$if reload
+  extend_operator.get_file_information('RELODATA', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := RELOAD_DATA_PAGE_MAX*page_size
+	end (* with *) ;
+      value_param := call_param;
+      io(reload_buffer, value_param, disk, file_system_disk);
+      ok := value_param.status = complete;
+      if not ok
+      then io_report.disk_error_check(call_param, value_param);
+
+      convert_reload_hosts(reload_buffer.reload_hosts);
+      convert_reload_nodes(reload_buffer.reload_nodes);
+      new.put_reload_value(reload_buffer.reload_value);
+      new.write_reload_data
+    end
+$endif
+end (* start_reconfig_reload_data *) ;
+
+
+$if reload
+(****************************  restructure  *****************************)
+(*									*)
+(*			      xmit_xom_hosts				*)
+(*									*)
+(*	Pass xom host entry one at a time to reconfigure class.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_xom_hosts(
+      file_length	: xom_host_page_index;
+  var buffer		: xom_host_file);
+
+var
+  pageno	 	: integer;
+  next_write_index	: integer;
+  i		 	: xom_host_entry_index;
+
+begin
+  new.clear_xom_host_file;
+  pageno := 0;
+  next_write_index := 0;
+  if file_length > 0
+  then
+    begin
+      repeat
+	for i := 0 to XOM_HOST_ENTRY_LIMIT do
+	  with buffer[pageno][i] do
+	    if host <> EMPTY_KEY
+	    then new.put_xom_host_entries(
+	      decode_host(host), decode_node(node), mxp, slot_restore, next_write_index);
+	pageno := pageno+1
+      until pageno >= file_length;
+      new.write_file_last_page(XOMHOSTS, next_write_index-1);
+      new.adjust_xom_host_file_length(next_write_index)
+    end
+end (* xmit_xom_hosts *) ;
+$endif
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		      start_reconfig_xom_host_data			*)
+(*									*)
+(*	Read 'XOMHOSTS' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_xom_hosts.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_xom_host_data;
+
+$if reload
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : xom_host_file;
+  ok		 : boolean;
+$endif
+
+begin
+$if reload
+  extend_operator.get_file_information('XOMHOSTS', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := XOM_HOST_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_xom_hosts(length, file_buffer)
+    end
+$endif
+end (* start_reconfig_xom_host_data *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*			     xmit_cluster_names				*)
+(*									*)
+(*	Pass cluster names one at a time to reconfigure class.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure xmit_cluster_names(
+  var buffer		: cluster_names_file);
+
+var
+  pageno		: integer;
+  i			: cluster_entry_index;
+  next_write_index	: integer;
+
+begin
+  new.clear_cluster_name_file;
+  pageno := 0;
+  repeat
+    for i := 0 to CLUSTER_ENTRY_LIMIT do
+      if pageno*CLUSTER_ENTRY_MAX+i <= NODE_LIMIT
+      then new.put_cluster_names(decode_node(pageno*CLUSTER_ENTRY_MAX+i),
+	buffer[pageno][i], next_write_index);
+    pageno := pageno+1
+  until pageno > CLUSTER_NAME_PAGE_LIMIT;
+  new.write_file_last_page(CLSTRNAM, next_write_index)
+end (* xmit_cluster_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		      start_reconfig_cluster_names			*)
+(*									*)
+(*	Read 'CLSTRNAM' file into file_buffer, if ok then process	*)
+(*	the file_buffer by calling xmit_cluster_names.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry start_reconfig_cluster_names;
+
+var
+  address	 : integer;
+  length	 : integer;
+  call_param  	 : disk_param;
+  value_param	 : disk_param;
+  file_buffer	 : cluster_names_file;
+  ok		 : boolean;
+
+begin
+  extend_operator.get_file_information('CLSTRNAM', address, length, ok);
+  if ok
+  then
+    begin
+      with call_param do
+	begin
+	  operation := disk_read;
+	  start_addr := address;
+	  byte_count := CLUSTER_NAME_PAGE_MAX*PAGE_SIZE
+	end (* with *) ;
+      value_param := call_param;
+      io(file_buffer, value_param, disk, file_system_disk);
+      if value_param.status <> complete
+      then io_report.disk_error_check(call_param, value_param)
+      else xmit_cluster_names(file_buffer)
+    end
+end (* start_reconfig_cluster_names *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		             write_erlog_file				*)
+(*									*)
+(*	Write erlog buffer to ERLOGDAT file. ERLOGDAT file will be 	*)
+(*	written to disk unconditionally whenever the "RECONFIG" 	*)
+(*	command is given.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_erlog_file;
+
+var
+  ok	: boolean;
+
+begin
+  erlog_generator.write_erlog_buffer(ok)
+end (* reconfig_erlog_file *) ;
+
+
+
+(****************************  restructure  *****************************)
+(*									*)
+(*		             write_erlog_file				*)
+(*									*)
+(*	Write erlog buffer to ERLOGDAT file.				*)
+(*	ERLOGDAT file will be written to disk whenever the "INIT"	*)
+(*	command is given.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry write_erlog_file;
+
+var
+  ok		      : boolean;
+  previous_incarnation: integer;
+
+begin
+  extend_operator.read_disk_header(previous_incarnation);
+  erlog_generator.write_erlog_buffer(ok);
+  if ok
+  then extend_operator.write_disk_header
+end (* write_erlog_file *) ;
+
+
+
+(****************************  restructure  *****************************)
+(************************************************************************)
+
+
+begin
+  master_name.size := 6;
+  master_name.text := 'MASTER          ';
+  fill_old_configuration_params
+end (* restructure *) ;
+!
+(************************************************************************)
+(*									*)
+(*	PROFIL.TDR							*)
+(*									*)
+(*				 profile				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+type
+  profile =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(****************************** profile  ********************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring PROFILE using TYMNET_I_TYMCOM_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX, HOST_NUMBER_MAX,\');
+      newline;
+      string('USERNAME_MAX, LIMIT_SET_MAX\');
+      write_line(user_terminal);
+      simple_message('ALARM_FEATURE, RELOAD_FEATURE, SHUT_LINK_TABLE_FEATURE\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(******************************  profile  *******************************)
+(*									*)
+(*			     reconfig_profile				*)
+(*									*)
+(*	Calculate the file_length, file_allocation of the profile	*)
+(*	which has new configuration parameters.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_profile;
+
+var
+  old_file_length,
+  address,
+  new_file_allocation,
+  new_file_length,
+  usernames,
+  used_rec: integer;
+  ok      : boolean;
+
+begin
+  extend_operator.get_file_information('PROFILES', address, old_file_length, ok);
+  if ok
+  then
+    begin
+      usernames := new.config.username_max;
+      new_file_allocation := new.profile_record_length*usernames;
+      new_file_length := new_file_allocation;
+
+$if debug
+      format.start;				
+      format.number(new_file_allocation, 10);	
+      format.skip(1);				
+      format.number(new_file_length, 10);		
+      format.skip(1);				
+      format.number(old.config.username_max, 10);	
+      format.skip(1);				
+      format.number(new.profile_record_length, 10);		
+      format.skip(1);				
+      format.number(old_file_length, 10);		
+      format.skip(1);				
+      format.number(old.profile_record_length, 10);		
+      format.write_line(user_terminal);		
+$endif
+
+      if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+	(old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+	(old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) or
+	(old.config.host_number_max <> new.config.host_number_max) or
+	(old.config.username_max <> new.config.username_max) or
+	(old.config.limit_set_max <> new.config.limit_set_max) or
+	(old.config.alarm_feature <> new.config.alarm_feature) or
+	(old.config.reload_feature <> new.config.reload_feature) or
+	(old.config.shut_link_table_feature <> new.config.shut_link_table_feature)
+      then
+	begin
+	  print_reconfig_message;
+	  if old.config.username_max > new.config.username_max
+	  then
+	    begin
+	      old.compact_profile;
+	      used_rec := new.config.username_max
+	    end
+	  else used_rec := old.config.username_max;
+	  old.start_reconfig_profile_records(new_file_allocation, 
+	    new_file_length, used_rec-1, new.profile_record_length)
+	end
+    end
+end (* reconfig_profile *) ;
+
+(****************************** profile  ********************************)
+(************************************************************************)
+
+
+begin
+end (* profile *) ;
+!
+(************************************************************************)
+(*	Updated 31-Oct-85 at 9:29 by Hueyma				*)
+(*									*)
+(*	NAMEFL.TDR							*)
+(*									*)
+(*				namefile				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+type
+  namefile =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(*****************************  namefile  *******************************)
+(*									*)
+(*		    print_reconfig_node_names_message			*)
+(*									*)
+(*	Print reconfiguring '$$$NODES' file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_node_names_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring $$$NODES file using TYMNET_I_TYMCOM_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX\');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_node_names_message *) ;
+
+
+
+(*****************************  namefile  *******************************)
+(*									*)
+(*		    print_reconfig_host_names_message			*)
+(*									*)
+(*	Print reconfiguring '$$$HOSTS' file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_host_names_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring $$$HOSTS file using HOST_NUMBER_MAX\');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_host_names_message *) ;
+
+
+
+(*****************************  namefile  *******************************)
+(*									*)
+(*			   reconfig_node_names				*)
+(*									*)
+(*	Reconfigure the '$$$NODES' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_node_names;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) 
+  then
+    begin
+      print_reconfig_node_names_message;
+      old.start_reconfig_node_names
+    end
+end (* reconfig_node_names *) ;
+
+
+
+(*****************************  namefile  *******************************)
+(*									*)
+(*			   reconfig_host_names				*)
+(*									*)
+(*	Reconfigure the '$$$HOSTS' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_host_names;
+
+begin
+  if old.config.host_number_max <> new.config.host_number_max
+  then
+    begin
+      print_reconfig_host_names_message;
+      old.start_reconfig_host_names
+    end
+end (* reconfig_host_names *) ;
+
+(*****************************  namefile  *******************************)
+(************************************************************************)
+
+begin
+end (* namefile *) ;
+!
+(************************************************************************)
+(*	Updated 31-Oct-85 at 13:33 by Hueyma				*)
+(*									*)
+(*	PROBFL.TDR							*)
+(*									*)
+(*			        probefile				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  probefile =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+(****************************  probefile  *******************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring $$$PROBE file message.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring $$$PROBE file using SUPERVISOR_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(****************************  probefile  *******************************)
+(*									*)
+(*			reconfig_probe_passwords			*)
+(*									*)
+(*	Reconfigure the '$$$PROBE' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_probe_passwords;
+
+begin
+  if old.config.supervisor_max <> new.config.supervisor_max
+  then
+    begin
+      print_reconfig_message;
+      old.start_reconfig_probe_passwords
+    end
+end (* reconfig_probe_passwords *) ;
+
+
+(****************************  probefile  *******************************)
+(************************************************************************)
+
+begin
+end (* probefile *) ;
+!
+(************************************************************************)
+(*	Updated 4-Nov-85 at 22:00 by Hueyma				*)
+(*									*)
+(*	REMOFL.TDR							*)
+(*									*)
+(*			     remote_down_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  remote_down_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(*************************  remote_down_file  ***************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring REMOTEDO file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring REMOTEDO file using TYMNET_I_TYMCOM_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX, HOST_NUMBER_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(*************************  remote_down_file  ***************************)
+(*									*)
+(*		      reconfig_remote_down_messages			*)
+(*									*)
+(*	Reconfigure the 'REMOTEDO' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_remote_down_messages;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) or
+    (old.config.host_number_max <> new.config.host_number_max)
+  then
+    begin
+      print_reconfig_message;
+      old.start_reconfig_remote_down_messages
+    end
+end (* reconfig_remote_down_messages *) ;
+
+
+
+(*************************  remote_down_file  ***************************)
+(************************************************************************)
+
+begin
+end (* remote_down_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	BTREFL.TDR							*)
+(*									*)
+(*			       b_tree_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*	 2Mar84 Convert to TMDM version 1.01 -- ahm			*)
+(*		<> Add reconfiguring messages				*)
+(*		<> Add reconfig_recur_hosts and reconfig_recur_lines	*)
+(*	16Jul84 Convert to TMDM 1.03 for TMCS 8.00 -- ahm		*)
+(*		<> Added following b_tree files:			*)
+(*		   HOSTSLOT, HSOTPID, NODEKRNL, RELOSLOT		*)
+(*		   RELONODE, SLOTNODE, SLOTHOST				*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  b_tree_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure;
+      misc_operator	: misc_utility);
+
+
+var
+  old_node_max: integer;
+  new_node_max: integer;
+  new_file_allocation: integer;
+  addr: integer;
+
+(***************************  b_tree_file  ******************************)
+(*									*)
+(*			       file_size				*)
+(*									*)
+(*	Calculate the b_tree file allocation.				*)
+(*									*)
+(************************************************************************)
+
+
+function file_size(entries: integer): integer;
+
+const
+  min_page_entry = 19;
+  max_page_entry = 38;
+
+begin
+  file_size := 3*misc_operator.ceiling(entries, MIN_PAGE_ENTRY)
+end (* file_size *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			    reconfig_up_nodes				*)
+(*									*)
+(*	Reconfigure the 'UPNODE' file.					*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_up_nodes;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.node_configuration_max <>
+    new.config.node_configuration_max
+  then
+    begin
+      format.simple_message('Reconfiguring UPNODE file using NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.node_configuration_max);
+      extend_operator.move_operation('UPNODE  ', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_up_nodes *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_down_nodes				*)
+(*									*)
+(*	Reconfigure the 'DOWNNODE' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_down_nodes;
+
+var
+  ok	: boolean;
+
+begin
+  if old_node_max <> new_node_max
+  then
+    begin
+      format.simple_message('Reconfiguring DOWNNODE file using NODE_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_node_max);
+      extend_operator.move_operation('DOWNNODE', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_down_nodes *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_active_nodes				*)
+(*									*)
+(*	Reconfigure the 'ACTVNODE' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_active_nodes;
+
+var
+  ok	: boolean;
+
+begin
+  if old_node_max <> new_node_max
+  then
+    begin
+      format.simple_message('Reconfiguring ACTVNODE file using NODE_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_node_max);
+      extend_operator.move_operation('ACTVNODE', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_active_nodes *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_recur_nodes				*)
+(*									*)
+(*	Reconfigure the 'RECRNODE' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_recur_nodes;
+
+var
+  ok	: boolean;
+
+begin
+  if old_node_max <> new_node_max
+  then
+    begin
+      format.simple_message('Reconfiguring RECRNODE file using NODE_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_node_max);
+      extend_operator.move_operation('RECRNODE', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_recur_nodes *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_recur_hosts				*)
+(*									*)
+(*	Reconfigure the 'RECRHOST' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_recur_hosts;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.host_configuration_max <> new.config.host_configuration_max 
+  then
+    begin
+      format.simple_message('Reconfiguring RECRHOST file using HOST_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_configuration_max);
+      extend_operator.move_operation('RECRHOST', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_recur_hosts *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_recur_lines				*)
+(*									*)
+(*	Reconfigure the 'RECRLINE' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_recur_lines;
+
+var
+  old_lines: integer;
+  new_lines: integer;
+  ok	   : boolean;
+
+begin
+  with old.config do
+    old_lines := ports_per_node*node_configuration_max;
+  with new.config do
+    new_lines := ports_per_node*node_configuration_max;
+  if old_lines <> new_lines
+  then
+    begin
+      format.simple_message('Reconfiguring RECRLINE file using PORTS_PER_NODE,\');
+      format.newline;
+      format.string('NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_lines);
+      extend_operator.move_operation('RECRLINE', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_recur_lines *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_shut_links				*)
+(*									*)
+(*	Reconfigure the 'SHUTLINK' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_shut_links;
+
+var
+  old_shut_links: integer;
+  new_shut_links: integer;
+  ok		: boolean;
+
+begin
+  with old.config do
+    old_shut_links := misc_operator.percent(
+      (links_per_node*node_configuration_max div 2), link_shut_percentage);
+  with new.config do
+    new_shut_links := misc_operator.percent(
+      (links_per_node*node_configuration_max div 2), link_shut_percentage);
+  if old_shut_links <> new_shut_links
+  then
+    begin
+      format.simple_message('Reconfiguring SHUTLINK file using LINKS_PER_NODE,\');
+      format.newline;
+      format.string('NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_shut_links);
+      extend_operator.move_operation('SHUTLINK', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_shut_links *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_active_links				*)
+(*									*)
+(*	Reconfigure the 'ACTVLINK' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_active_links;
+
+var
+  old_links: integer;
+  new_links: integer;
+  ok	   : boolean;
+
+begin
+  with old.config do
+    old_links := links_per_node*node_configuration_max;
+  with new.config do
+    new_links := links_per_node*node_configuration_max;
+  if old_links <> new_links
+  then
+    begin
+      format.simple_message('Reconfiguring ACTVLINK file using LINKS_PER_NODE,\');
+      format.newline;
+      format.string('NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_links);
+      extend_operator.move_operation('ACTVLINK', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_active_links *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_t_ineigh				*)
+(*									*)
+(*	Reconfigure the 'T-INEIGH' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_t_ineigh;
+
+var
+  old_links: integer;
+  new_links: integer;
+  ok	   : boolean;
+
+begin
+  with old.config do
+    old_links := links_per_node*tymnet_i_node_configuration_max;
+  with new.config do
+    new_links := links_per_node*tymnet_i_node_configuration_max;
+
+  if old.config.tymnet_i_node_configuration_max <> 0
+  then 
+    if (new.config.tymnet_i_node_configuration_max = 0) or
+      (old_links <> new_links)
+    then
+      begin
+	if new.config.tymnet_i_node_configuration_max = 0
+	then new_file_allocation := 0
+	else	(* old_links <> new_links *)
+	  begin
+	    format.simple_message('Reconfiguring T-INEIGH file using LINKS_PER_NODE,\');
+	    format.newline;
+	    format.string('TYMNET_I_NODE_CONFIGURATION_MAX\');
+	    format.write_line(user_terminal);
+	    new_file_allocation := file_size(new_links)
+	  end;
+	extend_operator.move_operation('T-INEIGH', 
+	  new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_t_ineigh *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_out_ports				*)
+(*									*)
+(*	Reconfigure the 'OUTPORT '  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_out_ports;
+
+var
+  old_out_ports: integer;
+  new_out_ports: integer;
+  ok	       : boolean;
+
+begin
+  with old.config do
+    old_out_ports := misc_operator.percent(
+      (ports_per_node*node_configuration_max), port_out_percentage);
+  with new.config do
+    new_out_ports := misc_operator.percent(
+      (ports_per_node*node_configuration_max), port_out_percentage);
+  if old_out_ports <> new_out_ports
+  then
+    begin
+      format.simple_message('Reconfiguring OUTPORT file using PORTS_PER_NODE,\ ');
+      format.newline;
+      format.string('NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_out_ports);
+      extend_operator.move_operation('OUTPORT ', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_out_ports *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_active_ports			*)
+(*									*)
+(*	Reconfigure the 'ACTVPORT'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_active_ports;
+
+var
+  old_active_ports: integer;
+  new_active_ports: integer;
+  ok		  : boolean;
+
+begin
+  with old.config do
+    old_active_ports := ports_per_node*node_configuration_max;
+  with new.config do
+    new_active_ports := ports_per_node*node_configuration_max;
+  if old_active_ports <> new_active_ports
+  then
+    begin
+      format.simple_message('Recconfiguring ACTVPORT file using PORTS_PER_NODE,\ ');
+      format.newline;
+      format.string('NODE_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new_active_ports);
+      extend_operator.move_operation('ACTVPORT', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_active_ports *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_exception_hosts			*)
+(*									*)
+(*	Reconfigure the 'EXCPHOST'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_exception_hosts;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.host_configuration_max <>
+    new.config.host_configuration_max
+  then
+    begin
+      format.simple_message('Reconfiguring EXCPHOST file using HOST_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_configuration_max);
+      extend_operator.move_operation('EXCPHOST', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_exception_hosts *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_active_hosts		  	 	*)
+(*									*)
+(*	Reconfigure the 'ACTVHOST'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_active_hosts;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.host_configuration_max <>
+    new.config.host_configuration_max
+  then
+    begin
+      format.simple_message('Reconfiguring ACTVHOST file using HOST_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_configuration_max);
+      extend_operator.move_operation('ACTVHOST', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_active_hosts *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			 reconfig_host_locations	  	 	*)
+(*									*)
+(*	Reconfigure the 'LOCAHOST'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_host_locations;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.host_configuration_max <>
+    new.config.host_configuration_max
+  then
+    begin
+      format.simple_message('Reconfiguring LOCAHOST file using HOST_CONFIGURATION_MAX\ ');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_configuration_max);
+      extend_operator.move_operation('LOCAHOST', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_host_locations *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			    reconfig_host_slot				*)
+(*									*)
+(*	Reconfigure the 'HOSTSLOT'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_host_slot;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+    (old.config.host_configuration_max <> new.config.host_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring HOSTSLOT file using HOST_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := file_size(new.config.host_configuration_max)
+	  end;
+        extend_operator.move_operation('HOSTSLOT', new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_host_slot *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			    reconfig_host_pid				*)
+(*									*)
+(*	Reconfigure the 'HOSTPID'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_host_pid;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+    (old.config.host_configuration_max <> new.config.host_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring HOSTPID file using HOST_CONFIGURATION\');
+	    format.write_line(user_terminal);
+	    new_file_allocation := file_size(new.config.host_configuration_max)
+	  end;
+        extend_operator.move_operation('HOSTPID ', new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_host_pid *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_node_kernel				*)
+(*									*)
+(*	Reconfigure the 'NODEKRNL'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_node_kernel;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+    (old.config.node_configuration_max <> new.config.node_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring NODEKRNL file using NODE_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := file_size(new.config.node_configuration_max)
+	  end;
+        extend_operator.move_operation('NODEKRNL', new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_node_kernel *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_slot_node				*)
+(*									*)
+(*	Reconfigure the 'SLOTNODE'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_slot_node;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+      (old.config.node_configuration_max <> new.config.node_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring SLOTNODE file using SLOT_MAX, NODE_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := 
+	      file_size(SLOT_MAX*new.config.node_configuration_max  )
+	  end;
+	extend_operator.move_operation('SLOTNODE', 
+	  new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_slot_node *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			    reconfig_slot_host				*)
+(*									*)
+(*	Reconfigure the 'SLOTHOST'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_slot_host;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+      (old.config.host_configuration_max <> new.config.host_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring SLOTHOST file using HOST_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := 
+	      file_size(new.config.host_configuration_max)
+	  end;
+	extend_operator.move_operation('SLOTHOST', 
+	  new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_slot_host *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_reload_slot				*)
+(*									*)
+(*	Reconfigure the 'RELOSLOT'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_reload_slot;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+      (old.config.node_configuration_max <> new.config.node_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring RELOSLOT file using SLOT_MAX, NODE_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := 
+	      file_size(SLOT_MAX*new.config.node_configuration_max)
+	  end;
+	extend_operator.move_operation('RELOSLOT', 
+	  new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_reload_slot *) ;
+
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			   reconfig_reload_node				*)
+(*									*)
+(*	Reconfigure the 'RELONODE'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_reload_node;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.reload_feature 
+  then 
+    if (not new.config.reload_feature) or
+      (old.config.node_configuration_max <> new.config.node_configuration_max)
+    then
+      begin
+	if not new.config.reload_feature
+	then new_file_allocation := 0
+	else
+	  begin
+	    format.simple_message('Reconfiguring RELONODE file using NODE_CONFIGURATION_MAX\ ');
+	    format.write_line(user_terminal);
+	    new_file_allocation := 
+	      file_size(new.config.node_configuration_max)
+	  end;
+	extend_operator.move_operation('RELONODE', 
+	  new_file_allocation, 0, addr, ok)
+      end
+end (* reconfig_reload_node *) ;
+
+
+(****************************  b_tree_file  *****************************)
+(*									*)
+(*			     reconfig_host_text				*)
+(*									*)
+(*	Reconfigure the 'HOSTTEXT'  file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_host_text;
+
+var
+  ok	: boolean;
+
+begin
+  if old.config.host_status_message_max <>
+    new.config.host_status_message_max
+  then
+    begin
+      format.simple_message('Reconfiguring HOSTTEXT file using HOST_STATUS_MESSAGE_MAX\');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_status_message_max);
+      extend_operator.move_operation('HOSTTEXT', new_file_allocation, 0, addr, ok)
+    end
+end (* reconfig_host_text *) ;
+
+
+(***************************  b_tree_file  ******************************)
+(************************************************************************)
+
+begin
+  with old.config do
+    old_node_max := 
+      1+tymnet_i_tymcom_max+tymnet_i_tymsat_max+tymnet_ii_node_max;
+  with new.config do
+    new_node_max :=
+      1+tymnet_i_tymcom_max+tymnet_i_tymsat_max+tymnet_ii_node_max
+end (* b_tree_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	LOCBKT.TDR							*)
+(*									*)
+(*			   location_bucket_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*	25Nov85 changed bucket_entry_max to 16	-- ahm			*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  location_bucket_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(***********************  location_bucket_file  *************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(* 	Print reconfiguring LOCABUCK file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring LOCABUCK file using TYMNET_I_TYMCOM_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX, HOST_MASK,\');
+      newline;
+      string('HOST_NUMBER_MAX\');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(***********************  location_bucket_file  *************************)
+(*									*)
+(*			reconfig_location_bucket			*)
+(*									*)
+(*	Reconfigure the 'LOCABUCK' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_location_bucket;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) or
+    (old.config.host_number_max <> new.config.host_number_max) or
+    (old.config.host_mask <> new.config.host_mask)
+  then
+    begin
+      print_reconfig_message;
+      old.start_reconfig_location_bucket
+    end
+end (* reconfig_location_bucket *) ;
+
+
+(***********************  location_bucket_file  *************************)
+(************************************************************************)
+
+begin
+end (* location_bucket_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	HSTSTS.TDR							*)
+(*									*)
+(*			     host_status_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+type
+  host_status_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure;
+      misc_operator	: misc_utility);
+
+
+(*************************  host_ststus_file  ***************************)
+(*									*)
+(*			       file_size				*)
+(*									*)
+(*	Calculate the host status file allocation.	        	*)
+(*									*)
+(************************************************************************)
+
+
+function file_size(entries: integer): integer;
+
+begin
+  if new.config.multiple_host_message_feature
+  then file_size := misc_operator.ceiling(entries, 4)*5
+  else file_size := misc_operator.ceiling(entries, 8)*9
+end (* file_size *) ;
+
+
+
+(*************************  host_ststus_file  ***************************)
+(*									*)
+(*			  print_reconfig_message			*)
+(*									*)
+(*	Print reconfiguring host status file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring HOSTSTAT file using HOST_NUMBER_MAX,\ ');
+      newline;
+      string('HOST_STATUS_MESSAGE_MAX\');
+      write_line(user_terminal);
+      if old.config.multiple_host_message_feature and 
+	not new.config.multiple_host_message_feature
+      then simple_message('with non multiple host message format\')
+      else if not old.config.multiple_host_message_feature and
+	new.config.multiple_host_message_feature
+      then simple_message('with multiple host message format\')
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(*************************  host_status_file  ***************************)
+(*									*)
+(*			  reconfig_host_status				*)
+(*									*)
+(*	Reconfigure the 'HOSTSTAT' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_host_status;
+
+var
+  new_file_allocation		: integer;
+  old_host_status_page_max	: integer;
+  address			: integer;
+  ok				: boolean;
+
+begin
+  if old.config.multiple_host_message_feature and 
+    not new.config.multiple_host_message_feature
+  then extend_operator.move_operation(
+    'HOSTSTAT', 0, 0, address, ok)
+  else 
+    if (old.config.host_number_max <> new.config.host_number_max) or
+      (old.config.supervisor_max <> new.config.supervisor_max) or
+      (old.config.host_status_message_max 	<> 
+       new.config.host_status_message_max) or
+      (old.config.multiple_host_message_feature <>
+       new.config.multiple_host_message_feature)
+    then
+      begin
+	print_reconfig_message;
+	new_file_allocation := file_size(new.config.host_status_message_max);
+	old.start_reconfig_host_status(old_host_status_page_max);
+	extend_operator.move_operation(
+	  'HOSTSTAT', new_file_allocation, new_file_allocation, address, ok)
+      end
+end (* reconfig_host_status *) ;
+
+
+(*************************  host_status_file  ***************************)
+(************************************************************************)
+
+begin
+  (*empty*)
+end (* host_status_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	URESFL.TDR							*)
+(*									*)
+(*			  user_response_buffers				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*	27Oct84 Have file_size depended on host_configuration_max --ahm *)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  user_response_buffers =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(***********************  user_response_buffers  ************************)
+(*									*)
+(*			       file_size				*)
+(*									*)
+(*	Calculate the user response buffer file_allocation.	       	*)
+(*									*)
+(************************************************************************)
+
+
+function file_size(entries: integer): integer;
+
+begin
+  file_size := 80*entries div PAGE_SIZE
+end (* file_size *) ;
+
+
+
+(***********************  user_response_buffers  ************************)
+(*									*)
+(*			reconfig_user_response_buffers			*)
+(*									*)
+(*	Reconfigure the 'URESBUFx' files, then delete the extra 	*)
+(*	response buffer files.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_user_response_buffers;
+
+var
+  new_file_allocation: integer;
+  file_name: identifier;
+  i	   : integer;
+  addr	   : integer;
+  last	   : integer;
+  ok	   : boolean;
+
+begin
+  file_name := 'URESBUF0';
+  if old.config.user_max > new.config.user_max
+  then						(* delete response buffer *)
+    begin
+      format.simple_message('Reconfiguring URESBUFx files using USER_MAX\');
+      format.write_line(user_terminal);
+      for i := new.config.user_max to (old.config.user_max-1) do
+	begin
+	  file_name[7] := chr(ord('0')+i);
+      	  extend_operator.move_operation(file_name, 0, 0, addr, ok)
+        end;
+      last := new.config.user_max-1
+    end
+  else last := old.config.user_max-1;
+
+  if old.config.host_configuration_max <> 
+    new.config.host_configuration_max   	
+  then					(* extend or shrink all	     *)
+    begin				(* existing response buffers *)
+      format.simple_message('Reconfiguring URESBUFx files using HOST_CONFIGURATION_MAX\');
+      format.write_line(user_terminal);
+      new_file_allocation := file_size(new.config.host_configuration_max);
+      for i := 0 to last do
+	begin
+  	  file_name[7] := chr(ord('0')+i);
+	  extend_operator.move_operation(file_name,
+	    new_file_allocation, 0, addr, ok)
+	end
+    end
+end (* reconfig_user_response_buffers *) ;
+
+
+(**********************  user_response_buffers  *************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* user_response_buffers *) ;
+!
+(************************************************************************)
+(*									*)
+(*	UDISFL.TDR							*)
+(*									*)
+(*			   user_display_buffers				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  user_display_buffers =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+(***********************  user_display_buffers  *************************)
+(*									*)
+(*			reconfig_user_display_buffers			*)
+(*									*)
+(*	Reconfigure the 'UDISBUFx' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_user_display_buffers;
+
+var
+  file_name: identifier;
+  i	   : integer;
+  addr	   : integer;
+  ok	   : boolean;
+
+begin
+  if old.config.user_max > new.config.user_max
+  then
+    begin
+      format.simple_message('Reconfiguring UDISBUFx file using USER_MAX\ ');
+      format.write_line(user_terminal);
+      file_name := 'UDISBUF0';
+      for i := new.config.user_max to (old.config.user_max-1) do
+	begin
+	  file_name[7] := chr(ord('0')+i);
+      	  extend_operator.move_operation(file_name, 0, 0, addr, ok)
+        end
+    end
+end (* reconfig_user_display_buffers *) ;
+
+
+(**********************  user_display_buffers  **************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* user_display_buffers *) ;
+!
+(************************************************************************)
+(*									*)
+(*	SENDFL.TDR							*)
+(*									*)
+(*			      sendsend_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  sendsend_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure;
+      mics_operator	: misc_utility);
+
+
+
+(***************************  sendsend_file  ****************************)
+(*									*)
+(*			  print_reconfig_message			*)
+(*									*)
+(*	Print reconfiguring 'SENDSEND' file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring SENDSEND file using USER_MAX,\');
+      newline;
+      string('USER_MESSAGE_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+
+(**************************  sendsend_file  *****************************)
+(*									*)
+(*			  reconfig_sendsend				*)
+(*									*)
+(*	Reconfigure the 'SENDSEND' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_sendsend;
+
+var
+  new_file_allocation: integer;
+  addr		     : integer;
+  ok		     : boolean;
+
+begin
+  if (old.config.user_max*old.config.user_message_max) <>
+    (new.config.user_max*new.config.user_message_max)
+  then
+    begin
+      new_file_allocation := 
+	new.config.user_max*new.config.user_message_max;
+      print_reconfig_message;
+      extend_operator.move_operation('SENDSEND', new_file_allocation, new_file_allocation, addr, ok)
+    end
+end (* reconfig_sendsend *) ;
+
+
+(**************************  sendsend_file  *****************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* sendsend_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	OPLGFL.TDR							*)
+(*									*)
+(*				oplog_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	14Feb84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  oplog_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+(****************************  oplog_file  ******************************)
+(*									*)
+(*			  print_reconfig_message			*)
+(*									*)
+(*	Print reconfiguring '$$$OPLOG' message.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  format.simple_message('Reconfiguring $$$OPLOG file using OPER_LOG_PAGE_MAX\');
+  format.write_line(user_terminal)
+end (* print_reconfig_message *) ;
+
+
+
+(***************************  oplog_file  *******************************)
+(*									*)
+(*			  reconfig_oplog				*)
+(*									*)
+(*	Reconfigure the '$$$OPLOG' file. The configuration parameter	*)
+(*	used by this file is oper_log_page_max.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_oplog;
+
+var
+  addr	: integer;
+  ok	: boolean;
+
+begin
+  if (old.config.oper_log_page_max) <> (new.config.oper_log_page_max)
+  then 
+    begin
+      extend_operator.move_operation('$$$OPLOG', 
+    	new.config.oper_log_page_max, new.config.oper_log_page_max, addr, ok);
+      if ok
+      then new.initial_oplog_file(addr, ok);
+      if ok
+      then print_reconfig_message
+    end
+end (* reconfig_oplog *) ;
+
+
+(****************************  oplog_file  ******************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* oplog_file *) ;
+!
+(************************************************************************)
+(*	Updated 2-Nov-85 at 10:10 by Hueyma				*)
+(*									*)
+(*	THREFL.TDR							*)
+(*									*)
+(*			threshold_condition_file			*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	17Jul84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  threshold_condition_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(*********************  threshold_condition_file  ***********************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring THRECOND file message.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring THRECOND file using THRESHOLD_CONDITION_MAX\  ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(*********************  threshold_condition_file  ***********************)
+(*									*)
+(*			reconfig_threshold_conditions			*)
+(*									*)
+(*	Reconfigure the 'THRECOND' file.				*)
+(*	If old threshold_condition_max is greater than new		*)
+(*	threshold_condition_max then after reconfiguring the		*)
+(*	'THRECOND' will be initialized.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_threshold_conditions;
+
+begin
+  if old.config.threshold_condition_max <> 0
+  then
+    if old.config.threshold_condition_max <> new.config.threshold_condition_max
+    then
+      begin
+	print_reconfig_message;
+	if old.config.threshold_condition_max < new.config.threshold_condition_max
+	then old.start_reconfig_threshold_conditions
+	else new.clear_threshold_condition_file
+      end
+end (* reconfig_threshold_conditions *) ;
+
+
+
+(********************  threshold_condition_file  ************************)
+(************************************************************************)
+
+begin
+end (* threshold_condition_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	CONDFL.TDR							*)
+(*									*)
+(*			      condition_log				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	17Oct84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  condition_log =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+(**************************  condition_log  *****************************)
+(*									*)
+(*			  print_reconfig_message			*)
+(*									*)
+(*	Print reconfiguring 'CONDLOG ' message.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  format.simple_message('Reconfiguring CONDLOG file using CONDITION_LOG_LENGTH\');
+  format.write_line(user_terminal)
+end (* print_reconfig_message *) ;
+
+
+
+(*************************  condition_log  ******************************)
+(*									*)
+(*			 reconfig_condition_log				*)
+(*									*)
+(*	Reconfigure the 'CONDLOG ' file. The configuration parameter	*)
+(*	used by this file is condition_log_length.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_condition_log;
+
+var
+  addr	: integer;
+  ok	: boolean;
+
+begin
+  if old.config.condition_log_length <> 0
+  then
+    if (old.config.condition_log_length) <> (new.config.condition_log_length)
+    then 
+      begin
+	extend_operator.move_operation('CONDLOG ', 
+	  new.config.condition_log_length, 
+	  new.config.condition_log_length, 
+	  addr, ok);
+	if ok
+	then new.initial_condition_log(addr, ok);
+	if ok
+	then print_reconfig_message
+      end
+end (* reconfig_condition_log *) ;
+
+
+(**************************  condition_log  *****************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* condition_log *) ;
+!
+(************************************************************************)
+(*									*)
+(*	RELDAT.TDR							*)
+(*									*)
+(*			     reload_data_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	17Jul84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  reload_data_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(**************************  reload_data_file  **************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring RELODATA file message.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring RELODATA file using HOST_NUMBER_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMCOM_MAX, TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(*************************  reload_data_file  ***************************)
+(*									*)
+(*			     do_reconfigure				*)
+(*									*)
+(************************************************************************)
+
+
+procedure do_reconfigure;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) or
+    (old.config.host_number_max <> new.config.host_number_max) 
+  then
+    begin
+      new.initial_reload_data;
+      print_reconfig_message;
+      old.start_reconfig_reload_data
+    end
+end (* do_reconfigure *) ;
+
+
+(*************************  reload_data_file  ***************************)
+(*									*)
+(*			  reconfig_reload_data				*)
+(*									*)
+(*	Reconfigure the 'RELODATA' file.				*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure entry reconfig_reload_data;
+
+var
+  addr: integer;
+  ok  : boolean;
+
+begin
+  if old.config.reload_feature
+  then
+    if new.config.reload_feature
+    then do_reconfigure
+    else extend_operator.move_operation('RELODATA', 0, 0, addr, ok)
+end (* reconfig_reload_data *) ;
+
+
+(*************************  reload_data_file  ***************************)
+(************************************************************************)
+
+begin
+end (* reload_data_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	XOMHFL.TDR							*)
+(*									*)
+(*			    xom_host_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	07Oct84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  xom_host_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(***************************  xom_host_file  ****************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring XOMHOSTS file message.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring XOMHOSTS file using HOST_NUMBER_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMCOM_MAX, TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+(***************************  xom_host_file  ****************************)
+(*									*)
+(*			     do_reconfigure				*)
+(*									*)
+(************************************************************************)
+
+
+procedure do_reconfigure;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) or
+    (old.config.host_number_max <> new.config.host_number_max) 
+  then
+    begin
+      print_reconfig_message;
+      old.start_reconfig_xom_host_data
+    end
+end (* do_reconfigure *) ;
+
+
+
+(***************************  xom_host_file  ****************************)
+(*									*)
+(*			    reconfig_xom_host				*)
+(*									*)
+(*	Reconfigure the 'XOMHOSTS' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_xom_host;
+
+var
+  addr: integer;
+  ok  : boolean;
+
+begin
+  if old.config.reload_feature
+  then
+    if new.config.reload_feature
+    then do_reconfigure
+    else extend_operator.move_operation('XOMHOSTS', 0, 0, addr, ok)
+end (* reconfig_xom_host *) ;
+
+
+
+(***************************  xom_host_file  ****************************)
+(************************************************************************)
+
+begin
+end (* xom_host_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	BJOBFL.TDR							*)
+(*									*)
+(*			  background_job_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	07Oct84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  background_job_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      extend_operator	: file_extender;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(************************  background_job_file  *************************)
+(*									*)
+(*			print_reconfig_message				*)
+(*									*)
+(*	Print reconfiguring BACKGRND file message.			*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure print_reconfig_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring BACKGRND file using USER_MAX\ ');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_message *) ;
+
+
+
+(***********************  background_job_file  **************************)
+(*									*)
+(*			    do_reconfigure				*)
+(*									*)
+(************************************************************************)
+
+
+procedure do_reconfigure;
+
+var
+  new_file_allocation: integer;
+  addr		     : integer;
+  ok		     : boolean;
+
+begin
+  if old.config.user_max <> new.config.user_max
+  then 
+    begin
+      new_file_allocation := 
+	(new.config.user_max + job_descriptor_entry_limit) div job_descriptor_entry_max;
+      extend_operator.move_operation('BACKGRND',
+    	new_file_allocation, new_file_allocation, addr, ok);
+      if ok
+      then new.initial_background_job_file(addr, ok);
+      if ok
+      then print_reconfig_message
+    end
+end (* do_reconfigure *) ;
+
+
+(***********************  background_job_file  **************************)
+(*									*)
+(*			reconfig_background_job				*)
+(*									*)
+(*	Reconfigure the 'BACKGRND' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_background_job;
+
+var
+  addr		     : integer;
+  ok		     : boolean;
+
+begin
+  if old.config.alarm_feature or old.config.reload_feature
+  then
+    if new.config.alarm_feature or new.config.reload_feature
+    then do_reconfigure
+    else extend_operator.move_operation('BACKGRND', 0, 0, addr, ok)
+end (* reconfig_background_job *) ;
+
+
+
+(***********************  background_job_file  **************************)
+(************************************************************************)
+
+begin
+end (* background_job_file *) ;
+!
+(************************************************************************)
+(*	Updated 1-Nov-85 at 14:16 by Hueyma				*)
+(*									*)
+(*	CLUSFL.TDR							*)
+(*									*)
+(*  			  cluster_name_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	26Oct84	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+type
+  cluster_name_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      old		: restructure;
+      new		: reconfigure);
+
+
+
+(*************************  cluster_name_file  **************************)
+(*									*)
+(*		    print_reconfig_cluster_name_message			*)
+(*									*)
+(*	Print reconfiguring 'CLSTRNAM' file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_cluster_name_message;
+
+begin
+  with format do
+    begin
+      simple_message('Reconfiguring CLSTRNAM file using TYMNET_I_TYMCOM_MAX,\ ');
+      newline;
+      string('TYMNET_I_TYMSAT_MAX, TYMNET_II_NODE_MAX\');
+      write_line(user_terminal)
+    end (* with *)
+end (* print_reconfig_cluster_name_message *) ;
+
+
+
+(*************************  cluster_name_file  **************************)
+(*									*)
+(*			  reconfig_cluster_names			*)
+(*									*)
+(*	Reconfigure the 'CLSTRNAM' file.				*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_cluster_names;
+
+begin
+  if (old.config.tymnet_i_tymcom_max <> new.config.tymnet_i_tymcom_max) or
+    (old.config.tymnet_i_tymsat_max <> new.config.tymnet_i_tymsat_max) or
+    (old.config.tymnet_ii_node_max <> new.config.tymnet_ii_node_max) 
+  then
+    begin
+      print_reconfig_cluster_name_message;
+      old.start_reconfig_cluster_names
+    end
+end (* reconfig_cluster_names *) ;
+
+
+
+(************************  cluster_name_file  ***************************)
+(************************************************************************)
+
+begin
+end (* cluster_name_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	ERLGFL.TDR							*)
+(*									*)
+(*				erlog_file				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	14Jun85	Original -- ahm						*)
+(*									*)
+(************************************************************************)
+
+
+
+type
+  erlog_file =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string;
+      erlog_generator	: erlog_data_generate;
+      old		: restructure;
+      new		: reconfigure);
+
+
+(****************************  erlog_file  ******************************)
+(*									*)
+(*			  print_reconfig_message			*)
+(*									*)
+(*	Print reconfiguring 'ERLOGDAT' file message.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_reconfig_message;
+
+begin
+  format.simple_message('Reconfiguring ERLOGDAT file due to TYMNETONE switch\');
+  format.write_line(user_terminal)
+end (* print_reconfig_message *) ;
+
+
+
+(***************************  erlog_file  *******************************)
+(*									*)
+(*			  reconfig_erlog				*)
+(*									*)
+(*	Reconfigure the 'ERLOGDAT' file. The configuration parameter	*)
+(*	used by this file is TYMNETONE condition.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry reconfig_erlog;
+
+var
+  tymnetone_switch_changed: boolean;
+  ok			  : boolean;
+
+begin
+  tymnetone_switch_changed := 
+    ((old.config.tymnet_i_node_configuration_max = 0) and (new.config.tymnet_i_node_configuration_max <> 0)) or
+    ((old.config.tymnet_i_node_configuration_max <> 0) and (new.config.tymnet_i_node_configuration_max = 0));
+  if tymnetone_switch_changed
+  then 
+    begin
+      erlog_generator.write_erlog_buffer(ok);
+      print_reconfig_message
+    end
+end (* reconfig_oplog *) ;
+
+
+(****************************  erlog_file  ******************************)
+(************************************************************************)
+
+begin
+  (* empty *)
+end (* erlog_file *) ;
+!
+(************************************************************************)
+(*									*)
+(*	DINIT.TDR							*)
+(*									*)
+(*			     disk_initializer				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Nov83	Original from (PATROL)DINIT.TDI -- ahm			*)
+(*									*)
+(************************************************************************)
+
+
+type 
+  disk_initializer = 
+    class(
+      user_terminal: circuit_handler;
+      io_report	   : disk_error;
+      dsk	   : disk_system;
+      new 	   : reconfigure);
+
+
+
+(**************************  disk_initializer  **************************)
+(*									*)
+(*				write_label				*)
+(*									*)
+(*	Write volume label.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure write_label(var ok: boolean);
+
+var
+  dinfo: disk_tape_information;
+  lab: new_vat;
+  i: 0 .. unused_volume_label_limit_1020;
+
+begin
+  dsk.get_info(dinfo, ok);
+  if ok
+  then
+    with lab do
+      begin
+	unused_logical_volume_number := 0;
+	incarnation_number := current_incarnation;
+	label_date_and_time := realtime;
+	pages_on_this_volume := dinfo.number_of_sectors;
+	vfdd_pointer := vfdd_start_address;
+	next_page_to_allocate :=
+		  vfdd_start_address+vfdd_allocation+dir_allocation;
+	config_params := new.config;
+	for i := 0 to unused_volume_label_limit_1020 do unused[i] := '(:0:)';
+	dsk.write_page(volume_label_addr, lab, ok)
+      end (* with *)
+  else user_terminal.write_quoted_text_line('Disk status error\')
+end (* write_label *) ;
+
+
+
+(**************************  disk_initializer  **************************)
+(*									*)
+(*				write_vfdd				*)
+(*									*)
+(*									*)
+(*									*)
+(************************************************************************)
+
+
+procedure write_vfdd(var ok: boolean);
+
+var
+  buffer: vfdd_page;
+  blank_fd: vfdd_entry;
+  i: integer;
+
+begin
+  with blank_fd, descriptor do
+    begin
+      file_address := 0;
+      file_length := 0;
+      file_allocation := 0;
+      creation_date_and_time := 0
+    end (* with *) ;
+
+  (*    page zero of VFDD    *)
+
+  for i := 0 to fd_limit do buffer[i] := blank_fd;
+
+for i := 1 to vfdd_allocation do
+  dsk.write_page(vfdd_start_address+i-1, buffer, ok);
+
+  with buffer[0], descriptor do
+    begin   (* VFDD self-descriptor *)
+      file_address := vfdd_start_address;
+      file_length := vfdd_allocation;
+      file_allocation := vfdd_allocation;
+      creation_date_and_time := realtime
+    end (* with *) ;
+  with buffer[1], descriptor do
+    begin   (* system directory descriptor *)
+      file_address := dir_start_address;
+      file_length := 0;
+      file_allocation := dir_allocation;
+      creation_date_and_time := realtime
+    end (* with *) ;
+  dsk.write_page(vfdd_start_address, buffer, ok)
+end (* write_vfdd *) ;
+
+
+
+(**************************  disk_initializer  **************************)
+(*									*)
+(*			      write_sys_dir				*)
+(*									*)
+(*									*)
+(*									*)
+(************************************************************************)
+
+
+
+procedure write_sys_dir(var ok: boolean);
+
+var
+  buffer: dir_page;
+  i: integer;
+
+begin
+  for i := 0 to dir_entry_limit do buffer[i].name := null_identifier;
+  for i := 1 to dir_allocation do
+    dsk.write_page(dir_start_address+i-1, buffer, ok)
+end (* write_sys_dir *) ;
+
+
+
+(**************************  disk_initializer  **************************)
+(*									*)
+(*				initialize				*)
+(*									*)
+(*									*)
+(*									*)
+(************************************************************************)
+
+
+procedure entry initialize(var ok: boolean);
+
+begin
+  write_label(ok);
+  if ok then write_vfdd(ok);
+  if ok then write_sys_dir(ok)
+end (* initialize *) ;
+
+(**************************  disk_initializer  **************************)
+(************************************************************************)
+
+
+begin (* initial statement *)
+end (* disk_initializer *) ;
+!
+(************************************************************************)
+(*									*)
+(*	SWITCH.CPA							*)
+(*									*)
+(*			       disk_switch				*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	15Dec83	Original -- rer						*)
+(*									*)
+(************************************************************************)
+
+
+type
+  disk_switch =
+    class(
+      user_terminal	: circuit_handler;
+      format		: internal_to_string
+    );
+
+const
+  track_max   = 96 (* pages per track *) ;
+  track_limit = track_max-1;
+
+type track_index = 0..track_limit;
+
+procedure entry copy(
+  from_unit	: integer;
+  to_unit	: integer);
+
+var
+  label: new_vat;
+  param: disk_param;
+  buffer: array [track_index] of page;
+  size: integer;
+  i: integer;
+
+begin
+  param.operation := DISK_READ;
+  param.start_addr := 0;
+  param.byte_count := PAGE_SIZE;
+  io(label, param, DISK, from_unit);
+  if param.status <> COMPLETE
+  then user_terminal.write_quoted_text_line('Disk error reading label\ ');
+  size := (label.next_page_to_allocate+TRACK_LIMIT) div TRACK_MAX;
+
+  for i:= 1 to size do
+    begin
+      param.operation := DISK_READ;
+      param.start_addr := (i-1)*TRACK_MAX;
+      param.byte_count := TRACK_MAX*PAGE_SIZE;
+      io(buffer, param, DISK, from_unit);
+      if param.status <> COMPLETE
+      then user_terminal.write_quoted_text_line('Read error on copy\ ');
+      param.operation := DISK_WRITE;
+      param.start_addr := (i-1)*TRACK_MAX;
+      param.byte_count := TRACK_MAX*PAGE_SIZE;
+      io(buffer, param, DISK, to_unit);
+      if param.status <> COMPLETE
+      then user_terminal.write_quoted_text_line('Write error on copy\');
+    end (* for *)
+end (* copy *) ;
+
+begin
+end (* disk_switch *) ;
+!
+(************************************************************************)
+(*	Updated 9-Jan-86 at 9:57 by Hueyma				*)
+(*									*)
+(*	CMDLVL.TDR							*)
+(*									*)
+(*			      command_level				*)
+(*									*)
+(*	This process is the main process that accepts user login	*)
+(*	and interprets commands. 					*)
+(*									*)
+(************************************************************************)
+(*									*)
+(*                           Revision Record                            *)
+(*									*)
+(*	31Oct83 Original from CMDLVL.BAS - ahm				*)
+(*	14Feb84 Convert for TMCS 7.5 - ahm				*)
+(*		<> Add reconfig_recur_hosts, reconfig_recur_lines	*)
+(*		   and reconfig_oplog in reconfigure_disk		*)
+(*		<> In scan_reconfigure_command, do compare_configs	*)
+(*		   first if ok then restructure_705			*)
+(*		<> Add print_parameters					*)
+(*	11Jul84 Convert for TMCS 10.0 - ahm				*)
+(*	14Mar85 For adding log message updating feature, made 		*)
+(*		following changes: - ahm				*)
+(*		- modified sacn_initialize_command, so initialize	*)
+(*		  command will write log message to file.		*)
+(*		- added scan_erlog_length_command.			*)
+(*	30Oct85 Made command_level the only process in TMDM		*)
+(*	10Jan86 Convert for TMCS 10.20 - ahm				*)
+(*		- removed node_mask, host_mask				*)
+(*		- added host_status_message_max, 			*)
+(*		  	multiple_host_message_feature			*)
+(*									*)
+(************************************************************************)
+
+ 	    
+var
+  commands		: command_table;
+  user_terminal 	: circuit_handler;
+  io_report		: disk_error;
+  dsksys		: disk_system;
+  dinit			: disk_initializer;
+  misc_operator		: misc_utility;
+  restore_operator	: disk_switch;
+  command_read		: command_loop;
+  scan_error		: command_error_message;
+  argument_scan 	: argument_scanner;
+  format		: internal_to_string;
+  command_scan		: command_scanner;
+  extend_operator	: file_extender;
+  erlog_generator	: erlog_data_generate;
+  new			: reconfigure;
+  old			: restructure;
+  profil		: profile;
+  namefl		: namefile;
+  probfl		: probefile;
+  remofl		: remote_down_file;
+  btrefl		: b_tree_file;
+  locbkt		: location_bucket_file;
+  hststs		: host_status_file;
+  uresfl		: user_response_buffers;
+  udisfl		: user_display_buffers;
+  sendfl		: sendsend_file;
+  oplgfl		: oplog_file;
+  clusfl		: cluster_name_file;
+  relofl		: reload_data_file;
+  xomhfl		: xom_host_file;
+  threfl		: threshold_condition_file;  
+  condfl		: condition_log;
+  bjobfl		: background_job_file;
+  erlgfl		: erlog_file;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			          login					*)
+(*									*)
+(*	This routine accepts a needle from a user terminal and attempts	*)
+(*	to login. It returns whether or not the login was successful.	*)
+(*									*)
+(************************************************************************)
+
+function login : boolean;
+
+var
+  login_info	: needle_record;
+
+begin
+  user_terminal.login(0, [COMPLETE, BREAK_KEY, ORANGE_BALL], login_info);
+  user_terminal.set_alternate_break('(:27:)');
+
+  format.start;
+  format.newline;
+  format.newline;
+  format.string('TMCS Disk Maintenance Program - Version \ ');
+  format.scaled_number(version*100+revision, 10, 2);
+  format.string(' at \ ');
+  format.time(realtime);
+  format.write_line(user_terminal);
+
+  login := TRUE
+end (* login *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			  scan_initialize_command			*)
+(*									*)
+(*	Scan the Initialize command.					*)
+(*									*)
+(************************************************************************)
+
+procedure scan_initialize_command;
+
+var
+  ok: boolean;
+
+begin
+  dinit.initialize(ok);
+  if ok
+  then 
+    begin
+      user_terminal.write_quoted_text_line('disk initialization succeeded.\ ');
+      old.write_erlog_file
+    end
+  else user_terminal.write_quoted_text_line('disk initialization failed.\')
+end (* scan_initialize_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			     reconfigure_disk				*)
+(*									*)
+(*	Disk reconfiguration.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure reconfigure_disk;
+
+begin
+  profil.reconfig_profile;
+  namefl.reconfig_node_names;
+  namefl.reconfig_host_names;
+  probfl.reconfig_probe_passwords;
+  remofl.reconfig_remote_down_messages;
+  btrefl.reconfig_up_nodes;
+  btrefl.reconfig_down_nodes;
+  btrefl.reconfig_active_nodes;
+  btrefl.reconfig_recur_nodes;
+  btrefl.reconfig_recur_hosts;
+  btrefl.reconfig_recur_lines;
+  btrefl.reconfig_shut_links;
+  btrefl.reconfig_active_links;
+  btrefl.reconfig_t_ineigh;
+  btrefl.reconfig_out_ports;
+  btrefl.reconfig_active_ports;
+  btrefl.reconfig_exception_hosts;
+  btrefl.reconfig_active_hosts;
+  btrefl.reconfig_host_locations;
+  btrefl.reconfig_host_slot;
+  btrefl.reconfig_host_pid;
+  btrefl.reconfig_node_kernel;
+
+  btrefl.reconfig_slot_node;
+  btrefl.reconfig_slot_host;
+  btrefl.reconfig_reload_slot;
+  btrefl.reconfig_reload_node;
+  btrefl.reconfig_host_text;
+
+  relofl.reconfig_reload_data;
+  xomhfl.reconfig_xom_host;
+
+  clusfl.reconfig_cluster_names;
+
+  threfl.reconfig_threshold_conditions;
+  condfl.reconfig_condition_log;
+
+  bjobfl.reconfig_background_job;
+
+  locbkt.reconfig_location_bucket;
+  hststs.reconfig_host_status;
+  uresfl.reconfig_user_response_buffers;
+  udisfl.reconfig_user_display_buffers;
+  sendfl.reconfig_sendsend;
+  oplgfl.reconfig_oplog;
+  erlgfl.reconfig_erlog;
+  old.reconfig_erlog_file
+end (* reconfigure_disk *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			 scan_reconfigure_command			*)
+(*									*)
+(*	Scan the Reconfigure command.					*)
+(*									*)
+(************************************************************************)
+
+procedure scan_reconfigure_command;
+
+var
+  previous_incarnation: integer;
+  ok: boolean;
+
+begin
+  extend_operator.read_disk_header(previous_incarnation);
+  if (previous_incarnation+1 < current_incarnation) or
+    (current_incarnation < previous_incarnation)
+  then
+    with format do
+      begin
+	simple_message('Invalid previous incarnation number: \');
+	number(previous_incarnation, 10);
+	write_line(user_terminal)
+      end (* with *)
+  else
+    begin
+      if previous_incarnation+1 = current_incarnation
+      then extend_operator.restructure_volume_label(old.config);
+      old.compare_configs(ok);
+      if ok
+      then
+	begin
+      	  if previous_incarnation+1 = current_incarnation
+      	  then old.restructure_disk;
+	  new.put_new_label_new_config;
+	  reconfigure_disk;
+	  extend_operator.write_disk_header
+      	end
+      else user_terminal.write_quoted_text_line('Old configs error\')
+    end
+end (* scan_reconfigure_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			print_integer_parameters			*)
+(*									*)
+(*	Print one set (old and new) configuration parameters.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_integer_parameters(param_name: quoted_text;
+			      	   first_skip,
+		   	   	   second_skip,
+			   	   first_number,
+			   	   second_number: integer);
+
+begin
+  with format do 
+    begin
+      simple_message(param_name);
+      skip_to(first_skip);
+      number(first_number, 10);
+      skip_to(second_skip);
+      number(second_number, 10);
+      write_line(user_terminal)
+    end
+end (* print_integer_parameters *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			print_boolean_parameters			*)
+(*									*)
+(*	Print one set (old and new) configuration parameters.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_boolean_parameters(param_name    : quoted_text;
+			      	   first_skip	 : integer;
+		   	   	   second_skip	 : integer;
+			   	   first_true    : boolean;
+			   	   second_true   : boolean);
+
+begin
+  with format do 
+    begin
+      simple_message(param_name);
+      skip_to(first_skip);
+      if first_true
+      then string('TRUE\ ')
+      else string('FALSE\');
+      skip_to(second_skip);
+      if second_true
+      then string('TRUE\ ')
+      else string('FALSE\');
+      write_line(user_terminal)
+    end
+end (* print_boolean_parameters *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*		      print_configuration_parameters			*)
+(*									*)
+(*	Print the old and new configuration parameters.			*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_configuration_parameters;
+
+begin
+  with format do
+    begin
+      start;
+      skip_to(30);
+      string('OLD CONFIGURATION\');
+      skip_to(50);
+      string('NEW CONFIGURATION\');
+      write_line(user_terminal)
+    end;
+  print_integer_parameters('USER_MAX\ ', 36, 57, 
+    old.config.user_max, new.config.user_max);
+  print_integer_parameters('USERNAME_MAX\ ', 36, 57, 
+    old.config.username_max, new.config.username_max);
+  print_integer_parameters('USER_MESSAGE_MAX\ ', 36, 57, 
+    old.config.user_message_max, new.config.user_message_max);
+  print_integer_parameters('SUPERVISOR_MAX\ ', 36, 57, 
+    old.config.supervisor_max, new.config.supervisor_max);
+  print_integer_parameters('TYMNET_II_NODE_MAX\ ', 36, 57, 
+    old.config.tymnet_ii_node_max, new.config.tymnet_ii_node_max);
+  print_integer_parameters('HOST_NUMBER_MAX\', 36, 57, 
+    old.config.host_number_max, new.config.host_number_max);
+  print_integer_parameters('NODE_CONFIGURATION_MAX\ ', 36, 57, 
+    old.config.node_configuration_max, new.config.node_configuration_max);
+  print_integer_parameters('HOST_CONFIGURATION_MAX\ ', 36, 57, 
+    old.config.host_configuration_max, new.config.host_configuration_max);
+  print_integer_parameters('LINKS_PER_NODE\ ', 36, 57, 
+    old.config.links_per_node, new.config.links_per_node);
+  print_integer_parameters('PORTS_PER_NODE\ ', 36, 57, 
+    old.config.ports_per_node, new.config.ports_per_node);
+  print_integer_parameters('LINK_SHUT_PERCENTAGE\ ', 36, 57, 
+    old.config.link_shut_percentage, new.config.link_shut_percentage);
+  print_integer_parameters('PORT_OUT_PERCENTAGE\', 36, 57, 
+    old.config.port_out_percentage, new.config.port_out_percentage);
+  print_integer_parameters('LIMIT_SET_MAX\', 36, 57, 
+    old.config.limit_set_max, new.config.limit_set_max);
+  print_integer_parameters('OPER_LOG_PAGE_MAX\', 36, 57, 
+    old.config.oper_log_page_max, new.config.oper_log_page_max);
+  print_integer_parameters('THRESHOLD_CONDITION_MAX\', 36, 57,
+    old.config.threshold_condition_max, new.config.threshold_condition_max);
+  print_integer_parameters('CONDITION_LOG_LENGTH\ ', 36, 57,
+    old.config.condition_log_length, new.config.condition_log_length);
+  print_boolean_parameters('RELOAD_FEATURE\ ', 36, 57,
+    old.config.reload_feature, new.config.reload_feature);
+  print_boolean_parameters('ALARM_FEATURE\', 36, 57,
+    old.config.alarm_feature, new.config.alarm_feature);
+  print_boolean_parameters('SHUT_LINK_TABLE_FEATURE\', 36, 57,
+    old.config.shut_link_table_feature, new.config.shut_link_table_feature);
+  print_integer_parameters('HOST_STATUS_MESSAGE_MAX\', 36, 57, 
+    old.config.host_status_message_max, new.config.host_status_message_max);
+  print_boolean_parameters('MULTIPLE_HOST_MESSAGE_FEATURE\', 36, 57,
+    old.config.multiple_host_message_feature, new.config.multiple_host_message_feature)
+end (* print_configuration_parameters *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			    print_vfdd_heading				*)
+(*									*)
+(*	Print file descriptor heading.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_vfdd_heading;
+
+begin
+  with format do
+    begin
+      start;
+      string('VFDD_IND\ ');
+      skip_to(15);
+      string('FILE_ADDR\');
+      skip_to(30);
+      string('FILE_ALLOC\ ');
+      skip_to(45);
+      string('FILE_LENGTH\');
+      skip_to(60);
+      string('CREATION_DATE\');
+      write_line(user_terminal)
+    end
+end (* print_vfdd_heading *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			      print_vfdd_page				*)
+(*									*)
+(*	Print file descriptor page.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_vfdd_page(data  : vfdd_page;
+			  pageno: integer);
+
+var
+  i : fd_index;
+
+begin
+  for i := 0 to fd_limit do
+    with format, data[i] do
+      if descriptor.file_address <> 0
+      then 
+	begin
+	  start;
+	  skip_to(4);
+	  number(pageno*FD_MAX+i, 10);
+	  skip_to(19);
+	  number(descriptor.file_address, 16);
+	  skip_to(34);
+	  number(descriptor.file_allocation, 10);
+	  skip_to(49);
+	  number(descriptor.file_length, 10);
+	  skip_to(58);
+	  time(creation_date_and_time);
+	  write_line(user_terminal)
+	end (* with *)
+end (* print_vfdd_page *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			    print_dir_heading				*)
+(*									*)
+(*	Print file directory heading.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_dir_heading;
+
+begin
+  with format do
+    begin
+      start;
+      string('FILE_NAME\');
+      skip_to(25);
+      string('VFDD_INDEX\ ');
+      write_line(user_terminal)
+    end
+end (* print_dir_heading *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			      print_dir_page				*)
+(*									*)
+(*	Print directory page.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure print_dir_page(data: dir_page);
+
+var
+  i : dir_entry_index;
+
+begin
+  for i := 0 to dir_entry_limit do
+    with format, data[i] do
+      if name <> null_identifier
+      then
+	begin
+	  start;
+	  file_identifier(name);
+	  skip_to(29);
+	  number(index, 10);
+	  write_line(user_terminal)
+	end (* with *)
+end (* print_dir_page *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*				dump_page				*)
+(*									*)
+(*	Dump page.							*)
+(*									*)
+(************************************************************************)
+
+
+procedure dump_page(page_number: integer);
+
+const
+  data_max = 64 (* words *) ;
+  data_limit = data_max-1;
+
+type data_index = 0..data_limit;
+
+var
+  data: array[data_index] of integer;
+  i: integer;
+  j: integer;
+  ok: boolean;
+
+begin
+  dsksys.read_page(page_number, data, ok);
+  if ok
+  then
+    with format do
+      for i := 0 to 7 do
+	begin
+	  start;
+	  for j := 0 to 7 do
+	    begin
+	      format_number(data[i*8+j], 16, -8);
+	      skip(1)
+	    end;
+	  write_line(user_terminal)
+	end (* with *)
+  else user_terminal.write_quoted_text_line('Dump page error\')
+end (* dump_page *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*				dump_vfdd				*)
+(*									*)
+(*	Dump file descriptor.						*)
+(*									*)
+(************************************************************************)
+
+procedure dump_vfdd;
+
+var
+  data: vfdd_page;
+  i: integer;
+  ok: boolean;
+
+begin
+  print_vfdd_heading;
+  i := VFDD_START_ADDRESS;
+  repeat
+    dsksys.read_page(i, data, ok);
+    if ok
+    then
+      begin
+	print_vfdd_page(data, i-1);
+        i := i+1
+      end
+    else user_terminal.write_quoted_text_line('Dump vfdd error\')
+  until not ok or (i > VFDD_START_ADDRESS+VFDD_ALLOCATION-1)
+end (* dump_vfdd *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			     dump_directory				*)
+(*									*)
+(*	Dump file directory.						*)
+(*									*)
+(************************************************************************)
+
+procedure dump_directory;
+
+var
+  data: dir_page;
+  i: integer;
+  ok: boolean;
+
+begin
+  print_dir_heading;
+  i := DIR_START_ADDRESS;
+  repeat
+    dsksys.read_page(i, data, ok);
+    if ok
+    then
+      begin
+	print_dir_page(data);
+        i := i+1
+      end
+    else user_terminal.write_quoted_text_line('Dump directory error\ ')
+  until not ok or (i > DIR_START_ADDRESS+DIR_ALLOCATION-1)
+end (* dump_directory *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			execute_display_config_command			*)
+(*									*)
+(*	Execute the display configuration parameters command. 		*)
+(*	Format is:							*)
+(*	DISPLAY CONFIG							*)
+(*									*)
+(************************************************************************)
+
+
+procedure execute_display_config_command(var scanned: scanned_command);
+
+begin
+  argument_scan.extra_argument_check(scanned);
+  if scanned.status = CMD_OK
+  then print_configuration_parameters
+end (* execute_display_config_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			execute_dump_vfdd_command			*)
+(*									*)
+(*	Execute the dump vfdd command. Format is:			*)
+(*	DUMP VFDD							*)
+(*									*)
+(************************************************************************)
+
+
+procedure execute_dump_vfdd_command(var scanned: scanned_command);
+
+begin
+  argument_scan.extra_argument_check(scanned);
+  if scanned.status = CMD_OK
+  then dump_vfdd
+end (* execute_dump_vfdd_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			execute_dump_dir_command			*)
+(*									*)
+(*	Execute dump directory command. Format is:			*)
+(*	DUMP DIR							*)
+(*									*)
+(************************************************************************)
+
+
+procedure execute_dump_dir_command(var scanned: scanned_command);
+
+begin
+  argument_scan.extra_argument_check(scanned);
+  if scanned.status = CMD_OK
+  then dump_directory
+end (* execute_dump_dir_command *) ;
+
+
+  
+(***************************  command_level  ****************************)
+(*									*)
+(*			  execute_dump_p_command			*)
+(*									*)
+(*	Execute dump a page command, "p" is the page number to be 	*)
+(*	dumped (in hexadecimal). Format is:				*)
+(*	DUMP p								*)
+(*									*)
+(************************************************************************)
+
+
+procedure execute_dump_p_command(var scanned: scanned_command);
+
+var
+  pageno: integer;
+
+begin
+  argument_scan.freeword_number(0, 16, scanned, pageno);
+  if scanned.status = CMD_OK
+  then
+    begin
+      argument_scan.extra_argument_check(scanned);
+      if scanned.status = CMD_OK
+      then dump_page(pageno)
+    end
+end (* execute_dump_p_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			    scan_dump_command				*)
+(*									*)
+(*	Scan the Dump command.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_dump_command(var scanned: scanned_command);
+
+begin
+  if argument_scan.check_keyword(CONTEXT_DUMP_VFDD_KEYWORD, scanned)
+  then execute_dump_vfdd_command(scanned)
+  else if argument_scan.check_keyword(CONTEXT_DUMP_DIR_KEYWORD, scanned)
+  then execute_dump_dir_command(scanned)
+  else execute_dump_p_command(scanned)
+end (* scan_dump_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			  scan_display_command				*)
+(*									*)
+(*	Scan the DISPLAY command.					*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_display_command(var scanned: scanned_command);
+
+begin
+  if argument_scan.check_keyword(CONTEXT_DISPLAY_CONFIG_KEYWORD, scanned)
+  then execute_display_config_command(scanned)
+end (* scan_display_command *) ;
+
+$if debug
+(***************************  command_level  ****************************)
+(*									*)
+(*			    scan_erlog_command				*)	
+(*									*)
+(*	Prepare the erlog buffer in core, and execute the ERLOG command.*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_erlog_command;
+
+begin
+  erlog_generator.fill_erlog_buffer;
+
+  format.simple_message('erlog buffer length: \');
+  format.number(erlog_generator.erlog_page_length, 10);
+  format.string(' pages, \ ');
+  format.number(erlog_generator.erlog_byte_size, 10);
+  format.string(' bytes\ ');
+  format.write_line(user_terminal)
+end (* scan_erlog_command *) ;
+$endif
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			   scan_restore_command				*)
+(*									*)
+(*	Scan the Restore command, and if valid, restore the disk	*)
+(*	from unit 1 to unit 0.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_restore_command;
+
+begin
+  restore_operator.copy(1, file_system_disk)
+end (* scan_restore_command *) ;
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			    scan_save_command				*)
+(*									*)
+(*	Scan the Save command, and if valid, save the disk		*)
+(*	from unit 0 to unit 1.						*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_save_command;
+
+begin
+  restore_operator.copy(file_system_disk, 1)
+end (* scan_save_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			    scan_quit_command				*)
+(*									*)
+(*	Scan the Quit command, and if valid, zap user circuit.		*)
+(*									*)
+(************************************************************************)
+
+
+procedure scan_quit_command;
+
+begin
+  format.start;
+  format.newline;
+  format.string('Logging out at \');
+  format.time(realtime);
+  format.write_line(user_terminal);
+
+  user_terminal.send_yellow_ball;
+  repeat
+    user_terminal.detect_orange_ball; wait
+  until (user_terminal.param.status = ORANGE_BALL) or
+	not user_terminal.available;
+
+  user_terminal.clear_circuit
+end (* scan_quit_command *) ;
+
+
+
+(***************************  command_level  ****************************)
+(*									*)
+(*			      process_user				*)
+(*									*)
+(*	This is the main processing routine. 				*)
+(*	It read context commands and goes to appropriate command class	*)
+(*	routine.							*)
+(*									*)
+(************************************************************************)
+
+procedure process_user;
+
+var
+  scanned : scanned_command;
+
+begin
+  command_read.add_class(CONTEXT_CLASS);
+
+  repeat
+    command_read.get_command(scanned);
+    if user_terminal.available
+    then
+      begin
+	command_read.remove_class(CONTEXT_CLASS);
+	case scanned.command of
+
+	  CONTEXT_INITIALIZE:
+	    scan_initialize_command;    
+
+	  CONTEXT_RECONFIGURE:
+	    scan_reconfigure_command;	  
+
+	  CONTEXT_DUMP:
+	    scan_dump_command(scanned);
+
+	  CONTEXT_DISPLAY:
+	    scan_display_command(scanned);
+
+	  CONTEXT_ERLOG:
+$if debug
+	    scan_erlog_command;
+$endif
+$ifnot debug	(* empty *);
+
+	  CONTEXT_RESTORE:
+	    scan_restore_command;
+	    "scanned.status := CMD_ERROR;"
+
+	  CONTEXT_SAVE:
+	    scan_save_command;
+	    "scanned.status := CMD_ERROR;"
+
+	  CONTEXT_QUIT:
+	    scan_quit_command
+
+	end (* case *) ;
+
+	command_read.add_class(CONTEXT_CLASS);
+	scan_error.display_command_error(scanned)
+      end (* if user_terminal.available *)
+  until not user_terminal.available
+end (* process_user *);
+
+
+
+(****************************  command_level  ***************************)
+(************************************************************************)
+
+begin (* initial statement *) 
+  init
+    commands,
+    user_terminal,
+    format,
+    io_report(user_terminal, format),
+    misc_operator,
+    restore_operator(user_terminal, format),
+    argument_scan,
+    command_scan(commands, argument_scan),
+    scan_error(user_terminal, format),
+    command_read(
+      0, user_terminal, argument_scan, format, command_scan,
+      scan_error, commands),
+    dsksys(io_report),
+    extend_operator(format, io_report, dsksys, user_terminal),
+    erlog_generator(io_report, user_terminal, extend_operator),
+    new(format, io_report, dsksys, user_terminal, extend_operator, misc_operator),
+    old(format, io_report, dsksys, user_terminal, extend_operator, 
+      erlog_generator, new, misc_operator),
+    dinit(user_terminal, io_report, dsksys, new),
+    profil(user_terminal, format, extend_operator, old, new),
+    namefl(user_terminal, format, old, new),
+    probfl(user_terminal, format, old, new),
+    remofl(user_terminal, format, old, new),
+    btrefl(user_terminal, format, extend_operator, old, new, misc_operator),
+    locbkt(user_terminal, format, old, new),
+    hststs(user_terminal, format, extend_operator, old, new, misc_operator),
+    uresfl(user_terminal, format, extend_operator, old, new),
+    udisfl(user_terminal, format, extend_operator, old, new),
+    sendfl(user_terminal, format, extend_operator, old, new, misc_operator),
+    clusfl(user_terminal, format, old, new),
+    relofl(user_terminal, format, extend_operator, old, new),
+    xomhfl(user_terminal, format, extend_operator, old, new),
+    threfl(user_terminal, format, old, new),
+    condfl(user_terminal, format, extend_operator, old, new),
+    bjobfl(user_terminal, format, extend_operator, old, new),
+    oplgfl(user_terminal, format, extend_operator, old, new);
+    
+
+  cycle
+    if login
+    then process_user
+    end (* cycle *)
+end (* command_level *) .
+  z!Q1¨
