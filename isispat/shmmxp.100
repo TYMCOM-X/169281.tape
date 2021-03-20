@@ -1,0 +1,4612 @@
+	subttl	stuff after TYMFILE but before START LIB
+maxprt	eq	nmach+nslot+1
+hprt0	eq	maxprt
+nport	eq	maxprt+1
+nbuf	eq	nport
+nbflet	eq	maxprt*$a170/2 :allow 1k on half the possible circuits
+
+	SUBTTL	ISIS Assembly Switch Definitions	- START.LIB
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+
+	REMARK %Start.Lib Version 
+SREV	EQ	0;	NUMBER SREV; REMARK .0
+SLEV	EQ	05;	NUMBER SLEV
+
+: Version 0.05 01/19/83 MDS
+:	Delete Remark regarding incompatibility with ISIS 5.00
+: Version 0.04 03/12/82  MDS
+:	Add new fields to SYS SVC Sub-operand definitions,
+:	per ISIS2 v.5.01
+: Version 0.03 03/08/82  MDS
+:	Add new fields to Seg F table per ISIS 5.01
+:	(note - Start.lib ** NOT ** compatible with ISIS 5.00
+:	because SLCNT and LCX were reversed in 5.00 )
+: Version 0.02  12/08/81  MDS
+:	Add QSTART remark, add I/O sub-ops for mother board.
+:	Delete ISIS (one) code - force ISIS2
+: Version 0.01  01/08/81  MDS
+:	Correct relative addresses of local clock index and values.
+
+	RA	0		:	START.LIB
+
+:	this file should always be assembled IMMEDIATELY AFTER the *.TYM file
+
+
+ISIS2	EQ	1	:Force ISIS2 for other library routines
+			:Note - ISIS 1 is no longer supported
+
+:			ISIS - II Version
+:
+:	The following parameters should be defined in the *.TYM file:
+:	MAXHST	maximum number of hosts associated with this interface slot
+:	MAXPRT	number of highest port associated with this interface slot
+:			(number of ports - 1)
+:	IRSIZE	 number of bytes to provide for input ring, from dispatcher
+:	ORSIZE	 number of bytes to provide for output ring, to dispatcher
+:	CNTRL	dispatcher control bits
+:	ENGINE	set to 1 if executing on a Tymnet Engine
+
+:	the following symbols MUST be defined SOMEWHERE in the assembly:
+:	IRING	the start of the input ring, from dispatcher
+:	ORING	the start of the output ring, to dispatcher
+:	ENTRY	the location of the first instruction to be executed
+
+:	the following symbols are defined for convenience:
+:	RATE	the rate of the fast clock (ticks/second)
+:	NRATE	word containing the value of RATE
+:	FASTC	word containing  realtime fast clock
+:	SLOWC	word containing  realtime slow clock (1-second)
+:	GMT	word containing GMT clock
+:	TEMPER	byte containing machine temperature
+:	VOLTS	byte containing machine voltage
+:	VERNO	halfword containing ISIS version number
+:	WWVBT	word containing WWVB time
+:	HOSTX	halfword containing kernel host number
+:	NODEX	halfword containing kernel node number
+:	LCX	halfword, offset of local clocks within seg F
+:	SLCNT	halfword, number of slots known to ISIS dispatcher
+:	LCT	halfword, pointer to crash table
+:	MAXP0	halfword, highest port 0 msg. #
+:	MAXMSG	halfword, highest msg # for all other ports
+:	LP0LST	halfword, length table for port 0 msgs.
+:	LENGTH	length table for msgs. all other ports
+:	R0-R15	symbolic names for the registers
+:	SEGn	the start address of segment n (0-0E)
+:	HOSTS	halfword array of host numbers as known by the dispatcher (R/O)
+:	PORTS	halfword array of ports/host as known by dispatcher (R/O)
+:
+:	the following symbols MAY be defined. defaults used otherwise
+:	APROTn	protection byte for area n. default area 1 write protected,
+:		other areas execution protected.
+:	HOSTn	host number for host position n. default none.
+:	HPRTn	number of ports for host position n. default none.
+:	DSTART	user DDT execution start address. default none.
+:	QSTART  user DDT query handler start address, default none.
+:	FPANEL	halfword cell for front panel display. default cell allocated
+:	FRISIS	bit array for input backpressure (1=no backpressure) default
+:			array allocated.
+:	TOISIS	bit array for output backpressure (1=no backpressure) default
+:			array allocated.
+:	VERSION	version number for slot code (default zero)
+:	PCTTBL	bit array for indicating terminating character for project
+:			code. (default none)
+:	REVLEV	revision level for slot code (default zero)
+:	A.DATA	segment number for data area. Default 0
+:	A.CODE	segment number for code area. Default 1
+:	A.BDAT	segment number for based data. Default 2.
+:	A.RING	segment number for rings. Default 2.
+:	A.BUFF	segment numberfor buffer(let)s. Default 2.
+:
+:	in addition most SVC calls have been assigned symbolic names.
+
+	GL	FASTC,SLOWC,RATE,NRATE,GMT,TEMPER,VOLTS,VERNO,HOSTX,NODEX,SLOTNO
+	GL	R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15
+	GL	IRSIZE,ORSIZE,CNTRL
+	GL	ENTRY,IRING,ORING,ENGINE,LCX
+	GL	VERREV,COREST,FPANEL,HOSTS,PORTS,FRISIS,TOISIS
+
+:	DEFINE SEG 15d LOCATIONS
+RATE	EQ	$A 600		:clock rate, ticks per second
+NRATE	EQ	0F0000		:word, contains RATE
+FASTC	EQ	0F0004		:word, contains fast clock (ticks)
+SLOWC	EQ	0F0008		:word, contains slow clock (seconds)
+GMT	EQ	0F000C		:word, contains GMT (seconds since 1/1/72)
+TEMPER	EQ	0F0010		:byte, contains machine temperature
+VOLTS	EQ	0F0011		:byte, contains machine voltage
+VERNO	EQ	0F0012		:halfword, ISIS version number
+WWVBT	EQ	0F0014		:word, WWVB time (format ??)
+HOSTX	EQ	0F0018		:halfword, kernel host number
+NODEX	EQ	0F001A		:halfword, kernel node number
+
+: Local clocks displacements
+
+LCX	EQ	0F001C	:1/2 word, contains offset of LOCLKS within seg F
+: LOCLKX and LOCLKS must be referenced by the pointer in LCX
+:LOCLKX	EQ	LOCLKS-2 :1/2 word, index to current clock from LOCLKX
+:LOCLKS	EQ	Seg F + contents of LCX
+			:clocks for slots, array of word entries per slot
+			:1st halfword is user ticks, 2nd is sys ticks for slot
+
+SLCNT	EQ	0F001E		:halfword, number of dispatcher slots
+LCT	EQ	0F0020		:halfword, pointer to crash table
+MAXP0	EQ	0F0022		:halfword, max. msg. # for port 0
+MAXMSG	EQ	0F0024		:halfword, max. msg #, all non-0 ports
+LP0LST	EQ	0F0026		:halfword, offset to port 0 msg length table
+LENGTH	EQ	0F0028		:byte table, lengths of non-0 port msgs
+
+:	Define Registers
+R0	EQ	0
+R1	EQ	1
+R2	EQ	2
+R3	EQ	3
+R4	EQ	4
+R5	EQ	5
+R6	EQ	6
+R7	EQ	7
+R8	EQ	8
+R9	EQ	9
+R10	EQ	$A 10
+R11	EQ	$A 11
+R12	EQ	$A 12
+R13	EQ	$A 13
+R14	EQ	$A 14
+R15	EQ	$A 15
+
+:	AREA DEFINITIONS
+	GL	A.DATA,A.CODE,A.BDAT,A.RING,A.BUFF
+:
+  IF	\A.DATA
+  ELSE
+A.DATA	EQ	0	:DEFAULT DATA AREA
+  EI
+
+  IF	\A.CODE
+  ELSE
+A.CODE	EQ	1	:DEFAULT CODE AREA
+  EI
+
+  IF	\A.BDAT
+  ELSE
+A.BDAT	EQ	2	:DEFAULT BASED DATA AREA
+  EI
+
+  IF	\A.RING
+  ELSE
+A.RING	EQ	2	:DEFAULT RING AREA
+  EI
+
+  IF	\A.BUFF
+  ELSE
+A.BUFF	EQ	2	:DEFAULT BUFFER AREA
+  EI
+
+:	SVC DEFINITIONS
+:
+	GL	DISMIS,FASTD,SYS,RSTRT.,CFGND.,DBGON.,DBGOF.,TSTDB.
+	GL	FREEZ.,THAW.,TFREZ.,RDDTR.,RDDTP.,RBREG.,RBPSD.
+	GL	RFREG.,RFPSD.,RDMAC.,RBMAC.,RFMAC.,SET1P.,SETP.,SETBE.
+	GL	SETFE.,IO,IOQRY.,CSYNI.,CSYNO.,FSYNO.,TIISC.
+	GL	CSUPF.,CSUPR.,FREZS.,THAWS.,ALARM.,RSCLK.,SSCLK.,SUDIA.
+	GL	SFREZ.,HALT.,SHALT.
+	GL	TIISI.,CASYN.,CPRT.,FPRT.,CSIO.,CMBRD.,FMBIN.,FMBOT.
+	GL	SHARE,K.IN,K.OUT,KIO,BDISC,SDISC
+:
+DISMIS	EQ	0	:DISMISS SVC
+FASTD	EQ	1	:FAST DISMISS SVC
+:
+SYS	EQ	2	:SYS SVC
+
+:	SYS SVC SUBOPERANDS
+RSTRT.	EQ	0	:Restart syscall
+CFGND.	EQ	1	:Connect foreground syscall
+DBGON.	EQ	2	:Debug mode ON syscall
+DBGOF.	EQ	3	:Debug mode OFF syscall
+TSTDB.	EQ	4	:Test debug mode syscall
+FREEZ.	EQ	5	:Freeze slot syscall
+THAW.	EQ	6	:Thaw slot syscall
+TFREZ.	EQ	7	:Test freeze syscall
+RDDTR.	EQ	8	:Read DDT register syscall
+RDDTP.	EQ	9	:Read DDT PSD syscall
+RBREG.	EQ	0A	:Read background register syscall
+RBPSD.	EQ	0B	:Read background PSD syscall
+RFREG.	EQ	0C	:Read foreground register syscall
+RFPSD.	EQ	0D	:Read foreground PSD syscall
+RDMAC.	EQ	0E	:Read DDT MAC register syscall
+RBMAC.	EQ	0F	:Read background MAC register syscall
+RFMAC.	EQ	10	:Read foreground MAC register syscall
+SET1P.	EQ	11	:Set 1 protect syscall
+SETP.	EQ	12	:Set protection syscall
+SETBE.	EQ	13	:Set background execution addr syscall
+SETFE.	EQ	14	:Set foreground execution addr syscall
+LMAC.	EQ	15	:Set up MAC from CTA (DDT only)
+CSUPF.	EQ	16	:Check SUP freeze state
+CSUPR.	EQ	17	:Check SUP run Q state
+FREZS.	EQ	18	:Freeze the SUP
+THAWS.	EQ	19	:Thaw the SUP
+ALARM.	EQ	1A	:Set/Clear alarm
+RSCLK.	EQ	1B	:Read the super-clock
+SSCLK.	EQ	1C	:Set the super-clock
+SUDIA.	EQ	1D	:Set user diagnostic
+UCORE.	EQ	1E	:Get slot physical addr & size (DDT only)
+SFREZ.	EQ	1F	:Super-freeze slot
+HALT.	EQ	20	:Halt the slot
+SHALT.	EQ	21	:Super-halt the slot
+SVSPY.	EQ	22	:Start/Stop SPY
+DISCO.	EQ	23	:Disconnect Logical Unit
+
+IO	EQ	3	:I/O SVC
+:	I/O SUBOPERANDS
+IOQRY.	EQ	8000	:Query I/O attributes
+CSYNI.	EQ	0	:Connect SYNC input
+CSYNO.	EQ	1	:Connect SYNC output
+FSYNO.	EQ	2	:Force SYNC output
+CASYN.	EQ	3	:Connect ASYNC
+CPRT.	EQ	4	:Connect Printer
+FPRT.	EQ	5	:Force Printer
+TIISC.	EQ	6	:T-II SYNC Connect
+TIISI.	EQ	7	:T-II SYNC Idle test
+CSIO.	EQ	8	:Connect SIO
+CMBRD.	EQ	9	:Connect SIO mother board
+FMBIN.	EQ	0A	:Force mother board input
+FMBOT.	EQ	0B	:Force mother board output
+SHARE	EQ	04	:Shared device SVC
+K.IN	EQ	0A	:Kernel Input SVC
+K.OUT	EQ	0B	:Kernel Output SVC
+KIO	EQ	0D	:Kernel-I/O (general) SVC
+BDISC	EQ	0E	:Big disc SVC (obsolete)
+SDISC	EQ	0F	:Small disc SVC (obsolete)
+
+	IF	IRSIZE&3;	REMARK	%IRSIZE should be multiple of 4
+IRSIZE	EQ	(IRSIZE!3)+1;	EI
+	IF	ORSIZE&3;	REMARK	%ORSIZE should be multiple of 4
+ORSIZE	EQ	(ORSIZE!3)+1;	EI
+
+  IF	\MAXPRT
+  ELSE
+	REMARK	%PLEASE DEFINE MAXPRT. NPORTT ASSUMED.
+MAXPRT	EQ	NPORTT-1
+HPRT0	EQ	MAXPRT
+  EI
+
+  IF	\MAXHST
+  ELSE
+	REMARK	%PLEASE DEFINE MAXHST. 1 ASSUMED.
+MAXHST	EQ	1
+HOST0	EQ	HOSTNO
+  EI
+
+
+:	DEFINE START OF SEGMENTS
+Q	EQ	0
+	NOLIST
+	RE	0F
+  IF	\SEG|Q|
+	GL	SEG|Q|
+  ELSE
+	SEG	Q
+	GL	SEG|Q|
+SEG|Q|
+  EI
+Q	EQ	Q+1
+	ER
+	LIST
+
+:GENERATE DIAGNOSTICS
+Q	EQ	0
+	NOLIST
+QQ	EQ	0;	RE	0F
+	IF	((Q*10000)%SEG|Q|)&7FFFFFFF
+QQ	EQ	1;	REMARK	%SYMBOL SEG
+	NUMBER	Q
+	REMARK	 IS NOT DEFINED PROPERLY. VALUE IS 
+	NUMBER	SEG|Q|
+	EI
+Q	EQ	Q+1;	ER
+	LIST
+
+	IF	QQ;
+	REMARK	%START.LIB **MUST** be assembled FIRST!!%;
+	EI
+	SUBTTL	Engine hardware trace trapping routine
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+	RA	0		:	TRACE.LIB
+
+:	This file provides the necessary backbone for using the TYMNET-ENGINE
+:	harware-trace feature.  It should be assembled IMMEDIATELY AFTER the
+:	START.LIB file.  The file may be assembled directly from the library
+:	version, in which case it is necessary to patch the appropriate test
+:	into the assembled code, OR it may be copied and the test hard-coded.
+
+	GL	ENTRY,CRASH	:TWO LIKELY CANDIDATES FOR SYMBOLS REQUIRED
+
+	MO	.,TRACE
+	SEG	0		:IN SEGMENT 0
+	ORG	10
+TRPSD	WC	1000,ENTRY	:FORCE A TRANSFER TO "ENTRY"
+	WC	TRACE		:ON TRAP, GO TO "TRACE"
+TRSAVE	HS	22		:USEFUL AREA TO SAVE REGS, ETC
+
+	SEG	A.CODE		:IN CODE AREA
+TRACE	HS	0		:ENTRY TO TRACE LOGIC
+	ST	R15,TRSAVE+4	:SAVE A REGISTER
+	L	R15,TRPSD+4	:GET ADDRESS WE JUST JUMPED TO
+	ST	R15,TRSAVE
+	L	R15,TRSAVE+4	:RESTORE REGISTER
+	UPSW	TRPSD		:INSTRUCTION TO RE-ENABLE TRACE
+	HS	40		:ADDITIONAL AREA TO PATCH IN REQUIRED TEST
+
+:	TRANSFER TO HERE TO TURN ON TRACE INITIALLY
+TRBGN	UPSW	IPSD		:THIS WILL TAKE US TO "ENTRY" WITH TRACE ON
+IPSD	WC	1000,ENTRY	:TRACE BIT ON, GO TO "ENTRY"
+	EM
+        SUBTTL  MISC...ASSORTTED UTILITES AND MACROES
+	seg	a.code
+:
+:STACK MANIPULATION MACROES
+:
+PUSH    MACRO(R) [
+        ST      R,0,R13
+        AIS     R13,4
+]
+POP     MACRO(R) [
+        SIS     R13,4
+        L       R,0,R13
+]
+RETJ    MACRO(R) [
+        POP(R)
+        JR      R
+]
+PUSHH   MACRO(R) [
+        STH     R,0,R13
+        AIS     R13,2
+]
+POPH    MACRO(R) [
+        SIS     R13,2
+        LHL     R,0,R13
+]
+
+:
+:  SYMBOL DEFINITIONS FOR ?STAT
+:
+
+SYMLST	MACRO(LABEL)
+[
+	GL	LABEL
+LABEL	WS	0
+]
+
+SYMDEF	MACRO(LABEL)
+[
+SYMX	EQ	.
+	GL	LABEL
+	BC	0B
+	AC	/           /
+	ORG	SYMX+1
+	AC	/LABEL/
+	ORG	SYMX+0C
+	WC	LABEL
+]
+
+SYMEND	MACRO(LABEL)
+[
+SYMLEN	EQ	.-SYMX
+	GL	SYMLEN
+LABEL	WC	.-LABEL
+]
+
+        SEG     0
+NGRP	EQ	(NPORT+0F)/10
+        GL      BUFWAK,kiobio,ngrp,BETAV
+BUFWAK  HS      NGRP                    :START UP BUFFER PROCESS
+kiobio	hs	ngrp			:DDT = 1, load = 0
+flags	hs	ngrp			:for buffer.lib
+:
+:  SYMBOL TABLE FOR ?STAT
+:  FOR ENTRIES TO APPEAR IN ALPHABETICAL ORDER, THEY MUST
+:  BE DECLARED IN REVERSE ALPHA ORDER.
+
+	SYMLST(SYMTBL)
+	SYMDEF(TRACE)
+	SYMDEF(RINGS)
+	SYMDEF(PORTAB)
+	SYMDEF(ORING)
+	SYMDEF(NXTDCB)
+	SYMDEF(KIOBIO)
+	SYMDEF(IRING)
+	SYMDEF(DCBLKS)
+	SYMDEF(CRAT)
+	SYMDEF(BIOBFR)
+	SYMDEF(BF)
+	SYMEND(SYMTBL)
+
+:  THIS STRING (BETAV) IS THE BETATEST REVISION LEVEL, IF ONE
+:  IS NECESSARY. IT IS OUTPUT IN THE HEADER OF THE '?STAT'
+:  COMMAND AND WILL APPEAR AFTER THE STANDARD VERSION AND REVISION LEVEL.
+
+BETAV	SC	/a/
+
+
+	SUBTTL	Standard Timeout Routine Library	- TIMOUT.LIB
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+	RA	0		:	TIMOUT.LIB
+
+:	This package contains the standard timeout routines
+:	The following parameters MUST be defined on entry:
+:	NTOUT	number of timeout entries which may be active at any one time
+
+:	expects to JAL R10,CRASH if list overflows
+
+:	six symbols are declared:
+:	IZT	called at initilization, link on R0
+:	TIMOUT	to be called periodicaly, link on on R0
+:		will in turn jump to any routines which should be serviced:
+:		R0 = routine address
+:		R1 = current fast-clock time.
+:	TORET	routines called by TIMOUT should exit to here
+:	TOPUT	any code may call this to place an entry on timeout list:
+:		link on R5...R6--R15 preserved
+:		R0 = address to transfer to
+:		R1 = next time to call routine
+:	TOGET	called to delete an entry already on timout list
+:		link on R5...R6--R15 preserved
+:		R0 = routine address...entry with this address will be deleted
+:	TONOW	called to flush an entry, and execute it NOW!
+:		link on R5...NO registers preserved! NOW!
+:		routine address in R0
+:	NOTE...when a routine is called from timeout list, it is removed from list,
+:	and must call TOPUT to be called again.
+:	ALSO...TOGET and TONOW both do normal returns, even if no entry is found.
+
+	GL	IZT,TIMOUT,TORET,TOPUT,CRASH,TOGET,TONOW,NTOUT
+	MO	.,TIMOUT
+
+	SEG	A.DATA		:PLACE IN DATA AREA
+
+  IF	6-.
+	BS	6-.		:UNUSED 
+  EI
+TO9	HS	2		:link for timeout processor
+LSIZ	EQ	$A 10		:number of bytes in list entry
+TLIST	BS	(NTOUT+1)*LSIZ	:timeout list
+:				active list entry = halfword chain pointer
+:				word routine address
+:				word time of next activiation
+
+:		free list pointer is at TLIST
+:		active list chain pointer is at TLIST+2
+:	CODE SEGMENT
+	SEG	A.CODE
+
+TORET	L	R0,TO9		:TIMEOUT ROUTINES EXIT HERE
+:	CALL NEXT TIME OUT ROUTINE (IF ANY) THAT HAS BECOME DUE
+TIMOUT	LHL	R2,TLIST+2	:GET ACTIVE LIST POINTER
+	JER	R0		:EXIT IF NO ACTIVE ENTRIES
+	L	R1,FASTC,,	:GET CURRENT CLOCK TIME
+	CL	R1,TLIST+6,R2	:IS 1ST ACTIVE LIST TIMEOUT DUE
+	JLR	R0		:NO TIMEOUTS DUE TO PROCESS
+	ST	R0,TO9		:ROUTINE MUST TERMINATE BY JUMPING TO TORET
+	LHL	R3,TLIST,R2
+	STH	R3,TLIST+2	:SHORTEN ACTIVE LIST
+	LHL	R4,TLIST
+	STH	R4,TLIST,R2	:SPLICE INTO HEAD OF FREE CHAIN
+	STH	R2,TLIST
+	L	R0,TLIST+2,R2
+	JR	R0		:FETCH ADRS AND ENTER TIMED OUT ROUTINE
+
+:	PUT ADRS R0 TO EXECUTE AT TIME R1 ON ACTIVE TIMEOUT LIST. LINK=R5.
+TOPUT	LIS	R2,2		:FIND ACTIVE LIST ENTRY BETWEEN EARLIER, LATER TIMEOUT.
+TPT1	LR	R3,R2
+	LHL	R2,TLIST,R2	:CHECK NEXT TIMEOUT ENTRY
+	JEFS	TPT2		:ACTIVE LIST IS EMPTY
+	CL	R1,TLIST+6,R2	:IS IT EARLIER THAN ARGUMENT DUE TIME
+	JGBS	TPT1		:YES, CONTINUE TIL R3 IS EARLIER AND R2 IS EQUAL OR LATER
+TPT2	LHL	R4,TLIST
+	JGFS	TPT3
+	JAL	R10,CRASH	:FREE LIST EXHAUSTED
+	BC	0,0,4*R5,0F	:FLAG--LINK R5, TYPE 15d CRASH
+TPT3	STH	R4,TLIST,R3	:MAKE EARLIER ACTIVE LIST ENTRY POINT TO NEW ENTRY
+	LHL	R3,TLIST,R4
+	STH	R3,TLIST	:SHORTEN FREE LIST
+	STH	R2,TLIST,R4	:HAVE NEW ENTRY POINT TO NEXT GREATER TIMEOUT ENTRY
+	ST	R0,TLIST+2,R4
+	ST	R1,TLIST+6,R4
+	JR	R5		:STORE ARGUMENTS AND RETURN
+
+TONOW	LIS	R1,2		:SEARCH ACTIVE LIST
+TONOW1	LR	R2,R1		:COPY CURRENT ENTRY POINTER
+	LHL	R1,TLIST,R2	:GET NEXT ENTRY
+	JER	R5		:LIST EXHAUSTED...EXIT
+	CL	R0,TLIST+2,R1	:CHECK THIS ENTRY
+	JNBS	TONOW1		:LOOP IF NOT MATCH
+	LHL	R3,TLIST,R1	:WE GOT A MATCH
+	STH	R3,TLIST,R2	:UNLINK THIS ENTRY
+	LHL	R3,TLIST	:GET START OF FREE LIST
+	STH	R3,TLIST,R1	:LINK THIS ENTRY TO FREE LIST
+	STH	R1,TLIST	:PLACE ON FREE LIST
+	ST	R5,TO9		:SAVE RETURN ADDRESS
+	JR	R0		:AND GO TO ROUTINE
+
+TOGET	LIS	R1,2		:SEARCH ACTIVE LIST
+TOGET1	LR	R2,R1		:COPY CURRENT ENTRY POINTER
+	LHL	R1,TLIST,R2	:GET NEXT ENTRY
+	JER	R5		:LIST EXHAUSTED...EXIT
+	CL	R0,TLIST+2,R1	:CHECK THIS ENTRY
+	JNBS	TOGET1		:LOOP IF NOT MATCH
+	LHL	R3,TLIST,R1	:WE GOT A MATCH
+	STH	R3,TLIST,R2	:UNLINK THIS ENTRY
+	LHL	R3,TLIST	:GET START OF FREE LIST
+	STH	R3,TLIST,R1	:LINK THIS ENTRY TO FREE LIST
+	STH	R1,TLIST	:PLACE ON FREE LIST
+	JR	R5		:AND EXIT
+
+IZT	LHI	R1,NTOUT*LSIZ	:INITIALIZE TIMEOUT FREE LIST
+	LIS	R2,0		:0 TERMINATES LIST
+	STH	R2,TLIST+2	:ACTIVE LIST IS EMPTY
+	STH	R2,TLIST,R1	:TERMINATE FREE LIST
+	STH	R1,TLIST-LSIZ,R1
+	SIS	R1,LSIZ
+	JGBS	.-6
+	JR	R0
+	EM
+
+	SUBTTL	ISIS Ring Handling Routines	- FRING.LIB
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+	RA	0		:	FRING.LIB
+
+:	ISIS RING HANDLERS
+
+:	This package is the fast, efficient ring handler set
+:	The following CONSTRAINTS apply:
+:	1.  Once started, register 14 or 15 is dedicated to that
+:		operation, until it is "ended".
+:	2.  If a new operation is st before the previous operation is
+:		"ended", the previous operation is aborted, and the
+:		appropriate ring is effectively left unchanged.
+:
+:	This package now permits simultaneous input and output!!!
+:		R15 is used for output operations
+:		R14 is used for input operations
+
+:*: NOTE: ISIS II will soon use negative indexing, like this ring package.
+:*:	To convert this package, remove all lines with ':*:' in them,
+:*:	and change all occurrences of 'LHL R15/R14' to 'LH R15/R14'.
+
+:	The package contains both utility and primitive routines:
+
+:	utility routines are called with link R5,
+:	they preserve registers R6--R14.
+:	OCS	Output Canned String
+:		R2 = port #, R3 = pointer to string (SC format)
+:		OCS will output string as a data message to the specified
+:		port. OCS goes to completion, and "ends the operation.
+:	OCM	Output Canned Message
+:		R2 = port #, R3 = pointer to string (SC format)
+:		OCM will output the string as a message to the specified port
+:		OCM goes to completion, and "ends the operation.
+:	OBS	Output Byte String
+:		R2 = number of characters, R3 = pointer to string
+:		OBS will output specified string into the current message
+:		message must have already been "started", and is NOT "ended".
+
+:	primitive input routines.  All link on R4, & preserve R1-R3, R5-R13, R15:
+:	LOOK	Determine if an input message exists...normal return if not
+:		skip (4) return if so, and then:
+:		R1 = port number
+:		R2 = message type code (peek)
+:		On skip return, condition codes are set such that JE will
+:		succeed on port 0.  The port number will have been removed
+:		from the message but the message code will not have been
+:		removed (you get a peek at it).
+:	GETCH	Get a character, returned in R0.
+:	GETH	Get a halfword, returned in R0.  An even number of bytes 
+:		should have been removed previously for expected results.
+:	GETW	Get a word, returned in R0.  An even number of halfwords 
+:		should have been removed previously for expected results.
+:	FLUSH	Flush away ("end") remainder of input message.  R0 is number
+:		of bytes remaining to flush.
+:	ELIR	End-Logical-Input-Record.  "Ends" current message, sets
+:		up pointers for next message.
+
+:	Primative output routines.  All link on R4, preserve R1-R3, R5-R14,
+:	unless used for arguments, or otherwise specified:
+:	SPACE	Returns R0 = number of characters of space available in	
+:		output ring. Sets up R15 for "start" of message.
+:	ROOM	R0 = number of characters required for next message,
+:		returns when that much room is available in output ring.
+:		MAY DISMISS.
+:		sets up R15 for "start" of message. SMASHES R1.
+:	SLOR	Start Logical Output Record.
+:		R0 = number of bytes required.
+:		R1 = port #
+:		R2 = message type code.
+:		Provides function of ROOM, PUTH, and PUTCH for first 3 chars
+:		of message. MAY DISMISS. SMASHES R3.
+:	PUTCH	places character in R0 in next position of ring.
+:	PUTH	places halfword in R0 in next position of ring.  Even number
+:		of bytes have been output previously in this message.
+:	PUTW	places word in R0 in next position of ring.  Even number of
+:		halfwords should have been output previously in this message.
+:	ELODR	End Logical Output Data Record
+:		places byte count into message type to make data message,
+:		then "ends" message.  Smashes R0, R1.
+:	ELOR	End Logical Output Record
+:		"ends" message.
+
+:	CONVENTIONS:
+:	ROUTINES USE DEDICATED REGISTERS:
+:	R15	OUTPUT RING INDEX
+:	R14	INPUT RING INDEX
+:
+:	NOTE....
+:		IRSIZE AND ORSIZE MUST EACH BE LESS THAN 32K.
+
+	GL	IRING,ORING,IRSIZE,ORSIZE
+	GL	OCS,OCM,OBS
+	GL	LOOK,GETCH,GETH,GETW,FLUSH,ELIR
+	GL	SPACE,ROOM,SLOR,PUTCH,PUTH,PUTW,ELODR,ELOR
+
+	MO	.,RING
+NFMI	EQ	0		:RELATIVE INDEX OF NEXT-FILL-MESSAGE-INDEX
+CEI	EQ	2		:RELATIVE INDEX OF CURRENT-EMPTY-INDEX
+RING	EQ	4		:RELATIVE INDEX OF START OF RING DATA
+
+:	DEFINE DATA AREA
+	SEG	A.RING		:RINGS IN RING AREA
+
+:	THE DISPATCHER OUTPUT RING
+ORING	HS	0		:OUTPUT BLOCK START ADDRESS
+	HC	0		:OUTPUT NEXT FILL MESSAGE INDEX
+	HC	0		:OUTPUT CURRENT ENTRY INDEX
+	BS	ORSIZE		:THE OUTPUT RING
+
+:	THE DISPATCHER INPUT RING
+IRING	HS	0		:INPUT BLOCK START ADDRESS
+	HC	0		:INPUT NEXT FILL MESSAGE INDEX
+	HC	0		:INPUT CURRENT EMPTY INDEX
+	BS	IRSIZE		:THE INPUT RING
+
+:	CODE AREA
+	SEG	A.CODE
+:	INPUT ROUTINES
+
+:	LOOK AT A RING ENTRY
+:	NORMAL RETURN IF RING EMPTY
+:	ELSE SKIP RETURN, PORT RETURNED IN R1
+:	MESSAGE TYPE RETURNED IN R2
+:	ALL REGISTERS SET UP FOR TRANSFER
+:	POSITION IS ADVANCED PAST PORT#
+	IF	\LOOK;.LOOK.	 HS	0;	ELSE;LOOK	 HS	0;	EI
+	LHL	R14,CEI+IRING,,	:GET CURRENT EMPTY INDEX
+	CLH	R14,NFMI+IRING,,	:TEST IF CAUGHT UP
+	JER	R4		:EMPTY...NORMAL RETURN
+	SHI	R14,IRSIZE	:*: CONVERT TO NEGATIVE INDEX
+	LHL	R1,IRING+RING+IRSIZE,R14,	:GET PORT #
+	AIS	R14,2		:BUMP POINTER PAST PORT #
+	LB	R2,IRING+RING+IRSIZE,R14,	:GET MESSAGE TYPE
+	LR	R1,R1		:SET CONDITION CODES
+	J	4,R4		:THEN SKIP RETURN
+
+:	GET A CHARACTER FROM THE INPUT RING
+:	CHARACTER RETURNED IN R0
+GETCH	LB	R0,IRING+RING+IRSIZE,R14,	:GET THE CHAR
+	AIS	R14,1		:BUMP INDEX
+	JLR	R4		:RETURN IF NOT
+	LHI	R14,-IRSIZE	:ELSE FOLD IT
+	JR	R4		:AND EXIT
+
+:	GET A HALF-WORD FROM THE INPUT RING
+:	ASSUME HAVE REMOVED AN INTEGRAL NUMBER OF HALF-WORDS FROM RECORD
+:	HALF-WORD RETURNED IN R0
+GETH	LHL	R0,IRING+RING+IRSIZE,R14,	:GET THE DATA
+	AIS	R14,2		:BUMP INDEX
+	JLR	R4		:RETURN IF NOT
+	LHI	R14,-IRSIZE	:ELSE FOLD IT
+	JR	R4		:AND EXIT
+
+:	GET A WORD FROM THE INPUT RING
+:	ASSUME HAVE REMOVED AN INTEGRAL NUMBER OF WORDS FROM RECORD
+:	WORD RETURNED IN R0
+GETW	L	R0,IRING+RING+IRSIZE,R14,	:GET THE DATA
+	AIS	R14,4		:BUMP INDEX
+	JLR	R4		:RETURN IF NOT
+	LHI	R14,-IRSIZE	:ELSE FOLD IT
+	JR	R4		:AND EXIT
+
+:	FLUSH AN INPUT RECORD
+:	NUMBER OF CHARS TO FLUSH IN R0
+FLUSH	AR	R14,R0		:ADVANCE RING AND FALL THROUGH
+
+:	END LOGICAL INPUT RECORD
+ELIR	AIS	R14,3		:FORCE TO NEXT WORD
+	NHI	R14,-4
+	JLFS	ELIR2		:NO
+	SHI	R14,IRSIZE	:YES
+ELIR2
+	AHI	R14,IRSIZE	:*: CONVERT TO POSITIVE INDEX
+	STH	R14,CEI+IRING,,
+	JR	R4		:AND EXIT
+
+:	OUTPUT ROUTINES
+
+:	OUTPUT "CANNED" MESSAGE
+:	LINK ON R5
+:	R2 = PORT #
+:	R3 = POINTER TO STRING (FORMAT: n\B1\...\Bn)
+OCM	LB	R0,0,R3		:GET COUNT n
+	AIS	R0,5		:COMPUTE SPACE REQUIREMENTS
+	NHI	R0,-4
+	JAL	R4,ROOM		:INSURE THERE IS ROOM
+	LR	R0,R2		:COPY PORT #
+	JAL	R4,PUTH		:PLACE PORT NUMBER
+	LB	R2,0,R3		:GET COUNT AGAIN
+	J	OCS1		:SKIP TO PLACE THE STRING
+
+:	OUTPUT "CANNED" STRING
+:	LINK ON R5
+:	R2 = PORT #
+:	R3 = POINTER TO TEXT STRING (FORMAT n\B1\...\Bn)
+OCS	LB	R0,0,R3		GET COUNT n
+	AIS	R0,6		:COMPUTE SPACE REQUIREMENTS
+	NHI	R0,-4
+	JAL	R4,ROOM		:INSURE THERE IS ROOM
+	LR	R0,R2
+	JAL	R4,PUTH		:PLACE PORT NUMBER
+	LB	R2,0,R3
+	LR	R0,R2		:GET THE COUNT n
+	JAL	R4,PUTCH	:PLACE IT...MESSAGE TYPE 1-7D
+OCS1	AIS	R3,1		:BUMP SOURCE CHARACTER POINTER
+	LB	R0,0,R3		:GET THE NEXT CHARACTER
+	JAL	R4,PUTCH	:PLACE IT INTO RING
+	SIS	R2,1		:REDUCE COUNT
+	JGBS	OCS1		:REPEAT UNTIL ALL CHARACTERS PLACED
+	JAL	R4,ELOR		:END LOGICAL OUTPUT RECORD
+	JR	R5		:THEN EXIT
+
+:	OUTPUT A BYTE STRING
+:	LINK ON R5
+:	R3 = POINTER TO STRING
+:	R2 = NUMBER OF CHARACTERS TO OUTPUT FROM STRING
+OBS1	AIS	R3,1		:BUMP CHARACTER POINTER
+OBS	LB	R0,0,R3		:GET THE NEXT CHARACTER
+	JAL	R4,PUTCH	:PLACE IT INTO RING
+	SIS	R2,1		:REDUCE COUNT
+	JGBS	OBS1		:REPEAT UNTIL ALL CHARACTERS PLACED
+	JR	R5		:THEN EXIT
+
+:	FIND SPACE IN THE RING (HOW BIG A MESSAGE IT WILL TAKE)
+:	RETURNS R0 = NUMBER OF CHARS OF SPACE
+SPACE	LCS	R0,4		:SET MASK
+	LHL	R15,NFMI+ORING,,
+	NH	R0,CEI+ORING,,	:FORCE EMPTIER TO WORD BOUNDARY
+	SR	R0,R15		:SPACE BETWEEN US AND EMPTIER
+	JGFS	SPACE1		:SKIP IF NO WRAP-AROUND
+	AHI	R0,ORSIZE	:ELSE CORRECT FOR WRAP
+SPACE1	SIS	R0,4		:CORRECT FOR POSSIBLE OVERFLOW
+	SHI	R15,ORSIZE	:*: CONVERT TO NEGATIVE INDEX
+	JR	R4		:AND RETURN
+
+:	INSURE THERE IS ROOM IN THE RING (DISMISS IF NECESSARY)
+:	EXPECTS R0 = NUMBER OF CHARACTERS OF SPACE
+ROOM	LHL	R15,NFMI+ORING,,
+	SHI	R15,ORSIZE	:*: CONVERT TO NEG. INDEX
+ROOM1	LCS	R1,4		:SET MASK
+	NH	R1,CEI+ORING,,	:FORCE HIM TO WORD BOUNDARY
+	SHI	R1,ORSIZE	:*:
+	SR	R1,R15		:CHECK RELATIVE POSITIONS
+	JGFS	ROOM2		:SKIP IF HE'S AHEAD OF US
+	JER	R4		:EQUAL...HE'S EMPTY...GO DO IT
+	AHI	R1,ORSIZE		:HE'S BEHIND US
+ROOM2	SIS	R1,4		:ALLOW FOR POTENTIAL OVERFLOW
+	CR	R0,R1
+	JLER	R4		:ROOM EXISTS...GO DO IT
+	SVC	DISMISS,0
+	J	ROOM1		:AND GO TRY AGAIN
+
+:	START LOGICAL OUTPUT RECORD
+:	PROVIDES FUNCTION OF ROOM, PUTH, & PUTCH FOR FIRST 3 CHARS OF MESSAGE
+:	R0 = NUMBER OF CHARACTERS OF SPACE REQUIRED
+:	R1 = PORT #
+:	R2 = MESSAGE CHARACTER CODE
+SLOR	LHL	R15,NFMI+ORING,,
+	SHI	R15,ORSIZE	:*: CONVERT TO NEG. INDEX
+SLOR1	LCS	R3,4		:SET A MASK
+	NH	R3,CEI+ORING,,	:FORCE RECEIVER TO WORD BOUNDARY
+	SHI	R3,ORSIZE	:*:
+	SR	R3,R15
+	JGFS	SLOR2
+	AHI	R3,ORSIZE	:ACCOUNT FOR POSSIBLE RING FOLDING
+SLOR2	SIS	R3,4		:ALLOW FOR POTENTIAL OVERFLOW
+	CR	R3,R0
+	JGEFS	SLOR3		:SKIP IF WE CAN GO
+	SVC	DISMISS,0
+	JBS	SLOR1
+SLOR3	STH	R1,ORING+RING+ORSIZE,R15,	:OK...PLACE MESSAGE
+	STB	R2,2+ORING+RING+ORSIZE,R15,
+	AIS	R15,3		:BUMP PAST THESE CHARACTERS
+	JR	R4		:AND EXIT
+
+:	PUT A CHARACTER INTO THE RING
+:	R0 = CHARACTER
+PUTCH	STB	R0,ORING+RING+ORSIZE,R15,	:PLACE THE CHARACTER
+	AIS	R15,1		:BUMP INDEX
+	JLR	R4		:SKIP IF NOT
+	LHI	R15,-ORSIZE	:ELSE WRAP AROUND
+	JR	R4		:AND EXIT
+
+:	PUT A HALF-WORD INTO THE RING
+:	R0 = HALF-WORD
+PUTH	STH	R0,ORING+RING+ORSIZE,R15,	:PLACE THE HALF-WORD
+	AIS	R15,2		:BUMP INDEX
+	JLR	R4		:EXIT IF NOT
+	LHI	R15,-ORSIZE	:ELSE WRAP AROUND
+	JR	R4		:AND EXIT
+
+:	PUT A WORD INTO THE RING
+:	R0 = WORD
+PUTW	ST	R0,ORING+RING+ORSIZE,R15,	:PLACE THE WORD
+	AIS	R15,4		:BUMP INDEX
+	JLR	R4		:SKIP IF NOT
+	LHI	R15,-ORSIZE	:ELSE WRAP AROUND
+	JR	R4		:AND EXIT
+
+:	END LOGICAL OUTPUT DATA RECORD
+ELODR	LHL	R1,NFMI+ORING,,	:GET START OF THIS MESSAGE
+	SHI	R1,ORSIZE	:*: CONVERT TO NEG. INDEX
+	LR	R0,R15		:COPY MESSAGE END
+	SR	R0,R1		:COMPUTE SIZE OF THIS MESSAGE
+	JGEFS	ELODR2		:SKIP IF NO WRAP-AROUND
+	AHI	R0,ORSIZE		:ELSE CORRECT FOR WRAP
+ELODR2	SIS	R0,3		:MAKE ALLOWANCE FOR HEADER
+	JER	R4		:EXIT IF ZERO LENGTH MESSAGE
+	STB	R0,2+ORING+RING+ORSIZE,R1,	:INSERT MESSAGE TYPE INTO MESSAGE
+				:AND FALL THROUGH
+
+:	END LOGICAL OUTPUT RECORD
+ELOR	AIS	R15,3
+	NHI	R15,-4
+	JLFS	ELOR2
+	LHI	R15,-ORSIZE	:FOLD IF NECESSARY
+ELOR2
+	AHI	R15,ORSIZE	:*: CONVERT BACK
+	STH	R15,NFMI+ORING,,	:NOW ADVANCE POINTER TO NEXT MESSAGE
+	JR	R4		:AND EXIT
+	EM
+	SUBTTL	ISIS STARTUP AND CRASH LIBRARY	- CRASH.LIB
+        REMARK  %CRASH.LIB    02-29-84 AWT
+
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+	RA	0		:	CRASH.LIB	MFR 07/14/81
+
+:       Set UPSW to turn off tracing.
+:       Added CTIME and CRTIME to save crash times in GMT.
+:       Added a NCRSAV option to keep old copies of crash tables.
+:         April 13, 1983 AWT
+:
+:	Changed the supervisor's log message to report the PRODID.
+:	Sep. 20, 1982 SCY.
+:	ENTRY2 (restart service) changed to clear input and output
+:	rings PRIOR to issuing Restart SVC to prevent crash-loop if
+:	Dispatcher has crashed. June 17, 1982 MDS.
+
+:			ISIS - II Version
+:
+	GL	CRASH,CRASHC,CPOINT,CFROM,CRREG,ENTRY,START,CRAT,CRSHCT,CRSTOP
+        GL      PRODID,NCRSAV,CTIME,CRTIME
+	MO	.,CRASH
+
+
+:	Generalized crash package.
+:	Handles both software and hardware crashes.  On any crash, the
+:	registers are saved in CRXREG, and CRSHCT is incremented.
+:	Software crashes occur via  JAL R10,CRASH .  CRASH saves (R10) in cell
+:	CPOINT.  Software crashes may be "good" or "bad"...if "good", the
+:	calling sequence is:
+
+:		JAL	R10,CRASH
+:						from a bad one
+:		HC	0		:this key distinguishes a good crash
+:		BC	4*L,Y		:first byte is 4*register linked to
+:						routine, Y is the reason
+:	then register (L) is saved in CFROM, and Y is saved in CRASHC
+
+:	in the event of a hardware failure, CPOINT contains the instruction
+:	address at the time of failure, CRASHC contains the failure reason,
+:	and CFROM is set =-1.
+
+:	On completion of crash, transfers to label START, defined
+:	in the user code.
+:
+:	The symbol CRSTOP may be set to 0 or 1.  If 1 the crash routine will
+:	be executed only once.  the second time through the crash area will
+:	be set up as specified above and then registers will be restored to
+:	their entry value and the slot will be frozen. If it is thawed it
+:	will restart.
+:
+:       The symbol NCRSAV defines the number of crash tables to be saved.
+:       It will be set to 1 by default. (In TYMFIL CRSHTB macro is used
+:       to define NCRSAV)
+:
+:       Entering :R CRAT,CRTSIZ (or 4C) will dump the last 
+:       crash table, CRAT+CRTLEN (or 50),CRTSIZ will dump the    
+:       previous crash table and so on.
+:
+:       CTIME,4 gives the last crash time (in GMT), CTIME+CRTLEN,4
+:       gives the previous crash time and so on.
+:
+:
+
+  IF	\CRSTOP
+  ELSE
+CRSTOP	EQ	0
+  EI
+  
+  IF    \NCRSAV                 :# OF CRASH TABLES TO SAVE
+  ELSE                          :IT MAY BE DEFINED IN TYMFIL
+NCRSAV  EQ      1               :OTHERWISE IT IS 1 BY DEFAULT
+  EI
+
+
+CRTENT  EQ      .               :CRASH TABLE ENTRY
+        ORG     0
+CRSHCT	HS	1		:CRASH COUNT...HOW MANY TIMES CRASHED
+CRASHC	HS	1		:CRASH CODE (INIT'ED TO MANUAL RESTART)
+CPOINT	HS	2		:WHERE CRASH OCCURED
+CFROM	HS	2    		:WHERE CRASH WAS CALLED FROM
+CRXREG	HS	20		:CRASH REGISTER SAVE AREA
+CRTSIZ  WS      0               :SIZE OF CRASH TABLE WITHOUT CRTIME
+CRTIME  WS      1               :REAL TIME OF CRASH (GMT)
+CRTLEN  WS      0               :LENGTH OF CRASH TABLE WITH CRTIME
+        ORG     CRTENT  
+
+        SEG     A.DATA
+        HS      0
+CTIME   WS      1               :STORAGE FOR CRASH TIME OF LAST CRASH
+CRAT    BS      CRTLEN*NCRSAV   :STORAGE FOR CRASH TABLE(S)
+CRREG   EQ      CRAT+CRXREG
+RGSTOR  WS      10              :TEMPORARY STORAGE FOR REGISTERS
+FGNDFL	HS	1		:FOREGROUND FLAG
+
+TRBOFF  WC      0,FAIL0         :TRACE BIT OFF, GO TO FAIL0
+TRCOFF  WC      0,CRASH0        :TRACE BIT OFF, GO TO CRASH0
+PSWSAV  WC      0,START         :RESTORE PSW,  GO TO INITIALIZATION CODE
+CHFLAG  WC      0               :USED FOR ANY CHANGES ON PSW
+
+
+	SEG	A.CODE		:CODE AREA
+CRSHCD	BC	1	:MANUAL RESTART
+	BC	0	:POWER FAILURE
+	BC	0E	:PARITY ERROR
+	BC	10	:DISPATCHER CRASH
+	BC	11	:ILLEGAL INSTRUCTION
+	BC	12	:ILLEGAL SVC
+	BC	13	:SYSTEM CRASH
+	BC	14	:PROTECTION VIOLATION
+	BC	15	:NON-RECOVERABLE DEVICE CHECK
+
+	RA	0
+:	GENERAL MACHINE FAILURE
+FAIL	HS	4		:PSD SAVED HERE
+	HS	4		:R0,R1 SAVED HERE
+        ST      R0,RGSTOR,,     :SAVE R0
+        ST      R2,RGSTOR+4,,   :SAVE R2
+        JAL     R2,SAVPSW       :SAVE CURRENT PSW
+        L       R0,RGSTOR,,     :RESTORE R0
+        L       R2,RGSTOR+4,,   :RESTORE R2
+        UPSW    TRBOFF          :TRACE BIT OFF AND CONTINUE
+FAIL0   LB      R0,CRSHCD,R1    :CONVERT CRASH REASON
+	CLHI	R0,12		:TEST IF ILLEGAL SVC
+	JNFS	FAIL1		:NO...SKIP
+	LHL	R0,FGNDFL	:DID FOREGROUND CAUSE THE CRASH?
+	JN	ENTRY2		:YES....JUMP OVER
+FAIL1   STM     R0,RGSTOR,,     :SAVE REGISTERS
+        JAL     R2,PSHTBS       :PUSH DOWN CRASH TABLES
+        L       R1,GMT,,        :GET GMT CLOCK
+        ST      R1,CTIME,,      :SAVE IT AS THE CRASH TIME
+        LM      R0,RGSTOR,,     :RESTORE REGISTERS
+        STM     R2,CRAT+CRXREG+8,, :SAVE THE REGISTERS
+        STH     R0,CRAT+CRASHC,,  :SAVE CRASH CODE
+        LM      R12,FAIL          :GET THE REST
+        STM     R14,CRAT+CRXREG,,  :SAVE R0 & R1
+        ST      R13,CRAT+CPOINT,, :SAVE FAILURE ADDRESS
+	LCS	R1,1
+        ST      R1,CRAT+CFROM,,   :FLUSH PLACE CALLED FROM
+        J       ENTRY1            :AND SKIP TO START UP AGAIN
+
+
+
+:	CRASH ROUTINE AND GENERAL INITIALIZER
+:	IF "GOOD" CALL TO CRASH, HAS HALFWORD 0'S FOLLOWING,
+:	THEN BYTE WITH 4*LINK REGISTER, THEN BYTE WITH CRASH REASON
+
+CRASH   ST      R0,RGSTOR,,     :SAVE R0
+        ST      R2,RGSTOR+4,,   :SAVE R2         
+        JAL     R2,SAVPSW       :SAVE CURRENT PSW
+        L       R0,RGSTOR,,     :RESTORE R0
+        L       R2,RGSTOR+4,,   :RESTORE R2
+        UPSW    TRCOFF          :TRACE BIT OFF AND CONTINUE
+CRASH0  STM     R0,RGSTOR,,     :SAVE REGISTERS
+        JAL     R2,PSHTBS       :PUSH DOWN THE CRASH TABLES
+        L       R1,GMT,,        :GET GMT CLOCK
+        ST      R1,CTIME,,      :SAVE IT AS THE CRASH TIME
+        LM      R0,RGSTOR,,     :RESTORE REGISTERS
+        STM     R0,CRAT+CRXREG,, :SAVE REGISTERS AND
+        ST      R10,CRAT+CPOINT,,                    
+	LIS	R0,$A10		:FAKE UNKNOWN CRASH
+	LCS	R1,1		:FROM NOWHERE
+	LHL	R2,0,R10	:CHECK WHERE CALLED FROM
+	JNFS	CRASH1		:NOT KNOWN...USE DEFAULT
+	LB	R0,3,R10	:GET CRASH CONDITION
+	LB	R2,2,R10	:GET CALLING REGISTER
+        L       R1,CRAT+CRXREG,R2 :GET CONTENTS OF REGISTER
+        
+CRASH1  STH     R0,CRAT+CRASHC,, :SAVE CRASH CODE
+        ST      R1,CRAT+CFROM,,  :SAVE PLACE CRASHED FROM
+	JFS	ENTRY1
+
+:	ENTER HERE WITH RESTART
+ENTRY	LIS	R0,1		:LOAD CRASH CODE REGISTER
+        STH     R0,CRAT+CRASHC,, :STORE IT
+ENTRY1	LIS	R1,1
+        AHM     R1,CRAT+CRSHCT,, :SAVE INTERESTING DATA
+
+  IF	CRSTOP		:IF STOPPING ON CONSECUTIVE CRASHES
+	CLHI	R0,1
+	JLE	ENTRY2		:IF POWER FAILURE OR MANUAL RESTART
+	OHI	R0,0CC00	:CRASH INDICATOR FOR FRONT PANEL
+	STH	R0,FPANEL,,	:SET PANEL TO BAD CRASH
+        LM      R0,CRAT+CRXREG,, :RESTORE REGISTERS
+	SVC	SYS,HALT.	:HALT THE SLOT
+  EI	CRSTOP
+
+	LIS	R0,1		:WANT SECOND WORD OF PSD
+	SVC	SYS,RFPSD.	:READ FOREGROUND PSD
+	CLI	R0,.		:TEST IF FOREGROUND IS EXECUTING THIS INSTRUCTION
+	JNFS	ENTRY2		:SKIP IF NOT
+	STH	R0,FGNDFL	:SET THE FOREGROUND FLAG
+
+ENTRY2		: NOW RESET OUTPUT RING, REPORT CRASH
+	LIS	R0,0
+	ST	R0,ORING,,	:EMPTY OUTPUT RING
+	ST	R0,IRING,,	:EMPTY INPUT RING
+
+	LA	R0,FAIL		:LOAD TRAP AREA ADDRESS
+	SVC	SYS,RSTRT.	:RESTART SVC
+	JAL	R10,CRASH	:NON-SKIP RETURN...CRASH
+
+
+	LIS	R0,0
+	STH	R0,FGNDFL	:CLEAR THE FOREGROUND FLAG
+
+	JAL	R4,SPACE,,	:SET UP FOR DIAGNOSTIC
+	LHI	R0,0300
+	JAL	R4,PUTW,,	:PORT 0 + DIAGNOSTIC MESSAGE + PAD
+	LHL	R0,CRAT+CRSHCT,,
+	JAL	R4,PUTCH,,	:HW4 LOW = CRASH COUNT
+	LIS	R0,0
+	JAL	R4,PUTCH,,	:RESERVED BYTE
+	LIS	R0,1
+	JAL	R4,PUTCH,,	:REPORT TYPE = 1
+	LHL	R0,CRAT+CRASHC,,
+	JAL	R4,PUTCH,,	:HW3 HIGH = CRASH CODE
+	LHI	R0,PRODID
+	JAL	R4,PUTCH,,	:HW2 LOW IS PRODUCT ID
+	JAL	R4,ELOR,,	:END LOGICAL OUTPUT RECORD
+        L       R1,CHFLAG,,     :SEE IF PSW HAS BEEN CHANGED
+        CLHI    R1,1
+        JNFS    CURPSW          :NO CHANGE, GO TO USE CURRENT PSW
+        LIS     R1,0
+        ST      R1,CHFLAG,,     :RESET CHFLAG FOR FUTURE PSW CHANGE
+        UPSW    PSWSAV          :INITIALIZE WITH RESTORED PSW
+CURPSW  J       START,,         :INITIALIZE WITH CURRENT PSW
+
+SAVPSW  LIS     R0,1            :GET PC OF BACKGROUND PSD
+        ST      R0,CHFLAG,,     :ALSO INDICATE PSW WILL BE MODIFIED
+        SVC     SYS,RBPSD.      :READ BACKGROUND PSD
+        CLI     R0,.            :IS IT RUNNING?
+        JNFS    ISFGND          :NO, IT MUST BE FOREGROUND JOB
+        LIS     R0,0            :GET PSW OF BACKGROUND JOB
+        SVC     SYS,RBPSD.
+        ST      R0,PSWSAV,,     :SAVE IT
+        JR      R2              :RETURN
+ISFGND  LIS     R0,0            :GET PSW OF FORGROUND JOB
+        SVC     SYS,RFPSD.
+        ST      R0,PSWSAV,,     :SAVE IT
+        JR      R2              :RETURN
+
+
+PSHTBS  LHI     R1,CRTLEN*NCRSAV-CRTLEN*2
+        JLR     R2              :IF ONLY 1 CRASH TABLE, SKIP AND RETURN
+PUSHIT  LM      R6,CRAT,R1      :PUSH DOWN THE CRASH TABLE
+        STM     R6,CRAT+CRTLEN,R1
+        LM      R6,CRAT+CRTLEN/2,R1
+        STM     R6,CRAT+CRTLEN+CRTLEN/2,R1
+        SHI     R1,CRTLEN
+        JGEBS   PUSHIT
+        L       R1,CTIME,,
+        ST      R1,CRAT+CRTSIZ,,
+        JR      R2              :RETURN
+         
+	EM
+
+	SUBTTL	GCI/WCI Buffer Package
+:************************************************************************
+:
+:	This program is the sole property and confidential
+:	information of TYMSHARE, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of TYMSHARE.
+:
+:************************************************************************
+	RA	0		:	BUFFER.LIB
+
+:	This package contains all code and storage allocation needed for
+:	bufferlet usage.
+:	If the symbol BUFTRC is defined and has a value greater than 0,
+:	then a trace of all GCI and WCI calls will be included and
+:	HISX will be a halfword pointer into a table HISTAB.
+:	HISTAB will contain 100 one word entries.  Each entry contains
+:	a one byte character, one byte of buffer number, and a halfword
+:	address of the caller of GCI/WCI.  The table is circular.
+
+:	the following parameters MUST be defined before assembly:
+:	NBUF	the number of buffers to create
+:	NBFLET	the number of bufferlets to create
+:
+:	THE FOLLOWING SYMBOL MAY BE DEFINED. IF IT IS NOT THE DEFAULT
+:	IS FALSE.
+:	UABUFF	IF TRUE (>1) THEN THE USER WILL ALLOCATE THE BUFFERLET
+:		POOL BUFER.
+
+:	uses routines in TIMOUT.LIB - - - requires one timeout list entry
+
+:	may JAL R10,CRASH on certain conditions
+
+:	Each routine is called with:
+:	Link on R4
+:	R0 = argument
+:	R1 = buffer index (buffer number*2)
+
+:	routines:
+:	IZBF	link on R5, used to initialize buffers
+:	GCI	get a character from buffer
+:	WCI	write a character into buffer
+:	WCD	back up a buffer to restore last character
+:	EMPTY	empty (flush) buffer
+
+:	buffer index may be used to index into the following halfword arrays
+:	from external routines:
+:	BF	buffer flags
+:	BB	buffer start address
+:	BE	buffer end address
+:	BCT	buffer counts
+
+:	the following should also be defined externally:
+:	FLAGS	a bit array of length corresponding to max buffer flag value
+:
+:	If the macro ZAPBUF is defined then the code in the macro will
+:	be executed whenever CKBZ is forced to zap a buffer. The code
+:	will be executed immediately following the call to EMPTY
+:	(R1 will contain the buffer index).  The first line of the macro
+:	must be "ZAPBUF MACRO [.X" (where X may be a carriage return
+:	or semicolon).
+
+
+	GL	NBUF,NBFLET,BUFTRC,UABUFF
+  IF	\BUFTRC
+  ELSE
+BUFTRC	EQ	0
+	REMARK	%*** Define BUFTRC EQ 1 if debug trace desired
+  EI
+
+ IF	\UABUFF
+ ELSE
+UABUFF	EQ	0	:BUFFERLET POOL IS NOT USER ALLOCATED
+ EI
+
+	MO	.,BUFFER
+	GL	FASTC,TORET,TOPUT,RATE,FLAGS,CRASH
+	GL	BF,BCT,BB,BE
+	GL	IZBF,GCI,WCI,WCD,EMPTY,GCPEEK,GCSCAN,MCI
+
+:	THE DATA FOR THESE ROUTINES
+	SEG	A.DATA		:PLACE IN DATA AREA
+REBL	HC	0		:FREE LIST POINTER FOR RESERVE STORAGE LIST
+REBC1	HC	0		:COUNTS TIMES BUFFER STORAGE WAS MOVED TO MAIN FREE LIST
+REBC2	HC	0		:COUNTS TOTAL NUMBER OF BUFFER ZAPS
+BFZ	HC	-1		:LAST BUFFER ZAPPED
+
+BF	HS	NBUF		:BUFFER FLAGS
+BCT	HS	NBUF		:BUFFER COUNTS
+BB	HS	NBUF		:BUFFER START ADDRESS
+BE	HS	NBUF		:BUFFER END ADDRESS
+
+  IF	BUFTRC
+	GL	HISX,HISTAB
+HISX	HC	0		:INDEX FOR HISTORY
+HISTAB	HS	200		:HISTORY DATA...400 BYTES...100 HISTORY ENTRIES
+  EI
+
+
+
+:	CODE SECTION
+	SEG	A.CODE		:PLACE IN CODE ARAEA
+
+:	INITIALIZE BUFFERS
+IZBF	LIS	R0,0		:SET A CONSTANT
+	LHI	R1,NBUF*2-2	:FOR ALL BUFFERS
+IZBF1	STH	R0,BCT,R1	:SET EMPTY
+	LHL	R2,BF,R1
+	RBT	R2,FLAGS	:TURN OFF FLAG BIT
+	SIS	R1,2
+	JGEBS	IZBF1
+	LHI	R1,NBFLET*8	:FOR ALL BUFERLETS
+	STH	R0,BUFERS,R1,	:TERMINATE LIST
+IZBF2	STH	R1,BUFERS-8,R1,	:LINK LAST TO THIS
+	STH	R0,BUFERS-6,R1,	:CLEAR DATA AREA
+	ST	R0,BUFERS-4,R1,
+	SIS	R1,8
+	JGBS	IZBF2		:REPEAT FOR ALL BUFFERLETS
+	STH	R0,REBL		:SET SPARE TANK EMPTY
+	L	R1,FASTC,,
+	LHI	R1,RATE/$A25,R1	:CALL EVERY 40 MS.
+	LA	R0,CKBZ		:PUT BUFFER CHECKING LOGIN ON QUEUE
+	J	TOPUT		:EXIT VIA TIMEOUT LIST ENTRY
+:	CHARACTER HANDLERS. THESE ROUTINES PASS BFR CHR IN R0,
+:	R1 FOR TWICE THE BUFFER NUMBER, R2,R3 FOR WORKING REGISTERS,
+:	R4 IS LINK REGISTER.
+
+:	GET CHAR FROM BUFFER AND INCREMENT FORWARD THRU THE BUFFER.
+GCICRA	JAL	R10,CRASH;	BC	0,0,4*R4,3	:FLAG--LINK R4, TYPE 3
+GCI	CLHI	R1,2*NBUF	:RANGE CHECK ON BUFFER NUMBER
+	JGEBS	GCICRA		:BUFFER NUMBER OUT OF RANGE...CRASH
+	LHL	R2,BB,R1	:GOOD BUFFER...GET INDEX TO CHARACTER
+	LB	R0,BUFERS,R2,	:PICK UP CHAR
+	LHL	R3,BCT,R1
+	SIS	R3,1      	:REDUCE COUNT OF CHARS IN BUFFER
+        STH     R3,BCT,R1
+	JLE	GCILAS		:SKIP IF NO CHARACTERS LEFT
+	AIS	R2,1		:ELSE INCREMENT BB VALUE
+	THI	R2,7		:TEST IF AT END OF BUFFERLET
+	JEFS	GCI1		:RETURN BUFFERLET TO FREE LIST IF SO
+	STH	R2,BB,R1	:ELSE UPDATE BB
+  IF	BUFTRC
+	J	HIST		:AND RETURN WITH THE CHAR
+  ELSE
+	JR	R4		:AND RETURN WITH THE CHAR
+  EI
+
+GCI1	LHL	R3,BUFERS,R2,	:BUFFERLET EXHAUSTED
+	SIS	R3,6		:CHAIN TO NEXT BUFFERLET
+	STH	R3,BB,R1	:SET BB TO START OF NEXT BUFFERLET
+	LHL	R3,BUFERS,,	:GET POINTER TO FREE LIST
+	STH	R3,BUFERS,R2,	:LINK LAST BUFFERLET TO FREE LIST
+	STH	R2,BUFERS,,	:AND PUT AT THE HEAD OF THE FREE LIST
+  IF	BUFTRC
+	J	HIST		:THEN EXIT
+  ELSE
+	JR	R4		:THEN EXIT
+  EI
+
+GCILAS	JL	GCICRA		:CRASH IF BUFFER WAS EMPTY
+	LHL	R3,BF,R1	:OK...GET POINTER TO FLAG BIT
+	RBT	R3,FLAGS	:RESET ATTENTION FLAG
+	AIS	R2,6		:BUMP CHARACTER POINTER PAST END OF BUFFERLET
+	NHI	R2,-8		:MAKE CHAIN A MULTIPLE OF 8
+	LHL	R3,BUFERS,,
+	STH	R3,BUFERS,R2,
+	STH	R2,BUFERS,,	:UPDATE FREE LIST
+  IF	BUFTRC
+	J	HIST
+  ELSE
+	JR	R4
+  EI
+
+:	PUT A CHARACTER INTO THE BUFFER
+WCI	CLHI	R1,2*NBUF	:RANGE CHECK ON BUFFER NUMBER
+	JLFS	WCI1		:SKIP IF OK
+WCICRA	JAL	R10,CRASH	:ELSE CRASH
+	BC	0,0,4*R4,5	:FLAG--LINK R4, TYPE 5 CRASH
+
+WCI1	LHL	R2,BCT,R1	:CHECK COUNT
+	JE	WCIFRS		:IF NEW BUFFER, SET UP ATTENTION FLAGS
+	AIS	R2,1		:ELSE UPDATE COUNT
+	STH	R2,BCT,R1
+	LHL	R2,BE,R1	:GET POINTER TO LAST CHARACTER POSITION
+	AIS	R2,1		:BUMP POINTER
+	THI	R2,7		:TEST IF BUFFERLET FULL
+	JEFS	WCINXB		:END OF BUFFERLET
+	STH	R2,BE,R1	:ELSE UPDATE BE
+	STB	R0,BUFERS,R2,	:AND SAVE CHAR IN BUFFER
+  IF	BUFTRC
+	J	HIST
+  ELSE
+	JR	R4
+  EI
+
+WCINXB	LHL	R3,BUFERS,,	:NEED A NEW BUFFERLET
+	JNFS	WCINXC		:SKIP IF THERE IS ANOTHER
+	JAL	R2,WRE		:(OPEN THE RESERVE TANK)
+	LHL	R2,BE,R1	:RESTORE R2
+	AIS	R2,1
+WCINXC	STH	R3,BUFERS,R2,	:LINK NEW BUFFERLET TO LAST ONE
+	LHL	R2,BUFERS,R3,	:AND REMOVE FROM FREE LIST
+	STH	R2,BUFERS,,
+	SIS	R3,6		:BACK UP NEW BUFFERLET
+	STH	R3,BE,R1	:SAVE AS NEW BE
+	STB	R0,BUFERS,R3,	:PUT THE CHARACTER THERE
+  IF	BUFTRC
+	J	HIST
+  ELSE
+	JR	R4
+  EI
+
+WCIFRS	LH	R2,BF,R1	:THE BUFFER WAS EMPTY
+  IF	BUFTRC
+	JE	HIST		:TOSS CHAR, DONT WASTE SPACE ON UNASSIGNED BFR
+  ELSE
+	JER	R4		:TOSS CHAR, DONT WASTE SPACE ON UNASSIGNED BFR
+  EI
+	SBT	R2,FLAGS	:ATTENTION BIT ON TO ALERT SOME PROCESS OF DATA WAITING
+	LIS	R2,1
+	STH	R2,BCT,R1	:SET COUNT = 1
+	LHL	R3,BUFERS,,	:POP A BUFFERLET OFF FREE LIST
+	JGFS	.+6		:SKIP IF THERE WAS ONE
+	JAL	R2,WRE		:ELSE OPEN THE RESERVE TANK
+	LHL	R2,BUFERS,R3,
+	STH	R2,BUFERS,,	:UPDATE FREE LIST
+	SIS	R3,6		:POINT IT AT FIRST CHARACTER
+	STH	R3,BB,R1	:SET UP BB
+	STH	R3,BE,R1	:AND BE
+	STB	R0,BUFERS,R3,	:PUT THE CHARACTER THERE
+  IF	BUFTRC
+	J	HIST
+  ELSE
+	JR	R4
+  EI
+
+:	MOVE RESERVE STORAGE SUPPLY TO MAIN FREE LIST
+WRE	LHL	R3,REBL		:GET POINTER TO RESERVE BUFFERLETS
+	EXHR	R3,R3
+	STH	R3,REBL		:SET RESERVE BUFFERLETS EMPTY (=0)
+	EXHR	R3,R3
+	JNR	R2		:IF IT WASN'T EMPTY, RETURN
+	JAL	R10,CRASH	:BUG, UNREASONABLY FAST STORAGE DRAIN
+	BC	0,0,4*R4,6	:FLAG--LINK R4, TYPE 6
+
+  IF	BUFTRC
+:	UPDATE HISTORY (TRACE) AFTER EVERY BUFFER OPERATION
+HIST	LH	R3,HISX		:GET HISTORY RING INDEX
+	AIS	R3,4		:BUMP TO NEXT ENTRY
+	NHI	R3,3FF		:ACCOUNT FOR FOLDING
+	STH	R3,HISX		:SAVE IT AGAIN
+	STB	R0,HISTAB,R3	:ENTRY (0) = CHARACTER
+	LR	R2,R1
+	SRHLS	R2,1		:COMPUTE BUFFER #
+	STB	R2,HISTAB+1,R3	:ENTRY (1) = PORT #
+	STH	R4,HISTAB+2,R3	:ENTRY (2, 3) = LOCATION WHERE CHAR PLACED
+	JR	R4
+  EI	(BUFTRC)
+
+:	PEEK AT FIRST CHAR OF BUFFER
+GCPCRA	JAL	R10,CRASH;	BC	0,0,4*R4,6	:CRASH TYPE 6
+GCPEEK	CLHI	R1,2*NBUF	:RANGE CHECK
+	JGEBS	GCPCRA
+	LHL	R2,BB,R1	:GET POINTER TO START OF BUFFER DATA
+	LHL	R3,BCT,R1	:GET COUNT OF CHARS THERE
+	JFS	GCS		:AND SKIP
+
+:	SCAN SUCESSIVE CHARACTERS IN BUFFER
+GCSCAN	CLHI	R1,2*NBUF	:RANGE CHECK
+	JGEBS	GCPCRA
+GCS	SIS	R3,1
+	JL	GCPCRA		:CRASH IF NO MORE CHARACTERS THERE
+	LB	R0,BUFERS,R2,	:ELSE GET CHAR
+	AIS	R2,1		:BUMP POINTER FOR NEXT TIME
+	THI	R2,7
+	JNR	R4		:EXIT IF NOT AT END OF BUFFERLET
+	LHL	R2,BUFERS,R2,	:ELSE ADVANCE TO NEXT BUFFERLET
+	SIS	R2,6		:POINT AT START
+	JR	R4
+
+:	MCI - MOVE ALL CHARACTERS FROM SOURCE TO DESTINATION BUFFER
+:	R5 = SOURCE BUFFER INDEX
+:	R6 = DESTINATION BUFFER INDEX
+:	R7 = LINK
+MCICRA	JAL	R10,CRASH
+	BC	0,0,4*R7,4	:FLAG--LINK R7, TYPE 4
+MCI	CLHI	R5,2*NBUF
+	JGBS	MCICRA		:RANGE CHECK ON SOURCE
+	CLHI	R6,2*NBUF
+	JGBS	MCICRA		:RANGE CHECK ON DESTINATION
+	LHL	R0,BCT,R5	:CHECK SOURCE
+	JER	R7		:EXIT IF EMPTY
+	LHL	R1,BF,R6	:SET DESTINATION FLAG
+	JNFS	MCI1		:FLAG = 0 IS BIT BUCKET
+	LR	R1,R5		:THEN JUST EMPTY BUFFERS
+	LR	R4,R7
+	J	EMPTY
+MCI1	SBT	R1,FLAGS	:SET THE FLAG
+	JNFS	MCI2		:NOT EMPTY...GO APPEND
+	LHL	R0,BB,R5	:EMPTY...COPY BUFFER START
+	STH	R0,BB,R6
+	J	MCI4		:AND SKIP TO FINISH TRANSFER OF DATA
+MCI2	LHL	R1,BE,R6	:CHECK DESTINATION
+	AIS	R1,1		:IS IT AT END OF BUFFERLET?
+	THI	R1,7
+	JNFS	MCI3		:SKIP IF NOT
+	LHL	R2,BB,R5	:YES...IS SOURCE ON BUFFERLET BOUNDARY?
+	AIS	R2,6
+	THI	R2,7
+	JNFS	MCI3		:SKIP IF NOT
+	STH	R2,BUFERS,R1,	:ELSE APPEND SOURCE TO DESTINATION
+	JFS	MCI4		:AND SKIP
+MCI3	LR	R1,R5		:MOVE A CHAR
+	JAL	R4,GCI
+	LR	R1,R6
+	JAL	R4,WCI
+	LHL	R0,BCT,R5	:CHECK SOURCE
+	JG	MCI2		:LOOP IF NOT EMPTY
+	JR	R7		:ELSE RETURN
+MCI4	LHL	R0,BE,R5
+	STH	R0,BE,R6	:UPDATE BUFFER END
+	LHL	R0,BCT,R5
+        LHL     R1,BCT,R6
+        AR      R0,R1
+	STH	R0,BCT,R6	:UPDATE COUNT
+	LIS	R0,0
+	STH	R0,BCT,R5	:CLEAR SOURCE BUFFER
+	LHL	R1,BF,R5
+	RBT	R1,FLAGS	:TURN OFF SOURCE FLAG
+	JR	R7		:AND EXIT
+
+:	BACK UP A BUFFER TO RESTORE LAST CHAR
+WCD	LHL	R2,BCT,R1	:PICK UP COUNT
+	JE	WCDZ		:BFR IS EMPTY BUT OLD CHAR IS STILL AROUND
+	AIS	R2,1		:ELSE UPDATE COUNT
+	STH	R2,BCT,R1
+	LHL	R2,BB,R1	:BACK UP BB
+	SIS	R2,1
+	STH	R2,BB,R1
+	AIS	R2,7		:TEST IF BACKED OVER BEGINNING OF BUFFERLET
+	THI	R2,7
+	JNR	R4		:EXIT IF NOT
+	LHL	R3,BUFERS,,	:ELSE GET LAST ENTRY FROM FREE LIST
+	LHL	R0,BUFERS,R3,
+	STH	R0,BUFERS,,
+	STH	R2,BUFERS,R3,	:LINK NEW FIRST ENTRY TO OLD FIRST
+	SIS	R3,1
+	STH	R3,BB,R1	:SET NEW ENTRY INTO BB
+	JR	R4
+
+WCDZ	LHL	R2,BUFERS,,	:HERE WITH BUFFER EMPTY (BB IS OK)
+	LHL	R3,BUFERS,R2,
+	STH	R3,BUFERS,,	:FIXUP FREE LIST
+	LHL	R2,BF,R1
+	SBT	R2,FLAGS	:SET NONEMPTY BFR ATTENTION FLAG
+	LIS	R2,1
+	STH	R2,BCT,R1	:SET COUNT = 1 CHARACTER
+	JR	R4
+
+:	RETURN ALL THE SPACE USED BY THE BUFFER
+EMPTY	CLHI	R1,2*NBUF	:RANGE CHECK ON BUFFER NUMBER
+	JLFS	C1		:BFR ARGUMENT ACCEPTED
+	JAL	R10,CRASH	:BFR ARG OUT OF RANGE
+	BC	0,0,4*R4,0D	:FLAG--LINK R4, TYPE 13d
+
+C1	LHL	R2,BCT,R1	:CHECK CONTENTS
+	JER	R4		:EXIT...BUFFER EMPTY
+	LIS	R2,0
+	STH	R2,BCT,R1	:NOT EMPTY...SET COUNT = 0
+	LHL	R2,BB,R1	:POINTER TO FIRST CHAR IN BUFFER
+	AIS	R2,6
+	NHI	R2,-8
+	LHL	R3,BUFERS,,	:GET POINTER TO FREE LIST
+	STH	R2,BUFERS,,	:PUT THE BUFFERS BUFFERLETS ONTO FREE LIST
+	LHL	R2,BE,R1	:GET POINTER TO LAST CHARACTER IN BUFFER
+	AIS	R2,6		:LOCATE THE POINTER IN THIS BUFFERLET
+	NHI	R2,-8
+	STH	R3,BUFERS,R2,	:CHAIN PREVIOUS FREE LIST TO THIS BUFFERLET
+	LH	R2,BF,R1
+	RBT	R2,FLAGS	:SET FLAGS TO EMPTY BUFFER
+	JR	R4		:AND RETURN
+
+:	SEE IF WE MUST ZAP BFRS BECAUSE BFR STORAGE RUNNING LOW
+CKBZ	LHI	R1,RATE/$A25,R1	:SET TIMER FOR NEXT CALL
+	JAL	R5,TOPUT	:RUN 25 TIMES PER SECOND
+	LH	R1,REBL		:ARE WE ON THE RESERVE TANK?
+	JN	TORET		:PLENTY OF BFR STORAGE. DONT ZAP BFRS
+
+:	WCI GRABBED RESERVE BFR FREE LIST AND MOVED IT TO MAIN FREE LIST.
+:	REFILL FREE LIST WITH 1/8 OF TOTAL BFR STORAGE. ZAP BFRS IF NECESSARY.
+	LIS	R0,1
+	AHM	R0,REBC1	:STATISTIC
+REB1	LIS	R2,0		:INITIAL POINTER IS TO START OF FREE LIST
+	LA	R1,NBFLET/8	:SCAN MAIN FREE LIST FOR 1/8 FREE STORAGE
+
+REB2	LHL	R2,BUFERS,R2,	:GET NEXT BUFFER ON FREE LIST
+	JE	REBZ		:NOT ENOUGH SPARE SPACE. ZAP A BFR
+	SIS	R1,1		:GOT ANOTHER...COUNT IT
+	JGBS	REB2		:GO UNTIL WE'VE GOT ENOUGH
+	LHL	R3,BUFERS,,	:DONE...SEPERATE FREE LIST INTO TWO PARTS
+	STH	R3,REBL		:BEGINNING OF THE RESERVE LIST
+	LHL	R4,BUFERS,R2,,
+	STH	R4,BUFERS,,	:BEGINNING OF MAIN LIST
+	STH	R1,BUFERS,R2,,	:DEATH'S BRIGHT ANGEL AT END OF SPARE LIST (=0)
+	J	TORET
+
+:	ZAP A BFR IN ORDER TO GET RESERVE TANK UP TO 1/8 OF TOTAL BFR STORAGE
+REBZ	LHI	R1,NBUF*2-2	:BCT INDEX
+	LIS	R7,0		:BCT CONTENTS OF LARGEST BFR
+REBZ1	LHL	R0,BCT,R1
+	CLR	R7,R0
+	JGEFS	.+6
+	LR	R7,R0
+	LR	R8,R1
+	SIS	R1,2
+	JGEBS	REBZ1
+	LIS	R0,1
+	AHM	R0,REBC2
+	STH	R8,BFZ		:STATISTICS
+	LR	R1,R8		:ZAP BIGGEST BUFFER FOUND
+	JAL	R4,EMPTY	:RETRIEVE STORAGE
+  IF	\ZAPBUF : ZAPBUF WILL EXPAND INTO MACRO CALL IF DEFINED,
+  EI		:ELSE THIS IS A NOOP
+	LIS	R0,9
+	JAL	R4,ROOM		:WE WANT TO SEND A 9-BYTE MESSAGE
+	LHI	R0,0300		:SPECIAL MESSAGE TYPE 3...
+	JAL	R4,PUTW		:SEND DIAGNOSTIC TO SUP
+	LR	R0,R7
+	JAL	R4,PUTH		:HW4 = CHAR COUNT
+	LR	R0,R8
+	SRHLS	R0,1
+	JAL	R4,PUTH		:HW3 = BUFFER NUMBER
+	LIS	R0,0
+	JAL	R4,PUTCH	:HW2 = 0
+	JAL	R4,ELOR		:END LOGICAL OUTPUT RECORD
+	J	REB1		:TRY AGAIN TO FILL RESERVE STORAGE LIST
+
+
+ IF	UABUFF
+ ELSE
+:	BUFFER SEGMENT
+	SEG	A.BUFF		:BUFFERLETS IN BUFFER AREA
+BUFERS	HS	4*NBFLET+1	:THE STORAGE FOR THE BUFFERLETS
+ EI
+	EM
+        subttl  SHAMAN  Data Control Block Structure
+        MO      .,DCB
+	gl	anyold
+:
+:macro to create entries in the DCB and globol the symbols
+:
+DCBDEF  MACRO(SYM,HL)
+[
+        GL      SYM
+SYM     HS      HL
+]
+:
+:MACRO TO CREATE A PAIR OF BYTE ENTRIES
+:
+DCBBYT  MACRO(SYM1,SYM2) [
+        GL      SYM1,SYM2
+SYM1    BS      1
+SYM2    BS      1
+]
+:
+:Macro for building symbols for the DCB.
+:This macro must contain the last 5 letters that
+:compose the symbol.  It must be called with a parameter that
+:forces the first character.
+:
+COMDEF  MACRO(P) [
+        dcbdef(P`DCB,0)         :START OF DCB
+	dcbdef(p`link,2)	:forward pointer
+        dcbdef(P`DACT,1)        :DATA ACTIVATION
+        dcbdef(P`CACT,1)        :CONTROL ACTIVATION
+        dcbdef(P`PORT,1)        :PORT NUMBER
+	dcbdef(p`bio,1)		:BIO status 
+	dcbdef(p`bufct,1)	:count of full BIO buffers
+	dcbdef(p`lodct,1)	:# chars in bufferlets for BIOPUT
+	dcbdef(p`mach,1)		:machine # (for downline loads)
+        dcbdef(P`BITS,1)        :CONTROL BITS
+        dcbdef(P`XLIM,1)        :SPACE REMAINING FOR OUTPUT
+        dcbdef(P`rings,2)       :ADDRESS OF KIO output ring
+	dcbdef(p`cbsiz,0)	:length marker for DCB
+]
+:
+:Care must be taken to realize that the FRNTND MODULE WILL
+:activate routines with R12 positioned to the DCB
+:an index from DCBLKS.
+:
+:
+        SEG     0
+OLDORG  EQ      .
+        ORG     0                       :RESET TO ORIGIN
+        COMDEF(D)                       :SYMBOLS FOR REFERENCE BY DCB
+DCBICC  EQ      0                       :NOT USED BUT NEEDED BY FRNTND
+ACTIVD  EQ      DDACT                   :DATA ACTIVATION
+ACTIVC  EQ      DCACT                   :CONTROL ACTIVIATION
+ACTIVT  EQ      0                       :NOT USED BUT NEEDED BY FRNTND
+ACTIVO  EQ      0                       :NOT USED BUT NEEDED BY FRNTND
+:
+:symbols for referencing bits in dbits
+:
+d.lth	eq	0f			:username length same as SHAMAN
+d.yell	eq	0e			:remember to output yellow ball
+:SYMBOLS FOR REFERENCING BITS in dbio
+:
+l.macw	eq	0f		:waiting for machine # from downline load
+l.macf	eq	0e		:machine # received-send msg to XPI
+m.macf	eq	0d		:req. to load sent to XPI-await response
+l.sync	eq	0c		:looking for sync pair
+l.cnt	eq	0b		:collecting full load packet for XPI
+l.zap	eq	0a		:zap downline load circuit
+:
+:restore the origin and then define the space for the DCB
+:
+        ORG     OLDORG
+        SEG     DCBSEG
+        WS      0
+        GL      DCBLKS
+DCBLKS  BS      DCBSIZ*maxprt            :storage for all DCB's
+:
+DFLDCB  hS      2
+	hs	1		:default data activ. routine (activd)
+	hs	1		:default control table (activc)
+:
+:FAKE OUT FINISH LIB SO THAT SEGMENTS DONT
+:OVERFLOW
+:
+Q1      EQ      DCBSEG
+Q2      EQ      .&0FFFF
+Q3      EQ      (.-Q1*10000)^$A-16
+        IF      Q3
+        RE      Q3
+        SEG     Q1
+        ORG     10000+Q1*10000
+Q1      EQ      Q1+1
+        ER
+        EI
+        SEG     Q1
+        ORG     Q2+Q1*10000
+        SEG     0
+NXTDCB  HS      2       ; GL NXTDCB     :FREE LIST FOR DCB'S
+PORTAB  WS      NPORT
+        SEG     A.CODE
+:
+:IZDCB  INITIALIZE DCB LIST
+:       LINK ON R5
+:
+        GL      IZDCB
+izdcb   LHI     R15,maxprt              :ONE dCB/HPRT
+        LA      R11,DCBLKS,,            :LOCATION OF DCB'S RELATIVE
+        LCS     R12,1                   :END OF THE LINE MARKER
+:
+IZdC10  ST      R12,dLINK,R11           :LOCATION OF next unused DCB
+        LR      R12,R11                 :CURRENT BECOMES OLD
+        AHI     R11,DCBSIZE             :CURRENT BECOMES NEW
+        SIS     R15,1                   :OUT OF BLOCKS
+        JG      IZdC10
+:
+        ST      R12,NXTDCB              :TAG AS NEXT DCB
+:
+:SET UP DCB FOR INACTIVE PORTS AND POINT ALL PORT ENTRIES TO IT
+:
+        LA      R12,DFLDCB,,            :DEFAULT DCB ADDRESS
+	lhi	r0,(anyold-10000)	:default control table
+	sth	r0,6,r12		:for msgs following zapper
+	lhi	r0,(flush-10000)	:default data activ. routine
+	sth	r0,4,r12		
+:
+        LHI     R11,MAXPRT*4            :INITIALIZE PORTAB
+IZDC20  ST      R12,PORTAB,R11
+        SIS     R11,4
+        JGBS    IZDC20
+        JR      R5
+        EM
+	subttl	SHAMAN KIO Ring Structure & Control
+	mo	.,krings
+:
+:This module structures, initializes and handles 
+:KIO ring data transfer.
+:
+	gl	kring,kfrom,kfrfil,kfremp,kto,ktofil,ktoemp,rngtab,RINGS
+:
+	seg	0
+oldorg	eq	.			:remember current origin
+	org	0			:get 0 displacement
+KBS	EQ	40			:KIO RING SIZE
+:
+:KIO Ring Offsets
+:
+kring	hs	0
+kfrom	bs	kbs			:data from kernel
+kfrfil	hs	1			:fill pointer
+kfremp	hs	1			:empty pointer
+:
+kto	bs	kbs			:data to kernel
+ktofil	hs	1			:fill pointer
+ktoemp	hs	1			:empty pointer
+kiosiz	hs	0			:size marker
+:
+	org	oldorg			:return to previous origin 
+:
+	seg	rngseg			:actual storage area location
+:
+:KIO Ring Storage
+:
+	bnd	2
+rings	hs	kiosiz*maxprt		:stores all rings in melting pot
+:
+:Table to access rings by port #
+:
+rngtab	ws	0
+	ws	nport			:port 0 offset + max ports
+:
+kdatin	hs	ngrp			:bit array for output presence
+kwrdin	hs	ngrp		 	:bit array for weird input(gobs,zaps)
+:
+:Parameter list passed with SVC to Connect Ring to Kernel Host
+:which contains ring pointer and zero bit indices
+:
+rngnxt	ws	1			:KIO ring pointer for this port
+	ws	1			:bit array indicating output 
+	ws	1			:bit array warning of gobs & zaps
+:
+:KIO Ring Table Initialization
+:
+	seg	a.code
+izrng	lhi	r12,maxprt		:total # of KIO rings required
+	la	r11,rngtab+4		:1st table entry, past port 0
+	la	r10,rings,,		:ring storage address
+	lhi	r9,-kbs			:prepare for negative indexing
+:
+izrng5	st	r10,0,r11		:store ring address in table
+	sth	r9,kfrfil,r10		:init all fill & emp ptrs
+	sth	r9,kfremp,r10
+	sth	r9,ktofil,r10
+	sth	r9,ktoemp,r10
+	ahi	r10,kiosiz		:point to next ring area
+	ais	r11,4			:point to next table entry
+	sis	r12,1			:finished?
+	jgbs	izrng5			:store 1 entry per port to max
+
+
+
+:	This routine transfers data and control messages from the KIO ring
+:	to the dispatcher output ring for each port.
+:
+:	If a port is signaled to override backpressure, the transmit limit
+:	for the port will be also be ignored. Characters are transfered as
+:	usual until the control message causing the override is found.
+:
+:	A crash will result if an invalid KIO control message is encountered
+:	or if only a single character of a two character KIO control message
+:	is present in the ring.
+:
+:	Register usage:
+:		
+:		R5 - link register
+:		R7 - dedicated pointer for KIO ring of port
+:		R8 - dedicated empty cursor of KIO ring
+:		R12 - pointer for port DCB
+:
+
+KIOGET	ST	R5,KIORET		:SAVE RETURN
+	LHI	R2,(NGRP-1)*2		:GET # OF BIT GROUPS
+
+KIOG05	TS	MOPKIO			:SET TO ONES
+
+KIOG10	LH	R0,TOISIS,R2		:PORTS CAN SEND ON
+	NH	R0,ACP,R2		:AND ACTIVE
+	NH	R0,KIOBIO,R2		:AND KIO
+	NH	R0,KDATIN,R2		:WITH DATA PRESENT
+	NH	R0,MOPKIO,R2		:THAT HAVE NOT EXCEEDED XMIT LIMIT
+	LH	R5,KWRDIN,R2		:GET PORTS TO OVERRIDE BKPRESSURE
+	NH	R5,ACP,R2		:THAT ARE ACTIVE
+	OR	R0,R5			:PROCESS ONLY THESE PORTS
+	JFFOH	R0,KIOG15		:GET A PORT
+	SIS	R2,2			:MOVE TO NEXT GROUP
+	JGE	KIOG05			:DO NEXT GROUP
+	L	R5,KIORET		:RESTORE RETURN
+	JR	R5			:RETURN
+
+KIOG15	STH	R2,KIOGRP		:SAVE GROUP #
+	SLLS	R2,3			:CONVERT GROUPS TO PORTS
+	OR	R1,R2			:ADD REMAINING TO GET PORT #
+	LR	R3,R1			:COPY PORT #
+	SLLS	R3,2			:MAKE FW INDEX
+	L	R12,PORTAB,R3		:GET DCB POINTER
+	RBT	R1,KWRDIN,R2		:OVERRIDE BACKPRESSURE?
+	JEFS	KIOG20			:IF NOT, SKIP
+	LHI	R5,9D			:LOAD MAX XMIT LIMIT
+	STH	R5,DXLIM,R12		:MAKE SURE SPECIAL MSG IS FOUND
+	J	KIOG25			:SKIP XMIT LIMIT CHECK
+
+KIOG20	LH	R0,DXLIM,R12		:GET XMIT LIMIT
+	JN	KIOG25			:SKIP IF NOT EXPIRED
+	RBT	R1,MOPKIO		:FINISHED WITH PORT FOR NOW
+	J	KIOG90			:DO NEXT PORT
+
+KIOG25	L	R7,RNGTAB,R3		:GET POINTER TO PORT'S KIO RING
+	LH	R8,KFREMP,R7		:GET FROM ISIS EMPTY CURSOR
+
+KIOG30	JAL	R4,SLOR			:START DISPATCHER OUTPUT
+
+KIOG35	CH	R8,KFRFIL,R7		:ANYTHING IN KIO RING?
+	JE	KIOG80			:IF NOT, DO NEXT PORT
+	LB	R0,KBS,R7,R8		:GET A CHAR FROM RING
+	AIS	R8,1			:BUMP EMPTY CURSOR
+	OHI	R8,-KBS			:ALLOW FOR WRAPPING
+	CHI	R0,8			:IS IT A DATA CHAR
+	JGE	KIOG75			:IF SO, PROCESS IT
+	CHI	R0,2			:IS IT ONE CHAR CONTROL MSG?
+	JGE	KIOG65			:IF SO, PROCESS IT
+	LR	R3,R0			:COPY CHAR
+	CH	R8,KFRFIL,R7		:IS THERE ANOTHER CHAR?
+	JE	KIOKRS			:IF NOT, CRASH!
+	LB	R0,KBS,R7,R8		:GET NEXT CHAR FROM RING
+	AIS	R8,1			:BUMP EMPTY CURSOR
+	OHI	R8,-KBS			:ALLOW FOR WRAPPING
+	LR	R3,R3			:WAS PREVIOUS A DATA ESCAPE?
+	JE	KIOG75			:IF SO, PROCESS DATA CHAR
+
+KIOG40	CHI	R0,0C0			:ECHO OFF MSG?
+	JN	KIOG45			:IF NOT, TRY NEXT
+	LA	R3,ECHOFF		:GET ISIS MSG
+	J	KIOG70			:OUTPUT IT
+
+KIOG45	CHI	R0,0C1			:ECHO ON MSG?
+	JN	KIOG50			:IF NOT, TRY NEXT
+	LA	R3,ECHON		:GET ISIS MSG
+	J	KIOG70			:OUTPUT IT
+
+KIOG50	CHI	R0,0FE			:ORANGE BALL?
+	JN	KIOG55			:IF NOT, TRY YELLOW
+	LA	R3,KOBMSG		:GET ISIS MSG
+	J	KIOG70			:OUTPUT IT
+
+KIOG55	JL	KIOKRS			:IF NOT YELLOW, CRASH
+	LA	R3,KYBMSG		:GET ISIS YELLOW MSG
+	J	KIOG70			:OUTPUT IT
+
+KIOG65	CLHI	R0,3			:IS IT A ZAPPER?
+	JNFS	KIOG68			:SKIP IF NOT
+	JAL	R4,ELODR		:END DATA OUTPUT
+	JAL	R5,HZKIO		:CLEAN UP PORT AND ZAP
+	J	KIOG90			:DO NEXT PORT
+
+KIOG68	LR	R3,R0			:COPY DISPLACEMENT
+	LB	R0,KIODSP,R3		:GET ISIS MESSAGE TYPE
+	STB	R0,GENMSG+1		:PUT IN GENERIC MESSAGE
+	LA	R3,GENMSG		:POINT TO MESSAGE
+
+KIOG70	JAL	R4,ELODR		:END DISPATCHER DATA MSG
+	LHL	R2,DPORT,R12		:GET PORT #
+	JAL	R5,OCM			:OUTPUT CONTROL MESSAGE
+	LHL	R1,DPORT,R12		:GET PORT #
+	J	KIOG30			:CONTINUE WITH CURRENT PORT
+
+KIOG75	JAL	R4,PUTCH		:OUTPUT CHARACTER TO DISPATCHER
+	LCS	R2,1			:GET -1
+	AHM	R2,DXLIM,R12		:DECREMENT XMIT LIMT FOR PORT
+	JG	KIOG35			:CONTINUE IF NOT ZERO
+	LHL	R1,DPORT,R12		:GET PORT #
+	RBT	R1,MOPKIO		:FINISHED WITH PORT FOR NOW
+	J	KIOG85			:DO NEXT PORT
+
+KIOG80	LHL	R1,DPORT,R12		:GET PORT 
+	RBT	R1,KDATIN		:SIGNAL ALL DATA PROCESSED
+
+KIOG85	JAL	R4,ELODR		:END DISPATCHER OUTPUT
+	STH	R8,KFREMP,R7		:UPDATE EMPTY CURSOR
+
+KIOG90	LH	R2,KIOGRP		:RESTORE GROUP #
+	J	KIOG10			:DO NEXT PORT
+
+kiokrs	l	r5,kioret		:restore return
+	jal	r10,crash
+	hc	0
+	bc	4*r5,kiocsh
+:
+	seg	rngseg
+	bnd	2
+kiogrp	hs	1
+kioret	hs	2
+mopkio	hs	1
+:
+echoff	bc	3,0b1,0,0		:echo off format for OCM
+echon	bc	3,0b1,0,1		:echo on format for OCM
+kybmsg	bc	1,0ac			:yellow ball for OCM
+kobmsg	bc	1,0ad			:orange ball for OCM
+genmsg	bc	1,0			:generic cntrl msg for OCM
+:
+:table for translating control msgs from KIO version to ISIS 
+:
+kiodsp	bc	0,0,0a2,9e,0,0aa,0ab,0
+	em
+
+	SUBTTL SHAMAN BIO BUFFER STRUCTURE
+	MO	.,BIO
+:
+	gl	binsw,boutsw,inst0,inbfr,inbf0,inst1,inbf1,outst0
+	gl	outbf0,outst1,outbf1,incnt,outcnt,ZAPIT
+:	
+	seg	rngseg
+:
+:BIO Structure
+:
+:
+biobfr	hs	0
+biolen	hc	biohld		:length of BIO buffer as known to ISIS
+:
+:buffer switches are oriented to XPI- they point to the buffer
+:which is currently being filled or read by XPI.  Conversely,
+:the Shaman is filling or reading the buffer which is not
+:pointed to by the switch.  The writing process, whether
+:Shaman or XPI, moves the pointer between buffers when it
+:has just completed writing to a buffer and the other buffer
+:has a status of 0.
+:
+:the process reading the buffer indicates completion by
+:changing status of its buffer to 0
+:
+:the halfword status indicator which precedes each buffer can
+:indicate 3 different states:
+:   negative	the buffer contains an internal message:
+:			Value	Direction	Meaning
+:			-1	to XPI		request to load 
+:			-1	to Shaman	OK to load
+:			-2	to XPI		zap circuit
+:			-2	to Shaman	zap circuit
+:
+:	 0	buffer has been completely read
+:  mach. #	buffer contains data for this machine
+:
+:input BIO buffer area
+:
+inbfr	hs	0		:to-Shaman buffers
+binsw	hc	0		:to-Shaman buffer switch (0 or 1)
+:
+inst0	hc	0		:status of first input buffer
+inbf0	bs	$a 66		:first input buffer
+:
+inst1	hc	0		:status of second input buffer
+inbf1	bs	$a 66		:second input buffer
+:
+:output BIO buffer area
+:
+outbfr	hs	0		:to-BIO buffers
+boutsw	hc	0		:to-BIO    buffer switch (0 or 1)
+outst0	hc	0		:status of first output buffer
+outbf0	bs	$a 66		:first output buffer
+:
+outst1	hc	0		:status of second output buffer
+outbf1	bs	$a 66		:second output buffer
+:
+bioend	hs	0		:end of BIO area as known to XPI & ISIS
+incnt	hc	0		:next character position to read
+outcnt	hc	0		:next character position to write to
+:
+biohld	eq	bioend-binsw+2
+:
+:machine table - relates machine number to port number.  Initialized
+:when machine # comes in from downline load.  Accessed when receiving
+:input from XPI by machine #.
+:
+	hs	0
+mactab	hs	nport
+	seg	a.code
+:
+:initialization routine for machine table
+:
+izmact	lcs	r0,1		:init each machine # area
+	lis	r11,2		:offset to machine #1
+izm10	sth	r0,mactab,r11	:initialize machine #
+	ais	r11,2		:offset to next machine
+	chi	r11,nport*2	:finished?
+	jlbs	izm10		:no-continue
+	jr	r5		:return
+:
+izbio	lis	r0,0		:initialize BIO buffers
+	sth	r0,inst0	
+	sth	r0,inst1
+	sth	r0,outst0
+	sth	r0,outst1
+	sth	r0,lodfil	:init port serve queue
+	jr	r5
+:
+:
+:BIOGET retrieves data from the BIO buffer (XPI-to-Shaman) if there
+:is any, and may also receive internal messages from XPI.  Details of
+:this are written up with BIO buffer structure.  BIOGET recognizes
+:and makes note of internal messages, or transfers data back to
+:the downline load process.
+:
+bioget	lh	r3,binsw		:which buffer is pointed to
+	jefs	biog10			:must be 2nd buffer
+:
+	la	r8,inst1		:load address of 2nd buffer
+	jfs	biog20
+:
+biog10	la	r8,inst0		:load address of 1st buffer
+:
+biog20	lh	r3,0,r8			:look at input status
+	jer	r5			:return if no input
+:
+:if status is positive, it should be a machine #
+:
+	jg	biodat			:must be data message 
+:
+:must have a negative status, therefore we hope we're dealing
+:with a (-1) confirmation of request to load a machine or (-2)
+:denial of the request or circuit zap for some other reason
+:
+	lh	r2,2,r8			:get machine # & validate
+	je	badm			:no good if 0
+:	
+	chi	r2,nmach		
+	jg	badm			:too large
+:
+	slls	r2,1			:make hw index to mactab
+	lh	r1,mactab,r2		:match machine #with port
+	slls	r1,2			:index to port table
+	l	r12,portab,r1		:load DCB
+	lis	r0,0			:zero status HW
+	sth	r0,0,r8
+:
+:now compare what we got to what we expected
+:
+	chi	r3,-1			:positive confirmation?
+	jefs	biogd			:yes - did we want this?
+:	
+	chi	r3,-2			:negative confirmation?
+	JE	hz10			:ZAP CIRCUIT IN ISIS DIRECTION
+	JAL	R10,CRASH		:CRASH ON INVALID MESSAGE
+	HC	0
+	BC	4*R5,BIOMSG		:CRASH CODE = 37
+
+:
+biogd	lis	r3,m.macf		:did we ask for this?
+	rbt	r3,dbio,r12
+	JNFS	BIOGD1			:IF SO, PROCESS
+	JAL	R10,CRASH		:CRASH ON UNEXPECTED CONFIRMATION 
+	HC	0
+	BC	4*R5,BIOCON		:CRASH CODE = 38
+:
+:received positive confirmation for the load - relate this back
+:to downline load process & update state info
+:
+BIOGD1	lhl	r1,dport,r12		:prepare to output mach #
+	jal	r4,slor
+	lhl	r0,dmach,r12	
+	jal	r4,putch
+	lhl	r1,dport,r12
+	jal	r4,elodr
+:
+	lis	r3,l.sync		:begin framing next msg.
+	sbt	r3,dbio,r12
+	jr	r5			:return
+:
+:BIODAT is an ongoing process - output as much as transmit limit
+:will allow for this port.  This means we may have left off
+:in the middle of the message when we did this processing last.
+:
+biodat	clhi	r3,nmach		:valid machine #?
+	jg	badm			:exceeds machine # range
+:
+	lr	r3,r3
+	je	badm			:zero not valid
+	slls	r3,1			:get port #
+	lh	r1,mactab,r3
+	slls	r1,2			:load DCB pointer
+	l	r12,portab,r1
+	srls	r1,2			:back to port #
+:
+	lh	r6,dxlim,r12		:check transmit limit
+	jler	r5			:expired-don't send
+:
+	tbt	r1,toisis		:check backpressure for port
+	jer	r5			:skip sending data
+:
+:OK to send data from BIO buffer back to downline load process
+:
+	jal	r4,slor
+	lh	r3,incnt		:locate right buffer pos.
+:
+biod10	lb	r0,2,r8,r3		:get a byte from buffer
+	jal	r4,putch		:send to downline load
+	lcs	r0,1			:decrem. transmit limit
+	ahm	r0,dxlim,r12
+	jle	biogon			:limit exhausted - quit
+:
+	ais	r3,1			:increment buffer location
+	chi	r3,42			:finished reading buffer?
+	jl	biod10			:no-continue
+:
+	lis	r3,0			:mark buffer status read
+	sth	r3,0,r8
+:
+	lcs	r3,1			:init chars read (to 0)
+:
+biogon	ais	r3,1			:increm. chars read
+	sth	r3,incnt
+	lhl	r1,dport,r12
+	jal	r4,elodr		:end logical output record
+	jr	r5
+:
+badm	jal	r10,crash
+	hc	0
+	bc	4*r5,biocsh
+:
+:BIOPUT sends an internal message - or downline load data - to XPI via 
+:BIO buffers.  It looks for a free buffer and sends the message if
+:one is available.  Multiple messages will be sent if XPI reads 
+:the buffers during execution of this routine.  (On second
+:thought I trashed this idea to reduce complexity.)
+:
+bioput	lh	r3,boutsw	:point to Shaman output buffer
+	jnfs	biop10		:point to 1st buffer
+:
+	la	r8,outst1	:point to 2nd buffer
+	jfs	biop20
+:
+biop10	la	r8,outst0	:load pointer to 1st buffer
+biop20	lh	r2,0,r8		:check buffer status
+	je	biopok		:ok to place msg in this buffer
+:
+	jal	r4,biosw	:switch to other buffer if poss.
+	jnr	r5		:impossible to send msg-return
+:
+biopok	jal	r4,qgout	:get a port wanting to send
+	jlr	r5		:nothing to do - return
+:
+	slls	r1,2		:make index
+	l	r12,portab,r1	:load DCB pointer
+	srls	r1,2		:unmake index
+	cli	r12,dfldcb	:was this port trashed?
+	jebs	biopok		:yes-get next port in line
+:
+:find out what type of message is being sent
+:
+	lis	r3,l.macf	:request to load?
+	rbt	r3,dbio,r12
+	jefs	biop50		:try for sending a zap
+:
+	lcs	r3,1		:set up request to load
+	lis	r2,m.macf	:note we received machine #
+	sbt	r2,dbio,r12
+	j	bioint		:send internal msg to XPI
+:
+biop50	lis	r3,l.zap	:ready to send zap?
+	rbt	r3,dbio,r12	
+	je	biopdt		:no - see if there's data to send
+	J	hz10		:no zap is sent to bio
+:
+	lcs	r3,2		:set up to send zap
+:
+:send internal message
+:
+bioint	sth	r3,0,r8		:store msg in status area
+	lh	r3,dmach,r12	:place machine # in buffer
+	sth	r3,2,r8
+	lh	r3,boutsw	:switch output buffer pointer
+	xhi	r3,1
+	sth	r3,boutsw
+:
+:(comment out following 3 lines)
+:	lis	r3,l.zap	:is this a zap?
+:	rbt	r3,dbio,r12	
+:	jn	hz10		:yes-zap the ISIS end too
+:
+	jr	r5		:finished-return
+:
+biopdt	lh	r9,dbufct,r12	:full buffers?
+	jer	r5		:nothing to do-I goofed!
+:
+	lis	r6,0		:init char # dealt with, buffer ptr
+	lhl	r1,dport,r12	:make bufferlet index
+	slls	r1,1
+:
+biop60	LHL	R0,BCT,R1	:CHECK BUFFER COUNT
+	JER	R5		:RETURN IF EMPTY
+	jal	r4,gci		:get character
+	stb	r0,2,r8,r6	:place in BIO buffer
+	ais	r6,1		:buffer full?
+	chi	r6,42
+	jn	biop60		:not yet
+:
+:buffer is full - should we release backpressure?
+:
+	sis	r9,1		:decrement remaining buffers
+	chi	r9,3
+	jnfs	biop70		:don't release
+:
+	srls	r1,1		:release backpressure
+	sbt	r1,frisis
+	lis	r0,3
+	lhi	r2,sndmsg
+	jal	r4,slor
+	jal	r4,elor
+:
+biop70	lh	r3,dmach,r12	:place machine # in status
+	sth	r3,0,r8
+	sth	r9,dbufct,r12
+:
+:see if buffer pointer can be switched
+:
+	lh	r3,boutsw	:point to buffer Shaman just loaded
+	jal	r4,biosw	:switch pointer if possible
+	jr	r5		:return
+:BIOSW switches buffer pointers if other buffer has already been
+:read by XPI
+:
+:expects BIO buffer we want to switch to in R3
+:
+biosw	lr	r3,r3		:load address of buffer pointed to
+	jefs	bios10		:must be first buffer
+:
+	la	r8,outst1	:load address of 2nd buffer
+	jfs	bios20
+:
+bios10	la	r8,outst0	:load address of 1st buffer
+bios20	lh	r2,0,r8		:check status
+	jnfs	biosno		:bad news - can't switch
+:
+	xhi	r3,1		:switch buffers
+	sth	r3,boutsw
+	lis	r2,0		:0 = good return
+	jr	r4
+:
+biosno	lcs	r2,1		:negative value = bad return
+	jr	r4
+:
+:QPOUT and QGOUT are utility routines which place a port number on
+:a FIFO queue for the Shaman-to-XPI communication process, and remove
+:the port number.
+:
+	seg	rngseg
+:
+	ws	0
+lodq	hs	nport*10
+lodfil	bc	0
+lodemp	bc	0
+:
+	seg	a.code
+:
+:qpout puts port number in active queue for output to XPI
+:Register Conventions
+:
+:r1 contains port #
+:
+qpout	lb	r3,lodfil		:get fill pointer
+	sth	r1,lodq,r3		:store port #
+	ais	r3,2
+	chi	r3,nport*20		:end of queue?
+	jlfs	qp10			:no
+:	
+	lis	r3,0			:wrap to beginning
+:
+qp10	clb	r3,lodemp		:lapping over empty ptr?
+:ACHTUNG! FOLLOWING WILL TRAP IF I SCREW UP (CHANGED MY MIND-
+:OK IFF POINTER WRAPS.
+:	jlefs	.
+	stb	r3,lodfil		:update fill ptr
+	jr	r4
+:
+:qgout takes first-in port number from active queue for output to XPI
+:Register Conventions
+:
+:r1 returns port # or -1 if queue is empty
+:
+:
+qgout	lb	r3,lodemp		:load empty ptr
+	clb	r3,lodfil		:is queue empty?
+	jnfs	qg10			:no-get port#
+:
+	lcs	r1,1			:empty-return -1
+	jr	r4
+:
+qg10	lh	r1,lodq,r3		:get port #
+	ais	r3,2			:update empty ptr
+	chi	r3,nport*20		:wrap?
+	jlfs	qg20			:no
+:
+	lis	r3,0			:yes
+:
+qg20	stb	r3,lodemp		:update empty ptr
+	lr	r3,r3
+	jr	r4			:return
+:
+	EM	SUBTTL	ISIS Front End Handler Package	- FRNTND.LIB
+:******************************************************************
+:
+:	This program is the sole property and confidential
+:	information of Tymshare, Inc., and may not be copied
+:	in whole or in part or disclosed to any third party
+:	without the prior written consent of Tymshare.
+:
+:*******************************************************************
+	RA	0		:	FRNTND.LIB	MFR 08/12/81
+:
+:	This package is an ISIS Front End interface to Tymnet. It
+:	is used to service the ISIS input ring, and to activate user
+:	defined routines whenever a message is found for a port and
+:	optionally for output service when output requests are pending.
+
+:	The package is designed to permit the activation routines to be
+:	defined on an individual port basis if desired. It is also
+:	designed so that context within a process can be indicated by 
+:	dynamically changing to a different set of activation routines.
+:
+:			Conventions
+:
+:	The following symbols are to be provided by the user:
+:
+:	ECHO	if TRUE causes Tymsat echoing for terminals
+:	AUTOBP	if TRUE causes automatic backpressure application and release
+:		for a port based upon comparing number of characters
+:		in input buffer and MAXCHAR.
+:	PTIMEO	if TRUE port timeouts are available
+:	MAXCHAR	maximum number of characters in a port's input buffer
+:		before backpressure should be applied. (Only needed if AUTOBP is TRUE)
+:	OUTPROC	if TRUE then output activation code will be included.
+:	WAITZA if TRUE then ZAPPER acknowledgements will be requested from
+:		ISIS and code will be included to clean up the port upon
+:		receipt of the ZAP ACK message. (User will not have to reset
+:		ACP.)
+:
+:	The following symbol is to be initialized by the user:
+:
+:	PECHO	a bit for each port. If set then echoing will be honored
+:		for the port, otherwise defered echo mode will not be
+:		honored.
+:
+:	The following symbols may be provided by the user:
+:	(If not provided, default values will be used)
+:
+:	CRIPOM	crash code for invalid port zero message (default 20x)
+:	CRNAR	crash code for no activation routine found (default 21x)
+:	CRINVN	crash code for invalid needle received (default 22x)
+:	CRINVM	crash code for invalid message received (default 23x)
+:       FWPTAB  if true use a fullword port table.  (default 0)
+:
+:	The following data structures are to be provided and initialized
+:	 by the user: (They may be located in any segment)
+:
+:	DCB	Device Control Block, a data structure which contains all
+:		the context information for a port. There should be NPORT
+:		DCB's defined starting at address DCBLKS. Within each DCB
+:		the following offsets must be defined:
+:			DCBICC	input character count (halfword)
+:			ACTIVD	relative address in A.CODE of data
+:				activation routine.
+:			ACTIVC	relative address in A.CODE of a table of
+:				halfword offsets in A.CODE of routines
+:				for each possible control message.
+:			ACTIVT	relative address in A.CODE of timeout
+:				activation routine.
+:			ACTIVO	relative address in A.CODE of output
+:				activation routine. (Only needed if OUTPROC
+:				is TRUE.)
+
+:
+:	PORTAB	Port Table, a halfword array containing entries for each
+:		port which are the relative offset from DCBLKS of the
+:		DCB for the port. If FWPTAB is true then the port
+:		table is a fullword array containig the address of
+:		the DCB for the port.  NOTE not an offset!
+:
+:	In addition, activation routines must be defined for port zero
+:	messages (ACTIV0) to for needles (ACTIVN). These labels should
+:	be the location of the actual routine not offsets in A.CODE.
+:
+:	Whenever a data or control message activation routine is called,
+:	the following registers are set up:
+:		R1	port number
+:		R2	message type
+:		R5	link register
+:		R12	DCB pointer
+:		R14	input ring pointers
+:
+:	The activation routines are responsible for extracting all the
+:	message data for the current logical record from the input ring.
+:	Upon return, this package willend the logical input record (ELIR).
+:	Therefore R14 must be pointing to the end of the message
+:	when this package regains control. All other registers may be
+:	smashed.
+:
+:	Needles are handled differently. The are parsed and the following
+:	registers loaded.
+:		R1	port number
+:		R2	number of characters in username
+:		R5	link register
+:		R6	invoice number
+:		R7	destination host number
+:		R8	originating node number
+:		R9	originating host number
+:		R10	originating port number
+:		R11	dialect code
+:		R13	TID
+:		R14	input ring pointer
+:
+:	Upon a needle activation, everything up to and including the
+:	username length will have been extracted from the input ring.
+:	The ACTIVN routine is responsible for extracting the username.
+:
+:	If PTIMEO is true then a normal return from any activate'ed
+:	process indicates that the timeout state of the port should not
+:	be modified. If a skip return is taken, then R0 will be
+:	examined. If R0 is non-zero, a timeout for that
+:	many seconds will be set for the port. If R0 is zero then any 
+:	timeout for the port will be cleared. When a timeout expires for a port
+:	the timeout activation routine for the port will be called with
+:	the following registers set up:
+:		R1	port number
+:		R5	link register
+:		R12	DCB pointer
+:
+:	Upon return from the timeout activation routine, the same
+:	skip/normal return convention is followed.
+:
+:	The user may also set or clear a timeout for a port directly.
+:	The routines SETTO and CLRTO are used to set or clear a
+:	timeout for a port respectively. They are used when a timeout
+:	is to be set (or cleared) at a time other than a the return from
+:	an activation. The routines should be called with R1 = port number.
+:	For SETTO R0 should contain the interval, in seconds, until
+:	the timeout activation routine for the DCB in activated.
+:
+:	The output routine searches for any ports requiring output service
+:	which are not backpressured. For each such port, the output
+:	activation routine found in the port's DCB will be activated
+:	with the following registers set up:
+:		R1	port number
+:		R5	link register
+:		R12	DCB pointer
+:
+:	Upon return from the output activation routine, the same
+:	skip/normal return convention for timeouts is followed.
+:
+:	The following routines are to be called by the user (link R0).
+:
+:	IZFRNT	at initialization time, after calling IZT.
+:	INPUT	from EXEC loop, to process input from ISIS.
+:	OUTPUT	from EXEC loop, to process output requests.
+:
+:	In order to facilitate setting up the control message
+:	activation routine table some symbols, routines, and macros
+:	have been defined.
+:
+:	The following symbols have the values of the offsets from A.CODE of
+:	a number of control message processing routines:
+:		Symbol	Routine	Description
+:		XTOSS	TOSS	tosses the message
+:		XZAP	ZAP	handles zapper
+:		XZACK	ZACK	handles zapper acknowledgement
+:		XNOSEND	NOSEND	handles backpressure
+:		XRESEND	RESEND	handles release backpressure
+:		XGOBBLE	GOBBLE	handles gobbler
+:		XFLBACK	FLBACK	handles flush backward
+:		XEDEM	EDEM	handles enter deffered echo mode
+:		XLDEM	LDEM	handles leave defered echo mode
+:		XGB	GB	handles green ball
+:		XRB	RB	handles red ball
+:		XOB	OB	handles orange or black ball
+:		XPNEED	PNEED	handles psuedo needle
+:		XXLIM	XLIM	handle xmit limit
+:		XINVAL	INVAL	crashes with invalid message code
+
+:	The following macros are used to set up the tables:
+:
+:		HTABVT with argument table name is used to set up the 
+:			process table for a typical virtual terminal port.
+:
+:		HTABIA with argument table name is used to set set up the
+:			process table for an inactive port.
+:
+:		CHGTAB	with arguments table name, msg number, and routine
+:			label is used to substitute for a default process
+:			routine in the table.
+::	Example:
+:		To set up the control message activation routine table for
+:		a virtual terminal handler which must call a routine to
+:		release resources (RELRSC) upon losing the circuit on a port
+:		the following code might be used.
+:
+:			SEG	A.CODE
+:			MO	.,FRNTND
+:
+:			HTABVT(VTAB)	:GENERATE DEFAULT TABLE
+:			CHGTAB(VTAB,9E,RELRSR)	:CHANGE ZAPPER HANDLER
+:		RELRSC	------		:CODE TO CLEAN UP AND RELEASE
+:			------		:RESOURCES USED BY PORT
+:			J	ZAP	:JUMP TO ZAP PROCESSOR TO CLEAN
+:					:UP ITS TABLES
+:			EM
+:			END
+:
+:	It should be noted that the above code is in the module FRNTND.
+:	This is the Input Handler module. The preceeding symbols, routines
+:	and macros are not global'ed so the code must be in the same
+:	module or the symbols LOCAL'ed.
+:	It should also be noted that the user defined processing
+:	routines should jump to the default process routine or perform
+:	similar processing on the input ring and status indicators.
+:
+:
+	GL	NPORT,ECHO,DEM,PECHO,XLIMIT,ACP,TOISIS,FRISIS
+	GL	IZFRNT,INPUT,RPORT,RDCB,AUTOBP,OUTPROC,PTIMEO
+	GL	ACTIV0,ACTIVD,ACTIVC,ACTIVN,ACTIVT
+	GL	CRIPOM,CRNAR,CRINVN,CRINVM
+        IF      \FWPTAB
+        ELSE
+FWPTAB  EQ      0               :DEFAULT OFF
+        EI
+:
+:DEFINE MACROES FOR ACCESSING PORTAB AND THE DCB
+:
+:
+:Macros used to reference the port table and the DCB
+:
+:GETDCB - loads RDCB from PORTAB and RPORT
+:
+:DCBREF - produces a reference to the DCB entry specified
+:         as a parameter to the macro.
+:
+	IF	FWPTAB
+GETDCB	MACRO [SLLS RPORT,2
+	L	RDCB,PORTAB,RPORT
+	SRLS	RPORT,2
+	LR	RDCB,RDCB
+]
+DCBREF	MACRO(REF) [REF,RDCB]
+	ELSE
+GETDCB	MACRO [LHL RDCB,PORTAB,RPORT,RPORT]
+DCBREF	MACRO(REF) [REF+DCBLKS,RDCB,]
+	EI
+ IF	OUTPROC
+	GL	ACTIVO,OUTPUT,OUTDAT
+ EI
+ IF	AUTOBP
+	GL	AUTOBP
+ EI
+
+	MO	.,FRNTND
+
+RPORT	EQ	R1		:PORT CURRENTLY BEING WORKED WITH
+RDCB	EQ	R12		:POINTER TO DCB
+
+	SEG	A.DATA
+
+XLIMIT	BS	NPORT		:MAX NUMBER OF DATA CHARACTERS THAT CAN BE SENT
+				:IN ONE MESSAGE
+NGRP	EQ	(NPORT+0F)/10	:NUMBER OF PORT GROUPS TO PROCESS
+ACP	HS	NGRP		:ACTIVE PORTS BIT ARRAY
+TOISIS	HS	NGRP		:PORTS WE CAN SEND DATA ON
+FRISIS	HS	NGRP		:PORTS WE HAVE NOT BACKPRESSURED
+DEM	HS	NGRP		:PORTS IN DEFERED ECHO MODE
+ IF	OUTPROC
+FLAGS	HS	1		:BASE ADDRESS OF BIT ARRARYS. FIRST
+				:HALFWORD WASTED TO AVOID BIT DISPLACE-
+				:MENTS OF ZERO.
+OUTDAT	HS	NGRP		:PORTS WITH OUTPUT REQUESTS WAITING
+ EI
+PECHO	HS	NGRP		:PORTS FOR WHICH ECHO SHOULD BE PERFORMED
+ IF	\WAITZA
+ ELSE
+	REMARK %PLEASE DEFINE WAITZA SWITCH. DEFAULT OFF ASSUMED%%
+WAITZA	EQ	0
+ EI
+
+	GL	CNTRL
+REGSAV	HS	20		:REGISTER SAVE AREA
+RETPTR	HS	2		:RETURN POINTER
+RETRN	HS	2		:RETURN ADDRESS FOR ACTIV ROUTINE
+SPORT	HS	1		:SAVE AREA FOR PORT NUMBER
+SDCB	HS	1		:SAVE AREA FOR DCB POINTER
+SLOOP	HS	1		:SAVE AREA FOR OUTPUT LOOP COUNTER
+ IF	OUTPROC
+PRTSVC	HS	1		:PORTS ELIGIBLE FOR SERVICE INDICATOR
+ EI
+
+  IF	PTIMEO			:PORT TIMEOUT
+TSAVE	HS	4		:SAVE AREA FOR TIMEOUT ACTIVATOR
+PTIME	HS	NGRP		:PORTS ON ACTIVE TIMEOUT
+ATIME	HS	2*NPORT		:ACTIVATION TIME
+  EI
+
+:
+:	DEFINE CRASH CODES IF USER HAS NOT
+:
+
+  IF	\CRIPOM
+  ELSE
+CRIPOM	EQ	20	:INVALID PORT ZERO MESSAGE
+  EI
+
+  IF	\CRNAR
+  ELSE
+CRNAR	EQ	21	:NO ACTIVATION ROUTINE IN DCB
+  EI
+
+  IF	\CRINVN
+  ELSE
+CRINVN	EQ	22	:INVALID NEEDLE RECEIVED
+  EI
+
+  IF	\CRINVM
+  ELSE
+CRINVM	EQ	23	:INVALID MESSAGE RECEIVED
+  EI
+
+
+	SEG	A.CODE
+
+:	HANDY INDEXABLE HALFWORD BIT MASKS
+HMASK	HC	8000,4000,2000,1000,800,400,200,100,80,40,20,10,8,4,2,1
+
+:	BIT ARRAY TO IDENTIFY DATA MESSAGES
+DATAM	HC	07FFF,-1,-1	:00
+	HC	-1,-1,-1	:30
+	HC	-1,-1,-1	:60
+	HC	0FFFC,0,0	:90
+	HC	0,0,0		:C0
+	HC	0		:F0
+
+LENGTH	BC	0		:MESSAGE LENGTH TABLE
+	RE	9D;	BC	.-LENGTH+1;	NOLIST;	ER;	LIST	:DATA TEXT STRINGS
+	BC	1		: 9E	DETACH
+	BC	1		: 9F	DISCONNECT
+	BC	1		: A0	APPLY BACKPRESSURE
+	BC	1		: A1	RELEASE BACKPRESSURE
+	BC	1		: A2	FLUSH FORWARD
+	BC	1		: A3	FLUSH BACKWARD
+	BC	1		: A4	BLACK BALL
+	BC	1		: A5	GREY BALL
+	BC	1		: A6	ENTER "DEM"
+	BC	1		: A7	LEAVE "DEM"
+	BC	1		: A8	ENTER "TRANSPARENCY"
+	BC	1		: A9	LEAVE "TRANSPARENCY"
+	BC	1		: AA	GREEN BALL
+	BC	1		: AB	RED BALL
+	BC	1		: AC	YELLOW BALL
+	BC	1		: AD	ORANGE BALL
+	BC	1		: AE	"BREAK" DETECTED
+	BC	1		: AF	"HANG UP"
+	BC	2		: B0	QUERY TERMINAL PARAMETER
+	BC	3		: B1	SET TERMINAL PARAMETER
+	BC	4		: B2	PSEUDO-NEEDLE
+	BC	2		: B3	LOGON CHARACTER
+	BC	2		: B4	NORMAL LOGON STATUS
+	BC	2		: B5	LOGON FAILURE
+	BC	8		: B6	SUCCESSFUL LOGON FROM THIS PORT
+	BC	6		: B7	ADDENDUM TO ACCOUNTING
+	BC	1		: B8	SUPER-"HANG UP"
+	BC	2		: B9	TRANSMIT LIMIT
+	BC	1		: BA	BREAK END
+	BC	1		: BB	ZAPPER ACKNOWLEGEMENT
+	BC	1		: BC	ENTER ALTERNATE OUTPUT DEVICE MODE
+	BC	1		: BD	LEAVE ALTERNATE OUTPUT DEVICE MODE
+	BC	2		: BE	ZAP WITH REASON
+	BC	1		: BF	START IIX
+	BC	1		: CO	TERMINATE IIX
+
+:		**INTERFACE DATA TYPES**
+
+
+NEDMSG	EQ	0		:NEEDLE
+FIRST	EQ	9E		:FIRST MESSAGE IN LIST
+DETMSG	EQ	9E		:DETACH MESSAGE
+ZAPMSG	EQ	9F		:DISCONNECT MESSAGE
+NOSMSG	EQ	0A0		:APPLY BACK-PRESSURE
+SNDMSG	EQ	0A1		:RELEASE BACK-PRESSURE
+GOBMSG	EQ	0A2		:FLUSH OUTPUT
+BKGMSG	EQ	0A3		:FLUSH INPUT
+BLKMSG	EQ	0A4		:DATA LOST IN THIS DIRECTION
+GRYMSG	EQ	0A5		:DATA LOST IN OPPOSITE DIRECTION
+EDMMSG	EQ	0A6		:ENTER DEFERED ECHO MESSAGE
+LDMMSG	EQ	0A7		:LEAVE DEFERED ECHO MESSAGE
+ETMMSG	EQ	0A8		:ENTER TRANSPARENCY MODE
+LTMMSG	EQ	0A9		:LEAVE TRANSPARENCY MODE
+GBMSG	EQ	0AA		:GREEN BALL
+RBMSG	EQ	0AB		:RED BALL
+YBMSG	EQ	0AC		:YELLOW BALL
+OBMSG	EQ	0AD		:ORANGE BALL
+BRKMSG	EQ	0AE		:BREAK DETECTED
+HNGMSG	EQ	0AF		:HANG UP
+QTPMSG	EQ	0B0		:QUERY TERMINAL PARAMETER
+STPMSG	EQ	0B1		:SET TERMINAL PARAMETER
+PNDMSG	EQ	0B2		:PSEUDO NEEDLE
+NLOGCH	EQ	0B3		:NORMAL LOGON CHAR
+NLOGST	EQ	0B4		:NORMAL LOGON STATUS
+LOGFAL	EQ	0B5		:LOGON FAILURE
+LOGOK	EQ	0B6		:SUCCESSFUL LOGON
+ADACTG	EQ	0B7		:ADDENDUM TO ACCOUNTING
+SHGMSG	EQ	0B8		:SUPER-HANG UP
+SETLIM	EQ	0B9		:SET XMIT LIMIT
+BRKEND	EQ	0BA		:BREAK END
+ZAPACK	EQ	0BB		:ZAPPER ACKNOWLEGEMENT
+EAODM	EQ	0BC		:ENTER ALTERNATE OUTPUT DEVICE MODE
+LAODM	EQ	0BD		:LEAVE ALTERNATE OUTPUT DEVICE MODE
+ZAPREA	EQ	0BE		:ZAP WITH REASON
+SIIX	EQ	0BF		:START IIX
+TIIX	EQ	0C0		:TERMINATE IIX
+MAXTYP	EQ	0C0		:MAXIMUM TYPE DEFINED
+
+:
+:	HANDLES INPUT MESSAGES FROM ISIS INPUT RING
+:
+INPUT	ST	R0,RETPTR	:SAVE RETURN ADDRESS
+INPUT1	JAL	R4,LOOK		:IS THERE ANYTHING TO DO?
+	J	RET		:NO... RETURN ALLL DONE FOR NOW
+	JN	INPUT2		:TEST IF PORT 0.. SKIP IF NOT
+:
+:	CHECK PORT ZERO MESSAGES
+:
+	JAL	R4,GETCH	:GET MSG TYPE BYTE
+	LR	R2,R0		:TEST MSG TYPE
+	JEFS	SPEC2		:SKIP IF MSG 0
+	TBT	R2,SPECL	:TEST IF VALID MESSAGE TYPE
+	JEFS	SPEC1		:SKIP IF OK
+	JAL	R10,CRASH	:OTHERWISE CRASH
+	BC	0,0,4*R2,CRIPOM
+
+SPECL	BC	1D,0A9,0FF	:INVALID PORT 0 MSG TYPES
+
+SPEC1	LA	R5,ACTIV0	:SET UP CALLING ADDRESS
+	JAL	R4,ACTIV	:ACTIVATE USER PORT 0 MSG ROUTINE
+SPEC2	JAL	R4,ELIR		:END LOGICAL INPUT RECORD
+	J	INPUT1		:AND GO BACK FOR MORE....
+:
+:	NOT A PORT ZERO MESSAGE
+:
+:	R1=PORT#	R2=MSG TYPE
+:
+INPUT2	JAL	R4,GETCH	:GET MSG TYPE
+	TBT	R0,DATAM	:TEST IF DATA MESSAGE
+	JE	INPUT3		:SKIP IF NOT
+:
+	TBT	RPORT,DEM	:TEST IF PORT IS IN DEFERED ECHO MODE
+	JE	INDATA		:SKIP IF NOT
+	TBT	RPORT,PECHO	:SHOULD DEM BE HONORED?
+	JE	INDATA		:SKIP IF NOT
+	LR	R2,R0		:COPY MSG LENGTH
+	LR	R5,R0		:COPY IT AGAIN
+	ST	R14,REGSAV	:SAVE INPUT RING POINTER REGISTER
+:
+ECHO1	JAL	R4,GETCH	:GET A CHARACTER
+	STB	R0,ECHOBF,R5	:PUT IT INTO ECHO BUFFER
+	SIS	R5,1		:DECREMENT COUNTER
+	JGBS	ECHO1		:GO BACK IF MORE CHARS IN RECORD
+	LR	R5,R2		:COPY CHAR COUNT
+	LHI	R0,3,R2		:CALCULATE MSG LENGTH
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+ECHO2	LB	R0,ECHOBF,R5	:GET A CHARACTER FROM ECHO BUFFER
+	JAL	R4,PUTCH	:PUT IT INTO OUTPUT RING
+	SIS	R5,1		:DECREMENT COUNTER
+	JGBS	ECHO2		:REPEAT IF MORE
+	JAL	R4,ELOR		:ALL DONE.. END LOGICAL RECORD
+:
+:	NOTE THAT BACKPRESSURE AND TRANSMIT LIMIT ARE NOT CHECKED
+:	IN SERVICING THE DEFERED ECHO.
+:
+	L	R14,REGSAV	:RESTORE INPUT RING POINTER
+
+:
+INDATA	GETDCB			:GET DCB POINTER
+	JEFS	INDCR		:CRASH IF NO DCB
+	LHL	R4,DCBREF(ACTIVD)	:GET DATA ACTIVATION ROUTINE FOR PORT
+	JNFS	INDAT1		:TEST IF THERE IS A ROUTINE
+INDCR	JAL	R10,CRASH	:CRASH IF NO ROUTINE
+	BC	0,0,4*RDCB,CRNAR
+:
+  IF	AUTOBP
+:
+:	CHECK IF INPUT PORT SHOULD BE BACKPRESSURED
+:
+INDAT1	STH	RPORT,SPORT	:PRESERVE R1
+	STH	RDCB,SDCB	:PRESERVE RDCB
+	LA	R5,SEG|A.CODE|,R4	:SET UP ACTIVATION ADDRESS
+	JAL	R4,ACTIV	:ACTIVATE
+	JAL	R4,ELIR		:END THE INPUT RECORD
+	LHL	RDCB,SDCB	:RESTORE DCB POINTER
+	LH	R0,DCBREF(DCBICC)	:GET INPUT CHAR COUNT
+	SHI	R0,MAXCHAR	:TEST IF TOO MANY CHARACTERS
+	JL	INPUT1		:NO... GO BACK FOR MORE 
+	LHL	RPORT,SPORT	:RESTORE PORT NUMBER
+	LIS	R0,3		:GENERATE BACKPRESSURE MESSAGE
+	LHI	R2,NOSMSG	:
+	JAL	R4,SLOR		:START THE RECORD
+	JAL	R4,ELOR		:END IT
+	RBT	RPORT,FRISIS	:SET BP INDICATOR FOR PORT
+	J	INPUT1		:AND GO BACK FOR MORE
+  ELSE
+:
+INDAT1	LA	R5,SEG|A.CODE|,R4	:SET UP ACTIVATION ADDRESS
+	JAL	R4,ACTIV	:ACTIVATE
+	JAL	R4,ELIR		:END THE INPUT RECORD
+	J	INPUT1		:AND GO BACK FOR MORE
+  EI
+
+	SEG	A.DATA
+ECHOBF	BS	FIRST	:ECHO BUFFER
+
+	SEG	A.CODE
+
+:
+:	PROCESS CONTROL MESSAGES
+:
+INPUT3	LR	R3,R0		:COPY MSG TYPE
+	JN	INCNTL		:NOT A NEEDLE....SKIP
+	SBT	RPORT,ACP		:TEST AND SET ACTIVE PORT BIT
+	JEFS	NEEDLE		:SKIP IF PORT WAS NOT ACTIVE
+	JAL	R10,CRASH	:OTHERWISE CRASH
+	BC	0,0,4*RPORT,CRINVN
+:
+:	PROCESS NEEDLES
+:
+NEEDLE	LHI	R0,FIRST-1	:SET UP TRANSMIT LIMIT
+	STB	R0,XLIMIT,RPORT	:STORE IT
+	SBT	RPORT,TOISIS	:CLEAR BACKPRESSURE
+	SBT	RPORT,FRISIS	:
+ IF	OUTPROC
+	RBT	RPORT,OUTDAT	:CLEAR OUTPUT DATA WAITING
+ EI
+  IF PTIMEO
+	RBT	RPORT,PTIME	:CLEAR PORT TIMEOUT
+  EI
+	JAL	R4,GETCH	:SKIP LENGTH
+	JAL	R4,GETW		:GET INVOICE NUMBER
+	LR	R6,R0		:COPY IT
+	JAL	R4,GETH		:GET DESTINATION HOST
+	LR	R7,R0		:COPY IT
+	JAL	R4,GETH		:GET SOURCE NODE
+	LR	R8,R0		:COPY IT
+	JAL	R4,GETH		:GET SOURCE HOST
+	LR	R9,R0		:COPY IT
+	JAL	R4,GETH		:GET SOURCE PORT
+	LR	R10,R0		:COPY IT
+	JAL	R4,GETW		:FUTURE EXPANSION
+	JAL	R4,GETH		:GET DIALECT CODE
+	LR	R11,R0		:COPY IT
+	JAL	R4,GETCH	:GET TID
+	LR	R13,R0		:COPY IT
+:
+  IF	ECHO
+:		SOURCE NODE SHOULD ECHO
+	THI	R13,1F		:CHECK IF TERMINAL
+	JE	NEED2		:SKIP... NOT A TERM
+	ST	R14,REGSAV	:SAVE INPUT RING POINTER
+	THI	R13,20		:CHECK IF HALF DUPLEX
+	JNFS	NEED1		:SKIP IF HDX.. DON'T SET DEM
+	SBT	RPORT,DEM	:SET DEM
+NEED1	LIS	R0,5		:SEND SET TERM PARM MSG
+	LHI	R2,STPMSG	:
+	JAL	R4,SLOR		:START THE OUTPUT RECORD
+	LIS	R0,0
+	JAL	R4,PUTCH	:
+	LIS	R0,1		:SET ECHO ON
+	JAL	R4,PUTCH	:
+	JAL	R4,ELOR		:
+	L	R14,REGSAV	:RESTORE INPUT RING POINTER
+  EI
+:
+NEED2	JAL	R4,GETCH	:GET USERNAME LENGTH
+	LR	R2,R0		:COPY USERNAME LENGTH
+	LA	R5,ACTIVN	:SET UP NEEDLE ACTIVATION ROUTINE ADDR
+	JAL	R4,ACTIV	:ACTIVATE IT
+	JAL	R4,ELIR		:END THE INPUT RECORD
+	J	INPUT1		:AND GO BACK FOR MORE
+
+:
+:
+:	PROCESS NON-NEEDLE CONTROL MESSAGES FOR PORTS
+:
+INCNTL	SHI	R3,FIRST		:SUBTRACT TO GET RELATIVE MSG NUMBER
+	SLLS	R3,1			:FORM HALFWORD INDEX
+	GETDCB			:GET DCB POINTER
+	JE	INCN1			:CRASH IF NO DCB
+	LHL	R4,DCBREF(ACTIVC)	:GET TABLE POINTER
+	JEFS	INCN1			:SKIP IF NO TABLE ADDRESS
+	LHL	R4,SEG|A.CODE|,R4,R3	:GET ROUTINE ADDRESS
+	JEFS	INCN1			:SKIP IF NO ROUTINE ADDRESS
+	LA	R5,SEG|A.CODE|,R4	:SET UP ACTIVATION ADDRESS
+	JAL	R4,ACTIV		:ACTIVATE
+	JAL	R4,ELIR			:END THE LOGICAL RECORD
+	J	INPUT1			:AND GO BACK FOR MORE
+:
+INCN1	JAL	R10,CRASH		:CRASH IF NO ROUTINE
+	BC	0,0,4*RDCB,CRNAR
+
+:	INITIALIZATION FOR THIS PACKAGE
+:
+IZFRNT	ST	R0,RETPTR	:SAVE RETURN ADDRESS
+	LHI	RPORT,NPORT-1	:SET UP LOOP
+IZIN1	RBT	RPORT,ACP	:SET PORT NOT ACTIVE
+	SBT	RPORT,TOISIS	:SET BACKPRESSURE OFF
+	SBT	RPORT,FRISIS	:
+ IF	OUTPROC
+	RBT	RPORT,OUTDAT	:RESET OUTPUT DATA WAITING
+ EI
+	RBT	RPORT,DEM	:NOT DEFERED ECHO MODE
+	SIS	RPORT,1		:DECREMENT LOOP COUNTER
+	JGEBS	IZIN1		:REPEAT IF MORE
+:
+  IF	AUTOBP			:AUTOMATIC BACKPRESSURE RELEASE CODE
+	L	R7,FASTC,,	:GET CURRENT TIME
+	LA	R0,RELBP	:PUT RELBP ON TIMEOUT LIST
+	LHI	R1,RATE/2,R7	:SET HALF SECOND TIMEOUT
+	JAL	R5,TOPUT	:
+  EI
+:
+  IF	PTIMEO			:PORT TIMEOUT CODE
+	L	R7,FASTC,,	:GET CURRENT TIME
+	LA	R0,ONESEC	:PUT ONESEC ON TIMEOUT LIST
+	LHI	R1,RATE,R7	:SET ONE SECOND TIMEOUT
+	JAL	R5,TOPUT	:
+  EI
+	JFS	RET		:RETURN
+:
+:	GENERAL RETURN ROUTINE
+RET	L	R0,RETPTR	:GET RETURN ADDRESS
+	JR	R0		:AND RETURN
+:
+:	ACTIVATION ROUTINE
+:
+ACTIV	ST	R4,RETRN	:SAVE RETURN ADDRESS
+  IF	PTIMEO
+:		PORT TIMEOUT CODE
+	STH	RPORT,SPORT	:PRESERVE PORT NUMBER
+	JALR	R5,R5		:ACTIVATE
+	J	ACTIV2		:NORMAL RETURN DON'T MODIFY TIMEOUT
+	LHL	RPORT,SPORT	:RESTORE PORT NUMBER
+	LR	R0,R0		:TEST RETURN PARAMETER
+	JGFS	ACTIV1		:NONZERO... SKIP
+	RBT	RPORT,PTIME	:TURN OFF PORT TIMEOUT INDICATOR
+	JFS	ACTIV2		:
+ACTIV1	SBT	RPORT,PTIME	:SET PORT TIMEOUT INDICATOR ON
+	A	R0,SLOWC,,	:ADD TIMEOUT TO SLOW CLOCK
+	SLHLS	RPORT,2		:MAKE WORD INDEX POINTER
+	ST	R0,ATIME,RPORT	:STORE ACTIVATION TIME
+  ELSE
+	JALR	R5,R5		:ACTIVATE
+  EI
+ACTIV2	L	R4,RETRN	:RESTORE RETURN ADDRESS
+	JR	R4		:AND RETURN
+:
+  IF	AUTOBP
+:
+:		CODE TO PERIODICALLY CHECK IF BACKPRESSURE CAN
+:		BE RELEASED ON ANY PORTS
+RELBP	AHI	R1,RATE/2		:
+	JAL	R5,TOPUT	:PUT BACK ON TIMEOUT LIST FOR ONE SECOND
+:
+:	CHECK ALL PORTS FOR THOSE WITH BACKPRESSURE APPLIED
+:
+	LHI	R5,(NGRP-1)*2	:
+	LHI	R6,(NGRP-1)*10	:SET UP POINTERS
+RBP1	LCS	R7,1		:
+	XH	R7,FRISIS,R5	:CHECK IF BACKPRESSURE APPLIED
+	NH	R7,ACP,R5	:AND PORT ACTIVE
+RBP2	LR	R1,R7		:TEST
+	JNFS	RBP3		:SKIP.. SOMETHING TO DO
+	SIS	R5,2		:DECREMENT POINTERS
+	SHI	R6,10		:
+	JGEBS	RBP1		:CHECK NEXT RING GROUP
+	J	TORET		:OTHERWISE RETURN
+:
+RBP3	JAL	R3,BIDH		:DETERMINE WHICH PORT ON GROUP NEEDS SERVICE
+	XH	R7,HMASK,R2,R2	:MARK PORT AS SERVICED
+	AR	R2,R6		:FORM PORT NUMBER
+	LR	RPORT,R2		:COPY IT
+	SLHLS	R2,2		:FORM BUFFER NUMBER
+	GETDCB			:GET DCB POINTER FROM PORT TABLE
+	LH	R0,DCBREF(DCBICC)	:GET INPUT CHAR COUNT
+	SHI	R0,MAXCHAR	:TEST IF LESS THAN MAXCHAR
+	JG	RBP2		:NOT EMPTY ENOUGH YET
+	SBT	RPORT,FRISIS	:RELEASE BACKPRESSURE
+	LIS	R0,3		:FORM 3 BYTE MESSAGE
+	LHI	R2,SNDMSG	:GET MESSAGE
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+	JAL	R4,ELOR		:END IT
+	J	RBP2		:AND CONTINUE
+  EI
+  IF	PTIMEO
+:
+:		CODE TO CHECK PERIODICALLY FOR PORT TIMEOUTS
+:
+ONESEC	AHI	R1,RATE		:SET UP TO RUN AGAIN IN ONE SECOND
+	JAL	R5,TOPUT	:
+	LHI	R15,(NGRP*2)-2	:SEARCH BY GROUPS
+OS1	LH	R14,ACP,R15	:GET ACTIVE PORT INDICATORS
+	NH	R14,PTIME,R15	:AND IN PORTS ON TIMEOUT
+	JNFS	OS3		:JUMP IF ANY TO CHECK
+OS2	SIS	R15,2		:DECREMENT GROUP INDEX
+	JGEBS	OS1		:REPEAT IF MORE
+	J	TORET		:OTHERWISE EXIT
+:
+OS3	LR	R1,R14		:COPY MASK OF PORTS TO PROCESS
+	JEBS	OS2		:NONE... GO ON TO NEXT GROUP
+	JAL	R3,BIDH		:FIND FIRST
+	XH	R14,HMASK,R2,R2	:SET IT EXAMINED
+	LR	R1,R15		:COPY GROUP INDEX
+	SLHLS	R1,3		:MAKE GROUP INDEX INTO PORT OFFSET
+	AR	RPORT,R2	:MAKE PORT NUMBER
+	LR	R2,RPORT	:COPY PORT NUMBER
+	SLHLS	R2,2		:MAKE INTO FULLWORD INDEX
+	L	R0,ATIME,R2	:GET ACTIVATION TIME
+	S	R0,SLOWC,,	:SUBTRACT CURRENT TIME
+	JG	OS3		:NOT READY.. IGNORE FOR NOW
+	GETDCB			:GET DCB POINTER
+	JNFS	OS4		:SKIP IF GOT A DCB
+OSCR	JAL	R10,CRASH	:CRASH
+	BC	0,0,4*RDCB,CRNAR	:NO ACTIVATION ROUTINE
+:
+OS4	LHL	R4,DCBREF(ACTIVT)	:GET ACTIVATION ROUTINE
+	JEBS	OSCR		:CRASH IF NO ROUTINE
+	LA	R5,SEG|A.CODE|,R4	:SET UP ACTIVATION ADDRESS
+	STM	R14,TSAVE	:PRESERVE WORK REGISTERS
+	JAL	R4,ACTIV	:ACTIVATE
+	LM	R14,TSAVE	:RESTORE WORK REGISTERS
+	J	OS3		:GO BACK FOR MORE
+:
+:	SET AND CLEAR TIMEOUT ROUTINES
+:		LINK ON R4
+:		EXPECT R1 = PORT NUMBER
+:		       R0 = TIMEOUT INTERVAL IN SECONDS (SETTO)
+:		SMASHES R0
+:
+	GL	SETTO,CLRTO
+:
+SETTO	SBT	RPORT,PTIME	:SET PORT TIMEOUT INDICATOR
+	A	R0,SLOWC,,	:ADD TO CURRENT TIME
+	SLHLS	RPORT,2		:MAKE INTO FULLWORD POINTER
+	ST	R0,ATIME,RPORT	:STORE TIME
+	SRHLS	RPORT,2		:MAKE BACK INTO PORT NUMBER
+	JR	R4		:AND RETURN
+:
+CLRTO	RBT	RPORT,PTIME	:RESET PORT TIMEOUT INDICATIOR
+	JR	R4		:AND RETURN
+  EI
+:
+
+:	CONTROL MESSAGE ACTIVATION ROUTINES
+:
+:	TOSS A MESSAGE
+TOSS	LB	R0,LENGTH,R2	:PICK UP MESSAGE LENGTH
+	SIS	R0,1		:WE'VE ALREADY GOTTEN MESSAGE TYPE
+	AR	R14,R0		:ADVANCE POINTER TO END OF MSG
+	JR	R5		:RETURN
+:
+:	ZAPPER ACKNOWEDGEMENT
+:
+ZACK	EQ	.
+:
+:	DISCONNECT
+ZAP	JAL	R4,EMPTYI	:EMPTY INPUT BUFFER
+	JAL	R4,EMPTYO	:EMPTY OUTPUT BUFFER
+	RBT	RPORT,ACP	:SET PORT NOT ACTIVE
+	RBT	RPORT,DEM	:SET PORT NOT IN DEM
+	JR	R5		:RETURN
+:
+:	APPLY BACKPRESSURE
+NOSEND	RBT	RPORT,TOISIS	:TURN IT OFF FOR PORT
+	JR	R5		:RETURN
+:
+:	RELEASE BACKPRESSURE
+RESEND	SBT	RPORT,TOISIS	:TURN IT ON FOR PORT
+	JR	R5		:RETURN
+:
+:	GOBBLER
+GOBBLE	JAL	R4,EMPTYI	:EMPTY INPUT BUFFER
+	SBT	RPORT,FRISIS	:RELEASE BACKPRESSURE
+	JR	R5		:AND RETURN
+:
+:	FLUSH BACKWARD
+FLBACK	JAL	R4,EMPTYO	:EMPTY OUTPUT BUFFER
+	LIS	R0,3		:SEND GOBBLER IN OTHER DIRECTION
+	LHI	R2,GOBMSG	:CREATE MESSAGE
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+	JAL	R4,ELOR		:END IT
+	JR	R5		:AND RETURN
+:
+:	ENTER DEM
+EDEM	SBT	RPORT,DEM	:SET INDICATOR
+	JR	R5		:RETURN
+
+:
+:	LEAVE DEM
+LDEM	RBT	RPORT,DEM	:CLEAR INDICATOR
+	JR	R5		:RETURN
+:
+
+:	GREEN BALL
+GB	LIS	R0,3		: RETURN GREEN BALL
+	LHI	R2,GBMSG	:CREATE MESSAGE
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+	JAL	R4,ELOR		:END IT
+	JR	R5		:AND RETURN
+:
+:	RED BALL
+RB	LIS	R0,3		:RETURN THE RED BALL
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+	JAL	R4,ELOR		:END IT
+	JR	R5		:AND RETURN
+:
+:	ORANGE (OR BLACK) BALL
+OB	LIS	R0,3		:CREATE MESSAGE
+	LHI	R2,1,R2		:CREATE OTHER BALL OF PAIR
+	JAL	R4,SLOR		:START LOGICAL OUTPUT RECORD
+	JAL	R4,ELOR		:END IT
+	JR	R5		:AND RETURN
+:
+:	PSUEDO-NEEDLE
+PNEED	LB	R0,LENGTH,R2	:JUST TOSS IT
+	SIS	R0,1		:WE ALREADY GOT MSG TYPE
+	AR	R14,R0		:ADVANCE POINTER TO END OF MSG
+	LHI	R0,FIRST-1	:SET UP DEFAULT TRANSMIT LIMIT
+	STB	R0,XLIMIT,RPORT	:
+	SBT	RPORT,ACP	:SET PORT ACTIVE
+	SBT	RPORT,TOISIS	:CLEAR BACKPRESSURE
+	SBT	RPORT,FRISIS	:
+	JR	R5		:AND RETURN
+:
+:	TRANSMIT LIMIT
+XLIM	JAL	R4,GETCH	:GET RESTRICTION
+	CLHI	R0,FIRST-1	:RANGE CHECK
+	JLFS	XLIM1		:OK...SKIP
+	LHI	R0,FIRST-1	:OTHERWISE SET LIMIT
+XLIM1	STB	R0,XLIMIT,RPORT	:SET UP RESTRICTION
+	JR	R5		:AND RETURN
+:
+:	INVALID MESSAGE
+INVAL	JAL	R10,CRASH
+	BC	0,0,4*R5,CRINVM
+ IF	OUTPROC
+
+:	OUTPUT PROCESS ROUTINE
+:
+OUTPUT	ST	R0,RETPTR	:SAVE RETURN ADDRESS
+	LHI	R11,(NGRP-1)*2	:LOOP COUNTER
+OUTP1	LCS	R1,1		:SET UP MASK
+	STH	R1,PRTSVC	:SAVE PORT SERVICED MASK
+OUTP2	LHL	R1,ACP,R11	:GET ACTIVE PORTS INDICATOR
+	NH	R1,OUTDAT,R11	:AND WITH DATA WAITING INDICATOR
+	NH	R1,TOISIS,R11	:AND NOT BACKPRESSURED
+	NH	R1,PRTSVC	:AND NOT ALREADY SERVICED
+	JNFS	OUTP3		:SKIP IF ANYTHING TO DO
+	SIS	R11,2		:DECREMENT LOOP COUNTER
+	JGEBS	OUTP1		:LOOP
+	J	RET		:DONE... RETURN
+:
+OUTP3	JAL	R3,BIDH		:FIND PORT TO SERVICE
+	LR	R1,R11		:COPY PORT OFFSET
+	SLHLS	R1,3		:TIMES EIGHT
+	AR	RPORT,R2	:PORT NUMBER!
+	RBT	R2,PRTSVC	:CLEAR PORT TO BE SERVICED BIT
+	GETDCB			:GET DCB POINTER FOR PORT
+	JEFS	OUTCR			:CRASH NO DCB POINTER
+	LHL	R4,DCBREF(ACTIVO)	:GET OUTPUT ACTIVATION ROUTINE
+	JNFS	OUTP4			:GOT A ROUTINE...SKIP
+:
+OUTCR	JAL	R10,CRASH
+	BC	0,0,4*RDCB,CRNAR	:NO ACTIVATION ROUTINE
+:
+OUTP4	STH	R11,SLOOP	:SAVE LOOP COUNTER
+	LA	R5,SEG|A.CODE|,R4	:SET UP ACTIVATION ADDRESS
+	JAL	R4,ACTIV	:ACTIVATE
+	LHL	R11,SLOOP	:RESTORE LOOP POINTER
+	J	OUTP2		:LOOP
+:
+ EI
+:	DEFAULT CONTROL MESSAGE ACTIVATION TABLES
+:
+:	CALCULATE ROUTINE OFFSETS
+:
+XTOSS	EQ	TOSS-SEG|A.CODE|
+XZAP	EQ	ZAP-SEG|A.CODE|
+XZACK	EQ	ZACK-SEG|A.CODE|
+XNOSEND	EQ	NOSEND-SEG|A.CODE|
+XRESEND	EQ	RESEND-SEG|A.CODE|
+XGOBBLE	EQ	GOBBLE-SEG|A.CODE|
+XFLBACK	EQ	FLBACK-SEG|A.CODE|
+XEDEM	EQ	EDEM-SEG|A.CODE|
+XLDEM	EQ	LDEM-SEG|A.CODE|
+XGB	EQ	GB-SEG|A.CODE|
+XRB	EQ	RB-SEG|A.CODE|
+XOB	EQ	OB-SEG|A.CODE|
+XPNEED	EQ	PNEED-SEG|A.CODE|
+XXLIM	EQ	XLIM-SEG|A.CODE|
+XINVAL	EQ	INVAL-SEG|A.CODE|
+:
+:	TABLE CREATION MACROS
+:
+HTABVT	MACRO(TABNAM)
+[	SEG	A.CODE
+	GL	TABNAM
+TABNAM	HC	XZAP,XZAP,XNOSEND,XRESEND,XGOBBLE,XFLBACK	:9E - A3
+	HC	XOB,XTOSS,XEDEM,XLDEM,XTOSS,XTOSS		:A4 - A9
+	HC	XGB,XRB,XOB,XTOSS,XTOSS,XTOSS			:AA - AF
+	HC	XTOSS,XTOSS,XINVAL,XINVAL,XTOSS,XTOSS		:B0 - B5
+	HC	XTOSS,XINVAL,XTOSS,XXLIM,XTOSS,XZACK		:B6 - BB 
+	HC	XTOSS,XTOSS,XINVAL,XTOSS,XTOSS			:BC - C0
+]
+:
+HTABIA	MACRO(TABNAM)
+[	SEG	A.CODE
+	GL	TABNAM
+TABNAM	HC	XZAP,XZAP	:9E - 9F
+	RE	0B1-9F
+	HC	XTOSS
+	NOLIST
+	ER
+	LIST
+	HC	XPNEED,XINVAL	:B2 - B3
+	HC	XTOSS,XTOSS,XTOSS,XINVAL,XTOSS,XTOSS		:B4 - B9
+	HC	XTOSS,XZACK,XTOSS,XTOSS,XINVAL,XTOSS,XTOSS	:BA - C0
+]
+:
+CHGTAB	MACRO(TABNAM,MSGNUM,ROUTIN)
+[
+OLDORG	EQ	.
+	ORG	TABNAM+(MSGNUM-FIRST)*2
+	HC	ROUTIN-SEG|A.CODE|
+	ORG	OLDORG
+]
+	EM
+:
+        subttl  SHAMAN  Front end Interface
+        MO      .,TP
+
+	GL	DSTART
+
+:
+:UPDATE TRANSMIT LIMIT TO EACH ACTIVE PORT. NOTIFY PROCESSES THAT
+:HAVE REQUESTED NOTIFICATION.
+:
+        SEG     A.CODE
+SETXLM  LHI     R2,(NGRP-1)*2
+SETX10  LH      R0,TOISIS,R2                    :FOR PORTS NOT BACKPRESSURED
+        NH      R0,ACP,R2                       :AND ACTIVE
+SETX20  JFFOH   R0,SETX30                       :SET-UP XLIM
+        SIS     R2,2                            :TRY NEXT GROUP
+        JGEBS   SETX10
+        JR      R5                              :RETURN WHEN DONE
+:
+:UPDATE XMIT COUNT
+:
+SETX30  XH      R0,hmask,R1,R1                  :TURN OFF THIS BIT
+        SLLS    R2,3                            :COMPUTE PORT #
+        OR      R1,R2
+        SRLS    R2,3
+        LB      R3,XLIMIT,R1                    :LIMIT FOR OUTPUT
+        SLLS    R1,2                            :MAKE A FW POINTER
+        L       R12,PORTAB,R1                   :LOCATE DCB
+        SRLS    R1,2                            :RETURN TO PORT NUMBER
+        STH     R3,DXLIM,R12
+        J       SETX20                          :FIND ANOTHER
+:
+:look for room in the KIO rings
+:
+kroom	macro	[
+:
+:returns condition code of "equal" if there is not room in the KIO rings
+:returns condition code of "greater than" if there is room
+:
+:load pointers
+:
+	l	r8,drings,r12		:load KIO to-kernel ring addr
+	lh	r6,ktoemp,r8		:load empty pointer	
+	lh	r7,ktofil,r8		:load fill pointer
+:
+:compare fill with empty pointer
+:
+	sr	r6,r7			:find count of remaining bytes
+	jgefs	.+6			:ring wrap did not interfere
+:
+	ahi	r6,40			:compensate for ring wrap
+:
+:r6 now contains count of remaining bytes in ring
+:
+	jnfs	.+6			:if 0, ring can hold the max
+	lhi	r6,3f
+	chi	r6,2			:room for KIO output?
+]
+:
+:output to KIO to-kernel ring
+:expects register setup done in KROOM to be preserved
+:
+kioput	macro	[
+	stb	r0,kto+40,r8,r7		:output to KIO
+	ais	r7,1			:move KIO fill pointer
+	jlfs	.+6			:no ring wrap
+:
+	lhi	r7,-40			:wrap occurred
+	sis	r6,1			:out of room in KIO ring?
+	chi	r6,2
+]
+:FOR THOSE ACTIVE PORTS for
+:WHich BUFFER ACTIVATION IS ENABLED, WAKE THEM UP, DRAIN THE INPUT
+:BUFFER.  WHEN THE BUFFER IS DRY TURN OFF THIS ACTIVATION AND 
+:ACTIVATE ON THE INPUT RING.
+:
+:
+BUFACT  LHI     R2,(NGRP-1)*2
+	st	r5,bufa92
+BUFA05	lcs	r5,1			:init. KIO ports 
+	sth	r5,bufkio		:to know which are still buffered
+bufa10  LH      R0,BUFWAK,R2            :NEXT GROUP
+        NH      R0,ACP,R2               :ONLY ACTIVE PORTS
+	nh	r0,kiobio,r2		:only deal with KIO ports here
+	nh	r0,bufkio		:not if backed up by KIO
+        JFFOH   R0,BUFA20               :GO TO DO ANY ACTIVE PORT
+:
+        SIS     R2,2                    :GO ON TO NEXT GROUP
+        JGEBS   BUFA05
+	l	r5,bufa92		:recover return address
+        JR      R5
+:
+BUFA20  STH     R2,BUFA90               :SAVE CURRENT GROUP#
+:
+        SLLS    R2,3
+        OR      R1,R2                   :COMPUT PORT #
+:
+        SLLS    R1,2                    :COMPUTE FW INDEX
+        L       R12,PORTAB,R1           :LOCATE DCB
+        SRLS    R1,2                    :RESTORE PORT INDEX
+:
+:Dealing with a buffered DDT port - if there is now room to output
+:to the KIO rings, do so.
+:
+bufa25	kroom
+	jle	bufa85			 :no room - try next inn
+:
+	lis	r0,d.yell		:do we have a yellow ball
+	rbt	r0,dbits,r12		:pair waiting?
+	je	bufa28			:no
+:
+	chi	r6,2			:yes, but is there room?
+	jle	bufa85			:no - skip port
+:
+	lis	r0,1			:output first char
+	kioput
+	lhi	r0,0ff			:output second
+	kioput
+	jle	bufa48			:clean up & do next port
+:
+bufa28  LR      R10,R1                  :COMPUTE BUFFER NUMBER
+        SLLS    R10,1
+:
+BUFA30  LHL     R0,BCT,R10              :CHECK ON BUFFER COUNT
+        JE      BUFA60                  :EMPTY BUFFER
+        LR      R1,R10
+        JAL     R4,GCI
+:
+:Look for buffered control messages & translate
+:
+	lr	r0,r0			:null?
+	je	bufnul			:yes - control char?
+:
+bufa45	kioput				:output char to KIO ring
+	jg	bufa30			:still room in KIO rings
+:
+:
+:KIO to-kernel ring full OR BUFFER EMPTY
+:
+bufa48	lhl	r1,dport,r12		:remember there more data
+	rbt	r1,bufkio
+bufa50	sth	r7,ktofil,r8		:update KIO fill pointer
+        LHL     R2,BUFA90               :RESTOR GROUP #
+        J       bufa10
+:
+:BUFFER EMPTY TURN ON NORMAL INPUT.  Allow ISIS dispatcher to
+:deliver data for this port, and retrieve subsequent data via
+:DIN input routine
+:
+BUFA60  LHL     R1,DPORT,R12            :RELEASE BACKPRESSURE
+        SBT     R1,FRISIS
+	lh	r2,bufa90		:note buffer is empty
+	rbt 	r1,bufwak,r2
+	lis	r0,3
+	lhi	r2,sndmsg		:allow msgs for this port
+	jal	r4,slor
+	jal	r4,elor
+        J       BUfa50
+:
+:NO OUTPUT SPACE
+:
+BUFA85  rBT     R1,BUFkio		:remember data for this port
+        LHL     R2,BUFA90		:is still being buffered
+        J       bufa10			:do next port in group
+:
+:control message processing
+:
+bufnul	jal	r4,gci			:get next buffered char
+	chi	r0,8			:escaped?
+	jge	bufn05			:no = ball logic
+	lr	r11,r0			:stuff the char - output 0 1st
+	lis	r0,0
+	kioput
+	lr	r0,r11
+	j 	bufa45
+:
+bufn05	chi	r0,0aa			:green ball?
+	jnfs	bufn10			:no
+:
+	lis	r0,5			:translate GB & output to KIO
+	j	bufa45
+:
+bufn10	chi	r0,0ab			:red ball?
+	jnfs	bufn20			:no
+:
+	lis	r0,7			:translate RB & output to KIO
+	j	bufa45
+:
+bufn20	chi	r0,0ac			:yellow ball
+	jn	bufbad			:buffer problem
+	chi	r6,2			:can whole pair be output?
+	jgefs	bufn30			:output pair
+:
+	lis	r0,d.yell		:remember to output pair
+	sbt	r0,dbits,r12		:now that it's out of buffer
+	j	bufa48			:clean up & return
+:
+bufn30	lis	r0,1			:output first character 
+	kioput
+	lhi	r0,0ff			:output second
+	j	bufa45
+:
+bufbad	jal	r10,crash		:crash during activation
+	hc	0
+	bc	4*r5,bufcsh
+        SEG     0
+bufkio	hs	2
+BUFA90  HS      1
+BUFA92  WS      1
+
+        GL     ANSHST,SETXLM
+:
+:This module contains the routines necessary to interface with
+:FRNTND and Fring.
+:
+:Data Activation:
+:This is the entry that receives data messages from FRNTND.  It
+:must activate a subroutine that wants the data.  It may be
+:necessary to buffer the data if the activation routine is
+:backpressured.  If this is the case then ISIS must be
+:backpressured as well.  Eventually this buffer will be
+:relieved.
+:
+:
+:register conventions:
+:
+:       R0      Data character
+:       R2      count of chars remaining in msg including current
+:       R7      CURRENT BUFFER ADDRESS (HW)
+:       R8      CURRENT RING POINTER
+:       R10     NUMBER OF CHARACTERS REMAINING IN MESSAGE + 1
+:       R12     DCB base address
+:       R13     stack pointer
+:
+:       R1      common linkage register
+:
+:       all other registers may be destroyed by this routine and
+:       external routines may destroy them as well.
+:
+        SEG     A.CODE
+din	lr	r10,r2			:r10 won't get clobbered
+	tbt	r1,kiobio		:dealing with KIO?
+	je	dinlod			:process downline load
+:
+        TBT     R1,FRISIS		:is port backpressured?
+        JE      DIN020
+:
+:WE ARE NOT BACKPRESSURED THEREFORE WE MUST 
+:look to see if the KIO rings have room for output
+:
+:look to see if there's room in the KIO rings
+:
+	kroom
+:r6 now contains count of remaining bytes in ring
+:
+	jgfs	din010			:yes - get character & output
+:
+	ais	r10,1			:prepare to backpressure
+	j	din017
+:
+DIN010  JAL     R4,GETCH
+	chi	r0,8			:char needing escape?
+	jge	din012
+:
+	lr	r2,r0			:save character
+	lis	r0,0			:escape it
+	kioput
+	lr	r0,r2			:get rid of char itself
+din012	kioput				:output to to-kernel KIO ring
+:
+:r6 contains remining count of available bytes in KIO ring
+:If this count is 1 or less backpressure isis
+:
+	jlefs	din015			:backpressure ISIS
+        SIS     R10,1			:was msg completely read?
+        JG      DIN010			:no-continue
+:
+:
+din015	sth	r7,ktofil,r8		:update fill pointer
+        LR      R10,R10                 :DID WE GET HERE BY BACKPRESSURE
+        JER     R5                      :RETURN IF NOT
+:
+:BACKPRESSURED
+:
+din017  LHL     R1,DPORT,R12            :SET BIT TO ISIS
+	sbt	r1,bufwak		:remember to empty buffer,stupid!
+        RBT     R1,FRISIS
+	lis	r0,3			:be good & send msg
+	lhi	r2,nosmsg
+	jal	r4,slor
+	jal	r4,elor	
+:
+        SIS     R10,1                    :IS THERE SOMETHING TO BUFFER
+        JER     R5                      :NO QUIT
+:
+:user is to be backpressured. Place the data into bufferlets
+:to await the user at some later time.
+:
+DIN020  JAL     R4,GETCH                :COPY OUT THE DATA IN THE MESSAGE
+:
+	slls	r1,1			:make bufferlet index
+	chi	r0,8			:need an escape
+	jgefs	din040			:null is used to escape cont msgs
+:
+	lr	r11,r0			:stash the character
+	lis	r0,0			:prefix a zero
+	jal	r4,wci			:(how could you forget this U idiot!)
+	lr	r0,r11
+:
+din040  JAL     R4,WCI                  :PASS DATA ON TO BUFFER
+	srls	r1,1			:make port index
+        SIS     R10,1			:all stored?
+        JGBS    DIN020			:keep shovelling
+        JR      R5
+:
+:
+:DINLOD processes the ISIS input for downline loads.
+:
+:character count is in R10
+:
+dinlod	lis	r3,l.macw		:see if waiting for machine #
+	rbt	r3,dbio,r12	
+	je	dindat			:no - this is data
+:
+	jal	r4,getch
+	chi	r0,nmach		:is this a valid machine #?
+	jg	dinzap			:zap the circuit
+:	
+	lr	r0,r0			:0 not valid machine #
+	je	dinzap			:zap the circuit
+:
+	lr	r3,r0			:connect a port # with mach #
+	slls	r3,1			:form hw index from machine #
+	LH	R2,MACTAB,R3		:IS MACH CURRENTLY IN USE
+	JGE	DINZAP	 		:IF SO, ZAP THE CIRCUIT
+:
+:received valid machine number - remember it
+:
+	sth	r0,dmach,r12		:remember machine #
+	sth	r1,mactab,r3		:store port #
+	lis	r3,l.macf		:note machine # sent by load
+	sbt	r3,dbio,r12
+:	
+:put this port # on the active queue indicating there's output
+:for XPI
+:
+	jal	r4,qpout			
+	jr	r5			:return
+:
+
+dindat	lis	r3,l.sync		:looking for sync pair?
+	tbt	r3,dbio,r12
+	je	dincnt			:no - collecting data?
+:
+:look for sync pair
+:
+dind05	lr	r10,r10			:any chars left in msg?
+	jer	r5			:no -return
+:
+dind10	jal	r4,getch		:get a char from IRING
+	sis	r10,1			:is this the last char?
+	jer	r5			:if so, can't be a pair
+:
+	clhi	r0,32			:first synch char?
+	jnbs	dind10			:no-keep looking
+:
+	jal	r4,getch		:look for 2nd sync
+	sis	r10,1			:decrement msg count
+	clhi	r0,32
+	jn	dind05			:not a sync pair-look again
+:
+:found a sync pair - initialize chars accumulated for XPI buffer
+:& store syncs in library bufferlets
+:
+	lhl	r1,dport,r12		:make bufferlet index
+	slls	r1,1
+	jal	r4,wci			:place syncs in bufferlet
+	lhi	r0,32
+	jal	r4,wci
+	lis	r0,2			:init BIO buffer count
+	sth	r0,dlodct,r12
+:
+	lis	r3,l.sync		:reset synch search bit
+	rbt	r3,dbio,r12
+:
+	lis	r3,l.cnt		:note accumulating BIO chars
+	sbt	r3,dbio,r12
+:
+:accumulate characters for BIO buffer - store in library bufferlets
+:until there is a full 66 (decimal) characters to retrieve for BIO buffer
+:
+dincnt	lr	r10,r10			:is msg count exhausted?
+	jer	r5	
+:
+	lis	r3,l.cnt		:counting characters?
+	tbt	r3,dbio,r12	
+:ACHTUNG! FOLLOWING TRAP SAYS THERE IS CRAP COMING FROM LOADS
+:BEFORE SHAMAN HAS DONE INITIALIZATION STUFF
+	jefs	.			
+:
+	lhl	r1,dport,r12		:make bufferlet index
+	lh	r11,dlodct,r12		:get prev. char count
+:
+dinc20	jal	r4,getch		:get char from IRING
+	slls	r1,1			:make buffer index
+	jal	r4,wci			:buffer it
+	srls	r1,1			:return to port #
+	ais	r11,1			:account for this char
+	chi	r11,42			:full BIO buffer?
+	jgefs	dinc40			:yes
+:
+	sis	r10,1			:finished with IRING msg?
+	jgbs	dinc20			:no - read more
+:
+	sth	r11,dlodct,r12		:yes- update counter
+	jr	r5			:& return
+:
+:found a full KIO buffer's worth of characters
+:
+dinc40	lh	r11,dbufct,r12		:load count of full buffers
+	chi	r11,3			:is there already > 1?
+	jnfs	dinc50			:no - just increment
+:
+	lhl	r1,dport,r12		:backpressure port
+	rbt	r1,frisis
+	lis	r0,3			:send msg like a good shaman
+	lhi	r2,nosmsg
+	jal	r4,slor
+	jal	r4,elor
+:
+dinc50	lh	r11,dbufct,r12
+	ais	r11,1			:up count of full BIO buffers
+	sth	r11,dbufct,r12
+:
+	lis	r3,l.sync		:start looking for sync pair
+	sbt	r3,dbio,r12
+:
+	lis	r3,l.cnt		:quit accumulating chars
+	rbt	r3,dbio,r12
+:
+	lhl	r1,dport,r12		:place port on XPI out queue
+	jal	r4,qpout
+	sis	r10,1			:dec IRING msg count
+	jer	r5			:return
+:
+	j	dind10			:look for sync pair
+:
+:
+: ZAP DOWNLINE LOAD CIRCUIT
+:
+dinzap	sis	r10,1			:see if the msg length=1
+	je	dinz10			:yes - just zap circuit
+
+	lr	r0,r10			:no - first flush rest of msg
+	jal	r4,flush
+
+DINZ10	J	HZ10			:ZAP CIRCUIT
+
+:
+:
+:Needle Activation Routine
+:
+:This routine must
+:       1)establish a DCB for this port and initialize it
+:	2)define port as DDT circuit versus downline load
+:	3)if DDT circuit, send TID & username to KIO
+:
+:Register contents
+:	r2	username length
+:	r6	invoice
+:	r7	destination host
+:	r8	source node
+:	r9	source host
+:	r10	source port
+:	r11	dialect code
+:	r13	TID
+:
+ACTIVN  L       R12,NXTDCB              :GET A DCB
+        SLLS    R1,2                    :MAKE FW POINTER
+        ST      R12,PORTAB,R1           :SET IT UP FOR THIS PORT
+        L       R0,DLINK,R12            :GET FORWARD LINK
+        ST      R0,NXTDCB               :USE THAT ONE NEXT
+	stb	r2,inlth		:remember username length
+:
+:clean up bit arrays
+:
+	lis	r0,0
+	sth	r0,dbits,r12
+	sth	r0,dbio,r12
+:
+:We now have a DCB and the terminal PORTAB index is pointing at
+:it.  Initial values must be set-up
+:
+        SRLS    R1,2                    :RESTORE PORT NUMBER
+        STH     R1,dPORT,R12            :SAVE PORT#
+:
+        RBT     R1,BUFWAK               :TURN OFF BUFFER WAKE-UP
+:
+:
+	LB      R0,XLIMIT,R1            :ALLOW INITIAL OUTPUT COUNT
+        STH     R0,DXLIM,R12
+	TS	DMACH,R12		:SET MACHINE # INACTIVE
+        SLLS    R1,1
+        JAL     R4,EMPTY,,
+        LIS     R0,1			:SET BUFFER FLAG NON ZERO
+        STH     R0,BF,R1
+	SRLS	R1,1			:RETURN TO PORT INDEX
+        LA      R0,tRMNX       		:CONTROL TABLE FOR isis messages
+        STH     R0,dCACT,R12
+        LA      R0,DIN     		:DATA ACTIVATION ADDRESS
+        STH     R0,dDACT,R12
+:
+:find out if this is a downline load, as indicated by username "SHAMAN"
+:
+	lb	r2,inlth		:first check username length
+	clhi	r2,7			:is it same as SHAMAN+cr?
+	jn	ddtwlt			:must be DDT logon
+:
+actn45	sis	r2,1			:index to SHALOD=total lngth-1
+actn50	jal	r4,getch		:get username character
+	nhi	r0,7f			:drop parity bit
+	clb	r0,shalod,r2		:compare with comp char in SHAMAN	
+	jn	ddtrlt			:if different, must be DDT logon
+:
+	sis	r2,1			:check next position
+	jnbs	actn50			:not done checking
+:
+:username = SHAMAN.  Remember to consider the next data byte a
+:machine number and to note that this circuit is for a LAN load.
+:	
+:
+	jal	r4,getch		:throw out carriage return
+	rbt	r1,kiobio		:mark as downline load(via port#)
+	lis	r2,0			:init. buffer count
+	sth	r2,dbufct,r12		
+	sth	r2,dbio,r12		:init. status  bits
+	lis	r2,l.macw		:remember waiting for machno
+	sbt	r2,dbio,r12
+	jr	r5			:done processing
+:
+:Processing for a DDT logon follows.
+:If the length of the username provided the indication that the
+:username was not "SHAMAN", no characters have yet been read from
+:the dispatcher rings.  Entry to this processing will be "DDTWLT"
+:if the username length was other than 6.
+:
+:However, if one or more characters were read from the dispatcher
+:ring before it was found that the username was not SHAMAN, those
+:characters must be output to KIO before char(s) still in IRING.
+:Entry is "DDTRLT" - DDT right length
+:
+ddtrlt	lis	r3,d.lth		:indicate username length of 6
+	sbt	r3,dbits,r12
+	stb	r0,ddtchr		:save the discriminating character
+	lis	r3,6			:find how many chars coincided
+	sr	r3,r2
+	stb	r3,ddtsam		:save this for later
+	sis 	r2,1			:save # chars still in IRING
+	stb	r2,ddtlth
+	jfs	ddttid
+:
+ddtwlt	stb	r2,ddtlth		:just save username length
+:
+:Send out TID to KIO ring
+:
+ddttid	lhl	r1,dport,r12		:get a KIO ring
+	slls	r1,2			:make fw index
+	l	r8,rngtab,r1
+	srls	r1,2
+	st	r8,drings,r12		:remember it
+	lhi	r0,-40			:init. pointers
+	sth	r0,ktofil,r8
+	sth	r0,ktoemp,r8
+	sth	r0,kfrfil,r8
+	sth	r0,kfremp,r8
+	sbt	r1,kiobio		:note this is a DDT circuit
+	lr	r3,r1			:calculate bit address of KDATIN
+	ai	r3,kdatin*8
+	st	r3,rngnxt+4		:store KDATIN
+	ai	r3,(kwrdin-kdatin)*8	:calculate bit address of KWRDIN
+	st	r3,rngnxt+8		:store KWRDIN @
+	st	r8,rngnxt		:store parameter list @
+	la	r0,rngnxt		:connect rings to KIO
+	rbt	r1,kwrdin		:init bit arrays
+	rbt 	r1,kdatin
+	svc	2,$a 36
+	j	ddtbad			:error return
+	KROOM				:room for TID?
+	jle	actn80			:rings should be empty
+:
+	lr	r0,r13			:output TID to KIO ring
+	KIOPUT
+	jle	actn80
+:
+	lis	r0,0f			:send 3 throwaway chars
+	lis	r3,3
+:
+ddtthw	KIOPUT
+	jle	actn80
+:
+	sis	r3,1			:done
+	jg	ddtthw
+:
+:Check to see if we have the situation where some characters 
+:coincided with username "SHAMAN"
+:
+	lis	r3,d.lth		:did we note that length=6?
+	tbt	r3,dbits,r12		
+	je	ddtget			:no - get all chars from IRING
+:
+	lb	r3,ddtsam		:are some chars the same?
+	je	ddtwrg			:no-just output "wrong" char
+:
+:Output the characters that coincided with "SHAMAN"
+:
+	lis	r4,6
+ddtgsh	lb	r0,shalod,r4		:get coincidental character
+	KIOPUT				:output it
+	jle	actn80
+:
+	sis	r3,1			:done?
+	jefs	ddtwrg			:yes-output "wrong" character
+:
+	sis	r4,1			:no-put out next char from SHAMAN
+	j	ddtgsh
+:
+:Output	the character which differentiated this username from SHAMAN
+:
+ddtwrg	lb	r0,ddtchr		:resurrect this character
+	KIOPUT				:output it
+	jle	actn80
+:
+:Get (remaining)characters of username from dispatcher IRING
+:& output them
+:
+ddtget	lb	r3,ddtlth		:get # chars still in IRING
+ddtg10	jal	r4,getch	
+:
+	KIOPUT				:output to KIO
+	jle	actn80
+:
+	sis	r3,1			:done outputting username?
+	jg	ddtg10	
+:
+:If username length is odd, toss an extra char to KIO
+:
+	lis	r3,7			:else test low order bit of lngth
+	tbt	r3,inlth
+	je	actdon			:zero-done
+:
+	KIOPUT				:toss character
+	jle	actn80
+:
+actdon	sth	r7,ktofil,r8
+	jr	r5			
+:
+ACTN80  JAL     R10,CRASH               :CRASH DURING ACTIVATION
+        HC      0
+        BC      4*R5,ACTCSH
+:
+ddtbad	jal	r10,crash		:error return from ring conn
+	hc	0
+	bc	4*r5,concsh
+:
+	seg	0
+shalod	bc	06,4e,41,4d,41,48,53	:"NAMAHS" username
+ddtlth	bs	1			:# username chars in IRING
+ddtsam	bs	1			:#chars same as SHAMAN initially
+ddtchr	bs	1			:1st char diff. from SHAMAN	
+inlth	bs	1			:save incoming length
+	lo	frntnd
+	seg	a.code
+:
+:Control message handling
+:
+hzap	tbt	r1,kiobio		:DDT or load circuit?
+	jnfs	hzkio			:skip if DDT
+:
+:handle a zapper for a BIO circuit
+:
+	lis	r3,l.zap		:remember to zap in BIOPUT
+	sbt	r3,dbio,r12
+	jal	r4,qpout		:place on queue for BIOPUT
+	jr	r5			:return
+:
+:this section handles disconnection of KIO rings & clean-up
+:
+hzkio	l	r0,drings,r12		:have rings been connected?
+	jl	hz10
+:
+	lhl	r1,dport,r12		:load port #
+	svc	2,$a 37			:disconnect KIO rings
+	j	hzbad			:error return
+	lcs	r0,1			:mark as disconnected
+	st	r0,drings,r12
+:
+:this section takes care of zapping circuits in the ISIS dispatcher
+:direction
+:
+hz10	lh	r1,dport,r12		:load port #
+	jlr	r5			:port already trashed
+:
+	LH	R2,DMACH,R12		:IS MACH IN USE FOR THIS PORT
+	JL	HZ20			:SKIP, IF NOT
+	TS	MACTAB,R2,R2		:SET PORT INACTIVE FOR MACH
+
+HZ20	la	r2,dfldcb,,		:set up default DCB
+	slls	r1,2			:make index
+	st	r2,portab,r1
+	srls	r1,2			:unmake index
+	l	r2,nxtdcb
+	st	r2,dlink,r12		:put DCB back on list
+	st	r12,nxtdcb
+	lcs	r0,1			:note that this port zapped
+	sth	r0,dport,r12
+	lis	r0,3			:send detach msg to ISIS
+	lhi	r2,9e
+	jal	r4,slor,,
+	jal	r4,elor,,
+	j	zap,,
+:
+hzbad	jal	r10,crash,,		:error return from disconn.
+	hc	0
+	bc	4*r5,discsh
+	seg	a.code
+
+:	PUTS DETACH MESSAGE IN OUTPUT RING FOR THE PORT AND
+:	RETURNS ON R5
+
+ZAPIT	LIS	R0,3			:MESSAGE LENGTH
+	LHL	R1,DPORT,R12		:PORT #
+	LHI	R2,9E			:DETACH MESSAGE
+	JAL	R4,SLOR,,		:START OUTPUT
+	JAL	R4,ELOR,,		:END OUTPUT
+	JR	R5			:RETURN
+:
+:following handles calls from FRNTND zap routine
+:
+emptyo	jr	r4			
+emptyi	st	r4,emptsv		:save return
+	slls	r1,1			:make bufferlet index
+	jal	r4,empty,,
+	srls	r1,1			:make port #
+	l	r4,emptsv		:return
+	jr	r4
+	seg	0
+emptsv	ws	1			:save @ for return to zap
+	seg	a.code	
+:
+:handle gobbler
+:
+hgob	tbt	r1,kiobio		:IS IT A BIO CIRCUIT?
+	JE	HGOB1			:SKIP, IF SO
+	JAL	R4,EMPTYI		:EMPTY INPUT BUFFER
+	SBT	RPORT,FRISIS		:RELEASE BACKPRESSURE
+	LHI	R0,0A2			:PRIME INMSG
+	STH	R0,INMSG
+	LIS	R0,2			:PRIME OUTMSG
+	STH	R0,OUTMSG
+	J	GENENT,,		:"GENERIC ENTRY" TO CTR MSGS
+:
+HGOB1	jal	r4,eatit		:handle like black ball
+	j 	gobble,,
+:
+:handle black ball
+:
+hblk	tbt	r1,kiobio		:DDT or downline load?
+	jn	ob,,			:handle routinely if DDT
+:
+	jal	r4,eatit
+	j	ob,,
+:
+:eatit routine zaps bufferlets, BIO buffers, etc. & notes that
+:a sync-sync search is underway
+:
+eatit	slls	r1,1			:flush bufferlets for port
+	st	r4,eatret
+	jal	r4,empty,,
+	srls	r1,1			:get port #
+	lis	r3,l.sync		:look for sync pair
+	sbt	r3,dbio,r12		
+	lis	r3,l.cnt		:don't accumulate buffer chars
+	rbt	r3,dbio,r12
+	lis	r3,0			:init # buffers waiting
+	sth	r3,dbufct,r12		
+	l	r4,eatret
+	jr	r4
+:
+	seg	0
+eatret	ws	1
+	seg	a.code
+:
+:handle EDEM
+:
+hedm	tbt	r1,kiobio		:if downline load, routine
+	jer	r5
+:
+	lhi	r0,0a6			:prime INMSG
+	sth	r0,inmsg
+	lis	r0,7			:prime OUTMSG
+	sth	r0,outmsg
+genent	slls	r1,1			:move into buffer index
+	lhl	r0,bct,r1		:is data buffered
+	je	he10			:no - try & send out msg
+:
+he05	lis	r0,0			:buffer null escape char
+	jal	r4,wci
+	lh	r0,inmsg		:buffer control msg
+	jal	r4,wci
+	srls	r1,1			:make R1 a port #
+	jr	r5
+:
+he10	srls	r1,1			:make R1 port #
+	l	r8,drings,r12		:is KIO ring connected?
+	jlr	r5			:no - return
+:
+	kroom				:room to output to KIO?
+	jle	he20			:no - backpressure & buffer
+:
+	lh	r0,outmsg		:output msg to KIO ring
+	chi	r0,1			:yellow ball-output a pair?
+	jn	he15			:no - single char output
+:
+	chi	r6,2			:must be room for 2 chars
+	jle	he20			:nope - backpress & buffer
+	kioput				:output the 01
+	lhi	r0,0ff			:prepare to output the FF
+:
+he15	kioput
+	sth	r7,ktofil,r8		:update pointer
+	jr	r5
+:
+he20	lhl	r1,dport,r12
+	rbt	r1,frisis		:set backpressure & send msg
+	lis	r3,0
+	lhi	r2,nosmsg	
+	jal	r4,slor
+	jal	r4,elor
+:
+	lhl	r1,dport,r12
+	slls	r1,1			:create buffer index
+	j	he05			:buffer the pair		
+:
+	seg	0
+:
+inmsg	hs	1
+outmsg	hs	1
+	seg	a.code
+:
+:handle LDEM
+:
+hldm	tbt	r1,kiobio		:if downline load, routine
+	jer	r5
+:
+	lhi	r0,0a7			:prime INMSG
+	sth	r0,inmsg
+	lis	r0,4			:prime OUTMSG
+	sth	r0,outmsg
+	j	genent,,			:"generic entry" to ctr msgs.
+:
+:handle green balls
+:
+hgb	tbt	r1,kiobio		:if downline load, routine
+	je	gb,,
+:
+	lhi	r0,0aa			:prime INMSG
+	sth	r0,inmsg
+	lis	r0,5			:prime OUTMSG
+	sth	r0,outmsg
+	j	genent,,			:"generic entry" to ctr msgs.
+:
+:handle red balls
+:
+hrb	tbt	r1,kiobio		:if downline load, routine
+	je	rb,,
+:
+	lhi	r0,0ab			:prime INMSG
+	sth	r0,inmsg
+	lis	r0,6			:prime OUTMSG
+	sth	r0,outmsg
+	j	genent,,			:"generic entry" to ctr msgs.
+:
+:handle yellow balls
+:
+hyb	tbt	r1,kiobio		:if downline load, routine
+	je	ob,,
+:
+	lhi	r0,0ac			:prime INMSG
+	sth	r0,inmsg
+	lis	r0,1			:prime OUTMSG
+	sth	r0,outmsg
+	j	genent,,			:"generic entry" to ctr msgs.
+	fo	frntnd
+:
+:  START ADDRESS FOR DDT ?STAT
+:
+
+DSTART	JAL	R5,DBAN			:DISPLAY BANNER
+	JAL	R5,DSYM			:DISPLAY SYMBOL TABLE
+	SVC	KIO,1			:RETURN TO DDT
+
+:
+:  THIS ROUTINE OUTPUTS THE SYMBOLS DEFINED IN SYMTBL TABLE
+:
+
+
+DSYM	LA	R2,SYMTBL		:GET TABLE ADDRESS
+	L	R3,0,R2			:GET LENGTH OF TABLE
+	SVC	0B,CRLF			:GET NEW LINE
+
+DSYM1	SHI	R2,SYMLEN		:GO TO NEXT ENTRY
+	SHI	R3,SYMLEN		:DECREMENT COUNT
+	JLR	R5			:RETURN IF FINISHED
+	SVC	0B,0,R2			:OUTPUT SYMBOL
+	L	R0,SYMLEN-4,R2		:GET SYMBOL ADDRESS
+	LHI	R1,530			:SET UP CNTL INFO
+	SVC	KIO,$A10		:OUTPUT ADDRESS
+	SVC	0B,CRLF			:OUTPUT 'CR' & 'LF'
+	J	DSYM1			:DO NEXT ENTRY
+
+:  THIS ROUTINE DISPLAYS THE FOLLOWING BANNER:
+:
+:  	SHAMAN VVV.RRRx
+:	
+:	V - VERSION #
+:	R - REVISION LEVEL
+:	x - BETATEST VERSION IDENTIFIER
+
+DBAN	SVC	0B,BANNER		:OUTPUT FIRST PART OF BANNER
+	LI	R0,VERSION		:GET VERSION #
+	LHI	R1,308			:3 OCTAL DIGITS
+	SVC	KIO,$A 10		:OUTPUT VERSION
+	SVC	0B,DECM			:OUTPUT DECIMAL
+	LI	R0,REVLEV		:GET REVISION LEVEL
+	LHI	R1,348			:3 OCTAL DIGITS, ZERO FILL
+	SVC	KIO,$A 10		:OUTPUT REVISION LEVEL
+	SVC	0B,BETAV		:OUTPUT BETATEST IDENTIFIER
+	SVC	0B,CRLF			:GET A NEW LINE
+	JR	R5			:RETURN
+
+	SEG	A.DATA
+CRLF	SC	/"8D"8A/
+BANNER	SC	/"8D"8A     SHAMAN /
+DECM	SC	/./
+
+
+	SEG	A.CODE
+:       ACTIV0 - ACTIVATION ADDRESS FOR PORT 0 MSGS
+POLMSG  EQ      10                      : LAST LEGAL PORT 0 MSG TYPE
+ACTIV0  CHI     R2,POLMSG               : LEGAL MSG TYPE ?
+        JG      POM30                   :   N - CRASH
+        SLHLS   R2,2                    : MAKE R2 INTO INDEX
+        J       P0MSG,R2                : PROCESS MSG BY TYPE
+ 
+ 
+:       P0MSG - JUMP TABLE FOR PORT 0 MSGS
+P0MSG   J       POM10                   : TYPE 0
+        J       POM10                   : TYPE 1
+        J       ANSHST                  : TYPE 2 NODE HAS BEEN TAKEN OVER
+        J       POM30                   : TYPE 3
+        J       POM30                   : TYPE 4
+        J       POM30                   : TYPE 5
+        J       POM20                   : TYPE 6
+        J       POM30                   : TYPE 7
+        J       POM30                   : TYPE 8
+        J       pom40                   : TYPE 9
+        J       POM30                   : TYPE A
+        J       POM30                   : TYPE B
+        J       POM30                   : TYPE C
+        J       POM10                   : TYPE D
+        J       POM10                   : TYPE E
+        J       POM30                   : TYPE F
+        J       POM30                   : TYPE 10
+ 
+POM10   JR      R5                      : JUST RETURN
+ 
+POM20                                   : MSG TYPE 6 - GMT
+        JAL     R4,GETCH,,              : SKIP CHAR
+        JAL     R4,GETW,,               : SKIP GMT
+        JR      R5                      : RETURN
+ 
+POM30   JAL     R10,CRASH,,             : GOT WRONG MSG TYPE - CRASH
+ 
+POM40   JAL     R4,GETCH,,              : GET TO END OF MSG
+        JAL     R4,GETH,,
+        JR      R5
+:
+:ANSHST ANSWER HOST
+:       LINK ON R5
+:
+ANSHST  LIS     R0,$A14                 :14 BYTE MSG
+        LIS     R1,0                    :PORT 0
+        LHI     R2,10                   :MSSAGE TYPE
+        JAL     R4,slor,,               :START OUTPUT
+        LIS     R0,0                    :NEXT BYTE NULL
+        JAL     R4,putch,,
+:
+        LHI     R0,HOST0                :HOST NUMBER
+        JAL     R4,puth,,
+        LHI     R0,maxprt               :NUMBER OF PORTS
+        JAL     R4,puth,,
+        LIS     R0,0                    :RELATIVE HOST NUMBER
+        JAL     R4,PUTW,,               :STATE AND HKEY
+        LHI     R0,PID                  :HIQ+PID (not IIX capable)
+        JAL     R4,puth,,
+        JAL     R4,elor,,                 :DONE!
+	la	r0,biobfr		:establish BIO buffer location
+	svc	sys,$a 48		
+	j	ansbad			:bad return
+        JR      R5
+:
+ansbad	jal	r10,crash,,
+	hc	0			:crash if error return from SVC
+	bc	4*r5,khcsh
+
+:
+:TABLES FOR FRONT END
+:
+        SEG     1
+        LO      FRNTND
+:
+:TERM CONTROL TABLE IIX DISALLOWED
+:
+        HTABVT(TRMNX)
+	CHGTAB(TRMNX,9E,HZAP)		:ZAPPER HANDLING
+        CHGTAB(TRMNX,9F,hZAP)		:zapper handling
+        CHGTAB(TRMNX,0A2,hgob)		:gobbler handling
+	chgtab(trmnx,0a4,hblk)		:handle black balls
+        CHGTAB(TRMNX,0A6,hedm)		:enter deferred echo mode
+        CHGTAB(TRMNX,0A7,hldm)		:leave deferred echo mode
+        CHGTAB(TRMNX,0AA,hGB)           :GREEN BALL HANDLING
+        CHGTAB(TRMNX,0Ab,hrb)		:red ball handling
+        CHGTAB(TRMNX,0Ac,hyb)		:yellow ball handling
+:
+	htabia(anyold)			:USE TABLE FOR INACTIVE PORTS
+        FO    FRNTND
+        EM
+        SUBTTL  EXEC...INITIALIZATION
+        GL      START,ANSHST,SETXLM,BUFACT
+        SEG     A.CODE
+START   JAL     R5,ANSHST               :ANSWER OUR HOST
+	jal	r0,izt			:initialize timout
+        JAL     R5,IZBF                 :INITIALIZE BUFFERS
+        JAL     R0,IZFRNT               :FRONT END PROCESSES
+        JAL     R5,IZDCB                :INITIALIZE CCB'S
+	jal	r5,izmact		:initialize machine table
+        JAL     R5,izrng               :INITIALIZE KIO rings
+	jal	r5,izbio		:initialize BIO status
+:
+exec    JAL     R5,SETXLM
+        JAL     R5,BUFACT
+	jal	r5,kioget
+ 	jal	r5,bioget
+	jal	r5,bioput
+        JAL     R0,INPUT                :DO FRNTND INPUT
+        SVC     FASTD
+        J       EXEC
+        SUBTTL  Control Table Allocation and Diagnostics - FINISH.LIB
+ 
+:**********************************************************************
+:                                                                     *
+:       This program is the sole property and confidential            *
+:       information of Tymshare, Inc., and may not be copied          *
+:       in whole or in part or disclosed to any third party           *
+:       without the prior written consent of Tymshare.                *
+:                                                                     *
+:**********************************************************************
+
+	RA	0		:	FINISH.LIB
+
+:	this file should always be assembled LAST!
+
+:ALLOCATE FPANEL IF USER HAS NOT
+  IF	\FPANEL
+  ELSE
+	SEG	A.DATA
+FPANEL  HS      1
+  EI
+  IF	\FRISIS
+  ELSE
+	SEG	0
+FRISIS	HS	$A (MAXPRT+15)/16
+  EI
+  IF	\TOISIS
+  ELSE
+	SEG	0
+TOISIS	HS	$A (MAXPRT+15)/16
+  EI
+
+:GENERATE DIAGNOSTICS
+Q	EQ	0
+	NOLIST
+	RE	0F
+SEG|Q|	EQ	SEG|Q|&07FFFFFFF
+	IF	SEG|Q|%(Q*10000)
+	REMARK	%"SEG
+	NUMBER	Q
+	REMARK	" has been redefined
+	EI
+
+  IF	1-(\PATCH0)
+	SEG	0
+PATCH0	WS	20	:SEGMENT ZERO PATCH AREA
+  EI
+  IF	1-(\PATCH1)
+	SEG	1
+PATCH1	WS	20	:SEGMENT ONE PATCH AREA
+  EI
+  IF	1-(\PATCH2)
+	SEG	2
+PATCH2	WS	20	:SEGMENT TWO PATCH AREA
+  EI
+:	DEFINE SIZES
+	SEG	Q
+S|Q|SIZE EQ	.-SEG|Q|
+Q	EQ	Q+1
+	ER
+	LIST
+
+:	BITCH IF ANY SEGMENTS OVERFLOW
+	NOLIST
+Q	EQ	0;	RE	0F;	IF	S|Q|SIZE-10000;	REMARK	%Segment 
+	NUMBER	Q;	REMARK	- overflow, exceeded by 
+	NUMBER	$A ($0S|Q|SIZE-10000);	REMARK	d bytes;	EI
+Q	EQ	Q+1;	ER
+	LIST
+
+      IF        \XMEMRY
+      ELSE
+XMEMRY  EQ      0
+      EI
+
+:	SET UP CTA TABLE
+  IF	SESIZE
+	REMARK	%SEGMENT E IS RESERVED FOR CTA. REMOVE OTHER ALLOCATIONS.%%
+  ELSE
+	SEG	0E
+      IF        XMEMRY
+CTA     WC      CNTRL+$01000    :Control flags
+      ELSE
+CTA	WC	CNTRL	:CONTROL FLAGS
+      EI
+
+	WC	CTASIZ	:SIZE OF CTA AREA
+AREAS
+Q	EQ	0
+	RE	0E
+	WC	S|Q|SIZE	:AREA SIZE
+Q	EQ	Q+1
+	ER
+
+	HC	0E	:NUMBER OF PROTECTION BYTES
+    IF	\APROT0
+	BC	APROT0	:SET AREA 0 PROTECTION
+    ELSE
+	REMARK	%DEFAULT AREA PROTECTIONS ASSUMED.%
+	BC	6	:EXECUTION PROTECTED
+    EI
+    IF	\APROT1
+	BC	APROT1	:SET AREA ONE PROTECTION
+    ELSE
+	BC	5	:WRITE PROTECTED
+    EI
+Q	EQ	2
+	RE	0C
+    IF	\APROT|Q|
+	BC	APROT|Q|
+    ELSE
+	BC	6	:EXECUTION PROTECTED
+    EI
+Q	EQ	Q+1
+	ER
+
+	WC	ENTRY	:ENTRY POINT ADDRESS
+    IF	\DSTART
+	WC	DSTART	:DDT START ADDRESS
+    ELSE
+	WC	0	:NO USER DDT CODE
+    EI
+
+	WC	FPANEL	:ADDRESS OF FRONT PANEL DISPLAY CELL
+
+	WC	HOSTS	:HOST TABLE ADDRESS
+	WC	PORTS	:PORT TABLE ADDRESS
+	WC	PTABLE	:PERMUTER TABLE ADDRESS
+	WC	IRING	:INPUT RING ADDRESS
+	WC	ORING	:OUTPUT RING ADDRESS
+	WC	FRISIS	:ADDRESS TO INPUT BACKPRESSURE BIT ARRAY
+	WC	TOISIS	:ADDRESS OF OUTPUT BACKPRESSURE ARRAY
+  IF	\PCTTBL
+	WC	PCTTBL	:PROJECT CODE TERMINATION TABLE
+  ELSE
+	WC	0	:NULL TABLE
+  EI
+COREST	WS	1	:ABSOLUTE CORE ADDRESS OF START OF SLOT
+	HC	MAXHST	:MAXIMUM HOSTS FOR SLOT
+	HC	MAXPRT	:HIGHEST PORT NUMBER FOR SLOT
+	HC	IRSIZE	:INPUT RING SIZE
+	HC	ORSIZE	:OUTPUT RING SIZE
+SLOTNO	HS	1	:SLOT NUMBER (SUPPLIED BY ISIS)
+VERREV	HS	0
+  IF	\VERSION
+	BC	VERSION	:VERSION NUMBER
+  ELSE
+	BC	0
+  EI
+  IF	\REVLEV
+	BC	REVLEV	:REVISION LEVEL
+  ELSE
+	BC	0
+  EI
+
+    IF	\QSTART
+	WC	QSTART	:DDT QUERRY START ADDRESS
+    ELSE
+	WC	0	:NO USER CODE
+    EI
+        HC      EMMAC0-CTA
+    IF  \NMACSS
+        HC      NMACSS          :Number of MAC Register Sets
+    ELSE
+        HC      0               :No extended MAC sets
+    EI
+        HC      0               :Segments to be saved
+
+    IF \PRODID
+    ELSE
+      IF  \HID0
+PRODID  EQ      HID0            :Define PRODID as alias
+      ELSE
+      EI  :HID0
+    EI :PRODID
+
+    IF \PRODID
+      IF PRODID-$a255
+        REMARK  %PRODID is too large%
+        QUIT    1
+      EI
+      IF PRODID-$a48
+      ELSE
+        REMARK  %PRODID is too small%
+        QUIT    1
+      EI
+    ELSE
+        REMARK  %PRODID - Slot Product id must be defined%
+        QUIT    1
+    EI :PRODID
+        HC      PRODID          :slot Product id
+
+	WS	10	:RESERVED FOR FUTURE EXPANSION
+
+HOSTS	HS	0	:BEGINNING OF HOST TABLE
+Q	EQ	0
+	RE	MAXHST
+    IF	\HOST|Q|
+	HC	HOST|Q|	:HOST NUMBER
+    ELSE
+	HC	0	:NO ASSEMBLED IN HOST NUMBER
+    EI
+Q	EQ	Q+1
+	ER
+
+PORTS	HS	0	:BEGINNING OF PORT TABLE
+Q	EQ	0
+	RE	MAXHST
+    IF	\HPRT|Q|
+	HC	HPRT|Q|
+    ELSE
+	HC	0	:NO ASSEMBLED IN NUMBER OF PORTS
+    EI
+Q	EQ	Q+1
+	ER
+
+PTABLE	HS	MAXPRT+1	:PERMUTER TABLE
+
+EMMAC0  WS      0               :Extended Memory MAC Register sets
+    IF XMEMRY
+      IF \NMACSS
+        EXPMAC
+        REMARK  %Using Extended Memory Option%
+        NUMBER  $a NMACSS
+        REMARK  MAC Register sets allocated%
+        NUMBER  $a EMEMR3
+        REMARK k allocated on non-zero meg
+      ELSE
+        REMARK  %NMACSS must be specified with extended memory%
+        QUIT    1
+      EI        :NMACSS
+    EI          :XMEMRY
+
+CTASIZ	EQ	.-CTA	:CTA AREA SIZE
+SESIZE	EQ	.-CTA	:SEG E SIZE
+  EI
+
+:	TELL MEMORY REQUIREMENTS
+Q	EQ	0
+QQ	EQ	0
+QQQ	EQ	0
+	RE	0F
+	IF	S|Q|SIZE
+	REMARK	%SEGMENT 
+	NUMBER	Q
+	REMARK	-length 
+QQQ	EQ	S|Q|SIZE
+	NUMBER	$A QQQ
+	REMARK	d, requires 
+Q3	EQ	(S|Q|SIZE+0FF)&(@0FF);	NUMBER	Q3
+QQ	EQ	QQ+Q3
+	REMARK	x bytes of core.
+	EI
+Q	EQ	Q+1
+	ER
+
+:	GIVE FINAL SIZES
+	REMARK	%       
+	NUMBER	(QQ+$03FF)/400$A	:FORCE TO BASE 10 FOR OUTPUT
+	REMARK	d K-bytes of core
+
+	UN		:spew out all undefined symbols
+ %1LH=
