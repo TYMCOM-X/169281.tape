@@ -1,0 +1,2077 @@
+
+
+
+       BBBBBB   TTTTTTTTTTTT       
+       BBBBBBB  TTTTTTTTTTTT
+       BB    BB      TT            
+       BB    BB      TT
+       BB    BB      TT            
+       BBBBBBB       TT
+       BBBBBBB       TT            
+       BB    BB      TT
+       BB    BB      TT            
+       BB    BB      TT
+       BBBBBBB       TT            
+       BBBBBB        TT
+
+
+       NN        NN
+       NNN       NN
+       NNNN      NN
+       NN NN     NN
+       NN  NN    NN
+       NN   NN   NN
+       NN   NN   NN  OOO  RRRR  TTTTT H   H
+       NN    NN  NN O   O R   R   T   H   H
+       NN     NN NN O   O R   R   T   H   H
+       NN      NNNN O   O RRRR    T   HHHHH
+       NN       NNN O   O R  R    T   H   H
+       NN        NN  OOO  R   R   T   H   H
+
+
+            AA
+           AAAA
+           AAAA
+           AAAA
+          AA  AA
+          AA  AA
+         AAAAAAAA   M   M EEEEE RRRR  I  CCC    A
+         AAAAAAAA   MM MM E     R   R I C   C  A A
+        AA      AA  M M M EEEE  R   R I C      A A
+        AA      AA  M   M E     RRRR  I C      AAA
+        AA      AA  M   M E     R  R  I C   C A   A
+       AA        AA M   M EEEEE R   R I  CCC  A   A
+
+
+                          TYMCOM-10 KL-10 PROCEDURES
+
+                          OPERATIONS MINI-MANUAL #2
+
+                                25 OCTOBER 1993
+
+                     SUPERSEDES MANUAL DATED 23 APRIL 1991
+
+                           (FREMONTDOC:34)PDPOPR.MM2
+                                                                         Page 2
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONNALLY LEFT BLANK
+                                                                         Page 3
+
+
+                               REVISION HISTORY                               ________ _______
+
+       REVISION  DATE       CHANGE MADE       ________  ____       ______ ____
+
+                 JUL 80     Initial Issue
+
+       1         APR 91     Completed Revision
+                            Superseded Mini-Manual #2
+                            and Mini-Manual #10
+
+       2         OCT 93     Added Revision number and date
+                            Deleted APPENDIX A
+                                                                         Page 4
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONNALLY LEFT BLANK
+                                                                         Page 5
+
+
+                     TYMCOM-X BASIC CONFIGURATION DIAGRAM                     ________ _____ _____________ _______
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         NOTE
+
+                     DIAGRAM IS LOCATED IN SYSTEM LOGBOOK.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 PROCEDURES
+       REVISION 2; 10/25/93
+                                                                         Page 6
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONNALLY LEFT BLANK
+                                                                         Page 7
+
+
+                           INTRODUCTION TO THE KL-10                           ____________ __ ___ _____
+
+            Within the DECsystem-10 series, the KL-10 represents a considerable
+       hardware  departure  from  the  central  processor configurations of the
+       earlier models.  One of the most significant features of  the  KL-10  is
+       the  PDP-11  based Console/Diagnostic front end computer.  KLDCP runs in
+       the PDP-11 to allow system checking, setting sense  switches,  accessing
+       stand-alone  utilities  and  diagnosing various hardware malfunctions on
+       the KL-10.
+
+            The instruction set for the KL-10 is microprogrammed, loaded by the
+       PDP-11  using  a DECTAPE channel.  As the micro-code is fetched, it sets
+       and resets flip flops and data paths within the KL-10.  This allows  the
+       possibility  of  using  microcode  to  establish  a variety of potential
+       processor instruction sets.
+
+            KL-10 BOOTS (KLDCP) is loaded through the PDP-11 DECTAPE equipment.
+       The  command  facilities  available  through  the console terminal (CTY)
+       permit the operator to communicate with the KL-10  through  the  PDP-11,
+       examine and deposit into memory locations and monitors the processor.
+
+            The KL-10 memory bus architecture is four 36-bit words.   That  is,
+       the  KL-10  can  read/write  four words from memory simultaneously.  The
+       KL-10 also features a high-speed buffer memory called  the  Data  Cache.
+       Cache  may  be  viewed  as  2048  general  purpose  fast registers which
+       substitute temporarily for the most frequently  referenced  real  memory
+       locations.   Data  read from memory is likely to be found already in the
+       cache, thus reducing the core cycle access time  for  certain  types  of
+       reads and writes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                         Page 8
+
+
+                                PDP-11 CONSOLE                                ______ _______
+
+            There are various operating switches, indicator lights,  and  other
+       controls  located  on  the  console  processor  panel directly below the
+       dectape drive.  Below these controls, another panel contains a row of 30
+       switches  and  additional  indicator  lights.   The  switches  that  are
+       numbered from 0 through 17 comprise the  switch  register.   The  switch
+       register  contains  18  switches representing bit settings of 0 or 1 and
+       numbered 0-17 from right to left according to PDP-11 convention.
+
+            The four load switches are labeled above  from  left  to  right  as
+       DISK, DECTAPE, SW/REG, and ENABLE.  The purpose of each is given below.
+
+               LOAD SWITCH     PURPOSE               ____ ______     _______
+
+               DISK            LOAD THE SYSTEM FROM A DISK PACK.
+                               (THIS IS NOT USED W/ TYMCOM-X)
+
+               DECTAPE         LOAD THE SYSTEM FROM DECTAPE
+
+               SW/REG          LOAD THE SYSTEM ACCORDING TO THE CONTENTS
+                               OF THE SWITCH REGISTER.
+
+               ENABLE          ENABLE LOADING VIA ANY LOAD SWITCH
+
+            There are two power switches.  The BLACK switch, labeled  POWER  ON
+       above  and POWER OFF below, is the switch normally used to supply or cut
+       power to the system.  The RED EMERGENCY POWER OFF SWITCH should be  used
+       ONLY  FOR  EMERGENCIES  (eg.  fire) where you must turn off the power as
+       quickly as possible.  If you ever have to press  this  switch,  NOVADYNE
+       must assist you with restoring power to the system.
+
+            The power light glowing red indicates that power  is  on.   If  the
+       power light is blinking, an override condition has been set by NOVADYNE.
+       You should not run the KL-10 with this override on  because  the  system
+       will not power down from overheating.
+
+            The fault light should  normally  be  off.   If  it  glows  contact
+       NOVADYNE;  A glowing light indicates a malfunction such as overheating.
+
+                                  POWERING UP                                  ________ __
+
+            In most cases you should only have to check to see that  the  power
+       light  to  the  right  of  the load switches is glowing red.  Otherwise,
+       press the BLACK power switch to the POWER ON position.
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                         Page 9
+
+
+                 KLDCP - KL CONSOLE FUNCTIONS ON THE PDP-11/40                 _____ _ __ _______ _________ __ ___ _________
+
+            As mentioned, the KLDCP program in the PDP-11/40 replaces  most  of
+       the  functions  accomplished from earlier model consoles.  This document
+       will describe several functions of interest to operations.
+
+                               KLDCP INTERACTION                               _____ ___________
+
+            KLDCP OPERATION/            _____ __________
+               COMMAND              FUNCTION                               _______              ________
+
+            MOUNT DECTAPE           LOAD KLDCP INTO
+            PRESS 'ENABLE'          PDP-11
+            PRESS LOAD SWITCH
+            DECTAPE
+
+            ^X (CTRL. X)            FROM 10 MONITOR
+                                    GET ATTENTION OF
+                                    KLDCP
+
+            MC                      LEAVE KLDCP AND
+                                    CONTINUE
+
+            RN                      RUN 10 MONITOR MODE
+                                    (USED WITH MC)
+
+
+
+                          KLDCP SENSE SWITCH FUNCTION                          _____ _____ ______ ________
+
+            KLDCP OPERATION/            _____ __________
+               COMMAND              FUNCTION                               _______              ________
+
+            SW N(NNNNN)             ENABLE SENSE SWITCH     
+                                    SETTING                 
+
+            SW                      DETERMINE SENSE         
+                                    SWITCH SETTING          
+
+            SW 0                    TURN OFF SENSE          
+                                    SWITCHES                
+
+
+
+
+
+
+       BTNA KL-10 PROCEDURES
+       REVISION 2; 10/25/93
+                                                                        Page 10
+
+
+                                 KL-10 LOADING                                 _____ _______
+
+            KLDCP OPERATION/            _____ __________
+               COMMAND              FUNCTION                               _______              ________
+
+            MOUNT DECTAPE           SELECT INPUT DEVICE     
+            DTN                     DEVICE FOR LOAD         
+                                                            
+
+            BT                      LOAD BOOTSTRAP          
+
+            MOUNT MONITOR TAPE      LOAD FTALOD/MONITOR     
+            AND DECTAPE W/ PROG                             
+            J FTALOD                                        
+
+
+
+            BOOTS COMMAND           FUNCTION                            _____ _______           ________
+
+            (CR)                    LOAD MONITOR            
+
+            BACKUP                  LOAD BACKUP MONITOR     
+
+            PAKCOP                  LOAD PACKCOPY PROG.     
+
+
+
+                               KL-10 STOP/START                               _____ __________
+
+            KLDCP OPERATION/            _____ __________
+               COMMAND              FUNCTION                               _______              ________
+
+            SP                      STOP PROCESSING          
+
+            RN                      CONTINUE FROM STOP      
+
+            SM                      RESET PROCESSOR ETC     
+
+            SI                      SET SINGLE INSTRUCTION  
+                                    MODE                    
+
+            ST ADDR                 START 10 AT ADDR        
+
+
+
+
+
+
+
+
+
+
+    BTNA KL-10 PROCEDURES
+    REVISION 2; 10/25/93
+                                                                        Page 11
+
+
+                         KL-10 MEMORY EXAMINE/DEPOSIT                         _____ ______ _______________
+
+            KLDCP OPERATION/            _____ __________
+               COMMAND              FUNCTION                               _______              ________
+
+            EM ADDR                 EXAMINE AND DISPLAY      
+                                    PDP-10 MEMORY ADDR       
+                                                             
+                                                            
+
+            EN                      EXAMINE AND DISPLAY     
+                                    NEXT PDP-10 MEMORY      
+                                    ADDRESS                 
+
+            DM ADDR:DATA            DEPOSIT DATA INTO       
+                                    A MEMORY LOCATION       
+                                                            
+
+            DN DATA                 DEPOSIT DATA INTO       
+                                    THE NEXT MEMORY ADDR    
+                                                            
+
+            MZ ADDR,COUNT           CLEAR PDP10 CORE        
+            (MZ 0,-1)               CLEARS 256K ONLY        
+                                    USE FASCLR TO           
+                                    CLEAR ALL CORE          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    BTNA KL-10 PROCEDURES
+    REVISION 2; 10/25/93
+                                                                        Page 12
+
+
+                          TYPICAL BT DECTAPE CONTENTS                          _______ __ _______ ________
+
+            FILENAME                FUNCTION            ________                ________
+
+            KLDCP.BIN               KL CONSOLE AND DIAGNOSTIC PROGRAM
+
+            BBT.CMD                 COMMANDS FILE TO START IPL ('BT)
+
+            UB.RAM                  PART OF IPL - LOAD MICROCODE
+
+            CONFIG.CCL              PART OF IPL - CONFIGURE MEMORY
+
+            MEMCON.A11              PDP-11 ASCII - CONFIGURE 10 MEMORY
+
+            BOTLOD.A10              PART OF IPL - KL-10 BOOTSTRAP
+
+            FTALOD.A10              ASCII-10 - LOAD MON FROM MAGTAPE
+
+            FTALOD.CMD              COMMANDS FILE TO RUN FTALOD
+
+            FASCLR.CMD              COMMANDS FILE TO CLEAR MEMORY
+
+            CORCLR.CCL              COMMANDS TO CLEAR MEMORY
+
+            147.CCL                 COMMANDS TO FORCE BOOTS LOADED
+
+            SNPSHT.CMD              COMMANDS FILE - DUMP DIAG INFO
+
+            DHQFA.A11               PDP-11 ASCII - DIAG TRACE UTILITY
+
+            KLDCP.HLP               TEXT FILE OF KLDCP OPTIONS, COMMANDS
+
+            YPTC.BIN                BINARY PROG. TO FORMAT DECTAPE
+
+            KLDCPU.A11              PDP-11 ASCII - CHECKS DECTAPE FORMAT
+
+            KLDTBT.BIN              11/40 BOOT TO LOAD KLDCP FROM DECTAPE
+
+            TSALDR.A10              ASCII-10 - LOAD DIAGNOSTICS
+
+            TSALDR.CMD              COMMANDS FILE - LOAD DIAGNOSTICS
+
+            BOTLOD.CMD              CMDS FILE - LOAD BOOTS W/O CORE CLEAR
+
+            KLHUNG.CMD              COMMANDS FILE - DUMP DIAG INFO
+                                    (WILL REPLACE 'SNPSHT.CMD' IN THE
+                                     NEAR FUTURE)
+
+
+
+
+    BTNA KL-10 PROCEDURES
+    REVISION 2; 10/25/93
+                                                                        Page 13
+
+
+                          KLDCP LOADING (COLD START)                          _____ _______ _____ ______
+
+            As mentioned above, the console front end in  the  PDP-11  must  be
+       running KLDCP to allow the operator contact with the KL-10.  If not, you
+       must load KLDCP from dectape.
+
+               1) CHECK AND SEE IF DECTAPE IS MOUNTED,
+                  PIN WHEEL IS SET AT ZERO (0), AND 'REMOTE
+                  SELECT' TOGGLE SWITCH IS IN 'LOCAL'.
+
+               2) ON THE PDP-11, PRESS THE LOAD SWITCH 'ENABLE';
+
+               3) NEXT PRESS THE PDP-11 LOAD SWITCH 'DECTAPE'.
+
+            A message reporting the load of KLDCP should now output on the CTY.
+       Once this has been accomplished, you can procede to load the appropriate
+       monitor from disk or from monitor tape using the WARM START procedure on
+       the next page.
+
+                                SENSE SWITCHES                                _____ ________
+
+            Since KLDCP performs the console functions  that  were  handled  by
+       keys on the earlier DECSYSTEM-10'S, sense switches also are set, checked
+       and turned off via the program.
+
+            There are six sense switches that are used on  the  TYMCOM-X.   The
+       commands  to  set  these  (e.g.   'SW  4'  to  set sense switch 4) and a
+       translation of the KLDCP setting for each possible sense switch is given
+       below:
+
+               SSW1    IS      'SW 40'
+               SSW2    IS      'SW 20'
+               SSW3    IS      'SW 10'
+               SSW4    IS      'SW 4'
+               SSW5    IS      'SW 2'
+               SSW6    IS      'SW 1'
+
+               'SW 0' CLEARS ANY SENSE SWITCHES THAT MAY BE ON.
+               'SW (CR)' REPORTS ANY SENSE SWITCHES SET.
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 PROCEDURES
+       REVISION 2; 10/25/93
+                                                                        Page 14
+
+
+                         MONITOR LOADING (WARM START)                         _______ _______ _____ ______
+
+
+                                         NOTE
+
+           The CTY is shared by the KL-10  and  the  PDP-11.   To  get  the
+           attention  of  KLDCP  for this procedure, you may have to type a
+           Control X (^X).
+
+           To set SSW4 prior to loading the monitor, type 'SW4' to  set  it
+           using KLDCP;  type 'SW0' to turn off all sense switches.
+
+
+
+            The monitor for the KL-10 can be loaded either from  disk  or  from
+       monitor tape.
+
+                               MONITOR FROM DISK                               _______ ____ ____
+
+               1) CHECK AND SEE IF DECTAPE IS MOUNTED,
+                  PIN WHEEL IS SET AT ZERO (0), AND 'REMOTE
+                  SELECT' TOGGLE SWITCH IS IN 'LOCAL'.
+
+               2) USING KLDCP, TYPE 'DT#(CR)'.
+                  THIS SELECTS THE DRIVE.  (# = DRIVE NUMBER)
+
+               3) TYPE 'BT(CR). THIS SHOULD LOAD THE BOOTSTRAP.
+
+               4) AT THIS POINT, TYPING ANOTHER CARRIAGE RETURN
+                  WILL LOAD THE CURRENT MONITOR FROM DISK;
+                  ALTERNATELY, TYPING 'BACKUP' LOADS THE BACKUP
+                  MONITOR; OR TYPE 'PAKCOP' TO LOAD PACKCOPY.
+
+                             MONITOR FROM MAGTAPE                             _______ ____ _______
+
+               1) CHECK AND SEE IF DECTAPEOUNTED,
+                  PIN WHEEL IS SET AT ZERO (0), AND 'REMOTE
+                  SELECT' TOGGLE SWITCH IS IN 'LOCAL'.
+
+               2) USING KLDCP, TYPE 'DT#(CR)'.
+                  THIS SELECTS THE DRIVE.  (# = DRIVE NUMBER)
+
+               3) TYPE 'J FTALOD(CR)' TO LOAD THE PROGRAM.
+
+               4) FTALOD WILL ASK FOR TAPE DRIVE NUMBER (FTAN)
+                  OF THE STC DRIVE WHERE THE MONITOR TAPE IS
+                  ON-LINE.
+
+
+
+
+
+       BTNA KL-10 PROCEDURES
+       REVISION 2; 10/25/93
+                                                                        Page 15
+
+
+                        TYMCOM-X NORMAL CRASH RECOVERY                        ________ ______ _____ ________
+
+            For normal crash situations, the TYMCOM-X operating system is  able
+       to  halt  the  system,  dump  a  core image to a fixed area of the disk,
+       initiate a BOOTS LOAD and restart.  These situations  are  described  in
+       other sections of this document.
+
+            Occasionally however, a problem arises which  disables  the  normal
+       crash / auto-restart sequence.  In these cases, the TYMCOM-X will appear
+       to be hung.
+
+            It could be caused by the CPU (APR), the MEMORY  (ARM10LS/TRM10LX),
+       DISC  CONTROLLER  (3674),  DISK  DRIVES  (3650  through  3656), the BASE
+       (EBUS), or the SA-10 (IBM compatible block MPX channel).
+
+            For whatever reason, the TYMCOM-X will complain and  print  out  to
+       the CTTY a STOPCODE of what could be the problem.
+
+            The course of action to be taken is determine by:
+
+            1.  What the STOPCODE means?
+
+            2.  Consult the document STOPCD.DOC filed in binder.
+
+            Once steps 1 and 2 are complied with, steps can be taken  to  bring
+       the TYMCOM-X up for customers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 16
+
+
+                             TYMCOM-X BASE (EBUS)                             ________ ____ ______
+
+            If the BASE (EBUS) gets hung or crashes, the PDP-10  will  complain
+       with  an  INFO stopcode NOBASE, and state that the BASE (EBUS) should be
+       reloaded.
+
+           "%%EVENT stopcode NOBASE at dd-mmm-yyy hh:mm:ss"
+           "No response from base.  Please reload it.  PDP-10 is still up."
+
+       The above will output until the base is reloaded or the Operator presses
+       the "INI" button on the BASE.  If after approximately SIXTY (60) seconds
+       there is no print out on the Console TTY, press the button again.
+
+
+                                         NOTE
+
+           Recyle the PDP-10 and reload  the  BASE  (EBUS)  if  the  second
+           attempt fails.
+
+
+
+            If this procedure (pressing the "INI" button) works, the  following
+       message will print out to the Console TTY twice:
+
+           "%%EVENT stopcode BASEOK at dd-mmm-yyy hh:mm:ss"
+           "Code in base is version 2.02 - debug flag is OFF"
+
+            After receiving the above message, see if circuits have been  built
+       by  running  TELECO.  TELECO any file under the username of OPER to OPER
+       on another system.  If you can, then everything is okay.   If  not,  you
+       will need to recycle the PDP-10 and reload the BASE (EBUS).
+
+            Make sure your Shift Supervisor is fully informed of the  situation
+       as well as NOVADYNE.
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 17
+
+
+                             3674 DISC CONTROLLER                             ____ ____ __________
+
+            This section describes the pertinent information on hanging of  the
+       system due to problems in the disk controller.  
+
+            On the Memorex 3674 DISC CONTROLLER, a CLOCK STOP or CHECK #1 error
+       can cause the system to hang.  A CHECK #1 error is a hardware controller
+       error that will automatically stop the clock on the disc controller.
+
+            An CHECK #2 error is a hardware disc error which will not stop  the
+       disc  controller  clock.   In most cases the system will reset the error
+       and normal operations will continue.
+
+            If upon checking the Memorex 3674 (DISC CONTROLLER) and you see any
+       of the above, call NOVADYNE to check out the system.
+
+                           DRIVE HANGUP INDICATIONS                           _____ ______ ___________
+
+            On each disk  drive  is  a  select  light  which  normally  flashes
+       randomly  as  that  particular drive is selected.  Should a select light
+       stay lit, that drive is either hung or has been the last drive accessed.
+       This condition may cause the system to hang.  An ERROR message will type
+       out to the CTTY:
+
+            "Unit BPA/BPB/BPC (with a number) went off-line
+            Please cycle it off-line, then back on-line again."
+
+            If the disk drive comes  back  on-line  by  itself,  the  following
+       message will print out to the CTTY:
+
+            "%%EVENT stopcode UNIONL at (date/time)
+            Unit came on-line: BPA/BPB/BPC (with the same number as above)"
+
+            If the ERROR message is excessive, then the Operator should  locate
+       the  disk  drive  and push the ATTENTION button.  If this does not bring
+       the disk drive back on-line then you must stop the  system  to  minimize
+       file  system  damage.   Run  TAKEIT.   If  TAKEIT  does  not  work, then
+       depositing a 1 in MA 30 should take the system  down.   NOVADYNE,  Shift
+       Supervisor,  and  TYMCOM-10  Coordinator should be notified immediately.
+       TYMCOM-10 Software Support  should  be  made  aware  of  the  situation.
+       (Possibility of a REBUILD).
+
+       If a disk drive(s) reports  being  HUNG  (Unit  BPA/BPB/BPC  Hung),  the
+       Operator  should  monitor the system and if it does not clear up, and/or
+       '%%EVENT stopcodes' start to print out, the system should be taken  down
+       immediately  with  a  deposit  of  1 in MA 30.  Contact your Supervisor,
+       NOVADYNE and  TYMCOM-10  Coordinator  immediately.   TYMCOM-10  Software
+       Support  should  be  made  aware  of  the  situation.  (Possibility of a
+       REBUILD).
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 18
+
+
+            Any particularly loud noise  eminating  from  a  certain  drive  is
+       reason  enough to take the system down.  Run TAKEIT.  If TAKEIT does not
+       work, then depositing a 1 in MA 30  will  stop  the  system.   NOVADYNE,
+       Shift   Supervisor   and   TYMCOM-10   Coordinator  should  be  notified
+       immediately.  TYMCOM-10 Software Support should be  made  aware  of  the
+       situation.  (Possibility of a REBUILD).
+
+                       STARTS AND RESTARTS AFTER CRASHES                       ______ ___ ________ _____ _______
+
+
+            The TYMCOM-X operating system has an  automatic  reload  capability
+       which  will occur so long as sense switch 4 is off (the normal setting).
+       When  the  monitor  goes  to  a  'BOOTS  LOADED'   condition   it   will
+       automatically  do  what  the  operator  would normally do:  perform a /D
+       (dump) to move the crash to the disk and a (carriage-return)  to  reload
+       the  monitor.  If this succeeds a program called INITIA does most of the
+       controlling of which jobs are then run in the auto-restart sequence.
+
+
+            If sense switch 4 on the console is set at  the  time  the  monitor
+       goes  to  BOOTS  LOADED, the automatic crash dump and system reload will
+       not happen.  In this case  the  BOOTS  program  will  wait  for  console
+       terminal  input  before continuing.  If you wish to dump the crash, type
+       '/D' (carriage return).  Then to load the monitor, type another carriage
+       return.   If  sense switch 4 is still on, the monitor will branch to the
+       ONCE ONLY code (signified by  a  '>').   The  operator  can  resume  the
+       automatic restart by typing 'GO'.
+
+
+            If you load BOOTS from DECTAPE the automatic crash  dump  will  not
+       happen.   To  accomplish  this  type a '/D' before you type the carriage
+       return to load the monitor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 19
+
+
+                        SENSE SWITCH 4 IS OFF (NORMAL)                        _____ ______ _ __ ___ ________
+
+           1.  The system crashes and 'BOOTS LOADED' is typed out;
+
+           2.  A /D moves the crash to disk in (SYS) CRASH.SAV;
+
+           3.  The monitor is loaded from disk and reports  status  of  offline
+           packs and amount of memory online;
+
+           4.  The monitor name, it's version and creation date are typed out;
+
+           5.  Date and time are obtained from the Network Supervisor;
+
+           6.  DSKCLN is run to verify the integrity of the file  system;   The
+           DSKCLN  mode  (FAST  or  FULL)  will  be  set  automatically  by the
+           operating system in most case if sense switch 4 is not ON.
+
+           7.  COPYCR saves the crash dump on disk into a file given  a  unique
+           filename in the form CRA00N;
+
+           8.  The CHKPNT job is started under username OPER;
+
+           9.  SCHED is set automatically to answer lines;
+
+           10.  A message is output that the Initialization has completed;
+
+                    (The following steps are done manually)
+
+           11.  Check the console terminal for any special messages;
+
+           12.  Login to OPER and set STATUS.
+
+           13.  GFD to UTIL and run your shift bringup command  file  (i.   e.,
+           COM;DAYS, COM;SWINGS, COM;MIDS).
+
+           14.  Fill out an INCIDENT REPORT (I/R) to  notify  NOVADYNE  of  the
+           crash.
+
+           15.  Send mail regarding the crash to @(UTIL)CRALST.CMD by executing
+           the command file CM10.
+
+                EXAMPLE:  
+
+                GFD UTIL (CR)
+
+                RU CM10 (CR)
+
+           16.  Set PE 36 on console TTY.  This will cause PARITY ERRORS  stops
+           to  be  reported  for DRAM parity, CRAM parity, FM parity and AR.ARX
+           stopcodes.
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 20
+
+
+                     SENSE SWITCH 4 IS ON (SPECIAL CASES)                     _____ ______ _ __ __ ________ ______
+
+       (With SSW4 on the crash routine loads BOOTS and then stops.)
+
+       To dump the crash you must type '/D';
+
+           a.  If you have reason to believe there may be  a  hardware  problem
+           with  the  system,  protect  the  disk  and  turn the system over to
+           NOVADYNE for diagnostics;
+
+                                     (or)
+
+           b.  At this point it might be appropriate to  contact  the  Software
+           Support Group to debug a software or file system problem;
+
+                                     (or)
+
+           c.  To load the current monitor type a carriage-return;
+
+                                     (or)
+
+           d.   To  load  a  different  copy  of  the  current   monitor   type
+           'BACKUP'(CR);   A  released  monitor will be here if SYSTEM.SAV will
+           not load.
+
+                                     (or)
+
+           e.  To continue with the automatic bringup  type  'GO'(CR)  (Monitor
+           performs  routines  3  through  10  above, and the Operator performs
+           routines 11 through 16 above)
+
+                                     (or)
+
+           f.   To  allow  OPER  to  login  before  the  normal  routines  type
+           'STAND'(CR)'  (After  the monitor loads you can login over the shut.
+           Consult the documents  on  DSKCLN  (Mini-Manual  #5),  COPYCR  (this
+           manual)  and  CHKPNT  (Mini-Manual  #3)  for the procedures to start
+           these programs manually).
+
+
+                                         NOTE
+
+           The  BACKUP  monitor  should  only  be  used  in   extraordinary
+           circumstances and with approval of your Supervisor.
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 21
+
+
+            The most common form of TYMCOM-X crash is the 'BOOTS LOADED'  type.
+       Before  the  BOOTS  LOADED  message,  the  monitor  may  print out other
+       messages:
+
+
+            An attempt should be made to dump the crash.  If a  previous  crash
+       has not actually been saved to a file with COPYCR, an error message will
+       be printed and the /D will be aborted.   Then  boots  will  go  back  to
+       command  level  and  allow  the  operator  to  decide  whether or not to
+       overwrite the previous crash dump or not write a crash  file  (that  is,
+       not  overwrite  the previous crash dump).  The general guidelines are 1)
+       if the system crashes and then crashes again during  bringup,  dump  the
+       original crash (that is, do not overwrite it with the second crash);  2)
+       if the system crashes and there is a dump from some earlier undetermined
+       time,  then  dump  the current crash (overwrite the earlier undetermined
+       crash dump).
+
+            When the system is loaded, the name of the monitor and time of  its
+       creation  will  be  typed on the console TTY.  The operating system will
+       not ask for the time and date to be typed in.  Instead it  will  try  to
+       get them from the Network Supervisor.  Failing this, it will request the
+       first OPER to log in to give the time and date.  
+
+            During the auto-restart process, all error messages will be sent to
+       the  console  teletype.  If any errors occur which make it impossible to
+       complete the auto-restart sequence, the system  will  remain  Super-Shut
+       (SCHED  600000).   It is necessary to crash the system by depositing a 1
+       in memory address 30 from the system console and get help.  Then  reload
+       with  the standalone option (set sense switch 4 on for this).  There are
+       no operating system error conditions which are correctable by Operations
+       without help from Software Support people.
+
+            Notify your Supervisor about ANY and ALL  error  conditions  and/or
+       unexpected messages that occur during auto restart.
+
+            The auto-restart sequence continues by running  DSKCLN:   Is  there
+       any  damage  in the file system that resulted from the crash?  If DSKCLN
+       encounters no major errors COPYCRASH will be  run.   This  program  will
+       copy  the  crash dump into a file if one is present and output a message
+       to this effect.  Next CHKPNT will be started automatically.  When  these
+       things  have  been  done,  an automatic schedule of 0, 100000, 400000 or
+       600000 will be set to allow or disallow logins depending on the  success
+       of  the  previous procedures.  (0 = All lines open, 100000 = Restricted,
+       400000 = Shut, 500000 = Restricted and Shut, and 600000 = Super Shut)
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 22
+
+
+            Any errors detected by INITIA will be sent to the console TTY.  For
+       each  of  the  jobs  run  by  auto-restart, INITIA logs that job into an
+       appropriate user name and starts it.  There is also a job  which  INITIA
+       runs  to make sure that the appropriate jobs have started correctly.  If
+       any errors are detected, a message will be output in the form:
+
+                   'INITIALIZE FAILURE JOB JOB-NAME REASON'
+
+
+            The internal monitor time will be kept in GMT  and  in  days  since
+       1/1/64.   The  system converts the date/time so it can give the user the
+       time in the time zone that applies to that user in the LUD.
+
+            When  all  jobs  are  correctly  running,  INITIA  will  print  the
+       following message on the console TTY.
+
+               INITIALIZATION COMPLETED DATE TIME GMT
+
+               or
+
+               INITIALIZATION COMPLETED DATE NOT RECEIVED
+
+
+            The second message is given if the time and date  information  have
+       not  yet been received from the supervisor.  If this occurs then a SCHED
+       400000 is put into effect until the date and time is correct.   In  this
+       case  the  operator  will have to set SCHED 0 after the problem has been
+       fixed.  LOGINN will request that date and time be typed in:
+
+               'DATE NOT SET, TYPE DATE AS MM-DD-YYYY'
+               (note that a 4 digit year is required.)
+
+       LOGINN will then type:
+
+               'TYPE TIME AS HHMM'
+
+       If a bad time or date is typed, LOGINN will type:
+
+               'INCORRECT DATE'     (or)    'INCORRECT TIME'
+
+       and make the request for input again.
+
+       Remember to set SCHED to 0 once the date and/or time is correct.
+
+
+            If the user is logging in  with  a  shut  override  password  (i.e.
+       OPER) and no device OPER is currently set, LOGINN will type:
+
+       'NO OPER TERMINAL - SET OPER DONE FOR THIS TERMINAL'
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 23
+
+
+            At this point do a 'SET HAPPY' to counteract  the  unhappy  message
+       that is sent when system initialization completes.
+
+            Then the operator should remove any obsolete shutdown letters.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 24
+
+
+                         REASONS FOR RESTART FAILURES                         _______ ___ _______ ________
+
+            Most restart failure messages require either hardware  or  software
+       personnel to intervene.  Reasons which may be given for job failure are:
+
+               MESSAGE                 MEANING               _______                 _______
+
+               NO SYS          It is not possible to access directory SYS
+
+               NO LUD          The LUD is not present or not readable
+
+               NO USER         INITIA could not find a user name in the LUD
+                               (currently either OPER or UN1)
+
+               CAN NOT LOGIN   The user INITIA is trying to login under has 
+                               a bit restricting logins under that user name
+
+               INTERLOCK       INITIA has been unable to set the UFD 
+                               interlock which is necessary to the login 
+                               process.
+
+               NO FSN          Something is wrong with one of the file 
+                               structures the LUD says should be set up for
+                               the user job INITIA is trying to start.
+
+               BAD UFD         The file directory for this user is bad
+
+               STRUUO          INITIA has not been able to correctly set up
+                               the file structure access list as indicated
+                               in the LUD.
+
+               GETTAB          INITIA was not able to obtain some needed 
+                               piece of information from the GETTAB UUO
+
+               RUN             The run UUO of a program INITIA was trying to
+                               start failed
+
+               TIMEOUT         This comes from the INITIA job only. It
+                               indicates that the system has not reached
+                               a state where all of the required jobs have 
+                               completed or are running within five minutes.
+                               Try bringup again before seeking software
+                               assistance.
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 25
+
+
+                             DEPOSITING INTO MA 30                             __________ ____ __ __
+
+            There are three basic  reasons  for  the  abrupt  crashing  of  the
+       TYMCOM-X with a deposit into memory address 30:
+
+            1) The SYSTEM is HUNG.
+
+            2) Leaving the system up would result  in  DISK  STRUCTURE  DAMAGE.
+            This  may  be  indicated by rapidly accumulating HDEV (Hard DEVice)
+            errors,  by  '?TRANSMISSION  ERROR'S  from  more  than  one  system
+            commands  or  by messages on the CTY regarding bad SATS, RIBS, MFD,
+            "critical files" etc.
+
+            3) Some catastophe like fire, flood, earthquake etc.
+
+            The following symptoms DO NOT indicate the need for a deposit  into
+       MA 30:
+
+            1) You cannot login to the host due to
+
+                    FRAME CAPACITY EXCEEDED
+                    HOST OUT OF PORTS
+                    ACCESS BARRED
+                    (ANY OTHER REASON PROVIDING A MESSAGE)
+
+       These messages mean exactly what they  say  and  are  not  fatal  errors
+       requiring the deposit into 30.
+
+            2) The system response is slow.
+
+            3) You cannot kill a 'stuck' job with TAKEIT.
+
+            For these situations, there  may  be  a  condition  which  warrants
+       immediate  attention,  but they do not warrant the immediate destruction
+       that occurs with the 1 in 30.  Even if it  is  necessary  to  bring  the
+       system  down,  make  every  effort  to use the TAKEIT program to do this
+       'gracefully'.
+
+            In some cases, problems with the  network  (especially  during  net
+       takeover)  can give the false impression of a host hangup.  You can test
+       this by trying the long form of login:
+
+                  'PLEASE LOGIN:'OPER:NN (CR)
+                  'PASSWORD:' (PSWD);(CR)
+
+       If you dont get the prompt for 'PASSWORD:', the problem is  probably  in
+       the  net,  not  in  the host.  Remember that inability to login does not
+       affect those users who are already logged into the system.  Call Network
+       Control  to  find  out  if there is any network condition which could be
+       preventing logins.
+
+
+
+
+
+       BTNA KL-10 procedures
+       REVISION 2; 10/25/93
+                                                                        Page 26
+
+
+                              KLDCP (RESTARTING)                              _____ ____________
+
+            If you are unable to get into KLDCP, chances are the unibus  itself
+       is  hung up.  An additional symptom of this problem is that only the RUN
+       and BUS lights may be on.  To restart KLDCP, the following steps  should
+       be taken ONLY when the system is DOWN.
+
+                            1140 RESTART PROCEDURES                            ____ _______ __________
+
+                          RESTART FROM ADDRESS 100000                          _______ ____ _______ ______
+
+            NORMAL       ADDRESS (UPPER ROW), DATA (LOWER ROW) LEDS ARE
+                         LIT.  SOME WILL BE BRIGHTER THAN OTHERS.  THE RUN,
+                         BUS & PROC LEDS WILL BE LIT.  CONS WILL NOT
+                         BE LIT.  (USER AND VIRTUAL LEDS ARE NOT USED).
+                         YOU CAN COMMUNICATE WITH THE 11/40 VIA THE CTY
+                         BY RUNNING R (UTIL)CTYMSG.
+
+            HALTED
+            CRASHED
+            HUNG        SOME OR ALL ADDRESS (UPPER ROW), DATA
+                        (LOWER ROW) LEDS MAY BE OUT -- NOT LIT --. THE
+                        LEDS THAT ARE LIT WILL BE VERY BRIGHT.  THE RUN,
+                        BUS, PROC LEDS MAY OR MAY NOT BE LIT.  GENERALLY
+                        THE RUN LED WILL BE OUT; BUS, PROC AND CONS
+                        WILL BE LIT.  (USER, VIRTUAL LEDS ARE NOT
+                        USED).  YOU CANNOT COMMUNICATE WITH THE 11/40
+                        VIA THE CTY.
+
+                       RESTARTING FROM ADDRESS (100000)                       __________ ____ _______ ________
+
+            1.  Verify that the 11/40 is down.
+
+            2.  Locate the following toggle switches:
+
+                A.  START switch.
+
+                B.  ENABLE/HALT switch.
+
+                C.  LOAD ADRS switch
+
+                D.  '15' switch
+
+            3.  Toggle ENABLE/HALT switch DOWN (it will stay down).
+
+            4.  Toggle '15' switch UP (it will stay up).
+
+            5.  Toggle LOAD ADRS switch DOWN (it will come back up).
+
+            6.  Toggle ENABLE/HALT switch UP.
+
+            7.  Toggle START switch DOWN (it will come back up).
+
+
+            BTNA KL-10 Procedures
+            Revision 2; 10/25/93
+                                                                        Page 27
+
+
+            8.  Toggle '15' switch DOWN.
+
+            9.  You are now done.
+
+
+            If existing KLDCP code is good, the  CTY  should  ECHO  the  prompt
+       ">.".  
+
+            If after several attempts the 11/40 will not load, turn the  system
+       over  to  NOVADYNE.   Extend  the  downtime if needed.  Send MAIL on all
+       events.
+
+                           RELOAD 11/40 FROM DECTAPE                           ______ _____ ____ _______
+
+            1.  Verify that the system is down.
+
+            2.  Verify system DECTAPE is mounted and thumb wheel is selected to
+                "0".  If not, rotate wheel until "0" is displayed.
+
+            3.  Push REMOTE/OFF/LOCAL switch to REMOTE position.
+
+            4.  Push DECTAPE switch, located in the left half of the 
+                panel above the 11/40.
+
+                The sytem DECTAPE should start spinning.  If not, push
+                the DECTAPE switch again.
+
+            5.  Push the REMOTE/OFF/LOCAL switch to the OFF position.
+
+            When the 11/40 is loaded, the CTY will echo:
+
+                DECSYSTEM DIAGNOSTIC CONSOLE
+                VERSION 0.17
+                SWR = 000000   DTE # 0
+                CMD:
+                >.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 PROCEDURES
+       REVISION 2; 10/25/93
+                                                                        Page 28
+
+
+                                    SNPSHT                                    ______
+
+
+                                         NOTE
+
+           SNPSHT TO  BE  REPLACED  WITH  KLHUNG  AS  SOON  AS  IT  BECOMES
+           AVAILABLE.
+
+
+
+            The SNPSHT.CMD is a command file on DECTAPE which will  break  down
+       the KL-10 CPU status for NOVADYNE whenever the system crashes with other
+       than a 'BOOTS LOADED'.  If the KL-10 is HUNG with no  apparent  hardware
+       problem  'J  SNPSHT'  must  be used.  In particular, it should be run if
+       there is NO CTY OUTPUT or any of the messages listed below output on the
+       CTTY:  (See COMMENTS for exceptions)
+
+                                                  COMMENTS                                                  ________
+
+            U-CODE HUNG
+
+            ?10TTI
+
+            ?10CMD
+
+            ?10SWS
+
+            ?CLOCK ERROR STOP CRAM PARITY   ;OPERATOR SHOULD RUN 'V UB'
+                                            ;ON THIS TYPE OF ERROR ONLY.
+
+            ?CLOCK ERROR STOP DRAM PARITY   ;RECYCLE SYSTEM
+
+            ?CLOCK ERROR STOP FM PARITY     ;SAME AS 'DRAM PARITY'
+
+
+                                         NOTE
+
+           If the TYMCOM-X goes down with the same STOPCODE more than  once
+           within   a   twenty-four   (24)  hour  period,  seek  NOVADYNE'S
+           assistance.
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 29
+
+
+            The command file itself is self explaining.  To  run  it,  use  the
+       following CTY typein:
+
+            CONTROL X               ;CALL KLDCP
+
+            '>.'DT#                 ;SELECT THE DECTAPE HAVING
+                                     SNPSHT.CMD ON IT
+
+            '>.'SP                  ;STOP THE PDP-10
+
+            '>.'J SNPSHT            ;LOAD SNPSHT FROM DECTAPE.
+                                     IT DUMPS ABOUT 3 PAGES OF
+                                     STATUS INFO TO CTY.
+
+            '>.'P BOTLOD            ;LOAD BOOTS FROM DECTAPE
+
+            'BOOTS LOADED'          ;IF YOU DON'T SEE THIS
+                                     YOU'L  HAVE TO 'DM 30:1' IN
+                                     KLDCP
+
+            'BOOTS'
+
+            It is essential that ALL CTY output, both before and during  SNPSHT
+       is saved for analysis by NOVADYNE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 30
+
+
+                       MEMORY PARITY ERRORS ON THE KL-10                       ______ ______ ______ __ ___ _____
+
+            The KL-10 runs with odd parity:  every 36 bit word should  have  an
+       odd  number of bits set (counting the extra parity bit).  Three types of
+       violations to this odd parity standard can occur.  An extra bit  may  be
+       turned  on, a bit that should be on may be dropped or the parity bit may
+       not function to insure odd parity.  All of these violations are hardware
+       problems.   Monitor mode parity errors cause the PDP-10 to crash and not
+       auto restart;  user mode parity errors will smash a  particular  process
+       or user's job but will not cause a system crash.
+
+            When possible,  get  NOVADYNE  attention  to  monitor  mode  parity
+       errors.   However,  when  NOVADYNE  is  not available, operations should
+       perform emergency procedures to determine how solid the  monitor  parity
+       error is and if necessary, deselect the portion of memory involved.
+
+                          MEMORY CORE SCAN PROCEDURE                          ______ ____ ____ _________
+
+            When monitor parity occur the system should scan  core,  print  out
+       error  locations  and contents and stop.  The first thing to do is check
+       the CTY for core scan output.  A sample auto core scan is shown below.
+
+                       'PARITY ERROR'
+                       'LOC            CONTENTS'
+                       '000000004147   000000,021400'
+                       '000000004243   000000,001000'
+
+                        'END OF CORE SCAN'
+
+
+
+                                         NOTE
+
+           There may be other parity error messages referring to the PDP-11
+           or  other  parts  of  the system architecture.  For all of these
+           situations you should get NOVADYNE help immediately.
+
+           User mode parity errors will cause the  message  'SWAP  READ  OR
+           PARITY  ERROR'  to output to the CTY.  This error condition will
+           not cause a system crash.  However, you should SAVE  the  OUTPUT
+           and do a SYSTAT DISK for NOVADYNE.
+
+
+
+            It may eventually be necessary to reconfigure memory and deselect a
+       bad  portion  of core.  It is better to run with less memory online than
+       to crash again with another parity error in monitor mode.
+
+            Monitor the system and if problem persists or errors continue,  get
+       NOVADYNE'S help immediately.
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 31
+
+
+                             BRINGUP AND FOLLOWUP                             _______ ___ ________
+
+            Now clear core with FASCLR and bring the system back up.  You  must
+       be  certain that all memory believed to be online is online.  Here's how
+       to use FASCLR:
+
+               '>.'DT#                 ;SELECT DECTAPE CONTAINING
+                                        FASCLR.CMD
+               '>.'J FASCLR            ;LOAD THE PROGRAM
+               'WHEN YOU GET THE HALT MESSAGE....ETC'
+                                       ;FOLLOW THE PROGRAM'S
+                                        INSTRUCTIONS
+               'KL10 HALTED PC /000014 VMA/000014'
+
+            Now bring up the system with the BT command in KLDCP.
+
+            DO NOT SAVE THE CRASH.
+
+            It is very important that the operator copy all addresses and  data
+       contents  that  have  been  obtained  in  the  system log.  Also keep an
+       accurate record if any deselecting and/or  reconfiguring  was  done.   A
+       copy  of  this information should be given to the System Quality Control
+       operator so that it can be entered into the shift log.  
+
+            If the memory reported to be online  is  different  than  what  you
+       expect,  check the TRM10LX/ARM10LS to see if any sectors are hung.  This
+       would be evident by the control error lights being on.  To clear a  hung
+       sector  press  the  RESET  button for the affected sector.  To clear the
+       entire TRM10LX move the STOP/CONT/CLEAR switch to  the  CLEAR  position.
+       To clear the entire ARM10LS push the FAULT RESET button.
+
+            If any of the TRM10LX/ARM10LS control status lights are on,  memory
+       malfunctions may be in the controller rather than parity errors.  Again,
+       NOVADYNE intervention is necessary for this.  If in doubt, get in  touch
+       with NOVADYNE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 32
+
+
+                              DESELECTING MEMORY                              ___________ ______
+
+            Deselecting memory is the process of which a portion(s)  of  memory
+       is  taken  off-line  so  that it will not be accessed when the system is
+       running.
+
+            Before taking memory off-line, the ARM-10LS  or  TRM-10LX  must  be
+       taken out of interleaving (See INTERLEAVE paragraph).
+
+                             HOW MEMORY IS DIVIDED                             ___ ______ __ _______
+
+            Each ARM-10LS and TRM-10LX memory is divided into four units called
+       sectors.   Each  sector  contains one-fourth of the memory for that arm.
+       The ARM-10LS totals 1024K of memory per sector while the TRM-10LX totals
+       512K  or  1024K  of memory per sector.  (ARM = AMPEX Replacement Memory;
+       TRM = TELESIS Replacement Memory)
+
+            The ARM-10LS and TRM-10LX has a total capacity of 2 or 4MEG.
+
+
+                                         NOTE
+
+           In ALL cases an entry will be made in the System Logbook of what
+           occurred and HARDCOPY saved for NOVADYNE.
+
+
+                          WHEN TO AND NOT TO DESELECT                          ____ __ ___ ___ __ ________
+
+            When you receive a PARITY error and/or CONTROL error, and it is the
+       FIRST  time,  press  the  RESET button in the SECTOR that is lite up and
+       then toggle the STOP/CONT/CLEAR switch from STOP to CLEAR and let go  on
+       the  TRM10LX.   On  the ARM10LS, press the (GREEN) FAULT RESET botton to
+       clear memory.
+
+            If the SECTOR RESET button comes on on the TRM10LX, just  press  to
+       clear it and advise NOVADYNE.
+
+            If the host crashed recently  with  a  parity  error  in  the  same
+       location,  you  will  probably  want  to  deselect.  Contact NOVADYNE if
+       assistance is needed.
+
+            If a parity error is received in the first sector on  the  ARM-10LS
+       or  TRM-10LX,  do not deselect unless you can reconfigure it out of this
+       portion of memory.  If this cannot be  done,  RESET,  CLEAR  MEMORY  and
+       recycle  the  system.  Deselecting without reconfiguring would interfere
+       with the monitor function.
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 33
+
+
+                               WHAT TO DESELECT                               ____ __ ________
+
+            Just to the left of the center of the panel are four rows  of  five
+       lights  located  under  the label PARITY ERROR.  The right hand four (4)
+       columns of lights under MODULE for TRM-10LX or SECTOR PARITY  ERROR  for
+       the  ARM-10LS will indicate where the problem is by having lights of the
+       effected memory come on.
+
+                                 INTERLEAVING                                 ____________
+
+            Definition - Interleave is the process of  configuring  the  memory
+       addressing  so  that  consecutive  addresses  are not stored in the SAME
+       memory module.  This allows increasing memory speed by overlapping  part
+       of the operation of different memory modules.  What is important for the
+       Operator to realize is that when interleave is on,  the  memory  can  be
+       accessed at a greater rate of speed.
+
+            We are concerned  with  interleave  because,  once  any  memory  is
+       deselected,  the  interleave  must  be TURNED OFF.  This is important to
+       remember, for if memory is left in "4-WAY" interleave, the  system  will
+       not come up.
+
+            To turn the interleave OFF, simply turn the knob labeled INTERLEAVE
+       to  the  OFF  position  on  the  TRM10LX.  If memory has been deselected
+       before you did your deselection, interleave will be in the OFF  position
+       already.
+
+            To turn the  interleave  OFF  on  the  ARM10LS,  first  locate  the
+       INTERLEAVE  section  to  the right of the two SECTOR INDEX (MSB and LSB)
+       switches.  Toggle this switch from 4-WAY to 1-WAY.  If memory  has  been
+       deselected  before  your  deselection,  this switch will be in the 1-WAY
+       position.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 34
+
+
+                                CLEARING MEMORY                                ________ ______
+
+       TRM-10LX       ________
+
+            The switches on the left and  right  of  the  PARITY  error/CONTROL
+       error  lights  which  are  labeled  CONT  on  the  left and right of the
+       switches and CLEAR below them, are the switches  to  clear  the  memory.
+       Toggle  this  switch  down  to  CLEAR and then up to STOP after you have
+       written down all the information.   DIAGRAM  of  the  Control  Panel  is
+       located in the System Logbook.
+
+       ARM-10LS       ________
+
+            To the right of the SECTOR ENABLE/DISABLE toggle switches there are
+       THREE  PUSH  buttons.  The WHITE LAMP TEST button, the GREEN FAULT RESET
+       button, and the RED RESET button.  To  clear  a  SECTOR  CONTROL  error,
+       SECTOR PARITY error, and PORT error push the FAULT RESET (GREEN) button.
+
+            To clear MEMORY, press BOTH the FAULT RESET (GREEN) and  the  RESET
+       (RED) buttons at the same time.
+
+            The  RESET  (RED)  button  when  pressed  by  itself,  resets   and
+       reconfigures  MEMORY.   This is not normally done when the System is up.
+       If it is pressed while the System is up, it will take it down.   DIAGRAM
+       of the Control Panel is located in the System Logbook.
+
+                             SECTOR SIZE (TRM10LX)                             ______ ____ _________
+
+            If SECTOR size = 512K, then it is a 2MEG box.   If  SECTOR  size  =
+       1024K, then it is a 4MEG box.
+
+            A 2MEG box uses SECTOR Address Bits 15 and 16;   a  4MEG  box  uses
+       SECTOR Address Bits 14 and 15.
+
+                            READDRESSING (TRM10LX)                            ____________ _________
+
+            To make a BAD SECTOR the  HIGH  SECTOR  in  memory,  readdress  the
+       SECTOR  Address Bits as follows:  (Let's say SECTOR 0 is BAD and want to
+       readdress it as 3 (Binary 11).
+
+           SECTOR 0 BAD, Readdress SECTOR 0 sector size address bits to 11(3).
+           Readdress SECTOR 3 sector size address bits to zero (0).
+
+               SECTOR/ADDRESS     BITS  15  16  or  14  15               ______________     ____  __  __  __  __  __
+
+               0                        0   0       0  0
+               1                        0   1       0  1
+               2                        1   0       1  0
+               3 (HIGH SECTOR)          1   1       1  1 (HIGH SECTOR)
+
+            BOOT the system and ensure that the MEMORY MAP is contiguous.
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 35
+
+
+       TRM-10LX       ________
+
+            In the bottom left-hand corner of each sector is a  switch  labeled
+       ENABLE  above  and  DISABLE  below.  This is the switch used to place an
+       individual BAD SECTOR off-line or put a GOOD SECTOR on-line.  If  it  is
+       in the down position, it is off-line.
+
+            To deselect the 512K or 1024K BAD sector, simply move  this  switch
+       to  the  down position toward DISABLE and this will deselect the 512K or
+       1024K sector.  Take MEMORY out of INTERLEAVE (See INTERLEAVING paragraph
+       above).
+
+       ARM-10LS       ________
+
+            Take MEMORY out of INTERNAL INTERLEAVE (See INTERLEAVING  paragraph
+       above).
+
+            In the bottom right-hand corner of each sector is a switch  labeled
+       ENABLE  above  and  DISABLE  below.  This is the switch used to place an
+       individual BAD SECTOR off-line or put a GOOD SECTOR on-line.  If  it  is
+       in the down position, it is off-line.
+
+            To deselect the sector, simply move the switch to the down position
+       and this will take 1024K sector of memory off-line.
+
+            The SECTOR INDEX should  be  set  to  the  complement  of  the  BAD
+       PHYSICAL SECTOR.
+
+                                MSB     LSB      MSB     LSB
+           The complement of      0       0       1       1
+                                  0       1       1       0
+                                  1       0       0       1
+                                  1       1       0       0
+
+                             RECONFIGURING MEMORY                             _____________ ______
+
+            Reconfiguring memory is the  process  by  which  the  access  order
+       (configuration) of memory is altered.  This process is used, usually, so
+       that deselected memory is moved to the last possible access point  in  a
+       box of memory.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 36
+
+
+                              TYMCOM-X COPYCRASH                              ________ _________
+
+            Under the normal automatic restart procedure both  the  '/D"  (dump
+       core  to  the  disk)  and  COPYCRASH  (move the crash dump into a unique
+       filename) will occur automatically.  However if the sense  switch  4  is
+       set  on or if the system is hung in a crash loop such that a later crash
+       in the loop would overwrite a previous crash dump, then operator  action
+       is required.
+
+            If COPYCRASH is run, other than  as  a  part  of  the  auto-restart
+       procedure,  it  will  check  the crash file to see if the crash has been
+       copied.  If it has, COPYCRASH will  type  '%CRASH  ALREADY  COPIED..MAKE
+       ANOTHER  COPY?'.   If the operator types Y or the crash has not yet been
+       copied, COPYCRASH will copy it to the next higher numbered  crash  file.
+       COPYCRASH will output a message of the form
+
+            'COPY STARTING...  CRA002...  COPY DONE'
+
+            When COPYCRASH runs as part of the auto-restart sequence,  it  will
+       simply terminate if the crash has already been copied.  If the crash has
+       not been copied, it will copy it and output the
+
+            'COPY STARTING.........  COPY DONE' message on the console TTY.
+
+            If there are any input or output errors during the copy,  COPYCRASH
+       will  attempt  to finish the copy anyway and then output 'OUTPUT ERRORS'
+       or 'INPUT ERRORS' after the '...COPY DONE' message.
+
+            Possible error messages from COPYCRASH are
+
+            CAN NOT INIT DSK
+            OP LICENSE REQUIRED
+            CAN NOT ENTER OUTPUT FILE
+            NO FILE (SYS)CRASH.SAV
+            ALL CRASH FILE NAMES USED
+
+            The last message means that there are files with the names  CRA001,
+       CRA002, ...  through CRA999 already in existance.
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 37
+
+
+                         CREATING MONITOR BACKUP TAPES                         ________ _______ ______ _____
+
+            In the normal operation of the TYMCOM-X, system  restarts  and  the
+       recycling  of  the monitor occurs automatically, or at least with little
+       operator intervention.  However, if this capability is  eliminated  (for
+       instance,  if a complete rebuild is required due to disk problems) or if
+       it is not possible (for instance, if  a  new  monitor  and  file  system
+       requires  a  refresh),  we must rely on monitor files that are stored on
+       tape rather than on the disk.  In these circumstances, a MONITOR  BACKUP
+       TAPE,  ASP  BACKUP  TAPE,  TITO  BACKUP TAPE and PAKCP5 BACKUP tape will
+       allow us to reconstruct the operating system and 'start from scratch' to
+       restore ASP and/or BACKUP tapes and ALL-FILES and/or BACKUP tapes.  This
+       document describes the procedures used to create these tapes.  This is a
+       crucial  element  within the total system of File Backup:  It means that
+       even in the worst case of file system damage, we have a  starting  point
+       for safeguarding user's files.
+
+                        CREATING A BACKUP MONITOR TAPE                        ________ _ ______ _______ ____
+
+               1) Get a good tape, mount it and set status.
+
+               2) GFD to UTIL and then enter "RU COM;...." (one
+                  of the following:
+
+                  ASPMON.FT#     NEWMON.FT#     PAKCP5.FT#
+                  BUMON.FT#      TITO.FT#       SYSMON.FT#
+
+                  # = tape drive tape is mounted on
+
+               3) After creating the tape, tape the TTY output
+                  on the tape reel.
+
+               4) Put a CRESCENT label on the tape and identify as:
+
+                   (SYS:##)FILENAME and EXT of the file written
+                   to tape.
+
+                   ## = SYSTEM NUMBER
+
+               5) Label tape strap with this information also.
+
+               6) Store this tape with the other MONITOR tapes
+                  in the Tape Library.
+
+
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 38
+
+
+                    TYMCOM-X FTALOD USING TC-11 AND MAGTAPE                    ________ ______ _____ _____ ___ _______
+
+
+            The purpose of FTALOD is to load a monitor from a MAGTAPE which  is
+       mounted  on  one  of  the  STC  tape  units.   This  provides us with an
+       additional method of bringing up  either  the  current  (SYS)SYSTEM.SAV,
+       (SYS)BACKUP.SAV, or (SYS)NEWMON.SAV from MAGTAPE (in this regard, always
+       clear any monitor version changes with your Supervisor).
+
+
+            The monitor MAGTAPE may be mounted on any of the units on  the  1st
+       STC tape controller.
+
+
+            Then as described below, FTALOD can be used  to  load  the  monitor
+       from tape.
+
+                          LOADING TAPES USING FTALOD                          _______ _____ _____ ______
+
+
+            It is assumed you have sufficient reason  to  load  the  file  from
+       tape.  If the system is UP, follow the usual procedures to take it down.
+
+            Mount the tape on a tape drive for the system and load it.
+
+            Check to make sure there is a DECTAPE on the DEC Tape Transport.
+
+            On the CONSOLE TTY (CTTY), enter a Control  X  (^X)  to  get  KLDCP
+       attention.
+
+            At the period (.) prompt, type in P FTALOD$ ($ = ESC key).
+
+            When "TAPE UNIT(0-7):"  prints  out,  enter  the  FTA#  number  you
+       mounted the tape on.
+
+            At this point, if everything  went  okay,  FTALOD  will  skip  over
+       MAGRIM and read the file into core.
+
+
+
+                                         NOTE
+
+           FTALOD actually does not use MAGRIM,  it  just  skips  over  it;
+           MAGRIM  is  only required so that the same tapes may be used for
+           read-in from both the DEC and STC MAGTAPE units, and so that two
+           procedures are not needed for creating read-in tapes.
+
+
+
+
+
+
+
+
+       BTNA KL-10 Procedures
+       Revision 2; 10/25/93
+                                                                        Page 39
+
+
+                                     INDEX                                     _____
+
+       DEPOSITING INTO MA 30 . . . . . . .  25
+       DESELECTING MEMORY  . . . . . . . .  32
+       DESELECTING WHAT TO DESELECT  . . .  33
+       DESELECTING WHEN TO AND NOT TO  . .  32
+
+       INTRO TO THE KL-10  . . . . . . . .  7
+
+       KLDCP (RESTARTING)  . . . . . . . .  26
+       KLDCP BOOTS COMMAND . . . . . . . .  10
+       KLDCP CONSOLE FUNCTIONS . . . . . .  9
+       KLDCP INTERACTION COMMANDS  . . . .  9
+       KLDCP KL-10 DECTAPE FILES . . . . .  12
+       KLDCP KL-10 LOADING COMMANDS  . . .  10
+       KLDCP KL-10 MEMORY EXAMINE/DEPOSIT   11
+       KLDCP KL-10 STOP/START  . . . . . .  10
+       KLDCP LOADING (COLD START)  . . . .  13
+       KLDCP SENSE SWITCH FUNCTIONS  . . .  9
+
+       MEMORY CLEARING . . . . . . . . . .  33
+       MEMORY CONFIGURATION DETAILS  . . .  31
+       MEMORY DIVIDING . . . . . . . . . .  32
+       MEMORY INTERLEAVING . . . . . . . .  33
+       MEMORY PARITY  ERROR SUMMARY  . . .  30
+       MEMORY PARITY  PROCEDURES . . . . .  30
+       MEMORY RECONFIGURING  . . . . . . .  35
+       MONITOR LOAD FROM DISK  . . . . . .  14
+       MONITOR LOAD FROM TAPE  . . . . . .  14
+       MONITOR LOADING (WARM START)  . . .  14
+
+       PARITY BRINGUP AND FOLLOWUP . . . .  31
+       PARITY ERRORS INTRO . . . . . . . .  30
+       PDP-11 CONSOLE SWITCHES . . . . . .  8
+       PDP-11 POWERING UP  . . . . . . . .  8
+       PDP-11/40 RELOAD FROM DECTAPE . . .  27
+       PDP-11/40 RESTART PROCEDURES  . . .  26
+
+       READDRESSING (TRM10LX)  . . . . . .  34
+
+       SECTOR SIZE (TRM10LX) . . . . . . .  34
+       SENSE SWITCH OFF  . . . . . . . . .  19
+       SENSE SWITCH ON . . . . . . . . . .  20
+       SENSE SWITCHES  . . . . . . . . . .  13
+       SNPSHT  . . . . . . . . . . . . . .  28
+
+       TYMCOM-X 3674 DISC CONTROLLER . . .  17
+       TYMCOM-X BASE (EBUS)  . . . . . . .  16
+       TYMCOM-X COPYCRASH  . . . . . . . .  36
+       TYMCOM-X CREATING TAPES . . . . . .  37
+       TYMCOM-X DISC DRIVE HANGUP  . . . .  17
+       TYMCOM-X FTALOD USING TC-11/MAGTAPE  38
+       TYMCOM-X NORMAL CRASH RECOVERY  . .  15
+       TYMCOM-X RESTART FAILURES . . . . .  24
+       TYMCOM-X STARTS/RESTARTS  . . . . .  18
+
+c1|Ø
