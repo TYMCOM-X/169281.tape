@@ -1,0 +1,1276 @@
+        NAD Assembler                                        September 17, 1985
+
+
+
+
+
+
+                                  1 -  NAD Assembler
+
+
+             NAD assembles symbolic statements that it inputs from a  disc file
+        which contains 7-bit characters.  It may output a listing to a  file in
+        the user's directory.
+
+
+
+
+
+
+                                    1.1  Using NAD
+
+
+             To invoke NAD, type:
+
+        -R NAD
+
+             It will come back and type a number, such as:
+
+        122579
+
+             This is the current NAD version number.
+
+             The command "%Q" (or two escapes) will cause it to exit.
+
+             The command ";A"  causes an assembly  to take place.   The command
+        ";@" is equivalent to ";A".  The command:
+
+        ;A   [(DIRECTORY)]FILE.EXT
+
+
+             will assemble file FILE.EXT from [optional] directory DIRECTORY.
+
+             The command "%@" is equivalent to "%A".  The command "%A"  is like
+        ";A", except that a listing file will be generated, with name FILE.LST.
+
+             MULTIPLE,  sucessive  ";A", "%A",  ";@"  or "%@"  commands  may be
+        given, IN ORDER TO collect a set of files into one assembly.
+
+             The ";(" and ";)" commands allow one listing file to  be generated
+        when multiple ";A" and "%A" commands are given.  They also can make the
+        ";A" command cause a listing to be produced.  (See section on  ";(" and
+        ";)" in NAD debugger chapter.)
+
+
+
+
+
+        1                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                               1.2  ";X" -- Command File
+
+
+             NAD has a command file capability.  Entering the command:
+
+        ;X   FILE.CMD
+
+             will cause subsequent commands to be read from FILE.CMD.   This is
+        especially useful for assembling  a series of files.  The  command file
+        specified may include any commands which may be entered after NAD types
+        its  version.  Two  characters  have special  meanings when  NAD  is in
+        command file mode: control-D (^D) terminates command file mode, causing
+        NAD to revert to normal terminal input mode.  Control-V (^V) causes NAD
+        to take characters  from the terminal until  a control-D is  typed, and
+        then to resume execution of the command file.  Thus, command  files may
+        allow for variable information to be inserted by the user  at execution
+        time.  For example, this command file:
+        %Afile1.nad
+        %A^V
+        %Afile3.nad
+
+             would  produce the  following output  (command file  text  and NAD
+        messages in UPPER CASE, user typein in lower case):
+        -r(isis)nnad
+        READY
+        ;x file.cmd
+        %A   FILE1.NAD          :command file assembles one file
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        %A   filex.nad^d        :user specifies second file
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        %A   FILE3.NAD
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;c   me:377             :command returns to the user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        2                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                                  1.3  Assembler Text
+
+
+             The input text  to the assembler is  a string of  statements which
+        either translate into ENGINE code or into directives to  the assembler.
+        Statements are  delimited by the  statement delimiters  carriage return
+        (C/R) and semicolon (;).
+
+
+
+
+
+
+                                    1.4  Statements
+
+
+             A statement is a  string of symbols, fields, and  expressions that
+        end with a carriage return or a semicolon.
+
+
+
+
+
+
+                                     1.5  Numbers
+
+
+             Numbers are a string of hex digits, where the first digit  must be
+        between 0 and 9.  Some examples of hex digits are:
+
+                0F      this is  the hex number of  the highest register on the
+                        ENGINE
+                0FFFFE  this is one less than the highest ENGINE byte address
+
+             The value of a number string is dependent on the radix.
+
+
+
+
+
+
+                                     1.6  Symbols
+
+
+             A symbol  is a  string of 1  to 6  alphanumerics, and  may include
+        imbedded  periods  (".").  The  first  character of  a  symbol  must be
+        alphabetic.  the period symbol "."  is an exception to this  rule.  "."
+        is the current program counter.
+
+
+
+
+
+
+        3                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                    1.6.1  Computed Symbols
+
+             The string "|" embedded in a symbol has special significance.  The
+        expression between two "|"'s is evaluated, and converted to a string of
+        digits  according  to the  current  radix, and  this  string  of digits
+        replaces the original expression.
+
+             The sequence:
+
+        Q       EQ      0
+                RE      3
+                HC      SYM|Q|
+        Q       EQ      Q+1
+                ER
+
+             is equivalent to the sequence:
+
+                HC      SYM0,SYM1,SYM2
+
+             in terms of the code generated.  However, it can eliminate a nasty
+        mess of IF--EI  statements when it is  desired to generate  a variable-
+        length table of numerically successive symbols.
+
+
+
+
+
+
+                                    1.7  Operators
+
+
+             Binary operators are lodged between two values in the form:
+
+                             left valueOPERATORright value
+
+             Unary operators do not have a left value.  There may be  no blanks
+        between  the  operators and  the  values they  operate  on.   the valid
+        assembler orerators  are below.  The  higher precedence  operations are
+        performed before the lower precedence operations.
+
+        Operator       Precedence      Function
+
+        +R             7               Value is R
+        -R             7               Value is minus R
+        @R             7               Value is the one's complement of R
+        \R             7               Value is whether R is defined
+                                        or not (see below)
+        L^R            6               Value is L shifted R places
+                                        (left for plus R,
+                                        and right for minus R)
+        L*R            5               Value is L times R
+        L/R            5               Value is L divided by R
+        L+R            4               Value is L plus R
+
+        4                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        L-R            4               Value is L minus R
+        L&R            1               Value is L and R
+        L!R            0               Value is L or R
+        L%R            0               Value is L exclusive-or R
+
+             The value of the   operator is one if its operand is defined (i.e.
+        all of the variables  in the operand have  a value when the  operand is
+        evaluated), zero if its operand contains exactly one undefined variable
+        and undefined if its operand contains two or more  undefined variables.
+        Note that the value of the operator is independent of the value  of its
+        operand.  The   operator is primarily used to determine whether  or not
+        a  variable is defined.  Example,
+
+                IF      \SYMBOL
+                REMARK  %SYMBOL IS DEFINED.
+                ELSE
+                REMARK  %SYMBOL WAS UNDEFINED.
+        SYMBOL  EQ      0
+                REMARK  %IT IS NOW DEFINED WITH A VALUE OF ZERO.
+                REMARK  %***WARNING*** A LISTING GENERATED ON PASS-2 OF NAD
+                REMARK  %ASSEMBLY WILL SHOW THE SYMBOL DEFINED (AT THAT TIME),
+                REMARK  %SINCE IT WAS ALREADY DECLARED DURING PASS 1!!
+                EI
+
+
+             CAUTION.  Construct complicated expressions with careful attention
+        to precedence.   Simple expressions come  naturally,  but  some complex
+        expressions don't.  Redundant  parenthesis don't bother  the expression
+        evaluator but  may help the  user.  In order  to bind a  low precedence
+        expression to  a high precedence  operator, parenthesis are  advised or
+        necessary.
+
+
+
+
+
+
+                                      1.8  Fields
+
+
+             A  field  is  a string  of  characters,  symbols,  numbers, and/or
+        operators that  has a  single meaning  in the  context of  a statement.
+        Fields  are  surrounded  on  the  left  and  right  by  the  delimiting
+        characters  (blanks,  tabs, commas,  dollar-sign,  parenthesis, colons,
+        semicolons, and carriage returns).
+
+
+
+
+
+
+
+
+
+        5                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                                   1.9  Expressions
+
+
+             An  expression  is  a  string  of  symbols,  numbers,  fields, and
+        operators  that  evaluate  to a  single  value.   Expressions  may also
+        contain the parenthesis  delimiters to delimit a  sub-expression within
+        an expression.  A simple expression may be as short as one alphanumeric
+        character.
+
+             A special rule of expressions  allows the user to imbed  a dollar-
+        sign  and  hex digit  in  or before  the  expression to  set  the radix
+        according to the hex digit for  the rest of the statement.  It  is also
+        legal  to  use this  radix  setting  convention more  than  once  in an
+        expression.  If  the hex character  is a  0, the radix  is set  to hex;
+        otherwise the radix is set to the value of the hex digit.
+
+
+
+
+
+
+                                1.10  Statement Format
+
+
+             The general statement format is:
+
+        LABEL   OPCODE  OPERANDS        :Comment field.
+
+             However, the assembler can be directed to ignor some or all of the
+        fields.
+
+             A statement that  begins with a ":"  is a comment  statement.  The
+        colon may be  placed almost anywhere to  indicate that the rest  of the
+        statement is a comment field.
+
+             The label field  is null unless a  symbol is left adjusted  in the
+        statement.  Symbols may be defined and redefined by repeated use in the
+        label field.
+
+             The opcode field contains a single symbol, with no operators, that
+        represents an ENGINE operation code or an assembler directive.
+
+             The  operand field  follows  the opcode  field.  The  value  of an
+        operand is  the value  of an  expression.  The  operand fields  must be
+        ordered in the same order  as they are ordered in the  ENGINE Reference
+        Manual.   All  operand  fields  except the  first  in  a  statement are
+        preceeded by a comma (",").  Even the RX3 operand fields  are delimited
+        only by commas.  Here are some examples:
+
+
+
+
+
+
+        6                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+
+                C       R1,D2,X2        :this would assemble as RX1 or RX2
+                C       R1,A2,FX2,SX2   :this would assemble as RX3
+                C       R1,A2,FX2,SX2   :would also assemble as RX3
+                C       R1,DISPL,RX,0   :user forced RX3 because displacement
+                                        : was large and would not fit in an
+                                        : RX1 or RX2 instruction
+
+             The last operand is terminated  by " " (blank), tab, ":",  ";", or
+        C/R.  Operands  that terminate  with a  "," are  not the  last operand.
+        Since each  operand may  be an  expression with  leading blanks,  it is
+        possible  to  seperate and  group  the operands.   Operand  fields that
+        assemble  to  4-bit  values  must  be  defined  at  the  time  that the
+        instruction  is  being  assembled,  except  for  short  forward  branch
+        instructions  which  may branch  ahead  to an  undefined  address.  The
+        expression that makes the displacement fields may contain one undefined
+        symbol.  The undefined symbol may be attached to any operator.
+
+             For example:
+
+                C       9,TABLE+((((7-Y*Z)+X)/2)),FX2,SX2+N*M
+
+             is legal if TABLE, X, Y, FX2, N, M, and SX2 are defined, and  Z is
+        undefined.
+
+             Any expression may  include a dollar-sign, hex-digit  field ("$n")
+        to indicate  that a special  radix is to  be used to  interpret numbers
+        until the end  of the last operand  field of the statement.   The legal
+        combinations are:
+            $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
+
+             The sixteen radices possible are specified by the hex character.
+
+        0       normal hex radix.
+        1       a dull radix.
+        2       binary.
+        8       octal.
+        A       decimal.
+        F       radix 15 decimal.
+
+             This special kludge on the operand built for the operand structure
+        can be used an unlimited number of times in a statement.  Examples:
+
+                L       R1,$ATEMP+212,15        :this assembles the
+                L       R1,$A TEMP+212,$8 17    :...same as this
+                L       $A R1,TEMP+212,15       :......and this
+
+             The  special  radix  setter  can be  used  more  than  once  in an
+        expression.
+
+
+
+
+
+        7                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                              1.11  Assembler Directives
+
+
+             The  opcode  field  of  a  statement  may  contain   an  assembler
+        directive.
+
+
+
+
+
+                    1.11.1  Assemble-time Comments
+
+             A source  file can  be made  to output  remarks to  the controling
+        terminal  at  assemble-time.  This  facility  may be  used  to generate
+        diagnostics.
+
+
+
+        1.11.1.1          REMARK  %type at assembly time
+
+             The REMARK directive  causes the assembler  to type on  the user's
+        terminal all  of the  characters between the  delimiter (blank  or tab)
+        following the word "REMARK" and the end of the statement (terminated by
+        C/R) at the  time the assembler  encounters the remark  statement.  The
+        symbol "%" in a remark is used to represent a carriage-return/line-feed
+        on output.
+
+
+
+        1.11.1.2          NUMBER  EXPRESSION
+
+             The NUMBER  directive causes  the expression  to be  evaluated and
+        typed out, according to the current radix, on the user's terminal.
+
+
+
+
+
+                    1.11.2  Symbol Control
+
+
+
+        1.11.2.1  LABEL   EQ      EXP
+
+             This defines label as having the value of EXP.
+
+
+
+
+
+
+
+
+
+        8                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.2.2  LABEL   LINENO
+
+             This defines label as having the value of the current  SOURCE line
+        number.
+
+
+
+        1.11.2.3  LABEL   NADVER
+
+             This  defines label  as having  the value  of the  current Version
+        number of NAD.
+
+
+
+        1.11.2.4  LABEL   ERRCNT
+
+             This defines label as having  the value of the number  of assembly
+        (file) errors which have so far occurred since entering NAD.
+
+
+
+        1.11.2.5  LABEL   UNCNT
+
+             This defines label  as the number  of symbols which  are currently
+        undefined.
+
+             Note that  the successive values  returned by this  directive both
+        increase  and decrease  whereas the  values returned  by  ERRCNT always
+        increase.
+
+
+
+        1.11.2.6  LABEL   CURGMT
+
+             This  defines label  as the  current time  in seconds  since 00:00
+        1/1/74 GMT (i.e. Network time).
+
+
+
+        1.11.2.7          GL      SYM1,SYM2,...,SYMn
+
+             This  directive marks  a  symbol as  global to  all  modules.  The
+        symbols in the list may be a mixture of symbols that are in other files
+        to be referenced by the  current file, and symbols that are  defined in
+        the current file that are  to be referenced from elsewhere.   In either
+        case,  GL should  be anywhere  in the  file before  the symbols  in the
+        symbol list are defined or referenced.  Globals must be stated  as such
+        before they are used.  GL will  not change a normal module symbol  to a
+        global.
+
+
+
+
+
+        9                          Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.2.8          UN
+
+             This directive causes all  undefined symbols to be printed  at the
+        terminal, including  all symbols which  have been declared  global, but
+        not defined.
+
+
+
+        1.11.2.9          KILL    SYM1,SYM2,...,SYMn
+
+             This directive causes its argument, a list of symbol names,  to be
+        removed from the symbol table  and to hence be undefined.   The symbols
+        need not be defined to be  KILL'ed.  A macro must be KILL'ed  before it
+        can be redefined.
+
+
+
+
+
+                    1.11.3  Program Counter
+
+             The symbol period  (". used by  NAD as the  location counter.
+        It may be explicitly changed by several directives.
+
+
+
+        1.11.3.1  LABEL   ORG     EXP
+
+             Start assembling into virtual memory location EXP.  If ORG  is not
+        issued to the assembler, ORG is set to 0 or to one higher than the last
+        location  assembled.  Even  code  that will  run address  free  must be
+        oriented to an origin at assembly time.
+
+             If  a label  is  used, the  label is  defined  to have  the  new P
+        counter.
+
+        LABEL   ORG     1000
+
+
+             is therefore the same as:
+
+                ORG     1000
+        LABEL
+
+
+                ORG     (.+3)/4*4
+        or
+                ORG     .+3&-4          :cause word alignment of PC
+
+                ORG     $A 1^14         :sets the origin to the lowest
+                                        :15 (decimal) bit address
+                                        :(which invokes RX2 instead of RX1)
+
+
+        10                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.3.2  LABEL   BND     EXP
+
+             Force  "."  (the  program  counter) to  the  next  (.  modulo EXP)
+        boundary. LABEL is set to the  new value of ".".  If "." is  already at
+        such a boundary, it is not changed.  EXP must be a power of two.
+
+                BND     0               :force to byte boundary
+                BND     2               :force to halfword boundary
+                BND     4               :force to word boundary
+                BND     8               :force to double-word boundary
+                BND     100             :force to page boundary
+                BND     10000           :force to segment boundary
+
+
+
+        1.11.3.3  LABEL   SEG     EXP
+
+             SEG permits  the maintaining of  separate location  counters (".")
+        for each MAC segment.  EXP  must be fully defined, and evaluate  to the
+        range 0-15d.  If the current segment is m, the command:
+
+                SEG     n               :switch to segment n
+
+        will cause:
+
+                m := CS         (CS = Current Segment)
+                PC(m) := .
+                CS := n
+                . := PC(n)
+
+             This is  especially useful when  gathering source material  from a
+        number of  library files, since  it allows each  file to  add variables
+        storage to segment 0, code  to segment 1, and define other  segments as
+        necessary.
+
+             The label LABEL will have  a value equal to the PC  AFTER changing
+        segments (like ORG).
+
+
+
+
+
+                    1.11.4  Modules
+
+             A program may  be divided into modules,  at the discretion  of the
+        programmer.  Symbols defined within a module are local to  that module,
+        and are distinct from the same symbols defined in other  modules.  This
+        permits the symbols to  be referenced from within that  module, without
+        conflict with other possible usage of the the same symbols.
+
+
+
+
+
+        11                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.4.1          MO      ORGEXP,ASCNAM
+
+             The MO directive delimits the beginning of a module that is  to be
+        referenced by the name ASCNAM.  The end of the module is marked  by the
+        EM directive  or a new  MO directive.  The  MO directive also  sets the
+        origin in the same sense as the ORG statement sets the origin.
+
+             It is not necessary to  issue MO statements to use  the assembler.
+        The default module is ..MAIN  which cannot be confused with  any module
+        specified by  the user.   There are  a maximum  of 36  possible modules
+        recognizable to  NAD.  32 of  the 36 are  available to the  user.  (The
+        others are  used for  special purposes,  such as  instructin mnemonics,
+        global symbols, etc.)
+
+
+
+        1.11.4.2          EM
+
+             The EM directive ends the current module and causes  the assembler
+        to type out the hex value of the origin as it was when the MO directive
+        was issued (see "ORGEXP" above)  and the current value of the  origin (
+        or "." or  PC).  All undefined symbols  for the module which  is ending
+        are also typed.
+
+             After the EM directive, the assembly proceeds in the ..MAIN module
+        until another MO directive is encountered.
+
+
+
+        1.11.4.3          LO      ASCNAM
+
+             Normally the assembler accesses the local symbols from  one module
+        at a time.   However, with the  use of the  LO directive, the  user can
+        make another set of locals available to him at assembly time.  There is
+        no limit to how many times the user may issue the LO directive.
+
+             It  is not  necessary to  use the  LO directive  to  access global
+        symbols that were assembled in another module.
+
+
+
+        1.11.4.4          FO      ASCNAM
+
+             This  directive  makes  the local  symbols  in  the  module ASCNAM
+        foreign.   This prevents  possible confusion  from locals  in different
+        packages that have the same asc mnemonics.
+
+
+
+
+
+
+
+
+        12                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                    1.11.5  Listing Control
+
+             Listings are generated using the %A command or with the ;A command
+        in conjunction with the ;( and ;) commands.  The listing file  can have
+        a three line heading on each page.  The page dimensions can  be changed
+        with the ;% command described  in the NAD debugger chapter.   The first
+        line of the  heading contains a section  and a page number,  title text
+        from the TITLE directive (described below), the current NAD version and
+        the date and time the file was assembled.  The second line contains the
+        name of the file being  assembled followed by the subtitle text  from a
+        SUBTTL directive (also described below).  The third line is blank.  The
+        section number starts  at one and is  incremented at the start  of each
+        file being assembled and with each SUBTTL directive.  Each listing line
+        can have up  to four fields.  The  first eight columns contain  a cross
+        reference listing line number and is only present if a  cross reference
+        listing is produced.  The next  eight columns contain the value  of the
+        program counter.  The next four and twenty columns contain the  hex for
+        the assembled instructions.   These two fields  are not present  if the
+        listing is  produced during  pass one  (see ;(  and ;)  commands).  The
+        remaining columns contain the source text.
+
+             If a listing is generated, certain controls may be applied  to the
+        listing.
+
+
+
+        1.11.5.1          control-L
+
+             A control-L (formfeed) may appear at the beginning of any  line to
+        force the listing to a new page.
+
+
+
+        1.11.5.2          LIST/NOLIST
+
+             These two  directives turn the  lister on and  off.  LIST  mode is
+        assumed if neither of these  directives is used.  NOLIST is  very handy
+        for  preventing  wasteful output  generated  in repeat  loops.   See RE
+        directive.  The LIST directive has the following format:
+
+                LIST    P1,P2,..Pn      :where Pi =
+
+        L       list NOLISTed lines "as is", ie, between a NOLIST and the
+                next LIST directive -
+                ";" delimited lines are printed as they are,
+                "RE" blocks are printed only once,
+                macro expansions are not printed,
+                no PC or HEX is printed to the left.
+
+        -L      do not list NOLISTed lines at all.
+
+        F       list "IF" skipped lines "as is", ie, within the IF
+                skipped block -
+
+        13                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                ";" lines are printed as they are,
+                "RE" blocks are printed only once,
+                macro expansions are not printed,
+                no PC or HEX is listed to the left.
+
+        -F      do not list "IF" skipped lines at all.
+
+        X       list macro calls followed by the macro expansion
+                surrounded by square brackets.
+
+        -X      list macro calls without expansions.
+
+        R       list all generations of repeat blocks.
+
+        -R      only list repeat blocks once.
+
+             LIST without  parameters uses  the parameters  from the  last LIST
+        directive.
+
+             "LIST F,L,R,X" is the default on entry to NAD.   Parameters should
+        be avoided in the code, so that they may be set up before the assembly.
+        An unrecognized LIST option will stop the option scan.
+
+             Eg:
+
+                R NAD
+                122579
+                ;(
+                LIST L,-F
+                ;A   1371T.TYM
+                ;A   I707.NAD
+                ;)
+
+             This sequence  will list NOLISTed  lines as is;  will not  list IF
+        skipped  lines  at  all;  will  create  a  cross-reference  file called
+        1371T.CRF, which will have cross-references relative to files 1371T.TYM
+        and I707.NAD.
+
+
+
+        1.11.5.3          TITLE   Text
+
+             The TITLE directive specifies that all the text after the blank or
+        tab following TITLE and up to but not including the carriage  return is
+        the new title.  When  the title is entered  directly, not as part  of a
+        source file, it becomes the  default title.  The default title  is used
+        for all pass one listings.  It is also used for all files which  do not
+        contain  a  TITLE directive.   If  no default  title  is  entered, only
+        listings of files containing a  TITLE directive and listed in  pass two
+        will have a heading.  If a default title is entered, its effect  can be
+        cancelled by a NOTTL directive (described below).  If a file contains a
+        TITLE directive, the title is  only used for pass two listings  of that
+
+
+        14                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        file.  There can only  be one TITLE directive  in a file and  the TITLE
+        text can be no longer than line length minus 46.
+
+
+
+        1.11.5.4          SUBTTL  Text
+
+             The SUBTTL directive causes a  section break on the listing  and a
+        new page  on which the  subtitle will appear  in files which  are being
+        listed with  a heading.   When getting  a pass  two listing,  the first
+        SUBTTL directive is saved during  pass one and used as the  subtitle on
+        the  first  page.  When  SUBTTL  is entered  directly,  it  becomes the
+        default subtitle.  The default  subtitle is used as the  first subtitle
+        in all pass one  listings.  It is also  the first and only  subtitle in
+        all  files  which  do  not contain  a  SUBTTL  directive.   The default
+        subtitle is initially null and can be changed as often as desired.  The
+        subtitle can be no longer than line length minus 24.
+
+
+
+        1.11.5.5          NOTTL
+
+             The NOTTL directive cancels the current default title,  if entered
+        directly, causing  listings of  any further  assemblies to  not contain
+        headings unless the  file contains a TITLE  directive and is  listed in
+        pass two.  A NOTTL directive in a file causes a pass two listing of the
+        file to be listed without headings.
+
+
+
+
+
+                    1.11.6  Storage Allocation
+
+             A  number of  directives  allow the  user to  define  and allocate
+        storage.
+
+
+
+        1.11.6.1  LABEL   BS      EXP
+
+             This defines EXP bytes of storage.  Assembly continues  beyond the
+        end of the storage area.
+
+             Examples of byte storage directive:
+
+        BITMAP  BS      BITCNT/8        :table for bit addressed array
+        PATCH   BS      40              :area for run time patches
+                BS      -.&7            :align to double word
+                                        :same as:       ORG     (.+7)/8*8
+                                        :or as:         ORG     (.+7)&(@7)
+                                        :or as:         BND     8
+                BS      .&1             :align to even byte (halfword) address
+
+        15                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.6.2  LABEL   HS      EXP
+
+             This align the program  counter to halfword boundary  and reserves
+        EXP halfwords of storage.
+
+
+
+        1.11.6.3  LABEL   WS      EXP
+
+             This  aligns  the  program  counter  to  fullword  boundaries  and
+        reserves EXP fullwords of storage.
+
+
+
+
+
+                    1.11.7  Data Allocation Directives
+
+             There  exist a  number of  directives for  the definition  of data
+        constants.
+
+
+
+        1.11.7.1  LABEL   BC      EXP1,EXP2,....,EXPn
+
+             This defines LABEL as the  first of N bytes that will  contain the
+        values of EXP1, EXP2, ....EXPN.   The low order bits of  the expression
+        values are used and the high-order value bits are ignored.
+
+
+
+        1.11.7.2  LABEL   HC      EXP1,EXP2,...,EXPn
+
+             Alignment  factor  2  is  used, then  N  halfwords  are  stored as
+        constants.  Only the right 16 bits of the expression values are stored.
+
+
+
+        1.11.7.3  LABEL   WC      EXP1,EXP2,...,EXPn
+
+             Alignment factor 4 is used then N fullwords are stored.
+
+
+
+        1.11.7.4  LABEL   XC      hexstring
+
+             Hex is stored starting at the left of the next available byte.
+
+
+
+
+
+
+
+        16                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.7.5  LABEL   AC      /ascii string/
+
+             8 bit ascii  bytes are generated starting  at the next  byte.  The
+        user picks the delimiter.  Special characters may be inserted  into the
+        text  by inserting  a full  quote  '"' followed  by 2  hex  digits that
+        represent the 8 bits of the special character.
+
+             For example:
+
+                AC      /message "8D"8A/
+
+             is a message followed by C/R, L/F.
+
+
+
+        1.11.7.6  LABEL   SC      /ascii string/
+
+             This is like  AC except that the  string is assembled  following a
+        byte which is the  modulo 256 count of  how many characters are  in the
+        message string.
+
+
+
+
+
+                    1.11.8  Conditional Assembly Control
+
+             It is  sometimes desirable to  conditionally suppress  or condense
+        statements in the source file.
+
+
+
+        1.11.8.1          IF      EXP
+
+             Assemble the following  text if EXP  is true.  True  means greater
+        than zero.
+
+
+
+        1.11.8.2          ELSE    EXP
+
+             Unlike IF and  EI, ELSE does not  change the nesting  level.  Code
+        between  an ELSE  and the  next ELSE  or EI  statement for  the current
+        nesting will assemble only if the ELSE argument is true and no code has
+        assembled on the current level.  EXP may be left null in which case the
+        intent is assumed to be:
+
+                ELSE    1
+
+
+
+
+
+
+        17                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        1.11.8.3          EI      (sym)
+
+             Terminate the range of an IF statement.  IF's may be  nested.  The
+        EI pops up one nesting level.
+
+
+
+        1.11.8.4  LABEL   RE      EXPOK
+
+
+
+        1.11.8.5          ER      EXPOK
+
+             These define the beginning and end of a repeat block.  If  ER, the
+        end-repeat  directive,  has an  expression  in the  operand  field, the
+        repeat  block is  assembled again  if the  expression is  true.   If ER
+        contains  a null  operand  field, then  the more  conventional  type of
+        repeat occurs.  In this mode, the expression field of the  RE directive
+        is a  counter which  the assembler  automatically decrements  and tests
+        when it  encounters the  ER statement.   The block  is repeated  if the
+        count is decremented to a true value.  That is, to a value greater than
+        0.
+
+             Repeat blocks may be nested and mixed with nested IF's.
+
+             Examples:
+                RE      4               :This block assembles 4 times
+                text
+                ER
+
+        Q       EQ      0
+                RE                      :Assemble a block of squares
+                WC      Q*Q             :       of integers
+        Q       EQ      Q+1
+                ER      LASTQ-Q         :Terminate conditional repeat
+
+               NOTE:   RE  blocks may  be nested.   However, there  is a
+                       limit of four levels of RE nesting.
+
+               NOTE:   Because of the particular implementation used for
+                       RE blocks, the "text" of the block is  limited to
+                       a maximum of 640d characters.  This  includes ALL
+                       characters, including blanks, CR,  comments, etc.
+                       A  diagnostic is  issued if  the repeat  range is
+                       greater than 640 characters.  (The  limitation is
+                       on the characters present in the source;  the use
+                       of macro invocations will NOT increase  the count
+                       of characters by the macro text.)
+
+
+
+
+
+
+        18                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                    1.11.9  Other Directives
+
+
+
+        1.11.9.1          RA      EXP
+
+             Sets the  radix.  For  example, if the  radix were  some confusing
+        value, it could be set to decimal by the statement:
+
+                RA      $00A
+
+        or the statement:
+
+                RA      $0 0A
+
+             0A is the hex number equal  to 10 decimal.  The $0 in  the example
+        was to make sure that the 0A part of the statement was not out of range
+        of the current radix.
+
+             The digits that make up  a number are subject to  the restrictions
+        set forth in the definition of a number, and to further restrictions of
+        the radix;  the Expression must evaluate to a number between 0 and 15d,
+        inclusive,  with 0  signifying  hexidecimal radix.   For  instance, the
+        number 9 will trap the  assembly with an error diagnostic if  the radix
+        is octal;  0 is valid in all radixes, and means hexidecimal.
+
+
+
+        1.11.9.2          END
+
+             This directive  tells the  assembler to  stop assembling  from the
+        input file.
+
+
+
+        1.11.9.3          QUIT   EXP
+
+             This  directive causes  NAD  to clear  the  terminal-input buffer,
+        close the input and command files (if open), and reverts control to the
+        controlling terminal.  If EXP is present, and evaluates TRUE (>0), then
+        NAD will exit back to the system level.
+
+
+
+
+
+
+
+
+
+
+
+
+
+        19                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+                              1.12  Instruction Mnemonics
+
+
+             Except for the branch  mnemonics, all the mnemonics listed  in the
+        machine reference  manual are used  in the assembler.   (Floating point
+        instructions are  not implemented.) The  branch variety is  detailed in
+        the chart below.
+
+             J means jump.
+
+             L, LE,  E, N,  GE, G,  C, NC, O,  NO mean:   Less, Less  or Equal,
+        Equal, Not Equal, Greater or Equal, Greater, Carry, No Carry, Overflow,
+        and No Overflow.
+
+             T means true.
+
+             F means false.
+
+              means default case.
+
+                {null}
+                T
+                F
+                L
+                LE
+                E       {null}
+        J       N       R
+                GE      BS
+                G       FS
+                C
+                NC
+                O
+                NO
+
+             Examples of mnemonics built from above chart:
+
+                JN      X               :jump to x if the condition
+                                        :       code is not equal.
+
+             The jump will occur if either the G or L conditions are on.
+
+                JNFS    X               :jump forward to local address
+                                        :       X within 15D halfwords
+                                        :       of the P counter if the
+                                        :       condition code is not equal.
+                JCR     1               :jump to the address in
+                                        :       register 1 if the carry
+                                        :       flip-flop is on.
+                JBS     .-4             :jump backward short
+                                        :       unconditionally
+                J       X               :jump to X
+                                        :       (RX1, RX2, RX3)
+
+
+        20                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+             The jump true and jump false (JT and JF) set require that  a 4-bit
+        condition code operand be specified as the first operand.  For example,
+        #JT 4,X#  tests a bit in  the fullword condition code and jumps  if the
+        bit is on.
+
+             JAL and JALR mean Jump And Link, and Jump And Link Register.
+
+
+
+
+
+
+                                 1.13  Macro Facility
+
+
+
+
+
+
+                    1.13.1  Macro Definition
+
+             Macro definitions have the form:
+        <name>  macro(<arg1>,<arg2>,...,<argn>) [<text>]
+
+             where <name>  has the form  for a legal  NAD symbol.   <name> must
+        appear in the label  field of the definition statement.   Arguments are
+        optional, and  must be surrounded  by parentheses, with  dummy argument
+        names obeying the rules for NAD symbol names. Up to 16  dummy arguments
+        may be given. For arguments to be recognized as such, they  must appear
+        surrounded  by  legal  delimiters,  or  preceded  by  the concatenation
+        operator, "`". Everything between  the first "[" seen and  the matching
+        "]"  that  is  not  an argument  is  stored  without  modification, and
+        retrieved when the macro is called.   A "`" or an unmatched "["  or "]"
+        character may be included  in a macro body  by preceding it with  a "`"
+        (i.e., to include a literal "`"  in a macro body, type "``").   A macro
+        definition can  appear as part  of <text>.  The  macro will  be defined
+        when the  macro containing the  definition is called.   A macro  can be
+        redefined if its previous  definition has been removed from  the symbol
+        table using the KILL directive.
+
+
+
+
+
+                    1.13.2  Macro Invocation
+
+             A macro call takes the form:
+                <name>(<arg1>,<arg2>,...,<argn>)
+
+             A macro call may appear  anywhere in a statement, and may  in fact
+        be  seen by  the assembler  as several  statements, or  only part  of a
+        statement.  As in a macro definition, arguments may be  omitted.  Extra
+
+
+        21                         Tools & Utilities                  TOOLS.DOC
+        NAD Assembler                                        September 17, 1985
+
+
+        arguments  are ignored,  missing arguments  are supplied  as  null.  If
+        arguments  are given,  the left  parenthesis that  begins  the argument
+        string must the first character after the macro name, or the macro will
+        be called without arguments. Arguments are delimited by commas, and the
+        argument string terminates when the matching right parenthesis is seen.
+        All other characters are included verbatim
+
+             A comma, an unmatched right or left parenthesis, or "`" (backwards
+        quote), may be included in an argument by preceding it with a "`".
+
+
+
+        1.13.2.1  Example:
+
+             This file:
+        FOO     MACRO(X,Y,Z)
+                [LIS    X,Y
+                SLLS    Y,X
+                LIS     Z
+                WC      X`Y]
+        BLA     FOO(1,2,3`,4)   :in this call X="1", Y="2", Z="3,4"
+                END
+
+        would assemble as:
+
+        BLA     LIS     1,2
+                SLLS    2,1
+                LIS     3,4     :the "`" in the source file causes the comma
+                                :to be taken as a normal character
+                WC      12      :here X and Y have been concatenated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]:It
