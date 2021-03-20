@@ -1,0 +1,280 @@
+                          The UNDELETE Command
+
+The UNDELETE command allows you to recover or "undelete" files deleted
+during a TYMCOM-X terminal session.  Command switches are used to enable
+the undelete capability, as well as to provide a variety of other
+functions.  Files that are deleted with the DELETE command while
+UNDELETE is enabled are automatically placed in temporary storage (that
+is, in files having a TMP extension).  You may recover any or all of
+these deleted files during the current terminal session, provided you
+have not given a GFD command since deleting them.
+
+The general form of the UNDELETE command is
+
+  -UNDELETE [switch] [file identifier list]<CR>
+
+The following command forms invoke various functions related to the
+undelete capability.
+
+  COMMAND FORM                     FUNCTION
+
+  UNDELETE /ENABLE                 Enables the undelete capability.
+
+  UNDELETE /LIST                   Lists the names of files that can
+    [file identifier list]         be recovered.
+
+  UNDELETE [/RECOVER]              Recovers the deleted files as
+    [file identifier list]         though they had never been
+                                   deleted.
+
+  UNDELETE /PURGE                  Erases the deleted files
+    [file identifier list]         permanently.
+
+  UNDELETE /SELECT                 Allows you to specify actions on
+    [file identifier list]         the deleted files on an
+                                   individual basis.
+
+  UNDELETE /DISABLE                Disables the undelete capability.
+
+The slash preceding the switch name is required.  Switch names can be
+abbreviated to the first letter if desired.
+
+Some of the switches are followed by an optional file identifier list.
+The file identifier list is a list of file identifiers separated by
+commas.  If you do not specify the file(s) to be affected by the command
+switch, all of the deleted files will be affected.  Whenever a form of
+the UNDELETE command displays a file identifier, it follows the
+identifier with the size of the file and the date and time the file was
+created.
+
+Each of the command switches is described below.  A session
+demonstrating the undelete capability is provided later.
+
+
+                    Enabling and Disabling UNDELETE
+
+The /ENABLE switch enables the undelete capability.  It must be used
+first, in order for the remaining switches to take effect.  Remember
+that only those files that are deleted while UNDELETE is enabled can be
+undeleted.  UNDELETE remains enabled, even between terminal sessions,
+until you use the /DISABLE switch.
+
+Enabling the undelete capability results in the creation of a file named
+DIRIT.INI in your directory.  Deleting this file will cause UNDELETE to
+be disabled.  As long as this file exists, it is not necessary to enable
+UNDELETE at the beginning of each terminal session.
+
+Note that disabling UNDELETE does not remove any deleted files from
+temporary storage.  Thus, if you enable UNDELETE again after disabling
+it, previously deleted files can still be recovered (provided you have
+not given a GFD command or logged out since deleting the files).
+
+
+                   Listing Names of Recoverable Files
+
+The /LIST switch lists the names of the files that can be undeleted.
+Once a file has been undeleted, it will no longer be shown when the
+/LIST switch is used.  For example:
+
+  -UNDELETE /ENABLE<CR>
+
+  -DELETE COMNEW, LPROG, NDATA<CR>
+
+  -UNDELETE /LIST<CR>
+
+  COMNEW    ;  2 pages; created 6-DEC-81  8:45:45
+  LPROG     ;  2 pages; created 6-DEC-81  8:39:29
+  NDATA     ;  3 pages; created 6-DEC-81  8:09:15
+
+  -
+
+
+                            Recovering Files
+
+The default switch for the UNDELETE command is /RECOVER; that is, if no
+command switch is entered following "UNDELETE", /RECOVER is assumed.  It
+recovers files deleted since the undelete capability was enabled, as
+though they had never been deleted.  The system responds with "[okay]"
+to indicate that the command has taken effect.  For example:
+
+  -UNDELETE COMNEW, NDATA<CR>
+
+  COMNEW    ;  2 pages; created 6-DEC-81  8:45:45 [okay]
+  NDATA     ;  3 pages; created 6-DEC-81  8:09:15 [okay]
+
+  -
+
+Files deleted before a GFD command was given, or during a previous
+terminal session, cannot be recovered.
+
+Note that it is possible that more than one file with the same name may
+be deleted, since the user might delete a file, create another one with
+the same name, delete that file, and so on.  In this case, all of the
+files are available for recovery.  An UNDELETE [/RECOVER] command
+specifying the duplicated file name, or no file name at all, will
+recover only one of the deleted files; you can tell which one by the
+information displayed following the file name.  If the recovered file is
+renamed, another of the deleted files having its former name can then be
+recovered.
+
+A file deleted from another directory will be restored to that
+directory.  For example, suppose a user logs in under the name SMITH,
+accesses another directory with a GFD command, and then deletes a file
+from the SMITH directory with the command
+
+  -DELETE (SMITH)MEMO.FEB<CR>
+
+At any time before giving another GFD command, the user may recover the
+file as follows:
+
+  -UNDELETE MEMO.FEB<CR>
+
+  [7,142]   MEMO.FEB  ;   2 pages; created 22-FEB-82 16:42:46 [okay]
+
+Here the file identifier is preceded by a bracketed "project-programmer
+number" which is the internal representation of the user name SMITH.
+After the above command is given, the file MEMO.FEB again exists as a
+file in the SMITH directory.
+
+
+                       Making Deletions Permanent
+
+When you give a GFD command or log out, the deleted files are
+permanently erased and cannot be recovered.  In addition, the /PURGE
+switch may be used to erase the deleted files permanently, making the
+storage they occupy available for other files.  The system responds with
+"[expunged]" to indicate that the command has taken effect.  For
+example:
+
+  -UNDELETE /PURGE LPROG<CR>
+
+  LPROG     ;   2 pages; created 6-DEC-81  8:39:29 [expunged]
+
+  -
+
+If you use this switch without specifying any file identifiers, you
+should always use the /LIST switch first, to be absolutely sure of what
+you are erasing.
+
+
+                   Selecting the Action for Each File
+
+The /SELECT switch allows you to specify actions on the deleted files
+individually.  The file identifiers are listed one at time, allowing you
+to specify what you want to do to each file.  There are five options
+available.
+
+
+OPTION                                 EFFECT
+
+<CR>                                   The file is not recovered or
+                                       affected in any way.
+
+<CTRL-R>                               Recovers the file.
+
+<CTRL-D>                               Deletes the file permanently.
+
+[(user name)]file identifier<CTRL-R>   Recovers the file and renames
+                                       it as specified.
+
+[(user name)]file identifier<CR>       Same as above.
+
+
+Each file identifier is followed by an equals sign, "=".  When you enter
+an option that takes an action on the file, the system responds with
+"[okay]" or "[expunged]" to indicate that the command has taken effect.
+For example:
+
+-UNDELETE /LIST<CR>
+
+NEWDAT.DAT ; 2 pages; created 4-NOV-81 10:30:33
+ACCT.A1    ; 2 pages; created 4-NOV-81 11:32:33
+ROUT3      ; 2 pages; created 4-NOV-81 11:31:01
+INV.CS     ; 2 pages; created 6-DEC-81  8:39:29
+
+-UNDELETE /SELECT<CR>
+
+NEWDAT.DAT ; 2 pages; created 4-NOV-81 10:30:33 = <CR>
+ACCT.A1    ; 2 pages; created 4-NOV-81 11:32:33 = <CTRL-D> [expunged]
+ROUT3      ; 2 pages; created 4-NOV-81 11:31:01 = <CTRL-R> [okay]
+INV.CS     ; 2 pages; created 6-DEC-81  8:39:29 = INV.D<CTRL-R> [okay]
+
+-
+
+The options for recovering and renaming the deleted file are useful when
+more than one file with the same name has been deleted, since each file
+can be recovered with a different name.  Also, by allowing a user name
+before the file identifier, these options enable files to be moved to
+other directories when they are recovered.  When no user name is
+specified, the current directory is assumed (whether logged into or
+accessed with a GFD command).
+
+
+                             Sample Session
+
+-UNDELETE /ENABLE<CR>
+
+-FILES<CR>
+
+COMNEW
+INV.SEP
+ROUT3
+LPROG
+ACCT
+NEWDAT
+
+-UNDELETE /LIST<CR>              [No files have been deleted since
+                                 UNDELETE was enabled.]
+
+-DELETE COMNEW, ROUT3<CR>        [These files are placed in
+                                 temporary storage.]
+
+-UNDELETE /LIST<CR>
+
+ROUT3      ;  2 pages; created 3-JAN-82 10:16:22
+COMNEW     ;  2 pages; created 3-JAN-82 10:18:31
+
+-UNDELETE /PURGE<CR>             [All of the files in temporary
+                                 storage are affected because
+                                 no file identifier was specified.]
+
+-DELETE INV.SEP, LPROG<CR>
+
+-UNDELETE /SELECT<CR>
+
+INV.SEP    ;  2 pages; created 3-JAN-82 10:17:44 = <CTRL-R> [okay]
+LPROG      ;  2 pages; created 3-JAN-82 10:38:35 = <CTRL-D> [expunged]
+
+-UNDELETE /LIST<CR>             [There are no files left that can
+                                be recovered.]
+
+-DELETE INV.SEP, ACCT, NEWDAT<CR>
+
+-UNDELETE /SELECT<CR>
+
+ACCT       ;  2 pages; created 3-JAN-82 10:10:12 = <CR>
+INV.SEP    ;  2 pages; created 3-JAN-82 10:17:44 = INV<CTRL-R> [okay]
+NEWDAT     ;  2 pages; created 5-JAN-82 10:51:20 = <CR>
+
+-UNDELETE /LIST<CR>
+
+ACCT       ;  2 pages; created 3-JAN-82 10:10:12
+NEWDAT     ;  2 pages; created 5-JAN-82 10:51:20
+
+-UNDELETE<CR>                   [This recovers all of the files that
+                                are currently in temporary storage.]
+ACCT       ;  2 pages; created 3-JAN-82 10:10:12
+NEWDAT     ;  2 pages; created 5-JAN-82 10:51:20
+
+-FILES<CR>                      [There are three files left in the
+                                directory at this point in the
+NEWDAT                          session.]
+ACCT
+INV
+
+-UNDELETE /DISABLE<CR>          [The UNDELETE command is now
+                                disabled; files that are deleted
+                                before UNDELETE is enabled again
+                                cannot be recovered.]
+
+-
