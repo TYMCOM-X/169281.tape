@@ -1,0 +1,3529 @@
+
+                                                                            
+
+
+
+
+                                     PAPER
+                                 DOCUMENTATION 
+                               TABLE OF CONTENTS
+
+                                  
+
+  
+          I. Overview of the PAPER Ticket System
+
+             A. Purpose
+             B. History
+             C. Who uses the PAPER ticket system?
+             D. PAPER ticket structure and type
+             E. Problems with the PAPER ticket system
+             F. Caution - usernames and passwords
+
+         II. Login and Help
+
+             A. How to log in to system 26 and the PAPER ticket system
+             B. Help Commands 
+
+        III. Ticket Header
+
+             A. Description of all fields
+                          
+         IV. Opening a PAPER Ticket
+
+             A. Obtaining a ticket history               
+
+             B. 'A' command
+                                  
+             C. Reviewing a ticket opening
+                1. Review ticket header
+                2. If service is restored
+
+             D. Changing the ticket header
+                1. G command
+
+          V. Maintenance Contracts and Billables
+
+             A. Maintenance Contracts
+
+             B. Billable
+
+
+
+
+
+         VI. Escalations
+
+             A. Definition
+
+             B. Time frames
+
+             C. Mechanix 
+ 
+             D. Supporting commands
+
+        VII. Deferments
+
+             A. Definition
+
+             B. When to defer
+                                    
+             C. Deferring a PAPER ticket
+                1. Commands used to defer a PAPER ticket
+                2. PAPER ticket header indications of deferment
+
+       VIII. Statusing a ticket
+
+             A. Definition
+                1. Length - 4 lines
+
+             B. Example
+                1. Informational statuses
+                2. Set time up
+                3. Long status
+
+             C. 'S' Command and options
+
+         IX. PAPER Commands - Functional Definitions
+                                     
+             A. Help menu 
+
+             B. Extended help menu
+
+             C. Additional commands
+
+          X. Monitor
+
+             A. The use of 'monitor'
+             B. Placing a ticket on 'monitor'
+
+
+
+
+
+
+
+
+
+
+         XI. Closing a ticket
+
+             A. When to close a ticket
+                                      
+             B. Commands to close a ticket
+
+             C. Closing the ticket
+
+             D. De-escalation
+ 
+             E. Change header fields
+
+             F. Call Backs
+
+             
+        XII. Reopening Tickets
+
+             A. When to reopen a ticket
+
+             B. Command to reopen a ticket
+
+       XIII. Ticmark
+
+             A. Ticmark commands 
+
+             B. Ticmark example
+ 
+        XIV. APPENDICES
+
+
+                                                                             
+
+
+                                   PAPER
+                               DOCUMENTATION
+                                 OVERVIEW
+
+
+
+
+
+
+
+        I. Overview of the Network Operations PAPER Ticketing System
+
+           A. Purpose
+
+              The ticket program is a method of tracking BT TYMNET
+              network anomalies from the time they are reported 
+              until their resolution.
+
+              The system includes an archive database in order to
+              provide and track historical information on a particular
+              problem/trouble/anomaly/project/preventive maintenance.
+
+              It allows multiple users and service groups to access
+              and interact with a uniform format for the purpose of
+              tracking network issues.
+
+           B. History
+
+              The ticket system originated at NSSC, the Network
+              Systems Support Center which monitors and maintains
+              the private and subnetworks of BT Tymnet.
+                
+              The name of the ticketing system is PAPER.
+              Pre-1984, network problems that were documented
+              by the Network Systems Support Center (NSSC)
+              were written on paper forms called tickets. 
+              All the steps that were taken to resolve a
+              problem were written on the form.  When the
+              issue was resolved, the tickets were filed
+              for possible future reference.
+              Don Murtaugh; then manager of Network Operations
+              wrote a program to enable the technicians to
+              utilize a relational database on a PDP10
+              instead of writing paper tickets. 
+                                                                  
+                                                                   
+              Used originally by only a few  technicians that
+              comprised NSSC,  PAPER has evolved into a worldwide
+              ticketing system utilizing a relational database.
+
+
+
+              
+
+
+                                                                            
+
+
+
+
+
+
+
+           C. Who Uses the Ticket System?
+
+              PAPER originally was used only by NSSC, but even-
+              tually it became a ticketing system for all U.S. 
+              Network Operations groups. The Field Engineering
+              organization was later given ability to insert
+              statuses, including the U.S. Novadyne Computer
+              Systems, Inc.   After a time, communications
+              specialists, project managers, and eventually, ATT
+              management, and customers were validated to view 
+              and update tickets.  The list of valid users was
+              then expanded to include Software Technical Support
+              (STS), National Technical Support(NTS), National
+              Technical Development(NTD), Project Implementation
+              (PI), and finally, International Operations Groups, 
+              and Support Personnel.   
+
+              PAPER is now a worldwide ticketing system.  The status
+              of users varies with the highest status  going to a
+              'control group'.  A control group is an operations
+              organization that can open and close tickets in addition
+              to statusing and transferring tickets between refer groups.
+              The user of a non-control group has the restriction of not
+              opening or closing tickets.  
+
+
+           D. Ticket Structure and Types
+
+              A PAPER ticket consists of:  
+
+                1. Header - which contains three columns of
+                   information about the particular aspect of the
+                   network that the ticket is referencing. (The
+                   header is covered in full in section II.)
+                   Some of the information in the header is entered
+                   at the time a ticket is opened.  Some header
+                   information is kept in a relational database. The
+                   relational database will add the information to
+                   the header of the ticket each time a new ticket is
+                   opened on that particular network aspect.
+
+                   Example:  The first time a ticket is opened
+                             on host 123 of slot 1 of Node 11430 the
+                             technician will be prompted to enter the
+                             name of a contact at the node site.  Every
+                             time thereafter that a ticket is opened on
+                             host 123 or node 11430 the site contact
+                             will automatically appear in the ticket 
+                             header.
+
+
+                                                                            
+
+
+
+
+
+
+                2. Problem Description - appears just below the
+                   ticket header and consists of a maximum of 10
+                   lines of a brief description of the anomaly 
+                   and any diagnostics or suggestions toward
+                   resolution.
+
+                3. Each  status consists of  up to 4 lines of
+                   information in the steps toward resolution. A
+                   status also contains information automatically
+                   entered by the program such as,  the control 
+                   group, the initials of the person entering the
+                   status, the date, GMT time.
+
+                4. PAPER recognizes 3 types of tickets in the following
+                   categories:
+
+                   Node    Host    Circuit
+
+           E. Problems with the PAPER Ticket System
+
+              Report any problems with the PAPER program to the
+              control group handling the ticket.  The control 
+              group will resolve the problem or refer it to 
+              Network Control for resolution.
+
+           F. Caution
+
+              At NO TIME should a username or password appear
+              any place in a ticket!
+
+                   
+
+          
+
+ 
+
+
+
+
+                                                                             
+
+
+
+
+
+  III. TICKET HEADER
+
+
+       A. Description of all Ticket Header Fields. 
+
+
+   A  NETWORK  : TELERATE N  SEVERITY      : 3        a CUSTOMER: TELERATE 
+   B  NODE TKT#: 310246   O  STATE         : OPEN     b CONTACT : HARBORSIDE-OPS
+   C  NODE #   : 2356     P  CONTROL GROUP : NSSC     c CPHONE  : 201-309-1360
+   D  KERNAL   : 356      Q  REFERRED TO   : ETSNY    d LOCALE  : HARBORSIDE NJ
+   E  HOST     : 944      R  MGMT ESCAL    : H1 S1 T1 e RPTD BY : NSSC
+   F  SLOT     : 2        S  TECH ESCAL    : NO       f RPHONE  : 215-251-6820
+   G  PORTS    : 0        T  DE-ESCAL CODE :   0      g PLAN 3  : B4
+   H  S/W VERS : 4.03     U  DEFER :    0/  0         h SITE HR : 00:00 TO 24:00
+   I  S/W DIST : ETSNY    V  OPEN  :  1-JUL-90 21:30Z i COM SPEC: BILL SCHNEIDER
+   J  H/W DIST : EFONK    W  RESLV :  1-JUL-90 21:41Z j CKT #   : FDEC624418
+   K  PRIMARY  : NO       X  CLOSE :  0-   - 0 .....Z k TELCO # : 800-422-2100
+   L  OPEN BY  : JLW      Y  ELAPS :       0.2 HR.    l REF.TKT#: 55234
+   M  ZONE     : 0        Z  CLSCD : ..........       m BILL/T40: NO /NO
+
+                                                            
+    The following explanation correspond with the italicized letters above:
+
+
+
+    A. NETWORK
+         
+       1. In the ticket system each network is assigned a number.
+          Use this number whenever prompted for 'network number'.
+              
+          A list of the networks follows and can also be found in
+          Appendix A.
+
+       2. On the following page the networks have been arranged 
+          in alphabetical order for quick reference; the ticket
+          system lists the networks in numeric order.
+
+       3. All public network tickets are opened under Network #1
+          for Tymnet.
+
+
+                                                                            
+
+
+
+
+
+
+
+
+
+
+
+
+
+        AIRFNET - 36    EUSKONET - 44       MGBTNET - 21       WESTNET - 17     
+        ALASCOM -  8       EXXON - 20       MTSSNET - 42      XARDANET - 43     
+         ANZPAC - 30     FIRNNET - 10        NISNET - 27                        
+        AUTONET - 18    FMOGLNET - 40       PHILIPS - 29                        
+     BABYLONNET - 37     FNBCNET - 14     SCANDUTCH - 35                        
+        BOFANET -  7     FORDNET - 41        SLIGOS - 26                        
+        BUBBNET - 38   GLASSROCK - 46        SWBNET - 16                        
+        CIDNNET -  3      HELLER - 45  S.C. JOHNSON - 24                        
+          CWNET - 32     HKBGNET - 11      TELERATE - 34                        
+         DECNET -  2      INSNET -  6    TELEVERKET - 23                        
+        DIALNET - 15     ITALNET - 31        TRWNET - 13                        
+         DOINET - 12      ITANET - 33        TYMNET -  1                        
+         DOLNET - 19       LENET - 39        UCCPAC - 22                        
+          DUNET -  9    MAYNENET -  4         UKNET - 28                        
+         EPANET - 25     MERCURY - 47         VANET -  5                        
+
+                                                                            
+ 
+
+
+
+
+    B. NODE TKT#
+
+       1. This is the system ticket number assigned automatically.
+          There are numerous groups with the capability of
+          opening tickets.  The numbers are assigned at the 
+          time the ticket is opened (originated) in numerical 
+          order, regardless of the group that has opened it.
+
+
+
+    C. NODE #
+
+       1. Can be up to 5 digits and must be assigned.  A node
+          number must be greater than zero.
+
+       2. In the case of a ticket for an internodal link, use
+          the low node number in the node pair.
+
+    D. KERNAL
+
+       1. The kernal host that is assigned to the subject node.
+
+    E. HOST
+
+       1. The host number within the slot if opening with 'H'
+          option. If opening ticket as an internodal link, the 
+          host field will come up as 'HI NODE # and will be the
+          higher node number of the node pair.
+
+    F. SLOT
+
+       1. If using the 'H' option when opening a ticket for a
+          host problem, the SLOT field will appear.  Enter the
+          identifying software slot number the host resides in.
+
+    G. PORTS
+
+       1. Will only be in the header if ticket is opened as a host
+          ticket using the 'H' option. Enter the identifying port
+          number.
+                
+       2. If problem with the slot is a specific port, the port 
+          number will be entered here.
+
+    H. PRODUCT
+
+       1. Assigned according to what product has the trouble.
+
+       2. Product IDs are divided into 4 categories: ACCESS,
+          INTERFACES, LINES, MISCELLANEOUS.
+          The definitions follow and can also be found in Appendix B.
+
+
+
+                                                                           
+
+
+
+
+
+                            PRODUCT ID DEFINITIONS
+                     
+
+    ACCESS    
+ 
+     1 DIAL-UP        = Async access problem
+     2 ATC            = Asynchronout Terminal Concentrator
+     3 H-W            = Hardwired Port
+     4 PAP            = Private Access Port
+     5 PVC            = Permanent Virtual Circuit
+     6 MPVC           = Multiplexed Permanent Virtual Circuit
+     7 MSERVER        = Menu Server Host
+     8 CONSAT         = Solo Consat
+     9 SUN            = Hardware where Unix operating System resides
+    88 TSI            = Tymnet Spirit Interface
+    72 TURBO          = Tymnet microprocessor
+
+    INTERFACES
+
+    10 SWITCHER       = Tymnet Switcher
+    11 XCOM           = X.25 Synchronous Host Interface
+    12 ISIS           = Internally Switched Interface System
+    13 PBH            = Polled Bisync Host Interface for IBM 3270
+    14 PBT            = Polled Bisync Terminal Interface for IBM 3270
+    15 SNA            = Systems Network Architecture
+    16 BBXS           = 2780/3780/HASP/RJE/DDCMP/RSCSVMB
+    17 X.75           = Gateway Interface To Another Network
+    18 X.PC           = Async Error Correction Protocol
+    19 TYMCOM         = Async Host Interface
+    70 SDLC           = Synchronous Data Link Control
+    73 PTI            = HSVC 3270 Terminal Interface
+    74 PHR
+    90 CRDU
+
+    LINES
+
+    20 4.8            = 4800 BPS Line
+    21 9.6            = 9600    "
+    22 14.4           = 14400   "
+    23 19.2           = 19200   "
+    24 56 KB          = 56000   "
+    25 T1             = High Bandwidth Line.  1.54 Megabits. 10 9.6 Circuits
+    26 HW-OCL         = Hard-wired Optically Coupled Line
+    27 SYNC DIAL B-UP = Dial Back Up For Customers Primary Line
+    28 TYMLINKEXP     = Dial-up Connection to the Network.  4800 BPS
+    29 ASYNC OUTDIAL  = Async Ports That Enables Communications to Tymnet
+
+
+
+
+    MISCELLANEOUS
+
+    30 VALID          = Corp Support Group for Username Validations
+    31 PROJECT        = Reconfigurations, Installs, Upgrades
+    32 I2IS           = ISIS Kernal Host
+    33 PERIF          = Peripheral Equipment (Printers, etc)
+    34 OEM            = Original Equipment Manufacturer (modems)
+    35 SUPERV         = Network Supervisor
+    36 ONTYME         = Electronic Mail System 
+    37 PROBE          = Network Monitoring and Maintenance Tool
+    38 UN2            = Supervisor Slave Slot
+    39 TTI            = Node Code
+    40 X25S           = Shared X.25 Interface
+    41 ISCS           = Async Terminal Interface (ATI)
+    42 CMTI           = Character Mode Translater (3270 Environment)
+    43 UTS            = Univac Terminal System
+    44 TMCS           = Tymnet Monitoring and Control System
+    45 NEM            = Network Event Monitor
+    46 RAM            = Raw Accounting Merger
+    47 NETVL          = Network Validation Tool
+    48 LOADII         = Tymnet Downline Loading Facility for Loading Code
+    49 MERLIN         = Merge and Link ISIS Node Program.  Binds Code
+    50 NETALERT       = Utility to Monitor Network Node Outages
+    51 PICO           = Tymnet Engine
+    52 RBO            = Remote Busy Out
+    53 ALC            = Airline Link Control
+    54 ALCC           = Airline Link Control - Character Mode Translator
+    55 ALCH           = Airline Link Control - Host Interface
+    56 CMH            = Interface In Europe (Private Nets)
+    57 DCMP           = (DDCMP) Digital's Data Communication Message Protocol 
+    58 ELF            = ENgine Load Facility
+    59 HSA            = High Speed Access Interface
+    60 I2G1           = Tymnet I Gateway
+    61 MUX            = Multiplexer Host
+    62 NTCN           = Network Console
+    63 STYM           = Smartym
+    64 TDI            = Payment Systems (PSC) Switch
+    IG           = Tymnet II Gateway Host
+    66 TIIS           = Solo Consat Node
+    67 TINH           = Paymet System Host Interface
+    68 TINT           = Payment System Terminal Interface
+    69 UTIL           = Utilities
+    71 INTLS          = International
+    75 CDM            = Concert Data Manager (Netfusion)
+    76 CMF            = Code Management Facility - Unix
+    77 CPC            =
+    78 CPPP           = Concurrent Pacal Pre-processor
+    79 NAD            = Node Assembler and Debugger
+    80 CPAS           = Concurrent Pascal Assembler
+    81 BITS           = Unix Node and Slot Load Facility
+    82 CKSUM          = Checksum
+    86 NCPY           =
+    87 MBAS           =
+
+
+
+                                                                            
+
+
+
+
+
+    I. SOFTWARE VERSION
+
+       1. Indicates the current version of code running in the 
+          node or slot at the time of the problem.
+
+       2. The accuracy of this field is important at all times
+          but it is critical when escalating a ticket to STS.
+
+       3. Obtain the current version from the command file of
+          the slot or node.
+
+
+    J. SOFTWARE DISTRICT
+
+       1. The office/district of the CS (Communications Specialist)
+          that is assigned to the particular network/account.
+
+       2. Please refer to Appendix C.
+
+
+
+    K. PRIMARY
+
+       1. Whether the outage is primary to the customer or not.
+          NOT USED.
+
+    L. OPEN BY
+
+       1. Technician's initials are entered here -- the three 
+          characters which were input when logging into PAPER.
+
+
+    M. ZONE
+
+       1. 1,2,3,or 4 depending on the distance from the site
+          to the nearest Field Service office.
+
+          1 = ONSITE
+          2 = 0 - 50 MILES
+          3 = 51 - 150 MILES
+          4 = GREATER THAN 150 MILES
+
+
+                                                                            
+
+
+
+
+
+
+
+    N. SEVERITY
+
+       1. Severity is 1,2,3,4, which reflects the severity level 
+          of the problem; to be determined by the guidelines
+          which can be found in Appendix D.
+            
+       2. The severity will determine when the problem will be
+          escalated and how often the ticket will have to be
+          updated (statused).
+
+       3. Once the 'time up' or RESOLVE TIME (see 'W' this section)
+          has been set, it is not necessary to change the severity.
+          For example, if a node crashes and is reloaded but a 
+          hardware dispatch to run diagnostics is desired the resolve
+          time will be set up, but the severity of the ticket still
+          remains a 1.
+
+    O. STATE
+
+       1. The state of the ticket will be:
+
+          OPEN
+          MONITOR
+          TRACK
+          CLOSED
+
+          A. OPEN    - The ticket is in an active state.  
+                                
+          B. MONITOR - The problem/outage has been resolved but
+                       there is a need to document a recurrence 
+                       without opening a new ticket.
+
+          C. TRACK   - When a ticket is being used for documentation;
+                       activity is not expected.  Also for
+                       documentation of future dispatches or releases.
+                       MTTR* report is not affected.
+                       *(Mean Time To Repair)
+
+          D. CLOSED  - Ticket is inactivated and ready to be sent
+                       to the archive database. Anomaly is resolved
+                       and verified.
+
+
+
+
+
+
+                   
+     
+    P. CONTROL GROUP
+
+       1. The group that has opened the ticket will appear here.
+          It is this group's responsibility to track the problem
+          through resolution and close with the person/group
+          that appears in the 'Reported By' field.
+           
+       2. The control group's are: NCS, NSSC, VANCF, or NETCON, but
+          it can also be an International Group or a Customer
+          if they have been given status to open tickets.
+
+    Q. REFERRED TO
+
+       1. Also known as the "ATTENTION GROUP" or the "Support
+          Area".
+         
+       2. This field indicates who is to be currently working
+          on the trouble.  
+
+       3. These fields can be found in APPENDIX C with an 
+          explanation of each abbreviation. 
+            
+          Example: The field engineer in New York might be
+          dispatching on a trouble ticket.  The "Referred To"
+          would read 'EFONY' which stands for Eastern Field 
+          Operations New York.
+
+
+
+     R. MGMT ESCAL  - (Management Escalation)
+
+        1. Indicates if the ticket has been escalated.
+
+        2. H1 would indicate no escalation within hardware.
+           H2 would indicate an escalation to first level manager
+           in hardware.
+           S1 is the escalation field for software
+           T1 is the escalation field for TELCO (telephone Company)
+
+     S. TECH ESCAL  - (Technical Escalation)
+
+        1. Defaults to NO.
+
+        2. If a ticket is escalated to STS (Software Technical 
+           Support) or NTS ( National Technical Support), the 
+           field will become a YES and remain YES even after
+           the ticket is referred to another group.
+
+
+
+
+
+     T. DE-ESCAL CODE
+
+        1. Defaults to 0
+
+        2. If a ticket is de-escalated, the technician is prompted
+           for a de-escalation code which will appear in this field
+           either while a ticket is open or after it is closed.
+        
+     U. DEFER
+
+        1. If there is not to be any action taken on a ticket
+           (that is open with resolve time not set),  the ticket
+           must be deferred to prevent the  accumulation of 
+           elapsed time on the Mean Time To Repair.
+
+        2. The field appears as #/#.
+
+           The first number is the amount of time that the
+           ticket is currently deferred in number of hours.
+
+           The second number is the amount of cumulative 
+           deferred number of hours. 
+
+        3. See Appendix E for a list of instances in which
+           you can defer a ticket.
+
+
+     V. OPEN
+        
+        1. The date the ticket was opened.
+
+        2. The time the ticket was opened in GMT time.
+
+     W. RESLV - (Resolved)
+
+        1. The date and time the problem was resolved or when
+           service was restored. The outage time for the ticket
+           is stopped at the time entered in this field.
+            
+        2. The service may be restored and the ticket can remain
+           open. 
+
+           Example:  Service is restored but diagnostics
+           are scheduled for the node. If service is restored the
+           resolve time should be set.
+
+           When service is believed to be restored, but a period of
+           time must pass before the customer can test and verify,
+           set the resolve time to when the current restoration
+           activity was completed.  When the customer can test (often
+           the next morning) and they find restoration not complete,
+           simply re-open the ticket as explained in section VIII C.
+
+
+
+
+
+
+
+     X. CLOSE
+
+        1. The date and time the ticket was actually closed.
+
+     Y. ELAPS  - (Elapsed Time)
+
+        1. The amount of time that has elapsed before a resolution
+           has been found or service has been restored.
+            
+        2. The elapsed time stops incrementing when the resolve
+           time is set up or the ticket is deferred.
+           See Field W.
+
+        3. Time shown in hours and tenths of hours.
+
+     Z. CLSCD - (Closed)
+
+        1. After a ticket is closed, the reason that it was closed
+           will be indicated here using one of 10 different
+           closeout codes.
+
+        2. The technician is prompted for a closeout code when 
+           closing a ticket.
+               
+           Section XI, provides a detailed discussion of closing
+           tickets and the use of closeout codes.
+
+     a. CUSTOMER
+
+        1. This is the name of the customer or network.
+
+        2. In the case of Private network customers, this field 
+           will be the same as the NETWORK field - letter A.
+
+        3. For Public Network, the NETWORK field will indicate 
+           TYMNET but CUSTOMER will be the specific company with 
+           the problem.
+ 
+     b. CONTACT
+
+        1. The name of the person or group at the actual site where 
+           the node is located.  In the case of an internodal link 
+           it is the contact at the low node number.
+
+     c. CPHONE
+
+        1. The telephone number of the above contact at the site.
+
+
+
+
+
+
+
+
+     d. LOCALE
+
+        1. The location of the node involved.
+
+        2. This will be the low numbered node in the event of an
+           internodal link involving two nodes.
+
+     e. RPTD BY - (Reported By)
+
+        1. The person who is reporting the problem.
+
+        2. This may be the customer who called in the trouble,
+           a customer help desk, or a monitoring group such as
+           Network Control who has detected the trouble remotely.
+
+        3. This person or group must give the okay that service
+           has been restored or problem resolved before ticket
+           is closed.
+
+     f. RPHONE
+
+        1. Phone number of the person or group that reported
+           the problem.
+
+     g. PLAN #
+        
+        1. The maintenance contract code indicating the time
+           period the customer has contracted for maintenance.
+            
+        2. For maintenance plan codes and a complete explanation
+           see Appendix F.
+
+     h. SITE HR
+
+        1. The hours that the site is open and available for 
+           maintenance dispatch or assistance in troubleshooting.
+
+        2. Site hours should be entered in GMT time.
+
+     i. COM SPEC - (Communication Specialist) 
+
+        1. The name of the Communications Specialist assigned to 
+           the particular account is entered here.
+
+
+
+
+
+
+
+
+     j. CKT #
+
+        1. If the problem reported is a problem with a data
+           communications line, the identifying circuit number
+           is entered here. 
+
+        2. Circuit number is a combination of letters and numbers 
+           up to 20 digits.
+
+        3. If the trouble ticket does not pertain to a circuit
+           this field should be blank. Enter a carriage return at
+           the prompt.
+
+     k. TELCO #
+
+        1. Pertaining to circuit number above ('j'), the trouble 
+           number of the telephone company responsible for the 
+           line/circuit is entered here.
+
+     l. REF.TKT#
+
+        1. Some customer operation groups also have a ticketing 
+           system and request referencing their own ticket in 
+           Tymnet's ticket.  If they do request this, enter their 
+           ticket number here.
+
+     m. BILL/T40
+
+        1. BILL stands for Billable Service Call.
+               
+        2. If the needed maintenance is not covered by
+           the customer's maintenance agreement, a YES should
+           be entered here.
+            
+        3. The default is NO.
+
+        4. T40 is whether customer is a TOP 40 customer of BT TYMNET.
+           Private Network customers should always have this set to
+           YES.
+           
+
+
+
+                                                                             
+
+
+
+
+
+    
+
+      II. LOGGING IN & HELP
+
+          A. Logging in
+                
+             1. The ticket system is located on system 26.
+                Login to the system by using your username, the
+                system number and your password.
+
+                Example: USERNAME:26; password
+                         -GO (TNT)PAPER
+                         ENTER "YOUR" INITIALS PLEASE :
+
+                When prompted as above, type your initials.
+                   
+                Example: BVS (3 characters eg.)
+
+                You will then see the main prompt.
+
+                ENTER COMMAND... OR A(CR) FOR HELP :
+
+                *Note - Some users are validated on 26 so that they
+                 are automatically routed to the PAPER program when
+                 they log in.  
+
+
+          B. HELP
+
+             1. Type a carriage return at the main prompt to get
+                a help menu.
+
+
+
+
+
+
+
+
+
+
+                            ALL NETWORK TICKETS
+
+   CREATE                      UPDATE                   REPORTS
+
+ A = ADD TICKET              S = UPDATE/CHANGE STATUS F = CREATE A DISK FILE
+ T = TRACK A TICKET          G = MODIFY ATTRIBUTES    K = KNOW WHAT IS YOURS
+ V = ADD QA MARKS            D = DEFER TICKET         K = KNOW WHAT IS YOURS
+A1 = ADD CALL BACK           C = CLOSE TICKET         6 = ESCALATION MATRIX
+
+ TICKET
+ L = LOOK AT A TICKET 
+ O = LIST OPEN TICKETS
+ N = HISTORICAL TICKETS                               MISCELLANEOUS
+ W = WHATS NEW FOR TODAY                              Q = QUIT PROGRAM
+ I = LIST CHART OF NETS                              5 = ALL OPEN TICKETS
+ 7 = LIST UN-UPDATED TICKETS                          2 = LIST ESCALATED TIC.
+ X = EXAMINE A TICKET                                 3 = REPORT ESCA. TIC.
+ 1 = TICKETS BY PRODUCT                               8 = HISTORICAL ESCAL. TIC
+ 4 = TIC BY F.E. REGION                               9 = LIST LAST STATUS TIME
+ ? = EXTENDED HELP LIST
+
+
+
+           2. Note the last choice on the list is a ? for more com-
+               mands.  Doing this will print the following less 
+                           frequently used commands:
+
+
+                         ALL NETWORK TICKETS
+
+
+            THE FOLLOWNG UPPER CASE COMMANDS ARE ALSO AVAILABLE...
+
+     TIME = PRINTS LOCAL AND GMT            VER = PRINTS VERSION OF PAPER
+     ( )  = PRINTS PRIMARY HELP LIST        MSG = PROGRAM CHANGES
+     INT  = REENTER INITIALS               REOPE= ROPENS A TICKET
+     DELET= DELETES ANY TICKET #            COM = TRANSFER TO 'COM'
+     B    = LISTS UNUPDATED TICKETS         Z   = RESETS TICKET #
+     U    = MOVES TICKET TO CURRENT         V   = ENTER Q.A. POINTS
+     REP  = TRANSFER TO REPORT PROGRAM
+
+
+             Please note that these are UPPER CASE only commands.
+
+
+
+
+
+
+
+                                                                             
+
+
+        
+
+
+       IV. OPENING A TICKET
+   
+           A. OBTAINING A TICKET HISTORY
+
+              Before opening a ticket check the ticket history! This 
+              will help in the diagnosis of the problem.  Also, if 
+              the same problem has occurred two times with in the past 
+              30 days, it is considered chronic on the third occurrence
+              and may require a higher severity.
+
+              1. Ticket history must be put in the opening status of 
+                 a ticket.
+
+              2. Type 'N' for history. The following will appear:         
+
+              THIS COMMAND WILL DISPLAY TICKETS EVER CREATED BY TOPIC.
+              THE TOPICS ARE...
+                1 = CIRCUIT NUMBER
+                2 = NODE + NETWORK
+                3 = HOST = NUMBER
+
+              ENTER THE NUMBER
+
+              3. Choose 1,2,or 3; the system will then prompt user for
+                 a network number.
+
+              ENTER THE NETWORK NUMBER OR A ZERO (0) FOR HELP :
+                
+              4. See Appendix A for an alphabetical list of the
+                 networks or type a zero to get a numeric list.
+        
+              5. The system will prompt for a node or host number.
+                 If option #1 for circuit number is chosen, the
+                 system will not prompt for the network as all 
+                 circuit numbers are unique.
+
+              6. If there are open tickets or tickets not moved to
+                 the archive database the ticket numbers will now
+                 appear on the screen. 
+
+              7. After checking the current database, the program
+                 will ask if you want to look at old tickets:
+
+              DO YOU WANT TO OPEN THE OLD DATABASE?
+
+
+
+
+
+
+
+              8. Enter 'Y' or 'N'
+                 A "Y" will list all current and historical tickets
+                 that may be related to the current network problem.
+
+              9. Check the current tickets and the old tickets of
+                 the past 30 days by doing an 'L' for Look. Enter
+                 the ticket number when prompted.
+
+             10. Use the history of problems for information in
+                 your ticket opening status.
+
+
+           B. 'A' Command
+
+              1. Type an 'A' to open a ticket - 'A' indicates Add.
+
+               DO YOU KNOW THE NODE NUMBER, HOST NUMBER OR CIRCUIT NUMBER?
+                  ENTER N,H,C ? :
+
+                 Indicate whether ticket is being opened by node,
+                 host, or circuit (line). If the problem involves a 
+                 circuit or link, use C. If a slot is involved, use 
+                 the H for host and get a host number from the slot 
+                 or the tymfile. For node problems use N.
+
+                 The system will then prompt for the node, host 
+                 or circuit number.
+
+               ENTER THE NETWORK NUMBER OR A ZERO(0) FOR HELP :
+        
+              2. See Appendix A for the network names in 
+                 alphabetical order - or type a zero for a list 
+                 of the networks by number.
+
+              3. The program will search for currently open tickets
+                 on the node, host or circuit. If there are open 
+                 tickets a listing of ticket numbers and a summary 
+                 of information such as date, node, host, circuit, 
+                 product ID will appear.
+
+              4. A review of the current tickets will help determine
+                 if a new ticket needs to be opened.  The program
+                 will inquire if opening a new ticket should continue.
+
+
+
+
+
+
+                 Indicate whether or not to 'ADD YOUR CONTACT TO THIS
+                 TICKET'S CALL BACK LIST'.  Answer 'Y' or 'N'.  If 'N',
+                 the program will go on to #5.  If 'Y',  your name and
+                 number (after entering them) will appear in the ticket
+                 header and you will be called when the problem is
+                 resolved.
+
+              5. If there are no current tickets or the program is told
+                 to open a new ticket, the new ticket number will appear.
+                   
+              6. The ticket system will look for information already
+                 entered into the system by a previous ticket on
+                 this particular node, host, or circuit.
+
+                 If a ticket has never been opened on this trouble you
+                 will be prompted through each field.
+
+                *There are, however, some fields which you will have
+                 to enter information each time a new ticket is opened.
+
+
+                 See Section II for complete description of the ticket
+                 header for the information to be entering.
+
+                 ENTER TIME OR C.R. FOR current time will show here.
+
+              7. A carriage return here will enter the current GMT
+                 time as the time the ticket was opened.  If the 
+                 outage occurred other than now, type in the time of
+                 the outage in GMT.
+
+               **This is important to accurately calculate the amount 
+                 of time it takes to repair the trouble.  
+
+                 Example: If XRAY indicates a node crashed and recovered 
+                          an hour previous, enter that time here.
+
+
+
+
+
+
+
+
+              8. After the required information has been entered, the
+                 program will prompt for a:
+
+                 PROBLEM DESCRIPTION
+
+                   10 lines are allowed to describe the problem.
+                   Be sure to include the following information:
+                   The location, if different than LOCALE in header.
+                   How the problem was discovered.
+                   A description of the problem.
+                   All troubleshooting done. Results of any testing.
+                   Possible resolutions.
+                   Related ticket history of past 30 days.
+                   What group or person the ticket is being turned
+                   over to for resolution. (See Appendix C for 
+                   REFER groups)
+                   In the case of a dialup access problem, indicate
+                   whether the problem was duplicated in the 
+                   troubleshooting process. Also indicate an alternative 
+                   dialup number that the customer can use.
+                   For circuit tickets or internodal links include 
+                   the following:
+                   Diagnostic address or if applicable,
+                   addresses and phone numbers and site contacts for
+                   both ends of an internodal link. (Needed for
+                   site testing or dispatch)
+                   Address of the 'drop' for multidrop problems.
+
+
+              9. When finished with the opening status, type a
+                 period in the far left hand margin and a carriage
+                 return to continue to the final steps of opening
+                 a ticket.
+                   
+                 ENTER THE NUMBER FOR THE GROUP WITH THE PROBLEM
+                          OR ENTER A ZERO FOR HELP :     
+                  
+             10. Choose what group the ticket is being referred
+                 to for resolution.
+                 See Appendix C for description of REFER groups.
+
+                 SEVERITY
+
+             11. The severity reflects the impact the problem
+                 has on the customer.
+                 See Appendix D for complete descriptions
+                 and examples of severity levels. 1,2,3,4.
+
+
+
+
+
+
+
+
+                 COMMENT(20 CHAR. MAX):
+
+             12. Enter a brief description of the trouble using up 
+                 to 20 characters.  This description will show up 
+                 when doing an N or an O command.
+
+                 
+             13. The last thing the program does is search the
+                 ticket history for recent outages and automatically
+                 enters the results of that search as a ticket status.
+
+           C. REVIEWING WHAT YOU HAVE DONE
+
+              1. At this point the ticket header can be reviewed
+                 to see if changes need to be made to any of the 
+                 fields.  Since some information might already be 
+                 in the ticket from previous openings, it is important
+                 to be sure all fields are correct.
+
+              2. If service has been restored, i.e., the slot 
+                 restarted, the node has been reloaded, set the
+                 'timeup' or resolve (RESLV) time.
+                      
+                 Do this by issuing the 'S' command and then
+                 choosing #10 from the menu.  Type a period in
+                 the left hand margin and a carriage return, and 
+                 when prompted, enter the time that service was
+                 restored.
+                 Note: Time up can also be set by using the 'G' command 
+                 or by entering the date and time separately. Use the
+                 G command to set time up if the date up is different
+                 from the current date.
+
+           D. CHANGING THE TICKET HEADER
+
+              1. THE 'G' COMMAND
+
+                 To change any of the fields in the header type 
+                 a 'G'; the following list of fields will appear:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     THIS COMMAND WILL ALLOW YOU TO CHANGE AN ITEM IN AN ENTIRE TICKET
+         1 = SUPPORT AREA    2 = PRODUCT TYPE
+         3 = SEVERITY        4 = CIRCUIT NUMBER
+         5 = TROUBLE NUMBER  6 = SITE CONTACT
+         7 = SITE PHONE      8 = NODE NUMBER
+         9 = HOST NUMBER    10 = SLOT NUMBER
+        11 = REPORTED BY    12 = CALL BACK #
+        13 = CONTROL GROUP  14 = DATE UP
+        15 = TIME UP        16 = DATE DOWN
+        17 = TIME DOWN      18 = ELAPSED TIME (AFTER CLOSING TIC.)
+        19 = COMMENT        20 = REFERENCE NUMBER
+        21 = CUSTOMER       22 = TECH SUPPORT
+        23 = PRODUCTION STATUS 24 = TOP 40 STATUS
+        25 = BILLABLE       26 = PORTS
+        27 = LOCATION       28 = KERNAL HOST
+        29 = CONTRACT       30 = START HOUR
+        31 = END HOUR       32 = VERSION
+        33 = LONODE         34 = HINODE
+
+                 See Appendix G for further information on the
+                             fields in this list.
+
+                 Enter the number of the field you want to change
+                 and then the ticket number and the system will
+                 display what is now in the header and ask you
+                 to type in your change.
+
+
+                                                                           
+
+
+
+
+
+
+         V. MAINTENANCE CONTRACTS AND BILLABLES
+
+            A. MAINTENANCE CONTRACTS
+
+               Categorized as B1, B2, B3, B4, B5 and A
+
+               Customers are charged according to the above plans.
+               See Appendix F for a complete description.
+               For instance B2 is maintenance service provided
+               Monday through Friday 08:00 to 24:00 local time.
+               Outside of this maintenance period the customer is
+               billed - see below.
+
+               The ticket header has a field for entering the
+               maintenance plan. When using the G command enter
+               a #29 to change it.
+
+            B. BILLABLE
+
+               If a customer requests maintenance outside of
+               the maintenance contract they are informed
+               that the dispatch is billable.
+
+               A Billable Service Call form is filled out 
+               by the technician.
+
+               When the field engineer has dispatched to the 
+               site, the needed information is received, such
+               as time of travel to site, parts used and arrival
+               and departure times. This is then entered on the 
+               billable form and submitted to the appropriate BT
+               Tymnet person.
+
+               Other reasons for Billable Calls:
+
+               Customer has caused the problem.
+               No trouble found. 
+               Customer moved equipment and is requesting reinstallation.
+               Customer has denied access to the site after
+               the Field Engineer has dispatched.
+               Dispatch occurred during contract covered period but
+               customer requested Field Engineer remain on site 
+               after covered period.
+
+
+
+                                                                             
+
+
+
+
+
+
+        VI. ESCALATIONS
+
+            A. Managerial escalations are made to all BT Tymnet and third
+               party support groups following specific time frames to
+               guarantee the quality of service provided to the customer.
+
+               'Escalate' means that the network technician makes a
+               phone call to the superior of the person assigned to
+               the ticket (support group). The technician informs the
+               superior of the ticket and of the non-resolution or
+               non-status of the problem.
+
+               If the superior cannot be reached, the next higher level
+               of management is informed.
+
+            B. Time frames for escalation vary according to the severity
+               level that has been assigned to the ticket. They are as 
+               follows:
+
+
+                    SEVERITY      STATUS EVERY        ESCALATE AFTER
+
+                      1              2 hours             4 hours
+                      2              4   "              12   "    
+                      3             12   "              24   "
+                      4             24   "              at control group
+                                                        manager's discretion
+        
+               1. Whatever support group  the ticket is assigned to
+                  for resolution must provide status according to
+                  the time frame for that severity. 
+                            
+                  Example: The ticket is a severity 2 and is over to 
+                           Novadyne to dispatch and perform maintenance.
+                           The support group should provide status at 
+                           least every 4 hours.
+        
+               2. The problem should be resolved within the 'ESCALATE'
+                  time frames above.  A severity 3 must be resolved
+                  within 24 hours or it is escalated.
+
+
+            C. When an escalation is instituted the technician does
+               the following:
+
+               1. Issue the command 'E' in the ticket system.
+                  Or '7' after an 'S'. See Section VI
+
+               2. Enter ticket number when prompted.
+
+
+
+
+
+
+
+
+               3. The program will then want to know what type
+                  of escalation is being performed.  
+
+                  The screen prompt is:
+
+               WHICH DISCIPLINE WAS THE ESCALATION PERFORMED UNDER ?
+                     1 = HARDWARE
+                     2 = SOFTWARE
+                     3 = TELCO
+                     4 = CUSTOMER
+               ENTER SELECTION :
+
+
+               4. The next prompt will be for the level of escalation:
+ 
+               ENTER THE LEVEL OF SOFTWARE ESCALATION THAT YOU HAVE PERFORMED..
+                     1 = NONE
+                     2 = DISTRICT
+                     3 = REGIONAL
+                     4 = DIRECTOR
+                     5 = EXEC. DIR.
+                     6 = VICE PRES.
+               ENTER THE NUMBER :
+                   
+                  The final prompt is for the name of the person
+                  escalated to and the time of escalation.
+
+
+            D. Supporting commands related to escalation.
+
+               1. '2' lists, the tickets currently open and escalated.
+
+               2. '9' lists the time the last status was added to the 
+                  ticket.
+
+               3. '6' is not used at this time.
+
+               4. '8' will create a file of all of the tickets currently 
+                  closed but had been escalated to STS during the 
+                  repair cycle.
+
+
+
+
+
+
+
+
+               5. Commands that advise when to escalate.  
+
+                  '71','72','73','74','75','76','77','78'- Will list tickets
+                  according to severity levels that are due for escalation,
+                  status update, have no time set up, or have been on monitor
+                  for more than 24 hours.
+              
+                  a. The commands are listed below with the control 
+                     to which they correspond:
+
+                     70 All groups
+                     71 NSSC
+                     72 NETCON
+                     73 VANCF
+                     74 Cust Serv
+                     75 NETOPS
+                     76 NETQC
+                     77 BTAUS
+                     78 ENOPS
+                     79 ORDPR
+
+
+                 
+
+
+
+                                                                             
+
+
+
+
+
+
+        VII. DEFERMENTS
+
+             A. Deferring a ticket means the technician is stopping
+                the 'clock from ticking' on the repair time of the
+                ticket.
+                This means ---
+                    1. If a ticket is opened on a trouble/problem and
+                       the time of resolution is not set up, a timer
+                       is logging the time it will take to repair the
+                       problem.  This information is used to calculate
+                       the Mean Time To Repair (MTTR).  MTTR is an
+                       indication to operations groups and customers
+                       as to how quickly anomalies are being resolved
+                       or repaired.
+
+                    2. Once the RESOLVE time is set in the ticket header,
+                       the repair time clock will stop.
+
+                    3. If there is an uncontrollable reason preventing 
+                       maintenance or repair, the repair time clock needs
+                       to be stopped temporarily.
+
+                    4. The repair time clock is stopped by deferring the
+                       ticket.
+
+             B. Reasons for Deferment
+
+                1. No access to the customer site.
+
+                2. Customer has requested the repair be delayed.
+
+                3. Outside of customer's principle maintenance
+                   period.
+                   See - Appendix F and Section V. of this 
+                   document for more information on billing and
+                   maintenance periods.
+
+             C. Deferring a ticket
+
+                1. There are two commands to defer a ticket.
+        
+                   a. 'D'
+                   b. '8' after issuing an 'S'
+
+
+
+                                                                            
+
+
+
+
+                      'D'
+                      Will prompt for a ticket number.
+                      Then give a three choice menu:
+ 
+                           1 = REDUCE DEFERMENT (ENTER NEGATIVE TIME)
+                           2 = ZERO OUT DEFERMENT
+                           3 = DEFER TICKET ACTION
+
+                      Choose one of the above, and, if appropriate, the
+                      program will prompt to enter the number of hours.
+                    
+                      Note: The maxium hours allowed for a single deferment
+                            is 144 hours.  If additional deferment is
+                            needed, repeat the process.
+
+                      Typing an 'S' and then choosing #8 from the menu 
+                      will accomplish the same thing as a D, but will
+                      allow the technician to first enter a ticket status. 
+
+                2. The ticket header 'DEFER' will reflect the number
+                   of hours the ticket is currently deferred and the
+                   number of total hours the ticket has been deferred.
+                 - See Section III U.
+
+                   Additionally, The ELAPS:  Elapsed time is calculated
+                   from the time the ticket is opened.  If a ticket
+                   is deferred, the effect on elapsed time will not
+                   be affected while ticket is open.  Deferral times
+                   are used to determine elapsed time at the time a 
+                   ticket is closed.
+
+
+                             See also Appendix E.
+
+
+
+
+                                                                             
+
+
+
+
+
+
+
+
+
+         VIII. Statusing a ticket and the 'S' command
+
+               A. A 'status' is information entered into the ticket
+                  system.
+
+                  4 lines of text are allowed in a normal status.
+
+                  Every action taken on a ticket must be entered 
+                  as a status.
+
+                  Statusing a ticket must be done when an action
+                  is taken or information obtained.  The ticket
+                  system enters:
+
+                  1. The GMT time of the entry
+                  2. The date of the entry
+                  3. The initials of the person entering the status, 
+                  4. The Control group - or support group to which
+                     the person belongs.
+                  5. A sequential number assigned to the status, ie
+                     #1,#2 etc.
+
+               B. A typical status looks like this:
+
+     --# 2 STATUS ENTERED FROM NSSC       BY BVS ON 19-JUL-90 @07:32ZULU.
+                       REPORT SENT YET?: YES    (311954)
+   THE NETWORK CONTROLLER IS REPORTING A NR ON ADDRESS 1/107/1/01 AT 06:55Z.
+    CALLED DISCO AND TURNED THE PROBLEM OVER TO BEV.  DISCO TICKET #13935.
+
+                  1. A person from NSSC entered this status with the
+                     initials BVS at 07:32z on July 19th on ticket
+                     #311954.
+
+                  2. There is one previous status, therefore, this one
+                     is numbered 2.
+
+                  3. Only pertinent information is entered. Under no
+                     circumstance should editorial comments or personal
+                     opinions be entered into a ticket.
+                     
+
+ 
+                                                                            
+ 
+ 
+ 
+             
+               C. Type 'S' to status a ticket.  After responding to the
+                  prompt for the ticket to be statused, a menu similiar
+                  to the one below will appear.
+
+
+               CUSTOMER; IMMIGRATIONS       NODE   2110    PROD: 9.6
+                      TICKET # 311954 IS CURRENTLY OPEN.
+                      WHAT WOULD YOU LIKE TO DO WITH IT?
+                                1 = ADD STATUS
+                                2 = PUT ON MONITOR
+                                3 = CLOSE TICKET
+                                4 = REOPEN TICKET
+                                5 = MAKE NO CHANGE
+                                6 = ENTER TICK MARK
+                                7 = ENTER ESCALATION
+                                8 = DEFER TICKET
+                                9 = TRACK
+                               10 = SET TIME UP ONLY
+                               11 = DE-ESCALATE THE TICKET
+                               12 = ADD LONG STATUS
+              ENTER #
+        
+              #1 is to add a new status.
+                (Explanation of the rest of the options will follow.)
+
+                Enter the number 1 and the screen will look like 
+                this:
+
+              TICKET STATUS
+                Type in your 4 line status.  If you use less than
+                4 lines, end your status by typing a period and 
+                carraige return in the far left hand margin.
+                
+
+                The program will then ask:
+
+              IS THE STATUS CORRECT ? FOR TICKET #  307438
+              C.R. WILL WRITE IT TO THE DATABASE, ANYTHING ELSE, 
+              WILL CAUSE YOU TO START OVER AGAIN :
+
+                If any character is typed at this prompt, the status
+                is discarded and the prompt to enter ticket status
+                will appear again.
+                                       
+                A carriage return will save your status as shown.
+                Then:
+
+
+
+                                                                             
+
+
+
+
+              ENTER TIME OR C.R. FOR 09:24 GMT :
+
+                The 9:24 will be whatever the current Greenwich Mean
+                Time (GMT) is. To change it, type in the change now
+                in the format:  07:24
+                To keep the time the same, type a carriage return.
+                The next prompt will be:
+
+
+
+              IS THIS STATUS ADMINISTRATIVE (A), OR TECHNICAL (T)?
+
+                A technical status constitutes:
+                                  
+                * Description of the outage/problem.
+                * Information contributing to resolution.
+                  e.g., diagnostics, parts replaced, code change.
+
+                An administrative status constitutes:
+
+                * Information not directly contributing to resolution.
+                  e.g., leaving a message for someone to status ticket,
+                  informing a CS of status entered by STS.
+                * Ticket maintenance.
+                  e.g., transferring ticket from one refer group to
+                  another, entering an incident # or DISCO, 
+                  acknowledgement of acceptance of ticket.
+                          
+
+              
+              PRODUCT = XCOM REFERRED TO = NSSC SEVERITY =           3
+    DO YOU WISH TO CHANGE ANYTHING ABOVE (Y) OR RETURN TO THE MENU (C.R.)?:
+        
+                The Product ID, refer group and severity level currently
+                in the header are indicated here.
+        
+                A carriage return indicates no change is needed to these
+                fields and the user is returned to the main prompt.
+                If a change is needed to any field in the ticket header
+                type 'Y'.  The same choice list as the 'G' command will
+                then appear.  See Appendix H or Section IV., D for more 
+                information.
+
+
+
+
+
+
+
+
+            #2  To put a ticket on monitor
+
+                The ticket state of monitor is used to ensure the
+                stability of network components following service
+                restoration. Monitor should only be used in cases
+                where component stability is not immediately evident.
+                In any case, the maximum period of monitor is 24
+                hours at which time the ticket is closed or reopened
+                as appropriate. 
+
+                Resolve time is automatically set up when a ticket 
+                is placed on monitor.
+
+                See Section X. for a complete discussion of monitor.
+
+
+
+             #3 Close a ticket.
+
+                When a problem is resolved and all investigation
+                complete, the ticket is closed.
+                Status choice #3 prompts the user through the
+                sequence of closing a ticket covered in section XI.
+
+                Note: A 'C' can also be used to close a ticket from 
+                      the main prompt.
+
+
+             #4 Reopening a ticket.
+
+                1. Reopen a currently closed ticket or an open ticket
+                   that has the resolve time set. This can only be done 
+                   if the ticket resolve time reflects less than 24 
+                   hours from the current time.
+
+                2. Using this command will zero out the resolve time
+                   on an open ticket.  It will then reset the elapsed
+                   time to reflect the amount of hours from the time
+                   the ticket was opened to the present and continue
+                   to increase.  When the ticket is closed the elapsed
+                   time will reflect only the total time the ticket 
+                   was open without resolve time set.
+
+                3. When issuing this command the user will be prompted 
+                   to add status, time, and changes with the 'G'
+                   command just as above with the #1 command.
+
+
+
+
+
+
+
+
+             #5 Make no change.
+
+                Returns the user to the main prompt.
+
+
+             #6 Enter "Ticmark"
+
+                A "Ticmark" is a comment about the service received
+                from a Hardware maintenance group, a Software group,
+                or a Vendor such as Telco.
+                "Ticmarks" can also be entered using the 'V' command; 
+                the difference being, with 'S' #6 you will also have 
+                the ability to enter a status.
+                See Section XIII for a complete explanation of
+                    Ticmarks.
+
+
+             #7 To document an escalation
+
+                See Section VI for complete discussion of
+                escalation.
+                Escalations can be entered using the 'E' command.
+
+
+             #8 To defer a ticket
+
+                Any deferral time entered will be subtracted
+                from the elapsed time when the ticket is closed.
+
+                See Section VII for complete discussion of
+                deferments.
+                Deferment can also be entered using the 'D' command.
+
+
+             #9 To place a ticket on 'track'
+
+                Stops all data from being included in MTTR.
+                Used by all Ops groups for the following:
+
+                1. PM (Preventive Maintenance) tickets.
+                2. Project (installations, upgrades) tickets.
+
+
+
+
+
+
+
+
+                3. Documentation tickets.
+                4. Non - BT Tymnet problems.
+
+                Will prompt you to add status, time and changes
+                with the 'G' command just as in option #1 above.
+
+
+
+            #10 Will set the resolve at whatever time is chosen.
+
+                The program prompts the technician for a status. 
+                Enter a status as shown in #1 above. If no status is
+                needed, type a period carriage return at the far 
+                left hand margin. The program prompts for a time which 
+                is then entered as the resolve time in the ticket.
+                Any time entered (GMT) previous to the current
+                time will be registered automatically with the  
+                correct date for the past 24 hours.
+
+                Example: If it is 02:00 GMT June 30th  and the resolve 
+                         time needs to be set for 10:00GMT  the day before 
+                         or June 29th, typing in 10:00  when prompted will 
+                         set resolve time for June 29th.
+
+
+
+            #11 De-Escalate a ticket.
+
+                Used if a ticket has been escalated to Software
+                Technical Support (STS) or National Technical Support
+                (NTS) (in-house Technical support).  When a proposed
+                or actual resolution is reached by one of these two 
+                groups, the ticket is de-escalated and may or may not 
+                be closed at that time. If the ticket is being closed, 
+                the de-escalation will be required at that time.  If 
+                the ticket is to remain open (for further investigation 
+                by another group or implemention of the escalation
+                resolution), use this option to de-escalate.
+                After prompting the user for status and time,
+                a code must be entered to indicate what type of
+                resolution was arrived at by STS or NTS.
+                The De-Escalation Codes are:
+
+
+
+
+
+
+
+
+                  SOFTWARE                          HARDWARE
+                  ________                          ________
+
+                  1 SOFTWARE REPAIR         50 MODEM - ASYNC
+                  2 CUSTOM CODE             51 MODEM - SYNC
+                  3 RELEASE UPGRADE         52 DSU
+                  4 UNABLE TO REPRODUCE     54 DISK DRIVE
+                  5 NON-TYMNET PROBLEM      55 TAPE DRIVE
+                  6 DOCUMENTATION           56 ENGINE
+                  7 CONFIGURATION           57 MINI ENG.
+                  8 UNSUPPORTED CONFIG.     58 MICRO ENG.
+                  9 PIR REQUIRED            59 HDLC MICRO ENG.
+                 10 SOURCE CHANGE AND NSR   60 PICO ENG.
+                 11 REGEN & RELOAD          61 T.S.I.
+                 13 SOFTWARE RETROFIT       63 TELCO ISSUE
+                                            64 CUSTOMER PROVIDED EQUIP. PROB.
+
+
+
+
+       Where needed an explanation of these follows:
+
+       SOFTWARE
+
+       1. This is a software patch of a new version of code.
+          The technician will be prompted to enter the name of the patch,
+          which should have been entered into the ticket by STS in
+          one of the statuses.
+       2. Customer software personnel have written or modified code.
+       3. An upgraded version has been made available.
+       4. Unable to reproduce the reported problem.
+       5. Anomaly has been identified as a non-Tymnet problem.
+       6. Documentation.
+       7. Configuration.
+       8. Might have been configured by customer.
+       9. Product Implementation Request.
+      10. Change to Source Code and Network Service Request.
+      11. Code was regenned and reloaded to clear problem.
+      12. A change was made to an existing software patch for the code.
+          Again, the program will prompt for the name of the patch
+          which should have been entered into the ticket by STS in one
+          of the statuses.
+
+
+
+
+
+
+
+
+       HARDWARE
+
+      50. Asynchronous modem
+      51. Synchronous modem
+      52. Digital Service Unit
+      54. Disk drive
+      55  Tape drive
+      56. Standard Tymnet engine
+      57. Tymnet Mini-engine
+      58. Tymnet Micro-engine
+      59. Tymnet HDLC-engine
+      60. Tymnet Pico-engine
+      61. Tymnet Spirit Interface
+      63. Problem turned out to be with the leased Telephone line 
+          or dialup line
+      64. Problem was not with Tymnet equipment, but with customer
+          provided equipment.
+
+
+
+
+
+              #12 Add a Long Status
+
+                  Allows more than a single 4 line status.
+                  A carriage return after typing a period in
+                  the far left hand margin will end status.
+                  Otherwise - exactly like option #1.
+         
+                    
+
+
+
+                                                                            
+
+
+
+
+
+
+        IX. PAPER COMMANDS/HELP
+
+            A. HELP/?
+
+               To see a list of the general program commands, type
+               a carriage return at the main prompt.
+               (The main prompt looks like this:)
+               ENTER COMMAND... OR A(CR) FOR HELP :  
+               Type '?' to get a list of 'privileged' commands.
+               If a user does not have status to use the privileged
+               commands those commands will not appear on the help menu.
+               There are additional commands not listed either in the 
+               HELP list or the ? list, are documented in Section D. 
+               below.
+
+               WHAT YOU SEE WHEN YOU TYPE A C.R.
+
+
+   CREATE                   UPDATE                      REPORTS
+   ------                   ------                      -------
+   A = ADD TICKET           S = UPDTE/CHANGE STATUS     F = CREAT A DISK FILE
+   T = TRACK A TICKET       G = MODIFY ATTRIBUTES       K = KNOW WHAT IS YOURS
+   V = ADD QA MARKS         D = DEFER TICKET            E = ESCALATE
+  A1 = ADD CALL BACK        C = CLOSE TICKET            6 = ESCALATIONS MATRIX
+   TICKET                  SW = START WORK
+   ------                  EW = END WORK
+   L = LOOK AT A TICKET
+   O = LIST OPEN TICKETS
+   N = HISTORICAL TICKETS                          MISCELLANEOUS
+   W = WHATS NEW FOR TODAY                         -------------
+   I = LIST CHART OF NETS                          Q = QUIT PROGRAM
+   7 = LIST UN-UPDATED TICKETS                     5 = ALL OPEN TICKETS
+   X = EXAMINE A TICKET                            2 = LIST ESCALATED TIC
+   1 = TICKETS BY PRODUCT                          3 = REPORT ESCAL.TIC.
+   ? = EXTENDED HELP LIST                          4 = TIC BY F.E. REGION
+                                                   8 = HISTORICAL ESCAL TIC
+                                                   9 = LIST LAST STATUS TIME
+
+
+             An Explanation of the above-----
+
+
+                                                                            
+
+
+
+
+
+             A - Add A Ticket-See section IV.
+             T - Track A Ticket-Will print information about a selected 
+                 ticket with regard to what REFER GROUPS it has been to, 
+                 on what dates, and for how long.
+             V - "Ticmark"-Enables the technician to add a comment about a 
+                 Vendor, Hardware personnel, or Software personnel. (QA 
+                 stands for Quality Assurance).  
+                 See also Section XIII.
+            A1 - Add Call Back-Adds a person's name, company, and phone 
+                 number to the opening status of a ticket. Used by public 
+                 network operations, because an outage/ticket may involve 
+                 more than one  company.  Rarely used by private network
+                 operations.
+                 When closing a ticket with A1 added, system will not
+                 close ticket until the technician has indicated that 
+                 the callbacks have been completed.
+             L - Look At A Ticket-Prints the ticket on the screen with the 
+                 number of total statuses indicated and offers a choice of 
+                 how many of these statuses the technician wants to view.
+             O - List Open Tickets-Lists all tickets currently open for a 
+                 chosen network. See Appendix A for list of networks. 
+                 Rarely used by non-private network operations.
+             N - Historical Tickets-Lists previously opened tickets on a 
+                 particular Host, Node, or Circuit for a given network.
+             W - Whats New For Today-Lists all tickets that were opened 
+                 in the time between the 'End of Shift Reports'. 'End of 
+                 Shift Report' is run by Network Control every night. 
+             I - List Chart Of Nets-Creates a list of all networks with 
+                 the number of tickets open, on monitor, and total at the 
+                 current time.
+             7 - List Un-Updated Tickets-Lists the tickets according to 
+                 severity levels that are due for a status/update or 
+                 escalation.
+                 See Section VI. for a complete list of the 7 commands.
+             X - Examine A Ticket-To see tickets currently open when one 
+                 of the following is known: Host #, Node #, Circuit #, 
+                 Customer name (first 3 letters), Ticket #.
+                 Note: Is used mainly by NETOPS technicians when 
+                 information is needed on a public network customer.
+                 Example: X then C MOT will list the tickets open for
+                 customer Motorola without going through all TYMNET 
+                 tickets.  Note that if another customer name were
+                 to begin with MOT, those tickets will be printed
+                 also.
+             1 - Tickets By Product-Lists all tickets open on a particular 
+                 Product ID.
+                 See Appendix B for a list of Product ID's
+
+
+                                                                            
+
+
+
+
+             4 - Tic By F.E. Region-Will print a list of the tickets which 
+                 are referred (Attention Group) to a particular region. 
+                 F.E stands for Field Engineering but this option also 
+                 includes software regions and project tickets.
+             ? - Extended Help List-Prints privileged commands.
+             S - Update/Change Status-See Section VIII for complete 
+                 information on statusing.
+             G - Modify Attributes-See Section IV and Appendix I for 
+                 complete information on changing ticket fields.
+             D - Defer Ticket-See Section VII and Appendix E for complete 
+                 information on deferring tickets.
+            SW - Start Work-Used by support groups to indicate when and how
+                 much time was spent actively working on a ticket.
+                 Starts the clock ticking.
+            EW - End Work-Same as SW above but ends time working on ticket.
+             F - Create A Disk File-Will create a file on system 26 
+                 containing tickets categorized by Network, Support Group, 
+                 or individual tickets.
+             K - Know What Is Yours-Lists all tickets currently assigned to 
+                 a group.
+                 i.e., typing 'K' and '59' will list tickets that are 
+                 currently referred to MDUK since their referred to
+                 group number is 59. 
+                 See Appendix A for network numbers.
+             E - Escalate-See Section VI and Appendix D for complete 
+                 information on escalating and severities.
+             6 - Escalation Matrix-Does nothing.
+             Q - Quit Program-Exit program
+             5 - All Open Tickets-Lists every open ticket.
+             2 - List Escalated Tickets-Lists all the tickets currently 
+                 open that have been or are escalated.                          
+             3 - Report Escalated Tickets-Creates a report on system 26 of 
+                 the escalated tickets for a certain date.
+             8 - Historical Escalated Tickets-Creates a file on system 26 
+                 for closed escalated tickets during a designated repair 
+                 cycle.
+             9 - List Last Status Time-Indicates the time, date, and initials 
+                 of the last status for the ticket you choose.
+
+ 
+          B. EXTENDED HELP MENU
+
+             WHAT YOU SEE WHEN YOU TYPE A '?'
+         
+   TIME = PRINTS LOCAL AND GMT             VER    = PRINTS VERSION OF PAPER
+   ( )  = PRINTS PRIMARY HELP LIST         MSG    = PROGRAM CHANGES
+   INT  = REENTER INITIALS                 REOPE  = REOPENS A TICKET
+   DELET= DELETES ANY TICKET #             COM    = TRANSFER TO 'CO
+   B    = LISTS UNUPDATED TICKETS          Z      = RESETS TICKET #
+   U    = MOVES TICKET TO CURRENT          V      = ENTER Q.A.POINTS
+   REP  = TRANSFER TO REPORT PROGRAM       
+
+
+
+
+
+                                                                            
+
+
+                   An explanation of the above commands....
+
+             TIME - Prints Local And GMT-Self explanatory.
+             ( )  - Prints Primary Help List-Type a carriage return to 
+                    get help list.
+             INT  - ReEnter Initials-Enter a new set of initials.  
+                    Use when leaving your terminal so that someone does
+                    not mistakenly use your initials instead of theirs.
+             DELET- Deletes Any Ticket #-Self explanatory.
+             B    - Lists Un-updated Tickets-Does not work. See Section VI 
+                    for listing un-updated tickets.
+             U    - Moves Ticket To Current-Will bring a ticket out of the 
+                    archive database into  the current one.  Do this to 
+                    make a change to a ticket that has been closed for more
+                    than 24 hours.
+             REP  - Transfer To Report Program-Calls up the report program 
+                    which is a separate program from 'PAPER'.
+                    In report mode there are 22 different reports e.g.,
+                    Shift reports, MTTR (Mean Time To Repair); and Database 
+                    administration.
+             VER  - Prints Version Of PAPER-Prints the current version of 
+                    the program.
+             MSG  - Program Changes-If the programmer has made a change to 
+                    the program, and has documented it, the message would 
+                    print here.
+                    Most recently this feature has been revised somewhat
+                    to print a message/update when user logs into PAPER
+                    for the first 5 times after a new message is entered.
+             REOPE- Reopens A Ticket-Moves a ticket's records out of the 
+                    archive database so that it can be reopened.
+             COM  - Transfer To "CO-Automatic running of the Shift Command 
+                    used by Network Control and run nightly to move ticket 
+                    records.  Option is the same as typing 'R COM' at the 
+                    exec prompt of PDP10.
+                    Will prompt for the name of a command file.
+             Z    - Resets Ticket #-If the system has mistakenly opened two 
+                    tickets with the same ticket number, using the Z will 
+                    reset the ticket number to a different number thus 
+                    avoiding duplication.
+             V    - Enter Q.A. Points-See Section XIII. Adds a comment about 
+                    a support group.
+
+
+
+ 
+          C. Addtional Commands not printed in the Ticket System's Help Lists
+            
+
+
+
+
+
+
+
+
+            TT    - Transfers a ticket from one Refer (Attention) Group
+                    to another.  See also - G command Section IV. D. and 
+                    Appendix H.
+
+            AR    - Enters the time a field engineer arrived on site.
+
+            AC    - Enables the technician to put a comment into the
+                    system that will display every time a ticket is 
+                    opened on the particular node/host/circuit.
+                    This  entry is  limited to  one line of text 80
+                    characters in length.
+
+            DP    - Enables the user to review the information contained
+                    in the database for a particular node, host or circuit.
+
+            AP    - Add information to the database for a particular
+                    node, host, circuit.
+
+            A1    - Adds a callback name and number for a ticket.
+                    If there is more than one customer affected by the
+                    outage and the various customers must be called when
+                    service is restored, this command puts the information
+                    into the database and prints the information when
+                    looking at a ticket header or closing a ticket.
+
+            C1    - Indicates that a call back has been made to a 
+                    particular customer on the callback list.
+
+            D1    - Indicates some information about a callback number
+                    such as who entered callback and when.
+
+            
+
+
+
+
+
+
+                                                                            
+
+
+
+
+         X. MONITOR
+    
+            A. The Use of Monitor
+
+   
+               1. The monitor state can be used for up to 24 hours to
+                  ensure stability of a network component prior to closing
+                  a ticket.  At the end of the designated monitor period
+                  (24 hour maxium), the trouble must be closed or reopened.
+                  The monitor state should be used very sparingly.  In
+                  most cases, when an outage has been resolved and verified,
+                  the ticket should be closed.  An example of the use of
+                  monitor would be to verify the "fix" (stability), of a
+                  chronic problem such as intermittent errors on a circuit. 
+
+            B. Placing a ticket on monitor:
+
+               Type an 'S' from the menu choices use # 2. Type in an 
+               informational status if desired. The time entered 
+               automatically sets the resolve or time up.
+
+
+
+
+                                                                            
+
+
+
+
+
+
+
+         XI. CLOSING A TICKET
+           
+             A. WHEN TO CLOSE A TICKET
+        
+                1. There are 4 types of tickets to close:
+
+                   a. Tickets reported by someone other than a Network
+                      Technician.
+
+                      Reported tickets have been opened at the request of
+                      a customer, CS or Project manager. Such tickets should 
+                      be closed with the person reporting the problem by 
+                      calling and confirming the problem is resolved.  This 
+                      person's name should always appear in the ticket header
+                      under RPTD BY. The phone number to reach this person 
+                      should appear in the ticket header under RPHONE (See 
+                      also Section II)
+
+                   b. Tickets reported by ontyme from a CS or
+                      escalation group for escalation purposes to STS.
+
+                      This type of ticket will generally be brought
+                      to the operation groups attention by changing the
+                      REFERRED GROUP in the ticket header.  The
+                      ticket will then show up when a technician 
+                      does a 'K' command (See also Section IX).
+                      If at that time the CS, etc has statused the
+                      ticket that a resolution has been reached and
+                      the ticket can be closed, you can do so without
+                      a phone call.
+
+                   c. Tickets opened by an Operations Group. 
+                     
+                      This will occur when an anomaly is recorded 
+                      through the various monitoring processes.
+                      In these types of tickets, when the 
+                      technician is satisfied that the problem is 
+                      resolved, the ticket can be closed with
+                      no phone call. *Exception: When there
+                      have been call backs added to the ticket.
+                      These people need to be called first.
+
+
+
+                                                                            
+
+
+
+
+                   d. A ticket opened on a problem which is now
+                      resolved, but customer has requested a 
+                      monitoring period.         
+
+
+                2. In summary: close a ticket when the problem is 
+                   confirmed resolved. Close a ticket with the 
+                   concurrence of the reporting person or after an 
+                   agreed monitoring period.
+
+
+             B. COMMANDS TO CLOSE A TICKET
+        
+                1. 'S' and then option #3.
+
+                2. 'C'
+
+                3. Either of the above will obtain the same result.
+                   The following will appear:
+
+
+
+
+                    ******** NO Q.A. ENTRIES MADE ********
+
+                       if a Q.A. entry had been made it would show up here
+   THIS ROUTINE IS FOR PLACING QA COMMENTS ABOUT SERVICE RENDERED.
+
+   THIS OPTION WILL ALLOW YOU TO PUT MULTIPLE TICMARKS IN FOR TICKET.
+   YOU WILL NOT BE PROMPTED. INSTEAD YOU WILL ENTER A TICKET
+   NUMBER.  YOU CAN THEN ENTER ALL THE DATA ON ONE LINE.
+   REFER GROUPS ARE STATDARD ! DISCIPLINES ARE... H = HARDWARE
+                                                  S = SOFTWARE
+                                                  V = VENDOR
+
+        NOTE : WHEN CLOSING A TICKET ENTER A -1 ON 
+                THE LAST LINE.
+
+                            cont. on next page.....
+
+
+
+
+
+
+
+       CTT RR COMMENTS..................................................
+
+
+
+
+                4. Above is the prompt to enter a ticmark or Q.A.
+                   This is a comment about the service rendered in
+                   resolving this ticket.
+                   (See Section XIII for complete explanation of
+                   Ticmarks/Q.A. and Appendix J)
+
+
+                5. After entering the ticmark or if entering no
+                   ticmark, enter a -1 in the left hand margin and
+                   then carriage return to close the ticket.
+
+
+
+
+             C. CLOSING THE TICKET.
+
+
+                1. The technician will then be prompted to add a status.
+                   The system will prompt - 'WHY IS THIS TICKET BEING 
+                   CLOSED?'
+
+                2. Enter the resolution--tests/diagnosis performed
+                   to confirm resolution, who confirmed the problem 
+                   is resolved (i.e., customer), who has been informed. 
+                                     
+                3. Enter 4 lines of status or a period and carriage 
+                   return in the left hand margin to end the closing
+                   status.
+
+                4. The technician is to review the closing status and 
+                   change it if appropriate.
+
+                5. The next prompt is to enter the 'CLOSE OUT CODE'
+                   The choices are:
+
+
+
+
+
+
+
+
+         ENTER THE CLOSE OUT CODE...
+            1 = NTF/D&R
+            2 = HARDWARE
+            3 = SOFTWARE
+            4 = UNKNOWN
+            5 = CUSTOMER INDUCED
+            6 = TELCO INDUCED
+            7 = O.E.M. (MODEMS, ETC)
+            8 = POWER OUTAGE AT THE SITE
+            9 = PERIFERALS
+           10 = DEAD ENDED NODE
+           11 = PROJECT
+           12 = ASYNC PROJECT
+        ENTER CHOICE...?:
+
+
+                6. For an explanation of Close Out Codes and what
+                   they are used for See Appendix G.
+
+                7. Numbers 1 and 4 should be used limitedly since
+                   a technician's job is to identify the cause and
+                   resolution of network problems to prevent their
+                   reoccurence.    
+
+
+             D. DE-ESCALATION
+
+                1. If the ticket has been escalated to STS, NTS, etc.
+                   the system will prompt the technician after entering 
+                   Close Out Code.  
+                   (See Section VIII,C,11 for explanation of 
+                   De-escalation choices.)
+
+             E. CHANGE HEADER FIELDS 
+
+                1. The last prompt, is the same as when statusing a 
+                   ticket, i.e., to change any field using the 'G' 
+                   Command.
+                   (See Section IV,D and Appendix I)
+
+
+
+
+
+
+
+                2. The comment field should be changed at this time.
+                   If, for any reason, the direction of the ticket
+                   was changed from the original opening comment,
+                   change it now.
+
+                   The comment field prints every time the archive 
+                   database is accessed and must be kept accurate.
+
+                3. The correct attention/refer group should be verified
+                   since the ticket may have been transferred to the
+                   control group for closing.  
+
+                   The refer group should accurately reflect the
+                   ticket progress.
+
+              
+             F. CALL BACKS
+
+                1. Ensure all callbacks have been satisfied.
+                   Primarily for async group tickets for Public 
+                   Network.
+
+
+
+                                                                            
+
+
+
+
+
+      XII. REOPENING TICKETS
+
+              A. The purpose of the ticket system is to record
+                 problem occurrences.  Every time a problem occurs 
+                 there should be a ticket to track it. Therefore, some
+                 controls have been built into the PAPER program:
+
+                 1. If the ticket has been closed for more than 24
+                    hours the program will not allow it to be reopened.
+
+                 2. If the 'resolve time' has been set up more
+                    than 24 hours, a ticket cannot be reopened.  
+
+                    (a) In this case, a technician would try to zero out
+                        the resolve time if the problem reoccurred before
+                        the ticket was closed.
+
+                        Example:  A node crashes;  a dispatch takes place.
+                                  A hardware fix is accomplished and service
+                                  is restored. Ticket is statused.
+                                  'Time up' is set (Resolve Time). While 
+                                  verifying that everthing is O.K., the  
+                                  node crashes again.  The ticket would then 
+                                  be reopened to set the resolve time to zero
+                                  since the service is gone. 
+                                  This can be accomplished as long as the
+                                  ticket had not remained open for 24 hours
+                                  after the time up was set.
+
+              B. Option #4 of the 'S' command will reopen a ticket
+                 after it has been closed.
+
+                        
+
+
+
+
+
+
+
+
+
+
+     XIII TICMARK
+                                     
+
+          A. TICMARKS / Q.A. (QUALITY ASSURANCE)
+
+              When closing a ticket the technician will automatically 
+              be prompted to add a "ticmark" if desired.  Otherwise 
+              one can be added later.
+
+              The commands are:
+
+              1. 'V', to enter a "ticmark".
+            
+              2. 'S' and then option #3, to enter a "ticmark" and a ticket
+                 status.
+      
+              3. 'C', to enter a "ticmark" and close the ticket.
+
+              4. Any of the above will bring the technician to the same 
+                 point.
+
+                 The following will appear:
+
+                    ******** NO Q.A. ENTRIES MADE ********
+
+              If a Q.A. entry had been made it would show up here
+
+   THIS ROUTINE IS FOR PLACING QA COMMENTS ABOUT SERVICE RENDERED.
+
+   THIS OPTION WILL ALLOW YOU TO PUT MULTIPLE TICMARKS IN FOR TICKET.
+   YOU WILL NOT BE PROMPTED. INSTEAD YOU WILL ENTER A TICKET
+   NUMBER.  YOU CAN THEN ENTER ALL THE DATA ON ONE LINE.
+   REFER GROUPS ARE STANDARD ! DISCIPLINES ARE... H = HARDWARE
+                                                  S = SOFTWARE
+                                                  V = VENDOR
+
+        NOTE : WHEN CLOSING A TICKET ENTER A -1 ON 
+                THE LAST LINE.
+
+   CTT RR COMMENTS..................................................
+
+
+
+
+                                                                            
+
+
+   
+         B. TicMark Example
+
+          
+            1. A ticmark can be entered at any time during the course
+               of a ticket.  The above printout is to remind the
+               technician when closing a ticket if there were any
+               reasons to make a comment.
+
+            2. A ticmark can be positive or negative.
+
+
+            3. Enter "ticmark" in the following format:
+
+
+            CTT RR COMMENTS
+   
+               C = H,S,V  (Hardware, Software, Vendor)
+                          (Vendor = Telco, Paradyne,etc)
+              TT = Qualilty Assurance Code.  See Appendix J.
+              RR = Refer Group # that you are commenting on.
+                   (See Appendix for 2 digit # corresponding
+                    to the appropriate group)
+
+            4. If a field engineer from Minneapolis arrived an
+               hour late on site for dispatch the technician would
+               type:
+
+            H02 17 FE John Doe arrived 1 hour late for node outage
+        
+               H = hardware    02 = code for late arrival
+              17 = EFOMP Minneapolis Field Service.
+
+            **Use No QA Quality Assurance Code for 'good' comment.
+
+            6. Enter multiple ticmarks if desired.  When finished,
+               enter a -1 in left hand margin and carriage return.
+
+
+
+
+                                                                            
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  APPENDICES
+                                    INDEX
+
+
+
+
+
+
+
+              A - NETWORK ABBREVIATIONS AND CORRESPONDING NETWORK NUMBERS
+              B - PRODUCT ID ABBREVIATIONS DEFINED
+              C - REFER GROUPS DEFINED
+              D - SEVERITY LEVELS DEFINED
+              E - DEFERRING GUIDELINES
+              F - MAINTENANCE PLANS DEFINED
+              G - CLOSEOUT CODES DEFINED
+              H - 'G' COMMAND MENU OPTIONS DEFINED 
+              I - TICMARK or QUALITY ASSURANCE CODES
+              J - REFER GROUPS LISTED ALPHABETICALLY
+
+
+
+
+                                                                            
+
+
+
+
+
+                            APPENDIX A
+
+                          NETWORK NUMBERS
+
+
+
+
+            NETWORKS:                                            
+          
+        |========================================================|
+        |     AIRFNET - 36    EUSKONET - 44       MGBTNET - 21   |
+        |     ALASCOM -  8       EXXON - 20       MTSSNET - 42   |
+        |      ANZPAC - 30      
+        |    ARMYCORP - 49     FIRNNET - 10        NISNET - 27   |
+        |     AUTONET - 18    FMOGLNET - 40       PHILIPS - 29   |
+        |  BABYLONNET - 37     FNBCNET - 14     SCANDUTCH - 35   |
+        |     BOFANET -  7     FORDNET - 41        SLIGOS - 26   |
+        |     BUBBNET - 38   GLASSROCK - 46        SWBNET - 16   |
+        |     CIDNNET -  3      HELLER - 45  S.C. JOHNSON - 24   |
+        |       CWNET - 32     HKBGNET - 11      TELERATE - 34   |
+        |      DECNET -  2      INSNET -  6    TELEVERKET - 23   |
+        |                                           THNET - 48   |
+        |     DIALNET - 15     ITALNET - 31        TRWNET - 13   |
+        |      DOINET - 12      ITANET - 33        TYMNET -  1   |
+        |      DOLNET - 19       LENET - 39        UCCPAC - 22   |
+        |       DUNET -  9    MAYNENET -  4         UKNET - 28   |
+        |      EPANET - 25     MERCURY - 47         VANET -  5   |
+        |                                         WESTNET - 17   |          
+        |                                        XARDANET - 43   |
+        |========================================================|
+
+
+
+
+
+
+
+                                                                            
+
+
+
+                               APPENDIX B
+
+                          PRODUCT ID DEFINITIONS
+                     
+
+   ACCESS    
+
+   1 DIAL-UP        = Async access problem
+   2 ATC            = Asynchronous Terminal Concentrator
+   3 H-W            = Hardwired Port
+   4 PAP            = Private Access Port
+   5 PVC            = Permanent Virtual Circuit
+   6 MPVC           = Multiplexed Permanent Virtual Circuit
+   7 MSERVER        = Menu Server Host
+   8 CONSAT         = Solo Consat
+   9 SUN            = Hardware where Unix operating System resides
+  88 TSI            = Tymnet Spirit Interface
+  72 TURBO          = Tymnet microprocessor
+
+   INTERFACES
+
+  10 SWITCHER       = Tymnet Switcher
+  11 XCOM           = X.25 Synchronous Host Interface
+  12 ISIS           = Internally Switched Interface System
+  13 PBH            = Polled Bisync Host Interface for IBM 3270
+  14 PBT            = Polled Bisync Terminal Interface for IBM 3270
+  15 SNA            = Systems Network Architecture
+  16 BBXS           = 2780/3780/Hasp/RJE/DDCMP/RSCSVMB
+  17 X.75           = Gateway Interface To Another Network
+  18 X.PC           = Async Error Correction Protocol
+  19 TYMCOM         = Async Host Interface
+  70 SDLC           = Synchronous Data Link Control
+  73 PTI            = HSVC 3270 Terminal Interface
+  74 PHR
+  90 CRDU
+
+
+
+
+
+
+
+
+   LINES
+
+  20 4.8            = 4800 BPS Line
+  21 9.6            = 9600    "
+  22 14.4           = 14400   "
+  23 19.2           = 19200   "
+  24 56 KB          = 56000   "
+  25 T1             = High Bandwidth Line.  1.54 Megabits. 10 9.6 Circuits
+  26 HW-OCL         = Hard-wired Optically Coupled Line
+  27 SYNC DIAL B-UP = Dial Back Up For Customers Primary Line
+  28 TYMLINKEXP     = Dial-up Connection to the Network.  4800 BPS
+  29 ASYNC OUTDIAL  = Async Ports That Enables Communications to Tymnet
+
+
+
+                                                                            
+
+
+   MISCELLANEOUS
+
+  30 VALID          = Corp Support Group for Username Validations
+  31 PROJECT        = Reconfigurations, Installs, Upgrades
+  32 I2IS           = ISIS Kernal Host
+  33 PERIF          = Peripheral Equipment (Printers, etc)
+  34 OEM            = Original Equipment Manufacturer (modems)
+  35 SUPERV         = Network Supervisor
+  36 ONTYME         = Electronic Mail System 
+  37 PROBE          = Network Monitoring and Maintenance Tool
+  38 UN2            = Supervisor Slave Slot
+  39 TII            = Node Code
+  40 X25S           = Shared X.25 Interface
+  41 ISCS           = Async Terminal Interface (ATI)
+  42 CMTI           = Character Mode Translator (3270 Environment)
+  43 UTS            = Univac Terminal System
+  44 TMCS           = Tymnet Monitoring and Control System
+  45 NEM            = Network Event Monitor
+  46 RAM            = Raw Accounting Merger
+  47 NETVL          = Network Validation Tool
+  48 LOADII         = Tymnet Downline Loading Facility for Loading Code
+  49 MERLIN         = Merge and Link ISIS Node Program.  Binds Code
+  50 NETALERT       = Utility to Monitor Network Node Outages
+  51 PICO           = Tymnet Engine
+  52 RBO            = Remote Busy Out
+
+
+
+
+
+
+
+  53 ALC            = Airline Link Control
+  54 ALCC           = Airline Link Control - Character Mode Translator 
+  55 ALCH           = Airline Link Control - Host Interface
+  56 CMH            = Interface In Europe (Private Nets)
+  57 DCMP           = (DDCMP) Digital's Data Communication Message Protocol 
+  58 ELF            = Engine Load Facility
+  59 HSA            = High Speed Access Interface
+  60 I2G1           = Tymnet I Gateway
+  61 MUX            = Multiplexer Host
+  62 NTCN           = Network Console
+  63 STYM           = Smartym
+  64 TDI            = Payment Systems (PSC) Switch
+  65 TIIG           = Tymnet II Gateway Host
+  66 TIIS           = Solo Consat Node
+  67 TINH           = Payment System Host Interface
+  68 TINT           = Payment System Terminal Interface
+  69 UTIL           = Utilities
+  71 INTLS          = International
+  75 GNU            = Concert Data Manager
+  76 CMF            = Code Management Facility - Unix
+  77 CPC            =
+  78 CPPP           = Concurrent Pacal Pre-Processor
+  79 NAD            = Node Assembler and Debugger
+  80 CPAS           = Concurrent Pascal Assembler
+  81 BITS           = Unix Node and Slot Load Facility
+  82 CKSUM          = Checksum
+  86 NCPY           =
+  87 MBAS           =
+                  
+
+
+
+
+
+
+
+
+
+
+                                                                            
+
+
+
+
+
+                             APPENDIX C
+                           REFER GROUPS
+     
+
+
+
+
+
+
+             The abbreviations and their meanings are as follows:
+               **For a list of the Refer Groups in Alphabetical
+                            order, see APPENDIX K.
+
+            For brevity the following are used in the explanations:
+
+                        * BTT = British Telecom Tymnet
+                        * MCD = McDonald Douglas
+
+        A "+" at the beginning of the line denotes unused at this time
+        
+         
+        1   EFTECH  Eastern Tech Support                        NOVADYNE
+        2   EFONE   Eastern Field Ops     New England           NOVADYNE
+      + 3   EFOBO          "              Boston                NOVADYNE
+        4   EFONY          "              New York              NOVADYNE
+                                  includes Elmsford,Syracuse,Buffalo,North 
+                                  Haven and Stamford
+        5   EFOMN          "              Manhattan             NOVADYNE
+                                  Wall Street office             
+        6   EFOPA          "              Philadelphia          NOVADYNE
+                                  includes Marlton NJ,and Delaware
+        7   EFOLI          "              Long Island           NOVADYNE
+                                  includes Newark,Piscataway
+        8   EFOKP          "              King of Prussia PA    NOVADYNE
+                                  includes Valley Forge,Harrisburg,Pittsburgh
+      + 9   EFOCR          "              Cranford              NOVADYNE
+      + 10  EFOMD          "              Maryland              NOVADYNE
+        11  EFOVA          "              Fairfax VA            NOVADYNE
+                                  includes Richmond, Midlothian,Rockville
+                                       Baltimore
+      + 12  EFOWA          "              Washington            NOVADYNE
+        13  EFOCA          "              North&South Carolina  NOVADYNE
+      + 14  EFORO          "              Rochester             NOVADYNE
+        15  EFOCH          "              Chicago               NOVADYNE
+                                  includes Glen Ellyn, Indianapolis
+
+
+
+
+
+
+        16  EFOPL          "              Plymouth              NOVADYNE
+                                  includes Detroit,Cleveland
+        17  WFOMP   Western Field Ops     Minneapolis           NOVADYNE
+                                  includes Madison Milwaukee
+        18  WFOSL          "              St Louis              NOVADYNE
+                                  includes Des Moines Iowa,Springfield MO
+        19  WFSM           "              Shawnee Mission       NOVADYNE
+                                  includes Kansas City,Oklahoma City,Omaha,
+                                       Tulsa, Wichita
+        20  WFODA          "              Dallas                NOVADYNE
+        21  WFOAU          "              Austin                NOVADYNE
+                                  includes San Antonio
+        22  WFOHO          "              Houston               NOVADYNE
+        23  EFOAT   Eastern Field Ops     Atlanta               NOVADYNE
+                                  includes Birmingham,Savannah,Memphis,
+                                           Monroe
+        24  EFOTA          "              Tampa                 NOVADYNE
+                                  includes Fort Myers,Puerto Rico,Tallahassee,
+                                       Orlando
+        25  EFOMI          "              Miami                 NOVADYNE
+                                  includes Fort Lauderdale
+        26  EFOCI          "              Cincinnati            NOVADYNE
+                                  includes Columbus,Louisville
+        27  WFTEC   Western Field Tech Support                  NOVADYNE
+        28  WFODE   Western Field Ops     Denver                NOVADYNE
+                                  includes New Mexico
+        29  WFOPH          "              Phoenix               NOVADYNE
+                                  includes Tucson
+        30  WFONB          "              North Bay CA          NOVADYNE
+                                  includes San Fransisco,Foster City,
+                                           China Basin  
+        31  WFOEB          "              East Bay CA           NOVADYNE
+                                  includes Stockton, Fremont,Oakland
+                                       Sacramento, Reno
+        32  WFOSB          "              South Bay CA          NOVADYNE
+                                  includes San Jose, Santa Clara, 
+                                       Redwood City
+        33  WFOLA          "              Los Angeles           NOVADYNE
+                                  includes Pasedena,Vernon,Santa Barbara
+        34  WFOOC          "              Orange County         NOVADYNE
+                                  includes Irvine,Newport Beach,San Diego
+                                       Fresno, Long Beach
+        35  WFOSE          "              Seattle               NOVADYNE
+                                  includes Salt Lake,Boise,Portland
+        36  NTS     National Tech Support                       BTT
+        37  NSSC    Network Systems Support Center              BTT
+        38  VANMC   Veterans Administration Network Mgmt Ctr    BTT
+
+
+
+
+
+
+        39  NETCON  Network Control (Public Net)                BTT
+        40  NCS     National Customer Service (Public Net)      BTT
+        41  STS     Software Technical Support (HQTECH)         BTT
+        42  CUSTM   BT Tymnet Customer                           -
+        43  WTSSF   Western Tech Support  San Fransisco         BTT
+        44  WTSSJ          "              San Jose              BTT
+        45  WTSIR          "              Irvine CA             BTT
+        46  CTSCH   Central Tech Support  Chicago               BTT
+        47  CTSHO          "              Houston               BTT
+        48  CTSDE          "              Detroit               BTT
+        49  CTSSL          "              St Louis              BTT
+        50  ETSNY   Eastern Tech Support  New York              BTT
+        51  ETSNJ          "              New Jersey            BTT
+        52  ETSBO          "              Boston                BTT
+        53  ETSVI          "              Vienna VA             BTT
+        54  DBTEL   Telco Order Processing                      BTT
+        55  DISCO   ATTIS Dataphone II Support group            ATT
+        56  MCI     MCI 
+        57  DBVAL   Database Validations                        BTT
+        58  NETQC   Network Quality Control                     BTT
+        59  MDUK    United Kingdom Field Service                MCD
+        60  MDGER   Germany Field Service                       MCD
+        61  PI      Project Implementation                      BTT
+        62  MDCAN   Canada Field Service                        MCD
+        63  CHAD    Central Dispatch Field Service              MCD
+        64  INTLT   International Field Service                 BTT
+        65  BTSW    Technical Support Sweden (software)         BTT
+        66  ATCOM   ATT Communications                          ATT
+        67  CLOSE   ???
+        68  TELCO   Local Telephone Companies
+        69  MDTSG   Technical Support Group - Europe            BTT
+        70  PROJ    Any Project Personnel                       BTT
+        71  MFG     Manufacturing Group                         MCD
+        72  NTD     National Technical Development              BTT
+        73  MDSWE   Sweden Field Service                        MCD
+        74  MDSZ    Switzerland Field Service                   MCD
+        75  BTBNL   Brussels,Netherlands,Luxembourg Field Serv  BTT
+        76  MDITA   Italy Field Service                         MCD
+        77  MDFR    France Field Service                        MCD
+        78  MDAUS   Australia Field Service                     MCD
+        79  MDHK    Hong Kong Field Service                     MCD
+        80  DOC.    Documentation                               BTT
+        81  NCC     Network Control Center - Romney             BTT
+        82  MDAIS   McDonald Douglas Air                        MCD
+
+
+
+
+
+
+        83  CWSERV  C & W Serv - Hong Kong Field Service
+        84  ELNUS   Jakarta Field Service
+        85  NIS     Japan Field Service
+        86  SIRTI   Autonet Network Support
+        87  TRT     Panama Field Service
+        88  ARFEN   Karachi Field Service - Is now IAL #114
+        89  TELDA   Singapore Field Service - now MDISI Pacific
+        90  MULTI   Taiwan Field Service
+        91  GDC     General Data Com
+      + 92  EFOGE   Eastern Field Operations Glenn Ellyn        NOVADYNE
+        93  EFONK   Eastern Field Operations Newark             NOVADYNE
+        94  BUBB    Bubbnet                                     BTT
+        95  ENOPS   European Network Operation (Paris, France)  BTT
+        96  GUAM    Guam Field Service
+        97  ETSFR   Eastern Tech Supp Federal Region (software) BTT
+        98  ETSAT   Eastern Tech Support Atlanta                BTT
+        99  ETSDU   Eastern Tech Support Dupont                 BTT
+       100  MDSPS   Spain Software Support                      MCD
+       101  MDSP    Spain Field Service                         MCD
+       102  BTUK    United Kingdom Field Service                BTT
+       103  MDNL    Netherlands Field Service                   MCD
+       104  MDBEL   Belgium Field Service                       MCD
+       105  BTSZ    Switzerland Software Support                BTT
+       106  BTGER   Germany Software Support                    BTT
+       107  BTITA   Italian Software Support                    BTT
+       108  BTSP    Spain Software Support                      BTT
+       109  MDFIN   Finland Field Service                       MCD
+       110  MDNOR   Norway Field Service                        MCD
+       111  MDDK    Denmark Field Service                       MCD
+       112  MDIRE   Ireland Field Service                       MCD
+       113  BTAUS   Australia Software Support                  BTT
+       114  BTIAL   Karachi Field Service                       BTT
+       115  BTHK    Hong Kong Software Support                  BTT
+       116  BTFR    France Software Support                     BTT
+       117  GCSCS   Global Customer Support Comm. Spec.         BTT
+       118  BTEVL   Validations/Europe                          BTT
+       119  OTHER
+
+
+
+
+
+
+
+
+
+
+                                  APPENDIX D
+       
+                               SEVERITY LEVELS
+
+
+
+
+
+                   |======================================|
+                   | SEVERITY 1: HIGHEST                  |
+                   |--------------------------------------| 
+                   | SEVERE IMPACT ON CUSTOMER            |
+                   | BUSINESS. LOSS OF PRODUCTION         |
+                   | THAT CAN'T BE CIRCUMVENTED.          |
+                   |                                      |
+                   | EXAMPLES:                            |
+                   | SUP OR NODE FAILURE.( STAYS DOWN     |
+                   | OR REPEATEDLY CRASHES)               |
+                   | LINK OUTAGES TO DEADENDED NODES      |
+                   | SLOT OUTAGES( UNUSABLE & NEEDED)     |
+                   | PRIVATE ACCESS PORTS(PAP)            |
+                   | LEASED/DEDICATED LINE  OR AUTODIAL   | 
+                   | PILOT NUMBER FAILURE.                | 
+                   | ESCALATE: EVERY 4 HOURS              |
+        
+
+
+  
+
+                   | SEVERITY 2: HIGH                     |
+                   |--------------------------------------|
+                   | SERIOUS PROBLEM WHERE SERVICE IS     |
+                   | PARTIALLY INTERRUPTED OR IMPAIRED    |
+                   | AND CAN'T BE CIRCUMVENTED.           | 
+                   |                                      |
+                   | EXAMPLES:                            |
+                   | SLOTS (PARTIALLY USABLE)             |
+                   | INTERNODAL LINKS                     |
+                   | SLOT LINES (PARTIALLY DIABLING)      |
+                   | GATEWAYS (WHEN OTHER GATEWAYS        |
+                   | ARE AVAILABLE)                       |  
+                   | ESCALATE: EVERY 12 HOURS             |
+  
+
+                                    cont.-
+
+
+                                                                           
+
+
+
+
+
+
+
+
+
+
+
+
+                   | SEVERITY 3: MEDIUM                   |
+                   |--------------------------------------|
+                   | PROBLEM HAS A MEDIUM IMPACT AND      |
+                   | PROBLEM CAN BE CIRCUMVENTED.         |
+                   |                                      |
+                   | EXAMPLES:                            |
+                   | SLOTS(IF SERVICE IS RESTORED)        |
+                   | INTERNODAL LINKS (IF REMAINING       |
+                   | PART OF LINK IS AVAILABLE)           |
+                   | NODE CRASHES (SELF RESTORED AND      |
+                   | DOES NOT REOCCUR IN 24 HOURS)        |
+                   | ESCALATE: EVERY 24 HOURS             |
+                   
+
+
+
+                   | SEVERITY 4: LOW                      |
+                   |--------------------------------------|
+                   | PROBLEM HAS NO OBSERVABLE IMPACT     |
+                   | ON PRODUCTION.                       |
+                   |                                      |
+                   | EXAMPLES:                            |
+                   | PM TICKETS                           |
+                   | TRACKING TICKETS                     |
+                   | HOST END-USER PROBLEMS               | 
+                   | HOST REQUESTS FOR SOFTWARE MOD       |
+                   | ESCALATE: AS DETERMINED BY THE UNIT  |
+                   | MANAGER                              |
+                   |======================================|
+
+
+
+
+                                                                            
+
+
+
+
+
+                                  APPENDIX E
+        
+                                   DEFERMENT
+        
+
+
+
+
+
+
+         The following guidelines/rules govern deferment of a ticket.
+        
+             1. No customer site access. i.e., site closed from 6:00 pm
+                to 6:00 am - ticket would be deferred 12 hours.
+        
+             2. Customer requested delay of repair - ticket would
+                be deferred for the requested period of time.
+        
+             3. An outage occurs outside of the customer's principle
+                period of maintenance and the customer does not want
+                a service call made.
+
+                i.e., customer has a maintenance contract effective from
+                8:00 am to 6:00 pm Monday through Friday; they ex-
+                perience an outage at 6:00 pm Friday night and want
+                the hardware dispatch at 8:00 am Monday; the ticket
+                would be deferred 62 hours.
+
+             4. Tickets are not deferred while awaiting parts from a 
+                Field Service Vendor.
+
+
+                * Note - It is not necessary to defer a ticket if the
+                         resolve time is set up.
+
+        
+               
+             
+
+
+
+                                                                            
+
+
+            
+
+                                  APPENDIX F 
+
+
+
+                            HARDWARE MAINTENANCE PLANS
+
+
+
+          PLAN
+
+          'A'  - All hardware maintenance services for time and
+                 materials are charged to the customer.  Maintenance
+                 is on an 'as requested' basis.
+
+          'B1' - Service provided for eight consecutive working
+                 hours (exclusive of one hour intervening meal
+                 period) Monday through Friday (BT Tymnet Holidays
+                 excluded) between 0800 and 1800 local time.
+           
+          'B2' - Service provided 0800 to 2400 local time,  Monday
+                 through Friday (BT Tymnet holidays excluded).
+
+          'B3' - Service provided 24 hours a day, Monday through
+                 Friday (BT Tymnet holidays excluded).
+
+          'B4' - Service provided 24 hours a day, Monday through
+                 Sunday.
+
+          'B5' - Service Provided 0800 to 2400 local time, Monday 
+                 through Sunday.
+
+
+
+
+                                                                            
+
+
+
+                                 APPENDIX G
+
+                               CLOSEOUT CODES
+
+
+
+
+
+
+       
+                          CLOSE OUT CODE DESCRIPTIONS
+
+
+             1. NTF          No trouble found or cleared by a dump and
+                             reload.
+
+             2. HARDWARE     BT Tymnet hardware was replaced, repaired, 
+                             adjusted.
+
+             3. SOFTWARE     BT Tymnet software was modified - node or slot 
+                             code.
+
+             4. UNKNOWN      The problem could not be identified and 
+                             cleared before the source of the problem
+                             could be isolated.
+
+             5. CUST IND     Customer induced. Customer caused the outage.
+
+             6. POWER        Problem resulted from a power outage either
+                             scheduled or unscheduled.
+
+             7. COMMON CARR  Common Carrier - The outage was a result of
+                             malfunctioning telephone company leased 
+                             line or dialup line.
+         
+             8. O.E.M.       Other Equipment Manufacturer - eg modems.
+                             O.E.M. traditionally stands for Original
+                             Equipment Manufacture.
+
+             9. PERIPHERALS  Any Tymnet input/output devices attached
+                             locally or remotely to an engine. eg tape drive
+
+            10. DEAD ENDED   Equipment was down because its upstream node
+                             connection to the network was down.
+
+            11. PROJECT      Implementation of a project.
+         
+        
+
+
+
+
+
+
+
+
+                              APPENDIX H
+
+                               G Command          
+
+
+
+                  1 = SUPPORT AREA          2 = PRODUCT TYPE
+                  3 = SEVERITY              4 = CIRCUIT NUMBER
+                  5 = TROUBLE NUMBER        6 = SITE CONTACT
+                  7 = SITE PHONE            8 = NODE NUMBER
+                  9 = HOST NUMBER          10 = SLOT NUMBER
+                 11 = REPORTED BY          12 = CALL BACK #
+                 13 = CONTROL GROUP        14 = DATE UP
+                 15 = TIME UP              16 = DATE DOWN
+                 17 = TIME DOWN            18 = ELAPSED TIME (AFTER CLOSING TIC)
+                 19 = COMMENT              20 = REFERENCE NUMBER
+                 21 = CUSTOMER             22 = TECH SUPPORT
+                 23 = PRODUCTION STATUS    24 = TOP 40 STATUS
+                 25 = BILLABLE             26 = PORTS
+                 27 = LOCATION             28 = KERNAL HOST
+                 29 = CONTRACT             30 = START HOUR
+                 31 = END HOUR             32 = VERSION
+                 33 = LONODE               34 = HINODE
+
+
+
+
+
+
+
+
+
+
+                  The following is a brief explanation of the
+                          above fields where needed.
+    
+             1. Who the ticket is referred to at the time for resolution.
+             2. See Appendix B.
+             3. See Appendix D.
+             4. Telco leased line number id.
+             5. Telco phone number to report a problem on a circuit
+             6. Name of the person at the site.
+             7. Phone number at the site.
+
+
+                                                                            
+
+
+
+
+
+
+             8. The node number with the problem.   
+             9. The host number in the case of slot/host tickets.
+            10. The slot number in the node. i.e., 1,2,3, etc.
+            11. Who called to report the problem.
+            12. The phone number of the person who reported the problem.
+            13. The group that opened the ticket or is taking control
+                of handling the ticket. ie NSSC,NSC,ENOPS, etc.
+            14. Date the service was restored.
+            15. Time the service was restored - GMT.
+            16. Date the application went out of service.
+            17. Time the application went out of service.
+            18. The amount of hours between the time the application
+                went out of service and the time service was restored.
+            19. A brief description of the problem. (Field should be
+                checked when ticket is closed in case a change is needed)
+            20. Customer ticket number if applicable.
+            21. Name of the customer (company name).
+            22. CS assigned to the account.
+            23. Whether product is in production and is therefore
+                important to customer:  Y/N
+            24. Is customer in the top 40 BT Tymnet customers? (Always yes
+                for Private networks)
+            25. Will the customer be billed for this outage? Also see
+                Section V.
+            26. The port number having a problem.
+            27. City/State/Country of equipment.
+            28. The kernal host of the node.  In circuit/internodal link
+                outages this is the kernal host of the low node.
+            29. Maintenance contract. Also see Appendix F.
+            30. The time that someone is available at the site.
+            31. The time that someone will no longer be available at the
+                site.
+            32. Software version. On internodal link tickets field is
+                used for the low node kernal host number.
+            33. For internodal link outages, the low node # of the pair.
+            34. For internodal link outages, the high node # of the pair.
+                  
+
+
+
+                                                                            
+
+
+                                                             
+
+  
+
+                                APPENDIX I
+                       
+                         
+                           QA\TICMARK DEFINITIONS           
+        
+
+
+
+
+
+
+                                   HARDWARE                                 
+
+
+                    TT - Ticmark code, ie, 01 for 'No Show'
+
+                          01- NO SHOW                                          
+                          02- LATE ARRIVAL                                     
+                          03- NO/WRONG REPLACEMENT PART                        
+                          04- REPLACEMENT PART/DEVICE NOT FUNCTIONING  
+                          05- DEPARTED SITE W/O CLOSING TICKET  
+                          06- FAILED TO CONTACT CUSTOMER ON ARRIVAL/DEPARTURE
+                          07- CUSTOMER COMPLAINT ABOUT FIELD SERVICE 
+                          08- UNTRAINED TECH DISPATCHED
+                          09- NO TEST EQUIPMENT
+                          10- POLICY, PROCEDURES, PROJECT PLAN NOT FOLLOWED
+                          11- NO ACCESS TO SITE (IF NO ACCESS IS FSC'S FAULT)
+                          12- FCO MISSING WHICH SHOULD HAVE BEEN INSTALLED
+                          13- NODE OR LINE TAKEN DOWN W/O AUTHORIZATION
+                          14- PROBLEM REOCCURED WITHIN 5 DAYS
+                          15- NO THIRD PARTY COORDINATION (TELCO,ETC)
+                          16- STAND-BY FE COULD NOT BE DISPATCHED
+                          17- STATUS NOT RECEIVED PER PROCEDURE
+                          18- INCONSISTANT REPORTING OF REPAIR PROGRESS  
+                          19- FAULTY PROBLEM DIAGNOSTIC/REPAIR PROCEDURES
+                          20- OTHER                                      
+                          21- NO QA ( NO HARDWARE QOS PROBLEMS WITH THIS TICKET) 
+
+
+
+
+   
+                              SOFTWARE   
+
+                                      
+
+            01- NO SHOW
+            02- NO CODE
+            03- WRONG CODE
+            04- CODE WILL NOT ASSEMBLE
+            05- PATCH MISSING
+            06- NO BACK-UP AND/OR SLOT NOT BOUND
+            07- FAILED TO MAKE CALLBACK
+            08- CUSTOMER COMPLAINT ABOUT SOFTWARE SUPPORT
+            09- TOOK CUSTOMER DOWN W/O AUTHORIZATION
+            10- DUMP/RELOAD BUT NO PROBLEMS FOUND
+            11- FAILURE TO FOLLOW POLICY AND/OR PROCEDURE
+            12- OPTION SET INCORRECTLY
+            13- LATE ARRIVAL
+            14- UNTRAINED SOFTWARE TECH DISPATCHED
+            15- SOFTWARE TECH HAD TO BE CALLED BACK WITHIN 5 DAYS  
+            16- NO QA (NO SOFTWARE QOS PROBLEMS WITH THIS TICKET)  
+
+
+
+
+
+
+
+                              VENDOR
+
+
+
+             01- NO SHOW
+             02- LATE ARRIVAL
+             03- DISPATCHED TO WRONG SITE
+             04- NO/WRONG REPLACEMENT PART(S)
+             05- REPLACEMENT PART NOT FUNCTIONAL
+             06- NO TEST EQUIPMENT
+             07- CUSTOMER COMPLAINT/TECH
+             08- UNTRAINED TECH DISPATCHED
+             09- NO INITIAL ACTION IN 1 HOUR
+             10- NO UPDATE IN 2 HOURS
+             11- RECEIVED CONFLICTING STATUS .. FALSITY
+             12- TROUBLE RECURRED WITHIN 5 DAYS
+             13- POLICY/PROCEDURES NOT FOLLOWED
+             14- NO QA
+
+
+
+
+                                                                            
+
+
+
+
+
+
+                                  APPENDIX J
+
+
+
+
+
+
+
+
+                              REFERRED TO GROUPS:  
+
+                                                                              
+  ARFEN -  88  DBTEL -  54  EFOPL - 16  MDAUS - 78     NCC -  81  WFODE -  28 
+  ATCOM -  66  DBVAL -  57  EFORO - 14  MDBEL - 104    NCS -  40  WFOEB -  31 
+  ATTIS -  67  DISCO -  55  EFOTA - 24  MDBNL -  75 NETCON -  39  WFOHO -  22 
+  BTAUS - 113   DOC. -  80  EFOVA - 11   MDDK - 111  NETQC -  58  WFOLA -  33 
+   BTFR - 116  EFOAT -  23  EFOWA - 12  MDFIN - 109    NIS -  85  WFOMP -  17 
+                                                                              
+  BTGER - 106  EFOBO -   3  EFTEC -  1   MDFR -  77   NSSC -  37  WFONB -  30 
+   BTHK - 115  EFOCA -  13  ELNUS - 84  MDGER -  60    NTD -  72  WFOOC -  34 
+  BTIAL - 114  EFOCH -  15  ENOPS - 95   MDHK -  79    NTS -  36  WFOPH -  29 
+  BTITA - 107  EFOCI -  26  ETSAT - 98  MDIRE - 112  OTHER - 118  WFOSB -  32 
+   BTSP - 108  EFOCR -   9  ETSBO - 52  MDITA -  76  PACTC -  65  WFOSE -  35 
+                                                                              
+   BTSZ - 105  EFOGE -  92  ETSDU - 99   MDNL - 103     PI -  61  WFOSL -  18 
+   BTUK - 102  EFOKP -   8  ETSFR - 97  MDNOR - 110   PROJ -  70  WFOSM -  19 
+   BUBB -  94  EFOLI -   7  ETSNJ - 51   MDSP - 101  SIRTI -  86  WFTEC -  27 
+ CANADA -  62  EFOMD -  10  ETSNY - 50  MDSPS - 100    STS -  41  WTSHO -  47 
+   CHAD -  63  EFOMI -  25  ETSVI - 53  MDSWE -  73  TELCO -  68  WTSIR -  45 
+                                                                              
+  CTSCH -  46  EFOMN -   5    GDC - 91   MDSZ -  74  TELDA -  89  WTSSF -  43 
+  CTSDE -  48  EFONE -   2   GUAM - 96  MDTSG -  69    TRT -  87  WTSSJ -  44 
+  CTSSL -  49  EFONK -  93  INTLT - 64   MDUK -  59  VANMC -  38              
+  CUSTM -  42  EFONY -   4    MCI - 56    MFG -  71  WFOAU -  21              
+  CWSRV -  83  EFOPA -   6  MDAIS - 82  MULTI -  90  WFODA -  20              
+ 
+
+    ?eqVŒ
