@@ -1,0 +1,331 @@
+!
+(************************************************************************)
+(*                                                                      *)
+(*      Sample TMCS configuration file for version 11.06                *)
+(*                                                                      *)
+(************************************************************************)
+
+
+(*  Concurrent PASCAL Preprocessor flags for conditional compilation    *)
+(*  to include selected TMCS facilities.                                *)
+(*                                                                      *)
+(*  alarm        - alarm faility                                        *)
+(*									*)
+(*  reload       - automatic reload facility                            *)
+(*									*)
+(*  clusternodes - allow definition of MXP clusters                     *)
+(*									*)
+(*  shut_link_table_maintenance	- shut link table maintenance facility	*)
+(*									*)
+(*  multiple_shut_link_table_maintenance - allow multiple shut link 	*)
+(*		   table maintenance facilities				*)
+(*									*)
+(*  xom		- X25/X75 operation manager code			*)
+(*									*)
+(*  xom_restore	- saving X25/X75 configuration parameters		*)
+(*									*)
+(*  ddt		- Extended DDT interface code				*)
+(*									*)
+(*  archive	- archive facility code					*)
+(*									*)
+(*  archive_auto_compare 						*)
+(*		- when archiving, compare automatically			*)
+(*		  files on tape with the one on disk			*)
+(*									*)
+(*  auto_backup	- multiple sites keeping				*)
+(*		  identical data. 					*)
+(*									*)
+(*  version_1020_to_1100	- this flag has to be enabled in the 	*)
+(*				  TMDM D-file when TMCS disk is 	*)
+(*				  reconfigured from version 10.20 to	*)
+(*				  11.00					*)
+(*									*)
+(*  xcom	- access XOM by an XCOM host number			*)
+(*									*)
+
+
+$enable auto_backup
+$enable xom
+$enable xom_restore
+$enable xcom
+$enable archive
+$enable archive_auto_compare
+
+(* TMCS user index *)
+
+const
+  user_max         = 20 (* users *) ;
+
+const
+  username_max     = 50 (* unique user names in profile *) ;
+
+const
+  user_message_max = 2 (* message send per user *) ;
+  
+const
+  limit_set_max    = 2 (* limits set stored per user *) ;
+
+
+(* supervisor parameters *)
+
+const
+  supervisor_max   = 2 (* supervisors *) ;
+
+(* Network configuration parameters *)
+
+const
+  btree_max = 256 (* number of nodes in btree. Multiple of 256 *) ;
+
+(****************************************************************************)
+(* The following lines are ONLY include when the XOM_RESTORE switch is 	    *)
+(* enabled.   						    		    *)
+(****************************************************************************)
+
+(* The number of xom hosts for which parameters will be saved.	       *)
+
+const
+  xom_host_max = 30;
+
+
+(* The average number of pages for a xom host in the XOM files. That	*)
+(* must be defined only if the xom_restore version has been enabled.	*)
+
+const
+  pages_per_xomhost = 20;
+
+(****************************************************************************)
+(* End of lines includes ONLY if XOM_RESTORE switch is enabled 	    	    *)
+(****************************************************************************)
+
+const
+  tymnet_ii_node_max  = 127 (* nodes 2001-2177 *) ;
+
+const
+  host_number_max     = 1023;
+
+const
+  node_configuration_max          = 100;
+  host_configuration_max          = 500;
+  links_per_node                  =   4;
+  ports_per_node                  =   5;
+  link_shut_percentage            =   5;
+  port_out_percentage             =  35;
+
+const
+  node_hash_max                   = 113;
+  host_hash_max                   = 557;
+
+const
+  oper_log_page_max               = 200;
+
+(* A simple help message of less than 64 characters *)
+
+const
+  help_text                       = 'See (NETDVDOC)TMCS.DOC\ ';
+
+(*  Simple TMCS logon banner title  *)
+
+const
+  banner_title                    = '>>  Sample Net  <<<\';
+
+(*  Offset for time calcs when daylight savings time is in effect *)
+
+const
+  daylight_savings_offset         = 60 (* minutes *) ;
+
+(* Network Event Monitor username. Used without host to find nem *)
+
+const
+  network_event_monitor_user_name = 'NETEVENT\ ';
+
+(* Probe username. Used to login to Probe on supervisor *)
+
+const
+  probe_network_login_name = 'PROBE\';
+
+(* Probe username which is used for the second login to Probe *)
+
+const
+  probe_second_login_name  = 'NETPAT\ ';
+
+(****************************************************************************)
+(* The following lines are ONLY include when the ALARM switch is enabled.   *)
+(****************************************************************************)
+
+(* threshold conditions *)
+
+const
+  threshold_condition_max = 5;
+
+(* Define the number of Network Alarms *)
+
+const
+  number_of_node_alarms		= 3;
+  number_of_host_alarms		= 2;
+  number_of_link_alarms		= 4;
+  number_of_slot_alarms		= 1;
+  number_of_general_alarms	= 5;
+
+(*  The size of the condition log in entries (used by alarm facility)  *)
+
+const
+  condition_log_length = 16*200;
+
+(*  Alarm bell specifications  *)
+
+const
+  bell_on_alarm_level_a         = TRUE;
+  bell_on_alarm_level_b         = TRUE;  
+  bell_on_alarm_level_c         = FALSE;
+  bell_on_alarm_level_o         = FALSE;
+
+(****************************************************************************)
+(* End of lines includes ONLY if ALARM  switch is enabled.                  *)
+(****************************************************************************)
+
+(****************************************************************************)
+(* The following lines are ONLY include when the RELOAD switch is enabled.  *)
+(****************************************************************************)
+
+(*  ELF filename descriptors for node and slot files stored in          *)
+(*  ELF but used by the reload facility.                                *)
+
+const
+  elf_node_designator = 'SN\ ';
+  
+(*  Reload facility sleep interval between processing of nodes and slots *)
+const
+  reload_sleep_interval        = 90 (* seconds *) ;
+
+(*  ELF parameters for dumping node/slot memory (used by reload facility)  *)
+const
+  elf_device_for_dumping       = 'D';
+  elf_unit_for_dumping         =  1 ;
+
+(*  Secondary network console login parameters - (used by reload facility) *)
+const
+  network_console_user_name    = 'TMCS\ ';
+  network_console_password     = 'XOM ACCESS\ ';
+  max_xom_restore_attempts     = 5;
+
+(****************************************************************************)
+(* End of lines includes ONLY if RELOAD switch is enabled.                  *)
+(****************************************************************************)
+
+(****************************************************************************)
+(* The following lines are ONLY include when the SHUT_LINK_TABLE_MAINTENANCE*)
+(* switch is enabled.   						    *)
+(****************************************************************************)
+
+(*  The number of shut sectors which is defined as SHTSEC in Supervisor     *)
+(*  tymfile 								    *)
+
+const
+  shut_sector_max	= 2;
+
+(****************************************************************************)
+(* End of lines includes ONLY if SHUT_LINK_TABLE_MAINTENANCE switch is 	    *)
+(* enabled.                  						    *)
+(****************************************************************************)
+
+
+const
+  host_status_message_max = (host_configuration_max*25 + 99) div 100;
+
+(****************************************************************************)
+(* The following lines are ONLY include when the AUTO_BACKUP switch is 	    *)
+(* enabled.   						    		    *)
+(****************************************************************************)
+
+(*									*)
+(*	User-configuration parameters for TMCS/NTCN automatic Backup.	*)
+(*									*)
+
+const
+  tmcs_auto_backup_user_name	= 'TMCSBACKUP\ ';
+const
+
+  site_max = 2 ;  (*  The number of TMCS/NTCN host Sites involved in	*)
+		  (*  keeping each others copies of the data base	*)
+		  (*  backed up.  The value of NPARTNERS in the slot	*)
+		  (*  parameter file must be one less than site_max.	*)
+
+(*      These are the three Configuration Parameters which control the     *)
+(*      timing of Circuit Build Retries.  For convenience, they are shown  *)
+(*      Expressed in minutes, followed by a *60, because the program uses  *)
+(*      time values computed in seconds.                                   *)
+
+   initial_retry_delay       =  1 ;    (*  Minimum time between Circuit Zap  *)
+                                       (*   and next retry at building.      *)
+
+   retry_delay_increment     =  5 *60 ;
+
+   retry_delay_limit         = 30 *60 ;
+
+(*      This Configuration Parameter controls the amount of time that a    *)
+(*      Circuit may be idle before it will be Disconnected, and not be     *)
+(*      rebuilt until there is some actual need to do so.                  *)
+
+   inactive_circuit_time_out = 60 *60 ;
+
+
+(*								  	*)
+(*		The Host Numbers of the TMCS/NTCN Sites.		*)
+(*									*)
+(*	There is provision for up to five interconnected Sites, all	*)
+(*	keeping each other backed up.  Each Site has a primary Host	*)
+(*	Number (which the User logs into), and up to three additional	*)
+(*	Host Numbers for the other Sites to log into when performing	*)
+(*	backup activity.						*)
+(*								  	*)
+(*	The Host Numbers are arranged in five sets of five; each set	*)
+(*	has five Host Numbers for the one site.  It is necessary that	*)
+(*	all five "Host Number" symbols be defined for each Site.  The	*)
+(*	unused ones should be at the end of each set, all set to zero.	*)
+(*								  	*)
+(*	The sets should be stated in increasing numerical order by	*)
+(*	primary ( _from_user) Host Number.  Within the set, the Host	*)
+(*	Numbers should appear in the same order that they appear in	*)
+(*	the Parameter file.  						*)
+(*								  	*)
+
+
+const
+  site_1_from_user_host_number = 806;
+  site_1_from_2_host_number = 801;
+  site_1_from_3_host_number = 0;
+  site_1_from_4_host_number = 0;
+  site_1_from_5_host_number = 0;
+
+  site_2_from_user_host_number = 808;
+  site_2_from_1_host_number = 802;
+  site_2_from_3_host_number = 0;
+  site_2_from_4_host_number = 0;
+  site_2_from_5_host_number = 0;
+
+  site_3_from_user_host_number =  0;
+  site_3_from_1_host_number = 0;
+  site_3_from_2_host_number = 0;
+  site_3_from_4_host_number = 0;
+  site_3_from_5_host_number = 0;
+
+  site_4_from_user_host_number =  0;
+  site_4_from_1_host_number = 0;
+  site_4_from_2_host_number = 0;
+  site_4_from_3_host_number = 0;
+  site_4_from_5_host_number = 0;
+
+  site_5_from_user_host_number =  0;
+  site_5_from_1_host_number = 0;
+  site_5_from_2_host_number = 0;
+  site_5_from_3_host_number = 0;
+  site_5_from_4_host_number = 0;
+
+(****************************************************************************)
+(* End of lines includes ONLY if AUTO_BACKUP switch is enabled. 	    *)
+(****************************************************************************)
+
+
+
+
+  
