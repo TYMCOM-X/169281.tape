@@ -1,0 +1,5249 @@
+                                                                October 19, 1982
+
+
+
+
+
+
+                         *****  ***   ***  *      ****
+                           *   *   * *   * *     *    
+                           *   *   * *   * *      *** 
+                           *   *   * *   * *         *
+                           *    ***   ***  ***** **** 
+
+                                 *   *   * **** 
+                                * *  **  * *   *
+                               ***** * * * *   *
+                               *   * *  ** *   *
+                               *   * *   * **** 
+
+             *   * ***** ***** *     ***** ***** ***** *****  ****
+             *   *   *     *   *       *     *     *   *     *    
+             *   *   *     *   *       *     *     *   ****   *** 
+             *   *   *     *   *       *     *     *   *         *
+              ***    *   ***** ***** *****   *   ***** ***** **** 
+
+                   Including NAD, MERLIN, LOADII, and NIBDMP
+                               REFERENCE MANUALS
+
+                           Network Development Group
+                                 Tymshare, Inc.
+                             Cupertino, California
+
+
+
+    DISCLAMER -- Many of the terms used herein are references to the ISIS-II
+   technology -- these are more fully described in the document "ISIS2.DOC".
+
+
+
+
+
+       =================================================================
+       |       THIS DOCUMENT IS THE SOLE PROPERTY AND CONFIDENTIAL     |
+       |       INFORMATION  OF  TYMSHARE,  INC.,  AND  MAY  NOT BE     |
+       |       COPIED  IN  WHOLE OR IN PART  OR  DISCLOSED  TO ANY     |
+       |       THIRD PARTY  WITHOUT THE PRIOR  WRITTEN  CONSENT OF     |
+       |       TYMSHARE.                                               |
+       =================================================================
+
+
+
+
+
+
+
+
+
+                                                               Tools & Utilities
+                                                                October 19, 1982
+
+
+
+
+
+
+
+
+
+
+
+
+
+             Various sections of this document were written by:
+
+           John O. Kopf
+           Dave Montagna
+           Dan Lasater
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           1                   Tools & Utilities
+                                   Tools & Utilities            October 19, 1982
+
+
+
+
+
+
+
+                                   TABLE OF CONTENTS
+
+        Section                                                             Page
+
+
+
+        1.   NAD Assembler                                                     2
+          1.1   Using NAD                                                      2
+          1.2   ";X" -- Command File                                           3
+          1.3   Assembler Text                                                 4
+          1.4   Statements                                                     4
+          1.5   Numbers                                                        4
+          1.6   Symbols                                                        4
+             1.6.1    Computed Symbols                                         5
+
+          1.7   Operators                                                      5
+          1.8   Fields                                                         6
+          1.9   Expressions                                                    7
+          1.10  Statement Format                                               7
+          1.11  Assembler Directives                                           9
+             1.11.1   Assemble-time Comments                                   9
+                1.11.1.1            REMARK  %type at assembly time             9
+                1.11.1.2            NUMBER  EXPRESSION                         9
+
+             1.11.2   Symbol Control                                           9
+                1.11.2.1    LABEL   EQ      EXP                                9
+                1.11.2.2    LABEL   LINENO                                     9
+                1.11.2.3    LABEL   NADVER                                    10
+                1.11.2.4    LABEL   ERRCNT                                    10
+                1.11.2.5    LABEL   UNCNT                                     10
+                1.11.2.6    LABEL   CURGMT                                    10
+                1.11.2.7            GL      SYM1,SYM2,...,SYMn                10
+                1.11.2.8            UN                                        10
+                1.11.2.9            KILL    SYM1,SYM2,...,SYMn                11
+
+             1.11.3   Program Counter                                         11
+                1.11.3.1    LABEL   ORG     EXP                               11
+                1.11.3.2    LABEL   BND     EXP                               11
+                1.11.3.3    LABEL   SEG     EXP                               12
+
+             1.11.4   Modules                                                 12
+                1.11.4.1            MO      ORGEXP,ASCNAM                     12
+                1.11.4.2            EM                                        13
+                1.11.4.3            LO      ASCNAM                            13
+                1.11.4.4            FO      ASCNAM                            13
+
+             1.11.5   Listing Control                                         13
+                1.11.5.1            control-L                                 14
+                                   Tools & Utilities            October 19, 1982
+
+
+                1.11.5.2            LIST/NOLIST                               14
+                1.11.5.3            TITLE   Text                              15
+                1.11.5.4            SUBTTL  Text                              16
+                1.11.5.5            NOTTL                                     16
+
+             1.11.6   Storage Allocation                                      16
+                1.11.6.1    LABEL   BS      EXP                               16
+                1.11.6.2    LABEL   HS      EXP                               17
+                1.11.6.3    LABEL   WS      EXP                               17
+
+             1.11.7   Data Allocation Directives                              17
+                1.11.7.1    LABEL   BC      EXP1,EXP2,....,EXPn               17
+                1.11.7.2    LABEL   HC      EXP1,EXP2,...,EXPn                17
+                1.11.7.3    LABEL   WC      EXP1,EXP2,...,EXPn                17
+                1.11.7.4    LABEL   XC      hexstring                         17
+                1.11.7.5    LABEL   AC      /ascii string/                    18
+                1.11.7.6    LABEL   SC      /ascii string/                    18
+
+             1.11.8   Conditional Assembly Control                            18
+                1.11.8.1            IF      EXP                               18
+                1.11.8.2            ELSE    EXP                               18
+                1.11.8.3            EI      (sym)                             19
+                1.11.8.4    LABEL   RE      EXPOK                             19
+                1.11.8.5            ER      EXPOK                             19
+
+             1.11.9   Other Directives                                        20
+                1.11.9.1            RA      EXP                               20
+                1.11.9.2            END                                       20
+                1.11.9.3            QUIT   EXP                                20
+
+          1.12  Instruction Mnemonics                                         21
+          1.13  Macro Facility                                                22
+             1.13.1   Macro Definition                                        22
+             1.13.2   Macro Invocation                                        22
+                1.13.2.1    Example:                                          23
+
+
+        2.   NAD Debugger                                                     24
+          2.1   Standard Type-out Mode                                        24
+          2.2   Halfword/fullword Mode                                        25
+          2.3   Radix                                                         25
+          2.4   "." (Dot)                                                     25
+          2.5   Line Editing                                                  25
+          2.6   Open Registers                                                26
+             2.6.1    "?"  command                                            26
+             2.6.2    ";A"  command                                           26
+             2.6.3    "%A"  command                                           27
+             2.6.4    CARRIAGE RETURN command                                 27
+             2.6.5    LINE FEED command                                       27
+             2.6.6    ";^"  command                                           27
+             2.6.7    "\"  command                                            28
+             2.6.8    "["  command                                            28
+             2.6.9    "]" command                                             28
+                                   Tools & Utilities            October 19, 1982
+
+
+             2.6.10   ";\" command                                            28
+             2.6.11   ";[" and ";]"  commands                                 28
+             2.6.12   "="  command                                            29
+             2.6.13   "#"  command                                            29
+             2.6.14   "_"  command                                            29
+             2.6.15   '"'  command                                            29
+             2.6.16   ":" command                                             29
+             2.6.17   %M, %N, %", %S, %I  commands                            30
+             2.6.18   ;M, ;N, ;", ;S, ;I commands                             30
+             2.6.19   "%2" and "%4"  commands                                 30
+             2.6.20   ";2" and ";4"  commands                                 30
+             2.6.21   ";%" command                                            31
+             2.6.22   ";(" and ";)" commands                                  31
+             2.6.23   ";;" command                                            33
+             2.6.24   ";K" command                                            33
+             2.6.25   Image Binary Commands                                   33
+             2.6.26   "%7" and ";7"  commands                                 33
+             2.6.27   ";8" and "%8"  commands                                 34
+             2.6.28   %Q  command                                             34
+
+          2.7   DEBUGGER-DDT communications                                   34
+             2.7.1    ";C" command                                            34
+             2.7.2    ";R" command                                            35
+             2.7.3    "%R" command                                            35
+             2.7.4    "::" command                                            35
+
+
+        3.   NAD-KERNEL COMMUNICATIONS                                        37
+          3.1   INTER-NETWORK communications, through a GATEWAY               37
+          3.2   NAD-DDT commands                                              38
+             3.2.1    ":A" Command                                            39
+             3.2.2    ":B ADDR NUM" Command                                   39
+             3.2.3    ":E" Command                                            39
+             3.2.4    ":F" Command                                            39
+             3.2.5    ":G ADDR" Command                                       39
+             3.2.6    ":H" Command                                            40
+             3.2.7    ":I" Command                                            40
+             3.2.8    ":L DISK-ADDR NUMBER-OF-BLOCKS MEM-ADDR" Command        40
+             3.2.9    ":LL UNIT SECTOR CORE-ADDR NUMBER-OF-BYTES" Command     40
+             3.2.10   ":M MASK START-ADDR END-ADDR" Command                   40
+             3.2.11   ":N" Command                                            41
+             3.2.12   ":P" Command                                            41
+             3.2.13   ":R ADDR COUNT" Command                                 41
+             3.2.14   ":RR REG COUNT" Command                                 41
+             3.2.15   ":S" DISK-ADDR NUMBER-OF-BLOCKS MEM-ADDR" Command       41
+             3.2.16   ":SS" UNIT SECTOR CORE-ADDR NUMBER-OF-BYTES" Command    41
+             3.2.17   ":T" Command                                            42
+             3.2.18   ":U NUM" Command                                        42
+             3.2.19   "Control-W ADDR COUNT" Command                          42
+             3.2.20   ":W ADDR VAL" Command                                   42
+             3.2.21   "ADDR COUNT :W" Command                                 42
+             3.2.22   "PADR VADR COUNT :W" Command                            43
+             3.2.23   ":WR REG VAL" Command                                   43
+                                   Tools & Utilities            October 19, 1982
+
+
+             3.2.24   ":X (0,1) (1,2,4) VALUE" Command                        43
+             3.2.25   ":Y(1,2,3) VALUE1 VALUE2 VALUE3" Command                43
+             3.2.26   ":Z" Command                                            43
+             3.2.27   ":\" Command                                            44
+
+
+        4.   NAD Image Binary File Usage                                      46
+          4.1   NAD Commands                                                  46
+
+
+        5.   MERLIN .  .  .  Merge and Link ISIS Nodes                        49
+          5.1   RUNNING MERLIN                                                49
+          5.2   MERLIN Sample-Run Output                                      50
+             5.2.1    Sample Run 1                                            50
+             5.2.2    Sample Run 2                                            52
+
+
+        6.   LOADII .  .  .Node Loading Program                               53
+          6.1   PREPARING FOR LOADII                                          54
+             6.1.1    Requirements for Choosing the Neighbor                  54
+             6.1.2    Requirements for Choosing the Line                      54
+
+          6.2   Bootstrapping the Target Machine                              55
+          6.3   LOADING                                                       56
+             6.3.1    Loading a Node                                          56
+                6.3.1.1     Example of Varian Load:                           58
+                6.3.1.2     Example of Engine Load                            58
+
+             6.3.2    Loading ISIS Slots                                      59
+                6.3.2.1     Example: Loading a Slot                           60
+                6.3.2.2     Example: Loading Multiple Slots                   61
+
+             6.3.3    Loading Diagnostics                                     62
+
+          6.4   PERFORMING A DUMP                                             62
+             6.4.1    Example of Dump:                                        63
+
+          6.5   RESTART                                                       64
+             6.5.1    Example of Restart:                                     64
+
+          6.6   ISIS-SLOT DUMPS                                               65
+          6.7   CIRCUIT BUILDING ERROR TYPES                                  65
+             6.7.1    From the PDP-10 monitor                                 66
+             6.7.2    From the network supervisor                             67
+             6.7.3    Circuit Building Process                                68
+
+          6.8   Streamlined Operation                                         69
+             6.8.1    Example:  To load a node in the public net              70
+             6.8.2    Example:  To load slots                                 70
+             6.8.3    Example:  A command file to pass through a gateway      70
+             6.8.4    Example:  Interacting with command files                70
+             6.8.5    Loading Multiple files                                  71
+             6.8.6    Additional Features                                     71
+                                   Tools & Utilities            October 19, 1982
+
+
+                6.8.6.1     A Security System                                 71
+                6.8.6.2     Default Gateways                                  71
+                6.8.6.3     No-Start-Up                                       72
+                6.8.6.4     Hexidecimal Output                                72
+                6.8.6.5     Default Directory                                 72
+
+             6.8.7    LOADII Accounting                                       72
+
+
+        7.   NIB Dump Program                                                 74
+
+
+                                     APPENDICIES
+                                     ===========
+
+
+        I.   NIB File Format                                                  77
+          I.1   ID Record (1 block long)                                      78
+          I.2   Memory Image Record                                           79
+          I.3   Symbol Table Record                                           79
+          I.4   State Information Entry                                       80
+     I.5   Opcode Entry                                                  80
+          I.6   Macro Entry                                                   81
+          I.7   Defined Symbol Entry                                          81
+          I.8   Undefined Symbol Entry                                        81
+
+
+        II.  CONVENTIONS FOR NAD - DDT COMMUNICATIONS                         82
+          II.1  PDP10 TO ENGINE                                               82
+          II.2  ENGINE TO PDP10                                               83
+
+                                        INDEX                                 84
+                                        =====
+        NAD Assembler                                           October 19, 1982
+
+
+
+
+
+
+                                   1 -  NAD Assembler
+
+
+             NAD assembles symbolic statements  that it inputs from a  disc file
+        which contains 7-bit characters.  It  may output a listing to a  file in
+        the user's directory.
+
+
+
+
+
+
+                                     1.1  Using NAD
+
+
+             To invoke NAD, type:
+
+        -R NAD
+
+             It will come back and type a number, such as:
+
+        122579
+
+             This is the current NAD version number.
+
+             The command "%Q" (or two escapes) will cause it to exit.
+
+             The command  ";A" causes  an assembly to  take place.   The command
+        ";@" is equivalent to ";A".  The command:
+
+        ;A   [(DIRECTORY)]FILE.EXT
+
+
+             will assemble file FILE.EXT from [optional] directory DIRECTORY.
+
+             The command "%@" is equivalent  to "%A".  The command "%A"  is like
+        ";A", except that a listing file will be generated, with name FILE.LST.
+
+             MULTIPLE, sucessive ";A", "%A", ";@" or "%@" commands may be given,
+        IN ORDER TO collect a set of files into one assembly.
+
+             The ";(" and ";)" commands  allow one listing file to  be generated
+        when multiple ";A" and "%A" commands are given.  They also can  make the
+        ";A" command cause a listing  to be produced.  (See section on  ";(" and
+        ";)" in NAD debugger chapter.)
+
+
+
+
+
+                                           2                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                               1.2  ";X" -- Command File
+
+
+             NAD has a command file capability.  Entering the command:
+
+        ;X   FILE.CMD
+
+             will cause subsequent commands  to be read from FILE.CMD.   This is
+        especially useful for  assembling a series  of files.  The  command file
+        specified may include any commands which may be entered after  NAD types
+        its  version.   Two characters  have  special meanings  when  NAD  is in
+        command file mode: control-D (^D) terminates command file  mode, causing
+        NAD to revert to normal terminal input mode.  Control-V (^V)  causes NAD
+        to take  characters from the  terminal until a  control-D is  typed, and
+        then to resume execution of  the command file.  Thus, command  files may
+        allow for variable information to  be inserted by the user  at execution
+        time.  For example, this command file:
+        %Afile1.nad
+        %A^V
+        %Afile3.nad
+
+             would  produce  the following  output  (command file  text  and NAD
+        messages in UPPER CASE, user typein in lower case):
+        -r(isis)nnad
+        READY
+        ;x file.cmd
+        %A   FILE1.NAD          :command file assembles one file
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        %A   filex.nad^d        :user specifies second file
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        %A   FILE3.NAD
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;c   me:377             :command returns to the user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           3                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                                  1.3  Assembler Text
+
+
+             The input  text to the  assembler is a  string of  statements which
+        either translate into ENGINE  code or into directives to  the assembler.
+        Statements  are delimited  by the  statement delimiters  carriage return
+        (C/R) and semicolon (;).
+
+
+
+
+
+
+                                    1.4  Statements
+
+
+             A statement is  a string of  symbols, fields, and  expressions that
+        end with a carriage return or a semicolon.
+
+
+
+
+
+
+                                      1.5  Numbers
+
+
+             Numbers are a string of  hex digits, where the first digit  must be
+        between 0 and 9.  Some examples of hex digits are:
+
+                0F      this is  the hex number of  the highest register on the
+                        ENGINE
+                0FFFFE  this is one less than the highest ENGINE byte address
+
+             The value of a number string is dependent on the radix.
+
+
+
+
+
+
+                                      1.6  Symbols
+
+
+             A  symbol is  a string  of 1  to 6  alphanumerics, and  may include
+        imbedded  periods  (".").   The  first character  of  a  symbol  must be
+        alphabetic.  the period symbol "." is an exception to this rule.  "." is
+        the current program counter.
+
+
+
+
+
+
+                                           4                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                    1.6.1  Computed Symbols
+
+             The string "|" embedded in a symbol has special  significance.  The
+        expression between two "|"'s is evaluated, and converted to a  string of
+        digits  according  to  the  current radix,  and  this  string  of digits
+        replaces the original expression.
+
+             The sequence:
+
+        Q       EQ      0
+                RE      3
+                HC      SYM|Q|
+        Q       EQ      Q+1
+                ER
+
+             is equivalent to the sequence:
+
+                HC      SYM0,SYM1,SYM2
+
+             in terms of the code generated.  However, it can eliminate  a nasty
+        mess of  IF--EI statements when  it is desired  to generate  a variable-
+        length table of numerically successive symbols.
+
+
+
+
+
+
+                                     1.7  Operators
+
+
+             Binary operators are lodged between two values in the form:
+
+                             left valueOPERATORright value
+
+             Unary operators do not have  a left value.  There may be  no blanks
+        between  the  operators  and  the values  they  operate  on.   the valid
+        assembler  orerators are  below.  The  higher precedence  operations are
+        performed before the lower precedence operations.
+
+        Operator       Precedence      Function
+
+        +R             7               Value is R
+        -R             7               Value is minus R
+        @R             7               Value is the one's complement of R
+        \R             7               Value is whether R is defined
+                                        or not (see below)
+        L^R            6               Value is L shifted R places
+                                        (left for plus R,
+                                        and right for minus R)
+        L*R            5               Value is L times R
+        L/R            5               Value is L divided by R
+        L+R            4               Value is L plus R
+
+                                           5                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        L-R            4               Value is L minus R
+        L&R            1               Value is L and R
+        L!R            0               Value is L or R
+        L%R            0               Value is L exclusive-or R
+
+             The value of the \ operator is one if its operand is  defined (i.e.
+        all of the  variables in the  operand have a  value when the  operand is
+        evaluated), zero if its operand contains exactly one  undefined variable
+        and undefined if its  operand contains two or more  undefined variables.
+        Note that the value of the  operator is independent of the value  of its
+        operand.  The \ operator is primarily used to determine whether or not a
+        variable is defined.  Example,
+
+                IF      \SYMBOL
+                REMARK  %SYMBOL IS DEFINED.
+                ELSE
+                REMARK  %SYMBOL WAS UNDEFINED.
+        SYMBOL  EQ      0
+                REMARK  %IT IS NOW DEFINED WITH A VALUE OF ZERO.
+                REMARK  %***WARNING*** A LISTING GENERATED ON PASS-2 OF NAD
+                REMARK  %ASSEMBLY WILL SHOW THE SYMBOL DEFINED (AT THAT TIME),
+                REMARK  %SINCE IT WAS ALREADY DECLARED DURING PASS 1!!
+                EI
+
+
+             CAUTION.  Construct complicated expressions with  careful attention
+        to  precedence.  Simple  expressions come  naturally,  but  some complex
+        expressions don't.   Redundant parenthesis  don't bother  the expression
+        evaluator but  may help  the user.  In  order to  bind a  low precedence
+        expression to  a high  precedence operator,  parenthesis are  advised or
+        necessary.
+
+
+
+
+
+
+                                      1.8  Fields
+
+
+             A  field  is  a  string  of  characters,  symbols,  numbers, and/or
+        operators  that has  a single  meaning in  the context  of  a statement.
+        Fields are surrounded on the left and right by the delimiting characters
+        (blanks, tabs, commas, dollar-sign, parenthesis, colons, semicolons, and
+        carriage returns).
+
+
+
+
+
+
+
+
+
+                                           6                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                                    1.9  Expressions
+
+
+             An  expression  is  a  string  of  symbols,  numbers,  fields,  and
+        operators that evaluate to a single value.  Expressions may also contain
+        the  parenthesis  delimiters  to  delimit  a  sub-expression  within  an
+        expression.  A  simple expression  may be as  short as  one alphanumeric
+        character.
+
+             A special rule  of expressions allows the  user to imbed  a dollar-
+        sign  and  hex  digit in  or  before  the expression  to  set  the radix
+        according to the hex  digit for the rest  of the statement.  It  is also
+        legal  to  use  this  radix setting  convention  more  than  once  in an
+        expression.  If  the hex  character is  a 0,  the radix  is set  to hex;
+        otherwise the radix is set to the value of the hex digit.
+
+
+
+
+
+
+                                 1.10  Statement Format
+
+
+             The general statement format is:
+
+        LABEL   OPCODE  OPERANDS        :Comment field.
+
+             However, the assembler can be directed to ignor some or all  of the
+        fields.
+
+             A statement  that begins with  a ":" is  a comment  statement.  The
+        colon may  be placed almost  anywhere to indicate  that the rest  of the
+        statement is a comment field.
+
+             The label  field is null  unless a symbol  is left adjusted  in the
+        statement.  Symbols may be defined and redefined by repeated use  in the
+        label field.
+
+             The opcode field contains a single symbol, with no  operators, that
+        represents an ENGINE operation code or an assembler directive.
+
+             The  operand  field follows  the  opcode field.   The  value  of an
+        operand  is the  value of  an expression.   The operand  fields  must be
+        ordered in the  same order as they  are ordered in the  ENGINE Reference
+        Manual.   All  operand  fields  except  the  first  in  a  statement are
+        preceeded by a comma (",").   Even the RX3 operand fields  are delimited
+        only by commas.  Here are some examples:
+
+
+
+
+
+
+                                           7                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+
+                C       R1,D2,X2        :this would assemble as RX1 or RX2
+                C       R1,A2,FX2,SX2   :this would assemble as RX3
+                C       R1,A2,FX2,SX2   :would also assemble as RX3
+                C       R1,DISPL,RX,0   :user forced RX3 because displacement
+                                        : was large and would not fit in an
+                                        : RX1 or RX2 instruction
+
+             The last operand  is terminated by "  " (blank), tab, ":",  ";", or
+        C/R.   Operands that  terminate with  a ","  are not  the  last operand.
+        Since  each operand  may be  an expression  with leading  blanks,  it is
+        possible  to  seperate  and group  the  operands.   Operand  fields that
+        assemble  to  4-bit  values  must  be  defined  at  the  time  that  the
+        instruction  is  being  assembled,  except  for  short   forward  branch
+        instructions  which  may  branch ahead  to  an  undefined  address.  The
+        expression that makes the displacement fields may contain  one undefined
+        symbol.  The undefined symbol may be attached to any operator.
+
+             For example:
+
+                C       9,TABLE+((((7-Y*Z)+X)/2)),FX2,SX2+N*M
+
+             is legal if TABLE, X, Y, FX2,  N, M, and SX2 are defined, and  Z is
+        undefined.
+
+             Any expression may include a dollar-sign, hex-digit field ("$n") to
+        indicate that a special radix  is to be used to interpret  numbers until
+        the  end  of  the  last  operand  field  of  the  statement.   The legal
+        combinations are:
+             $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
+
+             The sixteen radices possible are specified by the hex character.
+
+        0       normal hex radix.
+        1       a dull radix.
+        2       binary.
+        8       octal.
+        A       decimal.
+        F       radix 15 decimal.
+
+             This special kludge on the operand built for the  operand structure
+        can be used an unlimited number of times in a statement.  Examples:
+
+                L       R1,$ATEMP+212,15        :this assembles the
+                L       R1,$A TEMP+212,$8 17    :...same as this
+                L       $A R1,TEMP+212,15       :......and this
+
+             The  special  radix  setter  can  be  used  more  than  once  in an
+        expression.
+
+
+
+
+
+                                           8                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                               1.11  Assembler Directives
+
+
+             The opcode field of a statement may contain an assembler directive.
+
+
+
+
+
+                    1.11.1  Assemble-time Comments
+
+             A  source file  can be  made to  output remarks  to  the controling
+        terminal  at  assemble-time.   This facility  may  be  used  to generate
+        diagnostics.
+
+
+
+        1.11.1.1          REMARK  %type at assembly time
+
+             The REMARK  directive causes  the assembler to  type on  the user's
+        terminal  all of  the characters  between the  delimiter (blank  or tab)
+        following the word "REMARK" and the end of the statement  (terminated by
+        C/R) at  the time  the assembler encounters  the remark  statement.  The
+        symbol "%" in a remark is used to represent  a carriage-return/line-feed
+        on output.
+
+
+
+        1.11.1.2          NUMBER  EXPRESSION
+
+             The  NUMBER directive  causes the  expression to  be  evaluated and
+        typed out, according to the current radix, on the user's terminal.
+
+
+
+
+
+                    1.11.2  Symbol Control
+
+
+
+        1.11.2.1  LABEL   EQ      EXP
+
+             This defines label as having the value of EXP.
+
+
+
+        1.11.2.2  LABEL   LINENO
+
+             This defines label as having  the value of the current  SOURCE line
+        number.
+
+
+
+                                           9                   Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.2.3  LABEL   NADVER
+
+             This  defines label  as  having the  value of  the  current Version
+        number of NAD.
+
+
+
+        1.11.2.4  LABEL   ERRCNT
+
+             This defines label  as having the value  of the number  of assembly
+        (file) errors which have so far occurred since entering NAD.
+
+
+
+        1.11.2.5  LABEL   UNCNT
+
+             This defines  label as  the number of  symbols which  are currently
+        undefined.
+
+             Note that  the successive  values returned  by this  directive both
+        increase  and  decrease whereas  the  values returned  by  ERRCNT always
+        increase.
+
+
+
+        1.11.2.6  LABEL   CURGMT
+
+             This  defines label  as  the current  time in  seconds  since 00:00
+        1/1/74 GMT (i.e. Network time).
+
+
+
+        1.11.2.7          GL      SYM1,SYM2,...,SYMn
+
+             This  directive  marks a  symbol  as global  to  all  modules.  The
+        symbols in the list may be a mixture of symbols that are in  other files
+        to be referenced  by the current file,  and symbols that are  defined in
+        the current file  that are to be  referenced from elsewhere.   In either
+        case, GL should be anywhere in the file before the symbols in the symbol
+        list are defined or referenced.   Globals must be stated as  such before
+        they are used.  GL will not change a normal module symbol to a global.
+
+
+
+        1.11.2.8          UN
+
+             This directive causes  all undefined symbols  to be printed  at the
+        terminal, including all symbols which have been declared global, but not
+        defined.
+
+
+
+
+
+                                           10                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.2.9          KILL    SYM1,SYM2,...,SYMn
+
+             This directive causes its argument,  a list of symbol names,  to be
+        removed from the  symbol table and to  hence be undefined.   The symbols
+        need not be defined  to be KILL'ed.  A  macro must be KILL'ed  before it
+        can be redefined.
+
+
+
+
+
+                    1.11.3  Program Counter
+
+             The symbol period (".") is used by NAD as the location counter.  It
+        may be explicitly changed by several directives.
+
+
+
+        1.11.3.1  LABEL   ORG     EXP
+
+             Start assembling into virtual  memory location EXP.  If ORG  is not
+        issued to the assembler, ORG is set to 0 or to one higher than  the last
+        location  assembled.   Even code  that  will run  address  free  must be
+        oriented to an origin at assembly time.
+
+             If a label is used, the label is defined to have the new P counter.
+
+        LABEL   ORG     1000
+
+
+             is therefore the same as:
+
+                ORG     1000
+        LABEL
+
+
+                ORG     (.+3)/4*4
+        or
+                ORG     .+3&-4          :cause word alignment of PC
+
+                ORG     $A 1^14         :sets the origin to the lowest
+                                        :15 (decimal) bit address
+                                        :(which invokes RX2 instead of RX1)
+
+
+
+        1.11.3.2  LABEL   BND     EXP
+
+             Force  "."  (the  program  counter)  to  the  next  (.  modulo EXP)
+        boundary. LABEL is set  to the new value of  ".".  If "." is  already at
+        such a boundary, it is not changed.  EXP must be a power of two.
+
+                BND     0               :force to byte boundary
+
+                                           11                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                BND     2               :force to halfword boundary
+                BND     4               :force to word boundary
+                BND     8               :force to double-word boundary
+                BND     100             :force to page boundary
+                BND     10000           :force to segment boundary
+
+
+
+        1.11.3.3  LABEL   SEG     EXP
+
+             SEG permits the maintaining of separate location counters (".") for
+        each MAC segment.  EXP must be fully defined, and evaluate to  the range
+        0-15d.  If the current segment is m, the command:
+
+                SEG     n               :switch to segment n
+
+        will cause:
+
+                m := CS         (CS = Current Segment)
+                PC(m) := .
+                CS := n
+                . := PC(n)
+
+             This is  especially useful  when gathering  source material  from a
+        number of  library files,  since it  allows each  file to  add variables
+        storage to segment  0, code to segment  1, and define other  segments as
+        necessary.
+
+             The label LABEL  will have a value  equal to the PC  AFTER changing
+        segments (like ORG).
+
+
+
+
+
+                    1.11.4  Modules
+
+             A program  may be divided  into modules, at  the discretion  of the
+        programmer.  Symbols defined within  a module are local to  that module,
+        and are distinct from the  same symbols defined in other  modules.  This
+        permits the symbols  to be referenced  from within that  module, without
+        conflict with other possible usage of the the same symbols.
+
+
+
+        1.11.4.1          MO      ORGEXP,ASCNAM
+
+             The MO directive delimits the  beginning of a module that is  to be
+        referenced by the name ASCNAM.  The  end of the module is marked  by the
+        EM directive  or a  new MO directive.   The MO  directive also  sets the
+        origin in the same sense as the ORG statement sets the origin.
+
+
+
+                                           12                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+             It is not  necessary to issue MO  statements to use  the assembler.
+        The default module  is ..MAIN which cannot  be confused with  any module
+        specified  by the  user.  There  are a  maximum of  36  possible modules
+        recognizable to  NAD.  32  of the 36  are available  to the  user.  (The
+        others  are used  for special  purposes, such  as  instructin mnemonics,
+        global symbols, etc.)
+
+
+
+        1.11.4.2          EM
+
+             The EM directive ends  the current module and causes  the assembler
+        to type out the hex value of the origin as it was when the  MO directive
+        was issued (see "ORGEXP" above) and the current value of the origin ( or
+        "." or PC).   All undefined symbols for  the module which is  ending are
+        also typed.
+
+             After the EM directive, the assembly proceeds in the  ..MAIN module
+        until another MO directive is encountered.
+
+
+
+        1.11.4.3          LO      ASCNAM
+
+             Normally the assembler accesses  the local symbols from  one module
+        at a time.  However, with the use of the LO directive, the user can make
+        another set of  locals available to him  at assembly time.  There  is no
+        limit to how many times the user may issue the LO directive.
+
+             It  is not  necessary  to use  the  LO directive  to  access global
+        symbols that were assembled in another module.
+
+
+
+        1.11.4.4          FO      ASCNAM
+
+             This  directive  makes  the  local  symbols  in  the  module ASCNAM
+        foreign.   This prevents  possible  confusion from  locals  in different
+        packages that have the same asc mnemonics.
+
+
+
+
+
+                    1.11.5  Listing Control
+
+             Listings are generated using the %A command or with the  ;A command
+        in conjunction with the ;( and ;) commands.  The listing file can have a
+        three line  heading on each  page.  The page  dimensions can  be changed
+        with the ;%  command described in the  NAD debugger chapter.   The first
+        line of  the heading contains  a section and  a page number,  title text
+        from the TITLE directive (described below), the current NAD  version and
+
+
+                                           13                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        the date and time the file was assembled.  The second line  contains the
+        name of the  file being assembled followed  by the subtitle text  from a
+        SUBTTL directive (also described below).  The third line is  blank.  The
+        section number  starts at one  and is incremented  at the start  of each
+        file being assembled and with each SUBTTL directive.  Each  listing line
+        can have  up to four  fields.  The first  eight columns contain  a cross
+        reference listing line number and  is only present if a  cross reference
+        listing is produced.   The next eight columns  contain the value  of the
+        program counter.  The next four  and twenty columns contain the  hex for
+        the assembled  instructions.  These  two fields are  not present  if the
+        listing  is produced  during pass  one (see  ;( and  ;)  commands).  The
+        remaining columns contain the source text.
+
+             If a listing is generated,  certain controls may be applied  to the
+        listing.
+
+
+
+        1.11.5.1          control-L
+
+             A control-L (formfeed) may appear  at the beginning of any  line to
+        force the listing to a new page.
+
+
+
+        1.11.5.2          LIST/NOLIST
+
+             These two  directives turn  the lister  on and  off.  LIST  mode is
+        assumed if neither  of these directives is  used.  NOLIST is  very handy
+        for  preventing  wasteful  output generated  in  repeat  loops.   See RE
+        directive.  The LIST directive has the following format:
+
+                LIST    P1,P2,..Pn      :where Pi =
+
+        L       list NOLISTed lines "as is", ie, between a NOLIST and the
+                next LIST directive -
+                ";" delimited lines are printed as they are,
+                "RE" blocks are printed only once,
+                macro expansions are not printed,
+                no PC or HEX is printed to the left.
+
+        -L      do not list NOLISTed lines at all.
+
+        F       list "IF" skipped lines "as is", ie, within the IF
+                skipped block -
+                ";" lines are printed as they are,
+                "RE" blocks are printed only once,
+                macro expansions are not printed,
+                no PC or HEX is listed to the left.
+
+        -F      do not list "IF" skipped lines at all.
+
+        X       list macro calls followed by the macro expansion
+
+                                           14                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                surrounded by square brackets.
+
+        -X      list macro calls without expansions.
+
+        R       list all generations of repeat blocks.
+
+        -R      only list repeat blocks once.
+
+             LIST  without parameters  uses the  parameters from  the  last LIST
+        directive.
+
+             "LIST F,L,R,X" is the  default on entry to NAD.   Parameters should
+        be avoided in the code, so that they may be set up before  the assembly.
+        An unrecognized LIST option will stop the option scan.
+
+             Eg:
+
+                R NAD
+                122579
+                ;(
+                LIST L,-F
+                ;A   1371T.TYM
+                ;A   I707.NAD
+                ;)
+
+             This sequence  will list  NOLISTed lines  as is;  will not  list IF
+        skipped  lines  at  all;  will  create  a  cross-reference  file  called
+        1371T.CRF, which will have cross-references relative to  files 1371T.TYM
+        and I707.NAD.
+
+
+
+        1.11.5.3          TITLE   Text
+
+             The TITLE directive specifies that all the text after the  blank or
+        tab following TITLE and up  to but not including the carriage  return is
+        the new title.   When the title  is entered directly,  not as part  of a
+        source file, it  becomes the default title.   The default title  is used
+        for all pass one listings.  It  is also used for all files which  do not
+        contain  a  TITLE  directive.   If no  default  title  is  entered, only
+        listings of files  containing a TITLE directive  and listed in  pass two
+        will have a heading.  If a  default title is entered, its effect  can be
+        cancelled by a NOTTL directive (described below).  If a file  contains a
+        TITLE directive, the  title is only used  for pass two listings  of that
+        file.  There can  only be one  TITLE directive in  a file and  the TITLE
+        text can be no longer than line length minus 46.
+
+
+
+
+
+
+
+
+                                           15                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.5.4          SUBTTL  Text
+
+             The SUBTTL directive  causes a section break  on the listing  and a
+        new page  on which  the subtitle will  appear in  files which  are being
+        listed  with a  heading.  When  getting a  pass two  listing,  the first
+        SUBTTL directive is  saved during pass one  and used as the  subtitle on
+        the first page.  When SUBTTL is entered directly, it becomes the default
+        subtitle.  The  default subtitle is  used as the  first subtitle  in all
+        pass one listings.  It is also the first and only subtitle in  all files
+        which  do  not contain  a  SUBTTL directive.   The  default  subtitle is
+        initially null and can be changed as often as desired.  The subtitle can
+        be no longer than line length minus 24.
+
+
+
+        1.11.5.5          NOTTL
+
+             The NOTTL directive cancels  the current default title,  if entered
+        directly,  causing listings  of any  further assemblies  to  not contain
+        headings unless  the file contains  a TITLE directive  and is  listed in
+        pass two.  A NOTTL directive in a file causes a pass two listing  of the
+        file to be listed without headings.
+
+
+
+
+
+                    1.11.6  Storage Allocation
+
+             A  number  of directives  allow  the user  to  define  and allocate
+        storage.
+
+
+
+        1.11.6.1  LABEL   BS      EXP
+
+             This defines EXP bytes  of storage.  Assembly continues  beyond the
+        end of the storage area.
+
+             Examples of byte storage directive:
+
+        BITMAP  BS      BITCNT/8        :table for bit addressed array
+        PATCH   BS      40              :area for run time patches
+                BS      -.&7            :align to double word
+                                        :same as:       ORG     (.+7)/8*8
+                                        :or as:         ORG     (.+7)&(@7)
+                                        :or as:         BND     8
+                BS      .&1             :align to even byte (halfword) address
+
+
+
+
+
+
+                                           16                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.6.2  LABEL   HS      EXP
+
+             This align  the program counter  to halfword boundary  and reserves
+        EXP halfwords of storage.
+
+
+
+        1.11.6.3  LABEL   WS      EXP
+
+             This aligns the program counter to fullword boundaries and reserves
+        EXP fullwords of storage.
+
+
+
+
+
+                    1.11.7  Data Allocation Directives
+
+             There  exist a  number  of directives  for the  definition  of data
+        constants.
+
+
+
+        1.11.7.1  LABEL   BC      EXP1,EXP2,....,EXPn
+
+             This defines LABEL  as the first of  N bytes that will  contain the
+        values of EXP1,  EXP2, ....EXPN.  The low  order bits of  the expression
+        values are used and the high-order value bits are ignored.
+
+
+
+        1.11.7.2  LABEL   HC      EXP1,EXP2,...,EXPn
+
+             Alignment  factor  2  is  used,  then  N  halfwords  are  stored as
+        constants.  Only the right 16 bits of the expression values are stored.
+
+
+
+        1.11.7.3  LABEL   WC      EXP1,EXP2,...,EXPn
+
+             Alignment factor 4 is used then N fullwords are stored.
+
+
+
+        1.11.7.4  LABEL   XC      hexstring
+
+             Hex is stored starting at the left of the next available byte.
+
+
+
+
+
+
+
+                                           17                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.7.5  LABEL   AC      /ascii string/
+
+             8 bit  ascii bytes are  generated starting at  the next  byte.  The
+        user picks the delimiter.   Special characters may be inserted  into the
+        text  by  inserting a  full  quote '"'  followed  by 2  hex  digits that
+        represent the 8 bits of the special character.
+
+             For example:
+
+                AC      /message "8D"8A/
+
+             is a message followed by C/R, L/F.
+
+
+
+        1.11.7.6  LABEL   SC      /ascii string/
+
+             This is  like AC except  that the string  is assembled  following a
+        byte which is  the modulo 256  count of how  many characters are  in the
+        message string.
+
+
+
+
+
+                    1.11.8  Conditional Assembly Control
+
+             It  is sometimes  desirable to  conditionally suppress  or condense
+        statements in the source file.
+
+
+
+        1.11.8.1          IF      EXP
+
+             Assemble the  following text  if EXP is  true.  True  means greater
+        than zero.
+
+
+
+        1.11.8.2          ELSE    EXP
+
+             Unlike IF  and EI, ELSE  does not change  the nesting  level.  Code
+        between  an ELSE  and the  next  ELSE or  EI statement  for  the current
+        nesting will assemble only if the ELSE argument is true and no  code has
+        assembled on the current level.  EXP may be left null in which  case the
+        intent is assumed to be:
+
+                ELSE    1
+
+
+
+
+
+
+                                           18                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        1.11.8.3          EI      (sym)
+
+             Terminate the range of an  IF statement.  IF's may be  nested.  The
+        EI pops up one nesting level.
+
+
+
+        1.11.8.4  LABEL   RE      EXPOK
+
+
+
+        1.11.8.5          ER      EXPOK
+
+             These define the beginning and  end of a repeat block.  If  ER, the
+        end-repeat directive, has an expression in the operand field, the repeat
+        block is assembled  again if the expression  is true.  If ER  contains a
+        null operand field,  then the more  conventional type of  repeat occurs.
+        In this  mode, the  expression field of  the RE  directive is  a counter
+        which  the  assembler   automatically  decrements  and  tests   when  it
+        encounters the  ER statement.   The block  is repeated  if the  count is
+        decremented to a true value.  That is, to a value greater than 0.
+
+             Repeat blocks may be nested and mixed with nested IF's.
+
+             Examples:
+                RE      4               :This block assembles 4 times
+                text
+                ER
+
+        Q       EQ      0
+                RE                      :Assemble a block of squares
+                WC      Q*Q             :       of integers
+        Q       EQ      Q+1
+                ER      LASTQ-Q         :Terminate conditional repeat
+
+               NOTE:   RE  blocks may  be  nested.  However,  there  is a
+                       limit of four levels of RE nesting.
+
+               NOTE:   Because of the particular implementation  used for
+                       RE blocks, the "text" of the block is limited to a
+                       maximum  of  640d characters.   This  includes ALL
+                       characters, including  blanks, CR,  comments, etc.
+                       A  diagnostic is  issued  if the  repeat  range is
+                       greater than  640 characters.  (The  limitation is
+                       on the characters present in the source;   the use
+                       of macro invocations  will NOT increase  the count
+                       of characters by the macro text.)
+
+
+
+
+
+
+
+                                           19                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                    1.11.9  Other Directives
+
+
+
+        1.11.9.1          RA      EXP
+
+             Sets  the radix.   For example,  if the  radix were  some confusing
+        value, it could be set to decimal by the statement:
+
+                RA      $00A
+
+        or the statement:
+
+                RA      $0 0A
+
+             0A is the hex  number equal to 10  decimal.  The $0 in  the example
+        was to make sure that the 0A part of the statement was not out  of range
+        of the current radix.
+
+             The digits that  make up a number  are subject to  the restrictions
+        set forth in the definition of a number, and to further  restrictions of
+        the radix.  For instance, the  number 99 will trap the assembly  with an
+        error diagnostic if the radix is octal.
+
+
+
+        1.11.9.2          END
+
+             This  directive tells  the assembler  to stop  assembling  from the
+        input file.
+
+
+
+        1.11.9.3          QUIT   EXP
+
+             This directive causes NAD to clear the terminal-input buffer, close
+        the  input and  command  files (if  open),  and reverts  control  to the
+        controlling terminal.  If EXP is present, and evaluates TRUE  (>0), then
+        NAD will exit back to the system level.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           20                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+                              1.12  Instruction Mnemonics
+
+
+             Except for the  branch mnemonics, all  the mnemonics listed  in the
+        machine reference  manual are  used in  the assembler.   (Floating point
+        instructions are not implemented.) The branch variety is detailed in the
+        chart below.
+
+             J means jump.
+
+             L, LE, E, N, GE, G, C, NC, O, NO mean:  Less, Less or Equal, Equal,
+        Not Equal, Greater or Equal, Greater, Carry, No Carry, Overflow,  and No
+        Overflow.
+
+             T means true.
+
+             F means false.
+
+              means default case.
+
+                {null}
+                T
+                F
+                L
+                LE
+                E       {null}
+        J       N       R
+                GE      BS
+                G       FS
+                C
+                NC
+                O
+                NO
+
+             Examples of mnemonics built from above chart:
+
+                JN      X               :jump to x if the condition
+                                        :       code is not equal.
+
+             The jump will occur if either the G or L conditions are on.
+
+                JNFS    X               :jump forward to local address
+                                        :       X within 15D halfwords
+                                        :       of the P counter if the
+                                        :       condition code is not equal.
+                JCR     1               :jump to the address in
+                                        :       register 1 if the carry
+                                        :       flip-flop is on.
+                JBS     .-4             :jump backward short
+                                        :       unconditionally
+                J       X               :jump to X
+                                        :       (RX1, RX2, RX3)
+
+
+                                           21                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+             The jump true and jump false  (JT and JF) set require that  a 4-bit
+        condition code operand be specified as the first operand.   For example,
+        #JT 4,X#  tests a  bit in the fullword  condition code and jumps  if the
+        bit is on.
+
+             JAL and JALR mean Jump And Link, and Jump And Link Register.
+
+
+
+
+
+
+                                  1.13  Macro Facility
+
+
+
+
+
+
+                    1.13.1  Macro Definition
+
+             Macro definitions have the form:
+        <name>  macro(<arg1>,<arg2>,...,<argn>) [<text>]
+
+             where <name>  has the  form for  a legal  NAD symbol.   <name> must
+        appear in the  label field of  the definition statement.   Arguments are
+        optional, and  must be  surrounded by  parentheses, with  dummy argument
+        names obeying the rules for  NAD symbol names. Up to 16  dummy arguments
+        may be given. For arguments  to be recognized as such, they  must appear
+        surrounded  by  legal  delimiters,  or  preceded  by  the  concatenation
+        operator, "`". Everything  between the first  "[" seen and  the matching
+        "]"  that  is  not  an  argument  is  stored  without  modification, and
+        retrieved when the macro  is called.  A "`"  or an unmatched "["  or "]"
+        character may be  included in a  macro body by  preceding it with  a "`"
+        (i.e., to include a  literal "`" in a  macro body, type "``").   A macro
+        definition can appear as part of <text>.  The macro will be defined when
+        the macro containing the definition is called.  A macro can be redefined
+        if its previous definition has been removed from the symbol  table using
+        the KILL directive.
+
+
+
+
+
+                    1.13.2  Macro Invocation
+
+             A macro call takes the form:
+                <name>(<arg1>,<arg2>,...,<argn>)
+
+             A macro call may appear anywhere in a statement, and may in fact be
+        seen  by  the  assembler  as  several  statements,  or  only  part  of a
+        statement.  As in a  macro definition, arguments may be  omitted.  Extra
+
+
+                                           22                  Tools & Utilities
+        NAD Assembler                                           October 19, 1982
+
+
+        arguments  are  ignored, missing  arguments  are supplied  as  null.  If
+        arguments  are  given, the  left  parenthesis that  begins  the argument
+        string must the first character after the macro name, or the  macro will
+        be called without arguments. Arguments are delimited by commas,  and the
+        argument string terminates when the matching right parenthesis  is seen.
+        All other characters are included verbatim
+
+             A comma, an unmatched right or left parenthesis, or  "`" (backwards
+        quote), may be included in an argument by preceding it with a "`".
+
+
+
+        1.13.2.1  Example:
+
+             This file:
+        FOO     MACRO(X,Y,Z)
+                [LIS    X,Y
+                SLLS    Y,X
+                LIS     Z
+                WC      X`Y]
+        BLA     FOO(1,2,3`,4)   :in this call X="1", Y="2", Z="3,4"
+                END
+
+        would assemble as:
+
+        BLA     LIS     1,2
+                SLLS    2,1
+                LIS     3,4     :the "`" in the source file causes the comma
+                                :to be taken as a normal character
+                WC      12      :here X and Y have been concatenated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           23                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+
+
+
+
+                                   2 -  NAD Debugger
+
+
+             Commands are issued to the NAD system through the  debugger.  I.e.,
+        the command to assemble  a file is a  debugger command.  The user  is in
+        the debugger as soon  as he sees the  version after the RUN  command, to
+        the DEC monitor,  executes.  The debugger can  also be reached  from the
+        REE command from the dec monitor.
+
+             NAD interprets a large set of single characters or  character pairs
+        as command tokens.  Command tokens are usually preceeded by from zero to
+        four arguments.  The arguments  are seperated by commas, and  follow the
+        rules for symbols and expressions as outlined in the  assembler chapter.
+        There  is, however,  an important  rule that  if any  blanks are  in the
+        argument  string  preceding  the  command  token,  the  argument  string
+        represents an  instruction and  is a single  argument.  This  rule means
+        that the blank cannot be used to mean plus sign, as in 940 and  dec DDT.
+        The user may have more freedom with blanks in disc file assemblies.  For
+        instance, STH 1,2,3 is a single argument, while BETA*70/3-(1+4),,3  is a
+        string of 3 arguments, the middle argument being 0.
+
+             The  user  can  specify  5  different  type-out  modes.   They  are
+        magnitude, asc, symbolic address, instruction, and numeric (according to
+        the current radix).  Output is delivered in the current mode.  Normally,
+        input mode is infered from the way the arguments are typed.
+
+
+
+
+
+
+                              2.1  Standard Type-out Mode
+
+
+             See '%M', '%N', '%"', '%S', AND '%I' commands.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           24                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                              2.2  Halfword/fullword Mode
+
+
+             This mode determines the  constant length that the user  wishes the
+        debugger to assume.  See %2 and %4 commands.
+
+
+
+
+
+
+                                       2.3  Radix
+
+
+             RA  directive  and  the  dollar-sign  operator  described   in  the
+        assembler   chapter  set   the   standard  and   current   radix  values
+        respectively.
+
+
+
+
+
+
+                                     2.4  "." (Dot)
+
+
+             Both the debugger and the assembler use period (".") as meaning the
+        current program counter.
+
+
+
+
+
+
+                                   2.5  Line Editing
+
+
+             Line editing  has been added.   The following is  a summary  of all
+        editing performed.
+
+        <DEL>/<^A> (PDP/XEXEC) - delete characters one at a time back
+                to but not including the last non-alphanumeric character
+                if all deletable characters have been deleted a <cr><lf>
+                is performed.  This is a MONITOR response not a NAD
+                response.  memory remains open if it was and characters
+                not deleted still remain in effect.
+                e.g. ";A XYZ.TI<DEL><DEL><DEL>" will delete the "TI"
+                and perform <cr><lf>. "TYM" may then be enteredwhich
+                results in ";A XYZ.TYM" (only 2 <DEL>s where needed).
+
+        <^U>/<^Q> (PDP/XEXEC) - deletes ALL characters back to but not
+                including the last non-alphanumeric character
+                Works exactly like a very large number of <DEL>s except
+
+                                           25                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                that "^U" is echoed before the <cr><lf>.
+
+        ? - deletes current command, leaves memory open if it was
+                open, types a ? and accepts a new command.
+
+        <^C>/<ESC> (PDP/XEXEC) - deletes (or aborts if already started)
+                current command, closes memory if it was open, types
+                <CR><LF>, accepts a new command.
+
+        <^C^C>/<ESC,ESC> (PDP/XEXEC) - delete or abort current command,
+                if any, exit NAD (takes 10 seconds if an aux circuit is
+                up, otherwise is as fast as %Q below).
+        %Q - exit NAD
+
+
+
+
+
+
+                                  2.6  Open Registers
+
+
+             There are  several commands that  leave the halfword,  fullword, or
+        instruction  starting at  the  current pc  open and  subject  to change.
+        There are several commands that  close the memory at the current  pc and
+        possibly cause it to change; ie, see the carriage return  and back-slash
+        commands.
+
+
+
+
+
+                    2.6.1  "?"  command
+
+             This command  aborts the  argument string the  user just  typed and
+        lets him type it again.  If memory is open when the user types  "?", the
+        memory stays open.  the debugger types a question-mark back at the user.
+        It's a good  command to verify that  the debugger is running  in command
+        mode.
+
+
+
+
+
+                    2.6.2  ";A"  command
+
+             ";A" is equivalent to ";@", and either command may be used.
+
+             The ";A" command types 3 blanks, accepts a file name, and calls the
+        disc file assembler.  The file name may be preceeded by (USERNAME).
+
+             If ";A"  is preceeded  by an  argument, the  value of  the argument
+
+
+                                           26                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+        becomes the lowest value that NAD  will translate symbols into.  Symbols
+        with lower values will not be translated into symbolic output.
+
+
+
+
+
+                    2.6.3  "%A"  command
+
+             "%A" is equivalent to "%@", and either command may be used.
+
+             Like ";A" but with a listing file.
+
+
+
+
+
+                    2.6.4  CARRIAGE RETURN command
+
+             This command  does several  things.  It  sets the  current type-out
+        mode and  the halfword/fullword  mode to  their standard  settings.  See
+        ';M', ';N', ';"',  ';S', and ';I' commands.   It also sets the  value of
+        the current radix equal to the value of the standard radix.  This can be
+        handy when  the radix was  temporarily set at  an off-beat value  by the
+        dollar-sign operator.
+
+             After the carriage  return command is issued  with a null  or legal
+        argument,  memory  is left  closed.   If  memory was  open  and  a legal
+        argument was specified, memory  is changed to a new  halfword, fullword,
+        or instruction value at the current pc.
+
+
+
+
+
+                    2.6.5  LINE FEED command
+
+             This command possibly changes memory at the current pc  and updates
+        the current pc by a few bytes and displays memory from the new pc in the
+        current type-out mode.
+
+
+
+
+
+                    2.6.6  ";^"  command
+
+             ";^" is like line feed, except it backs up the current pc by 2 or 4
+        bytes depending on the current halfword/fullword mode.
+
+
+
+
+
+                                           27                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                    2.6.7  "\"  command
+
+             The back-slash works like the  normal slash command in the  940 and
+        dec debuggers.  (The slash is used only to mean divide in expressions in
+        this debugger.)
+
+             With a single argument, "\"  changes the current pc.  It  opens and
+        displays memory from the current pc and leaves the memory open.  With no
+        argument, "\" types from the cell pointed to by the last value  that the
+        debugger  sent to the TTY and leaves the open switch unchanged.
+
+             With 2 arguments, "\" lists a range of memory in the  current type-
+        out mode.
+
+
+
+
+
+                    2.6.8  "["  command
+
+             Sets the current type-out mode to magnitude and works like "\".
+
+
+
+
+
+                    2.6.9  "]" command
+
+             Sets the current type-out mode to instruction and works like "\".
+
+
+
+
+
+                    2.6.10  ";\" command
+
+             This command takes  no arguments from the  user, but acts  like "\"
+        with  one  argument.   The  argument is  the  last  value  typed  by the
+        debugger.   This is  handy  when you  have been  line-feeding  through a
+        series of cells and then you come to a pointer to a table, that you want
+        to line-feed through.
+
+
+
+
+
+                    2.6.11  ";[" and ";]"  commands
+
+             These set magnitude or instruction mode and work like ";\".
+
+
+
+
+
+                                           28                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                    2.6.12  "="  command
+
+             This  command takes  the  last value  showing on  the  tty, whether
+        entered by the user or typed  by the debugger, and translates it  to the
+        current type-out mode.
+
+
+
+
+
+                    2.6.13  " "  command
+
+             "#" sets the current  type-out mode to magnitude and  then proceeds
+        like the "=" command.
+
+
+
+
+
+                    2.6.14  "_"  command
+
+             Underscore  sets the  current type-out  mode to  symbolic  and then
+        proceeds like the "=" command.
+
+
+
+
+
+                    2.6.15  '"'  command
+
+             This command causes  memory to change  in a different  fashion than
+        the normal memory changing commands.  '"' stores asc in  memory starting
+        at the current  pc.  The string  is delimited on  the left by  the '"X',
+        where '"' is the command character and 'X' is any character.  The string
+        is delimited  on the  right by  "X" followed  immediately by  a carriage
+        return.
+
+
+
+
+
+                    2.6.16  ":" command
+
+             This command allows a symbol  to be defined while in  the debugger.
+        It is preceeded by  the symbol to be  defined and defines the  symbol in
+        the current module with the current value of ".".  The command  does not
+        close an  open cell and  can be used  to define a  label for  code being
+        entered directly.  Example,
+        13F\   OPFLOP   LABEL:   L R3,VALXG
+
+
+
+
+
+                                           29                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                    2.6.17  %M, %N, %", %S, %I  commands
+
+             These  commands  set  the  standard  type-out  mode  to  magnitude,
+        (signed) number, asc, symbolic, or instruction mode.
+
+
+
+
+
+                    2.6.18  ;M, ;N, ;", ;S, ;I commands
+
+             These set  the current  type-out mode.   The current  type-out mode
+        stays in effect until changed by one of these commands.
+
+             Also, "#", "[", "]", and "_" change the current type-out mode.  The
+        current  type-out mode  is  set to  the  standard type-out  mode  by the
+        carriage return command.
+
+
+
+
+
+                    2.6.19  "%2" and "%4"  commands
+
+             These set the standard halfword/fullword mode.
+
+             "%2%  and  "%4"  permit arguments:   "p1,p2%2"  says  to  print out
+        halfwords using p2  columns each p1+1  wide."p1,p2%4" says to  print out
+        fullwords using p2 columns each p1+1 wide.  "p1%2" says to print  out p1
+        columns of halfwords each 5  characters wide.  "p1%3" says to  print out
+        p1 columns of fullwords each 9 characters wide.  "0%2" or  "0%4" reverts
+        to normal printout.
+
+             Example:  10%2 FRED,40 (assuming FRED>40) list 4 lines of  10 bytes
+        each starting at FRED in  16 columns (10hex=16d) of halfwords  with each
+        column  being 5  characters  wide with  the hex  right-justified  in the
+        column.  For  halfword hex this  is the maximum  number of  columns that
+        will fit on one line.
+
+             Addresses are not included in the output.
+
+
+
+
+
+                    2.6.20  ";2" and ";4"  commands
+
+             These set the current halfword/fullword mode.
+
+
+
+
+
+
+                                           30                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+                    2.6.21  ";%" command
+
+             This command sets the listing page dimensions.  It takes  zero, one
+        or two arguments.   The first argument is  the line length,  the second,
+        the page length.  If there is only one argument, only the page length is
+        set.   With no  arguments, both  dimensions are  reset to  their initial
+        values  of 56  for page  length and  120 for  line length.   Page length
+        cannot be set less than four.  Line length can niether be set  less than
+        50 nor  greater than  145.  The  arguments are  evaluated in  decimal so
+        there is no need of a $A before the arguments.
+
+
+
+
+
+                    2.6.22  ";(" and ";)" commands
+
+             The commands, ";(" and ";)"  allow a listing file made from  one or
+        more source files.   Each source file can  be listed either  during pass
+        one, with no program counter or assembled code, or during pass two.  The
+        listing can be either a .LST  file which can be listed immediately  or a
+        .CRF file containing cross reference information to be further processed
+        by  CROSS.  The  ";(" command  takes zero,  one or  two  arguments which
+        preceed  the semicolon.   The two  arguments are  a listing  type  and a
+        listing file name.  A single argument is a listing file name.   The file
+        name is a  zero to six  character name with  no extension or  user name.
+        The  file is  always  created in  the  current directory  and  will have
+        extension .LST or .CRF.  If the file name is not given, the file name of
+        the first source file listed is used.  If the listing type is not given,
+        zero is  used.  The  listing type must  be between  zero and  five.  The
+        listing  type indicates  whether a  .CRF or  .LST file  is  produced and
+        whether files  assembled with  the ";A" command  are listed  during pass
+        one, during pass two or not at all.  Files assembled with %A  are always
+        listed during pass two.  The meanings of each value of the  listing type
+        are
+
+          0-create a .CRF file. Produce pass one listings for ";A" assemblies.
+          1-same as 0 except create .LST file.
+          2-create a .CRF file. Do not list ";A" assemblies.
+          3-same as 2 except create .LST file.
+          4-create a .CRF file. Produce pass two listings for ";A" assemblies.
+          5-same as 4 except create a .LST file.
+
+
+             The ";("  command must be  given before the  assemble of  the first
+        file to be listed and  the ";)" command, which closes the  listing file,
+        must be given after the assembly of the last file to be listed.   The %Q
+        command will also close the listing file.
+
+             The .CRF file cannot be  listed directly.  It must be  processed by
+        the CROSS  command in  the XEXEC.  To  do this,  simply type  "CROSS" at
+        XEXEC command level.  The .CRF file will be read and deleted, and a file
+
+
+                                           31                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+        with the  same name but  with extension .LST  will be created  which can
+        then be listed.  The cross program only knows which files to  process if
+        you don't logout.   (It reads a temporary  file for the file  names.) If
+        you do logout, you can still get your cross reference listing by running
+        "R  CREF"  and  entering  the file  to  be  processed  without extension
+        preceeded by an underline.
+
+             Example:
+
+        -R NAD
+        041779
+        4,SAR;(
+        ;X   SAR.CMD
+
+        ;A   SARCOM
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;A   (ISIS2)START.LIB
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;A   (ISIS2)FRING.LIB
+
+        RING 6 101C2
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;A   (ISIS2)CRASH.LIB
+
+        CRASH 1436 10302
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;A   SAR.NAD
+
+        END OF ASSEMBLY
+        LISTER WORKING
+        ;A   (ISIS2)FINISH.LIB
+
+        SEGMENT 0-LENGTH 12364D, REQUIRES 3700X BYTES OF CORE.
+        SEGMENT 1-LENGTH 14567D, REQUIRES 3900X BYTES OF CORE.
+               28D K-BYTES OF CORE
+        END OF ASSEMBLY
+        LISTER WORKING
+        %Q
+        EXIT
+
+        -FILE SAR.*
+
+        SAR     CRF
+        SAR     NAD
+
+        -CROSS
+        CROSS: SAR
+
+                                           32                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+
+        -FILE SAR.*
+
+        SAR     LST
+        SAR     NAD
+
+        -
+
+
+
+
+
+
+                    2.6.23  ";;" command
+
+             This command allows comments in command files or at  command level.
+        All characters  after the ";;"  and up to  but not including  a carriage
+        return are ignored  except that they  are typed if  the command is  in a
+        command file.
+
+
+
+
+
+                    2.6.24  ";K" command
+
+             This  command  removes  a  symbol from  the  symbol  table.   It is
+        equivalent to the KILL directive.
+
+
+
+
+
+                    2.6.25  Image Binary Commands
+
+             These commands allow the user to save and restore a memory image or
+        symbol table on a file.  They are fully described in (ISISDOC)NIB.DOC.
+
+
+
+
+
+                    2.6.26  "%7" and ";7"  commands
+
+             With two arguments, the first argument is the address of a block of
+        assembled code  (core image) in  the PDP-10.  The  second argument  is a
+        byte count.  The core image is transfered to the ENGINE machine  via the
+        same circuit that the user types the commands on.  "%7" does  ipl loads.
+        ";7" sends  bytes to  an ENGINE utility  program (BOOTSTRAP)  that loads
+        memory.
+
+             A sample use would be:
+
+
+                                           33                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+        BEGIN,DEND-BEGIN;7
+
+             A variant of the ";7",  "%7" commands allow three arguments  in the
+        form:
+
+        ENGADR,PDPADR,COUNT;7
+
+             The  3-argument  version  is like  the  2-argument  version  with a
+        special ENGINE address and a comma inserted before the calling sequence.
+
+
+
+
+
+                    2.6.27  ";8" and "%8"  commands
+
+             These are 120 character per second versions of ";7" and "%7".
+
+
+
+
+
+                    2.6.28  %Q  command
+
+             This command  exits NAD to  the monitor.  Exit  also occurs  if two
+        successive escapes are typed.
+
+
+
+
+
+
+                            2.7  DEBUGGER-DDT communications
+
+
+             In  addition to  the  above commands,  it  is possible  to  build a
+        circuit from NAD/DEBUG  to some other  process (nominally DDT  within an
+        engine),  and communicate  interactively with  that process.   Many such
+        interactive  commands are  specific to  a particular  application; some,
+        however, are general.
+
+
+
+
+
+                    2.7.1  ";C" command
+
+             ";C" is  used to construct  an auxiliary circuit;  as a  result, it
+        requires an  additional argument  consisting of  the username  string, a
+        ":", and the destination host.
+
+
+
+
+                                           34                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+
+                Example:
+
+        ;C   USER:987;                          [terminates with C/R]
+        Working*** System not available         [-- output if NAD failed]
+                                                        [ or ]
+        Working
+        Circuit ready                           [-- output if NAD succeeded]
+
+
+
+
+
+                    2.7.2  ";R" command
+
+             ";R"  is the  hex-relay command.   Succeeding pairs  of hexidecimal
+        digits are transmitted as characters; the command is terminated when the
+        first non-digit is entered.
+
+             The command:
+
+                                         %RBFBF
+
+             causes  the  character  string "??"  to  be  transmitted--any valid
+        characters may be sent in  this way, including those which  have special
+        properties if they were typed directly, such as x"1F" (escape).
+
+
+
+
+
+                    2.7.3  "%R" command
+
+             "%R" is  the text-relay command.   ALL subsequent  characters typed
+        are transmitted without inspection  by NAD.  This command  is terminated
+        by typing an "escape".  Note that in text-relay mode, ALL usage  of NAD,
+        such as symbol table references or expressions, are voided!
+
+
+
+
+
+                    2.7.4  "::" command
+
+             The "::"  command permits one  to transmit a  "string of  text", as
+        though in "%R" mode, and follow that with from 1 to 16 expressions to be
+        evaluated and transmitted in turn.
+
+             The "string of text" consists of all characters following the "::",
+        up to and including the first occurance of " " (blank), ",", or carriage
+        return.  (Carriage  return terminates the  command).  If the  command is
+        not terminated,  the subsequent  string is  evaluated as  an expression,
+
+
+                                           35                  Tools & Utilities
+        NAD Debugger                                            October 19, 1982
+
+
+        according  to  the  NAD expression  evaluation  rules.   This expression
+        string is terminated with "," or carriage return, which causes it  to be
+        transmitted (as the value, in ASCII hex characters).
+
+             Thus the command:
+
+                        ::CMD 10,$A15*2            and    ::WHO
+
+             will be transmitted as:
+
+                       CMD 00000010,0000001E       and       WHO
+
+             Caution...if  no  expressions  are  specified  the  carriage return
+        should follow CMD without any space.
+
+             Note that this command is  NOT interpreted by NAD... if CMD  is the
+        string "%Q", then "%Q" will be transmitted, and NAD will not exit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           36                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+
+
+
+
+                             3 -  NAD-KERNEL COMMUNICATIONS
+
+
+             To communicate with the resident ISIS DDT from NAD, one  must first
+        establish a circuit via the ;C command.  For example:
+
+        ;C      ISIS:377;
+
+             builds a circuit to DDT on host 377 with user-name ISIS.   ;C types
+        3 blanks  and expects  a logon string  up to  the first  semicolon (";")
+        followed by a carriage return.
+
+             DDT will first  validate the user name,  and then will  request the
+        user  to enter  the slot  number.  Use  the ";R"  command for  this (DDT
+        expects a binary number over an auxiliary circuit).
+
+             for example (USER TYPES, typed back):
+
+        ;C   USER:377;
+        working
+        circuit ready
+        slot# :;R03     (only if name is not preassigned to a slot)
+        *
+
+             The "*" prompt from DDT shows that the user is now connected to the
+        slot he specified.
+
+             Any circuit thus built will  be zapped if the user executes  the %Q
+        command.
+
+
+
+
+
+
+                  3.1  INTER-NETWORK communications, through a GATEWAY
+
+
+             On occasion, it becomes  desirable to establish a circuit  from NAD
+        to an ISIS DDT, on  a machine residing within another network.   In this
+        case, extra operations are required.
+
+             In particular, it  is necessary to  first establish a  circuit from
+        NAD to the GATEWAY, and then to perform a second logon to the designated
+        ISIS.  This can be done in either of two ways:
+
+
+
+
+
+                                           37                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+        ;C   GATE;              <Implicit Form>
+
+                or
+
+        ;C   USER:GGG;          <explicit Form>
+
+             In  the one  case, username  "GATE" is  "homed" to  that particular
+        gateway; in the other case, gateway host "GGG" is explicitly invoked.
+
+             Once the circuit is established to the gateway, the "::" command is
+        used to continue it to the host in question.
+
+                        EXAMPLE
+
+        ;C   BUBBC;        <or explicitly, "USER:454;" instead of "BUBBC">
+        working
+        circuit ready
+
+        interlink established from TYMNET-CUP to BUBB-NET
+        please log in:  "::USER:377;PASSWORDcr"
+        slot# :;R03
+        *
+
+             Note that,  once the message  "please log in:   " has  been output,
+        logon proceeds as though  directly from a terminal;  this  capability is
+        not explicitly  built into  NAD, and thus  the need  for using  the "::"
+        command.  This command MUST  be terminated by using a  carriage-return -
+        this constraint results from the fact that an auxiliary circuit is being
+        constructed through the gateway, and it is this necessary to get  NAD to
+        terminate the "::" command in order to issue the ";R" command.
+
+             In  the  form   shown,  the  PASSWORD   will  print;  if   this  is
+        unacceptable, it may be avoided by typing "cr" in place of the ";" - the
+        second network  will respond with  the prompt "password:  XXXXXXXX", and
+        the "X"'s will mask the password when typed.
+
+
+
+
+
+
+                                 3.2  NAD-DDT commands
+
+
+             Most of the DDT commands implemented in ISIS are implemented in NAD
+        with  a  similar  calling  sequence.  The  normal  syntax  is  a command
+        character followed  by an argument  string which has  N arguments  and N
+        delimiters;  namely, N-1  commas (or blanks,  or tabs) and  one carriage
+        return.   The arguments  can  be complex  expressions  involving symbols
+        defined during the assembly.
+
+
+
+
+                                           38                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.1  ":A" Command
+
+             Address:: Set up address space for slot as one large MAC area.
+
+             An area larger than 1 segment is constructed as the required number
+        of contiguous segments (e.g., a slot with 90-K will result in  segment 0
+        of 64-K and a segment 1 of 26-K).  No protections are applied.
+
+
+
+
+
+                    3.2.2  ":B ADDR NUM" Command
+
+             Breakpoint::  Set breakpoint  NUM  at ADDR.   B will  undo  any old
+        breakpoint NUM.  If ADDR is zero B will undo the old breakpoint only.
+
+
+
+
+
+                    3.2.3  ":E" Command
+
+             Execute::  connects  the job  associated  with a  slot   and starts
+        execution independent of DDT.
+
+
+
+
+
+                    3.2.4  ":F" Command
+
+             Fire  up::  enables  the  "KIO" jobs  associated  with  a  slot for
+        subsequent logon.
+
+
+
+
+
+                    3.2.5  ":G ADDR" Command
+
+             Go:: Causes your program to start at ADDR.  It creates a  PSW using
+        a half  word in the  user block.  The  status bits may  be changed  by a
+        privileged user through the ":U" command.
+
+
+
+
+
+
+
+
+
+
+                                           39                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.6  ":H" Command
+
+             Halt:: halts the job associated with a slot; if the slot controls a
+        "KIO" job, subsequent logons are disabled.
+
+
+
+
+
+                    3.2.7  ":I" Command
+
+             Initialize:: Should only be typed after a new load.
+
+
+
+
+
+                    3.2.8  ":L DISK-ADDR NUMBER-OF-BLOCKS MEM-ADDR" Command
+
+             Load memory from disk.:: *(* VALID ONLY IF SYSTEM INCLUDES DISK AND
+        SUPERVISOR *)*  Reads  NUMBER-OF-BLOCKS  (4  blocks/sector)  starting at
+        user's virtual  DISK-ADDR (16  bits, of which  the high  3 are  the area
+        number; the rest are beginning-block number) storing the result starting
+        at user's MEM-ADDR.
+
+
+
+
+
+                    3.2.9  ":LL UNIT SECTOR CORE-ADDR NUMBER-OF-BYTES" Command
+
+             Alternate  load  memory  from  disk.::  *(* VALID  ONLY  IF  SYSTEM
+        INCLUDES  DISK *)*  Reads  NUMBER-OF-BYTES  starting  at  user's virtual
+        SECTOR on UNIT storing the result starting at user's CORE-ADDR.
+
+
+
+
+
+                    3.2.10  ":M MASK START-ADDR END-ADDR" Command
+
+             Mask for search:: Set search  MASK and range FOR X AND  Y commands.
+        The MASK is one word (a MASK of 0 translates to -1).
+
+
+
+
+
+
+
+
+
+
+
+                                           40                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.11  ":N" Command
+
+             Next:: Sets a special breakpoint after the current  instruction and
+        then executes the current instruction.
+
+
+
+
+
+                    3.2.12  ":P" Command
+
+             Proceed:: Must  be used  to continue  from a  breakpoint.  Restores
+        identical status that existed when breakpoint was reached.
+
+
+
+
+
+                    3.2.13  ":R ADDR COUNT" Command
+
+             Read memory:: Prints contents of COUNT bytes starting at ADDR.
+
+
+
+
+
+                    3.2.14  ":RR REG COUNT" Command
+
+             Read  registers:: Prints  contents of  COUNT registers  starting at
+        REG.   These  are  the  register  values  at  the  time  the  last  user
+        instruction was executed.
+
+
+
+
+
+                    3.2.15  ":S" DISK-ADDR NUMBER-OF-BLOCKS MEM-ADDR" Command
+
+             Save memory on disk.::  *(* VALID ONLY IF SYSTEM INCLUDES  DISK AND
+        SUP, AND THE GLOBAL  UNIT DEFINITION INCLUDES THE "SS"  ATRIBUTE *)* Has
+        opposite effect of L.
+
+
+
+
+
+                    3.2.16  ":SS" UNIT SECTOR CORE-ADDR NUMBER-OF-BYTES" Command
+
+             Alternate save memory on disk.:: *(* VALID ONLY IF  SYSTEM INCLUDES
+        DISK, AND THE GLOBAL UNIT DEFINITION INCLUDES THE "SS"  ATRIBUTE *)* Has
+        opposite effect of LL.
+
+
+
+                                           41                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.17  ":T" Command
+
+             Type old PSW:: Types PSW  as it was when last user  instruction was
+        executed.  Two additional digits  are typed indicating the cause  of the
+        last MAC interrupt or machine malfunction.
+
+
+
+
+
+                    3.2.18  ":U NUM" Command
+
+             User Status:: Makes NUM (4 bits) the condition code in the  new psw
+        created by all subsequent G commands.  In an Engine, if NUM  .and. 1000x
+        is  non-zero,  instruction  trace  logic  is  enabled  for  subsequent G
+        commands.
+
+
+
+
+
+                    3.2.19  "Control-W ADDR COUNT" Command
+
+             Write memory:: Transfers "COUNT" bytes from the PDP to  the ENGINE,
+        starting at "ADDR".
+
+
+
+
+
+                    3.2.20  ":W ADDR VAL" Command
+
+             Write memory immediate:: Stores "VAL" right adjusted in the 4 bytes
+        starting at "ADDR".
+
+
+
+
+
+                    3.2.21  "ADDR COUNT :W" Command
+
+             Write memory:: Transfers "COUNT" bytes from the PDP to  the ENGINE,
+        starting at "ADDR".
+
+
+
+
+
+
+
+
+
+
+
+                                           42                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.22  "PADR VADR COUNT :W" Command
+
+             Write memory:: Transfers "COUNT" bytes from the PDP local (virtual)
+        memory, starting at "VADR, to the ENGINE (physical memory),  starting at
+        "PADR".
+
+
+
+
+
+                    3.2.23  ":WR REG VAL" Command
+
+             Write registers:: Reads "VAL" from the terminal and deposits  it in
+        the register "REG".
+
+
+
+
+
+                    3.2.24  ":X (0,1) (1,2,4) VALUE" Command
+
+             Data search:: 0 or 1 (match or non-match) 1,2 or 4 (number of bytes
+        long).  VALUE is one word.  The search range set in the  ":M"-command is
+        used with the mask set in ":M".  The mask is AND'ed only with the memory
+        value,  and  then compared  with  VALUE.   In a  match  search  only the
+        addresses of matched cells are printed, in non-match search both address
+        & value are printed (on seperate lines).
+
+
+
+
+
+                    3.2.25  ":Y(1,2,3) VALUE1 VALUE2 VALUE3" Command
+
+             Instruction  search::  1,2  or 3  (length  of  instruction  in half
+        words).  enter search value in appropriate number of half words.  Search
+        is  match  only  and used  search  range  set in  M  but  not  the mask.
+        Addresses of matches are printed.
+
+
+
+
+
+                    3.2.26  ":Z" Command
+
+             Zap:: Command to log off.  Responds with "Logging off?"  to confirm
+        your intentions.  Type ":Z" to log off, anything else to abort log off.
+
+
+
+
+
+
+
+                                           43                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+                    3.2.27  ":\" Command
+
+             "\":: is normally used  to recover from an  unrecognizable command.
+        It effectively restarts DDT.  Starting (or restarting) DDT  includes the
+        examination of a diagnostic to determine if any abnormal conditions have
+        occured since  the last start.   These conditions include  parity error,
+        illegal  memory references,  illegal  SVC's, or  KERNEL  crashes, either
+        within DDT, or within any  of the domain controlled by  DDT (Background,
+        Foreground, etc.).  "\"  may be used instead  of any command  to examine
+        this diagnostic.
+
+
+                                         NOTES:
+
+             :R\:RR,:W\:WR -  Due to the  fact that the  command syntax  uses no
+        seperator between the command and the parameters, if a  symbol beginning
+        with "R" is used as the  first parameter, it must be preceeded by  a "+"
+        operator.  For example;
+
+        :R+RET,4        reads 4 bytes starting at "RET"
+        :RRET,4         reads 4 registers starting at "ET"
+
+             sym: is NOT  an IDDT command but  defines symbol "sym" to  have the
+        current position counter value.
+
+             Characters  emitted from  the ENGINE  are typed  on  the NAD-user's
+        terminal as they arrive.  normally  they are sent to the  user's command
+        tty in asc mode.  However, they can be split into 2 hex characters.  The
+        ENGINE output relay  function will be changed  to hex if the  user types
+        "1;R".  "0;R" returns the relay function to normal.  Do not confuse this
+        ";R" command, which has an  argument before the semicolon with  the ";R"
+        command explained below that has no argument before the semicolon.
+
+             Typing errors are best corrected with the ":\" command.  ":\" sends
+        a "\"  to the  ENGINE.  If  you foul up  the argument  string to  the :R
+        command, just type a few ":\" commands until you are satisfied  with the
+        feedback you get from the ENGINE.
+
+
+                                      Miscellany:
+
+             %C and  %O send control-C  and control-O to  the ENGINE as  well as
+        clearing  the input  that has  arrived in  the pdp-10  on  the auxiliary
+        circuit and clearing the command-out circuit that is flooded.
+
+             There is a handy ;R (relay) command in NAD for sending general info
+        to the ENGINE (or any other host) that the NAD user has logged  into via
+        the ;C command.  The ;R is  followed by a string of pairs of  hex digits
+        terminated  by  any  non-hex  character.   Carriage  return  is   a  bad
+        terminator to use for this command.
+
+             There  is a  less general  "%R" (relay)  command which,  like ";R",
+
+
+                                           44                  Tools & Utilities
+        NAD-KERNEL COMMUNICATIONS                               October 19, 1982
+
+
+        relays  characters  from  the  user's  command  terminal  to  the ENGINE
+        program.   "%R" sends  a  copy of  the  asc string  following  it.  This
+        command  is terminated  by an  ESCAPE.  (DANGER,  2 ESCAPES  will likely
+        return control  to the  DEC monitor which  will terminate  all auxiliary
+        circuits.)
+
+             It takes AC (auxiliary circuit) license to be able to have circuits
+        built  from the  PDP-10 to  user names  other than  that of  the command
+        circuit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           45                  Tools & Utilities
+        NAD Image Binary File Usage                             October 19, 1982
+
+
+
+
+
+
+                            4 -  NAD Image Binary File Usage
+
+
+             NAD  will  read  and   write  image  binary  files   which  contain
+        information necessary to load and dump memory images for TYMNET ENGINES.
+        These files may also contain symbol table and macro information  so that
+        a user may save and reconstruct NAD environments.
+
+             This document describes the NAD commands used to create  and access
+        these files.   The format of  the files is  then specified.   Finally, a
+        program for obtaining a formatted dump of the files is described.
+
+
+
+
+
+
+                                   4.1  NAD Commands
+
+
+             Initially,  the  name  of  the  NAD  Image  Binary  (NIB)  file  is
+        undefined.  The user has the option of creating a new file  or appending
+        to an existing  one.  The recomended extension  name for these  files is
+        "NIB" (Nad Image Binary).
+
+             The following commands define the filename to NAD.
+
+
+           [n];F  filnam    A  new file,  "filnam", is  created and  becomes the
+                      current NIB file.  If "filnam" already exists and "n" is 1
+                      (1;F) the existing file  is deleted.  If the  file already
+                      exists and  "n" is zero  or not present  then the  user is
+                      given the option of deleting the existing file or aborting
+                      the command.
+
+           [n]%F filnam    An existing  file, "filnam", becomes the  current NIB
+                      file.   If "n"  is  1 (1%F)  then new  information  may be
+                      appended to the file.  If "n" is zero or not  present then
+                      the file  may be read  from but not  written to.   If file
+                      "filnam" does not exist a warning comment is issued  and a
+                      new file is opened.
+
+
+
+
+
+
+
+
+
+                                           46                  Tools & Utilities
+        NAD Image Binary File Usage                             October 19, 1982
+
+
+
+             The following commands append a  range of memory image data  to the
+        NIB file.
+
+
+           pad,vad,cnt;P   pad=physical  address, vad=virtual  address, cnt=byte
+                      count
+
+                ad,cnt;P   ad=address, pad=vad=ad
+
+                   cnt;P   pad=vad=0
+
+                      ;P   Put entire local image on the NIB file
+
+             The following command  gets a range of  memory image data  from the
+        NIB file.
+
+
+           pad,vad,cnt;G   pad=physical  address, vad=virtual  address, cnt=byte
+                      count
+
+                ad,cnt;G   ad=address, pad=vad=ad
+
+                   cnt;G   pad=vad=0
+
+                      ;G   Get entire NIB memory image into NAD local image
+
+             The range specified in the ;G commands need not  correspond exactly
+        to ranges used when  the memory image was put  on the NIB file.   If any
+        part of the range requested  cannot be found the lower and  upper bounds
+        of the ranges actually read are printed.  The bounds of ranges  read are
+        also printed after a ;G command without arguments.
+
+             The following  commands request that  NAD dump/retrieve  all tables
+        that it needs to reconstruct a NAD environment.
+
+
+                      %P   Put state information and all symbols  except opcodes
+                      on NIB file
+
+                module%P   Put symbols in module on NIB file
+
+                      %G   Get state information and all symbols from  last "%P"
+                      record of all symbols on NIB file
+
+                module%G   Get symbols from last module record on NIB file
+
+             Note:  The %G  command without  arguments will  only read  a record
+        written by a %P command  without arguments and similiarly, a  %G command
+        which specifies a module will only read a record written by a %P command
+        which specified the same module.
+
+
+
+                                           47                  Tools & Utilities
+        NAD Image Binary File Usage                             October 19, 1982
+
+
+             The  following  command  specifies  the  program  start  address to
+        transfer to  after a node  has been loaded  by the downline  loader.  If
+        this command is not envoked the transfer address is undefined.
+
+
+           pad;T           pad=physical address for Transfer
+
+             If any information given on  a command or found in a  file (tranfer
+        address, range  values, etc.) overlaps  or repeats  previous information
+        the new information is used.  For example, assume a 100,300;P is entered
+        and later (possible at a later date) a 200,10;P is entered.  If the file
+        is then read using a 200,100;G,  then the range 210 through 300  will be
+        obtained from  the first record  and the range  200 through 20F  will be
+        obtained from the second.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           48                  Tools & Utilities
+        MERLIN .  .  .  Merge and Link ISIS Nodes               October 19, 1982
+
+
+
+
+
+
+                     5 -  MERLIN .  .  .  Merge and Link ISIS Nodes
+
+
+             MERLIN (Merge  and Link  ISIS Nodes)  acts as  a linking  binder to
+        merge the binary images of ISIS II and the individual slot codes, taking
+        into account  the relocation  of slots from  their virtual  addresses to
+        their physical addresses, and initializing the run queue in ISIS to show
+        all the slots as active and ready.  The resulting binary image  file may
+        be  loaded  into  a  node  with  the  LOADII  program,  loading  all the
+        capabilities of a node in one operation.
+
+             MERLIN merges files by  reading the Kernel's tables  containing the
+        physical addresses of  the ISIS files and  the Segment E  information on
+        the  size and  characteristics of  each slot.   Segment E  is  the first
+        segment of each slot and contains information about the size of  all the
+        segments in  a slot, any  protection parameters for  that slot,  and any
+        information  the  Memory  Access  Controller  (MAC)  needs  to correctly
+        translate  the  virtual addresses  in  the code  to  their corresponding
+        physical addresses.  The slot maps shown in a run of MERLIN do  not show
+        Segment E  for any slot.   The size of  Segment E for  each slot  is the
+        difference between the start address  of the slot and the  start address
+        of the first segment in that slot.
+
+
+
+
+
+
+                                  5.1  RUNNING MERLIN
+
+
+             MERLIN is a program that will bind together an ISIS II NIB file and
+        NIB files  for ISIS II  slots.  It can  also alter already  bound files.
+        Whenever the  ISIS Kernel NIB  file is referred  to, a  previously bound
+        file may also be used.
+
+             To execute MERLIN, the user logs into the directory on which MERLIN
+        resides and types "GO MERLIN".  When executed, it will respond  with its
+        name and version number and provide an '*' for a prompt.  There  are two
+        ways of telling MERLIN what to do.
+
+             The  first way  is to  respond  to the  * with  a  carriage return.
+        MERLIN will ask for  the name of an output  file.  This file may  be the
+        same as any of  the input files to  be merged.  Specifically, it  may be
+        the same as the Kernel file.  MERLIN will open a .TMP file with the name
+        "MERnnn.TMP",  where  nnn is  the  jobnumber expressed  in  octal.  When
+        MERLIN  is  finished, it  will  delete  the output  file  name  that you
+        requested and rename the temporary file to that name.
+
+
+                                           49                  Tools & Utilities
+        MERLIN .  .  .  Merge and Link ISIS Nodes               October 19, 1982
+
+
+             Next, MERLIN will ask for the name of the ISIS Kernel file.
+
+             MERLIN will read the Kernel file and find out how many  slots there
+        are and  if they are  already defined.  Once  this is done,  MERLIN will
+        tell the user whether or not a slot is defined and ask for an option for
+        each slot assembled.  Typing a carriage return at this point will prompt
+        MERLIN to list the valid options.  The valid options are, a file name to
+        replace  any  existing slot  code,  a /N  to  not change  the  slot code
+        (whether it is already defined or not), or a /D to delete the  code that
+        is already defined for a slot.  Once all slots are prompted  for, MERLIN
+        will print a map of the address ranges that each slot has and,  for each
+        slot that is added, a map of where each MAC segment is  located.  During
+        this time the output file is created.
+
+             The second method of entry is to respond to the "*" prompt with the
+        name of the output file (NDxxxx.BND), followed by a "=", followed by the
+        name of the Kernel file, a comma, and the option for each slot, in order
+        and separated by commas:
+
+             NDxxxx.BND=NDxxxx.NIB,NDxxxx.N00,NDxxxx.N01,NDxxxx.02
+
+             No change may be specified by two commas with nothing between them.
+        The last slot is specified followed by a carriage return.  If  there are
+        more slots in the  Kernel file than there  are entries in the  list, the
+        last slots will be unchanged.  The  options /N and /D may also  be used.
+        There should be no embedded blanks.
+
+
+
+
+
+
+                             5.2  MERLIN Sample-Run Output
+
+
+
+
+
+
+                    5.2.1  Sample Run 1
+
+             The  following  sample  run  illustrates  user  input  in lowercase
+        letters and MERLIN responses in uppercase letters.
+
+        -go merlin
+        MERGE AND LINK ISIS SLOTS
+        VERSION 1.00
+        *
+        ENTER OUTPUT FILE NAME:ndxxxx.bnd
+        ENTER KERNEL FILE NAME:ndxxxx.nib
+        SLOT 0 PRESENT OPTION:<cr>
+        VALID OPTIONS ARE:
+        A FILE NAME
+
+                                           50                  Tools & Utilities
+        MERLIN .  .  .  Merge and Link ISIS Nodes               October 19, 1982
+
+
+        /N FOR NO CHANGE
+        /D FOR EXISTING SLOT
+        OPTION:ndxxxx.n00
+        SLOT 1 IS NOT PRESENT OPTION:/n
+        SLOT 2 PRESENT OPTION:/d
+        SLOT 3 IS NOT PRESENT OPTION:ndxxxx.n03
+
+                 SLOT MAP
+
+        SLOT BEGINS ENDS
+         0   10000  27FFF
+         1   28000  36FFF
+         2   37000  45FFF
+         3   46000  54FFF
+
+           MAP OF SLOT 0
+
+        SEG  BEGINS ENDS
+         0   10400  15CFF
+         1   15D00  19DFF
+         2   19E00  1BDFF
+         3   1BE00  1EDFF
+         6   1EE00  1F4FF
+        14   10000  103FF
+
+            MAP OF SLOT 3
+
+        SEG  BEGINS ENDS
+         0   46100  46273
+         1   46300  465C3
+         2   46600  46807
+         3   46900  469FF
+         4   46A00  46AFF
+         5   46B00  46BFF
+         6   46C00  46CFF
+         7   46D00  46DFF
+         8   46E00  46EFF
+         9   46F00  46FFF
+        10   47000  470FF
+        11   47100  471FF
+        12   47200  472FF
+        14   46000  4608F
+
+        exit
+        -
+
+
+
+
+
+
+
+
+
+                                           51                  Tools & Utilities
+        MERLIN .  .  .  Merge and Link ISIS Nodes               October 19, 1982
+
+
+                    5.2.2  Sample Run 2
+
+             The  following  sample  run  illustrates  user  input  in lowercase
+        letters and MERLIN responses in uppercase letters.
+
+
+        -go merlin
+        MERGE AND LINK ISIS SLOTS
+        VERSION 1.00
+        * ndxxxx.bnd=ndxxxx.nib,ndxxxx.n00,/d,,ndxxxx.n03
+
+                SLOT MAP
+
+        SLOT BEGINS ENDS
+         0   10000  27FFF
+         2   28000  36FFF
+         2   37000  45FFF
+         3   46000  54FFF
+
+            MAP OF SLOT 0
+
+        SEG  BEGINS ENDS
+         0   10400  15CFF
+         1   15D00  19DFF
+         2   19E00  1BDFF
+         3   1BE00  1EDFF
+         6   1EE00  1F4FF
+        14   10000  103FF
+
+            MAP OF SLOT 3
+
+        SEG  BEGINS ENDS
+         0   46100  46273
+         1   46300  465C3
+         2   46600  46807
+         3   46900  469FF
+         4   46A00  46AFF
+         5   46B00  46BFF
+         6   46C00  46CFF
+         7   46D00  46DFF
+         8   46E00  46EFF
+         9   46F00  46FFF
+        10   47000  470FF
+        11   47100  471FF
+        12   47200  472FF
+        14   46000  4608F
+
+        exit
+
+        -
+
+
+
+
+                                           52                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+
+
+
+
+                        6 -  LOADII .  .  .Node Loading Program
+
+
+             LOADII is a downstream loading program used to load a  binary image
+        of executable code and interface parameters into nodes within a Tymshare
+        network.   The binary  image  is loaded  through  network communications
+        links, and may be performed through inter-network gateways.   The binary
+        image may consist of the ISIS Kernel or any standard node or  slot code.
+        An ISIS node consists of the Kernel, node code, and slot code.
+
+             There are two main loading operations performed by  LOADII: loading
+        an entire machine, and loading  slots on ISIS nodes.  To load  an entire
+        machine, the machine  must not be in  the network.  When  loading slots,
+        the node may be in the network and the remainder of the node will not be
+        affected  by  the  load.   A  clear  understanding  of   global  network
+        characteristics,  especially  those  relating  to  topology  and network
+        control, will enable the user to make effective use of this program.  If
+        an entire machine is being loaded,  it must not be operating as  part of
+        network at the time, but must be running a special synchronous bootstrap
+        program.
+
+             LOADII builds a circuit to the neighbor of the machine to be loaded
+        and  passes the  data in  a  special protocol  accross the  line  to the
+        synchronous bootstrap program running in the target machine (the machine
+        to be loaded).  The bootstrap  program can be invoked by command  if the
+        node is running,  or automatically by  a watch dog  timer if there  is a
+        system failure.  If loading individual slot(s), the target  machine must
+        be in the network.  LOADII loads the slot by building a circuit directly
+        to the target's Kernel.
+
+             LOADII  can  also  load  a complete  ISIS  node  and  slots  in one
+        operation if the code has been run through the Merge and Link ISIS Nodes
+        Program (MERLIN).
+
+             LOADII can dump entire machines or individual slots as well.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           53                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                               6.1  PREPARING FOR LOADII
+
+
+             Conditions necessitating loading  code into a machine  include: the
+        introduction  of  a  new  version  of  code,  a  change  in   the  local
+        configuration, or reloading after a maintenance proceedure.   The unique
+        circumstances  of a  particular situation  will prescribe  the necessary
+        procedures.   The machine  to be  loaded is  referred to  as  the target
+        machine.  The machine from which the target machine is loaded  is called
+        the neighbor.
+
+             To perform a load,  the operator specifies the neighbor  number and
+        the line numbers.  The line number specification requires  two different
+        numbers because it is referred to by one number on the  neighbor machine
+        and another number on the target machine.  Following are two alternative
+        procedures  for  gathering  the  information  needed  to  determine  the
+        neighbor number and line numbers.
+
+             If  the target  is  operating in  the network  during  the planning
+        stages, the data  base containing a map  of the network topology  may be
+        used to determine the line  numbers or port numbers and node  numbers of
+        all  possible neighbors.   If the  machine is  not in  the  network, the
+        operator may examine the Tymfile for this same information.
+
+
+
+
+
+                    6.1.1  Requirements for Choosing the Neighbor
+
+             The user must  be able to  build a circuit  from the host  on which
+        LOADII runs  to the neighbor  machine.  For a  successful circuit  to be
+        built, the neighbor  must be in  the network, have  passthrough capacity
+        (applies to  TYMNET I  neighbors only), and  have an  accessible network
+        pathway between it and the host.
+
+
+
+
+
+                    6.1.2  Requirements for Choosing the Line
+
+             There are some differences between loading a Varian and  loading an
+        Engine target  machine.  One  difference concerns  the choice  of lines.
+        While a Varian may have up to sixteen lines, only the first eight can be
+        used for loading.  Engines may have up to thirty-two lines, of which the
+        first sixteen may be used for loading.
+
+
+
+
+
+
+
+                                           54                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                         6.2  Bootstrapping the Target Machine
+
+
+             Bootstrapping  refers  to  the  process  by  which  the  first  few
+        instructions of executable code are entered into a node.  The executable
+        code is  referred to  as the boot.   The process  will be  different for
+        machines currently in the network and those that are not.
+
+             A  machine  in the  network  may be  bootstrapped  using  the PROBE
+        "DLOAD"  Command.   To confirm  the  successful execution  of  the DLOAD
+        Command, the  operator may issue  the NODE Command  30 seconds  after he
+        issued the DLOAD  Command, verifying that the  node is no longer  in the
+        network.   For  machines not  in  the network,  the  bootstrap  may have
+        started automatically or may now have to be started manually.
+
+             Manual bootstrapping differs depending on which type of  machine is
+        used.  For Engines, the machine may simply be halted.   Normal operation
+        of the watch dog  timer will cause the  boot to be loaded  and executed.
+        There is a  bootstrap switch on the  Multi-function card of  any Engine.
+        If the  switch is on,  the bootstrap will  start automatically.   If the
+        switch is off and the machine is halted, the switch must be turned on to
+        start the bootstrap.  Most Engine machine failures (i.e.,  Kernel parity
+        error, illegal device interrupt, disc interrupt queue overrun) will also
+        cause the boot to be loaded.
+
+             Varian V72's and V77's have permanent read-only memory (PROM) boots
+        that may be loaded with a single button.  However, on V72's the  boot is
+        preset, to receive data on line zero.  If the operator has chosen a line
+        other than zero, the  boot must be altered.   On V77's, the boot  may be
+        altered by setting the line number in Register 1 before loading the PROM
+        boot.
+
+             For Varians,  if the line  number must be  changed, there  are five
+        addresses that must be altered.  The addresses depend on the memory size
+        of the machine.  The addresses for different memory sizes are:
+
+          LOC     LINE  LINE  LINE  LINE  LINE  LINE  LINE  LINE
+                    0     1     2     3     4     5     6     7
+          X7655   50040 50044 50050 50054 50060 50064 50070 50074
+          X7656   50042 50046 50052 50056 50062 50066 50072 50076
+          X7663   50043 50047 50053 50057 50063 50067 50073 50077
+          X7666   50041 50045 50051 50055 50061 50065 50071 50075
+          X7770   00021 00023 00025 00027 00031 00033 00035 00037
+
+                     Values for "X" vary with memory size.
+
+                                FOR 12K, X = 2
+                                FOR 16K, X = 3
+                                FOR 20K, X = 4
+                                FOR 24K, X = 5
+                                FOR 32K, X = 7
+
+
+
+                                           55                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+             In the case of Varian  620's, it is necessary to manually  load the
+        boot.  The  starting address of  the boot depends  on memory  size.  The
+        possible memory sizes and their starting locations are:
+
+                   MEM          LOCATION
+                   SIZE
+                   12K            27640
+                   16K            37640
+                   20K            47640
+                   24K            57640
+                   32K            77640
+
+             These values also apply to Varian's V70 Series machines.
+
+
+
+
+
+
+                                      6.3  LOADING
+
+
+             Two main loading operations  may be performed by LOADII:  loading a
+        node, and loading  slots on ISIS nodes.   There is a  separate operation
+        for loading multiple slots.
+
+
+
+
+
+                    6.3.1  Loading a Node
+
+             Loading  may be  performed  using LOADII  in any  machine  once the
+        machine is at least running its bootstrap and the synchronous  line over
+        which  the load  is to  be performed  is fully  operational.   LOADII is
+        maintained on a host computer in the network.
+
+             When the program  is accessed, it  will identify itself  and prompt
+        with a  colon, ":".  At  this point, the  operator may enter  a carriage
+        return and  the following  command options  list will  print out  at the
+        terminal:
+
+                      OPTIONS
+                       L - LOAD
+                       D - DUMP
+                       T - DIAGNOSTICS
+                       G - PASS GATEWAY
+                       X - PASS X-25 GATEWAY
+                       S - LOAD SLOT
+                       R - RESTART
+                       P - PARTIAL SLOT LOAD
+                       U - DUMP SLOT
+                       C - DUMP SLOT'S STANDARD CRASH TABLE
+
+                                           56                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+             Here, the decision is made about whether or not to use a gateway to
+        access the  neighbor node.   If a gateway  is to  be used,  the operator
+        enters the "G" Command and  a carriage return.  The LOADII  Program will
+        then prompt for the gateway host number.  After that number  is entered,
+        a prompt for the password to  access the neighbor in the network  on the
+        other side of the gateway is issued.
+
+             The passwords for DLOAD  and GATEWAY (LOADII's user names)  must be
+        set whenever LOADII is generated in the network.  The user  performing a
+        load must know these passwords for any network on which he is performing
+        a load.  The program's user names must be licensed at program generation
+        time to be able to build an auxiliary circuit.
+
+             The password will not be echoed at the terminal.  When  the correct
+        password is typed, the program returns to the colon prompt.
+
+             To load, the  "L" Command is issued.   The user will then  be asked
+        for the neighbor's node number.  For TYMNET II neighbors, the  user will
+        also be asked the Kernel host number.
+
+             The  user  is asked  to  specify  the logical  line  number  on the
+        neighbor.  Following  this, the program  requests the object  file name.
+        The rest of  the process is automatic  and consists of  various messages
+        indicating the progress of the load.
+
+             The automatic response begins  by returning the number  and version
+        of code running on the target machine.  The next line indicates the type
+        of  machine being  loaded, its  memory size,  and the  fact that  it can
+        receive passthroughs.
+
+             The  next set  of information  generated tells  the user  the lines
+        attached to the target, the nodes attached to those lines and the number
+        of groups  on each  line.  The next  line indicates  the numbers  of the
+        hosts to which the target node is attached.
+
+             The next six responses are progress reports from the  program.  XMT
+        means the number of records transmitted, RCV means the number of records
+        for which an acknowledgement of receipt was returned, and LOST means the
+        number of records for which no acknowledgement was received.  At the end
+        of the transmission, any LOST records will be retransmitted.  The number
+        of  records  received  will  always lag  behind  the  number  of records
+        transmitted because of the time it takes to receive  an acknowledgement.
+        When all records have been acknowledged, the program will  indicate that
+        all data has been transferred.
+
+             The last message  from the program  notifies the operator  that the
+        program is sending the startup  instructions to the node, at  which time
+        the operator may exit the program.
+
+
+
+
+
+
+                                           57                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+        6.3.1.1  Example of Varian Load:
+
+             User input  is illustrated  in lower case  letters.  The  last user
+        entry before the automated process is shown is the object file name.
+
+        -go (isis)loadii
+
+        NODE LOADER VERSION-1.00
+        :l
+        ENTER NEIGHBOR NUMBER:1212
+        ENTER THE LINE NUMBER ON NODE 1212:6
+        ENTER YOUR OBJECT FILE NAME:ttt64.rel
+        NODE:0064   VERSION:031310
+        MACH:V70  MEMORY:24K     PASSTHRUS
+        LINE TABLES
+        LINE NEIGH GROUPS
+           0  1212  1
+           1  1077  2
+        HOST(S)
+        0  64
+        BUILDING CIRCUIT
+        CIRCUIT BUILT
+        NODE 1212 HAS ACKNOWLEDGED THE REQUEST
+        LOADER SENT
+        LOADER RECEIVED
+        LOADING
+          40-XMT    18-RCV    0-LOST
+          80-XMT    60-RCV    0-LOST
+         120-XMT    90-RCV    0-LOST
+         160-XMT   127-RCV    0-LOST
+         200-XMT   169-RCV    0-LOST
+         240-XMT   218-RCV    0-LOST
+         280-XMT   254-RCV    0-LOST
+         320-XMT   284-RCV    0-LOST
+         360-XMT   327-RCV    0-LOST
+         400-XMT   363-RCV    0-LOST
+        ALL DATA TRANSFERRED
+        SENDING STARTUP
+
+        exit
+
+        -
+
+
+
+        6.3.1.2  Example of Engine Load
+
+        -go (isis)loadii
+
+        NODE LOADER VERSION- 1.00
+        :l
+        ENTER NEIGHBOR NUMBER:1212
+        ENTER THE LINE NUMBER ON NODE 1212:1
+
+                                           58                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+        ENTER YOUR OBJECT FILE NAME: (isis)nod303.nib
+        BUILDING CIRCUIT
+        CIRCUIT BUILT
+        NODE 1212 HAS ACKNOWLEDGED THE REQUEST
+        LOADING
+          40-XMT   12-RCV    0-LOST
+          80-XMT   36-RCV    0-LOST
+         120-XMT   72-RCV    0-LOST
+         160-XMT  115-RCV    0-LOST
+         200-XMT  151-RCV    0-LOST
+         240-XMT  193-RCV    0-LOST
+         280-XMT  230-RCV    0-LOST
+         320-XMT  272-RCV    0-LOST
+         360-XMT  315-RCV    0-LOST
+         400-XMT  351-RCV    0-LOST
+         440-XMT  393-RCV    0-LOST
+         480-XMT  430-RCV    0-LOST
+         520-XMT  472-RCV    0-LOST
+         560-XMT  509-RCV    0-LOST
+         600-XMT  551-RCV    0-LOST
+         640-XMT  593-RCV    0-LOST
+         680-XMT  630-RCV    0-LOST
+         720-XMT  672-RCV    0-LOST
+        ALL DATA TRANSFERRED
+        SENDING STARTUP
+
+        exit
+
+        -
+
+
+
+
+
+                    6.3.2  Loading ISIS Slots
+
+             There are three variations  of loading ISIS slots: when  the entire
+        machine is to be reloaded; when only a particular slot is to  be loaded;
+        and when only part of a slot is to be loaded.
+
+             Examples of situations requiring the entire machine to  be reloaded
+        are when a maintenance procedure has been performed which  destroys code
+        (loading a diagnostic, zeroing  memory), or node misbehavior  (take over
+        errors reported).  When the entire  machine is to be reloaded,  the user
+        will use a  MERLIN file which contains  the ISIS Kernel, the  node code,
+        and  all required  slots.  The  operator uses  the LOADII  load function
+        Command "L".
+
+             If the machine is already  in the network, and the  operator wishes
+        to only load the specific slot(s), he may enter an "S"  Command.  LOADII
+        will then  ask for the  slot file list  (those slots and  the associated
+        files the user wishes to load).   The user will then type a  slot number
+
+
+                                           59                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+        followed by a comma and file name for each different slot to  be loaded.
+        For example:
+
+                               1,NOD500.NO1,3,NOD500.NO3
+
+             After the last  file name, the user  will enter a  carriage return.
+        If  a slot  is composed  of more  than 1  file, each  file  is specified
+        seperated by a plus sign (+).  The first file must contain segment E.
+
+             After the  slot list  is entered, the  user will  be asked  for the
+        Kernel host number.  Once this is entered, LOADII logs in with  the user
+        name GATEWAY (which must be valid in the network) and proceeds  to build
+        a circuit to the Kernel host and begin to load slots.
+
+             To load only part of a slot the "P" command is used.   Operation is
+        identical to the "S" command,  except that the MAC is not  loaded.  This
+        is  useful  for loading  PASCAL  programs when  the  nucleus  is already
+        present.
+
+
+
+        6.3.2.1  Example: Loading a Slot
+
+             User input  is illustrated  in lower case  letters.  The  last user
+        entry before the automated process is shown is the Kernel host number.
+
+             The first message to the user after this point indicates  a circuit
+        to the gateway  has been built.   This does not  mean the load  is being
+        performed  on a  foreign network.   The gateway  is used  to  load slots
+        within the network.
+
+             The next two messages indicate the successful building of a circuit
+        to the  target node, and  the initializing  of the MAC  to enable  it to
+        properly relocate the succeeding segments of slot code.
+
+             The next set of  messages detail the logical starting  addresses of
+        the code being sent and the  number of bytes of code being sent  to each
+        address.  The MAC translates that address to the physical address of the
+        code.
+
+             When all the code is successfully loaded, the program will indicate
+        that the slot is loaded and the user may exit the program.
+
+             The messages from "INITIALIZING THE MAC" to "SLOT x LOADED" will be
+        repeated for each slot in a multiple slot load.
+
+        -go (isis)loadii
+
+        NODE LOADER VERSION-1.00
+        :g
+
+        ENTER GATEWAY HOST:453
+        ENTER PASSWORD FOR EXTERNAL NET
+
+                                           60                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+
+        :s
+        ENTER THE SLOT FILE LIST 1,(isis2)LB2016.n01
+
+        ENTER KERNEL HOST NUMBER 534
+        CIRCUIT TO GATEWAY BUILT
+        CIRCUIT BUILT
+        INITIALIZING MAC
+        TRANSMITTING SEGMENT 14
+        SENDING DATA TO ADDRESS:000000000000 BYTES=    9316
+        SENDING DATA TO ADDRESS:000000200000 BYTES=    6348
+        SLOT 1 LOADED
+
+        exit
+
+        -
+
+
+
+        6.3.2.2  Example: Loading Multiple Slots
+
+                -go (isis)loadii
+
+        NODE LOADER VERSION-1.00
+        :g
+
+        ENTER GATEWAY HOST:453
+        ENTER PASSWORD FOR EXTERNAL NET
+
+        :s
+        ENTER THE SLOT FILE LIST 1,(isis2)nd2016.n01,2,(isis2)nd2016.n02
+
+        ENTER KERNEL HOST NUMBER 534
+        CIRCUIT TO GATEWAY BUILT
+        CIRCUIT BUILT
+        INITIALIZING MAC
+        TRANSMITTING SEGMENT 14
+        SENDING DATA TO ADDRESS:000000000000 BYTES=    9316
+        SENDING DATA TO ADDRESS:000002000000 BYTES=    6348
+        SLOT 1 LOADED
+        INITIALIZING MAC
+        TRANSMITTING SEGMENT 14
+        SENDING DATA TO ADDRESS:000000000000 BYTES=    9316
+        SENDING DATA TO ADDRESS:000002000000 BYTES=    6348
+        SLOT 2 LOADED
+
+        exit
+
+        -
+
+
+
+
+
+                                           61                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                    6.3.3  Loading Diagnostics
+
+             The  loading  diagnostics   operation  begins  when   the  operator
+        specifies the "T" Command and  is used by maintenance personnel  only to
+        load  diagnostic programs.   This command  is only  necesary  for Varian
+        machines because  Engine diagnostics  may be loaded  by issuing  the "L"
+        Command.
+
+
+
+
+
+
+                                 6.4  PERFORMING A DUMP
+
+
+             Dumping the machine is the  process of reading the data out  of the
+        target machine's memory and copying it on to a file.  The  data acquired
+        from a dump can be used to help technical support personnel analyze code
+        problems offline.  Machines can  be dumped and reloaded,  returning them
+        to service immediately  without losing valuable information  about their
+        state.
+
+             Once the decision to take a dump is made, the operator  is required
+        to select  a neighbor and  line and bootstrap  the target  machine.  The
+        operator  executes the  LOADII Program  and receives  a colon  prompt to
+        specify the  option.  Here, the  operator issues the  "D" Command  and a
+        carriage return.  The  operator will be  asked the beginning  and ending
+        address for the dump.   On Varians, these addresses are  usually entered
+        in octal.  LOADII  defaults to octal  entry.  However, on  Engines these
+        addresses  are  expressed  in  hexadecimal.   If  hex  is  required, the
+        operator must precede the hexadecimal number with "$0".
+
+             The operator will be asked if he wishes to reload the  machine.  If
+        he elects to reload, he will  be asked the neighbor number and  the line
+        number as well as the object file and dump file.
+
+             If the operator  elects not to reload,  he is asked for  the manual
+        restart address.  (For Varian's, this is zero.  For Engines, the restart
+        address depends  on the  type of code  in the  machine).  The  ISIS code
+        restart address is 160 (octal).  The Remote code restart address is 2364
+        (octal).  If no restart is desired, the operator should enter "-1".
+
+             Next, the operator will be asked the neighbor number,  line number,
+        and the name of the output file.  In either case, the operator will then
+        be asked if the  target machine is a Varian,  and if so he will  then be
+        asked the  memory size.   If it  is not,  he will  be asked  the startup
+        address in the output file.  If none is to be entered, he will  enter "-
+        1".
+
+             The rest of  the process is automatic  and a message will  print at
+        the completion of each step indicating the progress of the dump.
+
+
+                                           62                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                    6.4.1  Example of Dump:
+
+             User input  is illustrated  in lower case  letters.  The  last user
+        entry before the automated process  is shown is the start-up  address in
+        the dump file.
+
+        -go (isis)loadii
+
+        NODE LOADER VERSION-1.00
+        :g
+
+        ENTER GATEWAY HOST:453
+        ENTER PASSWORD FOR EXTERNAL NET
+
+
+
+        :d
+        ENTER START ADDRESS:0
+        ENTER THE FINISH ADDRESS:$01000
+        DO YOU WANT A RELOAD AFTER THE DUMP? n
+        ENTER MANUAL RESTART ADDRESS (-1 IF NO RESTART)160
+        ENTER NEIGHBOR NUMBER:2030
+        ENTER KERNEL HOST NUMBER ON NODE 2030:544
+        ENTER THE LINE NUMBER ON NODE 2030:4
+        IS THE TARGET MACHINE A VARIAN?(Y OR N) n
+        ENTER DUMP OUTPUT FILE NAME:TEST.DMP
+        ENTER START-UP ADDR IN DUMP FILE (-1 IF NONE) -1
+        BUILDING CIRCUIT
+        CIRCUIT TO GATEWAY BUILT
+        CIRCUIT BUILT
+        NODE 2030 HAS ACKNOWLEDGED THE REQUEST
+        DUMPING
+          40-XMT    6-RCV    0-LOST
+          80-XMT   30-RCV    0-LOST
+         120-XMT   72-RCV    0-LOST
+        DUMP COMPLETE
+        SENDING STARTUP
+        exit
+
+        -
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           63                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                                      6.5  RESTART
+
+
+             The purpose of  a restart command is  to bring a machine  back into
+        the network when it is down and running its bootstrap.  When  using this
+        command, the operator is presuming  there is usable code in  the target.
+        The same decisions about choice  of neighbor and line must be  made that
+        are needed  to begin loading.   Restart is a  remote command to  be used
+        when there is no on-site operator.
+
+             The operator  issues the "R"  Comand and is  asked for  the restart
+        address.  For Varians  this is zero.   For Engines, the  restart address
+        depends on the type of code in the machine.  ISIS Code  starting address
+        is 160 (octal).   Engine remote code is  2364 (octal).  The  operator is
+        then asked if the target machine is a Varian.  If he answers that it is,
+        he  is  then prompted  for  memory size.   The  rest of  the  process is
+        automatic and restarts the target.
+
+
+
+
+
+                    6.5.1  Example of Restart:
+
+             User input  is illustrated  in lower case  letters.  The  last user
+        entry before the  automated process is  shown designates whether  or not
+        the machine is a Varian.
+
+        -go (isis)loadii
+
+        NODE LOADER VERSION-1.00
+        :g
+
+        ENTER GATEWAY HOST:453
+        ENTER PASSWORD FOR EXTERNAL NET
+
+        :r
+        ENTER MANUAL RESTART ADDRESS (-1 IF NO RESTART)160
+        ENTER NEIGHBOR NUMBER:2030
+        ENTER KERNEL HOST NUMBER ON NODE 2030:544
+        ENTER THE LINE NUMBER ON NODE 2030:4
+        IS THE TARGET MACHINE A VARIAN?(Y OR N) n
+        BUILDING CIRCUIT
+        CIRCUIT TO GATEWAY BUILT
+        CIRCUIT BUILT
+        NODE 2030 HAS ACKNOWLEDGED THE REQUEST
+        SENDING STARTUP
+
+        exit
+
+        -
+
+
+
+                                           64                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                                  6.6  ISIS-SLOT DUMPS
+
+
+             The command to dump a slot is "U".  The usual gateway  suffixes can
+        be applied such as "UB" and "UC".  The program will ask for kernel host,
+        slot number and  a file name.  If  that is all the  information supplied
+        the entire slot will be dumped.  Memory areas to be read will determined
+        by  reading  segment  "E"  (this  makes  dumping  sups  and  sup  slaves
+        impossible!).  LOADII will not halt  or restart a slot during  the dump.
+        If you dump a running slot you will get what you asked for!   At present
+        the security will be the same as that required to load slots.
+
+             As each  segment is dumped  a message giving  the address  and byte
+        count is output.  Also as each block I/O unit is read an asterisk (*) is
+        output.  The asterisks appear about every 1-2 seconds and  represent the
+        transfer  of 400  bytes  from the  network.   The last  block  read will
+        require at least  16 seconds.  If a  minute goes by without  an asterisk
+        something is wrong!
+
+             If the file name  is followed by a  comma and a segment  number (in
+        hex) optionally  followed by  more commas and  segment numbers  only the
+        specified segments will be read.  For example:
+
+        -r (isis)LOADII;UC,700,1,BB0700.D01,0,2
+
+             This will  dump only segments  0 and 2.   Since segment 1  is write
+        protected it should not require dumping.
+
+             The output file is in NIB format and address are virtual.  The file
+        may  be examined  by  nad and  symbols may  be  read into  nad  from the
+        assembly file.
+
+
+
+
+
+
+                           6.7  CIRCUIT BUILDING ERROR TYPES
+
+
+             At different steps in the  process of building a circuit,  an error
+        message  may print  out  at the  terminal.  These  failures  result from
+        improper  procedure or  network and  system conditions  external  to the
+        LOADII Program.   They are explained  below in some  detail to  help the
+        user  understand what  happens  in the  network when  the  circuit build
+        request  is  made  and  how the  system  attempts  to  build  a circuit.
+        Whenever appropriate, steps to correct the error are given.
+
+             Errors are divided into  two broad classes: those from  the network
+        supervisor; and those from  the PDP-10 monitor.  They appear  as twelve-
+        digit octal numbers.   Those from the network  appear as numbers  in the
+        least  significant  digit  of the  number  displayed  by  LOADII.  Error
+
+
+                                           65                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+        messages from the PDP-10 appear  as the middle digit of the  number.  (A
+        narrative of the circuit building process in which these  error messages
+        may be generated is given below.)
+
+
+
+
+
+
+                    6.7.1  From the PDP-10 monitor
+
+        LOGIN ERROR, RESPONSE:000002000000
+        WILL RETRY IN 30 SECONDS
+
+           This  message  indicates the  program  is not  licensed  to  build an
+                      auxiliary  circuit.  It  appears if  the monitor  does not
+                      recognize the  program as licensed.   Licenses are  set at
+                      the time of system generation.  A change can only  be made
+                      through your network operations staff.
+
+        LOGIN ERROR, RESPONSE:000003000000
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates the  host has no available ports.   It appears
+                      when all ports  from the host to  the network are  in use.
+                      Try another system.
+
+        LOGIN ERROR, RESPONSE:000004000000
+        WILL RETRY IN 30 SECONDS
+
+           This  message indicates  the host  requested permission  to  build an
+                      auxiliary circuit  and the supervisor  did not  respond to
+                      this request before  a timeout occurred.   Possible reason
+                      for  this  message is  no  supervisor in  control  of this
+                      portion of the network.
+
+        LOGIN ERROR, RESPONSE:000005000000
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates the supervisor did not acknowledge  the login.
+                      It  occurs  after a  port  is supplied  and  the  login is
+                      attempted and  fails.  This may  be due to  the supervisor
+                      responding too slowly, the takeover path to the supervisor
+                      being lost, or no supervisor in control of this portion of
+                      the network.
+
+        LOGIN ERROR, RESPONSE:000006000000
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates the supervisor did not acknowledge  receipt of
+                      the login  string sent  by the  host after  the supervisor
+                      acknowledged receipt  of the request  to build  a circuit.
+
+
+                                           66                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                      This message will occur if the supervisor has lost control
+                      of this portion of the network.
+
+
+
+
+
+                    6.7.2  From the network supervisor
+
+        LOGIN ERROR, RESPONSE:000000000001
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates a format  error in the circuit request  to the
+                      supervisor.  Contact  your account representative  if this
+                      appears.
+
+        LOGIN ERROR, RESPONSE:000000000002
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates a bad user name.  It occurs if  the supervisor
+                      doesn't  recognize the  "DLOAD" or  "GATEWAY"  user names.
+                      These  names  must  be  defined  in  the  MUD  before  the
+                      supervisor   will   respond  positively   (See   the  ISIS
+                      Validation Program, VAL, for procedure).
+
+        LOGIN ERROR, RESPONSE:000000000003
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates bad Master User's Directory (MUD).   It occurs
+                      when  the  MUD is  out  of format.   Contact  your account
+                      representative  if  this  appears.   (This  message cannot
+                      appear in a TYMNET I network).
+
+        LOGIN ERROR, RESPONSE:000000000004
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates system is unavailable.  It  frequently appears
+                      when building a circuit to a gateway or an ISIS  node.  It
+                      also occurs when a gateway or TYMNET II neighbor is not in
+                      the network  or not  accessible.  If  the neighbor  is not
+                      accessible because  of shut  lines, PROBE  may be  used to
+                      remove shuts.  Another  solution might be to  pick another
+                      neighbor.
+
+        LOGIN ERROR, RESPONSE:000000000005
+        WILL RETRY IN 30 SECONDS
+
+           This message indicates  a load or  dial-out failure.  It  occurs when
+                      the supervisor is unable to build a circuit to  the TYMNET
+                      I  neighbor.  If  it occurs  because the  neighbor  is not
+                      accessible because  of shut  lines, PROBE  may be  used to
+                      remove  shuts.  Another  solution may  be to  pick another
+                      neighbor.
+
+                                           67                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+
+        LOGIN ERROR, RESPONSE:000000000006
+        WILL RETRY IN 30 SECONDS
+
+           This  message indicates  a timeout.   It occurs  when  the supervisor
+                      fails to get response from the host running LOADII or from
+                      a TYMNET I node during circuit building.
+
+        LOGIN ERROR, RESPONSE:000000000007
+        WILL RETRY IN 30 SECONDS
+
+           This message  indicates access denied  because the definition  in the
+                      supervisor's MUD of the capabilities allowed for that user
+                      name did not  include the operation attempted.   (See ISIS
+                      Validation Program for procedure).
+
+
+
+
+
+                    6.7.3  Circuit Building Process
+
+             The  following  narrative describes  the  network  circuit building
+        process and the  points at which error  messages may be  generated.  The
+        messages are explained  below.  This process  begins after the  user has
+        responded to  all of  the LOADII  prompts for  information and  the host
+        begins to execute the request for a circuit.
+
+             The host LOADII is running on checks to see if the user  name under
+        which LOADII logged  on (GATEWAY of DLOAD)  is valid and whether  or not
+        the program  has license  to build  an auxiliary  circuit.  If  not, the
+        following message is sent to the terminal:
+
+        000002000000
+
+
+             If so, the host  checks to see if  it has any available  ports.  If
+        not, it sends the message:
+
+        000003000000
+
+
+             If  it  has  available  ports, the  host  sends  a  request  to the
+        supervisor to build an auxiliary circuit.  If there is no  response from
+        the supervisor  before a  timeout occurs, the  host sends  the following
+        message:
+
+        000004000000
+
+
+             If the supervisor responds to  the request, the host sends  a login
+        string to the supervisor.  The supervisor checks this login  string and,
+        if in error, may send one of the following messages:
+
+                                           68                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+
+        000000000001
+        000000000002
+        000000000003
+        000000000007
+
+
+             If the supervisor does not respond at all before a  timeout occurs,
+        the host will send the message:
+
+        000005000000
+
+
+             If there  are no  errors in  the login  string, and  the supervisor
+        responds to the request, the supervisor will attempt to build a circuit.
+        If  there  are  problems,  it may  respond  with  one  of  the following
+        messages:
+
+        000000000004
+        000000000005
+        000000000006
+
+
+             If the supervisor does not tell the host a circuit has  been built,
+        and does  not send an  error message before  a timeout occurs,  the host
+        will send the message:
+
+        000006000000
+
+
+             If  no errors  have  occurred by  this  point, a  circuit  has been
+        successfully built and LOADII will begin to load.
+
+
+
+
+
+
+                               6.8  Streamlined Operation
+
+
+             The user may also use a streamlined form of operation.  At any time
+        the user may answer the  current question and as many of  the subsequent
+        questions as desired  on one line with  each item seperated by  a comma.
+        The order of  items on a  line is critical.  Any  group of items  may be
+        replaced by a command file.   Data from the command file  is substituted
+        directly  into the  command  line in  place  of the  command  file name.
+        Command files are preceded by  an "@".  They may include a  username and
+        extension.  If no extension is provided, the default extension ".CMD" is
+        assumed.  Responses may be read  from the EXEC level command  line.  The
+        command  to execute  LOADII should  be followed  by a  ";" and  then the
+        responses or command files as above.
+
+
+                                           69                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+                    6.8.1  Example:  To load a node in the public net
+
+            go loadii;l,1700,0,nod300.bnd
+            NODE LOADER VERSION- 1.05
+            BUILDING CIRCUIT
+            .
+            .
+            .
+
+             This  represents  the entire  entry.   LOADII will  not  prompt for
+        anything.
+
+
+
+
+
+                    6.8.2  Example:  To load slots
+
+            go loadii;s,740,1,nod740.N01,2,nod740.n02,3,nod740.n03
+
+
+
+
+
+                    6.8.3  Example:  A command file to pass through a gateway
+
+             Assume that file BC contains:
+
+             G,454,NETPAS
+
+             Then...
+
+            go loadii;@bc
+            NODE LOADER VERSION 1.05
+            :l,1100,2,bub700.nib
+
+             This will pass through the gateway host 454.
+
+
+
+
+
+                    6.8.4  Example:  Interacting with command files
+
+             Two  adjacent  commas will  cause  the program  to  prompt  for the
+        missing data will proceed with the first command line once  the required
+        item is entered by the user.  For example:
+
+             File BC contains:       G,454,
+
+             The user enters:
+
+
+
+                                           70                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+            go loadii,@bc,@,1100,2,bub700.nib
+            NODE LOADER VERSION 1.05
+            ENTER PASSWORD FOR EXTERNAL NET __
+            BUILDING CIRCUIT
+
+             e
+
+
+
+
+
+                    6.8.5  Loading Multiple files
+
+             If a slot requires more than  one file to load it, such  as PASCAL,
+        the two file names seperated by "+" is substituted for the ususal single
+        file name.  There may also be more than two files.  The first  file MUST
+        contain segment "E".   The files are loaded  in order.  Later  files may
+        overlay data in earlier files.
+
+             A new command has been added that loads only part of a  slot.  This
+        command is "P".  The format for  entry is otherwise the same as  the "S"
+        command.  With this command the slot is halted, data from the file(s) is
+        written,  and  the  slot  is  restarted.   No  commands  are  issued  to
+        initialize the MAC.  There may be multiple files.
+
+
+
+
+
+                    6.8.6  Additional Features
+
+             There are a number of additional features.  These are  primarily of
+        interest to Network Development Personel:
+
+
+
+        6.8.6.1  A Security System
+
+             The  system  restricts  what kernal  hosts  may  be  accessed, what
+        neighbors and lines may be  accesed, and what networks may  be accessed.
+        An attempt has been made to  give all members of DND access to  any node
+        in BUBB-NET, and  specific access to  the BUBB-NET gateways.   Access to
+        the public net is forbidden unless there is a need.
+
+
+
+        6.8.6.2  Default Gateways
+
+             At generation time it  is possible to define the  aux-circuit login
+        stream to be used with  a particular key character.  The copy  of LOADII
+        in the ISIS directory will use the username "BUBB" with no  host number.
+        This will  assess the  nearest BUBB-NET gateway.   To use  this feature,
+
+
+                                           71                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+        append a "B" to the usual command that you wish to use.  For example, to
+        load a  slot in  BUBB-NET use  "SB" instead  of "S".   There will  be no
+        prompt for gateway hosts or passwords.
+
+
+
+        6.8.6.3  No-Start-Up
+
+             It is possible to specify that there should be no  start-up command
+        issued at the conclusion of a load (slot or otherwise).  Simply append a
+        "/N" to the file name, or last file name in the case of  a multiple-file
+        slot load.
+
+
+
+        6.8.6.4  Hexidecimal Output
+
+             The output of addresses  during slot loads appears  in Hexidecimal.
+        Also, ISIS error codes appear in hex.
+
+
+
+        6.8.6.5  Default Directory
+
+             Internal  files  that LOADII  must  access default  to  a directory
+        specified at generation time.
+
+
+
+
+
+                    6.8.7  LOADII Accounting
+
+             Any use  of LOADII causes  a record to  be generated in  the LOADII
+        accounting file:  LOADII.ACC.
+
+             The format of the LOADII.ACC is as follows:
+
+
+             If the operation was a load or load diagnostic (L or T):
+
+        DATE TIME  OPERATION SUCESS CD  USERNAME FILE NEIGH LINE NET ID
+        1-6  8-12  20-21     23-25      27-38    40-64 66-69 71-72 74-78
+
+             If the operation was a load slot:
+
+        DATE TIME KER HOST SLOT # OPERATION SUCESS CD USERNAME FILE   NET-ID
+        1-6  8-12 13-15    17-18  20-21     23-25     27-38    40-64  74-78
+
+
+
+
+
+
+                                           72                  Tools & Utilities
+        LOADII .  .  .Node Loading Program                      October 19, 1982
+
+
+
+             If the operation  code is not yet  received (i.e. the  user aborted
+        very early or was fooced out for security reasons):
+
+        DATE TIME SUCESS CD USERNAME
+        1-6  8-12 25-27     29-38
+
+             The codes for the operation are:
+
+        LD - LOAD includes load diagnostic
+        DI - LOAD DIAGNOSTIC
+        DU - DUMP
+        SL - SLOT LOAD includes P
+        NE - NO ENTRY MADE
+
+             The success codes are:
+
+        CIR - USER INTERRUPTED DURING CIRCUIT BUILDING
+        NEI - USER INTERRUPTED WHILE SENDING NEIGHBOR LINE NUMBER
+        LDR - USER INTERRUPTED WHILE SENDING LOADER
+        ULD - USER INTERRUPTED WHILE LOAD IN PROGRESS
+        UDM - USER INTERRUPTED WHILE DUMP IN PROGRESS
+        ZAP - RECEIVED EXTERNAL CIRCUIT ZAP
+        OK  - OPERATION SUCESSFUL
+        USL - USER INTERRUPTED DURING SLOT LOAD
+
+             DATE and TIMES are in the user's local time zone.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           73                  Tools & Utilities
+        NIB Dump Program                                        October 19, 1982
+
+
+
+
+
+
+                                 7 -  NIB Dump Program
+
+
+             A program which gives a  formatted dump of a NAD Image  Binary file
+        is  available.  ID  records are  interpreted in  ASCII and  HEX.  Memory
+        Image  records are  output  in HEX  with  the physical  and  virtual (if
+        defined) addresses also listed.  An option exists to specify  the number
+        of  columns  to  use  for memory  image  or  symbol  table  output.  The
+        available options and a sample output are given below.
+
+               R(ISIS)NIBDMP;infile,outfile/p1p2...pn<CR>
+
+               Where   infile  is the file to dump
+
+                   outfile is the dump listing file (default is terminal)
+
+                   pi  are options as follows --
+
+                       I   output ID record blocks
+
+                       M   output Memory Image data blocks The  physical address
+                                        (PAD),  virtual address  (VAD)  and data
+                                        are output in hex.  Each line contains a
+                                        PAD  and  a VAD  followed  by  words (32
+                                        bits)  of data.   If VAD=PAD  or  VAD is
+                                        undefined, it is not listed.   Each word
+                                        takes  11 characters.   The  line length
+                                        may be specified in terms of  columns of
+                                        memory data words, i.e. ...
+
+                       S   output Symbol Table data records
+
+                       n   number of columns for MI data
+
+             Options may be  seperated by anything  or nothing.  The  default is
+        /IMS5.
+
+             Blanks may be used freely  on the run line.  The output  listing is
+        58 lines per page (i.e. large 6 or small 8 lines per inch) The number of
+        columns  and  whether  a  virtual address  or  module  number  is listed
+        determine how wide the page is.  Some useful values are as follows.
+
+                n       VAD     no VAD  module  no module
+                5       68      62      68      60      (TTY)
+                6       79      73      68      80
+                8       102     95      102     100     (SMALL)
+                9       113     106     102     100
+                11      135     128     119     120     (LARGE)
+
+
+                                           74                  Tools & Utilities
+        NIB Dump Program                                        October 19, 1982
+
+
+             All ID records are output  before any Memory Image or  Symbol Table
+        records are output.
+
+             In the following example  "<...>" indicates an explaination  and is
+        not part of the output.
+
+             The following dump was obtained by entering:
+
+                        R(ISIS)NIBDMP;FRED.NIB,FRED.DMP/4
+
+
+
+
+
+            1   NIBDMP OF FRED.NIB      <HEADER LINE PAGE 1>
+
+
+             ID RECORD BLOCK 0000
+         PSA=UNDEF                      <pad;T was not entered>
+         78-11-27   9:49:19             <creation date and time>
+         [011334,225365] FRED.NIB       <(GAN,,PPN)file.ext>
+         AUTHOR = MONTAGNA
+
+          BLK=00001 PAD=00100   <1st Memory image record starts at block 1>
+          CNT= 0300 VAD=00200           <100,200,300;P was entered in NAD>
+
+          BLK=00002 PAD=00000           <0,10;P was entered in NAD>
+          CNT= 0010 VAD=00000
+
+          BLK=00003 MODULE=***ALL***   <%P was entered in NAD>
+
+          BLK=00005 MODULE=GLOBAL      <GLOBAL%P was entered in NAD>
+
+         ID CHAIN = 00000               <this is the only ID record>
+
+
+                  MEMORY IMAGE          <first MI record>
+          PAD=00100 VAD=00200 CNT=0300
+
+             0001                       <block address = 1>
+         <PAD> <VAD>  <data, *177 indicates 2*177 bytes of 00>
+         00100 00200  0000*177   A8C0 0000  0000 4300  0004 0000
+         003FA 004FA  4300 000E  0000
+
+
+                  MEMORY IMAGE          <second MI record>
+          PAD=00000 VAD=00000 CNT=0010
+
+             0002                       <block address = 2>
+         <PAD>  <DATA>  <VAD is missing because VAD=PAD>
+         00000  0000*2     24A4 4300  4000 30DC  0000 24AE
+
+
+
+                                           75                  Tools & Utilities
+        NIB Dump Program                                        October 19, 1982
+
+
+
+
+            2   NIBDMP OF FOO.NIB
+
+
+
+                  SYMBOL TABLE RECORD       <record for %P>
+         MODULE=***ALL***  COUNT=   146
+         FIRST BLOCK=   3  NUMBER OF BLOCKS=   2
+
+         VERSION=022779                 <state information>
+         CURRENT SEGMENT= 2
+         SEGMENT TABLE
+         0 00000  1 14000  2 20000  3 30000  4 40000  5 50000  6 60000  7 70000
+         8 80000  9 90000 10 A0000 11 B0000 12 C0000 13 D0000 14 E0000 15 F0000
+
+         CURRENT MODULE=34    MODULE MASK=320000000003
+         MODULE TABLE
+         N NAME    ORG X2  N NAME    ORG X2  N NAME    ORG X2  N NAME    ORG X2
+         0 OPCODE 20000 0  1 GLOBAL 00000 0  2 .MACRO 00000 0  3 ..FREE 00000 0
+          4 MAIN   00000 0 34 THREE  20000 0 35 ANOTHR 10000 0
+
+
+         SYMBOL TABLE
+         NAME MODULE   VALUE NAME MODULE   VALUE NAME MODULE   VALUE
+         FINISH  4       200 EXIT    1     10F12 ENTRY   1     10000
+         .       1     20200 LOOP    4       E34 START   4       100
+
+
+
+
+            3   NIBDMP OF FOO.NIB
+
+
+
+                  SYMBOL TABLE RECORD   <record for GLOBAL%P>
+         MODULE=GLOBAL     COUNT=     9
+         FIRST BLOCK=   5  NUMBER OF BLOCKS=   1
+
+
+
+         SYMBOL TABLE
+         NAME       VALUE NAME       VALUE NAME       VALUE
+         EXIT       10F12 ENTRY      10000 .          20200
+
+
+
+
+
+
+
+
+
+
+                                           76                  Tools & Utilities
+                                    NIB File Format             October 19, 1982
+
+
+
+
+
+
+                             APPENDIX I.   NIB File Format
+
+
+
+             A NAD Image  Binary file is  divided into sections  called records.
+        For efficient utilization of PDP I/O, all records must start on  a block
+        boundary.  A block is a group of 200 octal 36 bit words.
+
+             The first  block (block  0) on a  file must  contain the  first (or
+        only) "ID" record.  This  record contains (among other other  things) an
+        index to all other records in the file.  This index is a two  word entry
+        specifying the record type and block address for the start of the record
+        as well as some type dependent information.  The first two words of each
+        record are the  record header.  This record  header is an exact  copy of
+        the record index  from the ID record.   This allows a certain  amount of
+        error checking.
+
+             In  the   record  format  descriptions   which  follow,   the  form
+        "X Y/Z,Y/Z,..." is used to indicate fields of Y decimal bits of  value Z
+        starting at octal  word address X.   X is relative  to the start  of the
+        record.  If value  Z is equal  to "**" it is  an undefined value  and is
+        reserved for future use.
+
+             The following abbreviations are used:
+
+                RTYPE   record type
+
+                U       undefined bit (1=undefined)
+
+                TDF     type dependent field
+
+                BAD     block address
+
+                PAD     physical address
+
+                VAD     virtual address
+
+                BCNT    byte count
+
+             A record header is defined as follows.
+
+                0       4/RTYPE, 12/BAD, 20/TDF
+
+                1       36/TDF
+
+
+
+
+
+
+                                           77                  Tools & Utilities
+                                    NIB File Format             October 19, 1982
+
+
+                             I.1  ID Record (1 block long)
+
+
+                0       4/1, 12/BAD, 20/**      ID header
+                                                BAD=0 for first ID record
+                1       36/psa                  program start address,
+                                                minus if undefined
+                2       36/date                 creation date (Sixbit)
+                3       36/time                 creation time in msec
+                4       36*2/username           Sixbit username for this
+                                                file.  If first word is 0,
+                                                2nd word is the AUN, i.e.,
+                                                (GAN,,PPN) in binary.
+                6       36/filename             in Sixbit
+                7       18/extension,18/**      in Sixbit
+                10      36*2/author             Sixbit username of creator
+                12      36*2/record index       format as in record headers
+                        ...     more indexes
+                        ...     terminated by a zero word
+                176     36/0                    always zero
+                177     36/BAD of next ID record or zero if none
+
+             Any  additional ID  records have  the same  format.   The following
+        should be noted.
+
+           1.  The  PSA (if defined)  is always contained  in the block  zero ID
+                      record.   All  other  ID records  should  contain  a minus
+                      value.
+           2.  Creation  date and time  and the author  field will  be different
+                      from previous values only if this ID record marks appended
+                      information.
+           3.  The filename field may  be different if the file was  renamed and
+                      an append was performed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           78                  Tools & Utilities
+                                    NIB File Format             October 19, 1982
+
+
+
+
+
+
+
+
+                                I.2  Memory Image Record
+
+
+                0       4/2, 12/BAD, 20/PAD
+                1       15/BCNT, 1/U, 20/VAD
+                2       36/data         image or compression data
+                        ...
+                n       36/data
+
+             Where:
+
+           image data is 4*(1/0,8/data byte)
+           compression data is 1/1,8/byte1,1/0,8/byte2,18/repeat count
+           n  = (BCNT+3)/4  -  ([sum i=1,m](repeat  count(i) -1))/2  (where  m =
+                      number of compression words in record)
+           U = 0 if VAD is defined, otherwise U = 1
+
+             A memory image record may span block boundaries.
+
+
+
+
+
+
+                                I.3  Symbol Table Record
+
+
+                0       4/3, 12/BAD, 20/cnt
+                1       36/module
+                2       first symbol table word
+                        ...
+                cnt+1   last symbol table word
+
+             Where:
+
+           module  is a  sixbit module  name  or the  number of  words  of state
+                      information (currently 128)
+           cnt is  the number of  words in  the record less  two for  the header
+                      words.  A symbol table record with no data will have cnt =
+                      0.
+
+
+
+
+
+             The state information entry, if available, is the first entry after
+        the header.  It contains the following information.
+
+                                           79                  Tools & Utilities
+                                    NIB File Format             October 19, 1982
+
+
+                              I.4  State Information Entry
+
+
+                0       36/state information version, currently SIXBIT/022779/
+                1       36/number of segment being assembled into
+                2       36/program counter for segment 0
+                        ...
+                17      36/program counter for segment 15
+                18      36/number of module being assembled into
+                19      36/module mask
+                20      36/sixbit name of module 0 or 0 if undefined
+                        ...
+                55      36/sixbit name of module 35 or 0 if undefined
+                56      36/origin of module 0 if defined
+                        ...
+                81      36/origin of module 35 if defined
+                82      36/default X2 set by US statement for module 0
+                        ...
+                127     36/default X2 set by US statement for module 35
+
+             All symbol entries are a multiple of three words in length  and all
+        entries other than macro definitions are exactly three words long.
+
+             There are  four types of  entries: opcodes, macros,  defined symbol
+        and undefined symbol.
+
+             In all entries, the first word contains a module number in bits 12-
+        17 and the second word contains a sixbit symbol name, left justified.
+
+
+
+
+
+
+                                   I.5  Opcode Entry
+
+
+                0       1/0, 5/**, 6/optype, 6/0, 18/**
+                1       36/opcode name
+                2       2/**, 16/opcode value, 18/**
+
+             Where:
+
+           optype is the type of the opcode and has values 1-9
+
+
+
+
+
+
+
+
+
+
+                                           80                  Tools & Utilities
+                                    NIB File Format             October 19, 1982
+
+
+                                    I.6  Macro Entry
+
+                0       1/0, 11/**, 6/2, 18/**
+                1       36/macro name
+                2       18/**, 9/m, 9/nargs
+                3       first word of macro text
+                        ...
+                m+2     last word of macro text
+
+             Where:
+
+           m is the number of words of macro text and is a multiple of three
+           nargs is the number of dummy arguments.
+
+             The macro text ends with the character pair control-C,  null. Dummy
+        arguments in the  text appear as  the character pair  contol-B, argument
+        number.
+
+
+
+
+
+
+                               I.7  Defined Symbol Entry
+
+
+                0       1/0, 11/**, 6/module number, 18/**
+                1       36/symbol name
+                2       36/symbol value
+
+
+
+
+
+
+                              I.8  Undefined Symbol Entry
+
+
+                0       1/1, 11/**, 6/module, 18/**
+                1       36/symbol name
+                2       36/0
+
+             Other record types will be defined as the need arises.
+
+
+
+
+
+
+
+
+
+
+
+                                           81                  Tools & Utilities
+                        CONVENTIONS FOR NAD - DDT COMMUNICATIONSOctober 19, 1982
+
+
+
+
+
+
+                APPENDIX II.   CONVENTIONS FOR NAD - DDT COMMUNICATIONS
+
+
+
+             A program on the PDP-10 (such as NAD) can build a circuit to DDT in
+        a specific slot on a  Tymnet Engine.  Once this circuit has  been built,
+        it  can enter  Binary-Mode-Transfers (via  the "C"  command).   While in
+        binary-mode, information is transmitted in an abbreviated form.
+
+             The conventions used are  different, depending on the  direction of
+        transfer.
+
+
+
+
+
+
+                                 II.1  PDP10 TO ENGINE
+
+
+           81 -  FLUSH CHAR.  Will  cause hand-shake char  to be sent  by Tymnet
+                      Engine.  The Engine then waits for command.  (Only sent in
+                      response to flush request originating at Engine.)
+           84 - "0" FILL.  Next data character contains count of 00 bytes.
+           85 - "1" FILL.  Next data character contains count of FF bytes.
+           80 - ESCAPE CHAR.  Next byte is XOR with 40--the result is data.  The
+                      only data characters presently requiring escape are:
+
+        80      ESCAPE
+        81      FLUSH
+        83      
+        84      "0" FILL
+        85      "1" FILL
+        8F
+        03      ZAPPER
+        0F      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                           82                  Tools & Utilities
+                        CONVENTIONS FOR NAD - DDT COMMUNICATIONSOctober 19, 1982
+
+
+                                 II.2  ENGINE TO PDP10
+
+
+           81 - Requests  a flush char from  the PDP10, then all  bytes received
+                      will be ignored until the flush char is received.
+           80 -  ESCAPE CHAR  - The  following table  indicates meaning  of next
+                      byte:
+
+        00      DATA CHAR 80.
+        01      DATA CHAR 81.
+        02      HAND SHAKE - Tymnet Engine waits for a command.
+        03      ILLEGAL COMMAND.
+        04      ILLEGAL INSTRUCTION AT:
+                        followed by 4 bytes of address.
+        05      BREAKPOINT ENCOUNTERED
+                        followed by 1 byte BP number.
+        06      ADDRESS OUT OF RANGE (from G or B).
+        07      BREAKPOINT NUMBER OUT OF RANGE (from B).
+        08      NO BREAKPOINT TO PROCEED FROM (from P).
+        09      MEMORY OUT OF BOUNDS (from R or W).
+        0A      ILLEGAL REGISTER NUMBER (from R or W).
+        0B      DISK ERROR (from L or S)
+                        followed by 2 bytes of status.
+        0C      INVALID NUMBER (should never happen).
+        0D      INCORRECT BOUNDS (from M).
+        0E      BAD SEARCH LENGTH (from X or Y).
+        0F      BAD SEARCH BOUNDARY (from X or Y).
+        10      ILLEGAL SVC EXECUTED.
+        11      ILLEGAL MEMORY REFERENCE BY OUT-SVC.
+        12      PARITY ERROR.
+        13      ILLEGAL MEMORY REFERENCE BY USER PROGRAM.
+        14      LOGGING OFF?
+        15      JUMP OUT OF BOUNDS.
+        16      SLOT ALREADY CONNECTED.
+        17      ILLEGAL INSTRUCTION IN CONTROLLED CODE.
+        18      BREAKPOINT ALREADY EXISTS THERE.
+        19      DISPATCHER CRASH.
+        1A      BAD 'M' ARGUMENTS.
+        1B      WE ALREADY HAVE USE OF SPY...ABORTING.
+        1C      ABORTING.
+        1D      INSUFFICIENT LICENSE.
+        1E      FROZEN!
+        1F      MAC NOT SET UP CORRECTLY.
+        20      ABORTING--AVAILABLE SPACE EXCEEDED.
+        21      DISC AREA SAVE PROTECTED.
+
+
+
+
+
+
+
+
+
+                                           83                  Tools & Utilities
+                                         INDEX                  October 19, 1982
+
+
+
+
+        '%2' COMMAND, DEBUGGER  30            DDT MAC INITIALIZATION FOR
+        '%4' COMMAND, DEBUGGER  30               SLOT  39
+        '%A' COMMAND, DEBUGGER  27            DDT MEMORY SEARCHES  40, 43, 43
+        '%I' COMMAND, DEBUGGER  30            DDT PROGRAM STEPPING  41
+        '%M' COMMAND, DEBUGGER  30            DDT READ COMMAND  44
+        '%N' COMMAND, DEBUGGER  30            DDT SLOT CONNECTION  39
+        '%S' COMMAND, DEBUGGER  30            DDT SLOT DISCONNECTION  40
+        ''' COMMAND, DEBUGGER  29             DDT WRITE COMMAND  44
+        ':' COMMAND, DEBUGGER  29             DDT-DEBUGGER COMMUNICATIONS  37
+        ';%' COMMAND, DEBUGGER  31            DDT:  EXAMINING MEMORY  41
+        ';(' COMMAND, DEBUGGER  31            DDT:  EXAMINING PROGRAM STATUS  42
+        ';)' COMMAND, DEBUGGER  31            DDT:  EXAMINING REGISTERS  41
+        ';2' COMMAND, DEBUGGER  30            DDT:  MODIFYING MEMORY  42
+        ';4' COMMAND, DEBUGGER  30            DDT:  PROCEEDING FROM A
+        ';A' COMMAND, DEBUGGER  26               BREAKPOINT  41
+        ';I' COMMAND, DEBUGGER  30            DDT: MODIFYING REGISTERS  43
+        ';M' COMMAND, DEBUGGER  30            DEBUGGER  see NAD
+        ';N' COMMAND, DEBUGGER  30            DEBUGGER, NAD  24, see also DDT
+        ';S' COMMAND, DEBUGGER  30            DEBUGGER-DDT COMMUNICATIONS  37
+        ';[' COMMAND, DEBUGGER  28            DISCONNECTING A SLOT  40
+        ';\' COMMAND, DEBUGGER  28            DISCONNECTION FROM DDT  43
+        ';]' COMMAND, DEBUGGER  28
+        ';^' COMMAND, DEBUGGER  27            EI DIRECTIVE, NAD  19
+        '=' COMMAND, DEBUGGER  29             ELSE DIRECTIVE, NAD  18
+        '?' COMMAND, DEBUGGER  26             EM DIRECTIVE, NAD  13
+        '[' COMMAND, DEBUGGER  28             END DIRECTIVE, NAD  20
+        '\' COMMAND, DEBUGGER  28             EQ DIRECTIVE, NAD  9
+        ']' COMMAND, DEBUGGER  28             ER DIRECTIVE, NAD  19
+        '_' COMMAND, DEBUGGER  29             ERRCNT DIRECTIVE, NAD  10
+                                              EXECUTING A PROGRAM UNDER DDT  39
+        AC DIRECTIVE, NAD  18                 EXITING NAD  34
+        ASSEMBLER  see NAD                    EXPRESSIONS, NAD  7
+
+        BC DIRECTIVE, NAD  17                 FO DIRECTIVE, NAD  13
+        BND DIRECTIVE, NAD  11
+        BREAKPOINTS, DDT  39                  GATEWAY USAGE  37
+        BRINGING A SLOT ONLINE  39            GENERATION, ISIS  33
+        BS DIRECTIVE, NAD  16                 GL DIRECTIVE, NAD  10
+                                              GLOBAL  see GL
+        CODE ASSEMBLY  2, 26
+        COMMAND FILE  3                       HC DIRECTIVE, NAD  17
+        COMPUTED SYMBOLS, NAD  5              HS DIRECTIVE, NAD  17
+        CONDITIONAL ASSEMBLY, NAD  18
+        CONNECTING A SLOT  39                 IF DIRECTIVE, NAD  18
+        CURGMT DIRECTIVE, NAD  10             INITIALIZATION OF MAC FOR SLOT  39
+                                              INSTRUCTIONS, MACHINE  21
+        DATA ALLOCATION, NAD  17              INTER-NETWORK COMMUNICATIONS  37
+        DDT  39                               INVOKING NAD  2
+        DDT BREAKPOINTS  39
+        DDT EXECUTION  39                     KILL DIRECTIVE, NAD  11
+        DDT INITALIZATION  40
+
+                                           84                  Tools & Utilities
+                                         INDEX                  October 19, 1982
+
+
+
+
+        LINE EDITING  25                      SYMBOLS, NAD  4
+        LINENO DIRECTIVE, NAD  9
+        LIST DIRECTIVE, NAD  14               TAKING A SLOT OFFLINE  40
+        LISTINGS, NAD  13, 31, 31             TEXT DATA ALLOCATION, NAD  18
+        LO DIRECTIVE, NAD  13                 TITLE DIRECTIVE, NAD  15
+        LOADII  53
+                                              UN DIRECTIVE, NAD  10
+        MAC INITIALIZATION FOR SLOT  39       UNCNT DIRECTIVE, NAD  10
+        MACHINE INSTRUCTIONS  21
+        MACRO DIRECTIVE, NAD  22              WC DIRECTIVE, NAD  17
+        MERLIN (MERGE AND LINK ISIS           WRITE COMMAND, DDT  44
+           NODES)  49                         WS DIRECTIVE, NAD  17
+        MO DIRECTIVE, NAD  12
+        MODULE, SYMBOL  12                    XC DIRECTIVE, NAD  17
+
+        NAD  2
+        NAD COMPUTED SYMBOLS  5
+        NAD DEBUGGER  24
+        NAD EXPRESSIONS  7
+        NAD NUMBERS  4
+        NAD OPERATORS  5
+        NAD SYMBOLS  4
+        NADVER DIRECTIVE, NAD  10
+        NIBDMP  74
+        NODE ASSEMBLER DEBUGGER  2, see
+           NAD
+        NOLIST DIRECTIVE, NAD  14
+        NOTTL DIRECTIVE  16
+        NUMBER DIRECTIVE, NAD  9
+        NUMBERS, NAD  4
+
+        OFFLINE, TAKING A SLOT  40
+        ONLINE, BRINGING A SLOT  39
+        OPERATORS, NAD  5
+        ORG DIRECTIVE, NAD  11
+
+        QUIT DIRECTIVE, NAD  20
+
+        RA DIRECTIVE, NAD  20
+        RADIX, DEBUGGER  25
+        RADIX, NAD  8, 20
+        RE DIRECTIVE, NAD  19
+        READ COMMAND, DDT  44
+        REMARK DIRECTIVE, NAD  9
+
+        SC DIRECTIVE, NAD  18
+        SEG DIRECTIVE, NAD  12
+        SEGMENT  12
+        SLOT MAC INITIALIZATION  39
+        STORAGE ALLOCATION, NAD  16
+        SUBTTL DIRECTIVE, NAD  16
+
+                                           85                  Tools & Utilities
+    | ­
