@@ -1,0 +1,145 @@
+PROCEDURE SEL.LINE.ITEM
+
+%--------------------------------------------------------------------------
+
+  Name: SEL.LINE.ITEM        Author: Mary Winslow    Date: 01/25/82
+
+Purpose:  This is a selectable inquiry screen for use in demonstrating the
+        Screen Generator in the MAGNUM Maintenance and Implementation class.
+
+Relations Referenced: SO.LINE.ITEM
+
+Relations Affected: SO.LINE.ITEM but only when LINE.ITEM.SEL procedure is
+        called.
+
+----------------------------------------------------------------------------%
+
+
+MAIN.LOOP:
+BEGIN % selectable line item %
+
+CONTROLS FOR RELATION
+  CONCURRENT UPDATE
+
+INCLUDE TEXT 'CRT.CONTROLS'
+INCLUDE TEXT 'SEL.ITEM.LIB'
+INCLUDE TEXT 'LINE.ITEM.SEL'
+
+DISP.MASK:
+DISPLAY SEL.ITEM
+
+  BEGIN % display %
+
+  APPLY DISP.SEL.ITEM
+  LOOP1:
+  BEGIN % loop1 %
+
+    FOR EACH SO.LINE.ITEM VIA (SALES.ORD.NO)
+    BEGIN % for each line item %
+
+      APPLY WL.SEL.ITEM
+      IF SCREEN.FULL EQ 'Y'
+        THEN
+        FUNCT.KEY.LOOP:
+            BEGIN % funct.key.loop %
+	      TYPE TO TERMINAL ERROR.LINE, 'TYPE FUNCTION / FOR MORE'
+              SET.CURSOR SALES.ORD.NO OF SEL.ITEM
+	      INPUT FUNCTION.KEY
+              CONDITIONAL ON FUNCT.KEY
+                BEGIN % conditional %
+                    FUNCT.T:
+                      BEGIN % select %
+                          APPLY PROCESS.SEL.ITEM
+                          IF EDIT.CANCELED EQ 'Y'
+                            THEN REPEAT FUNCT.KEY.LOOP
+                          IF SELECT.SEL.ITEM EQ 'Y'
+                            THEN 
+                              BEGIN % move the fields so they can be
+                                      passed as parameters later %
+                                  MOVE SALES.ORD.NO 
+                                    TO SALES.ORD.NO OF PROCEDURE
+                                  FINISH DISP.MASK
+                              END % of move the key fields %
+                            ELSE FINISH FUNCT.KEY.LOOP
+                      END % of select %
+                    FUNCT.R:
+                      BEGIN % restore screen to current values %
+                          APPLY RESTORE.SEL.ITEM
+                          REPEAT LOOP1
+                      END % of restore %
+                    FUNCT.D:
+                      BEGIN % clear to defaults %
+			  TYPE TO TERMINAL ERROR.LINE
+                          APPLY DEFAULT.SEL.ITEM
+                          REPEAT DISP.MASK
+                      END % of clear %
+                    FUNCT.Q: FINISH DISP.MASK
+                END % of conditional %
+                ELSE TYPE TO TERMINAL ERROR.LINE, 'Invalid function key ',
+                       'entered', BELL, HOME
+                REPEAT FUNCT.KEY.LOOP
+            END % of funct.key.loop %
+    END % of for each line item %
+
+  TYPE TO TERMINAL SET.PROTECT.MODE.ON, ERROR.LINE
+
+  FUNCT.KEY.LOOP2:
+  BEGIN % funct.key.loop2 %
+    SET.CURSOR SALES.ORD.NO OF SEL.ITEM
+    INPUT FUNCTION.KEY
+    CONDITIONAL ON FUNCT.KEY
+      BEGIN % conditional 2 %
+          FUNCT.T:
+            BEGIN % retrieve %
+                APPLY PROCESS.SEL.ITEM
+                IF EDIT.CANCELED EQ 'Y'
+                  THEN REPEAT FUNCT.KEY.LOOP2
+                IF SELECT.SEL.ITEM EQ 'Y'
+                  THEN 
+                    BEGIN %  pass to next procedure %
+                        MOVE SALES.ORD.NO TO SALES.ORD.NO OF PROCEDURE
+                                % only move order no since the line no is
+                                  already at procedure level when the
+                                  attributes of PROCESS are applied %
+                        FINISH DISP.MASK
+                    END % of pass to next procedure %
+                  ELSE
+                    BEGIN % done selecting %
+                        LET SCREEN.FULL = 'Y'
+                        LET CL.SEL.ITEM = DEFAULT
+                        REPEAT LOOP1
+                    END % of done selecting %
+            END % of retrieve %
+          FUNCT.R:
+            BEGIN % restore screen to current values %
+                APPLY RESTORE.SEL.ITEM
+                REPEAT LOOP1
+            END % of restore %
+          FUNCT.D:
+            BEGIN % redisplay %
+                LET SCREEN.FULL = 'N'
+                APPLY DEFAULT.SEL.ITEM
+		TYPE TO TERMINAL ERROR.LINE
+                REPEAT DISP.MASK
+            END % of redisplay %
+          FUNCT.Q: FINISH DISP.MASK
+      END % of conditional 2 %
+      ELSE TYPE TO TERMINAL ERROR.LINE, 'Invalid function key entered',
+              BELL, HOME
+      REPEAT FUNCT.KEY.LOOP2
+  END % of funct.key.loop2 %
+
+  END % of loop1 %
+
+END % display %
+
+IF SELECT.SEL.ITEM EQ 'Y'
+  THEN 
+    BEGIN % run fix routine and the redisplay inquiry screen %
+        APPLY LINE.ITEM.SEL
+        MOVE DEFAULT TO SALES.ORD.NO, LINE.NO, SELECT.SEL.ITEM
+        REPEAT MAIN.LOOP
+    END % of run fix routine %
+
+
+END % of selectable line item %
