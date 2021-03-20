@@ -1,0 +1,331 @@
+;       THIS PROGRAM IS THE SOLE PROPERTY AND CONFIDENTIAL
+;       INFORMATION OF TYMSHARE, INC., AND MAY NOT BE
+;       COPIED IN WHOLE OR IN PART OR DISCLOSED TO ANY
+;       THIRD PARTY WITHOUT THE PRIOR WRITTEN CONSENT OF
+;       TYMSHARE.
+;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;               ALOAD.MAC          WRITTEN BY BILL SCHEIBLE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;       MACRO SUBROUTINES FOR USE WITH NETGEN.FTF
+;       THE NETWORK DOWNSTREAM LOADING PROGRAMS
+;
+;       SUPPLIIES VARIOUS PACKING AND UNPACKING OPERATIONS,
+;       8-LEVEL CHARACTER READING, AND A FEW OTHER THINGS.
+;       ALSO HAS ALL THE AUX CIRCUIT CONTROL AND I/O DRIVERS
+;
+TITLE ALOAD
+; WD32 SPLITS A 36BIT WD INTO TWO 16BIT WDS. IT USES
+;  THE RIGHT 2 BITS AS CONTROL BITS. IF ON,WRD IS VAILD TO ASSEMBLE
+;       CALL WD32(WRD,HWRD1,HWRD2)
+        ENTRY WD32,EXPAND,MDATE
+WD32:   0
+        MOVE 3,@0(16)
+        LSHC 3,-^D20
+        TRNN 4,400000
+        TLO 3,400000
+        MOVEM 3,@1(16)
+        SETZ 3,0
+        LSHC 3,^D16
+        TLNN 4,40000
+        TLO 3,400000
+        MOVEM 3,@2(16)
+        JRA 16,3(16)
+;
+; WD24 TAKES 3 36BIT WORDS AND PACKS THE RT 24BITS OF EACH INTO
+;       2 36BIT WORDS.
+;       CALL WD24(WD24A,WD24B,WD24C,WD36A,WD36B)
+        ENTRY WD24
+WD24:   0
+        MOVE 3,@0(16)
+        AND 3,[OCT 77777777]
+        LSH 3,^D12
+        MOVE 4,@1(16)
+        AND 4,[OCT 77777777]
+        SETZ 5,
+        LSHC 4,-^D12
+        IOR 3,4
+        MOVEM 3,@3(16)
+        MOVE 3,@2(16)
+        AND 3,[OCT 77777777]
+        IOR 3,5
+        MOVEM 3,@4(16)
+        JRA 16,5(16)
+;
+; WD16 SPLITS A 16BIT WRD INTO TWO 8BIT WORDS AND DOES THE ADDITIVE
+;       CHECKSUM..ALSO DOES A BARBER POLE CHECKSUM
+;       CALL WD16(WRD,HWRD1,HWRD2,CKSUM,BPSUM)
+        ENTRY WD16
+WD16:   0
+        MOVE 1,@0(16)
+        XORM 1,@3(16)
+        SETZ  3,0
+        SETZ 4,0
+        MOVE 3,@4(16)   ;GET THE CURRENT BARBERPOLE
+        LSHC 3,-^D15
+        LSHC 4,-^D20   ;GET EVERYTHING RIGHT JUSTIFIED....HEE HEE
+        IOR  3,4        ;THIS SHOULD PUT THINGS BACCK TOGETHER AGAIN
+        XORM 1,3        ;AND OR THE WHOLE THING TOGETHER
+        AND   3,[177777]        ;SET UP FOR 16 BITS ONLY
+        MOVEM 3,@4(16)
+        LSHC 1,-^D8
+        MOVEM 1,@1(16)
+        SETZ 1,0
+        LSHC 1,^D8
+        MOVEM 1,@2(16)
+        JRA 16,5(16)
+;
+;
+;               EXPAND PICKS UP THE PDP-10 LENGTH OF THE REL FILE
+;
+EXPAND: 0
+        HLROS   ,@0(16)
+        SETCMM  ,@0(16)
+        AOS     ,@0(16)
+        JRA     16,1(16)
+
+;
+;               MDATE RETURNS THE DATE
+;
+MDATE:  0
+        DATE    0,
+        JRA     16,1(16)
+;
+;
+;       ROUTINE TO BUILD A CIRCUIT...PASSES BACK THE PORT
+;       FOR THE REASON FOR FAILURE
+        ENTRY BCIR
+BCIR:   0
+        MOVE    5,[ POINT  7,0]
+        HRR     5,0(16)
+        MOVE    6,[POINT   7,LOGIN]
+        HRRZI   7,25
+;
+BCOPY:  ILDB    4,5
+        CAIE    4,40
+        IDPB    4,6
+        JUMPE   4,BC
+        SOJG    7,BCOPY
+BC:     HRRZI   5,LOGIN
+        CREAUX 5,       ;BUILD THE CIRUCIT
+        JRST    BCIR1   ;ERROR
+        HRRZM   5,@1(16)        ;SEND BACK THE PORT NUMBER
+        JRA     16,3(16)        ;NORMAL RETURN
+BCIR1:  MOVEM  5,@2(16)        ;SEND BACK ERROR CODE
+        JRA     16,3(16)        ;AND RETURN
+;
+LOGIN:  BLOCK   5
+;
+;       ROUTINE TO ZAP A CIRCUIT
+        ENTRY ZAP
+ZAP:    0
+        MOVE    5,@0(16)
+        ZAPCIR  5,
+        JRA     16,0(16)
+;
+;
+;
+;
+;       LITTLE ROUTINE TO SEE WHO IS RUNNING WHAT
+;       
+        ENTRY WHOYOU
+WHOYOU: 0
+        MOVE    5,[36,,-1]
+        FRMOP   5,LO1
+        JUMPA   YOUNOT  ;ERROR
+;
+        MOVE    5,LO2
+        TDON    5,[3700,,0]	; TID = 5 bits, 6th bit is HDX
+        JUMPA   YOUNOT
+        SETZM   5,              ;CLEAR OUR ACC 5
+        MOVE    5,[-25]         ;LOOKING FOR A PPN...
+        GETTAB  5,              ;GO GET IT
+        JFCL    0               ;INCASE WE GET A SKIP RETURN
+        CAME    5,[21477,,175306];ARE WE LOCATED IN NETCON??
+        JRST    YOU2            ;NOPE...HOW ABOUT CES
+        JRA     16,1(16)
+YOU2:   CAME    5,[21477,,452022];ARE WE NCF
+        JRST    YOU3
+        JRA     16,1(16)
+YOU3:   CAME    5,[21477,,125475];ARE WE PAPDEV
+        JRST    YOU4
+        JRA     16,1(16)
+YOU4:   CAME    5,[21477,,632362];ARE WE TNT
+        JRST    YOU5
+        JRA     16,1(16)
+YOU5:   CAME    5,[21477,,353503];ARE WE MURTAUGH
+        JRST    YOU6
+        JRA     16,1(16)
+YOU6:   CAME    5,[21477,,147773];ARE WE NSSC
+        JRST    YOUNOT
+        JRA     16,1(16)
+YOUNOT: MOVE    5,[-1]
+        MOVEM   5,@0(16)        ;RETURN THE -1
+        JRA     16,1(16)
+LO1:    1,,LO2
+LO2:    0
+;
+;
+;
+;
+;
+;       OUTDAT..SENDS OUT 2 CONSECUTIVE 8 BITS CHARS
+;       CALL AS (PORT,ID1,ID2,RES)
+;       IF RES IS NOT 0..THEN SOME KIND OF ERROR OCCURRED..
+;       I'M NOT SURE OF THE ERROR (SKIP TYPE)..OR IF IT WILL
+;WORK...WORRIED ABOUT ZAPPED CIRCUITS
+;
+;
+        ENTRY OUTDAT
+OUTDAT: 0
+        HRLZ    6,@0(16)        ;PUT THE PORT NUMBER IN 6
+        HRR     6,[0,,3]        ;TYPE 3 REQUEST..IMAGE OUT
+        MOVE    5,@1(16)        ;LOAD UP FIRST BYTE
+        AUXCAL  6,5             ;SEND IT OUT
+        MOVE    5,@2(16)        ;GET THE 2ND BYTE
+        AUXCAL  6,5             ;AND SEND IT OUT
+        JRA     16,3(16)        ;AND RETURN
+;
+;
+;       ROUTINE TO CHECK AND SEE IF AUX CIRCUIT STILL THERE
+;
+;       CALL AS CHECK(RES,ADDRESS OF TABLE)
+;
+        ENTRY CHECK
+CHECK:  0
+        MOVE    6,[-1,,TABS]
+        AUXRED  6,
+        JRST    CK1             ;WE GOT AN ERROR
+        CAME    6,[0]           ;0 MEANS NO PORT
+        JRA     16,1(16)        ;JUST RETURN IF EVERYTHING IS COOL
+        MOVE    5,[-1]
+        MOVEM   5,@0(16)        ;SEND BACK A -1
+        JRA     16,1(16)        ;BYE BYE
+CK1:    MOVE    5,[-1]
+        MOVEM   5,@0(16)
+        JRA     16,1(16)
+TABS: BLOCK 3
+;
+;       END OF CHECK ROUTINE
+;
+;
+;       
+;
+;
+;
+;       OK..ROUTINE TO GET ONLY ONE CHAR IN..RATHER SLOPPY I THINK
+;       CALL AS GETCH (PORT,CHAR)
+;
+;
+        ENTRY GETCHR
+GETCHR: 0
+        SETZ    5,0            ;MAKE SURE ACC 5 IS CLEAN
+        HRLZ    6,@0(16)        ;GET THE PORT NUMBER
+        HRR     6,[0,,10]       ;CHECK TO SEE IF SOMETHING THERE
+        AUXCAL  6,5             ;RESULT IN ACC 5
+        JRST    INO1            ;NO DATA
+        HRR     6,[0,,1]
+        AUXCAL  6,5
+        JFCL    0
+        HRRZM   5,2             ;SLAP IT AROUND
+        AND     2,[377]         ;8 BITS ONLY!!
+        HRRZM   2,@1(16)        ;AND SEND IT BACK
+        JRA     16,2(16)        ;AND SPLIT
+INO1:   MOVE    5,[-1]          ;SET UP FRO ALL 1'S
+        HRROM   5,@1(16)        ;SET IT BACK FOR AN ERROR
+        JRA     16,2(16)        ;BYE!!!!
+;
+;
+;
+;       OK...TAKES WHAT WE ARE ABOUT TO RECEIVE...
+;       AND..DOES THE CHECKSUMMING...
+;       AMEN
+;       AMEN
+;
+;
+;       CALL AS GETCKS(WORD,CHECKSUM,BARBERPOLE)
+;
+        ENTRY GETCKS
+GETCKS: 0
+        SETZ    2,0
+        SETZ    3,0
+        SETZ    4,0     ;CLEAR UP EVERYTHING
+        MOVE    2,@0(16)        ;GET THE DATA
+        MOVE    3,@1(16)        ;GET THE CURRENT VERT CHECKSUM
+        XOR     3,2     
+        AND     3,[177777]      ;MAKE SURE WE ONLY HAV 16 BITS
+       MOVEM   3,@1(16)        ;PUT IT BACK
+        MOVE    3,@2(16)        ;GET THE CURRENT BARBER POLE
+        LSHC    3,-^D15
+        LSH     4,-^D20
+        IOR     3,4             ;PUT THEM BACK TOGETHER AGAIN..
+        XOR     3,2             ;AND MERGE...
+        AND     3,[177777]
+        MOVEM   3,@2(16)
+        JRA     16,3(16)        ;AND RETRUN
+;
+;
+;       OUTPUT A SINGLE CHAR...
+;       CALL AS OUTONE(PORT,DATA)
+        ENTRY OUTONE
+
+OUTONE: 0
+        HRLZ    6,@0(16)        ;THE PORT NUMBER
+        HRR     6,[0,,3]        ;PACK IN THE REQUEST TYPE
+        MOVE    5,@1(16)        ;GET THE CHAR
+        AUXCAL  6,5             ;SEND IT OUT
+        JRA     16,0(16)        ;DON'T SEND ANYTHING BACK
+;
+;       ROTINE TO GO SLEEP FOR 1 SEC..AND WAKE IF CHAR
+;       SHOWS UP
+;       CALL AS     CALL DELAY (PORT)
+;
+;
+        ENTRY DELAY
+DELAY:  0
+        HRLZ    5,@0(16)        ;GET THE PORT NUMBER
+        LSH     5,^D9           ;PUT IN THE HIGH ORDER
+        IOR     5,[000130,,^D1000]   ;SLEEP FOR 1 SECOND AND INTERR ON CHAR INCOMING
+        HIBER   5,              ;GO TO IT
+        JRA     16,1(16)        ;ERROR RETURN..BAD NEWS
+        JRA     16,1(16)        ;NORMAL RETURN
+;
+;       ROUTINE TO PROVIDE THE SHORTEST POSSIBLE DELAY
+;
+        ENTRY   SDELAY
+SDELAY: 0
+        HRLZ    5,@0(16)
+        LSH     5,^D9
+        IOR     5,[130,,1]
+        HIBER   5,
+        JRA     16,1(16)
+        JRA     16,1(16)
+;
+;
+;
+
+;
+;
+;
+;
+;       ROUTINE TO READ THE FILE STATUS WORD FOR
+;       A SPECIFIED PORT.
+;
+;       FORTRAN CALL:
+;
+;       CALL GETCHN(PORT,STATUS)
+;
+;       RETURNS THE CHANNEL STATUS WORD IN STATUS
+;       IF STATUS = -1 A GETTABS ERROR HAS OCCURED
+;
+        ENTRY   GETCHN
+GETCHN: 0
+        HRLZ    3,@0(16)        ;PUT PORT IN LEFT
+        HRRI    3,-31           ;GETTABS TABLE 31
+        GETTAB  3,
+        SETO    3,              ;RETURN -1 IF ERROR
+        MOVEM   3,@1(16)        ;RETURN RESULT
+        JRA     16,2(16)        ;RETURN TO CALLER
+        END
+    
