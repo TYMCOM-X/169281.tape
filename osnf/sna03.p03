@@ -1,0 +1,518 @@
+::	PATCH FILE FILENAME: SNA03.P03
+::      Last time updated by  Ping Chu,  1/17/88
+::
+
+:1)  Patch name  :  SNABKP.PTH  or  SNA03.PAB
+:*   Patch at RELBP and QDIFSN for Back Pressure Problem
+:
+	RA	0
+RELBPL	EQ	0
+SETBPL	EQ	0A
+
+	LO	GBLDEF
+	LO	CBKDEF
+	LO	CMDLST
+	LO	ISISC
+	LO	OSCAN
+	LO	SNAPKG
+	LO	IFCNTL
+	LO	BSUB
+	LO	FRNTND
+	LO 	MAIN
+
+	PATCH(121787,1400,D/BONDAD,RELBP3+0A,,6)
+	J	PA1PTR,,		:JUMP TO PATCH
+
+	CONPATCH(RELBP1+12,,6)
+	NOP	0,0,0,0			:ACP IS NOT SUPPORTED
+
+	IF	TERMIF!VHRSUP
+	CONPATCH(LOGMB2+38,,6)
+	J	PA1LOG,,		:LOGON TIME CLEANING
+	EI
+
+	IF	TERMIF
+	CONPATCH(RSTTRM+38,,6)		:TIF ZAP CLEANING
+	J	PA1TRM,,
+	EI
+
+	IF	HOSTIF
+	CONPATCH(DSCHPR+26,,6)		:HIF ZAP CLEANING
+	J	PA1HPR,,
+	EI
+
+	CONPATCH(PA1PTR,,092)
+	CHI	RPORT,NPORT		:CHECK RPORT
+	JGE	RELBP1,,		:JUMP IF FINISHED
+	LHL	RDCB,PORTAB,RPORT,RPORT	:GET DCB POINTER
+	LHL	R4,DCBLKS+DCBLUC,RDCB,	:GET LUCTAB ENTRY
+	JE	RELBP2,,		:IF NO LUC ENTRY THEN RETURN
+	LIS	R0,0			:INIT PENDING LINK COUNTER TO ZERO
+	LHL	R2,LUCTAB+LUSNDR,R4,	:GET NWK TO SNA DATA QUEUE RELEASE PTR
+	LHL	R3,LUCTAB+LUSNDG,R4,	:GET NWK TO SNA DATA QUEUE GET PTR
+RELBP4
+	CR	R2,R3			:ANY PENDING CMD LINKS?
+	JE	RELBP3+24,,		:NO, RELEASE BKPRSSRE
+	AIS	R0,1			:YES, COUNT ONE MORE LINK PENDING
+	CHI	R0,RELBPL		:ARE THERE TOO MANY?
+	JG	RELBP2,,		:YES, DO NOT REL BKPR
+	LHL	R3,CMDBLK+CLPTR,R3,	:POINT TO NEXT BUFFER IN QUEUE
+	J	RELBP4			:GO CHECK IF DONE
+
+	IF	TERMIF!VHRSUP
+PA1LOG	SBT	RPORT,TOISIS,,		:CLEAN BACKPRESSURE
+	SBT	RPORT,FRISIS,,		:CLEAN BACKPRESSURE
+	J	LOGMB2+3E,,		:JUMP BACK
+	EI
+
+	IF	TERMIF
+PA1TRM	RBT	R1,ACP,,		:RESET ACTIVE PORT
+	SBT	R1,TOISIS,,		:CLEAN BACKPRESSURE
+	SBT	R1,FRISIS,,		:CLEAN BACKPRESSURE
+	J	RSTTRM+3E,,		:JUMP BACK
+	EI
+
+	IF	HOSTIF
+PA1HPR	RBT	R2,ACP,,		:RESET ACTIVE PORT
+	SBT	R2,TOISIS,,		:CLEAN BACKPRESSURE
+	SBT	R2,FRISIS,,		:CLEAN BACKPRESSURE
+	LA	R3,DETACH,,		:GET DETACH MESSAGE
+	J	DSCHPR+2E,,		:JUMP BACK
+	EI
+
+	ENDPATCH(RELEASE BACKPRESSURE)
+
+
+	PATCH(121787,1400,D/BONDAD,QDIFSN,,6)
+	J	PA1PTR,,		:JUMP TO PATCH
+
+	CONPATCH(PA1PTR,,76)
+	ST	R6,BBISAV,,		:SAVE RET REG
+	STM	R0,LURGSV,,		:SAVE ALL REGS
+	LHL	RDCB,LUCTAB+LUCDCB,R11,	:GET DCB PTR
+	JE	QDIFS2			:DONE IF NOT SET
+	LHL	R1,DCBLKS+DCBIPR,RDCB,	:GET PORT NUMBER
+	JE	QDIFS2			:DONE IF NOT SET
+	TBT	R1,FRISIS,,		:CHECK BACKPRSSRE
+	JE	QDIFS2			:DONE IF SET
+	LIS	R0,0			:INIT LINK CONTER
+	LHL	R4,LUCTAB+LUSNDG,R11,	:GET GET PTR
+	LHL	R5,LUCTAB+LUSNDR,R11,	:GET REL PTR
+QDIFS1	CR	R4,R5			:COMPARE
+	JE	QDIFS2			:DONE
+	LHL	R4,CMDBLK+CLPTR,R4,	:GET NEXT CMD LINK
+	AIS	R0,1			:INCR COUNTER
+	CHI	R0,SETBPL		:TOO MANY?
+	JL	QDIFS1			:CONTINUE IF NOT
+: BACK PRESSURE 
+	RBT	R1,FRISIS,,		:RESET NO BP INDICATOR
+	LHI	R2,NOSMSG		:GET APPLY BP MSG
+:SEND MESSAGE
+	LIS	R0,3			:GET MSG LENGTH
+	JAL	R4,SLOR,,		:START OUTPUT OF MSG
+	JAL	R4,ELOR,,		:END MSG OUTPUT
+QDIFS2	LM	R0,LURGSV,,		:RESTORE ALL REGISTERS
+	J	QDIFSN+6,,		:RETURN
+
+	ENDPATCH(SET BACKPRESSURE)
+
+
+	FO 	GBLDEF
+	FO	CMDLST
+	FO	DLCPRO
+	FO	CBKDEF
+	FO	ISISC
+	FO	SNAPKG
+	FO	BSUB
+	FO	IFCNTL
+	FO	OSCAN
+	FO	FRNTND
+
+
+
+:2)  Patch name :  VHRREG.P33  or  SNA03.PAC
+:*   Solution  -   To correct a coding error of a wrong index register.
+:*   No escalation. It is a problem found during NTD's testing.
+
+	IF	(VHRSUP)&(HOSTIF)
+	LO	SNAPKG
+	LO	CBKDEF
+	
+	PATCH(880105,1200,PING/CHU,H.LCFN+8,,4)
+	THI	R5,LUVHRF		:check if VHR
+	ENDPATCH(Correct a coding error of a wrong index register)
+
+	FO	CBKDEF
+	FO	SNAPKG
+	EI	(VHRSUP)&(HOSTIF)
+
+
+
+:3)  Patch name  :  TIFVHR.P33  or  SNA03.PAD
+:*   Solution  -  To use a correct index register when referening LUCTAB.
+:*   No escalation. It's found during NTD's testing.
+
+	IF	(TERMIF)&(VHRSUP)
+	LO	ISISC
+	LO	SNAPKG
+	LO	GBLDEF
+	LO	CBKDEF
+
+	PATCH(880105,1200,PING/CHU,LOGMB2+4E,,6)
+	LB	R0,LUCTAB+LUCVHR,R11,		:use R11 to index into LUCTAB
+	ENDPATCH(Use R11 to index into LUCTAB)
+	
+	FO	ISISC
+	FO	SNAPKG
+	FO	CBKDEF
+	FO	GBLDEF
+	EI	(TERMIF)&(VHRSUP)
+
+
+
+:4)  Patch name  :  STOLOG.P33  or  SNA03.PAE
+:*   Solution  -  If not a stored-logon mode, skip the logic of 
+:*   processing store logons.
+:*   No escalation. It's found during NTD's testing.
+
+	IF	TERMIF
+	LO	BSUB
+	LO	GBLDEF
+
+	PATCH(880105,1200,PING/CHU,LGNER0,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,20)
+	LIS	R0,D.STOR		:stored logon mode?
+	TBT	R0,DCBLKS+DCBMOD,RDCB,
+	JE	LGNER1,,		:no
+	JAL	R6,PTLBH,,		:resume original logic
+	LB	R7,DCBLKS+DCBTMP,RDCB,
+	J	LGNER0+0A,,
+
+	ENDPATCH(Test if stored logon mode is defined in TIF)
+
+	FO	BSUB
+	FO	GBLDEF
+	EI	(TERMIF)
+
+
+
+:5)  Patch name  :  LUCVTI.P33  or  SNA03.PAF
+:*   Redefine LUCVTI location for every LUCTAB.
+:*   No escalation. It's found during NTD's testing.
+
+	LO	GBLDEF
+	LO	CBKDEF
+	PATCH(880120,1400,PING/CHU,LUCTAB+2+LUCFST,,1)
+SAVORG	EQ	.
+PX	EQ	0
+PZ	EQ	0
+PQ	EQ	0
+	RE	NLINES
+PP	EQ	0
+	RE	MSTN|PQ|
+PY	EQ	0
+	RE	MLU|PQ||PP|
+	ORG	LUCTAB+2+PX*LUCLEN+LUCFST
+	IF	\LS|PQ||PP||PY|
+	BC	LS|PQ||PP||PY|^1
+	ELSE
+	IF	\G.SIZE
+	BC	G.SIZE^1
+	EI
+	EI
+PX	EQ	PX+1
+PY	EQ	PY+1
+	ER
+PZ	EQ	PZ+1
+PP	EQ	PP+1
+	ER
+PQ	EQ	PQ+1
+	ER
+
+:	If both VTI & VHR are available in the same slot,
+:	LUVHRF should also be set.
+
+PX	EQ	0
+PZ	EQ	0
+PQ	EQ	0
+	RE	NLINES
+PP	EQ	0
+	RE	MSTN|PQ|
+PY	EQ	0
+	RE	MLU|PQ||PP|
+	IF	VTISUP&LINK|PQ|
+	ORG	LUCTAB+2+PX*LUCLEN+LUCVTI
+	IF	\VT|PQ||PP||PY|
+	IF	VT|PQ||PP||PY|
+QQQQQQ	EQ	LUVTIF
+	ELSE
+QQQQQQ	EQ	0
+	EI
+	ELSE
+	IF	\G.VTI
+	IF	G.VTI
+QQQQQQ	EQ	LUVTIF
+	ELSE
+QQQQQQ	EQ	0
+	EI
+	ELSE
+QQQQQQ	EQ	0
+	EI
+	EI
+	IF	\SR|PQ||PP||PY|
+	IF	SR|PQ||PP||PY|
+QQQQQQ	EQ	QQQQQQ!LUSRQF
+	EI
+	ELSE
+	IF	\G.SRQ
+	IF	G.SRQ
+QQQQQQ	EQ	QQQQQQ!LUSRQF
+	EI
+	EI
+	EI
+	BC	QQQQQQ
+	EI
+PX	EQ	PX+1
+PY	EQ	PY+1
+	ER
+PZ	EQ	PZ+1
+PP	EQ	PP+1
+	ER
+PQ	EQ	PQ+1
+	ER
+
+	ORG	SAVORG
+	ENDPATCH(Redefine LUCVTI location for all LUCTABs)
+
+	FO	GBLDEF
+	FO	CBKDEF
+
+
+
+:6)  Patch name  -  XDDTDR.P33  or  SNA03.PAG
+:*   Problem - When using Extended DDT to display the content of the
+:*             dispatcher rings, the display has 'extra data' past
+:*             the end of each DATA message.
+
+        LO      STATUS
+	PATCH(880115,1030,J/MCKIERNAN,PA0PTR,,0A)
+INVP0M  SC      /??? 0000 /             : Literal for output
+	CONPATCH(XDRISI,,06)
+        J       PA1PTR,,                : Jump to patch area
+	CONPATCH(PA1PTR,,12)
+        CR      R15,R6                  : Resume original logic
+        JN      XDRISQ,,                : 
+        LHI     R0,20                   : Set display to BLANK
+        J       XDRISI+06,,             : Return
+
+	CONPATCH(XDR0C0+6,,6)
+        J       PA1PTR,,                : Jump to patch area
+	CONPATCH(PA1PTR,,12)
+        LR      R5,R2                   : Set up to print type
+        SVC     0B,INVP0M,,             : Output the literal
+        JAL     R11,XDPUT,,             : Output the type
+        AIS     R1,4                    : Move ring index
+        JR      R13                     : Return to XDRISM
+	ENDPATCH( Correct display of ring contents )
+
+        FO      STATUS
+
+
+
+:7)   Patch name : NEWLIN.P33  or  SNA03.PAH
+:*    Problem  -  When SNA HIF displays VTAM banner, it does not leave
+:*    the cursor at the end of the VTAM banner string, but it bumps the
+:*    cursor to the next row on the screen.
+:*    Solution -  If VTAM banner ends with NL, put an SF unprotected at
+:*    the previous row column 80, then bump the cursor to the next row.
+:*    If not, just leave the SF unprotected at the end of the last row
+:*    of VTAM banner, then move the cursor right next to it.
+:*    Escalation  70183,  Parker Haninfin
+
+	IF	HDPSUP
+	LO	SNAPKG
+	LO	GBLDEF
+
+	PATCH(880120,1500,PING/CHU,PATCH0,,01)
+CVFLAG	BS	1		:temp flag
+LASTNL	EQ	80		:last character of VTAM banner is an NL
+	ENDPATCH()
+
+
+	PATCH(880120,1200,PING/CHU,H.CVR9+22,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,0E)
+	CLHI	R0,NL.			:an NL ?
+	JE	H.CVRE			:yes
+	J	H.CVR9+2A,,
+	
+	CONPATCH(H.CVR9+42,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,1A)
+	LIS	R2,0
+	J	H.CVRB,,
+H.CVRE	XR	R6,R6			:clear R6
+	OHI	R6,LASTNL		:turn on the flag for the NL
+	STB	R6,CVFLAG,,
+	J	H.CVRA,,
+	ENDPATCH(Turn on flag if the last character of VTAM banner is an NL)
+
+
+	PATCH(880120,1200,PING/CHU,H.CVRA+0E,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,12)
+	LB	R4,LUCTAB+LULUW3,R9,
+	STB	R2,CURCOL,,
+	J	H.CVRA+14,,
+	ENDPATCH(Put an SBA at the end of the previous row)
+
+
+	PATCH(880120,1200,PING/CHU,H.CVRU+0E,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,2A)
+	LB	R6,CVFLAG,,
+	THI	R6,LASTNL
+	JNFS	H.CVRF			:last char is an NL
+	CR	R2,R1			:need to bump the row?
+	JLE	H.CVRX,,		:no
+	
+H.CVRF	NHI	R6,@LASTNL		:clear flag
+	STB	R6,CVFLAG,,
+	JAL	R4,NXTLNE,,
+	J	H.CVRU+16,,		:resume original logic
+
+	ENDPATCH(Display cursor at the end of VTAM banner)
+
+	FO	SNAPKG
+	FO	GBLDEF
+	EI	(HDPSUP)
+
+
+
+:8)  Patch name :  EVTLOG.P33  or  SNA03.PAI
+:*   Problem - Event Log Table does not keep track of correct information
+:*             because passing registers are not referenced correctly.
+:*   Ticket  40324,  Morgan
+
+	LO	GBLDEF
+	LO	BSUB
+	PATCH(880115,1500,PING/CHU,SEVLOG+0C,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,1E)
+	STB	R1,ELGTBL+ELGTYP,R8,		:R1 = event type
+	STB	R1,RPSTYP,,
+	STB	R3,ELGTBL+ELGDA1,R8,
+	STB	R3,RPSDA1,,
+	J	SEVLOG+1E,,			:resume original logic
+	ENDPATCH()
+
+	PATCH(880115,1500,PING/CHU,EVT0PR,,2)
+	NOPR	R4,R4
+
+	CONPATCH(EVT1PR+6,,4)
+	NHI	R4,0FF				:use NHI to get one byte
+
+	CONPATCH(EVT3PR+6,,4)
+	NHI	R4,0FF
+	ENDPATCH(Straighten out the Event Log Table)
+
+	FO	GBLDEF
+	FO	BSUB
+
+
+
+
+:9)   Patch name :  VHRPA1.P33  or  SNA03.PAK
+:*    Patch at H.RDFI to correct a coding error. This error caused  a
+:*    hanging problem. Also, for VHR, it will be better to check at 
+:*    H.RDFI, the LUCVHR byte and jump to H.RDFR if it was VHR.
+
+	IF	HDPSUP
+	LO	CBKDEF
+	LO	GBLDEF
+	LO	BBUFER
+	LO	SNAPKG
+
+	PATCH(011288,1030,H/SANATKAR,H.RDFI,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,20)
+	IF	VHRSUP
+	LB	R5,LUCTAB+LUCVHR,R9,		:GET VHR STATE BYTE
+	THI	R5,LUVHRF			:VHR LU?
+	JN	H.RDFR,,			:JUMP IF SO
+	EI
+	THI	R4,WCCKBR		:IS KEYBOARD RESTORE ON IN WCC
+	JN	H.RDFR,,		:JUMP IF SO
+	J	H.RDFI+8,,		:RETURN FROM PATCH
+	CONPATCH(H.RDFW,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,12)
+	BBLOAD	R5,BBUFER+MURUPT,R10,	:GET POINTER TO RU
+	STB	R4,BBUFER+1,R5,		:PUT WCC BACK IN BUFFER
+	J	H.RDFR,,		:JUMP TO CONTINUE
+	ENDPATCH(CHECK FOR VHR AT H.RDFI ; CORRECT CODING ERROR)
+
+	FO	CBKDEF
+	FO	GBLDEF
+	FO	BBUFER
+	FO	SNAPKG
+	EI	
+
+
+
+:10) patch name :  VHRPA2.P33  or  SNA03.PAL
+:*   Patch at H.RCLL to jump to the correct location. This error
+:*   causes a hanging problem. A positive response should be sent 
+:*   if VHR is available.
+
+	IF	HOSTIF
+	LO	CBKDEF
+	LO	GBLDEF
+	LO	BBUFER
+	LO	SNAPKG
+
+	PATCH(011288,1300,H/SANATKAR,H.RCLL+22,,6)
+	JE	H.RCLN,,
+	CONPATCH(H.RCLL+36,,6)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,12)
+	STH	R0,BBUFER+CLARG1,R5,
+	J	H.RCL4,,
+	ENDPATCH(SEND POSITIVE RESPONSE IF VHR)
+
+	FO	CBKDEF
+	FO	GBLDEF
+	FO	BBUFER
+	FO	SNAPKG
+	EI
+
+
+
+:11) Patch name :  VHRPA3.P33  or  SNA03.PAM
+:*   Patch at SINVHR to update the buffer index properly. A crash
+:*   would occur for having a bad buffer pointer in the case of the
+:*   last bufferlet.
+
+	IF	VHRSUP
+	LO	SNTPKG
+	LO	CBKDEF
+	LO	GBLDEF
+	LO	SNAPKG
+	LO	BSUB
+	LO	NIO
+
+	PATCH(011588,1300,H/SANATKAR,SINVHR+1A,,6)
+	AHM	R0,DCBLKS+DCBIBX,RDCB,		:UPDATE BUFFER INDEX
+	CONPATCH(LINAVR+2A,,4)
+	CHI	R4,FID2LN+RHLENG+VHRCDE+1	:CHECK FOR HEADER
+	ENDPATCH(UPDATE BUFFER INDEX)
+
+	FO	SNTPKG
+	FO	CBKDEF
+	FO	GBLDEF
+	FO	SNAPKG
+	FO	BSUB
+	FO	NIO
+	EI
+   
