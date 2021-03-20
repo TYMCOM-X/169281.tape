@@ -1,0 +1,238 @@
+
+
+
+     1.  SUMMARY OF CHANGES
+
+     Version 11.00 of the TAPE program on the TYMCOM X contains a number of
+     enhancements and changes.  A summary follows:
+
+     There are several related  enhancements  to  TAPE  pertaining  to  the
+     substitution option.  They are as follows:
+
+     (1)  Substitution  is  now  allowed  during  the  binary  reading  and
+          punching  modes  and  has  been  expanded to handle 8-bit values.
+          (Values > 177B must be entered numerically.)
+
+     (2)  The limit on the number of  conversions  has  been  increased  to
+          256D.
+
+     (3)  Error checking is done during the actual read  or  punch  on  the
+          range  of values being used in the substitutions.  If the user is
+          attempting substitutions whose  values  are  too  large  for  the
+          transfer  mode  (ie.  eighth bit set to 1 in symbolic mode), then
+          the values will be truncated before use.
+
+     (4)  Error checking of the  substitution  tables  to  determine  their
+          acceptability  for the direction of the transfer is now done just
+          prior to the actual transfer (when the direction is known).  This
+          eliminates  the  printing  of needless messages which could occur
+          previously during entry of the tables indicating collisions which
+          might  be  no problem for the intended transfer direction.  There
+          are also no messages printed during the entry of  the  substitute
+          tables  acknowledging  the  character  name 'NOTHING' as was done
+          previously.
+
+     To aid in examining binary tapes, the following was added:
+
+     (5)  The representation option has been extended to include  character
+          values of up to 377B(256D), and representation of binary tapes is
+          now possible.  Of course, the literal  representation  is  always
+          symbolic.
+
+     Miscellaneous changes:
+
+     (6)  The prompt command has been changed to prompt the  user  for  the
+          substitute  and representation information when a binary transfer
+          is requested, since these options are now possible in that mode.
+
+     (7)  Block  I/O  is  now  used  for  transfers  to/from  the  terminal
+          reader/punch  or  a  cassette terminal if a channel is available,
+          and the requested operation is not  a  continuous  read.   Normal
+          buffered  I/O will be used otherwise.  A new error message "BLOCK
+          IO ERROR" could result if a problem occurs  during  a  block  I/O
+          transfer to/from the TTY.
+
+     (8)  An additional mode (continuous) has been created  to  handle  the
+          reading of tapes on terminals which do not have the capability to
+          ignore the X-OFF character at the reader.  When this mode  is  in
+          use,  tape  will  force  the  terminal  reader  on (with an X-ON)
+                                                                     Page 2
+
+
+          whenever it needs more input  causing  the  transfer  not  to  be
+          terminated  if  the reader reads an X-OFF character.  The mode is
+          enabled with the commands "CONTINUOUS ON" or "CONTINUOUS YES" and
+          disabled with the commands "CONTINUOUS OFF" or "CONTINUOUS NO" or
+          "NO CONTINUOUS".  The user may have to use the substitute  option
+          in  conjunction  with  this  new  mode if he/she wishes to ignore
+          X-OFF characters (not store them on the disk file).
+
+     (9)  The list command has been changed to  report  the  state  of  the
+          CONTINUOUS option.
+
+     The following bugs have been fixed:
+
+     (10) Previously, when resetting the  substitution  tables  back  to  a
+          state  of  no  conversions  in  effect,  TAPE  neglected to reset
+          pointers so that the beginning of the substitute  string  storage
+          would  be  used  again.   This  caused  TAPE to run out of string
+          storage space unnecessarily.
+
+     (11) Having a substitute table present while doing a  binary  transfer
+          (even  though  substitution was not allowed in previous versions)
+          caused the data to be scrambled.
+
+
+
+
+     2.  DESCRIPTION OF CHANGES
+
+
+     2.1 SUBSTITUTE OPTION
+
+     The substitute option may now be used with a binary transfer.   Either
+     eight-bit or six-bit character values will be converted depending upon
+     the current mode.  TAPE can now handle characters whose  octal  values
+     require  eight bits (<=255D or 377B), although the values which exceed
+     the range of the printing characters must be entered numerically.
+
+     The number of entries which may be in  a  substitute  table  has  been
+     increased  to  256D  to  correspond  with  the  new maximum size of an
+     individual entry character.  However, the implied limit for a symbolic
+     transfer  or  binary  transfer  with six-bit characters is, of course,
+     smaller (corresponding to the range of acceptable values).
+
+     The user should take care that the substitution table being used is in
+     the  proper  range  for  the  character  size  of  the current mode of
+     transfer,  since  octal  values  which  require  more  bits  than  the
+     character size in use will have the high order bit(s) truncated.
+
+     Error checking of the substitute tables for conflicting entries is now
+     done  just  prior  to the actual read or punch operation instead of at
+     the time they are entered  or  loaded.   This  eliminates  unnecessary
+     messages which could be generated before the direction of the transfer
+     is known.  The character name  'NOTHING'  is  no  longer  acknowledged
+     unless  it  is found to be in error for the given direction.  When the
+     READ or PUNCH command is  issued,  TAPE  checks  to  see  if  any  new
+                                                                     Page 3
+
+
+     conversions have been entered since the last time a check was made for
+     conflicts in the given  direction.   If  so,  it  prints  the  message
+     "CHECKING  NEW SUBSTITUTION ENTRIES" on the user's TTY and proceeds to
+     check the new entries.  Error messages, if any, are  the  same  as  in
+     previous versions.
+
+
+     2.2 REPRESENTATION OPTION
+
+     It is now possible to "represent" a tape in one of the  binary  modes,
+     and  the  range  of  acceptable values has been increased to eight-bit
+     values (<=377B or 256D).  Care should  be  exercised  when  converting
+     from a representation to a standard tape or file that the type of tape
+     or file is consistent with the range of character values  represented.
+     Remember that the representation of a file or tape is always symbolic.
+
+
+     2.3 CONTINUOUS OPTION
+
+     It is possible when using a cassette to echo output  which  is  coming
+     from  the  PDP-10  to  have X-OFF characters stored on the tape.  When
+     reading back such a tape with the TAPE program, it  is  necessary  for
+     the  user to restart the reader when it stops if the input unit is not
+     capable of ignoring these characters.  To aid in reading tape of  this
+     type,  the  CONTINUOUS  option  may  be  used  to  force the reader on
+     automatically.  The substitute option may be used in conjunction  with
+     this mode to throw away X-OFF characters so that they will not be read
+     into a file.
+
+     The option is enabled with the following command:
+
+     p:  CONTINUOUS ON
+
+
+     2.4 USE OF BLOCK I/O
+
+     The use of block I/O during transfer to/from a TTY type device  should
+     cut down the cost of running the TAPE package.  The I/O operation will
+     run most efficiently under these conditions if echoing is turned off.
+
+
+
+     3.  AFFECTED PORTIONS OF THE MANUAL
+
+     SECTION 1 (INTRODUCTION)
+
+     page 1; paragraph 3:  remove word "Symbolic"
+     page 1; REPRESENTATION description:  remove all the occurrences
+             of the word "symbolic"
+
+     SECTION 2 (USING TAPE)
+
+     page 11; summary of READ and PUNCH options:  add the description
+              of CONTINUOUS mode to the end of the table
+     page 11; summary table:  remove the word "symbolic" from the
+                                                                     Page 4
+
+
+              discussion of SUBSTITUTE
+     page 16; LIST example:  need new example showing the reporting
+              of the CONTINUOUS mode status
+
+     SECTION 3 (SYMBOLIC READING AND PUNCHING)
+
+     page 26; the paragraph which starts with "CAUTION":  it can be
+              removed since it is no longer true.
+     page 26; The discussion of CONTINUOUS mode could go here.
+
+     SECTION 4 (BINARY READING AND PUNCHING)
+
+     page 39; 1st paragraph after title PAPER TAPE READING:  remove
+              the words "SUBSTITUTE, and REPRESENTATION from the
+              second line.
+     page 39; can insert into that paragraph before NOTE a blurb which
+              says something like the following:
+                  The REPRESENTATION and SUBSTITUTE options may
+                  be used with care, in binary mode.  See Section 
+                  5 - CODE CONVERSIONS for more details.
+     page 40; need new example showing prompt for LITERAL REPRESENTATION
+              and SUBSTITUTE.
+     page 41; need new PROMPT example
+
+     SECTION 5 (CODE CONVERSIONS)
+
+     page 43; first 4 paragraphs:  change to reflect the fact that
+              the features may be used in binary modes as well.
+
+     page 44; second line:  change 200 to 256
+              may also want a new example which would show a
+              representation of a binary file or tape.
+
+     APPENDIX C (TAPE COMMAND SUMMARY)
+
+     page 81; insert an entry for CONTINUOUS mode.
+     page 83; remove occurrences of the word "symbolic" in sections
+              on representation.
+
+     APPENDIX D (ERROR MESSAGES)
+
+     page 87; last two error messages no longer apply and can
+              be removed
+     page 90; third message:  change 177B to 377B
+                                                                     Page 5
+
+
+              representation of a binary file or tape.
+
+     APPENDIX C (TAPE COMMAND SUMMARY)
+
+             page 81; insert an entry for CONTINUOUS mode.
+     page 83; remove occurrences of the word "symbolic" in sections
+              on representation.
+
+     APPENDIX D (ERROR MESSAGES)
+
+     page 87; last two error messages no longer apply and can
+              be removed
+     page 90; third message:  change 177B to 377B
+    
