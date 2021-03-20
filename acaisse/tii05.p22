@@ -1,0 +1,2201 @@
+
+::*********************************************************************
+::
+::	T-II NODE CODE VERSION 05.22 PATCH FILE
+::
+::*********************************************************************
+:
+
+:       See if the NETID is not 0 and if so then tell them which network
+:       the netid is for.
+:
+        kill    net
+netdok  eq      0               :find a known NETID?
+
+        if      1-netid         :0 is not a valid netid
+        Remark%%%       ERROR!!!!   NETID of 0 is not valid.%%%
+        quit    ;       kill rseg0,privbg :prevent writeout.
+        ei
+net     macro(na,nb)[
+ne      eq      nb
+        if      (netid/ne)*(ne/netid)   :if they are equal
+netdok  eq      1               :we found a netid
+        remark%%%       NETID is ;
+ number $a ne ; remark d.  This is a NA network node.%%%
+mnetid  macro[  ac /NA/  ]
+        ei
+]
+:	NETWORKS AS OF 7/20/88
+
+	net(TYMNET,1)
+	net(BUBBNET,2)
+	net(TRWNET,$A 3)
+	net(DECNET,$A 4)
+	net(ITALNET,$A 5)
+        net(SWEDNET,$A 6)
+        net(NETHERNET,$A 7)
+        net(SUNNET,$A 8)
+        net(SWISSNET$A 9)
+        net(UCCPAC,$A 10)
+        net(XEROXNET,$A 11)
+        net(BOFANET,$A 12)
+        net(VANET,$A 13)
+        net(CHASENET,$A 14)
+        net(CODAN,$A 15)
+        net(BPNET,$A 16)
+        net(DUNET,$A 17)
+        net(LENET,$A 18)
+        net(AVISO,$A 19)
+        net(DIALOG,$A 20)
+        net(MGT,$A 21)
+        net(STAGENET,$A 22)
+        net(GEONET,$A 23)
+        net(ALASCOM,$A 24)
+        net(CASNET,$A 25)
+        net(EXXON,$A 26)
+        net(INSNET,$A 27)
+        net(HSBCNET,$A 28)
+        net(FIRNNET,$A 29)
+        net(DOLNET,$A 30)
+        net(CTS,$A 31)
+        net(SWBNET,$A 32)
+        net(ITALCABLE,$A 34)
+        net(TELEVERKET,$A 36)
+        net(PHILIPS,$A 37)
+        net(UKLAB,$A 38)
+        net(EASTNETLAB,$A 39)
+        net(DATAPAC,$A 40)
+        net(TRAINING,$A 41)
+        net(LENG,$A 42)
+        net(SLIGOS,$A 43)
+        net(WESTREGLAB,$A 44)
+        net(REPAIRDEPOT,$A 45)
+        net(WESTPUB,$A 46)
+        net(WYNET,$A 47)
+        net(HGNET,$A 48)
+        net(MDISINET,$A 49)
+        net(NISNET,$A 50)
+        net(BABYLON,$A 52)
+        net(ANZNET,$A 53)
+        net(FTS2000,$A 54)
+        net(CONNNET,$A 55)
+        net(NTSNET,$A 56)
+        net(MERCURYNET,$A 57)
+        net(DEVNET,$A 58)
+        net(EDS-ELECT DT,$A 59)
+        net(MDISI-SWEDEN,$A 60)
+        net(TELEVERKLAB1,$A 61)
+        net(TELEVERKLAB2,$A 62)
+        net(WTS LABS,$A 63)
+        net(TELERATE,$A 64)
+        net(ICINET-IMPER,$A 65)
+        net(FMC,$A 66)
+        net(MAURUZEN,$A 67)
+        net(AUSTRALIAN FEDS,$A 68)
+        net(INTL TELECOM,$A 69)
+        net(TESTNET,$A 99)
+
+        if      1-netdok        :if didn't find a known netid
+        remark%%%       NETID is ;
+ number $a netid ; remark d.  This NETID is unknown.
+        remark%%        Please make sure this NETID is correct.%%%
+mnetid  macro[ ac /Unknown/ ]
+       ei       :not a known netid.
+
+:       display at assembly time the maximum number of nodes in the net
+:       for a supe base config before running the risk of crashing node code
+:       base with 68C3 with its supe wakes up.
+
+        if      super
+ remark%% Maximum number of nodes in network:  NNODES = 
+ number $a NNODES
+ remark d%
+        ei      :super
+
+
+:       fix the patch macros to kill the assembly if an error occurs and
+:       to print out which parameter to change when patch space overflows.
+:       Also, the extremely annoying ^G (bells) have been removed.  Bells
+:       are normally reserved for assembly errors and do not belong in a
+:       properly assembling patch file.
+	KILL	PATCH
+PATCH	macro(day,tim,usr,fba,lba1,len)[
+  IF	PATACT
+ REMARK %>>>> ERROR **** Previous PATCH not ended with ENDPATCH <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  ELSE
+PATACT	EQ	1
+  EI
+ REMARK %%PATCH added on day at tim by usr`.
+	SEG	0
+	ORG	PAHPTR
+   IF	(PAHPTR+1)-(PATHIS+PHSIZE)
+ REMARK %>>>> ERROR **** Too many PATCHs, increase PHSIZE beyond ; NUMBER $0PHSIZE
+ REMARK x and reassemble <<<<%
+ remark %>>>> NOTE: PHSIZE is a Tymfile equate.  example:  PHSIZE EQ $0 300 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+   EI
+	WC	$0 day!19000000
+	HC	$0 tim
+Q	AC	\usr\
+Q1	HS
+	ORG	Q+$a10	:skip to next history area
+PAHPTR	HS
+  IF	Q1-.	:IF UNAME>10 CHARARACTERS, CLEAR OVERFLOW
+	RE	Q1-.
+	BC	0
+	ER
+  EI
+
+QPATS	EQ	((fba)&$00FF0000)^-$010
+QPATB	EQ	fba
+QPATC	EQ	lba1
+  IF	lba1 0
+QPATL	EQ	(lba1)-(fba)
+  ELSE
+QPATL	EQ	len 2
+  EI
+  IF	(.NE.(QPATC,0))&(.GT.(QPATB-QPATC+2,0))
+ REMARK %>>>> ERROR **** Address of patch end < address of patch start <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	(QPATB+1)-(PATCH1)	:IF PATCHING IN PATCH1,
+   IF	(PATCH1+P1SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+    IF	(QPATB+QPATL)-(PATCH1+P1SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH1 area overflow <<<<%
+ REMARK %>>>> Expand P1SIZE beyond ; NUMBER (QPATB+QPATL-PATCH1)
+ REMARK x and reassemble. <<<<%
+ remark %>>>> NOTE: P1SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 0C00 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	(QPATB+1)-(PATCH0)	:IF PATCHING IN PATCH0,
+   IF	(PATCH0+P0SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	0	:PATCHING PATCH0 AREA
+    IF	(QPATB+QPATL)-(PATCH0+P0SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH0 area overflow <<<<%
+ REMARK %>>>> Expand P0SIZE beyond ; NUMBER (QPATB+QPATL-PATCH0)
+ REMARK x and reassemble. <<<<%
+ remark %>>>> NOTE: P0SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 200 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	QPATA+1		:IF PATCHING IN PATCH0 OR PATCH1 AREA
+ REMARK %	Starts at PATCH; NUMBER $0QPATA; REMARK +
+ NUMBER	$0PA|QPATA|PTR-PATCH|QPATA|
+ REMARK  and is ; NUMBER $0QPATL; REMARK x bytes long%
+  ELSE
+ REMARK %     Starts at fba and is 
+ NUMBER $0 QPATL
+ REMARK x bytes long%
+  EI
+
+	SEG	QPATS
+	ORG	QPATB
+	RE	QPATL
+	BC	0
+	ER
+  IF	(.+1)-(S|QPATS|SIZE+SEG|QPATS|)
+ REMARK %>>>> ERROR **** PATCH causes SEG; NUMBER $0qpats
+ REMARK  overflow <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+QPATRM  EQ      0                       :last macro was PATCH   ###sdw
+	ORG	QPATB
+
+]               :end PATCH
+
+:	>>CONPAT(fba,lba1,len)<<	CONTINUE A PATCH
+
+	KILL	CONPAT
+CONPAT	MACRO(cfba,clba1,clen)[
+PATACT	EQ	PATACT+1
+  IF	2-PATACT
+REMARK %>>>> ERROR **** CONPAT not preceded by a PATCH <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	QPATA+1		:IF PATCH WAS IN A PATCH AREA
+PA|QPATA|PTR	EQ	.
+  EI
+QPATA	EQ	-1	:CLEAR FLAG
+QPATS	EQ	((cfba)&$00FF0000)^-$010
+QPATB	EQ	cfba
+QPATC	EQ	clba1
+  IF	clba1 0
+QPATL	EQ	(clba1)-(cfba)
+  ELSE
+QPATL	EQ	clen 2
+  EI
+  IF	(.NE.(QPATC,0))&(.GT.(QPATB-QPATC+2,0))
+ REMARK %>>>> ERROR **** Address of conpatch end < address of conpatch start <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	(QPATB+1)-(PATCH1)	:IF PATCHING IN PATCH1,
+   IF	(PATCH1+P1SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+    IF	(QPATB+QPATL)-(PATCH1+P1SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH1 area overflow <<<<%
+ REMARK %>>>> Expand P1SIZE beyond ; NUMBER (QPATB+QPATL-PATCH1)
+ REMARK x and reassemble. <<<<
+ remark %>>>> NOTE: P1SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 0C00 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	(QPATB+1)-(PATCH0)	:IF PATCHING IN PATCH0,
+   IF	(PATCH0+P0SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	0	:PATCHING PATCH0 AREA
+    IF	(QPATB+QPATL)-(PATCH0+P0SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH0 area overflow <<<<%
+ REMARK %>>>> Expand P0SIZE beyond ; NUMBER (QPATB+QPATL-PATCH0)
+ REMARK x and reassemble. <<<<%%
+ remark %>>>> NOTE: P0SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 200 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	QPATA+1		:IF PATCHING IN PATCH0 OR PATCH1 AREA
+ REMARK 	Continues at PATCH; NUMBER $0QPATA; REMARK +
+ NUMBER	$0PA|QPATA|PTR-PATCH|QPATA|
+ REMARK  and is ; NUMBER $0QPATL; REMARK x bytes long%
+  ELSE
+ REMARK 	Continues at cfba and is 
+ NUMBER $0 QPATL
+ REMARK x bytes long%
+  EI
+	SEG	QPATS
+	ORG	QPATB
+	RE	QPATL
+	BC	0
+	ER
+  IF	.-(S|QPATS|SIZE+SEG|QPATS|)
+ REMARK %>>>> ERROR **** PATCH causes SEG; NUMBER $0qpats
+ REMARK overflow <<<<$
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+qpatrm  eq      1               :last macro run was CONPATCH
+	ORG	QPATB
+]
+
+:	>>ENDPATCH(com)<<  End a patch - does error checking, outputs comment
+
+	KILL	ENDPATCH
+ENDPATCH	macro(c1,c2,c3,c4,c5)[
+PATACT	EQ	0
+  IF	.-(QPATB+QPATL)
+        IF      QPATRM          :if last was CONPATCH
+ REMARK %>>>> ERROR **** BAD CONPATCH **** <<<<%
+        else                    :last was PATCH
+ REMARK %>>>> ERROR **** BAD PATCH **** <<<<%
+        ei                      :print correct remark
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	QPATA+1		:IF PATCH WAS IN A PATCH AREA
+PA|QPATA|PTR	EQ	.
+  EI
+QPATA	EQ	-1	:CLEAR FLAG
+	SEG	1
+ REMARK <<< c1 >>>
+]
+
+
+:	Patch to fix reset version compatibility problem.
+:	Use regs R2 and R3 to avoid clobbering R0 which is used later.
+:
+	IF	XRESET
+	PATCH(870811,0900,JLADEN,ATTLI0+20,,10)
+	LCS	R2,1			:store FFFFs over remainder...
+	LHI	R3,XSDSZ-10		:byte count-4
+ATTLI3	ST	R2,XRSTP+0C,SD,R3	:store one word at a time
+	SIS	R3,4			:back up a FW at a time
+	JGEBS	ATTLI3			:loop till done
+	ENDPATCH(FIX RESET VERSION COMPATIBILTY PROBLEM)
+	EI	:XRESET
+
+:       Patch to fix crash in RTBFTA caused by killing R2 when used as a
+:       scratch register.
+        IF      REBILD
+        IF      REBTST
+        PATCH(870907,0138,SDW,RTBFA2+4,,6)
+        LHL     R1,BCT,R2,              :use r1 as scratch instead of R2
+        ENDPATCH(PATCH TO FIX REGISTER USAGE BY IMPROVED REBUILD ROUTINE)
+        EI      :REBTST
+        EI      :REBILD
+
+        IF      T2GATE
+        PATCH(870915,2144,SDW,ZAPXN-1A,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,10)
+        LHL     R8,BF,R2,               :clear logon char count
+        SHI     R8,DISZFL
+        J       ZAPXN-14,,              :using zapxn-14 due to IF switch
+        ENDPATCH(Correctly clear logon char count on zappers)
+
+        EI      :T2GATE
+
+        IF      T2GATE
+        PATCH(870915,2153,SDW,GZPCY1,,6)
+        J       GZPCX4
+        ENDPATCH(Correct ZAPHRD if both ends are ISIS ports)
+        EI
+
+        IF      T2GATE
+        PATCH(870915,2155,SDW,ZAPX2+1A,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1A)
+        CLHI    R8,DISZFL               :handle case when not dispathcer cir
+        JGE     ZAPX2+22,,
+        CLHI    R3,DISZFL
+        JL      GZPCX6,,                :skip isis stuff if port in login or
+        J       GZPCX2,,                :internal host
+     ENDPATCH(Remove crash when zapping Internal ports or ports in logon mode)
+        EI      :T2GATE
+
+       IF       T2GATE
+        IF      1-ACCT                  :Only when no accouting
+        PATCH(871005,1318,sdw,LEP0F+2A,,4)
+GASTRT  EQ      LEP9F1
+        JE      LEP9F1
+       ENDPATCH(Patch to correct Undefined symbol GASTRT)
+      EI        :INTACC
+        EI      :T2GATE
+
+
+       IF       T2GATE
+        IF      1-ACCT                  :Only when no accouting
+        PATCH(871005,1318,sdw,PA1PTR,,2)
+AARLO   HS      0
+AARDIC  JR      R8                      :define them to do nothings
+       ENDPATCH(Patch to correct Undefined symbols AARLO AARDIC)
+      EI        :INTACC
+        EI      :T2GATE
+
+       IF       T2GATE
+        IF      ACCT
+        PATCH(871005,1856,SDW,GDSOH4,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1C)
+        LHI     R1,AALR02
+        STH     R1,AAREAS,,
+        LHI     R1,ZAPPN
+        JAL     R9,ZAPX,,
+        J       DSOTBP,,
+       CONPATCH(GZPCX2+18,,4)
+        JN      GZPCX4
+   ENDPATCH(Send session terminated accounting message when logon attempt fails)
+       EI       :ACCT
+      EI        :t2gate
+
+       IF       T2GATE
+        IF      ACCT
+        PATCH(880705,1428,sdw.GDB3Ac,GDB362+20,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,2c)
+        STB     R1,DIRNG+2,PRD,
+        AIS     PRD,4
+        NR      PRD,TC
+        STH     PRD,DRIF,,
+        LIS     R0,AALR03               :zapped by user
+        STH     R0,AAREAS
+        LHI     R3,DISZFL-MNACHN,R5     :convert abs chn # to rel acct chn #
+        JAL     R8,AARLO,,
+        LIS     R0,0
+        STH     R0,AAREAS               :clear reason
+        J       GDINXT,,
+    ENDPATCH(Send termination accounting when user zaps while in logon mode)
+       EI       :ACCT
+      EI        :T2GATE
+
+       IF       T2GATE
+       IF       4-HHOST
+        PATCH(871006,1628,sdw,LOG10+28,,4)
+        JAL     R9,PCIE
+        CONPATCH(LOG10+34,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,18)
+        CLI     R1,8000+HHOST
+        JN      LOGZAP,,
+        L       R3,BB,R2,
+        J       LOG60,,
+    ENDPATCH(Patch to correct circuit zapping if HNET host number less than 4)
+
+        PATCH(871006,1428,SDW,GNE021+4,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1C)
+        JAL     R8,CBCCT,,
+        STB     R1,GLGCNT,CHN,          :not logon chars for logsup
+        TBT     CHN,GTHDX
+        JE      GNE121,,
+        J       GNE021+0A,,
+        ENDPATCH(Correctly handle logon chars if HHOST number less than 4)
+
+       EI       :4-HHOST
+       EI       :T2GATE
+
+       IF       T2GATE
+        PATCH(871007,333,SDW,GNEMXP+4,,4)
+        LHI     R1,HHOST                :was incorrect as LH
+        ENDPATCH(Store correct host number so Supe trace circuit can work)
+       EI       :T2GATE
+
+
+
+       IF       T2GATE
+        PATCH(880305,0340,sdw,GZPCX5,,1C)
+        LHI     R3,DISZFL,R5            :reorder instruction to make sure
+        CLHI    R3,MNACHN               :CHN is valid before using CHN
+        JL      GZPCX6
+        CLHI    R3,MXACHN
+        JGE     GZPCX6
+        TBT     CHN,GDSTPT
+        JE      GZPCX6
+        ENDPATCH(Fix order of instructions to prevent crash in Gateway ZAPHRD)
+       EI       :T2GATE
+
+       IF	APLYBP
+	PATCH(871030,1600,EV,RMHIT3+0C,,6)
+	TBT	R2,BPSVCP,R7,		:Was 'Apply Backpressure' received?
+	ENDPATCH(Test bit only, do not reset for  APLYBP)
+       EI	:APLYBP
+
+       IF       \AAMIR                  :ACCT is redefined in xray HS cmd
+        PATCH(871213,0441,SDW,AAMIR,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,10)
+        L       R1,AAINV,R11
+        JN      AAPIR,,
+        LM      R1,AARGSV
+        JR      R8
+        ENDPATCH(Properly restore registers when doing accounting)
+       EI       :\AAMIR
+
+      IF        SOLOCS
+        LO      DATA
+        LO      CONSAT
+       IF       NUMPRN-1
+        PATCH(871229,0407,sdw,NST08,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,16)
+        JAL     R8,HCLEAR,,
+        LIS     R0,NUMPRN-1
+        STH     R0,PRTACT
+        LHI     R10,NHOSTS-1
+        J       NST08+8,,
+        ENDPATCH(Fix initialize bug when more than one printer connected)
+       EI       :NUMPRN-1
+        FO      CONSAT
+        FO      DATA
+      EI        :SOLOCS
+
+       IF       T2GATE
+:       problem is that odd length usernames are followed by a null (80)
+:       and that gateway handled it like data typed by the user that
+:       happened to catch up to the needle.  Problem reported for transparent
+:       but also true for normal.  normal isn't a 'problem' since the null
+:       is sent as the first logon char and supe ignores it.
+:       About the patch: R7 (count) is decremented from an even number (LGCHMX)
+:       as the char is read, but the first char, the transparent logon i
+:       indication (the '?'), was not counted as a uname char.  So the test
+:       for an odd length uname is to see if the count is now even.     ###sdw
+        PATCH(880706,1050,sdw.TrnNUL,GDB214,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,26)
+        RBT     CHN,LOGDAT              :finished sending username
+        THI     R7,1                    :was it an odd (1,3,5..) len uname?
+        JN      GDB220,,                :nope, no problem
+        LHL     R0,BCT,R2,              :make sure that extra null is there
+        JE      GDB220,,
+        JAL     R9,GCIE,,               :take out the null
+        J       GDB220,,
+     ENDPATCH(Don't let null at end of transparent usernames be sent as data.)
+       EI       :T2GATE
+
+:       Not a patch, but a verification of tymfile parameters which allow a
+:       properly genned NC to not work with ISIS.
+        IF      ISIS                    :solo also has no KIO
+       IF       1-T2GATE                :gateway has no KIO
+       IF       NOSEG                   :if kio rings not forced to seg 5
+        IF      1-IKNRNG                :then must have newer kio rings
+        REMARK%%%%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%
+        REMARK!!!  FATAL CONFIGURATION ERROR             !!!%
+        REMARK!!!  ASSEMBLY HAS BEEN KILLED              !!!%
+        REMARK!!!  IF IKNRNG IS 0 THEN NOSEG MUST EQ 0   !!!%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%
+        KILL    SEG0,PRIVBG     :prevent writeout of file
+       EI       :1-IKNRNG
+       EI       :NOSEG
+       EI       :1-T2GATE
+       EI       :ISIS
+
+:       Problem in the HS U (for up) command that the check for up is also
+:       checking for host having ports.  So up hosts are not displayed.
+       IF       1-T2GATE
+        PATCH(870211,1800,SDW,HSTDI4+0C,,4)
+        NHI     R2,40                   :not 60
+   ENDPATCH(Patch to have XRAY HS U command display up hosts that have no ports)
+       EI       :1-T2GATE
+
+
+
+:       Patch to make data in reset packet always match the reset header.
+:       Before if an error was found then the old style reset header would
+:       be put in front of a new style reset packet.  Possible for both nodes
+:       to be in this error condition and never exit since neighbor is sending
+:       bad packet, which is error so send bad packet, and get it back and so
+:       on.
+:      ious patch used R6 instead of SD to change it in SIO buffer if
+:       SIO port, but both reset buffers should match.
+:       For SIO buffer the remaining is not set to FFFF since only used for
+:       sync to prevent false indication of new data.
+       IF       1-(STRHUB!STRRMT)       :unpatchable if tymstar
+      IF        XRESET
+        PATCH(880121,1301,sdw.RESET1,ATTL05-8,,6)
+        J       PA1PTR,,
+       IF       SILINS
+        CONPATCH(PA1PTR,,5C)
+       ELSE     :only sync
+        CONPATCH(PA1PTR,,3A)
+       EI       :SILINS
+        LHI     R4,TTRSHD               :existing instructions
+        STH     R4,XRSTP,SD             :old reset header stored
+        LHI     R0,MACHNM               :new logic: construct old reset packet
+        STH     R0,XRSTP+2,SD
+        L       R0,TTRSET+4,,           :write old reset packet data
+        ST      R0,XRSTP+4,SD
+        LI      R0,VERCOM
+        ST      R0,XRSTP+8,SD
+        LHI     R3,XSDSZ-10
+        LCS     R2,1                    :overwrite old data
+ATTP90  ST      R2,XRSTP+0C,SD,R3
+        SIS     R3,4
+        JGEBS   ATTP90
+       IF       SILINS
+        CLHI    LN,(NLINES-SILINS-1)*2  :sio lines have another reset xmit buf
+        JLE     ATTL05,,
+       IF       SIBFRL
+        L       R6,SIORSP,LN,LN
+       ELSE     :not SIBFRL
+        LHL     R6,SIORSP,LN,
+       EI       :SIBFRL
+        L       R0,XRSTP,SD             :copy reset packet
+        ST      R0,2,R6                 :first HW is count for SIO packet
+        LI      R0,VERCOM
+        ST      R0,6,R6
+       EI       :SILINS
+        J       ATTL05,,
+   ENDPATCH(Make old style reset packet always have old style reset data)
+      EI        :XRESET
+       EI       :not STRHUB!STRRMT
+
+:       Problem of putting wrong reset in front of a reset packet.  Problem
+:       is that logic assumes that any subsequent resets are of same type as
+:       original reset.  Solution is to consider different type of reset an
+:       error and go back to sending sending initial resets of same type
+:       we just received.
+
+       IF       1-(STRHUB!STRRMT)       :unpatchable if tymstar
+       IF       XRESET
+        PATCH(880829,1400,sdw.RESET2,ATTLIN+8,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,54)
+        LH      R4,VRSTP,SD
+        NHI     R4,0FFE0                :reset type (expanded or old is left)
+        CLHI    R4,TXRSHD               :new reset?
+        JNFS    ATT0P1
+        SBT     LN,XRSTBT,,             :indicate new reset received
+        JE      ATTLD4,,                :***previous wasn't
+        J       ATT0P2                  :check timout
+ATT0P1  RBT     LN,XRSTBT,,             :got an old reset
+        JN      ATTLD4,,                :
+ATT0P2  LHL     R3,RSTIM,SD
+        JN      ATTLI1,,                :the overwritten instructions
+        J       ATTLIN+10,,
+        ENDPATCH(Handle neighbor switching between old and expanded resets)
+       EI       :XRESET
+       EI       :not STRHUB!STRRMT
+
+:       This patch is to resolve problem with 5.10 neighbors.  They will
+:       stop sending resets and we will send them only new style resets and
+:       thus the line never comes up.  So every four minutes we will simply
+:       send an old style reset and then next time to 1sec we go back to
+:       expanded reset.  Four min also checks on many of the reset related
+:       bit arrays and such and logs the errors.  This patch also should
+:       prevent line garbage causing missed or misinterpeted data from causing
+:       a line from never coming up.
+       IF       1-(STRHUB!STRRMT)       :unpatchable if tymstar
+       IF       XRESET
+        PATCH(880126,1756,sdw.RES4M1,G04MIN,,6)
+        J       PA1PTR,,
+        CONPATCH(PA0PTR,,0E)
+G04ER1  HS      1                       :errors in timing out resets
+G04M1S  HS      4                       :more than enough for a bit per line
+G04M1H  HS      4                       :a history to make sure OSR was sent
+        CONPATCH(PA1PTR,,0D8)
+        JAL     R10,CKTCON,,            :the overwritten instruction
+        LHI     LN,NLINES*2             :for each line (extra 2 for next line)
+G04P01  SIS     LN,2                    :next line
+        JL      G04MIN+6,,              :done with patch
+        LHI     R1,TINTCH*2-2           :make sure no dline load in progress
+G04P02  CLH     LN,DWLNUM,R1,           :get number of line being loaded
+        JE      G04P01                  :in progress, skip this line
+        SIS     R1,2                    :check next internal chn
+        JGEBS   G04P02
+        LHL     SD,SDLN,LN,             :get reset descriptor
+        L       KD,KDLN,LN,LN           :see if link up
+        JG      G04P01                  :is up (no send it reset)
+        LHL     R0,RSTIM,SD             :see if reset sequence in progress
+        JEFS    G04P03                  :not in progress
+        SH      R0,SLOWC+2,,            :see if should have timed out
+        CHVR    R0,R0                   :worry about high bit
+        JG      G04P01                  :timer still going
+        LIS     R0,1
+        AHM     R0,G04ER1,,             :error, timout should have gone off
+        JFS     G04P06                  :and send old style reset
+G04P03  LR      R1,LN                   :get a real line number
+        SRLS    R1,1
+        TBT     R1,LNSUSC               :is line suspended?
+        JN      G04P01                  :suspended is okay, next line
+
+G04P06  LHL     SD,SDLN,LN,             :get reset descriptor
+        JAL     R9,RSTSTR,,             :restart reset process
+        LHI     R4,TTRSHD               :existing instructions
+        STH     R4,XRSTP,SD             :old reset header stored
+        LHI     R0,MACHNM               :new logic: construct old reset packet
+        STH     R0,XRSTP+2,SD
+        L       R0,TTRSET+4,,           :write old reset packet data
+        ST      R0,XRSTP+4,SD
+        LI      R0,VERCOM
+        ST      R0,XRSTP+8,SD
+        LHI     R3,XSDSZ-10
+        LCS     R2,1                    :overwrite old data
+G04P09  ST      R2,XRSTP+0C,SD,R3
+        SIS     R3,4
+        JGEBS   G04P09
+       IF       SILINS
+        CLHI    LN,(NLINES-SILINS-1)*2  :sio lines have another reset xmit buf
+        JLE     G04P10
+       IF       SIBFRL
+        L       R6,SIORSP,LN,LN
+       ELSE     :not SIBFRL
+        LHL     R6,SIORSP,LN,
+       EI       :SIBFRL
+        L       R0,XRSTP,SD             :copy reset packet
+        ST      R0,2,R6                 :first HW is count for SIO packet
+        LI      R0,VERCOM
+        ST      R0,6,R6
+       EI       :SILINS
+:       now will send old style resets.  Must make sure we only do it for
+:       a second.  So set a bit for this line for 1sec patch to find!
+G04P10  LR      R1,LN
+        SRLS    R1,1                    :make it a line number
+        SBT     R1,G04M1S,,             :tell 1sec about this
+        RBT     R1,G04M1H,,             :extra careful on history
+        LHI     R1,TXRSHD               :if don't receive a response
+        STH     R1,VRSTP,SD             :then last received is this
+        J       G04P01
+   ENDPATCH(Send a old style reset every four minutes to help lines to come up)
+
+:       Now, part two of the patch: Patch 1sec logic to make sure only 1sec
+:       or so of old style resets is sent.  Note that ESR is expanded reset
+:       these patches are sort of tricky to follow.  Notice that when we
+:       sent the OSR we put a ESR header in received reset buffer.  So if
+:       1sec logic finds an OSR header then we have received an OSR packet
+:       from neighbor and we don't interfere.  If no packet received we
+:       store an ESR header since we want to return to sending ESR packets
+:       and RESET XSRTBT since that will be detected in ATTLIN as an abort
+:       and then setting LINATT is needed to run ATTLIN for this line.
+:       and OSR is old style resets.
+
+        PATCH(880126,1845,sdw.RES4M2,G01SE3,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,8A)
+G01P00  LIS     R2,4
+G01P01  L       R0,G04M1H,R2,           :port ready to go to back to ESRs?
+        JN      G01P04
+        SIS     R2,4
+        JGEBS   G01P01
+        L       R0,G04M1S,,
+        ST      R0,G04M1H,,
+        L       R0,G04M1S+4,,
+        ST      R0,G04M1H+4,,           :delay change to ESR for a sec
+        LIS     R0,0
+        ST      R0,G04M1S,,
+        ST      R0,G04M1S+4,,           :clear change requests
+        LA      R0,G01SEC,,             :done with patch
+        J       EXDIS,,
+G01P04  JFFO    R0,G01P05
+G01P05  SLLS    R2,3
+        LR      LN,R1
+        AR      LN,R2                   :make real line number
+        RBT     LN,G04M1H,,             :done for this line
+        AR      LN,LN                   :make 2*line number
+        LHL     SD,SDLN,LN,             :get reset descriptor
+        LHL     R4,VRSTP,SD             :see if received OSR
+        NHI     R4,0FFE0                :remove any sequence or second line
+        CLHI    R4,TTRSHD               :we had put an ESR header there
+        JE      G01P00                  :so we must have received a good reset
+        LR      R1,LN
+        SRLS    R1,1
+        SBT     R1,LINATT               :make it think it got a reset packet
+        LHI     R1,TXRSHD               :but different than last send
+        STH     R1,VRSTP,SD
+        RBT     LN,XRSTBT,,             :make it find a switch from OSR to ESR
+        LHI     R0,1F-PLINKR
+        SBT     R0,TLINKR
+        J       G01P00                  :next line
+
+ ENDPATCH(Part 2 of patch to occasionally send old style resets.)
+
+       EI       :XRESET
+       EI       :not STRHUB!STRRMT
+
+
+       IF       1-(STRHUB!STRRMT)       :unpatchable if tymstar
+        IF      SILINS
+        IF      ISIS
+        PATCH(880218,1600,sdw.SIOCHN,siopt4+8,,2)
+        JFS     SION
+        ENDPATCH(Allow SIO to send more than 40 packets per second)
+        EI      :ISIS
+        EI      :SILINS
+       EI       :not (STRHUB!STRRMT)
+
+:       Problem is that SIO logic sends a reset packet whenever line is
+:       idle.  Thus, lines which are not connected to a neighbor put a
+:       greater load to a machine that when the sio lines is connected.
+:       Solution is to set a bit in one second logic and have SIO logic
+:       send packet when bit set and then reset bit.                    ###sdw
+       IF       SILINS
+       IF       1-(STRHUB!STRRMT)       :tymstar is unpatchable
+        PATCH(880218,2330,sdw.SIORSPC,SIORS,,10)
+        J       PSIORS,,                :go to patch area
+        CONPATCH(SIORR,,6)
+        J       PSIORR,,
+        CONPATCH(PA0PTR,,LNSIZE)
+        HS      0
+SIORPC  BS      LNSIZE
+        CONPATCH(PA1PTR,,28)
+PSIORS	LHI	R9,SIORT-SEG1		:CHANGE TO SIORT TO CLOCK SPEED
+	J	PSIOR1			:FINISH PREV OUTPUT, SEND RESET
+
+PSIORR  LR      R9,LN
+        SRLS    R9,R1                   :make R9 into line number
+        RBT     R9,SIORPC,,             :bits set every 1 second by G01SEC
+        JE      SIOIDL,,                :already send reset for this second
+	LHI	R9,SIORR-SEG1		:MAINTAIN SAME STATE
+
+PSIOR1	HS	0			:###LSH
+	IF	SIBFRL			:###LSH
+	L	R1,SIOCO,LN,LN		:GET CURRENT BLOCK ADDRESS
+        J       SIOR1+6,,
+	ELSE	:SIBFRL			:###LSH
+	LHL	R1,SIOCO,LN		:GET CURRENT BLOCK ADDRESS
+        J       SIOR1+4,,               :return
+	EI	:SIBFRL			:###LSH
+     ENDPATCH(Part 1 of patch to send only 1 SIO reset per second)
+
+       EI       :SILINS
+       EI       :not STRHUB or STRRMT
+
+:       part 2 of patch is to 1sec logic to set bit to send reset.
+       IF       1-(STRHUB!STRRMT)       :tymstar is unpatchable
+        IF      SILINS
+        PATCH(880218,2356,sdw.SIORSP2,G01PER,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1E)
+        LIS     R1,LNSIZE-4     :LNSIZE is bit array size (rounded to words)
+        LCS     R0,1
+G01PRS  ST      R0,SIORPC,R1,   :pace resets
+        SIS     R1,4
+        JGEBS   G01PRS
+        L       R1,LINSPT       :the overwritten instructions
+        JE      G01PE1,,
+        J       G01PER+6,,      :end of overwriiten instructions
+      ENDPATCH(Part 2 of patch to send only 1 SIO reset per second)
+        EI      :SILINS
+       EI       :not STRHUB!STRRMT
+
+:       gateway's counting of dispatcher ports included port 0 which is
+:       never used, so gateway would never report out of ports to supe 
+:       so that supe could redirect to some other gateway host.  instead
+:       dispatcher would zap circuit since slot out of ports.
+       IF       T2GATE
+        PATCH(880223,1630,sdw.CNTNDP,G08S20+16,,8)
+        LHI     R5,DISZFL+1             :not including port 0
+        LHI     R1,NDP-1                :one fewer port to count
+        ENDPATCH(Correctly count number of available ports)
+       EI       :T2GATE
+
+
+:       problem of XDDT job and Node Code's background interfering with
+:       data structures which can not handle reenterint code.  Affected
+:       commands are DB (also DE but if no DB...) and WB since both cause
+:       data to be written to bufferlets.
+:       Patchable solution is to disable the commands from XDDT to prevent
+:       the possibility of crashing (solution in Node Code 5.30 code is to
+:       allow commands by extensive changes to source code).
+
+        IF      XRSZLV-1                :if command enabled
+        IF      2-XRYTMC
+        PATCH(880306,109,sdw.FIX DB,DBEGIN,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1C)
+        CI      XD,TTYXD                :TTY USER?
+        JE      XRYPFS,,                :existing error routine
+        SIS     R2,4                    :the existing instructions
+        JGE     DBEGIA,,
+        LIS     R6,0
+        J       DBEGIB,,
+  ENDPAT(Disable DB command from local Xray to prevent crash or corrupted data)
+
+:       do same for WB command
+       PATCH(880305,123,sdw.FIX WB,XWRBUF,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,30)
+        CI      XD,TTYXD                        :tty user
+        JE      XRYPFS,,
+        LR      R10,R2                  :the existing instructions
+        JE      XRCRLF,,
+        l       r2,value1,xd            :get buffer number
+        nhi     r2,-4                   :force to buffer number
+        J       xwrbuf+6,,
+        conpatch(xwrbuf+6,,12)
+        clhi    r2,4
+        jle     comerr                  :not buffer 0 or 4 or neg buffer #
+        ci      r2,lbufn                :largest buffer number
+        jg      comerr                  :so it is a buffer number
+  ENDPAT(Disable WB command from local Xray to prevent crash or corrupted data)
+       EI       :XRSZLV-1
+       EI       :2-XRYTMC
+
+:       Fix crash which happend when user logs out and user had delay circuit
+:       with data pending.  Problem was the clearing the delay circuit did
+:       not clear the service port flag.
+        PATCH(880305,134,sdw.REMZAP,REMZA6+2,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,10)
+        RBT     R6,INTLST               :reset the service flag
+        STH     R0,INTUSE,R6,R6         :the existing instructions
+        J       REMZA6+8,,
+ ENDPAT(Fix potential crash when Xray user zaps before clearing delay circuits)
+
+
+:       Don't put neighbor with NETID mismatch on badguy list, but don't
+:       want to continuously report it to cryto log.  Trouble with putting
+:       it on badguy list is that if accidently wrong netid then all of
+:       its neighbors put it on badguy list and then no way for node to
+:       ever come up even if use xray to change neighbor's netid.  
+:       Solution is to not put on badguy list, but set bit first time it
+:       happens and skip over supe and crypto msgs if bit set (not first
+:       time).
+:       Note: bit array uses line number*2 only because this way the patch
+:       took less room that the replaced instructions which makes the patch
+:       simpler and actually ends taking less memory.
+
+       IF       XRESET
+        PATCH(880307,0934,sdw.NETIDBG,ATTNID,,12)
+        SBT     LN,BNETID,,             :set bit (LN is 2* line #)
+        JE      ATTN04+4                :do reporting if first time
+        JAL     R9,RSTSTR               :restart the reset sequence
+        J       ATLD41
+        CONPATCH(PA0PTR,,LNSIZE*2)
+BNETID  HS      LNSIZE                  :note HS instead of BS (see above)
+        ENDPATCH(Do not put neighbor with bad NETID on node's bad guy list)
+       EI       :XRESET
+
+
+:       Fix problem of XRAY loop without a dismiss when getting characters
+:       from XDDT.  Would happen for all input after the first character of
+:       a command and added substantial CPU load.
+
+       IF       ISIS
+        PATCH(880317,1523,sdw.XRAYIN,XRYIN7,,4)
+        SVC     0A,01FF
+        ENDPATCH(Fix local XRAY to have a dismiss when waiting for character)
+       EI       :ISIS
+
+:	Nodecode TII  Version 5.22      :adapted from 5.10 patch by sdw
+:	Fix crash 0007 from corrupted Qexec entry 11x, caused by
+:	non-Xray process CRQZOG (needle-point killed by an 03-xx
+:	char pair, usually a hard zapper) as follows:
+:	  Calling Xray routine CHNLNK/XFNDLK which expects R15 to
+:	  be Xray user block for data storage, resulting in random
+:	  memory corruption.
+:	Also fixed:
+:	  CRQZOG does not establish the channel register.
+:	  Non-Xray LEP9V1 (T-I early zapper) calls Xray CHNLNK/XFDNLK.
+:	  Use own node# on internal termination return from CHNLNK/
+:	  XFNDLK (wasn't carried forward from v5.06 patch).
+:
+	PATCH(880408,1500,SLN.FNDLNK,CRQZOG+6,,0E)
+	JAL	R8,PSN26A,,		:Get chnl#, use new routine
+	J	.+8			:No neighbor
+	LHI	R3,MACHNM		:Int. term, use own node#
+	CONPATCH(LEP9V2-20,,0E)
+	JAL	R8,PSN26B,,		:Use new routine
+	J	.+8			:No neighbor
+	LHI	R3,MACHNM		:Int. term, use own node#
+	CONPATCH(PA1PTR,,4C)
+PSN26A	LHL	CHN,BF,R2,		:Get channel# from buffer BF
+PSN26B	LCS	R3,4			:Initial index to CHNMAP
+PSN26C	AIS	R3,4			:Bump to next entry
+	CLH	CHN,CHNMAP,R3		:Q.Less than beginning channel
+	JLBS	PSN26C			:Y.Look at next entry
+	LHL	R3,CHNMAP+2,R3		:Right chnl range, get data
+	THI	R3,8000			:Q.HOB for internal term.
+	JN	4,R8			:Y.Return as internal term.
+	LHL	R3,CHNMPD,R3		:Get link data
+	THI	R3,8000			:Q.HOB for T-I neighbor
+	JEFS	PSN26D			:N.Go verify that T-II is up
+	NHI	R3,3FFF			:Clear HOB for T-I
+	J	8,R8			:Return as found neighbor
+PSN26D	LHI	R1,2*(NLINKS-1)		:Index for links
+PSN26E	LHL	R9,KDKN,R1,		:Get link descriptor
+	CLH	R3,NDID,R9		:Q.Neighbor found
+	JEFS	PSN26F			:Y.Return as found neighbor
+	SIS	R1,2			:Q.More to check
+	JGEBS	PSN26E			:Y.Go check next entry
+	LBR	R1,R0			:Restore R1
+	JR	R8			:Return as no neighbor	
+PSN26F	LBR	R1,R0			:Restore R1
+	J	8,R8			:Return as found neighbor
+	ENDPATCH(Fix crash 0007 from Qexec corruption)
+
+:       Patch to fix problem of setting bit at ATTLD4 using R2 when
+:       R2 no longer contains the line number.  Symptom is crash.
+:       problem is good example of why it is a bad idea to assume a
+:       scratch register still contains a value after 150 lines of
+:       code.  problem first reported by NIS.
+
+        PATCH(880410,1525,sdw.ATT.R2,ATTLDW,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,14)
+        LR      R2,LN
+        SRLS    R2,1                    :make R2 the line # (again)
+        RBT     R2,VRSTDL               :existing instructions
+        JE      ATTLD6,,
+        J       ATTLDW+8,,
+        ENDPATCH(Fix crash in line attach logic due to corrupted register)
+
+:       patch so that a windowsize matchdown isn't a major operational problem.
+:       problem is that windowsize would only go smaller.  only way to get back
+:       to configured windowsize was to restart both nodes simultaneously.
+:       Solution is when matching down to save where the circular list of
+:       windows was truncated and when/if the link is detached to restore the
+:       circular list of windows and hence the tymfile windowsize.
+:       This also has the nice effect of having the windowsize matchdown occur
+:       everytime the link comes up which keeps this critical information in
+:       the crypto log and is sent to supe.
+
+       IF       XRESET                  :feature only exists in new reset code
+        PATCH(880405,2334,sdw.WSZDWN,MCHD04+4,,6)
+        J       MCHDP0,,                :pointing to where to snip sector list
+        CONPATCH(TRLINZ,,6)             :restore windows when link goes down
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,66)
+        LHL     R0,WSZKN,KN,KN          :get original window size
+        CLB     R0,WSIZ,KD              :did a matchdown?
+        JE      PTRLNK                  :nope, ready to exit
+        STB     R0,WSIZ,KD              :save restored windowsize
+        LHL     R10,ISECS1,KN,KN        :where list was broken for input
+        LHL     R0,ISECS2,KN,KN         :value at break for input sectors
+        STH     R0,RLNK,R10             :input sectors restored
+        LHL     R10,OSECS1,KN,KN        :where list was broken for output
+        LHL     R0,OSECS2,KN,KN         :value at break for output sectors
+        STH     R0,RLNK,R10             :output sectors restored
+PTRLNK  LH      R0,ONDID,KD             :existing instructions
+        STH     R0,NDID,KD
+        J       TRLINZ+8,,
+
+MCHDP0  LB      R10,LKNM,KD             :need index when storing
+        LHL     R0,ISEC,KD              :doing input windows?
+        CR      R0,R2                   :r2 has either ISEC,kd or OSEC,kd
+        JEFS    MCHDP1                  :is ISEC
+        AHI     R10,NLINKS              :if OSEC then now points into OSECS1/2
+MCHDP1  STH     R3,ISECS1,R10,R10       :where list is broken
+        LHL     R0,RLNK,R3              :value at the break
+        STH     R0,ISECS2,R10,R10
+        STH     R2,RLNK,R3              :existing instructions
+        JR      R9
+
+        CONPATCH(PA0PTR,,NLINKS*8)
+:       note that OSECS1 and OSECS2 are never referenced.  Data is stored into
+:       them by using offset from the ISEC save areas.  This is horrid general
+:       programming practice, but proper way requires larger and more 
+:       of the limited patch area.
+ISECS1  HS      NLINKS          :where the list is broken
+OSECS1  HS      NLINKS          :where the list is broken for output sectors
+ISECS2  HS      NLINKS          :value at the break for input sectors
+OSECS2  HS      NLINKS          :value at the break for output sectors
+ ENDPATCH(Fix windowsize matchdown to restore to original when link goes down)
+
+        EI      :XRESET
+
+
+:       fix bug of gateway input accounting.  have it count chars it is
+:       sending back to INET if origination circuit (INET to HNET).  In other
+:       words: do input accounting which previously is only the number of
+:       chars in username:host/password.  first reported by NIS.
+
+        IF      T2GATE                  :another gateway patch
+        IF      ACCT                    :of accounting mistake
+        PATCH(880411,112,sdw.ACCTIN,DISI80+4,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,22)
+        STB     LRC,DIRNG+2,R1,         :save len of msg
+        TBT     CHN,GORGPT              :origination port?
+        JN      DISI90,,                :return to existing instructions
+        LR      R0,LRC                  :get count of chars moved
+        LHI     R3,DISZFL-MNACHN,CHN    :get relative accounting port
+        JAL     R8,AARDIC,,             :count the chars
+        J       DISI90,,                :and done
+        ENDPATCH(Fix Gateway input accounting to count input characters)
+        EI      :acct
+        EI      :t2gate
+
+:  Written 23 February 1988  -  AMH
+:
+:  UUN bit for channel may be set from previous login attempt.  
+:  Reset UUN bit in expanded needle prior to testing of UUN request.
+:
+
+	IF	ISIS
+	IF	EXPNDL
+	PATCH(880223,1000,amh.UUN,DZ0711,,0A)
+	RBT	CHN,DISUUN	:reset UUN bit (the inserted instruction)
+	J	PAH01A,,	:jump to patch
+	CONPATCH(PA1PTR,,10)
+:       following is just the existing instructions
+PAH01A	THI	R0,PSNUUN	:did slot request UUN from sup?
+	JEFS	PAH01B		:branch if not
+	SBT	CHN,DISUUN	:else set bit in UUN bit array
+PAH01B	J	DZ0713,,	:return
+	ENDPATCH(Reset UUN bit in expanded needle prior to test for send UUN)
+	EI	:EXPNDL
+	EI	:ISIS
+
+
+:       Correct Xray NS display to have proper header over the time given
+:       for each process.  The change is that the H-SEC used to be the third
+:       job in the queue and is now the 6th.  The first job is the buffer
+:       zap and it's time is not displayed.
+       if       1-aplybp        :aplybp really complicates job list
+       IF       1-SOLOCS        :solo consat has different text
+        PATCH(880425,1713,sdw.HSecNS,XSTMS0,,4C)
+       ELSE     :solocs
+        PATCH(880425,1713,sdw.HSecNS,XSTMS0,,58)
+       EI       :solocs
+       IF       SOLOCS          :solo consat has different job list
+XSTMS0	SC	/"0D"0A"0APROCESS: ASYNC SYLVR SPIDR SWICH LINKR Q-SEC H-SEC DWLIN SOURC X-RAY 1SEC"0D"0APERCENT: /
+       ELSE     :normal does not have 1/4 sec logic
+XSTMS0	SC	/"0D"0A"0APROCESS: SYLVR SPIDR SWICH LINKR H-SEC DWLIN SOURC X-RAY 1SEC"0D"0APERCENT: /
+       EI       :SOLOCS
+        ENDPATCH(Fix NS to show proper time spent in H-SEC process)
+       EI       :aplybp
+
+:       problem was xray KD command displayed more command circuits than
+:       actually existed.  Simple solution is to make sure circuit is
+:       active as well as a cmd circuit.  The efficiency of testing each
+:       bit is poor, but that solution belongs as a source change, not in
+:       a patch.
+        PATCH(880426,2214,sdw.KDCMTS,XNEI7B,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,1A)
+        TBT     R1,CMDCTS,R7,           :existing instructions
+        JEFS    XNEI7D
+        TBT     R1,LNKACP,R7,           :is this an active circuit?
+        JE      XNEI7B+8,,              :is set, active, count it
+XNEI7D  J       XNEI7A,,                :not cmd and active
+   ENDPATCH(Fix Xray KD command to correctly count number of command circuits)
+
+:       problem of foreground setting lktear bit before copying the data.
+:       if the foreground gets sliced out between setting the bit and
+:       copying the data then rtear is going to tear garbage that it thinks
+:       is the next record.
+:       patch simply reorders instructions.
+       IF       1-(STRHUB+NAKCOD)       :hopeless if tymstar
+	if	silins*isis
+	if	1-\expwsz
+expwsz	eq	0
+	ei
+	patch(880408,1000,pk.siocopy,sioi5+8,,36)
+	la	r7,sibuf,r11,r13
+	ar	r7,r1
+	if	expwsz
+	l	r8,brec,r6
+	else
+	lhl	r8,brec,r6
+	ei
+	la	r8,recbuf-2,r8,r1
+	slls	r1,3
+	sis	r1,1
+	hc      3f71            :copy r7,r1
+	lr	r0,ln
+	srls	r0,1
+	sbt	r0,lngrec
+	sth	r2,recn,r6
+	lb	r3,lknm,kd
+	sbt	r3,lkgrec
+	sbt	r3,lktear
+	lis	r0,1
+	ahm	r0,rcrcvd,ln
+ endpatch(Remove SIO input problems with foreground/background collisions)
+	ei
+       EI       :(STRHUB or NAKCOD)
+
+:       fix problem of extraneous logon characters on Hnet to Inet logons.
+:       If uname field is of odd len (uname+ (CR or SEMI) totalling odd len)
+:       then the next char is to be removed since it is only a supe padding
+:       char since supe wanted msg to end on a HW.
+:       Note that the counting is from an odd number.  that is since the
+:       first char of the username has already been read when checking for
+:       transparent uname.
+
+       IF       T2GATE
+        patch(880706,2256,sdw.GDB216,GDB216,,4)
+        LHI     R7,7F                   :get a nice large number to decrement
+        CONPATCH(GDB217+0a,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,2A)
+        CHI     R1,8D                   :existing instruction
+        JEFS    GDB2P1                  :existing instruction
+        CHI     R1,0BB                  :existing instruction
+        JN      GDB217,,                :existing instruction
+GDB2P1  THI     R7,1                    :odd len?
+        JEFS    GDB2P2                  :not odd
+        LHL     R1,BCT,R2,              :make sure another to get
+        JEFS    GDB2P2
+        JAL     R9,GCIE,,               :it could be escaped
+GDB2P2  J       GDB220,,                :done
+    ENDPATCH(Remove extraneous logon character which was at end of HNET needle)
+       EI       :T2GATE
+
+:       GATEWAY bug of a misplaced register shift.  certain logon
+:       cases jumped to the shift right without going through the
+:       shift left, causing further tests with the logon status byte
+:       to be invalid.  result was that HNET-INET IIX transparent
+:       logons were zapped if the INET supe requested a password.
+:
+:       Patch takes advantage of GB4X4 doing what WCIE does and so by
+:       calling WCIE directly, there is room for the patch without jumping
+:       to the patch area.
+
+       IF       T2GATE
+        PATCH(880601,0040,sdw.GDB4A,GB4DX4,,12)
+        LR      R1,R11                  :old logic here is just a WCIE
+        JAL     R9,WCIE                 :now have created room for the patch
+        TBT     CHN,GTTRNS              :transparent?
+        JE      DSOIRP                  :no, done
+        J       GDB45+0A                :after the misplaced SRLS r11,2
+  ENDPATCH(Fix zap of HNET to INET IIX transparent logons requiring a password)
+       EI       :T2GATE
+
+:       Not a patch, but a reminder of enabling REBTST when enabling
+:       rebuild.
+      IF        REBILD                  :rebuild enabled
+       IF       1-REBTST                :but not the improved stuff
+        REMARK%%%%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%
+        REMARK!!!        CONFIGURATION ERROR             !!!%
+        REMARK!!!      ASSEMBLY HAS BEEN KILLED          !!!%
+        REMARK!!!  For REBUILD to work properly then     !!!%
+        REMARK!!!  REBTST EQ 1 must be in the Tymfile    !!!%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%
+        KILL    SEG0,PRIVBG     :prevent writeout of file
+       EI       :1-REBTST
+      EI        :REBILD
+
+:****************************************************************
+: Patch name:  TRNACC.TST	Product and Version:  TIIG 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/23/88
+: Reason for patch: Termination accounting not done when logon fails.
+:       Patch to have transparent logon failures do termination accounting.
+:       Some logon responses for transparent logons like bad uname or bad
+:       host result in zapping the logon circuit.  Currently, it is zapped
+:       without doing terminating accounting.  Patch inserts termation
+:       accounting just like in ZAPHRD into ISIS B4 msg transparent logon
+:       logic.
+:****************************************************************
+
+        IF      T2GATE
+        IF      ACCT
+        patch(880623,2251,sdw.TRNACC,GDB45A-6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,26)
+        jal     r9,glzpv,,              :existing instruction
+        lis     r0,aalr02               :zapped by host
+        sth     r0,aareas,,             :save reason for termanation
+        lhi     r3,diszfl-mnachn,chn    :get absolute accounting chn
+        jal     r8,aarlo,,              :do termation accounting
+        lis     r0,0                    :clear accounting reason area
+        sth     r0,aareas,,
+        j       dsoirp,,                :done
+       endpatch(Do accounting for transparent logon failures)
+        ei      :ACCT
+        ei      :T2GATE
+
+:****************************************************************
+: Patch name:  TRNTXT.TST	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/05/88
+: Reason for patch:  Transparent HNET to INET circuits display the 'INTERLINK
+:       CLEARED' message but since they are transparent there should be no
+:       msg just like the INET to HNET case.
+:
+:       The detach logic is used to disconnect the circuit and is given a
+:       number of the message to send.  Solution is to patch the loading of
+:       the message for transparent circuit to new value FF.  The DETOUT logic
+:       is patched to not display any message if msg value is FF.  Thus, no
+:       message is displayed.  Note the gateway bit arrays (GTTRNS, GDSPRT)
+:       cannot be used in DETOUT since no longer have a dispatcher port 
+:       (have detach chn and a link chn).
+:****************************************************************
+
+        if      t2gate
+        patch(880705,2336,sdw.TRNTXT,GSOZW7+0a,,6)
+        j       gsozp1,,
+        conpatch(detcr8+0a,,6)
+        j       gsozp6,,
+        conpatch(gsozw8+4,,10)
+        stb     r3,detmty,chn           :save reason
+        jal     r9,zapx,,
+        ahi     r5,detzfl
+        jfs     gsozw8+14
+        conpatch(pa1ptr,,32)
+gsozp1  lis     r3,8                    :send interlink cleared msg
+        tbt     chn,gttrns              :transparent?
+        jefs    gsozp2
+        lcs     r3,1                    :transparent, no send msg
+gsozp2  l       r4,detacp,,
+        j       gsozw7+10,,
+
+:       DETCIR patch stuff
+gsozp6  clhi    r4,00ff                 :no msg indication?
+        jnfs    gsozp7
+        xhi     r2,4                    :existing logic
+        j       detcr8+20,,             :yes no message to send
+gsozp7  lhl     r4,detmtb,r4,r4
+        j       detcr8+10,,
+        endpatch(Do not send gateway message to HNET to INET transparent uesrs)
+        ei      :t2gate
+
+:****************************************************************
+: Patch name:  T2PSNR.TST	Product and Version:  TIIG 5.22
+:     Author:  scott Wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/24/88
+: Reason for patch:  Do termination accounting when pseudo is rejected.
+:       Previously, termination accounting only was sent when zapping
+:       circuits via ZAPHRD, but when getting PSNRJ then ZAPHRD cannot
+:       be used since only have 1/2 a circuit.  Also, since the accounting
+:       block is initialized after receiving a PSN, the patch has to first
+:       get the invoice number, initialize the accounting block, store the
+:       reason for termination, do logout accounting and then restore the
+:       patched instructions.
+:****************************************************************
+
+       if       T2gate
+        if      acct                    :gateway accounting
+        patch(880624,1125,sdw.T2PSNR,GLZ9+24,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,4e)
+        jal     r9,g2ci,,               :needle point
+        jal     r9,g2ci,,               :length
+        jal     r9,g2ci,,               :link count
+        jal     r9,ghwi,,               :start of invoice number
+        sth     r1,cqinv                :save 1st 1/2 of inv
+        jal     r9,ghwi,,               :2nd hw of inv
+        sth     r1,cqinv+2
+        lhi     r5,diszfl               :dispatcher port 0 is never used
+                                        :so momentarily use its accounting
+                                        :block.
+        jal     r8,aastrt,,             :initialize accounting
+        j       glz9p9
+        lis     r0,aalr02               :zapped by host
+        sth     r0,aareas
+        jal     r8,aarlo,,              :send termination accounting
+        xhi     r2,4
+        lhi     r1,zapph                :existing instructions
+glz9p9  j       glz9+2c,,               :done
+        endpatch(Do termination accounting when receive pseudo needle reject)
+        ei      :acct
+        ei      :t2gate
+
+:****************************************************************
+:       NSR#1861
+: Patch name:  sioch2.522	Product and Version:  TII 5.22
+:     Author:  scott wedel	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/28/88
+: Reason for patch: Sio chaining not working as well as it should.
+:    Change logic to attempt to check the status of the chain immediately
+:       after attempting the chain instead of waiting till the next
+:       foreground pass before checking chain status.
+:       Also, idle should be when have a free CCW, not only when not
+:       sending anything.  A free CCW means that the line is probably
+:       idle between this and the next foreground.
+:****************************************************************
+
+        if      ISIS
+        if      silins
+        patch(880628,1500,sdw.SIOCH2,siosnd-4,,4)
+        j       sioc
+        conpatch(sion4-6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,12)
+        chvr    r6,r6                   :existing instruction
+        jg      sion4,,                 :existing logic
+        ts      idle,r4                 :inserted instruction
+        j       sioids,,                :existing instruction
+     endpatch(Correct logic which flagged an unloaded line as saturated)
+       ei       :silins
+        ei      :ISIS
+
+:****************************************************************
+:       NSR#1862
+: Patch name:  oops.522  	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/23/88
+: Reason for patch:  R0 are not saved on Software detected crashes.
+:       Patch so that R0 and R1 are saved when doing software detected
+:       crashes.  The crash logic saves all registers before calling OOPS
+:       but OOPS then falls through to SFAIL which saves all registers
+:       again.  Patch has OOPS jumping over the SFAIL STM so that the
+:       registers at time of crash are preserved.
+:****************************************************************
+
+        patch(880623,1330,sdw.OOPS,SFAIL-0a,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,10)
+        lhl     r1,crcdtb,r1,           :existing instructions
+        sth     r1,crshid
+        j       sfail+4,,               :inserted instruction
+        endpatch(Save R0 and R1 when doing software crashes)
+
+:****************************************************************
+: Patch name:  XRDBRM.522	Product and Version:  TII 5.22
+:     Author:  Clive Rowe	       Organization:  STS
+:   Customer:  Exxon		       Date Written:  07/06/88
+: Reason for patch:
+:    This patch makes sure that the 'Remote XRAY User Flag' is
+:    not set when entering delay measurement routines.
+:****************************************************************
+:
+				:********************************
+        if      xrszlv-1
+        if      2-xrytmc
+	PATCH(880706,1301,CMR.XRDBRM,DBEGI8,,6)
+	J	PA1PTR,,	:
+				:********************************
+	CONPATCH(PA1PTR,,20)	:
+	RBT	R14,INTXRF	: Reset 'Remote XRAY User' flag
+	LIS	R4,1		:
+	STH	R4,DLSTAT,R6	: Mark new status : needle req
+	J	DBEGI8+6,,	: Return
+				:********************************
+	ENDPATCH(Reset INTXRF flag when entering 'DB' command)
+        ei      :xrszlv
+        ei      :2-xrytmc
+				:********************************
+
+:****************************************************************
+: Patch name:  T2SUPG.TST	Product and Version:  TII 5.22
+:     Author:  Scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/25/88
+: Reason for patch:  Gateway sends an ISIS probe message whenever a link
+:       is overloaded, spacing on input is received, HDLC cksum errors and
+:       a link goes out.  Trouble is that these messages are not known by
+:       probe and are instead interpeted as buffer zap messages.  Since none
+:       of the calls to GSUPLG send out properly defined probe messages the
+:       routine immediately returns without sending a message.  Anyway these
+:       events shouldn't be reported to the Inet supe since they are link/line
+:       in the Hnet (and they are properly reported to the Hnet supe).  Thoug
+:       if gateway ever intelligently used the host costing, it would increase
+:       its host cost to the Inet supe when it did have overloaded links.
+:****************************************************************
+
+        IF      T2GATE
+        patch(880725,0008,sdw.GSUPLG,GSUPLG,,2)
+        jr      r10                     :immediately return without doing msg
+        endpatch(Stop Gateway from sending bad probe messages to the Inet Supe)
+        EI      :t2gate
+
+:****************************************************************
+: Patch name:  ndpno8.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  06.28.88
+: Reason for patch:  Gateway does not send data on dispatcher ports if
+:    the number of dispather ports isn't a multiple of 8.
+:       Problem was that the service flags used ndp/8 so the remaining
+:       ports (NDP modulo 8) weren't serviced.  Never much of a problem
+:       in node code since ports are used from 1 up.  but when a gateway
+:       the ports are used from high to low and thus the ports which are
+:       not going to get serviced are the first to be used.  Thus, the
+:       patch is of two parts, the first is for both TII and gateway and
+:       the other is for a gateway specific routine.
+:****************************************************************
+
+        IF      ISIS            :no need if not
+       if       ((ndp+7)/8)-(ndp/8) :declared ports not a mult of 8
+        patch(880627,1401,sdw.DSONDP,DISI30+6,,4)
+        clhi    r7,(ndp+7)/8    :do all
+       if       t2gate          :gateway has an additional spot
+        conpatch(gdb330+6,,4)
+        clhi    r7,(ndp+7)/8    :all ports
+       ei       :t2gate
+        endpatch(Fix bug which prevented sending on dispatcher ports)
+       ei       :if ndp mod 8
+        ei      :isis
+
+:****************************************************************
+: Patch name:  xryssr.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/25/88
+: Reason for patch:  On solo machines the Xray SS cmd shows the status
+:       of the previous 4 minutes.  this is because the SIO status block
+:       is only updated when doing the 4 minute line check.  This makes
+:       the SS not very helpful when trying to fix line problems.
+:       Solution is to do the SVC to update the SIO status block at the
+:       start of the Xray SS command.  So the displayed sio status is
+:       always up to date.
+:****************************************************************
+
+        if      1-ISIS                  :only for solow
+        if      silins                  :with sio lines
+        patch(880725,0009,sdw.XRY.SS,XSIOLN,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,2a)
+        lr      r0,r14                  :need absolute line # times 2
+        srls    r0,3                    :relative sio line # times 2
+        ahi     r0,(nlines-silins)*2    :absolute line # times 2
+        la      r1,siostt,,             :status block area
+        svc     0f,sv.qsi               :do get sio status svc
+        j       pxr.ss                  :error return
+        lr      r3,r14                  :existing
+        srls    r3,4                    :existing
+        ahi     r3,nlines-silins        :existing
+        j       xsioln+8,,              :done
+pxr.ss  jal     r12,svce0f,,            :handle if error
+        endpatch(Fix Xray SS command to display current SIO status)
+        ei      :silins
+        ei      :1-isis
+
+:****************************************************************
+: Patch name:  dbfill.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/25/88
+: Reason for patch:  When using the DB command, specifying a large fill
+:       count can crash the machine since that many characters will be moved
+:       into the buffers and if there aren't enough buffers to handle it
+:       then crash.  Solution is to not allow setting more than 400
+:       (1024) as fill since that is the maximum throughput.
+:****************************************************************
+
+        if      xrszlv-1
+        if      2-xrytmc                :if DB exists
+        patch(880725,1500,sdw.DBFILL,DBEGI5,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,1e)
+        lhl     r3,dlyfil,r6            :get current value
+        shi     r3,200                  :maximum circuit speed/2
+        jlfs    pdbg00                  :within range
+        lhi     r3,1ff
+        sth     r3,dlyfil,r6
+pdbg00  la      r2,prtint,,
+        j       dbegi5+6,,
+        endpatch(Prevent crash caused by delay circuits using all bufferlets)
+        ei
+        ei
+:****************************************************************
+: Patch name:  termac.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/05/88
+: Reason for patch:  Gateway termination accounting tis but a joke.
+:       Oh, it would handle the few most common cases, but any of the
+:       less common calls to zap do not do termination accounting (most
+:       obvious being fat zapper, soft zapper, received detach).
+:
+:       Patch simply goes through the whole code and fixes all calls to
+:       zaphrd to set up for accounting.  Only exception is to leave
+:       internal host zaps alone.  Also, there are a couple of ways to
+:       clear a circuit without calling zaphrd.  those do accounting
+:       before exiting.
+:
+:****************************************************************
+
+       if       t2gate
+        if      acct
+        patch(880706,0112,sdw.TermAc,DSOZAP+0e,,8)
+        jfs     dsozap+16               :remove tests for loging mode
+        conpatch(dsodet+16,,6)
+        kill    dsop01
+        j       dsop01,,
+
+        conpatch(rtdng1+18,,6)
+        kill    rtdng3
+        j       rtdng3,,
+
+        conpatch(rtdgob-0e,,6)          :fix RTDZPS (soft zapper
+        kill    rtdzp9
+        j       rtdzp9,,
+
+        conpatch(rtfz10-4e,,6)
+        kill    rtdz44
+        j       rtdz44,,
+
+        conpatch(dsozw8+4,,6)
+        kill    dsozw9
+        j       dsozw9,,
+
+        conpatch(gdzap+2a,,6)
+        kill gdzap1
+        j       gdzap1,,
+
+        conpatch(trlin2+4,,6)           :and when tearing down a link
+        kill    trlp00
+        j       trlp00,,
+
+        conpatch(crto10+0e,,6)
+        kill    crtop0
+        j       crtop0,,
+
+        if      rebild                  :another one if rebuild enabled
+        conpatch(leprbj+16,,6)
+        kill    leprb2
+        j       leprb2,,
+        ei      :rebild
+
+        conpatch(pa1ptr,,100)
+dsop01  lis     r0,aalr02
+        sth     r0,aareas
+        jal     r9,zapxn,,
+        j       dsoz10,,                :fix for DSODET
+
+rtdng3  lis     r0,aalr03               :zap from net
+        sth     r0,aareas
+        jal     r9,zapxng,,
+        j       rtdng1+1e,,
+
+rtdzp9  lis     r0,aalr03
+        sth     r0,aareas
+        jal     r10,trcirc,,
+        lis     r0,0
+        sth     r0,aareas               :may not clear it
+        j       rtdgob-8,,              :RTDZPS after trcirc
+
+
+rtdz44  lis     r0,aalr03
+        sth     r0,aareas
+        jal     r10,trcrft,,
+        lis     r0,0
+        sth     r0,aareas
+        j       rtfz10-48,,
+
+dsozw9  lis     r0,aalr02               :fix for DSOZWR zap with reason
+        sth     r0,aareas
+        jal     r9,zapx,,
+        j       dsozw8+0a,,
+
+
+gdzap1  lis     r0,aalr02
+        sth     r0,aareas
+        rbt     chn,disznk
+        lr      r3,chn
+        jal     r8,aarlo,,
+        lis     r0,0
+        sth     r0,aareas
+        j       dsoirp,,
+
+trlp00  lis     r0,aalr03               :zap from net
+        sth     r0,aareas
+        jal     r10,trcr02,,
+        lis     r0,0
+        sth     r0,aareas
+        j       trlin2+0a,,
+
+crtop0  lis     r0,aalr03               :from net
+        sth     r0,aareas
+        jal     r9,zaphrd,,             :existing
+        lis     r0,0
+        sth     r0,aareas
+        j       crtou2,,
+
+       if       rebild
+leprb2  lis     r0,aalr03               :link outage is from HNET side
+        sth     r0,aareas
+        jal     r9,zaphrd,,
+        lis     r0,0
+        sth     r0,aareas
+        j       biddrt,,                :existing instruction
+       ei       :rebild
+       endpatch(Do termination accounting for all types of zaps)
+        ei      :acct
+        ei      :t2gate
+
+
+:****************************************************************
+: Patch name:  t2gdb5.tst	Product and Version:  TIIG 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  08/07/88
+: Reason for patch:  Accounting is not done for B5 messages and the
+:       counting of active dispatcher ports (HNPORT) is wrong since it
+:       is not decremented everytime GLZPV is called (that routine clears
+:       the active channel and such).  The calls from GDB4 and GDB5 will
+:       cause a zapack to be received, but since the ports have already been
+:       cleared then the zapack is skipped, thus counting gets off.
+:       As described above, this is sort of three patches in 1, but 5.22
+:       already has so many patches that PHSIZE has to be increased
+:       in some cases and i'd rather not make it always.
+:****************************************************************
+
+        if      t2gate                  :another gateway patch
+        patch(880806,1933,sdw.GDB5,gdb5fn+4,,6)
+        j       gdb5p0,,
+        conpatch(gdb45+24,,6)
+        j       gdb5p2,,
+        conpatch(pa1ptr,,3e)
+gdb5p0  jal     r9,w2ci,,               :exising
+        lcs     r0,1
+        ahm     r0,hnport               :dec existing ports
+        lis     r0,aalr02               :from host
+        sth     r0,aareas,,             :save reason
+        lhi     r3,diszfl-mnachn,chn    :get rel acct port
+        jal     r8,aarlo,,              :do termination accounting
+        lis     r0,0
+        sth     r0,aareas,,             :clear reason
+        j       dsoirp,,                :existing
+
+gdb5p2  sth     r0,gdlgtb,chn,chn       :existing
+        lcs     r1,1
+        ahm     r1,hnport               :dec number of active ports
+        j       gdb45+2a,,
+        endpatch(Fix MAXPORT in Xray NS cmd and an accounting bug)
+        ei      :t2gate
+
+:****************************************************************
+: Patch name:  ZR7263.TST	Product and Version:  TII 5.22
+:     Author:  Scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/29/88
+: Reason for patch:  If the zapper has already been sent out on the port
+:       then the ZAP with reason logic should not clear the port stuff
+:       but what for the ZAP ACK.  Patch is to add a check to exit after
+:       doing the host status stuff and before the port clearout stuff.
+:****************************************************************
+
+        If      ISIS
+        IF      1-T2GATE                :nc running under ISIS
+        patch(880729,1600,SDW.ZR7263,dsozw7,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,1C)
+        lhl     r2,diotab,r4,r4         :existing
+        nhi     r2,-4                   :existing
+        lhl     r0,bf,r2,               :port cleared?
+        je      dsoirp,,                :yes, not detach stuff to do
+        j       dsozw7+0a,,             :return to existing
+  endpatch(Fix problem with Zap With Reason which leads to a 7263 crash)
+        ei      :1-t2gate
+        ei      :isis
+
+:****************************************************************
+: Patch name:  newni.tst 	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  09/30/88
+: Reason for patch:  There is no way to determine what are the current NETID
+:       for each line or the NETID for that value.  Since it is unlikely that
+:       many NETIDs are different than genned in, the name of the original
+:       network is included in the header as well as the NETID.
+:****************************************************************
+
+        if      xrszlv-2
+        patch(880930,115,sdw.NI cmd,XNID+10,,6)
+        sis     r2,8                    :instead of clhi r2,8
+        jn      xnid20,,                :print out NETIDs
+        conpatch(qrychn-6,,6)
+        j       xnid30,,                :print out NETIDS
+        conpatch(pa1ptr,,100)
+xnid20  ais     r2,8                    :if no args then okay
+        jn      comerr,,                :gave some arguments, syntax error
+xnid30  la      r2,xnidh0               :get address of header
+        jal     r7,typasc,,             :print it
+        lhi     r3,netid
+        jal     r9,typhwd,,
+        la      r2,xnidh1
+        jal     r7,typasc,,
+        lis     r5,0                    :line number
+xnid33  lr      r10,r5                  :last line number displayed
+        lh      r6,lnetid,r5,r5         :last netid displayed
+        lr      r3,r5
+        jal     r9,typbyd,,              :print line #
+xnid36  clh     r6,lnetid+2,r5,r5       :netid of next line
+        jnfs    xnid50
+        ais     r5,1
+        clhi    r5,nlines
+        jlbs    xnid36                  :see how many match
+        sis     r5,1                    :let display discover this is last line
+xnid50  cr      r5,r10                  :a range of just one line
+        jnfs    xnid53
+        jal     r7,typ8sp,,
+        j       xnid56
+xnid53  lhi     r1,ascdsh               :print '-'
+        jal     r13,xryout,,
+        jal     r7,typ2sp,,
+        lr      r3,r5                   :high end of range
+        jal     r9,typbyd,,
+        la      r2,asc1sp,,
+        jal     r7,typasc,,
+xnid56  jal     r7,typ8sp,,
+        lr      r3,r6                   :print the netid
+        jal     r9,typhwd,,
+        jal     r7,typcrl,,             :new line
+        ais     r5,1                    :see if at end
+        clhi    r5,nlines
+        jl      xnid33                  :do remaining lines
+        j       xrcrlf,,                :otherwise done
+
+xnidh0  sc      /"8d"8aAssembled in NETID: /
+xnidh1  bc      0
+        ac      /(decimal)  /
+q       eq      .                       :limit network name to 10d bytes
+        mnetid
+        if      .-q-0a                  :if more than 10 bytes
+        org     q+0a
+        re .-q-0a ; bc 0 ; er           :clear excess
+        org     q+0a
+        ei                              :handling of overwrite
+        ac      /'s NETID."8d"8a  LINES           NETID (in decimal)"8d"8a/
+q       eq      .
+        org     xnidh1
+        bc      q-xnidh1-1              :length (not includind length field)
+        org     q                       :restore pc
+        hs      0
+
+     endpatch(Change Xray NI command to also display the NETIDs for each line)
+        ei
+
+:****************************************************************
+: Patch name:  gtpwr5.522	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  11/28/88
+: Reason for patch: Xray GP doesn't work for five digit kernel hosts.
+:       Instead ofthe most correct solution of correcting DECHEX to handle
+:       five digits, the patch simply has the comparision compare against
+:       the decimal host.
+:****************************************************************
+
+        if      xrszlv-1                :only when the cmd exists
+        patch(881128,0113,sdw.GETPWR,getpwr+18,,0e)
+        c       r3,hst0.p
+        jn      comerr                  :existing
+        jfs     .+8                     :get back to normal
+hst0.p  bc      0                       :save it in decimal form
+        ra      0a
+q1      eq      10000
+q2      eq      hst0
+        re      3
+q3      eq      (q2/(q1*10))
+q2      eq      q2-(q3*q1*10)
+q4      eq      (q2/q1)
+q2      eq      q2-(q4*q1)
+q1      eq      q1/100
+        bc      q3^4+q4
+        er
+        ra      0
+        hs      0
+        endpatch(Fix Xray GP to work for all Node and Host numbers)
+        ei
+
+
+:****************************************************************
+: Patch name:  misnet.tst       Product and Version:  TII 5.22
+:     Author:  scott wedel             Organization:  STS
+:   Customer:  all                     Date Written:  12/01/88
+: Reason for patch:  Prevent two versions which both know expanded resets
+:       from letting a link come up on old resets.  This is not nontrivial
+:       because still have to work with 5.10 and with the ATCs which put
+:       psuedo random garbage as its version number.  Thus, have to
+:       verify that the version number is really okay.
+:****************************************************************
+
+      if        xreset
+        patch(890625,1645,sdw.ExpOld,atl061+4,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,50)
+        tbt     ln,xrstbt,,
+        jn      atl061+0c,,             :coming up expanded so do netid check
+        lh      r0,vrstp+4,sd           :any version present?
+        je      attl07,,                :nope, something old
+        lh      r9,vrstp+6,sd           :get 1s complement
+        xr      r9,r0                   :verify version
+        ais     r9,1
+        jn      attl07,,                :some garbage, not a version
+        clhi    r0,$8 520               :this neighbor 5.20 or later?
+        jl      attl07,,                :old guy so okay
+        lhi     r0,txrshd               :force new resets
+        sth     r0,vrstp,sd             :to be sent
+        j       attld4,,                :recent version, make it come up on
+                                        :expanded resets
+ endpatch(Don't let links between v5.20+ neighbors come up on old style resets)
+      ei        :xreset
+
+:****************************************************************
+: Patch name:  gatsig.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  09/21/88
+: Reason for patch:  Gateway does not distinguish between 01 char pairs
+:       and data while attempting to build a circuit.  This creates 
+:       problems since the signal is sent as a logon char and thus creates
+:       bad usernames/passwords.  Solution is to properly skip over
+:       these signals while in logon mode.  Problem exists in both 
+:       directions.
+:****************************************************************
+
+        if      t2gate                  :yes, another gateway bug
+        patch(880921,1623,sdw.GATSIG,gdb403+12,,6)
+        j       gb3p00,,
+        conpatch(gdpp4,,10)
+        stb     r9,glgcnt,r9,
+        sis     cd,1
+        jle     gdb390                  :moved all
+        j       gdb360                  :get char the right way
+        conpatch(lg10lp+10,,6)
+        j       logp00,,
+        conpatch(log309+0e,,6)
+        j       logp10,,
+        conpatch(pa1ptr,,80)
+gb3p00  sis     r1,3                    :this sig a pair or a byte?
+        jg      gdb390,,                :a signal byte signal
+        lhl     r0,bct,r2,              :make sure another byte is there
+        je      gdb390,,
+        jal     r8,gci,,                :get second byte
+        clhi    r1,0ff                  :yellow ball?
+        je      gb3c02,,                :yes, yellow
+        j       gdb390,,                :other, ignore it
+
+logp00  sis     r1,3                    :existing
+        je      lg10lp+16,,             :check out zapper type
+        jg      log41,,                :some 1 byte signal
+        jal     r8,pci,,                :skip second byte of signal
+        sis     r4,1
+        ais     r9,1
+        j       log41,,
+
+logp10  lr      r1,r1                   :escaped byte?
+        jefs    logp11
+        sis     r1,3                    :two byte char pair?
+        jg      log3,,
+        lr      r2,r6                   :source reg
+        jal     r8,gci,,                :get second byte of signal pair
+        lr      r2,r7                   :dest reg
+        j       log3,,
+logp11  lr      r2,r6
+        jal     r8,gci,,                :get second byte of char pair
+        lr      r2,r7
+        j       log6,,
+        endpatch(Fix Gateway handling of signals while in login mode)
+        ei      :t2gate
+
+      if        isis                    :only if ISIS
+        kill    gentim                  :just in case defined
+qpc     eq      .
+
+GENTIM	MACRO(TIME) [
+
+	RA	$0 0A
+
+QQQQYS	EQ	365*4+1			:quad year size in days
+QQQDAZ	EQ	(TIME)/(24*60*60)+365	:days since 1/1/74 + 365
+QQQNQY	EQ	QQQDAZ/QQQQYS		:# of quad yrs since 1/1/74
+QQQROD	EQ	QQQDAZ-QQQNQY*QQQQYS	:remainder of days 
+QQQLEA	EQ	QQQROD/365		:year in current quad yr
+
+	IF	QQQLEA-3
+QQQLEA	EQ	3
+	EI
+
+QQQYR	EQ	QQQNQY*4+QQQLEA+73
+QQQDAY	EQ	QQQROD-QQQLEA*365+1
+
+QQQM1	EQ	31
+	IF	QQQLEA-2
+QQQM2	EQ	29
+	ELSE
+QQQM2	EQ	28
+	EI
+QQQM3	EQ	31
+QQQM4	EQ	30
+QQQM5	EQ	31
+QQQM6	EQ	30
+QQQM7	EQ	31
+QQQM8	EQ	31
+QQQM9	EQ	30
+QQQM10	EQ	31
+QQQM11	EQ	30
+QQQM12	EQ	31
+
+QQQMON	EQ	1
+QQQNOT	EQ	1
+
+	RE	
+	IF	QQQDAY-QQQM|QQQMON|
+QQQDAY	EQ	QQQDAY-QQQM|QQQMON|
+QQQMON	EQ	QQQMON+1
+	ELSE
+QQQNOT	EQ	0
+	EI
+	ER	QQQNOT
+
+QQQRS1	EQ	(TIME)-((QQQDAZ-365)*(24*60*60))
+QQQHRS	EQ	QQQRS1/(60*60)
+QQQRS2	EQ	QQQRS1-QQQHRS*(60*60)
+QQQMIN	EQ	QQQRS2/60
+QQQSEC	EQ	QQQRS2-QQQMIN*60
+        RA      0
+]
+
+ patch(881202,2313,sdw.?slot,0e00a4,,6)
+qq      CURGMT
+        gentim(qq)
+        org     0e00a4                  :put time for ISIS ?slot
+        bc      qqqmon,qqqday,qqqyr,qqqhrs,qqqmin,qqqsec
+
+        org     0e0096
+        if      t2gate
+        hc      8b                      :gateway's PID
+        else
+        hc      37                      :isis's PID
+        ei
+        org     qpc                     :restore PC
+        endpatch(Set up Segment E so that DDT ?SLOT command works properly)
+
+     ei         :isis
+
+
+:****************************************************************
+: Patch name:  wssege.tst       Product and Version:  TII 5.22
+:     Author:  scott wedel             Organization:  STS
+:   Customer:  all                     Date Written:  12/02/88
+: Reason for patch:  In ISIS xray will allow an attempted write to
+:       segments E and F even though when xray does the write then
+:       node code will be crashed since node code can never write
+:       segment E and Segment F since the svc to remove write
+:       protection does not apply to SEG E and F.
+:****************************************************************
+
+
+       if       ISIS                    :only applies for ISIS
+        patch(881202,2255,sdw.W.SegE,write4+0a,,6)
+        j       pa1ptr,,
+        conpatch(writf4+0a,,6)          :applies to Write fullword as well
+        j       writf6,,
+        conpatch(chkdat+0f*4,,4)
+        wc      4ff                     :size of seg F
+        conpatch(pa1ptr,,40)
+        ci      r11,0e0000              :going for Seg E
+        jge     chkma1,,
+        jal     r9,typadd,,             :existing
+        j       write4+10,,
+
+writf6  ci      r11,0e0000
+        jge     chkma1,,
+        jal     r9,typadd,,
+        j       writf4+10,,
+ endpatch(Prevent Xray W or WS command from writing to Seg E or Seg F)
+       ei       :isis
+
+:****************************************************************
+: Patch name:  xrdbuf.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/13/88
+: Reason for patch: The RB command does not range check buffer number.
+:****************************************************************
+
+        if      xrszlv-2
+        patch(881213,1655,sdw.FIX RB,xrdbu3+4,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        ci      r2,lbufn
+        jg      comerr,,
+        lr      r2,r2
+        jl      comerr,,
+        jal     r8,cbcct,,
+        j       xrdbu3+0a,,
+        endpatch(Put a range check on Xray RB command)
+        ei
+
+:****************************************************************
+: Patch name:  xrstmg.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/13/88
+: Reason for patch: The SM and AP commands do not range check for
+:       negative numbers and thus allow a typo to crash node code
+:****************************************************************
+
+        if      xrszlv-1
+        patch(881213,1655,sdw.FIX SM,setme0+6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        l       r0,value1-4,xd,r2
+        jl      comerr,,
+        j       setme0+0c,,
+        endpatch(Put a range check on Xray SM command)
+        ei
+
+
+:****************************************************************
+: Patch name:  xrstmg.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/13/88
+: Reason for patch: The SM and AP commands do not range check for
+:       negative numbers and thus allow a typo to crash node code
+:****************************************************************
+
+        if      xrszlv-2
+        if      primsg
+        patch(881213,1655,sdw.FIX AP,setpr0+6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        l       r0,value1-4,xd,r2
+        jl      comerr,,
+        j       setpr0+0c,,
+        endpatch(Put a range check on Xray AP command)
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  hsslot.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/07/89
+: Reason for patch: HS <value> S only shows 1st host for slot instead of
+:       all hosts for slot.
+:****************************************************************
+
+       if       1-t2gate                :not for gateway
+        if      xrszlv-1
+        if      2-xrytmc
+:       note: hstdi5+6 for 5.31 and hstdi5+8 for 5.22
+        patch(890207,250,sdw.HSslot,hstdi5+8,,4)
+        je      hstdi8                  :instead of hstdi9
+    endpatch(Fix Xray HS <value> S command to display all hosts for that slot)
+        ei
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  kdlcs8.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/22/89
+: Reason for patch:  fix crash of link going down while doing KD cmd
+:****************************************************************
+
+       if       xreset
+        if      2-xrytmc
+        if      xrszlv
+        patch(890222,141,sdw.KD r8,xneig2-16,,12)
+        lcs     r8,1                    :don't display if no lines
+        LB      R0,NLAT,KX
+        JNFS    XNEIG2                  :GOT SOME
+        LA      R2,ASCZIP,,
+        JAL     R7,TYPASC               :NO LINES ATTACHED - SAY 'ZIP'
+        endpatch(Fix potential crash due to improperly orderred instructions)
+        ei
+        ei
+       ei       :xreset
+
+:****************************************************************
+: Patch name:  hdlcsm.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/22/89
+: Reason for patch:
+:****************************************************************
+
+        if      silins
+        patch(890222,0059,sdw.crHDLC,ldrp54-1a,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        lhl     r10,rcrcvd,ln,                  :packets received
+        srls    r10,7                           :over 128
+        cr      r0,r10                          :hdlc errors>=packets/128?
+        jl      ldrp54,,                        :not enough errors to worry
+        jal     r10,siosur,,                    :existing
+        jal     r8,crypto,,
+        hc      crye4a                          :existing
+        j       ldrp54-0e,,                     :done
+       endpatch(Only put HDLC CKSUM ERROR in Crypto log when line is bad)
+       ei
+
+:****************************************************************
+: Patch name:  gatcln.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  05/05/89
+: Reason for patch:  Gateway will put a port in cleanup if it has
+:       sent data to the supe (thus is waiting for logon status)
+:       the command circuit gets zapped shortly after the user zaps.
+:       Not a common sequence, but can occur when a supe gets sick
+:       and users give up (zap) before the supe responds.
+:****************************************************************
+
+       if       t2gate
+        patch(890505,1604,sdw.t2Clean,gdb320+6,,4)
+        jfs     .+6             :remove the waiting for supe's response
+        conpatch(gdb356-4,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        je      gdb320,,        :existing
+        lr      lrc,r1
+        lr      cd,lrc          :both also existing
+        tbt     chn,logdat      :normal login mode?
+        jn      gdb360,,        :unchanged if we can talk to supe
+        jal     r8,pcis,,       :check out first char
+        sis     r1,3            :zapper type?
+        jn      gdinxt,,        :nothing interesting
+        jal     r8,pci,,        :is it really a zapper?
+        sis     r1,3
+        jg      gdinxt,,        :too big to be a zap
+        j       gdb362,,        :is a zapper so send it
+       endpatch(Fix problem of gateway with ports in cleanup)
+       ei       :t2gate
+
+:****************************************************************
+: Patch name:  lep0db.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  05/16/89
+: Reason for patch:  Node Code trusted the supe to have the correct
+:       length of the text to login port (msg 0D subtype 10).  If the
+:       puts an incorrect length then the origination node crashes.
+:       
+:****************************************************************
+
+        if      t2gate
+
+        patch(890517,1744,sdw.lep0db,lep0db,,1a)
+LEP0DB  LR      R2,R6                   :R6 is LEP buffer
+        JAL     R8,GCI                  :move string from LEP buffer to port
+        LR      R2,R7                   :R7 is port input buffer
+        JAL     R8,WCI
+        LH      R1,BCT,R6,              :INSURE BUFFER NOT EMPTY
+        JEFS    LEP0D1
+        SIS     LRC,1
+        JGBS    LEP0DB
+        LR      R2,R6                   :KLUDGE TO CIRCUMVENT SUP BUG
+        endpatch(Don't crash on illegal Supe to Node 0D messages)
+       ei       :t2gate
+
+
+
+::*************************END OF PATCH FILE***************************
+
+:       this should always be at the end of the patch file.
+PATERR  ERRCNT
+        if      paterr-badcod           :any assembly errors in patchs
+        REMARK%%%%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%
+        REMARK!!! PATCH ASSEMBLY ERRORS !!! FATAL ERROR  !!!%
+        REMARK!!! ASSEMBLY HAS BEEN KILLED               !!!%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%
+        KILL    SEG0,PRIVBG
+        ei      :patch check
+   @nØ
