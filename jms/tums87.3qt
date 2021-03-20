@@ -1,0 +1,1031 @@
+From: Joe Smith <JMS@X930> 
+Date: Wed, 1 Jul 87 13:11:19 PDT 
+To: TYM.T/FERRO@EMSTXS.Ontyme.Tymnet 
+Cc: TXS.J/SMITH@EMSTXS.Ontyme.Tymnet 
+Subject: Re: ANOTHER 2020 CRASH 
+In-reply-to: I53791@Ontyme.Tymnet of 30 JUN 87 17:09:49
+
+I could not find a dump of the crash from 30-JUN-87.  However, the message
+"?PAR ERR 277 001 300" means that a memory parity error was detected by
+Unibus Adaptor #3.  This indicates a possible hardware problem in the
+memory boards, the memory controller, or UBA3.
+
+I looked at CRA001.SAV which was a crash dump from 8-JUN-87.  In it, the
+IRING and ORING pointers indicate that either the KMC or the LSI-11 wasn't
+doing its job since the ORING was completely full.  Most of the time when
+this happens to us, the LSI-11 has halted.  We simply reload the LSI-11 and
+the KS2020 and don't bother with saving a crash dump.
+
+As for the stopcode message, TTYBNP means Block I/O Not in Progress.
+This can happen when the LSI-11 scribbles garbage in the IRING just before
+it halts.  There's not much that can be done other than reloading the LSI-11
+node and the KS2020.
+
+			/Joe
+
+From: Joe Smith <JMS@X930> 
+Date: Fri, 10 Jul 87 17:24:09 PDT 
+To: WRS 
+Subject: Changes to RDIST. 
+
+Bug #1: Time-out on 930 for when LOGINN was waiting for project code.
+	LOGINN demands a CR not just an LF at the end of the project code.
+Fix #1: Send two CR's - one for project code, one for "attach to job?".
+
+Bug #2: Gives up too soon when a host with 1B0 set appears in JOBS.DAT.
+Fix #2: Stop at -1 instead of negative.  MHX also has this bug, CPY does not.
+
+New:  I added the /MASTER switch so that I could run RDIST on the slave system.
+New:  I added version number in DEC standard form.
+
+File 1)	DSK:RDIST.WRS	created: 0152 28-JUN-87
+File 2)	DSK:RDIST.SAI	created: 1643 10-JUL-87
+
+1)1	require "(SAILIB)SAIL.DEF" source!file;
+****
+2)1	require '1 lsh 24 lor '002 version;	comment version 1(2);
+2)	require "(SAILIB)SAIL.DEF" source!file;
+**************
+1)1	require "ARGS.REQ" source!file;
+1)	require "AUXLIB.REQ" source!file;
+1)	require "(MPL)UUOSYM.SAI" source!file;
+****
+2)1	require "(WRS)ARGS.REQ" source!file;
+2)	require "(WRS)AUXLIB.REQ" source!file;
+2)	require "(MPL)UUOSYM.SAI" source!file;
+**************
+1)	item LISTONLY;
+1)	string item LOGFILE;
+1)	string item NAMES;
+1)	item CHECK;
+1)	string item HOSTS;
+1)	integer item RETRIES;
+1)	integer item TIMEOUT;
+1)	item TRACE;
+1)	string item USER;
+1)	item VERBOSE;
+1)	set AllFiles;
+1)	string MASTER;
+****
+2)	string item LOGFILE;
+2)	string item NAMES;
+2)	        item CHECK;
+2)	 string item HOSTS;
+2)	        item LISTONLY;
+2)	 string item MASTER;
+2)	integer item RETRIES;
+2)	integer item TIMEOUT;
+2)	        item TRACE;
+2)	 string item USER;
+2)	        item VERBOSE;
+2)	set AllFiles;
+**************
+1)3		while 0 < i_wordin(chan) do
+1)		    if i land '1000000000 then
+****
+2)3		while -1 neq i_wordin(chan) do		! Stop at -1, not 1B0;
+2)		    if i land '1000000000 then
+**************
+1)3		    	HostTab[h_h+1] _ i land '777777;
+****
+2)3				! The master system should be excluded here;
+2)		    	HostTab[h_h+1] _ i land '777777;
+**************
+1)5	    auxOut( "SET LOGOUT"& #lf& "TTY NO CRLF"& #lf );
+1)	    return( true );
+****
+2)5	    ! Send one CR for "project code" and another for "attach to job?";
+2)	    auxOut( #cr& #cr& "SET LOGOUT"& #cr& "TTY NO CRLF"& #cr );
+2)	    return( true );
+**************
+1)6	    auxOut( "R(SPL)FINDIT"&#lf );
+1)	    auxSync( #lf& "Find file: " );
+****
+2)6	    auxOut( "R(SPL)FINDIT"&#cr );
+2)	    auxSync( #lf& "Find file: " );
+**************
+1)6	    auxOut( NAMES&#lf );
+1)	    auxSync( #lf );
+****
+2)6	    auxOut( NAMES&#cr );
+2)	    auxSync( #lf );
+**************
+1)7	    S := S[1 to 14]& "*"& S[19 to 30]& ","& S[1 to 30];
+1)	    cprint( TEL.COM, scan( S, noBlank, !SKIP! ), crlf );
+****
+2)7	    S := S[1 to 14]& datum(MASTER)& S[19 to 30]& ","& S[1 to 30];
+2)	    cprint( TEL.COM, scan( S, noBlank, !SKIP! ), crlf );
+**************
+1)8	    Login( USER, cvd(MASTER) );
+1)	    Findit( NAMES, Build );
+****
+2)8	    Login( USER, cvd(datum(MASTER)) );
+2)	    Findit( NAMES, Build );
+**************
+1)10	    MASTER := cvs(calli(!xwd(!CNSYS,!GTCNF),calli!GETTAB));
+1)	    datum(RETRIES) := 5;
+****
+2)10	    datum(MASTER) := cvs(calli(!xwd(!CNSYS,!GTCNF),calli!GETTAB));
+2)	    datum(RETRIES) := 5;
+**************
+1)10		{CHECK,HOSTS,LISTONLY,RETRIES,TIMEOUT,TRACE,USER,VERBOSE},
+1)		ARGS );
+****
+2)10		{CHECK,HOSTS,LISTONLY,MASTER,RETRIES,TIMEOUT,TRACE,USER,VERBOSE},
+2)		ARGS );
+**************
+1)10		print( "Master host: ", MASTER, crlf );
+1)		BuildDataBase( datum(USER), datum(NAMES) );
+****
+2)10		print( "Master host: ", datum(MASTER), crlf );
+2)		BuildDataBase( datum(USER), datum(NAMES) );
+**************
+Received: from D25.Tymnet by X930.Tymnet; Mon, 13 Jul 87 13:15:28 PDT
+Return-path: <JMS@X930> 
+From: Joe Smith <JMS@X930> 
+Date: Mon, 13 Jul 87 15:14:18 CDT 
+To: OSMAN 
+Subject: (SYS)SAISGA.SHR had wrong protection. 
+
+I set it back to ALL RD RD.  It was ALL RD NO.
+
+DIRECTORY 1,4	1514	13-JUL-87
+   FILE                 CREATION
+NAME    EXT   PAGES    DATE    TIME      ALLOWED       WORDS     LICENSE  
+
+SAISGA  SHR      43  18-APR-87  234    ALL RD  NO     21292
+SAISGA  BAD      43  11-MAR-83 1818    ALL RD  RD     21292
+SAIL    LOW       9  11-MAR-83 1818    ALL RD  RD      3967
+SAILOW  REL       7  11-MAR-83 1818    ALL RD  RD      2687
+SAIL    SHR      64  11-MAR-83 1816    ALL RD  RD     31940
+SAISG9  SHR      41  11-AUG-80 1209    ALL RD  RD     19992
+SAILWT  REL      20  31-MAY-79 1246    ALL RD  RD      9515
+SAISGT  SHR      43  31-MAY-79 1246    ALL RD  RD     20998
+SAISG8  SHR      42   4-AUG-78 1218    ALL RD  RD     20904
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Wed, 15 Jul 87 2:13:07 PDT 
+To: Dennis Ernst <DErnst@B39.Tymnet> 
+Cc: Joe Smith <JMS@X930.Tymnet>, Osman Guven <Osman@X930.Tymnet>, dencoff 
+Subject: Micronode changes 
+
+Dennis,
+  I've sent you interoffice mail with a node map and hardware layout of
+the new proposed micronet.  I've created a file (CURR11:930)RUFSC.MAC that
+has the routing information (a la RULAB.MAC) with the nodes that are NOT
+part of our local net removed.
+
+  I put routing info in for the host numbers that I've chosen for the DZ's
+and the (future) DZV's for comment... they can be commented out so that
+they would go to TYMNET and back into the micronet where necessary.  We
+can talk about that part when you and I talk on the phone.
+
+  Please call me when you receive the inter-office mail.
+
+/Carl
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Wed, 15 Jul 87 15:43:47 PDT 
+To: Dennis Ernst <DErnst@B39.Tymnet>, Monitor Group <CARL@X930>, Osman Guven
+	<Osman@X930.Tymnet>, Joe Smith <JMS@X930.Tymnet> 
+Cc: Craig Fletcher <fletcherc@X930.Tymnet>, Dennis Coffey <dencoff@X930.Tymnet>
+	
+Subject: PDP-11 Diagnostics 
+
+Dennis,
+  It is my impression that the node code loaded by NODLOD in *.IMG files
+is an image copy made using LINK11 of code that runs in the PDP-11.  It
+is also my impression that *.BND files are also possible to be built and
+then loaded with LOADII.
+
+  The hardware FE's have some standard diagnostics for PDP-11 based systems
+which (on the 11's with disks or tapes) can be loaded and run.
+
+  Do you know if the format of either the BND or IMG files is the same or
+similar to the DEC standard diagnostics, and if it is reasonable to expect
+that we could load these diagnostics from a TYMCOM-X system using NODLOD or
+LOADII?
+
+  If the formats are different, it may be possible (should be, anyway) to
+convert them to either IMG or BND file format, and then load them into the
+LSI's to run memory or other diagnostics in order to trace some of our
+intermittant faults.
+
+  I am asking, because this may be the method to use to try and diagnose
+why the micronode at TRW keeps halting... the symptoms suggest a power-
+supply problem, but I am unsure, and would like to try another route...
+besides, it will give us a way to trace and fix the intermittant problems
+we have with two of our micronodes.
+
+/Carl
+Received: from B39.Tymnet by X930.Tymnet; Thu, 16 Jul 87 11:23:07 PDT
+Return-path: <DERNST@B39.Tymnet> 
+From: DERNST@B39.Tymnet 
+Date: Thu, 16 Jul 87 11:08:12 PDT 
+To: Carl A Baltrunas <Carl@X930.Tymnet> 
+Cc: Monitor Group <CARL@X930>, Osman Guven <Osman@X930.Tymnet>, Joe Smith
+	<JMS@X930.Tymnet>, Craig Fletcher <fletcherc@X930.Tymnet>, Dennis
+	Coffey <dencoff@X930.Tymnet> 
+Subject: Re: PDP-11 Diagnostics 
+In-reply-to: your message of Wed, 15 Jul 87 15:43:47 PDT
+
+Carl,
+  Once upon a time, we had a project to get the source
+for the LSI-11 diags (yes, DEC sells them) and assemble them
+using our PDP-11 assembler.  They could then be converted
+to BND format.  However, since the normal method used by the
+field people when the want to do diags is to read them from
+mag tape using a portable TU-58, the project was dropped.  They are
+also available on paper tape.  
+
+I got your stuff in the mail.  Will call you when I have had a chance to 
+look it over.
+
+Dennis
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Thu, 30 Jul 87 9:16:43 PDT 
+To: Wayne D Bartlett <BARTLETW@B39.Tymnet>, William R Soley <WRS@B39.Tymnet> 
+Cc: Joe Smith <JMS@X930.Tymnet>, Craig Fletcher <Fletcherc@X930.Tymnet>, Dennis
+	Ernst <Dernst@B39.Tymnet>, Osman Guven <Osman@X930.Tymnet> 
+Subject: Ref: MSG from Joe Smith, re: NAD and WF 
+
+Wayne,
+  Since Joe (also in class) was working with NAD, I had him test the ability
+of a non-privileged, non-licensed user to write a file to a directory that
+he otherwise would not have access to.  He chose (UN1) for the destination
+directory.
+  I heard from Dennis Ernst, that HF or WF should probably NOT be set on NAD.
+As such, we will be removing WF from (SYS)NAD sometime today...
+
+
+  If this causes someone some inconvenience, because they were relying on
+this "capability", please have them contact one of us (Joe or Carl).
+
+Please forward a copy of this message to Doug E.  Thanks.
+
+/Carl
+From: Joe Smith <JMS@X930> 
+Date: Thu, 30 Jul 87 15:29:02 PDT 
+To: Monitor Group <JMS>, Carl, Osman 
+Cc: FletcherC, DenCoff 
+Subject: IME crashes on D37 caused by low core getting corrupted. 
+
+The immediate cause of the IME (Illegal Memory reference from Exec) was
+due to the byte pointer at UPYUWM got changed from 001200,,374670 to
+401202,,354670.  Bits 0 and 16 got set and bit 22 got cleared.  Several other
+words in the vicinity of UPYUWM also got mangled - see below.
+
+I think it was caused by the "SET AUTOLOGOUT" inactivity timer going off
+while the user's context pages were swapped out.  This would not show up on 930
+or 95 unless a bunch of memory hogs were logged in to force the idle job out.
+
+DSK:6000.MON (1447 30-JUL-87)	 DSK:6000.C05 (1447 30-JUL-87)
+   the running monitor		   crash dump from IME
+1)1 Input file: 		2)1 Input file: (SYS)CRA005     Bit 0 got set
+1) $$C 6000<6777>0$N		2) $$C 6000<6777>0$N		Bit 16 got set
+**************							Bit 22 cleared
+1) UPYPSR/ 310300,,372701	2) UPYPSR/ 710302,,352701	400002,,020000
+1) USYPSR/ 310300,,773701	2) USYPSR/ 710302,,753701	   "      "
+1) UXYPSR/ 310300,,366701	2) UXYPSR/ 710302,,346701	(same for all)
+1) UPYUWM/   1200,,374670 	2) UPYUWM/ 401202,,354670
+1) USYUWM/   1200,,775670	2) USYUWM/ 401202,,755670
+1) UXYUWM/   1200,,370670	2) UXYUWM/ 401202,,350670
+1) USYSIN/ 241200,,775675	2) USYSIN/ 641202,,755675
+1) USYLSP/   1200,,775675	2) USYLSP/ 401202,,755675
+1) PBMMSK/      0,,177777	2) PBMMSK/ 400002,,157777
+1) UPYPTM/   2200,,372414	2) UPYPTM/ 402202,,352414
+1) UPYPXM/   2200,,372412	2) UPYPXM/ 402202,,352412
+1) USYPTM/   2200,,773414	2) USYPTM/ 402202,,753414
+1) USYPXM/   2200,,773412	2) USYPXM/ 402202,,753412
+1) UXYPTM/   2200,,372414	2) UXYPTM/ 402202,,352414
+1) LMYCUR/ 410212,,373521	2) LMYCUR/ 410212,,353521
+1) LMYLMA/   2712,,373521	2) LMYLMA/ 402712,,353521
+1) LMYHDA/   1212,,373521	2) LMYHDA/ 401212,,353521
+1) LMYSPB/  42212,,373521	2) LMYSPB/ 442212,,353521
+1) LMYSPO/    412,,373521	2) LMYSPO/ 400412,,353521
+1) HNGTIM/ 12			2) HNGTIM/ 67
+1) HNGMIN/ 16			2) HNGMIN/ 21
+      CIPWT is the clock queue.  It is supposed to differ.
+1) CIPWT+0/ 400012,,600004	2) CIPWT+0/ 400017,,145
+1) CIPWT+1/ 410102,,42		2) CIPWT+1/ 410111,,200002
+1) CIPWT+2/ 400003,,400112	2) CIPWT+2/ 410101,,103
+1) CIPWT+3/ 400050,,200033	2) CIPWT+3/ 400025,,200027
+1) CIPWT+4/ 400036,,600005	2) CIPWT+4/ 410120,,600003
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Sun, 2 Aug 87 23:42:08 PDT 
+To: Monitor Group <CARL@X930>, Osman Guven <Osman@X930.Tymnet>, Joe Smith
+	<JMS@X930.Tymnet> 
+Cc: Craig Fletcher <fletcherc@X930.Tymnet>, Dennis Coffey <dencoff@X930.Tymnet>
+	
+Subject: Agenda item(s) 
+
+
+1. TrainNet connection
+   a. refusal of F3s due to space and maintenance costs
+   b. connection to TrainNet at Nicholson Lane
+      1. Bob Grandey and George King are in favor of some arrangement
+      2. What do we get out of this arrangement?
+
+2. Review of Monitor /C release (current stage?)
+
+3. Review of Monitor /D release
+   a. What is going to be implemented
+   b. Additional 1+s that have come up in the past 3 weeks
+   c. What will be put off until /E or later?
+
+4. Congratulations to Joe and Carl for successful completion of class
+   (Both Joe and Carl finished at the top of their respective classes)
+
+5. Review of D37 crash due to missing patch
+
+6. Review of Ranier Bank problem with BOOTS-MT-Memory parity problems
+
+7. Update status of the move to South Bay Center
+
+8. Update on the progress of building our micronet for the move
+
+9. Review of computing resources
+
+Received: from F29.Tymnet by X930.Tymnet; Wed, 19 Aug 87 13:24:22 PDT
+Received: from EMSFSC.Ontyme.Tymnet by F29.Tymnet; Wed, 19 Aug 87 13:08:22 PDT
+Return-path: <FSC.P/DIAMOND@EMSFSC.Ontyme.Tymnet> 
+From: FSC.P/DIAMOND@EMSFSC.Ontyme.Tymnet 
+Date: 19 AUG 87 10:31:49 
+To: FSC.JM/SMITH@EMSFSC.Ontyme.Tymnet 
+Message-id: P22557@Ontyme.Tymnet 
+Subject: POLICY 605 CLEARIFICATION 
+GRAYAREAONTELCOMANAGEMENTINP#605: 
+
+                M C D O N N E L L   D O U G L A S
+ 
+            F I E L D   S E R V I C E   C O M P A N Y
+
+
+
+DATE>      19 AUG 87  10:30
+
+TO>        FIELD OPERATIONS MANAGMENT
+
+COPIES>    
+
+FROM>      PAT DIAMOND
+
+
+SUBJECT>   GRAY AREA ON TELCO MANAGEMENT IN P#605
+
+
+-----------------------------------------------------------------------
+
+
+IT SEEMS THE NEW POLICY 605 HAS AN AREA IN THE TELCO MANAGEMENT SECTION
+AS IT IDENTIFIES THE RESPONSIBILITIES OF TELCO INTERFACE.
+I HOPE THIS ONTYME WILL CLEAR UP THIS CONFUSION.
+
+THERE ARE TWO TELCO INTERFACE AREAS FSCO IS INVOLVED IN;
+1. THE LOCAL ACCESS DIAL LINES ARE HANDLED IN TWO STEPS;
+   A. THE TECH SUPPORT GROUP IS RESPONSIBLE FOR RUNNING THE ROTARY
+      TESTER. IF THEY IDENTIFY A FAULT WITH THE ROTARY THEY WILL TURN
+      THIS OVER TO THE FIELD DISTRICT RESPONSIBLE THROUGH CHAD.
+   B. THE FIELD ENGINEERS ARE RESPONSIBLE FOR THE REPAIR OF THESE LOCAL
+      ACCESS PROBLEMS INCLUDING INTERFACE WITH THE TELEPHONE COMPANY
+      PROVIDING THIS SERVICE. THIS PROCESS IS THE SAME AS IT HAS ALWAYS
+      BEEN.
+
+2. THE DEDICATED CIRCUIT (3002) CHANNEL PROCESS IS AS FOLLOWS;
+   A. THE FIELD ENGINEER DIAGNOSIS IDENTIFIES A FAULT WITH THE CIRCUIT.
+   B. THE FIELD ENGINEER TURNS THE CIRCUIT OVER TO TELCO AS SPECIFIED
+      IN POLICY 605.
+   C. TECHNICAL SUPPORT IS THE GROUP CHARTERED WITH MANAGING THE REPAIR
+      AFTER FE TURN OVER. THIS IS THE TELCO MANAGEMENT PROCESS THAT HAS
+      BEEN CHANGED.
+
+TO SUMMARIZE;
+1. FE'S ARE RESPONSIBLE FOR LOCAL ACCESS TELCO INTERFACE AND PROBLEM
+RESOLUTION.
+2. TECHNICAL SUPPORT IS RESPONSIBLE FOR DEDICATED CIRCUIT REPAIR MANAGEMENT
+                                                                Page  2
+
+AFTER FE DIAGNOSIS IDENTIFIES A CIRCUIT FAULT.
+
+PLEASE INSURE YOUR FIELD ENGINEERS ARE CLEAR ON THIS PROCESS.
+From: Joe Smith <JMS@D35> 
+Date: Tue, 1 Sep 87 18:21:41 CDT 
+To: fletcherc 
+Cc: Monitor Group <JMS>, Carl, Osman, FletcherC, DenCoff 
+Subject: A Varian PDP-10 Base in the Augment area. 
+
+There is an orange PDP-10 dual base complete with "72" CPU in the Augment
+junk area at Liberty Street.  It looks to be the base for V70 and V72 from
+Valley Forge.  I don't think it belongs in the Augment area.  Shouldn't it
+be moved to FSC or IPC property?  /Joe
+From: Joe Smith <JMS> 
+Date: Thu, 24 Sep 87 12:30:29 CDT 
+To: carl, wrs 
+Subject: OPER getting duplicate mail on F33. 
+
+I have hardcopy of the following, which was printed from the OPR terminal:
+
+please log in: OPER:33;;
+tymshare  1713  23-sep-1987
+[mail waiting]
+.O MOST
+PEREZC
+.
+!  [mail from Carl A Baltrunas <Carl@D35.Tymnet>]
+!  [mail from OPER@F33.Tymnet]
+!  [mail from JMS@F33.Tymnet]
+!  [mail from Carl A Baltrunas <Carl@D35.Tymnet>]
+!  [mail from OPER@F33.Tymnet]
+!  [mail from JMS@F33.Tymnet]
+!  [mail from Carl A Baltrunas <Carl@D35.Tymnet>]
+!  [mail from OPER@F33.Tymnet]
+!  [mail from JMS@F33.Tymnet]
+!
+!DAYTIME
+23-SEP-87 19:04:01 PDT
+!RDMAIL -H
+Carl A Baltrunas <Carl@D35.Tymnet>    Wed, 23 Sep 87 13:37:17 PDT
+OPER@F33.Tymnet                       Wed, 23 Sep 87 13:31:22 PDT
+JMS@F33.Tymnet                        Wed, 23 Sep 87 13:36:30 PDT
+
+
+The file (MAIL:33)LOG shows some strangeness going on - it says
+"REQ: <OPER>" every hour!  I tried to clean up a bit by modifying the
+SUBMIT jobs for VWALKER and RKARLSON to not send mail and renamed 32.Q to
+35.Q after editting it.			/Joe
+Received: from D35.Tymnet by D35.Tymnet; Thu, 24 Sep 87 11:13:18 PDT
+Received: from F29.Tymnet by D35.Tymnet; Mon, 21 Sep 87 16:53:59 PDT
+Received: from EMSTXS.Ontyme.Tymnet by F29.Tymnet; Mon, 21 Sep 87 16:45:25 PDT
+Return-path: <TXSSUP@D35.Tymnet> 
+From: TYMOPS.TOMASI@EMSTXS.Ontyme.Tymnet 
+Date: 22 SEP 87 00:08:47 
+To: TXS.SUP@EMSTXS.Ontyme.Tymnet 
+Message-id: M20248@Ontyme.Tymnet 
+Subject: NETWORK RESOURCES 
+Resent-from: Tymcom-X Supervisor <TXSSUP> 
+Resent-date: Thu, 24 Sep 87 13:02:33 CDT 
+Resent-to: JMS, OSMAN, CARL, DENCOFF, FLETCHERC 
+
+TO ALL SUPERVISORS:  PLEASE DISTRIBUTE THE FOLLOWING MESSAGE TO
+ONLY MANAGERS.  THANK YOU.
+
+                 MCDONNELL DOUGLAS NETWORK SS COMPANY
+
+                     T Y M N E T    O P E R A T I O N S
+
+                            M E M O R A N D U M
+
+
+
+DATE>      21 SEP 87  15:50
+
+TO>        ALL OPERATIONS PERSONNEL/TYMNET MANAGERS
+
+COPIES>    P. KRETER  W. PRINCE
+
+FROM>      BOB TOMASI
+
+
+SUBJECT>   NETWORK RESOURCES
+
+
+-----------------------------------------------------------------------
+
+
+
+          I AM PLEASED TO ANNOUNCE THE APPOINTMENT OF THOM  KELLEY  TO  THE
+
+          POSITION OF MANAGER,  NETWORK RESOURCES,  REPLACING JACK SNAVELY.
+
+          THIS APPOINTMENT IS EFFECTIVE MONDAY, SEPTEMBER 28TH, 1987.
+
+
+          WITH THOM'S APPOINTMENT,  SEVERAL CHANGES WILL BE TAKING PLACE IN
+
+          THE  NETWORK  RESOURCES  GROUP.    FIRST,  THE LOGISTICS PLANNING
+
+          FUNCTION, UNDER FRANK TROGLIONE,  WILL BE MERGED INTO THE NETWORK
+
+          RESOURCES  GROUP AND WILL CONTINUE TO REPORT TO THOM.   THE ORDER
+
+          PROCESSING GROUP, UNDER KATHERINE GOODWIN,  THE PROJECT IMPLEMEN-
+
+          TATION GROUP,  UNDER BERYL AGUA, AND THE RESOURCE CENTER UNDER JO
+
+          HANNAH, WILL ALSO REPORT TO THOM.   THIS COMBINATION OF FUNCTIONS
+
+          WILL BETTER ENABLE US TO ADDRESS THE MATERIAL SUPPORT CONCERNS AS
+                                                                Page  2
+
+
+          THEY RELATE TO ORDER PROCESSING.   PEGGY MACDONALD,  SECRETARY TO
+
+          JACK SNAVELY, WILL ALSO REPORT TO THOM.
+
+
+          THIS  NEW  NETWORK RESOURCES GROUP WILL THEN REPORT INTACT TO DR.
+
+          A.  S.  (RAJA) RAJARAMAN,  DIRECTOR OF NETWORK  PLANNING.    THIS
+
+          CHANGE  IS  BEING  MADE  TO  CONSOLIDATE  REPORTING FUNCTIONS AND
+
+          PROVIDE  A  MORE  COHESIVE  APPROACH  TO  NETWORK  PLANNING   AND
+
+          IMPLEMENTATION.
+
+
+          I  TRUST  THAT I CAN COUNT ON YOUR SUPPORT FOR BOTH THOM AND RAJA
+
+          AS THEY ASSUME THEIR NEW ASSIGNMENTS.
+From: Joe Smith <JMS> 
+Date: Tue, 29 Sep 87 13:12:57 CDT 
+To: Monitor Group <JMS>, Carl, Osman 
+Cc: FletcherC, DenCoff 
+Subject: X32 disk gone. 
+
+Osman says they overwrote part of our DSKB on the 3650s.  The last incremental
+backup was done Friday night - any work done Sunday and Monday is gone.
+Received: from F29.Tymnet by X930.Tymnet; Mon, 17 Aug 87 18:44:54 PDT
+Received: from EMSFSC.Ontyme.Tymnet by F29.Tymnet; Mon, 17 Aug 87 18:31:12 PDT
+Return-path: <FSC.P/DIAMOND@EMSFSC.Ontyme.Tymnet> 
+From: FSC.P/DIAMOND@EMSFSC.Ontyme.Tymnet 
+Date: 17 AUG 87 13:31:46 
+To: FSC.JM/SMITH@EMSFSC.Ontyme.Tymnet 
+Message-id: P22207@Ontyme.Tymnet 
+Subject: NEW PROCEDURES 
+
+
+
+                 MCDONNELL DOUGLAS FIELD SERVICE COMPANY
+
+                                  MEMO
+
+DATE:    August 17, 1987
+
+TO:      All Field Operations Personnel
+
+FROM:    Rich Heimann
+
+SUBJ:    PROCEDURAL CHANGES FOR TELECOMMUNICATIONS FUNCTION, EFFECTIVE
+         AUGUST 17, 1987
+------------------------------------------------------------------------
+R E Q U I R E D        R E A D I N G !
+
+
+This memo, and attachments, identify the changes to the current process
+for dispatching and interfacing to Network Systems Company products and
+support groups, effective August 17, 1987.
+
+Central Dispatch has accepted the responsibility for initial interface
+to Network Systems Companies trouble ticket system.
+
+The Field Technical Support Organizations has been assigned the
+responsibility for Telco Trouble Management and Rotary Testing.  Also,
+these groups will assume management responsibility of our field Tymnet
+project coordination.  There will not be any changes to the existing
+process in the Network project coordination activity.
+
+Network Systems Company assumes the responsibility during the transition
+for management notification on Network outages.  Continuation of this
+function by NSC on a long term basis will be reviewed.
+
+Network Systems Company has accepted, during the transition phase, the
+responsibility for pursuing overdue status from MDFSCO on network
+outages during 8 to 5 local time, Monday thru Friday.  Central Dispatch
+will pursue status overdue at all other times.
+
+This information distribution to MDFSCO Field Engineers and support
+personnel is the responsibility of management in receipt of this
+information.  This information must be transmitted to all staff by
+August 18, 1987.
+
+The attachments include policy and procedure manual updates,
+organizational charts, and ticket system operation instruction.
+
+The team charged with this change definition process included Business
+Systems, Field Technical Support, Telecommunications Support, Central
+Dispatch, Field Operations Management, and the finance group responsible
+for Field Operating guide development and maintenance.  I believe that
+the outcome is sound, and thank them for their effort.  The adherence
+and support of all is essential for success, and I expect Field
+Operations Management to assure that this support will be evident to
+all.
+
+
+**
+All aforementioned attachments are being provided to Field Operations
+Managers.  Please contact your manager for this information.
+From: Joe Smith <JMS@X930> 
+Date: Mon, 17 Aug 87 19:37:37 PDT 
+To: wrs 
+Cc: Monitor Group <JMS>, Carl, Osman, FletcherC, DenCoff 
+Subject: FINDIT modified to not list TMP files. 
+
+So as to not confuse RDIST with garbage names from deleted files, FINDIT
+no longer reports files with an extension of ".TMP" or files with bit 8 set in
+.RBLIC (the TMP file bit).  Column 60 of the output is blank for normal files,
+is a dollar sign for JIS-8 Katakana files.  (SPL)FINDIT.DOC has been updated.
+		/Joe
+Received: from B39.Tymnet by X930.Tymnet; Tue, 18 Aug 87 19:07:42 PDT
+Return-path: <WRS@B39.Tymnet> 
+From: William R. Soley <WRS@B39.Tymnet> 
+Date: Tue, 18 Aug 87 18:46:31 PDT 
+To: JMS@X930.Tymnet 
+Subject: Re: "What sort of a system is HOBBES?"... 
+In-reply-to: your message of Mon, 17 Aug 87 19:55:52 PDT
+
+hobbes is a Sun server running 4.3 Unix slightly modified by Sun.
+25 MHz 68020.  So are calvin, opus, rocky, borris and bullwinkle.
+-Bill
+From: Joe Smith <JMS@X930> 
+Date: Tue, 18 Aug 87 19:24:23 PDT 
+To: WRS@HOBBES 
+Cc: WRS@B39 
+Subject: The ".Tymnet" domain. 
+
+One of the messages from your had the following:
+     Received: from B39.Tymnet by X930.Tymnet
+     Received: from tymix.Tymnet by B39.Tymnet
+     Received: by tymix.Tymnet (5.51/4.7) id AA18817
+     Received: by hobbes.Tymnet.com (3.2/SMI-3.2) id AA16948
+
+Is "B39.Tymnet" part of the same domain as "xxxxx.Tymnet.com"?
+Does Hobbes have its own connection to .COM or does it go thru
+something else (like OFFICE-1.ARPA)?
+
+I'm sending this message to see if TUMS understands "WRS@HOBBES"
+From: Carl A Baltrunas <Carl@X930.Tymnet> 
+Date: Tue, 18 Aug 87 20:34:55 PDT 
+To: Joe Smith <JMS@X930.Tymnet> 
+Subject: FINDIT/FILDAT revision 
+
+After seeing what I had in CK.SAI for checksums, I took a quick look
+at FINDIT... well, it uses FILDAT in (SAILIB) so I looked at that.
+
+There is a new version of FILDAT which scrunches the ROT-XOR-ADD loop
+to 4 instructions instead of 12 or 13 in the old version.  This of course
+only speeds up the computation, and since it only holds one page per pass
+the I/O may be the remaining limiting factor.
+
+I didn't increment the FINDIT version, since it is essentially the same...
+FILDAT has changed, not FINDIT.   It is on SPL,XEXEC and VMAP.
+/Carl
+From: NTD.L/JOHNSON@EMSTXS.Ontyme.Tymnet 
+Date: 21 AUG 87 20:59:00 
+To: TXS.SUP@EMSTXS.Ontyme.Tymnet 
+Message-id: I74923@Ontyme.Tymnet 
+Subject: SNA/SDLC person is Drue Bondat 
+
+FROM>      MICHAEL F. RUDE
+SUBJECT>   NEW RESPONSIBILITY FOR DRUE BONDAD
+
+I AM PLEASED TO ANNOUNCE THAT DRUE BONDAD HAS ACCEPTED THE RESPONSIBILITIES
+OF ACTING MANAGER OF THE SNA/SDLC SECTION.
+
+DRUE HAS BEEN A MEMBER OF THE SNA/SDLC TEAM SINCE 1983 WITH PRIME RESPONSIBILITY
+FOR THE SDLC PRODUCT.  RECENTLY SHE ALSO ASSUMED RESPONSIBILITY FOR THE SNA
+PRODUCT.
+
+I FEEL THAT DRUE'S UNDERSTANDING OF THESE PRODUCTS AND EXPERIENCE WITHIN NTD
+SHOULD ENABLE HER TO BE HIGHLY EFFECTIVE IN HANDLING HER NEW RESPONSIBILITIES.
+I ASK YOU ALL TO HELP SUPPORT DRUE IN HER NEW ROLE.
+
+MFR/lj                          Keywords: IBM interface, 2780/3780/HASP.
+From: TYMPLN.HQ@EMSTXS.Ontyme.Tymnet 
+Date: 24 AUG 87 19:56:15 
+To: TXSSUP@D35.Tymnet 
+Subject: ACCESS CHARGE SEMINAR 
+
+     TO:  ALL TYMNET MANAGERS & ALL SALES
+   FROM:  JO AN COUCHE
+SUBJECT:  ACCESS CHARGE SEMINAR
+
+               * * ACCESS CHARGE UPDATE * *
+
+Access charges -
+  What are they?
+  Why does the FCC want to impose them on Tymnet?
+  How will they impact our business?
+  What can we do to stop the FCC from imposing these charges?
+
+These  questions  and  many more will be answered at  the  Access
+Charge  Seminar  on  Thursday,  August 27 9:00-11:00  AM  in  the
+Training Room at Valley Green Drive
+
+Please plan to attend.  Contact Jo An Couche at (408) 446-7154 if
+you have questions.
+From: Carl A Baltrunas <Carl> 
+Date: Thu, 3 Sep 87 17:53:20 PDT 
+To: Monitor Group <Carl>, Osman Guven <Osman>, Joe Smith <JMS>, Craig Fletcher
+	<fletcherc>, Dennis Coffey <dencoff> 
+Subject: St.Louis KL#1300 call 
+
+We received a call to look at a crash on cpu#1300 and called the FE and
+the FE's beeper and received no response.  I logged into OSTC.DEC1 but
+it is homed to KL#1195 at the moment and both 5243&5244 report host down.
+
+I called the computer center, @Roe West's # 314-232-7151 and no one was
+working on the machine... so, if they need our help... we just have to
+wat for them to call us back.
+
+/Carl
+Received: from F29.Tymnet by D35.Tymnet; Wed, 2 Sep 87 7:47:33 PDT
+Received: from EMSTXS.Ontyme.Tymnet by F29.Tymnet; Wed, 2 Sep 87 7:45:26 PDT
+From: ISGFM.R/KAMINSKI@EMSTXS.Ontyme.Tymnet 
+Date: 02 SEP 87 15:31:10 
+To: TXS.SUP@EMSTXS.Ontyme.Tymnet 
+Message-id: J11985@Ontyme.Tymnet 
+Subject: "ADMINISTRATIVE NO: DIS-87-012"... 
+Resent-from: Tymcom-X Supervisor <TXSSUP> 
+Resent-date: Thu, 10 Sep 87 22:42:49 CDT 
+Resent-to: JMS, OSMAN, CARL, DENCOFF, FLETCHERC 
+
+
+
+
+                                ADMINISTRATIVE          NO:    DIS-87-012
+                                    BULLETIN            DATE:  02 SEP 87
+
+         MCDONNELL DOUGLAS DIVERSIFIED INFORMATION SYSTEMS COMPANY
+
+
+
+To:                ISG St. Louis Tract III Lists A - H
+
+Subject:           EXPRESS SHIPPING SERVICES
+
+
+
+Effective September 1, 1987, the processing of expedite/express parcels
+previously handled by Production Services, Information Processing Company
+has been transferred to the Metropolitan Services Organization.  The
+function and the receiving window has been relocated from Building 307,
+1 West to Building 307, 1 East.
+
+The basic services previously provided will continue at the new location.
+Hours of operation will be changed effective September 7, 1987 to
+8:30 a.m. to 4:30 p.m., Monday through Friday.  Therefore, all parcels
+must be to the MSO before 4:30 p.m.
+
+We continue to look forward to being of service to you in this area of
+responsibility.
+
+
+(Original signed by M. J. Daniels)
+
+M. J. Daniels, Manager
+Branch Center Tract III
+Metropolitan Services Organization - St. Louis
+
+
+(Original signed by R. W. Brown)
+
+R. W. Brown, Manager
+Production Services
+Information Processing Services
+
+
+(Original signed by R. D. Windsor)
+
+R. D. Windsor, Director
+Metropolitan Services Organization - St. Louis
+Received: from X32.Tymnet by D35.Tymnet; Mon, 14 Sep 87 18:16:12 PDT
+Return-path: <OSMAN@X35> 
+From: Osman Guven <OSMAN@X35> 
+Date: Mon, 14 Sep 87 18:14:16 PDT 
+To: Ed Barens <IPC.E/Barens@Ontyme>, Jim English <IPC.J/English@Ontyme>, Leland
+	Yarbrough <IPC.L/Yarbrough@Ontyme>, Tom Marconi <IPC.T/Marconi@Ontyme>,
+	Bill Fischer <IPC.B/Fischer@Ontyme>, Cheryl Eldred
+	<IPC.C/Eldred@Ontyme>, Rick Daniels <IPC.R/Daniels@Ontyme>, Bill
+	Richardson <FSC.B/Richardson@Ontyme>, Jerry Meyer <FSC.G/Meyer@Ontyme>,
+	Ray Donahue <FSC.R/Donahue@Ontyme>, Steve Atwell <FSC.S/Atwell@Ontyme>,
+	Monitor Group <OSMAN>, Joe Smith <JMS@X35>, Carl Baltrunas <Carl@X35> 
+Cc: Craig Fletcher <FletcherC@X35>, Dennis Coffey <DenCoff@X35> 
+Subject: AR/ARX Parity Error .. 
+
+
+
+
+
+                                                           Sept 11, 1987
+
+
+                            AR/ARX Parity Error
+                            -------------------
+
+	Any system running with the P035/C monitor if enabled will
+report the AR/ARX parity error.  This would give FSCO personnel more
+precise information where in the hardware the error happened.
+
+	AR/ARX parity error checking is enabled by KLDCP.  While
+in KLDCP type "PE 36<cr>" to enable it and "PE 16<cr>" to disable it.
+Once the AR/ARX parity error checking is enabled on the KL10 you must
+bring the system up with P035/C monitor or later.
+
+Any question or comment:
+OSMAN         =  PDP10 User name
+FSC.O/GUVEN   =  Ontyme user name
+Phone: (415)922-6236
+
+-Osman-
+From: Joe Smith <JMS@X32> 
+Date: Wed, 16 Sep 87 18:25:47 CDT 
+To: wrs 
+Subject: Host 14 is still on 940NET. 
+
+(begin forwarded message)
+
+Received: from D35.Tymnet by D35.Tymnet; Sat, 29 Aug 87 19:10:43 PDT
+Return-path: <JMS@D35>
+From: Joe Smith <JMS@D35>
+Date: Sat, 29 Aug 87 20:52:47 CDT
+To: Monitor Group <JMS>, Carl, Osman
+Cc: FletcherC, DenCoff, Landa Morris <IPC.L/Morris@Ontyme>, Jan Krivanec
+	<IPC.J/Krivanec@Ontyme>, Vida Stafford <TYMOPS.V/Stafford@Ontyme>
+Subject: Host 14 is still on 940NET.
+
+When I tried to log into JMS:14, the Supervisor told me the host was down
+before I had entered my password.  Using JMS:17 requires a password go get
+the host down message.  It appears that transparent login to 940NET is still
+in effect.
+
+The following hosts are transparent: 1,2,4,6,8,9,11,12,13,14,16,20.
+The following hosts are normal: 3,7,10,15,17,18,19,21.
+
+Someone needs to tell the Supervisors that hosts 14 and 16 are normal hosts,
+not transparent.   /Joe
+
+(end forwarded message)
+
+Is this behavior in the group/class list, or is it a kludge in the Supervisor?
+If the latter, how long will it take to get new code genned and loaded in
+all the SUPs?    ?joe
+Received: from B39.Tymnet by D35.Tymnet; Thu, 24 Sep 87 12:31:12 PDT
+Return-path: <WRS@B39.Tymnet> 
+From: William R. Soley <WRS@B39.Tymnet> 
+Date: Thu, 24 Sep 87 12:23:15 PDT 
+To: <JMS@D35.Tymnet> 
+Cc: carl 
+Subject: Re: OPER getting duplicate mail on F33. 
+In-reply-to: your message of Thu, 24 Sep 87 12:30:29 CDT
+
+I checked out 33 and whatever it was is gone now.  You must have fixed it.
+Its not clearwhat it was.  Some program was appearently running, opening
+a file, and dieing without closing it (this is detected and the mail is
+reprocessed by MAILER thus causing the REQ).  The idea being that when a
+program dies without cleaning up, you can't tell if it has delivered the
+mail it was working on, so to be safe, you deliver it again.  -Bill
+From: Carl A Baltrunas <Carl> 
+Date: Thu, 24 Sep 87 13:00:58 PDT 
+To: Joe Smith <JMS>, William R Soley <WRS@B39.Tymnet> 
+Subject: Re: OPER getting duplicate mail on F33 
+
+Bill,
+  This problem seems to be occurring off and on... Both Rick Daniels and
+Osman have seen it on separate occasions... then it goes away?  Is (MAIL)
+up to date on system 33?
+
+/Carl
+From: Joe Smith <JMS@X930> 
+Date: Mon, 3 Aug 87 23:27:52 PDT 
+To: Carl A Baltrunas <Carl@X930.Tymnet> 
+Cc: Osman Guven <Osman@X930.Tymnet> 
+Subject: Re: SAXINY on system F74 
+In-reply-to: your message of Mon, 3 Aug 87 22:09:51 PDT
+
+SAXINY is new in /B10.  It means that COMMOD got an interrupt from the SA10
+and the unit number stored in location 301 or 305 does not match the kontroller
+data blocks.  For instance, if the disk channel interrupts with unit 277 (or
+unit 0), COMMOD will check if it belongs to BPA (units 300-317) or BPB (units
+320-337).  Since there is no Kontroller that claims that unit, COMMOD can't
+do anything with the interrupt other than dismiss it.  Prior to /B10 there
+was no indications when this occurred.  I added EVENT stopcode SAXINY so that
+it would show up on the CTY.  My guess is that a disk caused a transfer-done
+interrupt, but the 3672 reported a bogus unit.  COMMOD complains that it got
+an interrupt from an unknown unit, then FILIO says THUNG because it missed
+an interrupt it was expecting.  I will see if SAXINY can be modified to output
+more info to catch the bad unit.  /Joe
+Received: from B39.Tymnet by X930.Tymnet; Wed, 12 Aug 87 21:56:26 PDT
+Return-path: <WRS@B39.Tymnet> 
+From: William R. Soley <WRS@B39.Tymnet> 
+Date: Wed, 12 Aug 87 21:50:48 PDT 
+To: carl@930, jms@930 
+Subject: change these passwords 
+
+The following passwords should probably be changed since they leave
+something to be desired in terms of security.  They were "guessed"
+by a program which tries words from a dictionary against all users
+in the mud.  Thanks -Bill
+
+public net:
+FRENCH              FRENCH         [3,232631]      30Jul80 
+GO AWAY             OSNF           [3,140673]      28Jan85 
+NEW USER            OSB            [3,145107]      24Aug84 
+NEW USER            OSP            [3,140674]      24Aug84 
+NEW USER            T10AIL         [3,326471]      24Aug84 
+NEW USER            TYMAIL         [3,326742]      24Aug84 
+PASCALDOC           PASCALDOC      [3,315030]      17Apr80 
+
+bubb net:
+GO AWAY             JMS            [3,431116]      14Mar86 so
+From: Joe Smith <JMS@X930> 
+Date: Sat, 15 Aug 87 10:40:04 PDT 
+To: Monitor Group <JMS>, Carl, Osman 
+Cc: FletcherC, DenCoff 
+Subject: Test of Hotline 
+
+At 10:20am Saturday my beeper went off, the number it displayed was
+800 854-6000.  No system number this time.  I called it, and was given
+three of the "please hold on" recordings before it was answered.  I gave
+my name, stated that I was responding to TYMCOM-X Support.  She was expecting
+Osman, and "DEC System Support".  She also asked for my employee number,
+meaning the 4-digit FSC payroll number, not the 6-digit ISG number.  They
+had Osman on call until 5:30pm Monday instead of me.  It looks like we need
+to have a more formal schedule, instead of just a sheet of paper on my wall.
+
+I called Emile at the Fremont Data Center at 10:23am.  End of call.
+				/Joe
+
+Received: from B39.Tymnet by X930.Tymnet; Wed, 19 Aug 87 2:32:41 PDT
+Return-path: <WRS@B39.Tymnet> 
+From: William R. Soley <WRS@B39.Tymnet> 
+Date: Wed, 19 Aug 87 2:19:25 PDT 
+To: Joe Smith <JMS@X930> 
+Subject: Re: The ".Tymnet" domain. 
+In-reply-to: your message of Tue, 18 Aug 87 19:24:23 PDT
+
+We're not really part of .com officially, and hobbes shouldn't really be
+using that name.  It isn't clear what our official address will be if we
+ever get around to getting one.  Probably (for example) jms@x930.mdc.com
+or possibly jms@x930.tymnet.com, but not likely since that's not our name.
+Currently, there is no name server in TUMS or on the Unix systems, so I
+(tums) assume that anything ending in .com .gov .arpa .edu, etc. is on
+the DARPA internet and route it to office-1.  So, wrs@hobbes.Tymnet.com
+is not likely to work, although I may make a special case check for it
+and change it to just wrs@hobbes.Tymnet (kludge).  At any rate, I've lost
+track of your question.  I think you mea to understand how we can be
+addressed from other nets and the answer is: from usenet, only by explicit
+path ...  ...oliveb!tymix!jms%x930, and from anywhere on the DARPA internet:
+jms%x930.Tymnet@office-1.arpa (also <@office-1.arpa:jms@x930.Tymnet> but
+that doesn't work in some mailers so some sites may not be able to send
+that kind of address).  Did I answer your question?  -Bill
+From: NTD.SUP@EMSTXS.Ontyme.Tymnet 
+Date: 20 AUG 87 22:03:20 
+To: TXS.SUP@EMSTXS.Ontyme.Tymnet 
+Subject: NTD ADDRESS/PHONE CHANGES 
+
+FROM>      GAIL CONE
+SUBJECT>   NTD ADDRESS/PHONE CHANGES
+
+          PLEASE NOTE THAT NTD'S NEW LOCATION IS 2580 N. 1ST. ST. - BLDG B.
+          OUR  NEW  FAX PHONE NUMBER IS 922-6125.   ALSO NOTE THAT FLOORS 1
+          THROUGH 5 HAVE MESSAGE CENTERS.   FOR GENERAL  ASSISTANCE  PLEASE
+          CONTACT:
+
+          ELLAN STOKES  - X.7792 - 2ND FLOOR - ENGINEERING DEPT
+          SILVIA PULIDO - X.6069 - 3RD FLOOR - NETWORK INTERFACES & APPS
+          DIANA VORNE   - X.6498 - 4TH FLOOR - NTD HQ & NETWORK SYS. & ARCH
+          ANNE HARRIMAN - X.6649 - 5TH FLOOR - CONSULTING & SUPPORT SERVCS
+
+  THE FOLLOWING LIST INDICATES DEPT HEAD, DEPT, SECRETARY, ETC.
+
+          AL FENN,V.P. - NTD HQ - X.6347 - 4TH FLOOR
+               GAIL CONE,SECRETARY - X.6090 - 4TH FLOOR
+
+          DAVE ALCORN,DIRECTOR - ENGINEERING DEPT.- X.6066 - 2ND FLOOR
+               RILLA HARTSOE,SECRETARY - X.6034 - 2ND FLOOR
+
+          BILL EUSKE,DIRECTOR - NETWORK SYS & ARCH - X.6093 - 4TH FLOOR
+               STARR BLACK,SECRETARY - X.6722 - 4TH FLOOR
+
+          MIKE RUDE,DIRECTOR - NETWORK INTERF & APPS - X.6160 - 3RD FLOOR
+               LINDA JOHNSON,SECRETARY - X.6057 - 3RD FLOOR
+
+          KEN HOLCOMB,DIRECTOR - CONS & SUPPORT SERVCS - X.6614 5TH FLOOR
+               JOY SARGENT,SECRETARY - X.6152 - 5TH FLOOR
+From: Joe Smith <JMS@X32> 
+Date: Wed, 16 Sep 87 8:33:38 CDT 
+To: Monitor Group <JMS>, Carl, Osman 
+Cc: FletcherC, DenCoff 
+Subject: MUX 2096 is very slow today. 
+
+As of 9/15, MUX hosts 2096 and 1274 have moved from Engines in Orchard Parkway
+to Microengines in South Bay Center.  If you have nodes 2366 or 2367 in your
+SWITCH.INI, they should be changed to 3170 and 3345 respectively.  I noticed
+the change because host 2096 was having problems.  It was "2*OV" and "****"
+meaning the link to its only neighbor was overloaded both directions and
+had a high line error rate.  1274 was better.   /Joe
+From: Joe Smith <JMS@X32> 
+Date: Wed, 16 Sep 87 8:40:36 CDT 
+To: Monitor Group <JMS>, Carl, Osman 
+Cc: FletcherC, DenCoff 
+Subject: [1, 4].UFD damaged on F26. 
+
+The first UFD data page for (SYS:26) was on BPA3 page 10010.  That was one
+of the pages that PAKCOP could not read, and had pointers to LOGINN and RPG.
+DSKCLN aborted with "Error in RIB - wrong hash code" and "Critical file
+damaged".  Page 0 was indeed garbage, and the 2nd page for that hash code
+was 10.  After zeroing the offending paged and putting 10 in the link at 777,
+the UFD was readable.  Having REFLAG, I restored all of SYS until TITO asked
+to overwrite a file.  Typing control-C at that point caused TITO to report
+that 102 files were processed, exactly one page worth.  F26 is running a
+full DSKCLN at this moment.  /Joe
+  G)kÂ
