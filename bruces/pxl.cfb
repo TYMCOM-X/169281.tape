@@ -1,0 +1,1641 @@
+
+CFB NO.  193						       25-APRIL-1991
+
+REV LEVEL:  07					DATE CHANGED:    26-MAR-1992
+
+TYPE:      HARDWARE
+HARDWARE:  PXL
+SUBJECT:   PXL DESCRIPTION AND INSTALLATION.
+
+
+
+The  purpose of this CFB  is to provide  a means for field service personnel
+to  install the PXL product.    This CFB  is not intended to be an  in-depth
+description  of the  PXL product  and is  intended  to supplement  published
+PXL reference documentation.
+
+Three additional PXL reference materials have been  produced to  detail  the
+PXL product:
+
+    o  PXL Maintenance Manual  (NPD DEMM0066.01A)
+    o  PXL-I Field Service Document
+    o  PXL Product Familiarization Video
+
+
+The  first manual must be  ordered through BT TYMNET publications, while the
+second  manual  can  be  found  in  the  NTS username  on  all  PDP and UNIX
+systems under the file PXL.DOC.    It is  strongly  recommended that one  of
+the two documents  be available when the PXL installation takes place.   The
+training  video can be purchased through  the BT TYMNET Training Department.
+
+This CFB  is broken  into  four  sections:  overview,  hardware description,
+installation and miscellaneous information.
+
+
+
+
+1.  OVERVIEW.
+
+The  PXL is  designed to  be a phased in replacement for the PICO engine and
+offers  the  same compatibility  as other members of the XL hardware family.
+Because  the  MAC  V  employs  a  different  virtual  to  physical   address
+translation format,  it is  NOT  compatible  with  any  previously  released
+software.
+
+Essentially  the PXL is a repackaging of the Compact XL into a significantly
+smaller  package.  PXL-I has 1 megabyte of memory and communications options
+equivalent  to a  single SIO motherboard, 8 standard sync ports and up to 32
+standard  low speed  async ports depending upon the selected  configuration.
+The PXL utilizes  logic cell  arrays and  surface mount technology to reduce
+real  estate  and  power  consumption.  There  is  NO parity error detection
+circuitry on the PXL-I.
+
+The  MAC  V  structure of  the  PXL  requires  that modified versions of ALL
+supporting code be used to accomodate the expanded MAC V addressing. 
+
+CONFIGURATION GUIDELINES.
+
+The bus slots on the PXL look like this:
+
+      +---+---+---+---+---+---+---+---+---+---+
+      | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+      +---+---+---+---+---+---+---+---+---+---+
+      
+        |   |  |______________||______________|
+	|   |         |                |
+	|   |         |                |
+	|   |         |                 ----------  NON-DMA expansion
+	|   |          ---------------------------  DMA expansion
+	|    -------------------------------------  Reserved for TTY/V.24
+	 -----------------------------------------  Reserved for SIO MB
+
+
+
+    Slot 0:  PXL-1  requires  that  slot  0  be  reserved  for  the   SIO 
+             Motherboard  card. 
+
+    Slot 1:  Reserved for the SCV24 card which contains the multifunction
+             logic and two (2) V.24 ports.  These  V.24 ports can be used
+	     for any application (node code, X.25,  SDLC, etc).   This is
+	     considered one of the 5 DMA capable slots.
+
+    Slot 2 - Slot 5:
+             Are the ONLY  DMA capable  expansion  slots.   These can run
+	     any combination of OCL, V.24, V.35 or SIO ASYNC  cards.  The
+	     restriction is the current SIO motherboard  guidelines.   In
+	     addition, the non-SIO async cards can run in these slots.
+
+    Slot 6 - Slot 9: 
+             Are NON-DMA capable  expansion slots.   These  slots can  be
+	     configured for ASYNC or a MAXIMUM of 8 sync ports.  The sync
+	     ports can ONLY be configured to run in these four slots.
+
+
+
+     NOTE:    Bus allocations are configured in PAIRS (for the primary and
+              secondary  option cards - AP/AE and SP/SE).  The PAIR groups
+              are defined as follows:
+
+                    0 and 1  RESERVED
+	            2 and 3
+	            4 and 5
+	            6 and 7
+	            8 and 9
+
+	       When a PRIMARY  card (AP/SP) is installed in EITHER bus slot
+	       of a pair, it will control  the EXPANSION card in the  other
+	       bus  slot of the SAME pair.   An example of this would  be a
+	       configuration were primary and extender card options look as
+	       follows:
+
+	                    OCL AP  AE  AP  AP  AE  AP  AE
+
+	           +---+---+---+---+---+---+---+---+---+---+
+	           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+	           +---+---+---+---+---+---+---+---+---+---+
+	                    ------- ------- ------- -------
+	                       |       |       |       |
+	                       |       |       |        ---  fourth pair
+	                       |       |        -----------  third  pair
+	                       |        -------------------  second pair
+	                        ---------------------------  first  pair
+
+                    where
+
+	               OCL in slot 2
+                       AP  in slot 3     controlls itself only (no AE card)
+
+		       AE  in slot 4     controlled by AP in slot 5
+		       AP  in slot 5
+
+		       AP  in slot 6
+		       AE  in slot 7     controlled by AP in slot 6
+
+
+
+The rule of thumb for hardware configurations (at this time) are as follows:
+
+   SYNC:  Maximum of 8 ports (4 on sync primary card, 4 on sync expansion
+          card).  Must be installed in  slots 6-9.   This is the standard
+	  sync available on the engine.  Available at speeds up to 19.2K.
+	  Maximum  sustainable SYNC  speed (aggregate CPS)  is  19200 CPS
+	  (each 19.2K  line has a  value of  2400 CPS  for a  total  of 8
+	  lines  at 19.2K).   The sync  ports for the PXL are designed to
+	  be referenced as the  NON-PRIMITIVE ports  (ports which provide
+	  the full range of signals).  This is the reason for restricting
+	  the  number  of  sync  ports  to 8 as  the  8  configurable are
+	  defined as follows:
+
+	      Physical port	Logical Port
+	      -------- ----     ------- ----
+
+	            0		      2
+		    1                 3
+		    2                 6
+		    3                 7
+		    4                10
+		    5                11
+		    6                14
+		    7                15
+
+          Therefore, the NSYNC value in the TYMFILE must be set to 16 if
+	  all 8 sync ports are active.
+
+
+
+   ASYNC: Maximum of 28 ports  (configurable as 4 per primary  card [AP],
+          4 per expansion  card [AE]), or 48 ports [configurable as 8 per
+          AL8 card).    Can be  installed  in  ANY  slots  (2-9).    This
+          is the  standard async  available on the engine.   Available at
+          50-1200  with BAUDR  set to  0 (low  speed)  and  50-4800  with
+	  BAUDR set to 2 (high speed).  Maximum sustainable ASYNC thruput
+	  (aggregate CPS)  is  4200-4500 CPS,  with  no more  than  10 PC
+	  file transfers simultaneously.
+
+									 
+
+   SIO:   Follows CFB 168 (published SIO Configuration Guidelines):
+
+2.  HARDWARE DESCRIPTION.
+
+2.1  BASIC SYSTEM
+
+The  PXL basic  system consists of three main components: PXL motherboard,
+SIO motherboard and SCV24 card.
+
+The  PXL  motherboard  is  the  equivalent  of  the  standard  engine CPU,
+ROM & I/O,  MAC and  MEMORY boards combined.   The PXL is functionally the
+same as a CPU II and MAC III at 10 Mhz.
+
+The SIO motherboard which resides in  dedicated slot 0 of the PXL bus is a
+full size  card (3.5 inches high by 10.00 inches  long) and  contains  the
+equivalent of a standard engine SIO motherboard.
+
+The  SCV24 is also a full size card (3.5 inches high by 10.00 inches long)
+and is the equivalent of the standard engine Multifunction card and an old
+style SIO V.24 daughtercard (2 V.24 ports).
+
+All other options cards, except the SP (Sync Primary) are half size  cards
+(3.5 inches high by 5.5 inches long).   The  SP card is a  full size  card
+measuring 3.5 inches high by 10.00 inches long.
+
+
+PXL characteristics:
+
+  Processor:  32 bit 	  Memory:     1Mb RAM
+
+  Power Backup:  Up to 48 hours with Power Backup option
+
+  FCC Requirements:  Meets Part 15 of FCC rules for Class A computing
+                     devices.
+
+  Communications Boards:
+
+    o  Asynchronous to 4.8Kb
+    o  Synchronous  to 19.2Kb
+
+    o  SIO V.24 Asynchronous to   9.6Kb
+    o  SIO V.24 Synchronous  to  19.2Kb
+    o  SIO V.35 synchronous  to    72Kb
+    o  SIO OCL               to 162.5Kb (dynamically allocated)
+
+
+  Physical Dimensions:
+
+    Height:    5.5 inches (14.0 cm)
+    Width:    14.5 inches (36.8 cm)
+    Depth:    13.5 inches (34.3 cm)
+    Weight:   25.0 pounds (11.3 kg)
+
+  External power:
+
+    Model PX-1000-01 and PX-1001-01    (Plug type  NEMA 5-15P)
+
+       Voltage:      120 VAC  (90 - 132 VAC)
+       Frequency:    50/60 Hz (47 - 63 Hz)
+       Current:      1.0 Amp
+
+    Model PX-1000-02 and PX-1001-02    (Plug type  NEMA 6-15P)
+
+       Voltage:      220 VAC  (175 - 264 VAC)
+       Frequency:    50/60 Hz (47 - 63 Hz)
+       Current:      0.5 Amp
+  
+    The  PXL  should  not  be  connected  to  AC  feeds that contain  heavy
+    inductive motors, heaters, etc. or any device that generates electrical
+    disturbance  that  could  feed  back  into the PXL  (causing  component
+    failures or memory corruption).
+
+SIO Port addressing.
+
+All  daughtercards follow  the same  port address method using a 16 position
+dial to set the motherboard port addressing:
+
+    As viewed from the top down:
+
+    +-------------------------------------------------------------------+
+    |       C                                                           |
+    |     +---+                                                         |
+    |   8 |   | 0							|
+    |     +---+								|
+    |       4                                                           |
+    +-------------------------------------------------------------------+
+
+    where:
+
+       0   =  SIO ports addressed as 0,1
+       1   =  SIO ports addressed as 2,3
+       2   =  SIO ports addressed as 4,5
+       3   =  SIO ports addressed as 6,7
+       4   =  SIO ports addressed as 8,9
+       5   =  SIO ports addressed as A,B
+       6   =  SIO ports addressed as C,D
+       7   =  SIO ports addressed as E,F
+       8-F =  SIO ports DISABLED
+
+
+    NOTE:  Any SIO port pair not in use should have the address switch
+           set to one of the DISABLED positions (8-F).
+
+
+STAKE JUMPER PIN ORIENTATION.
+
+The  orientation  of pin 1 on ALL  stake jumpers  can  be confusing, but a
+quick check on the  soldered side of  the PCB will  reveal the location of
+pin 1 by the SQUARE solder connection.
+
+
+TERMINOLOGY
+
+For  the following  sections the  enabling or disabling of options can be
+referenced as follows:
+
+
+     DISABLED  =  OPEN    =  OFF  =  0
+     ENABLED   =  CLOSED  =  ON   =  1
+
+
+
+CONSOLE LOCKING:
+
+The  front  console  locking mechanism  is built  into the  console  keypad
+and is envoked via a 3 key sequence:
+
+     CONSOLE LOCKING:
+
+         BLANK-D-1
+
+     CONSOLE UNLOCKING:
+
+	 BLANK-E-1
+
+Currently  the console  will  initially  comes  up  LOCKED.  Once UNLOCKED
+any system  reset  (boot or  power recycle)  will cause  the console to be
+once again LOCKED.
+					     
+
+
+SCV24  [470359-001]
+
+The SCV24 combines the standard engine Multifunction card with a Old Style
+SIO  V.24 two (2) port  daughtercard.   
+
+A simplified diagram of the SCV24 daughtercard is as follows:
+
+   	           SCV24 CARD   [470359-001]          
+
+     +---------------------------------------------------+  
+    |                                                 BT -|-
+    |                         SW2   E  E  E  S  E  E     -| 
+    |                               1  4  4  3  7  1  TTY | 
+    |                               2  4  3              -| 
+    |                                                     | 
+    |                                                    -| 
+    |                                                 x1  | 
+    |                                                    -| 
+    |                                                     | 
+    |                                                    -| 
+    |                                                 x0  |   
+    |                                                    -| 
+    |                                                     |
+     ---------------------------                       ---  
+                                |_____________________|    
+
+     where:
+
+       SW2 =  Multifunction configuration 8 position DIP switch:
+
+                Switch 1:  BRG Interrupter Enabled
+                           OPEN   =  Disabled 
+		           CLOSED =  Enabled  [DEFAULT]
+                Switch 2:  Terminal break key status enabled  
+                           OPEN   =  Disabled  [DEFAULT]
+		           CLOSED =  Enabled
+                Switch 3:  Multifunction logic enabled 
+                           OPEN   =  Disabled
+		           CLOSED =  Enabled  [DEFAULT]
+                Switch 4:  Watchdog Timer
+                           OPEN   =  Disabled [DEFAULT]
+		           CLOSED =  Enabled  
+                Switch 5:  BRG Interrupter Priority Level [3600/14400]
+                           OPEN   =  ATN00  [DEFAULT]
+		           CLOSED =  ATN20
+                Switch 6:  BRG Interrupter Frequency (Hz) [N/T Jumper]
+                           OPEN   =   3600  [BAUDR = 0]   [DEFAULT]
+		           CLOSED =  14400  [BAUDR = 2]
+                Switch 7:  Reserved for future use
+                           OPEN   =  
+		           CLOSED =  [DEFAULT]
+                Switch 8:  Reserved for future use
+                           OPEN   =
+			   CLOSED =  [DEFAULT]
+
+
+       E12 =  TTY port terminal baud rate (4 stake jumper) where
+
+               1-2 OPEN   3-4 OPEN   5-6 OPEN   7-8 OPEN   Baud rate = 9600
+               1-2 CLOSED 3-4 OPEN   5-6 OPEN   7-8 OPEN   Baud rate = 4800
+               1-2 OPEN   3-4 CLOSED 5-6 OPEN   7-8 OPEN   Baud rate = 2400
+               1-2 OPEN   3-4 OPEN   5-6 CLOSED 7-8 OPEN   Baud rate = 1200
+               1-2 OPEN   3-4 OPEN   5-6 OPEN   7-8 CLOSED Baud rate =  300
+
+                 CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E44 =  Port 1 clock speed selector:
+
+                1-2 OPEN   3-4 OPEN   Clock speed =  2400
+		1-2 CLOSED 3-4 OPEN   Clock speed =  4800
+		1-2 OPEN   3-4 CLOSED Clock speed =  9600
+		1-2 CLOSED 3-4 CLOSED Clock speed = 19200
+
+                 CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E43 =  Port 0 clock speed selector (same options as E44).
+
+       S3  =  Port addressing dial switch (see SIO Port Addressing above).
+
+       E7  =  Clock selection (port 0 and port 1) selector:
+
+               1-2  Port 0 Transmit clock direction
+	       3-4  Port 0 Receive  clock direction
+	       5-6  Port 1 Transmit clock direction
+	       7-8  Port 1 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       E1  =  Watchdog timer status jumper (2 stake jumper) where
+
+               1-2 OPEN   Watchdog timer DISABLED
+	       1-2 CLOSED Watchdog timer ENABLED
+
+      	       CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       BT  =  Snap action boot switch.
+       TTY =  Console TTY port
+
+       x0  =  Port  0  RJ45 connector
+       x1  =  Port  1  RJ45 connector           
+
+NOTE:  There are two items  concerning the WATCHDOG timer (SW2-switch 4 and
+       E1 jumper).  Switch  SW2-4  should  ALWAYS be disabled (OFF or OPEN).
+       The  E1  jumper  really   determines  the  watchdog  timer  function.
+       If SW2-switch 4 is CLOSED (or ON) pushing the INI button on the front
+       console will cause  the  PXL to go into BOOT, regardless of  what the
+       E1 jumper is set to.  SW2-switch 4 should ALWAYS be OPEN or (OFF).
+
+OPTION CARDS.
+
+SV24  [470364-001]
+
+The  SV24 PXL daughtercard is  the equivalent of two (2) SIO V.24  OLD-STYLE
+daughtercards on the  standard engine.  The SV24 provides 4 ports capable of
+running speeds up to 19.2Kb.
+
+A simplified diagram of the SV24 daughtercard is as follows:
+
+	      SV24  REVISION B   [470364-001]
+
+	       +---------------------------+  
+              |                             | 
+              |   S S  E E E E     E E     -|
+              |   1 2  5 6 7 8     2 1   x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+
+    where:
+
+       S1  = Port addressing dial switch for port 0 and 1 
+       S2  = Port addressing dial switch for port 2 and 3
+
+       E5 =  Port 0 clock speed selector:
+
+                1-2 OPEN   3-4 OPEN   Clock speed =  2400
+		1-2 CLOSED 3-4 OPEN   Clock speed =  4800
+		1-2 OPEN   3-4 CLOSED Clock speed =  9600
+		1-2 CLOSED 3-4 CLOSED Clock speed = 19200
+
+                 CLOSED = Jumper Installed    OPEN = No Jumper Installed
+
+       E6 =  Port 1 clock speed selector (same options as E5).
+       E7 =  Port 2 clock speed selector (same options as E5).
+       E8 =  Port 3 clock speed selector (same options as E5).
+
+       E2  =  Clock selection (port 2 and port 3) selector:
+
+               1-2  Port 2 Transmit clock direction
+	       3-4  Port 2 Receive  clock direction
+	       5-6  Port 3 Transmit clock direction
+	       7-8  Port 3 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       E1  =  Clock selection (port 0 and port 1) selector:
+
+               1-2  Port 0 Transmit clock direction
+	       3-4  Port 0 Receive  clock direc
+	       5-6  Port 1 Transmit clock direction
+	       7-8  Port 1 Receive  clock direction
+
+	       OPEN   - No jumper installed  clocks provided EXTERNALLY
+	       CLOSED - Jumper installed     clocks provided INTERNALLY
+
+       x0  =  Port 0 RJ45 connector
+       x1  =  Port 1 RJ45 connector
+       x2  =  Port 2 RJ45 connector
+       x3  =  Port 3 RJ45 connector
+
+
+SV35 CARD  [470370-001]       **  REV B ARTWORK ONLY  **
+
+***  NOTE:  VERIFY THE REV LEVEL OF THE SV35 IS REV B THEN USE THIS SECTION
+            TO SET THE APPROPRIATE JUMPERS AND SWITCHES.  IF THE SV35  IS A
+	    REV D BOARD USE THE FOLLOWING SECTION FOR THE STRAPPING.
+
+The  SV35 PXL  daughtercard is  the  equivalent  of  the  SIO V.35 OLD-STYLE
+daughtercard on the  standard engine.  The SV35 provides 2 ports capable  of
+running up to 72Kb  per port.
+
+The  SV35 is capable  of providing  both primary and  secondary transmit and
+receive clocks at 56Kb.  These are  on-board [INTERNAL] clocks  and  require
+one  of the following  options if a hardwire connection is desired:
+
+    o  The PXL and the neighbor to provide TRANSMIT  clocks (primary  and
+       secondary) and a crossover cable in between.
+
+    o  Use  of  a  V.35 crossover  cable which does not bridge any clocks,
+       but the PXL provides both primary and secondary clocking.
+
+NOTE:  The PXL V.35 cable (part number 160602-TAB DB-15 to Winchester) has
+       a shroud that is too large to connect to some modems and requires a
+       pigtail  cable  to connect cleanly.   This  shroud is necessary for
+       FCC compliance  and is  not a  design oversight.  The pigtail cable
+       necessary is part number 160615-TAB.
+				       
+
+A simplified diagram of the SV35 daughtercard is as follows:
+
+              SV35  REVISION  B  [470370-001]
+
+               +---------------------------+  
+              | S   E E S S   E E S S       | 
+              | 5   2 1 2 3   4 3 1 4      -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+    where:
+   
+       S5  =    Port addressing dial switch.
+
+       E2  =    4 stake jumper for  determining whether  Port 0  is
+	        configured  for  TRANSMIT  clock  to  be   INTERNAL
+	        or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        E1  =    4 stake jumper for  determining whether  Port 0  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        S2  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+
+	S3  =    Two  position  switch  (up/down)  to  determine the
+	         function of the on-board TRANSMIT clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+     
+        E4  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for  TRANSMIT  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E2).
+
+        E3  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E1).
+
+        S1  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for  Port 1
+		 (same options as S2).
+
+        S4  =    Two  position  switch  (up/down)  to  determine the
+                 function of the on-board TRANSMIT clock for  Port 1
+		 (same options as S3).
+
+        x0  =    Port 0 DB15 connector (FEMALE)
+        x1  =    Port 1 DB15 connector (FEMALE)
+
+
+NOTE:  BOTH THE INTERNAL/EXTERNAL CLOCK  DIRECTION JUMPER (E1, E2, E4 OR E5)
+       AND THE CLOCK  ENABLING/DISABLING SWITCH (S2, S3, S1 OR S4) MUST BOTH
+       BE  SET  TO THE  SAME  CONFIGURATION  (EITHER  EXTERNAL  OR  INTERNAL
+       CLOCKING).
+  
+
+
+SV35 CARD  [470370-001]       **  REV D ARTWORK ONLY  **
+
+***  NOTE:  VERIFY THE REV LEVEL OF THE SV35 IS REV D THEN USE THIS SECTION
+            TO SET THE APPROPRIATE JUMPERS AND SWITCHES.  IF THE SV35  IS A
+	    REV B BOARD USE THE PRECEEDING SECTION FOR THE STRAPPING.
+
+The  SV35 PXL  daughtercard is  the  equivalent  of  the  SIO V.35 OLD-STYLE
+daughtercard on the  standard engine.  The SV35 provides 2 ports capable  of
+running up to 72Kb  per port.
+
+The  SV35 is capable  of providing  both primary and  secondary transmit and
+receive clocks at 56Kb.  These are  on-board [INTERNAL] clocks  and  require
+one  of the following  options if a hardwire connection is desired:
+
+    o  The PXL and the neighbor to provide TRANSMIT  clocks (primary  and
+       secondary) and a crossover cable in between.
+
+    o  Use  of  a  V.35 crossover  cable which does not bridge any clocks,
+       but the PXL provides both primary and secondary clocking.
+
+NOTE:  The PXL V.35 cable (part number 160602-TAB DB-15 to Winchester) has
+       a shroud that is too large to connect to some modems and requires a
+       pigtail  cable  to connect cleanly.   This  shroud is necessary for
+       FCC compliance  and is  not a  design oversight.  The pigtail cable
+       necessary is part number 160615-TAB.
+				       
+
+A simplified diagram of the SV35 daughtercard is as follows:
+
+              SV35  REVISION  D  [470370-001]
+
+               +---------------------------+  
+              | S   E E S S   E E S S       | 
+              | 5   2 1 1 2   4 3 3 4      -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+    where:
+   
+       S5  =    Port addressing dial switch.
+
+       E2  =    4 stake jumper for  determining whether  Port 0  is
+	        configured  for  TRANSMIT  clock  to  be   INTERNAL
+	        or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        E1  =    4 stake jumper for  determining whether  Port 0  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL:
+
+ 	            1-2 CLOSED   3-4 OPEN    Clocking is INTERNAL
+ 	            1-2 OPEN     3-4 CLOSED  Clocking is EXTERNAL
+
+		    where
+		      OPEN   - Jumper NOT installed
+		      CLOSED - Jumper installed
+
+        S1  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+
+	S2  =    Two  position  switch  (up/down)  to  determine the
+	         function of the on-board TRANSMIT clock for Port 0:
+
+		    UP    -  On-board clock is DISABLED
+		    DOWN  -  On-board clock is ENABLED
+     
+        E4  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for  TRANSMIT  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E2).
+
+        E3  =    4 stake jumper for  determining whether  Port 1  is
+	         configured  for   RECEIVE  clock  to  be   INTERNAL
+		 or EXTERNAL (same options as E1).
+
+        S3  =    Two  position  switch  (up/down) to  determine  the
+	         function of the on-board RECEIVE  clock for  Port 1
+		 (same options as S1).
+
+        S4  =    Two  position  switch  (up/down)  to  determine the
+                 function of the on-board TRANSMIT clock for  Port 1
+		 (same options as S2).
+
+        x0  =    Port 0 DB15 connector (FEMALE)
+        x1  =    Port 1 DB15 connector (FEMALE)
+
+
+NOTE:  BOTH THE INTERNAL/EXTERNAL CLOCK  DIRECTION JUMPER (E1, E2, E4 OR E5)
+       AND THE CLOCK  ENABLING/DISABLING SWITCH (S2, S3, S1 OR S4) MUST BOTH
+       BE  SET  TO THE  SAME  CONFIGURATION  (EITHER  EXTERNAL  OR  INTERNAL
+       CLOCKING).
+  
+
+AV24  [470363-001]
+
+The  AV24 PXL daughtercard is  the equivalent of two (2) SIO ASYNC OLD-STYLE
+daughtercards on the  standard engine.  The AV24 provides 4 ports capable of
+running speeds up to 9.6Kb.
+
+A simplified diagram of the AV24 daughtercard is as follows:
+
+	      AV24  REVISION B   [470363-001]
+
+	       +---------------------------+  
+              |                             | 
+              |    S S S S S S             -|
+              |    1 2 3 4 5 6           x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+    where:
+
+       S1 =  Port addressing dial switch for port 0 and 1 
+       S2 =  Port addressing dial switch for port 2 and 3 
+
+       S3 =  Ports 0 and 1 TRANSMIT speed selector dial:
+                0   =    300 baud
+		1   =    600 baud
+		2   =   1200 baud
+		3   =   2400 baud
+		4   =   4800 baud
+		5   =   9600 baud
+		6   =  19200 baud
+		7   =  38400 baud
+		8-F =  Clocks OFF
+
+           NOTE:  Although speeds greater  than 9.6Kb are  available,  the
+	          current software and  hardware only support up to 9.6Kb.
+                
+       S4 =  Ports 0 and 1 RECEIVE  speed selector dial (same options as S3).
+       S5 =  Ports 2 and 3 TRANSMIT speed selector dial (same options as S3).
+       S6 =  Ports 2 and 3 RECEIVE  speed selector dial (same options as S3).
+
+       x0 =  Port 0 RJ45 connector
+       x1 =  Port 1 RJ45 connector
+       x2 =  Port 2 RJ45 connector
+       x3 =  Port 3 RJ45 connector
+
+POCL  [470377-001]
+
+The  POCL PXL  daughtercard is  the  equivalent  of  the  SIO OCL  OLD-STYLE
+daughtercard  on the  standard engine.  The POCL provides 2 ports capable of
+running up to 162Kb per port.
+
+A simplified diagram of the POCL daughtercard is as follows:
+
+              POCL  REVISION B   [470377-001]
+
+	       +---------------------------+  
+              |                             | 
+              |         S1                 -|
+              |                          x1 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             | 
+              |                            -| 
+              |                          x0 | 
+              |                            -| 
+              |                             | 
+              |                             | 
+              |                             |
+               ---                       ---  
+                  |_____________________|    
+
+
+
+
+    where:
+ 
+       S1  =  Port addressing dial switch 
+
+       x0  =  Port 0 DB9 connector (FEMALE)
+       x1  =  Port 1 DB9 connector (FEMALE)
+  
+
+SP/SE  [SP 470360-001  -  SE  470362-001]
+
+The SP/SE PXL daughtercards are the equivalent of the standard  Engine  sync
+motherboard.   The SP/SE  daughtercards provide  a  combined 8 ports of sync
+access (speeds to 19.2K bps).  A MAXIMUM of  1 SP and 1 SE can be configured
+and supported in a single PXL.   The SP/SE  provide  a full  set  of  RS-232
+signals  (non-primitive  ports)  and  therefore  the  8 ports  available are
+viewed  from ISIS  as a  full 16  port sync  board (primitive ports are  not
+available).   The SP/SE cards can be installed in any of the PXL non-SIO bus
+slots (slots 6-9) with the following rules:  the SP must be  in  either slot
+6  or 8,  and the SE  immediately following  the SP in slot  7 or 9.  The SP
+board is a full size  daughtercard  with  the logic  to  maintain  8  ports,
+while  the SE daughtercard  is a half-size  card with only the drivers for 4
+ports.
+
+A simplified diagram of the SP and SE  daughtercards is as follows:
+
+    	              SP CARD   [470360-001]          
+
+     +---------------------------------------------------+  
+    |                                                     |
+    |                          E1   E2        E3  E4     -| 
+    |                                                  x3 | 
+    |                                                    -| 
+    |                                                    -| 
+    |                                                  x2 | 
+    |                                                    -| 
+    |                                                    -| 
+    |                                                  x1 | 
+    |                                                    -| 
+    |                                                    -|
+    |                                                  x0 | 
+    |                                                    -|
+    |                                                     |
+     ---------------------------                       ---  
+                                |_____________________|    
+
+
+ 		   SE CARD   [470362-001]
+	       +---------------------------+  
+              |                             | 
+              |                E2  E1      -|
+              |                          x3 | 
+              |                            -| 
+              |                            -| 
+              |                          x2 | 
+              |                            -| 
+              |                            -| 
+              |                          x1 | 
+              |                            -| 
+              |                            -| 
+              |                          x0 | 
+              |                            -|
+               ---                       ---  
+                  |_____________________|    
+
+
+     where:
+
+       E1 =  Clock speeds available
+
+               1-2 OPEN    Speeds available are 19.2Kb and 9.6Kb
+	       1-2 CLOSED  Speeds available are  9.6Kb and 4.8Kb
+
+       E2 =  Port Addressing jumper
+
+               1-2 OPEN    Second sync board address range (40-5F, FF)
+	       1-2 CLOSED  First  sync board address range (20-3F, 8F)
+
+             NOTE:  There is NO logic to support a second sync board
+	            on  either  the  SP or  PXL motherboard.  The E2
+		    jumper  MUST be  INSTALLED or  an unexpected I/O
+		    interrupt will occur.
+
+
+       x0 =  Port 0 RJ45 connector
+       x1 =  Port 1 RJ45 connector
+       x2 =  Port 2 RJ45 connector
+       x3 =  Port 3 RJ45 connector
+
+       [ SP BOARD CLOCK SETTING ]
+
+             The TRANSMIT and RECEIVE clocks speed stake jumpers look
+	     as follows:
+
+              +--------------------------------------------+  Top edge
+	     |                       c  . . . .   . . . .   |
+	     |                       b  . . . .   . . . .   |
+	     |                       a  . . . .   . . . .   |
+	     |                          1 4 7 10  1 4 7 10  |  Component
+	     |                                              |  Side
+	     |                             E3        E4     |
+	     |                            (TC)      (RC)    |
+	     |                                              |
+	     |                                              |
+	     |                                              |
+              +--------------------------------------------+  Bottom edge
+
+       E3 =  TRANSMIT clock speed selector (SP board ONLY):
+
+               1-2-3      Transmit clock port 0
+	       4-5-6      Transmit clock port 1
+	       7-8-9      Transmit clock port 2
+	       10-11-12   Transmit clock port 3
+
+	       where  [Depending upon E3 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 4800 or  9600
+		         Jumper between b-c  speeds are 9600 or 19200
+
+       E4 =  RECEIVE clock speed selector (SP board ONLY):
+
+               1-2-3      Receive  clock port 0
+	       4-5-6      Receive  clock port 1
+	       7-8-9      Receive  clock port 2
+	       10-11-12   Receive  clock port 3
+
+	       where [Depending upon E4 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 4800 or  9600
+		         Jumper between b-c  speeds are 9600 or 19200
+
+
+       [ SE BOARD CLOCK SETTING ]
+
+             The TRANSMIT and RECEIVE clocks speed stake jumpers look
+	     as follows:
+
+              +--------------------------------------------+  Top edge
+	     |                       c  . . . .   . . . .   |
+	     |                       b  . . . .   . . . .   |
+	     |                       a  . . . .   . . . .   |
+	     |                          1 4 7 10  1 4 7 10  |  Component
+	     |                                              |  Side
+	     |                             E2        E1     |
+	     |                            (RC)      (TC)    |
+	     |                                              |
+	     |                                              |
+	     |                                              |
+              +--------------------------------------------+  Bottom edge
+
+       E2 =  TRANSMIT clock speed selector (SE board ONLY):
+
+               1-2-3      Transmit clock port 0
+	       4-5-6      Transmit clock port 1
+	       7-8-9      Transmit clock port 2
+	       10-11-12   Transmit clock port 3
+
+	       where  [Depending upon E2 speed selection setting]
+	         a-b-c = Jumper between a-b  speeds are 9600 or 19200
+		         Jumper between b-c  speeds are 4800 or  9600
+
+       E1 =  RECEIVE clock speed selector (SE board ONLY):
+
+               1-2-3      Receive  clock port 0
+	       4-5-6      Receive  clock port 1
+	       7-8-9      Receive  clock port 2
+	       10-11-12   Receive  clock port 3
+
+	       where [Depending upon E1 speed selection setting]
+	         a-b-c = Jumper between a-b  speed are 9600 or 19200
+		         Jumper between b-c  speed are 4800 or  9600
+
+        NOTE:  The orientation of the clocks speeds and jumper set is
+	       OPPOSITE of the SP board.
+
+
+AP/AE   [AP  470361-001  -  AE  470365-001]
+
+The AP/AE PXL daughtercards are the equivalent of the standard  Engine async
+motherboard.   The AP/AE  daughtercards provide  a  combined 8 ports of  low
+access  (50-4800  baud).    A  MAXIMUM  of  32 async ports (4 AP/AE)  can be
+configured  on the PXL.    See  the Configuraion  Guidelines  section at the
+beginning of this document for PXL bus slot allocations.
+
+Each  card  is a half-size  card,  with the AP daughtercard  containing  the
+logic  to  maintain  8  ports,  while  the AE  daughtercard  card with  only
+the drivers for 4 ports.
+
+If the AP card is installed the ports are active, there is no way to have an
+AP card installed but the ports disabled (as with the SIO option cards).
+
+A simplified diagram of the async cards is as follows:
+
+
+
+	  AP  (ASYNC  PRIMARY)             AE (ASYNC  EXTENDER)
+    	       [470361-001]                     [470365-001]
+
+     +----------------------------+    +----------------------------+
+    |  ||                          |  |                              |
+    |  E1                         -|  |                             -| 
+    |                          x3 _|  |                          x3 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x2 _|  |                          x2 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x1 _|  |                          x1 _| 
+    |                              |  |                              |
+    |                             -|  |                             -|
+    |                          x0 _|  |                          x0 _| 
+    |                              |  |                              |
+     ---                        ---    ---                        ---
+        |______________________|          |______________________|
+
+     where:
+
+       E1 =     4 stake jumper used to determine the Async port addressing
+
+       x0 =     Port  0                           Port  4
+       x1 =     Port  1                           Port  5
+       x2 =     Port  2                           Port  6
+       x3 =     Port  3                           Port  7
+                
+
+
+The  E1 jumper on the  AP daughtercard  [470361-001] is  used to specify the
+async board  addressing used by ISIS and to designate the port range for the
+AP/AE boards (s).   Each AP board controls the addressing for itself and one
+(1) AE (if necessary).  As viewed from the top down the  E1 jumper is set as
+follows:
+
+    +-------------------------------------------------------------------+
+    |     3 1                                                      PORT |
+    |     4 2                                                CONNECTORS |
+    +-------------------------------------------------------------------+
+
+	 where:
+
+	   1-2 OPEN   and 3-4   OPEN:  Async MB address 0C1 ports 8-15
+	   1-2 CLOSED and 3-4   OPEN:  Async MB address 0C1 ports 0- 7
+	   1-2 OPEN   and 3-4 CLOSED:  Async MB address 0C5 ports 8-15
+	   1-2 CLOSED and 3-4 CLOSED:  Async MB address 0C5 ports 0- 7
+
+	   OPEN - No jumper  installed      CLOSED - Jumper installed
+
+
+Essentially the two sets of pin (1-2 and 3-4) can be viewed as follows:
+
+   1-2  Refers to the group of 8 ports:
+
+        1-2 OPEN   refers to the HIGHER group of 8 (ports 8-15)
+	1-2 CLOSED refers to the LOWER  group of 8 (ports 0- 7)
+
+   3-4  Refers to the board base address:
+
+        3-4 OPEN   refers to address C1  [ISIS A.REF(0)]
+	3-4 CLOSED refers to address C5  [ISIS A.REF(1)]
+
+
+
+The RECOMMENDED configuration for a  28 port ASYNC  CONSAT or TYMCOMM  is as
+follows:
+
+            +---+---+---+---+---+---+---+---+---+---+
+            | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+            +---+---+---+---+---+---+---+---+---+---+
+                     OCL AP  AP  AE  AP  AE  AP  AE
+	                 |   |       |       |
+	                 |   |       |        --- Jumper 1-2 CLOSED
+	                 |   |       |                   3-4 OPEN
+	                 |   |       |
+	                 |   |        ----------- Jumper 1-2 OPEN
+                         |   |                           3-4 OPEN
+                         |   |
+	                 |    ------------------- Jumper 1-2 CLOSED
+	                 |                               3-4 CLOSED
+	                 |
+	                  ----------------------- Jumper 1-2 OPEN
+			                                 3-4 CLOSED
+
+
+From  the ISIS  perspective there  are 32  ports or  2 ISIS A.REF (0 AND 1),
+but there  are actually  on 28 PHYSICAL ports.   ISIS makes no destintion of
+ports in anything other than groups of 16.
+
+In the above recommended configuration the physical ports look as follows:
+
+           +---+---+---+---+---+---+---+---+---+---+
+           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+           +---+---+---+---+---+---+---+---+---+---+
+                    OCL AP  AP  AE  AP  AE  AP  AE
+		        |   |   |   |   |   |   |
+			|   |   |   |   |    ------  Ports  0-7
+			|   |   |   |   |
+			|   |   |    --------------  Ports  8-15
+			|   |   |
+			|    ----------------------  Ports 16-24
+			|
+			 --------------------------  Ports 25-28
+
+It should be noted that no matter what sequence the AP boards are installed
+there  will be  a gap  of four (4) non-existent  ports, these  ports can be
+configured at the end of the rotary or in the first group of 16.
+
+See  the Configuration Guidelines  section at the beginning of this document
+for further PXL bus slot allocations.
+
+
+AL8  [470422-001]
+
+The  AL8  PXL daughtercard is  the equivalent  of  single PSM standard async
+daughtercard  on the  standard engine.  The AL8  provides 8 ports capable of
+running speeds  up to  4800 baud  depending upon BAUDR setting.  The AL8 has
+all of the logic to  drive 8  ports and  uses the standard PSM  ASYNC 50-pin
+8-by breakout cable.  The 8-by  breakout (ocotpus) cable  used with  the AL8
+card is part number 160158-TAB Rev M.
+
+A simplified diagram of the AL8 daughtercard is as follows:
+
+
+	           AL8   [470422-001]
+
+	       +---------------------------+  
+              |  SW1                        | 
+              |                           --|
+              |                           | | 
+              |                           |J| 
+              |                           |1| 
+              |                           | | 
+              |                           | | 
+              |                           | |
+              |                           | | 
+              |                           | | 
+              |                           | | 
+              |                           --| 
+              |                             |
+               ---      -                ---  
+                  |____| |______________|    
+
+
+    where:
+
+      SW1 =  Async addressing dial switch (see below)
+      J1  =  50 pin Amphenol connector (male)
+
+
+
+The async port address dial (SW1) is configurable as follows:
+
+    +-------------------------------------------------------------------+
+    |       C                                                           |
+    |     +---+                                                         |
+    |   8 |   | 0							|
+    |     +---+								|
+    |       4                                                           |
+    +-------------------------------------------------------------------+
+
+    where:
+
+       0   =  Async address C1-C3 (ports 8-15)   [ ISIS A.REF(0) ]
+       1   =  Async address C1-C3 (ports 0- 7)
+       2   =  Async address C5-C7 (ports 8-15)   [ ISIS A.REF(1) ]
+       3   =  Async address C5-C7 (ports 0- 7)
+       4   =  Async address C9-CB (ports 8-15)   [ ISIS A.REF(2) ]
+       5   =  Async address C9-CB (ports 0- 7)
+       6   =  Async address CD-CF (ports 8-15)   [ ISIS A.REF(3) ]
+       7   =  Async address CD-CF (ports 0- 8)
+       8-F =  SIO ports DISABLED
+
+
+
+The recommended 48 ports AL daughtercard configuration looks as follows:
+
+
+             +---+---+---+---+---+---+---+---+---+---+
+             | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+             +---+---+---+---+---+---+---+---+---+---+
+                      OCL     AL  AL  AL  AL  AL  AL
+                              |   |   |   |   |   |
+                              |   |   |   |   |    --- Ports 0-7
+                              |   |   |   |   |        SW1 set to 1
+	                      |   |   |   |   |
+	                      |   |   |   |    ------- Ports 8-15
+	                      |   |   |   |            SW1 set to 0
+	                      |   |   |   |
+		              |   |   |    ----------- Ports 16-23
+		              |   |   |                SW1 set to 3
+			      |   |   |
+			      |   |    --------------- Ports 24-31
+			      |   |                    SW1 set to 2
+			      |   |
+			      |    ------------------- Ports 32-39
+			      |                        SW1 set to 5
+			      |
+			       ----------------------- Ports 40-47
+				                       SW1 set to 4
+
+
+3.  INSTALLATION.
+
+The  following section  will describe  the installation process.
+
+1.  Visually inspect the shipping container, noting any damage to it.
+
+2.  Remove the PXL from the shipping container.   Remove the  top cover  and
+inspect the components for any possible damage during shipping.
+
+3.  Power Backup option installation.  This section is only required  if the
+power backup option is separate  from the PXL,  or  to be  retrofitted to an
+existing PXL.
+
+    o  Verify that all components of the power backup kit are present:
+
+       o  Power Backup PCB - part number 470392-001
+       o  Cable assembly   - part number 160641-001
+       o  Installation hardware:
+          o  4 spacers - part number 210001-411
+	  o  8 screws  - part number 210205-004
+
+       If all  components are  not present,  do not continue with the Power
+       Backup installation.  
+
+    o  If this is a retrofit insure that the PXL  is powered  off  and  the
+       AC power cord is disconnected.
+
+    o  Disconnect  the  3  cables  connecting   the  filtered  power  entry
+       module (where ON/OFF switch is located) to the power supply AC input
+       terminator block TB1.   Note the  location and  color  of each  wire
+       BEFORE disconnecting them.
+
+    o  Disconnect the cable to the DC fan.
+
+    o  Remove the main power harness (molex type connector)  from the power
+       supply  unit  DC  terminator  block  TB2  and   the  PXL motherboard
+       (location  P1).   Note the  color of  end wires  on the  molex  type
+       connectors on both TB2 and P1 BEFORE disconnecting them.
+
+    o  Remove the 6 screws holding the power supply tray to the chassis.
+
+    o  Install the 4 spacers to the  BOTTOM of the power supply tray.  Once
+       the power  supply tray  is re-installed  these  will be pointing  to
+       the bottom of PXL chassis.
+
+    o  Install the Power Backup PCB to the spacers  with the capacitor bank
+       facing the BOTTOM  of the power  supply tray.  Insure that the Power
+       Backup PCB connector  edge is  on the  same end  as the power supply
+       cable harness.
+
+    o  Connect the lead from the  main  power harness  to the  Power Backup
+       Module PCB.
+
+    o  Install   the  power  supply   tray  by  replacing   the  six screws
+       removed earlier.
+
+    o  Re-connect the cable to the DC fan.
+
+    o  Re-connect  the  3  cables   connecting   to  filtered  power  entry
+       module  (where ON/OFF  switch is located) to the AC terminator block
+       TB1 on the power supply.  Connect the 3 leads in  the same  order as
+       was noted previously when they were disconnected.    The orientation
+       of  the   cable should look as follows (from TOP down as viewed from
+       the front console end):
+
+                             +--------------+
+                            |                |
+	BROWN wire  <====== |== ||      || = | =======>   BLUE wire
+                            |       || ===== | =====>  GREEN wire
+                            |                |
+                             +--------------+
+
+
+    o  Re-connect the main power  harness  from  the DC terminator block TB2
+       on  the power  supply  unit  to  the PXL motherboard  (location  P1).
+       The molex type connectors must be replaced with the wire-color scheme
+       identical to that noted previously when they were disconnected.   The
+       orientation  of  the  cables to the power supply and mother board are
+       as follows (TOP down as viewed from the front console end):
+
+                              POWER SUPPLY  TB2
+                            +-------------------+ pin 1
+
+	    RED   wire <----  =================  ---->  YELLOW wire
+			        CABLE  HARNESS
+                                (TWISTED ONCE) 
+	    GREEN wire <----  =================  ---->  RED wire
+
+                            +-------------------+
+ 			      PXL   MOTHERBOARD
+			         LOCATION P1
+
+       The main power harness cable has a friction key  lock  at  the molex
+       connector  ends and requires a  single twist to insure  that the key
+       (or L shaped) end is inserted correctly at both ends.
+
+       NOTE:  Initial production units contain a 15-pin molex connector for
+              connecting to the AC terminator block TB2 on the power supply
+	      unit.  The TB2  terminator  block is a  7 output points  with
+	      each point being  a 2-pin connection, for a total of 14-pins.
+	      It is important to insure that  the 15th pin is not connected
+	      to  any  point on the power supply  terminator block  as this
+	      will  insure proper  connection.   If  installed  with  pin-1
+	      shifted off the block,  there will be  an open  condition and
+	      a clicking type noise  will be heard.  Simply shift the molex
+	      connector over one pin after powering off the unit.
+
+    o  Re-connect the AC power  cord and  power  PXL on.   The Power Backup
+       capacitor bank will be  completely charged  by the  time any code is
+       loaded into the PXL.
+
+    o  Load any code (standalone diagnostic or ISIS code) into the PXL  and
+       verify the Power Backup module is operational.
+
+
+4.  Power check out:
+
+    o  The POWER ONE power supply automatically adjusts to the  power input
+       and no jumpers or fuse changes are required.
+
+    o  Connect the AC power cord to the receptacle on the back panel.
+
+    o  Power the unit ON.
+
+    o  Verify the DC fan is operational.
+    
+    o  Verify  the voltages on the  PSU.  The  test  points  and adjustment
+       pots on the PXL PSU are as follows:
+
+
+		   POWER ONE POWER SUPPLY  [390060-001]
+
+             +-----------------------------------------------------+
+	     |                                                     |
+             | TB1-1                                         TB2-1 |
+	     | TB1-2                                         TB2-2 |
+	     | TB1-3             P S U                       TB2-3 |
+	     |                                               TB2-4 |
+	     |                                           V2  TB2-5 |
+	     |                                               TB2-6 |
+	     |                                           V1  TB2-7 |
+	     |                                                     |
+	     +-----------------------------------------------------+
+
+	     ** NOTE:  Measure the voltages on TB2 at the screw lugs
+	               and NOT from the molex connector.
+
+             where
+
+	       TB1-1 =  GROUND
+	       TB1-2 =  N
+	       TB1-3 =  L
+	       
+               TB2-1 =  -12 volt
+               TB2-2 =   -5 volt
+               TB2-3 =  +12 volt
+               TB2-4 =  GROUND
+               TB2-5 =  GROUND
+               TB2-6 =   +5 volt
+               TB2-7 =   +5 volt
+
+               V1    =   +5 VDC adjustment pot
+               V2    =  +12 VDC adjustment pot
+
+    o  Using  a DVM,  measure the +5 volt level across TB2-7 and TB2-4.  The
+       voltage should  be set to 5.00 (+/- 0.2 V).    If the voltage is off,
+       adjust it via the pot designated as V1 in the above diagram.
+
+    o  Measure  the  +12 volt level across  TB2-3  and  TB2-4.   The voltage
+       should  be set to 12.00 (+/- 0.2 V).    If the voltage is off, adjust
+       it via the pot designated as V2 in the above diagram.
+
+
+5.  Diagnostic check out:
+
+If  a PC is available with the MAC V diagnostic NIB files and TERMITE on it,
+use  the  PC to load  the  diagnostics  via the TTY port.   The file  naming 
+convention  for the  PC diagnostic files  is at  the  discretion of the file
+creator  and may be  named something  like .NIB or .TTY.  It is important to
+note that the PXL requires the use of the MAC V diagnostics and will NOT run
+with the non-MAC V diagnostics.
+
+Set  the  TTY  port on  the  SCV24 card  (see above) to  9600 baud  and  the
+Console TTY cable (part  number 160608-TAB).  If no PC is available, connect
+the  network line  to the  appropriate  communication protocol  daughtercard
+(insuring  that  the  SIO address  and  clocking strategy are set correctly)
+and have NETCON  or NSSC  load the standalone diagnostics for the MAC V from
+the SUN server.
+
+See  the files TERMIT.DOC and PROLIT.DOC in the username NTS on the PDP's or
+the PUBLIC network SUN systems for reference in doing the TTY loads.
+
+The  following diagnostics can be found in the  ENGDIAG directory on the SUN
+systems and should be executed in the following order:
+
+    o  DCPU version 4.60  -  25 passes
+    o  DMAC version 7.60  -  25 passes
+    o  DMEM version 4.60  -  24 hours of ALL tests except 10 and 11.
+    o  DSIO version 4.60  -  25 passes
+    o  DSYA version 6.00  -  Minimum of 1 hour
+    o  DSYN version 4.00  -  Minimum of 1 hour
+
+All  diagnostics  should  pass with NO errors.  It is important to note that
+the  DMEM diagnostic  requires that  ALL tests except 10 (BBU) and 11 (Scope
+Loop) be executed, not just the default tests.
+
+
+6.  Network Installation.
+
+Power the PXL off.
+
+Using  the target code  TYMFILE or project report, configure the address and
+clocking  strategies for  all I/O boards.   If there  is  no  TYMFILE or the
+project report is  unclear, do NOT proceed until the responsible CS provides
+this information.
+
+Connect the necessary network and application slot cables to the appropriate
+I/O cards.
+
+Power  the  PXL back on.   Ensure that the PXL is running boot by looking at
+the front console.  The right  most digit  should  display  a "C", while the
+left most two digits should be scrolling between 00 and FF.
+
+Have NETCON or NSSC load the appropriate code in the PXL.
+
+From the Console TTY port, log into DDT in slot FF (ISIS kernel) and  verify
+the node is operational  by  entering the  following DDT commands to look at
+the state of the node:	
+
+    [ Note:  Terminate EACH command with a carriage return ]
+
+    o  ?DIAG
+    o  ?HIST
+
+The  ?DIAG  and  ?HIST commands will display any  activity relating to  ISIS
+that may have occurred on the node since it was loaded. 
+
+Now move to the  node code  and check the crypto log for any problem  areas.
+This is done by the following DDT and XRAY commands:
+
+    o  ^0
+    o  ?STAT
+
+    o  CL
+    o  ND
+    o  NS
+    o  HS
+
+The  CL, ND, NS, and HS commands are XRAY commands to print the crypto  log,
+the  node  state and  host status  of all  hosts on the  node.  Look for any
+abnormal message reports in the crypto log such as HDLC checksum errors, bad
+BORI's,  line outages,  etc.   The ND display will show if the nodes link(s)
+have come  up and if any crashes have occurred.  The HS command will display
+the state of  all hosts  on the  node and these states should be verified by
+the NSSC or NETCON.
+
+
+7.  Exit from  the console port by typing a  CONTROL-C in XRAY.
+
+8.  Remove the console cable.
+
+9.  Replace the cover.  DO NOT stack PXL engines.
+
+10.  Leave TYMFILE copy with PXL engine.
+
+
+
+4.  MISCELLANEOUS INFORMATION.
+
+The following section outlines the PXL part number, cable specifications and
+loopback specifications.
+
+
+4.1  PART NUMBERS.
+
+
+    BASIC SYSTEM:
+
+      PX-100x-0x  PSN PXL     PXL Basic System, consisting of:
+	          470367-001  PXL motherboard
+		  470374-001  SIO Motherboard
+		  470359-001  SCV24 board  [SIO V.24 2 ports, TTY port]
+                  390060-001  Power Supply (POWER ONE MAP 80-4000)
+        where
+
+	   PX-1000-01 = 110v without Power Backup Module
+	   PX-1001-01 = 110v with    Power Backup Module
+           PX-1000-02 = 220v without Power Backup Module
+           PX-1001-02 = 220v with    Power Backup Module
+
+
+   OPTION CARDS:
+
+      470370-001  PSN 2SV35  SV35  board  [SIO V.35       2 ports]
+      470363-001  PSN 4AV24  AV24  board  [SIO Async      4 ports]
+      470364-001  PSN 4SV24  SV24  board  [SIO V.24       4 ports]
+      470377-001  PSN 2POCL  POCL  board  [SIO OCL        2 ports]
+
+      470361-001  PSN 4AP    AP    board  [Standard Async 4 ports each]
+      470365-001  PSN 4AE    AE    board  [Standard Async 4 ports each]
+      470422-001  PSN AL8    AL    board  [Standard Async 8 ports each]
+
+      470360-001  PSN 4SP    SP    board  [Standard Sync  4 ports each]
+      470362-001  PSN 4SE    SE    board  [Standard Sync  4 ports each]
+
+
+
+   ADDITIONAL OPTIONS:
+
+      590023-001  PSN PXL-CAB  PXL Stacker Cabinet
+
+      360084-001  PXL Power Backup Option Kit (for POWER ONE Power Supply)
+
+      220058-001  Power cord for Canada, Mexico, Japan (10a/125v)
+      220100-001  Power cord for France, Germany, Spain, Benelux (10a/220v)
+      220101-001  Power cord for Australia (10a/240v)
+      220102-001  Power cord for United Kingdom, Ireland (10a/250v)
+      220103-001  Power cord for Italy (10a/220v)
+      220104-001  Power cord for Switzerland (10a/220v)
+      220105-001  Power cord for Denmark (10a/240v)
+      220106-001  Power cord for India (10a/220v)
+
+							
+
+   CABLES:
+
+      160537-TAB  RJ-45 to DB-25 Async        Straight-Thru [AV24 and AP/AE]
+      160547-TAB  RJ-45 t0 DB-25 Sync         Straight-Thru [SP/SE, SV24, SCV24]
+      160608-TAB  RJ-45 to DB-25 Console TTY  Straight-Thru [SCV24]
+
+      160683-TAB  RJ-45 to RJ-45 Sync Crossover     [SP/SE, SCV24 and SV24]
+      160703-TAB  RJ-45 to DB-15 Sync Crossover     [SP/SE, SCV24 and SV24]
+      160549-TAB  RJ-45 to DB-25 Sync Crossover     [SP/SE, SCV24 and SV24]
+
+      160491-TAB  Winchester to Winchester Crossover [SV35]
+      160602-TAB  DB-15 to Winchester Straight-Thru  [SV35]
+      160615-001  Winchester to Winchester Pigtail Straight-Thru [SV35]
+     
+
+      160526-TAB  DB-9  to DB-25 OCL Straight-Thru   [POCL]
+      160629-TAB  DB-9  to DB-9  OCL Crossover       [POCL]
+
+
+
+   LOOPBACK PLUGS:
+
+      630038-001  DB-9  SIO OCL          [POCL]
+      630042-001  RJ-45 Async            [AE/AP]
+      630080-001  RJ-45 SIO Async        [AV24]
+      630081-001  RJ-45 Sync Loopback    [SCV24 and SV24]
+      630082-001  DB-15 SIO V.35         [SV35]
+      630032-003  50-Pin Standard Async  [AL8]
+
+4.2. LOOPBACK SPECIFICATIONS.
+
+The  following  section  outlines the  loopback options  for the  individual
+PXL communication cards:
+
+   AP/AE ASYNC Loopback Plug:  630042-001  RJ45
+
+      Pin  5 (TD)   to  Pin  3 (RD)
+      Pin  6 (DTR)  to  Pin  2 (DSR)
+      Pin  8 (BUSY  to  Pin  4 (DCD)
+
+
+   AL8 (50-PIN) ASYNC Loopback Plug:  630032-003  (50-PIN AMPHENOL)
+
+      Pin   1 (TD)  to  Pin 19 (RD)    [CHANNEL A]
+      Pin   2 (DTR) to  Pin 34 (DSR)
+      Pin  35 (DCD) to  Pin 18 (BUSY)
+ 
+      Pin   3 (TD)  to  Pin 21 (RD)    [CHANNEL B]
+      Pin   4 (DTR) to  Pin 36 (DSR)
+      Pin  37 (DCD) to  Pin 20 (BUSY)
+ 
+      Pin   5 (TD)  to  Pin 23 (RD)    [CHANNEL C]
+      Pin   6 (DTR) to  Pin 38 (DSR)
+      Pin  39 (DCD) to  Pin 22 (BUSY)
+
+      Pin   7 (TD)  to  Pin 25 (RD)    [CHANNEL D]
+      Pin   8 (DTR) to  Pin 40 (DSR)
+      Pin  41 (DCD) to  Pin 24 (BUSY)
+
+      Pin   9 (TD)  to  Pin 27 (RD)    [CHANNEL E]
+      Pin  10 (DTR) to  Pin 42 (DSR)
+      Pin  43 (DCD) to  Pin 26 (BUSY)
+
+      Pin  11 (TD)  to  Pin 29 (RD)    [CHANNEL F]
+      Pin  12 (DTR) to  Pin 44 (DSR)
+      Pin  45 (DCD) to  Pin 28 (BUSY)
+
+      Pin  13 (TD)  to  Pin 31 (RD)    [CHANNEL G]
+      Pin  14 (DTR) to  Pin 46 (DSR)
+      Pin  47 (DCD) to  Pin 30 (BUSY)
+
+      Pin  15 (TD)  to  Pin 33 (RD)    [CHANNEL H]
+      Pin  16 (DTR) to  Pin 48 (DSR)
+      Pin  49 (DCD) to  Pin 32 (BUSY)
+
+
+  OCL Loopback Plug:  630038-001  (DB-9 FEMALE)
+
+      Pin 2 TD(a)  to   Pin 6 RD(b)
+      Pin 3 RD(b)  to   Pin 7 RD(b)
+
+
+  SIO ASYNC Loopback Plug:  630080-001  (RJ-45)
+
+      Pin  5 (TD)   to  Pin  3 (RD)
+      Pin  6 (DTR)  to  Pin  4 (DCD)
+      Pin  8 (RTS)  to  Pin  2 (DSR)
+
+
+  SYNC  Loopback Plug:  630081-001  (RJ-45)
+
+      Pin  1 (TD)   to  Pin  2 (RD)
+      Pin  7 (DTR)  to  Pin  5 (DSR)
+      Pin  3 (RTS)  to  Pin  4 (CTS)
+      Pin  6 (TC)   to  Pin  8 (RC)
+
+
+  SV35 Loopback Plug:  630082-001  (DB-15 MALE)
+
+       Pin  3 [RTS]   to  Pin 12 [CTS]
+       Pin 10 [DTR]   to  Pin  5 [DSR]
+       Pin  6 [TC(b)] to  Pin  7 [RC(b)]
+       Pin 13 [TC(a)] to  Pin 14 [RC(a)]
+       Pin  2 [TD(b)] to  Pin  4 [RD(b)]
+       Pin  9 [TD(a)] to  Pin 11 [RD(a)]
+
+  y ­
