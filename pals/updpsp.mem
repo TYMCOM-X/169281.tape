@@ -1,0 +1,278 @@
+
+
+
+       BBBBBB   TTTTTTTTTTTT       
+       BBBBBBB  TTTTTTTTTTTT
+       BB    BB      TT            
+       BB    BB      TT
+       BB    BB      TT            
+       BBBBBBB       TT
+       BBBBBBB       TT            
+       BB    BB      TT
+       BB    BB      TT            
+       BB    BB      TT
+       BBBBBBB       TT            
+       BBBBBB        TT
+
+
+       NN        NN
+       NNN       NN
+       NNNN      NN
+       NN NN     NN
+       NN  NN    NN
+       NN   NN   NN
+       NN   NN   NN  OOO  RRRR  TTTTT H   H
+       NN    NN  NN O   O R   R   T   H   H
+       NN     NN NN O   O R   R   T   H   H
+       NN      NNNN O   O RRRR    T   HHHHH
+       NN       NNN O   O R  R    T   H   H
+       NN        NN  OOO  R   R   T   H   H
+
+
+            AA
+           AAAA
+           AAAA
+           AAAA
+          AA  AA
+          AA  AA
+         AAAAAAAA   M   M EEEEE RRRR  I  CCC    A
+         AAAAAAAA   MM MM E     R   R I C   C  A A
+        AA      AA  M M M EEEE  R   R I C      A A
+        AA      AA  M   M E     RRRR  I C      AAA
+        AA      AA  M   M E     R  R  I C   C A   A
+       AA        AA M   M EEEEE R   R I  CCC  A   A
+
+
+                       MODIFYING PSP###.MAC PROGRAMS
+
+                                20 JANUARY 1993
+
+                           (FREMONTDOC:74)UPDPSP.MEM
+                                                                         Page 2
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      THIS PAGE INTENTIONNALLY LEFT BLANK
+MODIFYING PSP###.MAC PROGRAMS                                         Page 3
+
+
+                PROCEDURES FOR MODIFYING PSP###.MAC PROGRAMS                __________ ___ _________ __________ ________
+
+                                 FILES NEEDED                                 _____ ______
+
+                                  PSPATO.MAC
+                                  PSPCIR.MAC
+                                  PSPEEP.MAC
+                                  PSPLIB.MAC
+                                  PSPPDP.MAC
+                                  PSPSLV.MAC
+                                   CM10.LST
+                                   HOST.LST
+                                  PDPENG.SYS
+                                  MONROL.CMD
+
+       The above files are under the username UTIL on all FREMONT  TYMCOM-10'S.
+       Backup copies are under the username FREMONTDOC on system 74.
+
+           Log into the Username UTIL:74 and from the EXEC, type in:
+
+               "!"MOD PSPPDP.MAC (CR)
+               "NUMBER OF CHARACTERS"
+               "*"F 'NUMTAB'=
+               "Print??" "Y (CR)
+               "146"
+                     "HRRI PTR,NUMTAB"
+               "189"
+                     "MOVE PTR,[-TBLEN,,NUMTAB]"
+               "1173"
+               "NUMTAB: DEC 23,26,30,33,34,38,74"
+               "1175"
+               "TBLEN==.-NUMTAB"
+               "4"
+               "*"
+
+       Line number reports here everytime NUMTAB is found.  The  line  you  are
+       concerned with is the line reporting all the DEC hosts numbers.  This is
+       the line you want to ADD or REMOVE host numbers.  Once this is done  you
+       need to SAVE it.
+
+               "*"S (CR)
+               ""23,26,33""(^D) FOR ""23,26,30,33""(^D)(CR)
+               "Wait?" Y (CR)
+               "NUMTAB: DEC 23,26,30,33,34,38,74"
+               "Ok?" Y (CR)
+               "1"
+               "*"1173/
+               "NUMTAB: DEC 23,26,33,34,38,74"
+               "*"
+MODIFYING PSP###.MAC PROGRAMS                                         Page 4
+
+
+
+
+                                         NOTE
+
+           In the PSPPDP.MAC document, there is another part  that  reports
+           system  serial number and hardware alpha character.  It is under
+           the heading of ALFACK.  This needs to be updated whenever a host
+           is ADDED or DELETED.
+
+
+
+               "*" F 'ALFACK'= (CR)
+               "Print?" Y (CR)
+               "431"
+                     "HRRZ   T2,ALFACK(T3)   ;-Get...etc"
+               "435"
+                     "MOVE   T1,ALFACK(T3)   ;-Yes. Get it"
+               "445"
+               "ALFACK:   DEFINE  XX(NAM,NUM),...ETC"
+               "3"
+               "*"445,453/
+               "ALFACK:   DEFINE  XX(NAM,NUM),...ETC"
+                           XX (3G,1421)    ;F23
+                           XX (3I,1336)    ;F26
+                           XX (3B,1388)    ;F30
+                           XX (3C,1427)    ;F33
+                           XX (3A,1405)    ;F34
+                           XX (3F,1324)    ;F38
+                           XX (3D,1354)    ;F74
+                              0,,123456    ;End marker
+
+
+                                         NOTE
+
+           No need to make changes if running on BACKUP hardware.
+
+
+               "*"EXIT (CR)
+               "PSPPDP.MAC"
+               "NUMBER OF CHARACTERS"
+
+               "!"
+
+       After all changes are made you need to compile and SAVE it.
+
+           From the EXEC, type in:
+
+               "!"LOAD PSPPDP,PSPCIR,PSPEEP,PSPLIB (CR)
+               "MACRO: PSPPDP"
+               "MACRO: PSPCIR"
+               "MACRO: PSPEEP"
+               "MACRO: .MAIN"
+               "LOADING"
+               "6 PAGES CORE"
+
+               "!"SAVE PSPPDP (CR)
+               "PSPPDP saved"
+MODIFYING PSP###.MAC PROGRAMS                                         Page 5
+
+
+               "!"DEC ALL RD RUN PSPPDP.SAV (CR)
+
+       At this time you can DELETE the PSPPDP.REL, PSPCIR.REL, PSPLIB.REL,  and
+       the PSPEEP.REL files from the directory of UTIL.
+
+       Store the file PSPPDP.SAV from UTIL to tape and restore to UTIL  on  all
+       TYMCOM-10'S.   It is best to do it by tape rather than telecopy.  If you
+       telecopy, the file loses LICENSE and its DECLARATION, and you will  need
+       to log into each host and set each file up correctly.
+
+       Whenever you make changes to the PSPPDP.MAC (ALFACK) section,  you  MUST
+       notify  TYMCOM-10  Software  Support of the change.  Call, or send mail,
+       and let them know that System ## has been moved from  HARDWARE  ID,  CPU
+       ####,   and  NODE  ####  to  the  NEW  configuration.   They  need  this
+       information to GEN a (SYS)NEWMON.SAV monitor for the System.
+
+       After you hear from them that (SYS)NEWMON.SAV has been installed on  the
+       System you need to run the following program:
+
+               RU COM;MONROL.CMD (CR), (CR)
+
+       After  running  this  program,  request  that  the  (SYS)SYSTEM.SAV  and
+       (SYS)BACKUP.SAV monitor tapes and the DSKMAP be updated for the System.
+
+                                OTHER PROGRAMS                                _____ ________
+
+       The information contained in the next few paragraphs is listed  in  case
+       any  of  these  programs get clobbered or deleted from the systems.  The
+       PSPSLV program controls the BATCH and SPOOL clearing  software  used  by
+       Operators  in  the  System  Quality  Control  office.   SHOULD  NEVER BE
+       MODIFIED.
+
+               "!"LOAD PSPSLV,PSPCIR,PSPLIB (CR)
+               "MACRO: PSPSLV"
+               "MACRO: .MAIN"
+               "LOADING"
+               "4 PAGES CORE"
+
+               "!"SAVE PSPSLV (CR)
+               "PSPSLV saved"
+
+               "!"
+
+       This file must have SY and RF license assigned to it and be declared ALL
+       RUN RUN for it to run.
+
+               "!"R SETLIC (CR)
+
+               "FILE NAME:" PSPSLV.SAV,SY,RF (CR)
+
+               "EXIT"
+
+               "!"DEC ALL RUN RUN PSPSLV.SAV (CR)
+
+       This program is used by Operators to check  the  PSPPDP  status  of  the
+       systems.  Very SELDOM needs modification.
+MODIFYING PSP###.MAC PROGRAMS                                         Page 6
+
+
+           From the EXEC, type in:
+
+               "!"LOAD PSPATO (CR)
+               "MACRO: PSPATO"
+               "LOADING"
+               "2 PAGES CORE"
+
+               "!"SAVE PSPATO (CR)
+               "PSPATO saved"
+
+               "!"
+
+       If you should happen to re-compile these programs, be sure to DELETE the
+       PSPSLV.REL,  PSPCIR.REL,  PSPLIB.REL,  and  PSPATO.REL  files  from  the
+       directory of UTIL.
+
+       Store  the  files  from  UTIL  to  tape  and  restore  to  UTIL  on  all
+       TYMCOM-10'S.   It is best to do it by tape rather than telecopy.  If you
+       telecopy, the file loses LICENSE and its DECLARATION, and you will  need
+       to log into each host and set each file up correctly.
+
+       ADD or DELETE systems from the CM10.LST,  HOST.LST,  and  PDPENG.SYS  as
+       appropriate.
+
