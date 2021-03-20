@@ -1,0 +1,270 @@
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source code listing constitutes the proprietary pro-  **
+: **  perty of TYMNET, Incorporated. The recipient, by receiving  **
+: **  this program listing, agrees that neither this listing nor  **
+: **  the   information  disclosed herein nor any  part  thereof  **
+: **  shall be  reproduced or transferred to other documents  or  **
+: **  used  or  disclosed to others for manufacturing or for any  **
+: **  other   purpose except as specifically authorized in  wri-  **
+: **  ting by  TYMNET, Incorporated.                              **
+: ******************************************************************
+: **                   PROGRAM IDENTIFICATION                     **
+: **                                                              **
+: **  Version Number     :  11.12    				  **
+: **  Release Date 	 :  Oct. 28, 1985			  **
+: **                                                              **
+: **  File Name          :  PNUC11.I12                            **
+: **                                                              **
+: **  File Description   :                                        **
+: **                                                              **
+: **  File Abstract      :                                        **
+: **                                                              **
+: ******************************************************************
+: **                CONFIGURATION SPECIFICATION                   **
+: **                                                              **
+: **  Core Memory Requirement:                                    **
+: **                                                              **
+: **  Basic Code Size:                                            **
+: **                                                              **
+: **  Additional Code Size per Tymfile Parameter Unit:            **
+: **                                                              **
+: **  Estimated Code Growth for Next 12 Months:                   **
+: **                                                              **
+: **  Sample Configurations:                                      **
+: **                                                              **
+: **  Hardware/Firmware Requirements:                             **
+: **                                                              **
+: **  Other Software Requirements:                                **
+: **                                                              **
+: **  Slot Limitations:                                           **
+: **                                                              **
+: ******************************************************************
+: **                   DOCUMENT SPECIFICATION                     **
+: **                                                              **
+: **  Software Requirements Specification       :                 **
+: **                                                              **
+: **  Functional Specification (GED)            :                 **
+: **                                                              **
+: ******************************************************************
+: **                      MAINTENANCE HISTORY                     **
+: **                                                              **
+: **  Ver   Date    By   PIR/NSR         Reason for Change        **
+: ** ----- -------- ---  -------- ------------------------------  **
+: **                                                              **
+: ******************************************************************
+: **                 SUBROUTINE IDENTIFICATION                    **
+: **                                                              **
+: **  Routine Abstract   :                                        **
+: **                                                              **
+: **  Calling Sequence   :                                        **
+: **                                                              **
+: **  Parameters         :                                        **
+: **                                                              **
+: **  Returned Values    :                                        **
+: **                                                              **
+: **  Side Effects       :                                        **
+: **                                                              **
+: **  Optional Comments  :                                        **
+: **                                                              **
+: ******************************************************************
+:	PASCAL NUCLEUS INI FILE
+:
+	MO	.,COMFIL
+
+	GL	HOST0,NPORT,NAUX,ADDSIZ,NUCDB,CRERR
+	GL	NDISK,MXDISK,NTAPE,MXTAPE,NPRINT,MXPRNT,NSVC,MAXTRY
+        GL      XMEMRY,NMACSS,EMEMR0,EMEMR3,PRODID
+	GL	NCONST,NCRSAV,NPIPE,XPIPE,XLOOK,NLOOK,XTRACE
+        GL      LVNQUE,LVDSK0,LVNDSK,LVPDK0
+
+NDISK	EQ	0		:Start with no disks defined
+MXDISK	EQ	0		:And highest disk # = 0
+NTAPE	EQ	0		:Start with no tapes defined
+MXTAPE	EQ	0		:And highest tape # = 0
+NPRINT	EQ	0		:Start with no printers defined
+MXPRNT	EQ	0		:And highest printer # = 0
+NSVC	EQ	0		:Assume default # of SVC blocks
+NCONST	EQ	0		:Number of configuration constants
+
+DDISK	MACRO(PASDNO,LUN,SIZE)[
+	IF	-PASDNO
+	REMARK	%Disk device number 
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	IF	PASDNO-256+1
+	REMARK	%Disk device number 
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	GL	DLUN|PASDNO|
+DLUN|PASDNO|	EQ	LUN
+NDISK	EQ	NDISK+1
+	IF	PASDNO-MXDISK
+MXDISK	EQ	PASDNO
+	EI
+	GL	DSIZ|PASDNO|
+DSIZ|PASDNO|	EQ	SIZE]
+
+DTAPE	MACRO(PASDNO,LUN)[
+	IF	-PASDNO
+	REMARK	%Tape device number 
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	IF	PASDNO-256+1
+	REMARK	%Tape device number 
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	GL	TLUN|PASDNO|
+TLUN|PASDNO|	EQ	LUN
+NTAPE	EQ	NTAPE+1
+	IF	PASDNO-MXTAPE
+MXTAPE	EQ	PASDNO
+	EI]
+
+DPRINT	MACRO(PASDNO,LUN)[
+	IF	-PASDNO
+	REMARK	%Printer device number
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	IF	PASDNO-16+1
+	REMARK	%Printer device number
+	NUMBER	PASDNO
+	REMARK	 out of range.
+	EI
+	GL	PLUN|PASDNO|
+PLUN|PASDNO|	EQ	LUN
+NPRINT	EQ	NPRINT+1
+	IF	PASDNO-MXPRNT
+MXPRNT	EQ	PASDNO
+	EI]
+
+CCONST	MACRO(NUM)[
+NCONST	EQ	NCONST+1
+	GL	CNST|NCONST|
+CNST|NCONST|	EQ	NUM]
+:
+: SYMBOLS FOR HOST STATES
+:
+	GL	UP,DOWN,SHUT,GONE
+
+UP	EQ	0		:HOST UP
+DOWN	EQ	1		:HOST DOWN
+SHUT	EQ	2		:HOST SHUT
+GONE	EQ	3		:HOST GONE
+
+HOST    MACRO(HSTNUM,HSTSTA,HSTID0,HSTIQ0)[
+HOST0   EQ      HSTNUM          :Host 0 number
+HSTATE  EQ      HSTSTA          :Host 0 state
+HID0    EQ      HSTID0          :Host 0 ID for IIX
+HIQ0    EQ      HSTIQ0          :Host 0 IQ for IIX]
+
+LVOL    MACRO(VNQUE,VDSK0,VNDSK,VPDK0)[
+LVNQUE  EQ      VNQUE           :Entries in LVOL queue
+LVDSK0  EQ      VDSK0           :Disks in series
+LVNDSK  EQ      VNDSK           :LVOL number of disk series
+LVPDK0  EQ      VPDK0           :starting Pascal disk]
+
+DIALER  MACRO(DIAL8,DIALV)[
+N801    EQ      DIAL8           :Number of Bell 801s
+NVADIC  EQ      DIALV           :Number of Vadic dialers]
+
+NTTY    MACRO(NUMTER,NUMAUX)[
+NTERM   EQ      NUMTER          :Number of terminals
+NAUX    EQ      NUMAUX          :Number of aux circuits]
+
+TTYOPT  MACRO(ATIME,BUFFPP,MAXCIN,RBBOPT,AUXECH)[
+AUXTIM  EQ      ATIME           :Timeout for circuit build
+BFLT.P  EQ      BUFFPP          :Bufferlets per port
+MAXCHA  EQ      MAXCIN          :Number of bytes before backpressure
+BBMSG   EQ      RBBOPT          :Dont reflect black balls
+ACECHO  EQ      AUXECH          :Echo on aux circuit?]
+
+NBYTES  MACRO(PBYTES,SBYTES)[
+PTMP1	EQ	PBYTES -1
+PTMP2	EQ	SBYTES -1
+	IF	PTMP1
+PASSIZ  EQ      PBYTES          :Pascal area in k-bytes
+	EI
+	IF	PTMP2
+SLOTSZ  EQ      SBYTES          :Slot size in kbytes
+	EI]
+
+LOOKOP  MACRO(NSTOP)[
+        IF      NSTOP
+NLOOK   EQ      NSTOP
+XLOOK   EQ      1
+        REMARK  %LOOKOP MACRO WITH VALUE 
+        NUMBER  NSTOP
+        REMARK  WILL LOOK THE IRING FOR 
+        NUMBER  NSTOP
+        REMARK  X IRSIZE BYTES EACH INPUT CALL
+        ELSE
+XLOOK   EQ      0
+        REMARK  %LOOKOP MACRO WITH VALUE 
+        NUMBER  NSTOP
+        REMARK  WILL KEEP LOOKING THE IRING TILL IT IS EMPTY
+        EI]
+
+NPROCS  MACRO(MPROCS)[
+MINPRO  EQ      MPROCS          :Minimum number of processes]
+
+DSKOPT  MACRO(DSKTRA,DSKTRB,DSKRDB,DSKTRY)[
+DTRACE  EQ      DSKTRA          :Turn on disk trace
+NDTRB   EQ      DSKTRB          :Number of simult. disk reqs
+RDBACK  EQ      DSKRDB          :Read back kludge
+MXTRYS  EQ      DSKTRY          :Max retries]
+
+LOGOPT  MACRO[
+LPROMP  EQ      1               :Logon prompt]
+
+DSKINT  MACRO[
+MAXTRY  EQ      1               :ONLY 1 TRY PER DISK INITIALIZATION]
+
+CROPTS  MACRO(CRSHER,CRSHSP)[         
+CRERR   EQ      CRSHER          :CRASH slot on PASCAL error
+CRSTOP  EQ      CRSHSP          :Freeze slot on CRASH]
+
+CRSHTB  MACRO(NCRT)[
+        IF      NCRT
+NCRSAV  EQ      NCRT            :# OF CRASH TABLES
+        ELSE
+NCRSAV  EQ      1               :# OF CRASH TABLE 
+        REMARK  %CRSHTB MACRO WITH NCRT VALUE
+        NUMBER  NCRT
+        REMARK   WILL FORCE NCRSAV TO BE 1
+        EI]
+
+PIPOPT  MACRO(NUMPIP)[
+NPIPE   EQ      NUMPIP          :# OF PIPES
+XPIPE   EQ      1               :TURN ON PIPE OPTION]
+
+FAILTR  MACRO[
+XTRACE  EQ      1               :FAIL CONDITION TRACE]
+
+BUFFTR  MACRO[
+BUFTRC  EQ      1               :Bufferlet tracing]
+
+NOCLRC  MACRO[
+CLRCOR  EQ      0               :Dont clear core on init]
+
+IOCHKS  MACRO(IOCHKX)[
+IOMXRT  EQ      IOCHKX          :IO checks per second]
+
+ECNT    MACRO(ECNTX)[
+ECOUNT  EQ      ECNTX]
+
+INITEC  MACRO[
+INECHO  EQ      1               :Initial echo state off]
+
+EMEMRY  MACRO(EMEMX0,EMEMX3,NMACSX)[
+EMEMR0  EQ      EMEMX0          :Size of area 0
+EMEMR3  EQ      EMEMX3          :Size of area 3
+NMACSS  EQ      NMACSX          :Number of MAC Register Sets
+XMEMRY  EQ      1               :Turn on Extended Memory]
+  
