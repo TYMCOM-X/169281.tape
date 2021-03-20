@@ -1,0 +1,113 @@
+:**********************************************************************
+:
+:                               MOBIL OIL CORP.
+:
+: NODE NUMBER: 2126     KERNAL HOST NUMBER: 1202    CREATION DATE: 8/2/85
+:
+: LINE SPEED: 4800 (SIO)     HOST NUMBER: 7576    SLOT NUMBER: 2
+:
+: CIRCUIT NUMBER: 96FDDA840858                 CONSULTANT: GARY NADOW
+:                               SOFTWARE VERSION: 4.03
+:***********************************************************************
+:
+:                               ADDITIONAL COMMENTS
+:
+: MOBIL HAS AN IBM SYSTEM: 36 THAT WILL PLACE A CALL TO A 3725.
+: THIS 3725 WILL COMMUNICATE TO THE NCP TO ESTABLISH A SESSION.
+: THIS WILL LOOK TO TYMNET, LIKE A HOST TO HOST CALL
+:
+: DATE: JULY 8TH 1985      ADDED AUSTRALIA, TOKOYO AND NEW ZEALAN 
+:            CHANGES BY RAJ  METTECH AREA
+:
+: 7/29/85  -ADDED THE USERNAMES FOR FRANCE AND SOUTH AFRICA  -MHH
+:
+: 8/02/85  -DOWNGRADED THE  INTERFACE FROM 3.00 TO 2.02 ON REQUEST OF
+:           RICKY JORDAN      -MHH
+:
+: 11/06/85  -UPGRADED TO VERSION 3.01 PER CALINFORNIA REQUEST
+:            RICK JORDAN
+:
+: 11/06/85  -ADDED USERNAME DPAC TO ALLOW ACCESS INTO CANDA  -RAJ
+:
+: 01-09-86  -added brussels username for outbound calls to belgium,
+:            and reduced the 'seeconfig' statement to facilitate genning  -mhh
+:
+:  9-16-86  ADDED NEW S. AFRICAN DNIC (6559) - JCR
+:
+:  9-26-86  ADDED GATEWAY STATEMENT FOR INDONESIA - JCR
+:
+: 9/16/88  ADDED GATEWAY STATEMENT FOR SPAIN - WPF
+: 12-9-88 ADDEDE ODNIC(3106,5351) STATEMENT TO ALLOW ACCESS TO GUAM SUB-NET
+:       14-DEC-88 ADDED CHKCLG STATEMENT.. PER SALES REQ. DEC 8TH.. PJJM CS.
+:
+: 1-16-89  ADDED GATEWAY STATEMENT FOR PHILIPPINES....DAB
+:
+: 1-16-89 UPGRADED FROM VERSION 3.01 TO 4.03....DAB
+: >>>>>>>>>>>>>>>>>>>>>>>>>>>> SPECIAL NOTICE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+:
+: WHEN PLACING A CALL TO CANDA THE USER IN THE U.S.A MUST SET THE 
+: REVERSE CHARGE PARARMETER TO YES
+: OTHERWISE THE CALL WILL BE CLEARED WITH A DIAGNOSTIC OF C0,D64 DTE ORIGINATED
+:
+: >>>>>>>>>>>>>>>>>>>>>>>>>>>> END OF NOTICE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+:
+:
+: THIS HOST WILL APPEAR SHUT AFTER A RELOAD BECAUSE IT IS A WORK STATION
+: AND WILL NOT RESPOND TO A POLL UNTIL IT IS REAY TO MAKE A CALL
+: THIS STATION WILL ALWAYS PLACE CALLS NOT RECEIVE THEM.
+:
+:************************************************************************
+:
+        SEECONFIGURATION(1)        : a complete tymfile list is displayed
+                                   : when genning this code.
+        PROTOCOL(X.25,HDLC,LAPB)   : represents and x25 front end
+                                   : hdlc = bit oriented hdlc framing
+                                   : lapb = asynchronous balanced mode
+                                   : from dte to network interface.
+        DPORTS(16)                 : total number of logical channels
+                                   : number of simultaneous users.
+        HOSTLINKS(7576,0)          : network host number.
+            PSIZE(128,128)         : packet size, transmit packet and receive
+            LINKS(0)               : begins a link options group. not specified
+            ILRR(0)                : extra recieve ready or recieve not ready
+                                   : will not be sent on an inactive link.
+            PKTOPT(ZCAUS,+IPRNR)   : allow packet window to close
+                                   : a dte. zeros will be placed in the reset,
+                                   : clear and restart fields.
+                                   : a non packet mode dte which has no call
+                                   : request packet can used the host
+                                   : number to create a calling address
+        CLDADR(31060075760000)     : it specifies the address to used to
+        CHKCLG(3106007576)         : SENDS CALLING ADDRESS SPECIFIED..
+                                   : create a called address.
+        TCLASS(9,9,+NEGOTIATION)   : set throughput class at 4800 baud
+
+           CUDSTRING()             : no specified, no call user data field
+       ODNIC(3106,5351)            :GUAM DNIC SWITCHED WITHIN PUB NET
+       GATEWAY(2329,T.MOBILVI"3B)  : used to place calls to austria
+       GATEWAY(5301,T.MOBILANZ"3B) :* to place calls to new zealan
+       GATEWAY(5052,T.MOBILANZ"3B) :* to place calls to australia as well
+       GATEWAY(4542,T.MOBIL"3B)    : colon must be present to send call to hgkg
+       GATEWAY(4408,T.MOBILJP"0D)  : allow calls to tokoyo japan
+       GATEWAY(5252,T.MOBILSGP"3B) : used for outbound calls to singapore
+       GATEWAY(2080,T.MOBILFR"3B)  : used for outbound calls to france
+       GATEWAY(6550,T.MOBILSBI"3B) : used for outbound calls to s. africa
+       GATEWAY(6559,T.MOBILSBI"3B) : NEW DNIC FOR S. AFRICA
+       GATEWAY(2222,T.MOBILITA"3B) : outbound call to italy. 
+       GATEWAY(2624,T.MOBILGNY"3B) : outbound call to germany
+       GATEWAY(3020,DPAC"3B)       : outbound call to calgary,canda
+       GATEWAY(2680,T.MOBILPGL"3B) : outbound calls to portugal
+       GATEWAY(2062,T.MOBILSBI"3B) : outbound calls to brussels belgium
+       GATEWAY(5101,T.IDNMOBIL"3B) : OUTBOUND CALLS TO INDONESIA
+       GATEWAY(2145,T.ESPMOBIL"3BM BOIL2SPAIN"3B) : OUTBOUND TO SPAIN
+       GATEWAY(4659,T.PHLMOBIL"3BM MOBIL CORP"3B) : OUTBOUND TO MINILA
+        HIHOSTNUMBER(99999)        : used for determining the tymnet
+                                   : method for creating a username to sup.
+        XOMUSERNAME(OMNC)          : used for debugging purposes
+
+MTEXT(0000, "0D"8A MOBIL: )        : specifies that the message "mobil"
+                                   : is the result of a action occurring on
+                                   : the customer side
+MTEXT(0001,"8D"8A TYMNET: )        : specifies that the message "tymnet"
+                                   : is the result of an action
+                                   : occurring on the network side
