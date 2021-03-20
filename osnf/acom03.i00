@@ -1,0 +1,2219 @@
+	TITLE   ASYNC TYMCOM VERSION 3.00
+	SUBTTL	PROGRAM INFORMATION
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source code listing constitutes the proprietary pro-  **
+: **  perty of TYMNET, Incorporated. The recipient, by receiving  **
+: **  this program listing, agrees that neither this listing nor  **
+: **  the   information  disclosed herein nor any  part  thereof  **
+: **  shall be  reproduced or transferred to other documents  or  **
+: **  used  or  disclosed to others for manufacturing or for any  **
+: **  other purpose except as specifically authorized in writing  **
+: **  by TYMNET, Incorporated.                                    **
+: ******************************************************************
+: **                   PROGRAM IDENTIFICATION                     **
+: **                                                              **
+: **  Version Number     :  3.00         Release Date : 05/27/86  **
+   GL  VERSIO,REVLEV ;VERSIO EQ $8 3 ;REVLEV EQ $8 00
+: **                                                              **
+: **  File Name          :  TYMCOM 3.00 release file consist of 2 **
+: **			    files, ACOM03.I00,ACOM03.R00          **
+: **                                                              **
+: **  File Description   :  ISIS async Tymcom provides a set of   **
+: **			    individual asynchronous line interfaces*
+: **			    to an attached host computer.It appears*
+: **			    to a host computer as a bank of async **
+: **			    dial-up modems or async terminals,    **
+: **			    depending on the configuration. The   **
+: **			    Tymcom runs in a job slot on an ISIS  **
+: **			    node, and communicates with the host  **
+: **			    over async lines using async I/O cards**
+: **			    (called async ports) and SIO mother-  **
+: **			    board cards (called SIO ports). Async **
+: **			    ports use EIA RS-232 signal protocol  **
+: **			    supporting 8 bit or 5 bit characters. **
+: **			    SIO ports use EIA RS-232 signal       **
+: **			    protocol supporting 8 bit characters  **
+: **			    or using a subset of X.20 protocol    **
+: **			    supporting 5 bit characters.          **
+: **                                                              **
+: **  File Abstract      :  ISIS Asynchronous TYMCOM              **
+: **                                                              **
+: ******************************************************************
+: **                CONFIGURATION SPECIFICATION                   **
+: **                                                              **
+: **  Core Memory Requirement                                     **
+: **                                                              **
+: **  Basic Code Size: 45K                                        **
+: **                                                              **
+: **  Additional Code Size per Tymfile Parameter Unit: Depend on  **
+: **                                              the parameter   **
+: **  Estimated Code Growth for Next 12 Months: 5K                **
+: **                                                              **
+: **  Sample Configurations:  ACOM02.T06                          **
+: **                                                              **
+: **  Hardware/Firmware Requirements:                             **
+: **                                                              **
+: **  Other Software Requirements: n/a                            **
+: **                                      			  **
+: **  Slot Limitations:                                           **
+: **                                                              **
+: ******************************************************************
+: **                      MAINTENANCE HISTORY                     **
+: **                                                              **
+: ** VER  DATE     BY    PIR/NSR          REASON FOR CHANGE	  **
+: ** --- -------- -----  ------- -------------------------------- **
+: **3.00 05/27/86  SDW   PIR 1824 Added TBYEMS(TEXT,PARITY) macro **
+: **2.06 05/27/86  CAB   NSR 716  Added optional cost parameter to**
+: **				  to HSKEY(KEY,COST) macro for    **
+: **				  load leveling support.          **
+: **2.06 01/20/86  OJ    N/A      Add "leave transparency" msg    **
+: **				  upon circuit detach for 8 bit   **
+: **				  mode data transfer.             **
+: **								  **
+: **2.06 12/18/85  OJ  		  Add proprietary banner	  **
+: **								  **
+: ** "	    "	   "	 NSR079   Added a new option to back-     **
+: **                              pressure the host using the RS232*
+: ** 				  CTS signal, instead of an XON/  **
+: **				  XOFF mechanism. The host will   **
+: **				  still be able to backpressure   **
+: **				  the Tymcom using XON/XOFF.      **
+: **				  Covered by Micro Data's project.**
+: **				  	SOPT(CTSBP)		  **
+: **								  **
+: ** "	    "      "	 NSR080   Added a new option to force     **
+: **  				  detach upon data loss.          **
+: **				  	SOPT(DETDL)		  **
+: **								  **
+: ** "	    "	   "	 NSR081   Added a new option to allow the **
+: **				  host to initiate the disconnect **
+: **				  sequnce by using "host disconnect*
+: **				  characterts" instead of modem   **
+: **				  signals.			  **
+: **				  Covered by Micro Data's project.**
+: **				  	HDCHAR(C1,...,CN)         **
+: **								  **
+: ** "      "	   "	 NSR082	  Added a new option to give Tymcom*
+: **				  an ability to set terminal      **
+: **				  parameter -- reverse X enable   **
+: **				  for each new circuit. Effect is **
+: **				  the same as logging in with a   **
+: **				  "control R".			  **
+: **				   	SOPT(RXENA)		  **
+: **								  **
+: ** "      "      "	 NSR277   SIO initialization correction   **
+: **		           	  to ensure 1 1/2 stop bits for   **
+: **				  50 & 75 baud baudot ports.      **
+: **								  **
+: ** "      "      "	 NSR282   Fixed a problem of ports avail- **
+: **				  able (via TOM) yet host shut    **
+: **				  condition.                      **
+: **	                                                          **
+: ** "      "      "	 NSR287	  Fixed async host signal changes **
+: **				  unshuting shut Tymcom host to   **
+: **				  keep Tymcom from reporting host **
+: **				  answered when it has been shut  **
+: **				  via TOM. 			  **
+: **						                  **
+: ** "      "      DU     NSR377  Tom msg command bug. Fixed a	  **
+: **				  problem in the Tom ME command.  **
+: **			  	  Removed an internal control     **
+: **				  character ETX (03 hex) which was**
+: **				  included in the message when    **
+: **				  a multiple line message is      **
+: **				  entered.			  **
+: **								  **
+: ** "      "      OJ     NSR420  Fixed a problem to signify the  **
+: **				  "host key enable" by masking    **
+: **				  a bit in the status field of    **
+: **				  "Extended report host status"   **
+: **				  (ISIS MSG 10) msg.              **
+: **								  **
+: ** "      "      "	 NSR459	 Elicit no terminal type match msg**
+: **				 Fixed the problem of "NO PORTS   **
+: **			         AVAILABLE" msg sent when "NO     **
+: **				 TERMINAL MATCH" is detected      **
+: **				 by Tymcom.			  **
+: **								  **
+: **			PIR1823  Micro Data R-mode connection	  **
+: ** "      "      "		1. Tymcom login changes		  **
+: **				 a. Enter 8 bit mode              **   
+: **				    This new option is added to   **
+: **				    specify that the host supports**
+: **				    8 bit characters.             **
+: **				    	SOPT(E8BTM)               **
+: **								  **
+: **				  b. Terminal initialization msg  **
+: **				     Tis new option is allowing   **
+: **				     the user to specify a message**
+: **				     string sent to terminal side **
+: **				     following  the network "enter**
+: **				     transparency" message on new **
+: **				     logins.			  **
+: **				       TINTMS(TXT)                ** 
+: **								  **
+: ** "      "      "    PIR1823	 2. Escape character handling     **
+: **			    	    for these ports, if the escape**
+: **				    mechanism is used and the     **
+: **				    following character is not    **
+: **				    special, both the escape char **
+: **				    and the following char must   **
+: **				    be sent to the terminal side. **
+: **                                   CTLESC(CHAR,SYM)           **
+: **								  **
+: ** "      "      "	PIR1823	 3. CTS flow control              **
+: **					SOPT(CTSBP)               ** 
+: **				    Please refer to the above     **	
+: **				    NSR079 description.		  **
+: **								  **
+: ** "	    "      "    PIR1823  4. Host initiated disconnect     **
+: **					HDCHAR(C1,...,CN)         **
+: **				    Please refer to the above     **
+: **				    NSR081 description.		  **
+: **								  **
+: ** "      "     DU	PIR1823	 5. Break delay option		  **
+: **				    A second numerical parameter  **
+: **				    is added to indicate the      **
+: **				    number of 1/30 second delays  **
+: **				    to provide after the break    **
+: **				    is sent.			  **
+: **					BKSND(CNT,DELAY)          **
+: **								  **
+: ** "      "     OJ	PIR1823	 6. Tymcom to host reset message  **
+: **				    Tymcom has a definable reset  **
+: **				    msg on a sub-host basis.      **
+: **				    For Microdata, this should be **
+: **				    <break> OFF <CR>. A mechanism **
+: **				    to define a break in this reset*
+: **				    msg is implemented. This msg  **
+: **				    will send to the host 1)      ** 
+: **				    initially at login, prior to  **
+: **				    any other data, and 2) upon   **
+: **				    loss of nework circuit.       **
+: **				    network circuit.		  **
+: **								  **
+: ** "     "      "    PIR1823   7. Tymcom message Masking        **   
+: **				    Tymcom should mask any data   **
+: **				    msgs originated within the    **
+: **				    Tymcom to space parity ( 0    **
+: **				    top bit) for ports in 8 bit   **
+: **				    transparency mode.            **
+: **								  **
+: ** "     "      DU   PIR1823	 8. Tymcom special char handling  **
+: **				    The program is modified to    **
+: **				    handle 8 bit special chars.   **
+: **								  **
+: ** "     "      DU   PIR1823 	 9. Hardwire TOM modification     **
+: **           			    Tom is modified to support    **
+: **				    the hardwire Tom ports whcih  ** 
+: **				    can response the "O" TID      **
+: **				    request and force all data to **
+: **				    the terminals to space parity.**
+: **								  **
+: ** "     "      OJ   N/A	 10. Fixed a bug to avoid sending **
+: **				     2 "B7" msg while  no circuit **
+: **			             has been built in ISIS       **
+: **				     message scanner.		  **
+: **								  **
+: ** "     "      OJ   N/A        11. PATCH.LIB is added.         **
+: **								  **
+: ****************************************************************** 
+  
+    SUBTTL   PROGRAM IDENTIFICATION (I-FILE)
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source code listing constitutes the proprietary pro-  **
+: **  perty of TYMNET, Incorporated. The recipient, by receiving  **
+: **  this program listing, agrees that neither this listing nor  **
+: **  the   information  disclosed herein nor any  part  thereof  **
+: **  shall be  reproduced or transferred to other documents  or  **
+: **  used  or  disclosed to others for manufacturing or for any  **
+: **  other   purpose except as specifically authorized in  wri-  **
+: **  ting by  TYMNET, Incorporated.                              **
+: ******************************************************************
+: **                   MODULE IDENFICATION                        **
+: **                                                              **
+: **                                                              **
+: **  File Name          :  ACOM02.I06      Last change: 12/20/85 **
+: **                                                              **
+: **  File Abstract      :  Utility macros and symbol		  **
+: **			    initialization.			  **
+: **								  **
+: **  File Description   :  Create all the Macros which will be   **
+: **                        used in user Tymfile.                 **
+: **			    Define hardware environment macros.   **
+: **			    Define Tom option macros.             **
+: **			    Define Global level option macros.    **
+: **			    Define Host level option macros.      **
+: **			    Define subhost level option macros.   **
+: **			    Define port level option macros.      **
+: ** 			    Define symbols.                       **
+: **                                                              **
+: ******************************************************************
+: **                      CHANGE LOG                              **
+: **                                                              **
+: **  Ver   Date    By    PIR/NSR    Changes (most recent at top) **
+: ** ----- -------- ----- --------  ----------------------------  **
+: **								  **
+: **2.06 12/18/85  OJ  		  Add proprietary banner	  **
+: **								  **
+: ** "	    "	   "	 NSR079   Added a new option to back-     **
+: **                              pressure the host using the RS232*
+: ** 				  CTS signal, instead of an XON/  **
+: **				  XOFF mechanism. The host will   **
+: **				  still be able to backpressure   **
+: **				  the Tymcom using XON/XOFF.      **
+: **				  Covered by Micro Data's project.**
+: **				  	SOPT(CTSBP)		  **
+: **								  **
+: ** "	    "      "	 NSR080   Added a new option to force     **
+: **  				  detach upon data loss.          **
+: **				  	SOPT(DETDL)		  **
+: **								  **
+: ** "	    "	   "	 NSR081   Added a new option to allow the **
+: **				  host to initiate the disconnect **
+: **				  sequnce by using "host disconnect*
+: **				  characterts" instead of modem   **
+: **				  signals.			  **
+: **				  Covered by Micro Data's project.**
+: **				  	HDCHAR(C1,...,CN)         **
+: **								  **
+: ** "      "	   "	 NSR082	  Added a new option to give Tymcom*
+: **				  an ability to set terminal      **
+: **				  parameter -- reverse X enable   **
+: **				  for each new circuit. Effect is **
+: **				  the same as logging in with a   **
+: **				  "control R".			  **
+: **				   	SOPT(RXENA)		  **
+: **								  **
+: **								  **
+: **			PIR1823  Micro Data R-mode connection	  **
+: ** "      "      "		1. Tymcom login changes		  **
+: **				 a. Enter 8 bit mode              **   
+: **				    This new option is added to   **
+: **				    specify that the host supports**
+: **				    8 bit characters.            **
+: **				    	SOPT(E8BTM)               **
+: **								  **
+: **				  b. Terminal initialization msg  **
+: **				     Tis new option is allowing   **
+: **				     the user to specify a message**
+: **				     string sent to terminal side **
+: **				     following  the network "enter**
+: **				     transparency" message on new **
+: **				     logins.			  **
+: **				       TINTMS(TXT)                ** 
+: **								  **
+: ** "      "      "    PIR1823	 2. Escape character handling     **
+: **			    	    for these ports, if the escape**
+: **				    mechanism is used and the     **
+: **				    following character is not    **
+: **				    special, both the escape char **
+: **				    and the following char must   **
+: **				    be sent to the terminal side. **
+: **                                   CTLESC(CHAR,SYM)           **
+: **								  **
+: ** "      "      "	PIR1823	 3. CTS flow control              **
+: **					SOPT(CTSBP)               ** 
+: **				    Please refer to the above     **	
+: **				    NSR079 description.		  **
+: **								  **
+: ** "	    "      "	PIR1823	 4. Host initiated disconnect     **
+: **					HDCHAR(C1,...,CN)         **
+: **				    Please refer to the above     **
+: **				    NSR081 description.		  **
+: **								  **
+: ** "      "     DU	PIR1823	 5. Break delay option		  **
+: **				    A second numerical parameter  **
+: **				    is added to indicate the      **
+: **				    number of 1/30 second delays  **
+: **				    to provide after the break    **
+: **				    is sent.			  **
+: **					BKSND(CNT,DELAY)          **
+: **								  **
+: ** "     "      DU	PIR1823	 6. Tymcom special char handling  **
+: **				    The macros are modified to    **
+: **				    handle 8 bit special chars.   **
+: **								  **
+: ******************************************************************
+        SUBTTL  OPTIONS LIST
+::      ALL VALID OPTIONS ARE LISTED BELOW IN THE ORDER
+:       THAT THEY WILL BE DEFINED IN THE INIT CODE THAT FOLLOWS.
+:
+:       NALU(CNT)
+:       NMLU(CNT)
+:       TYMNET(level)
+:       MUTOM(cnt)
+:       TOMCL(lev,cn)
+:       TOMGG(unam)
+:       TOMTR(min)
+:       TOMTZ(bias)
+:       NHAMT(min)
+:       TOMPW(pwrd)
+:       PNRADX(rx)
+:       MTEXT(mnam,mtxt,pos)
+:		NTM	/"8D"8ANO TERMINAL TYPE MATCH/
+:               NPA     /"8D"8ANO PORTS AVAILABLE/
+:               APD     /"8D"8AALL PORTS DOWN/
+:               RNA     /"8D"8ARING NO ANSWER ON PORT nnn/
+:               PN      /Pnnn"8D"8A/
+:               GRT     /xxxx IS ON LINE"8D"8A/
+:               IUN     /"8D"8AUSERNAME INVALID, DISCONNECTING/
+:               ANP     /"8D"8AACCESS FROM THIS NODE IS NOT PERMITTED/
+:               INA     /"8D"8ADROPPED FOR INACTIVITY/
+:               DBH     /"8D"8ADROPPED BY HOST/
+:               NHA     /HOST DID NOT ACKNOWLEDGE USER DISCONNECT"8D"8A/
+:               HDN     /"8D"8Axxxx IS DOWN/
+:               HSH     /"8D"8Axxxx IS SHUT/
+:               LOFF    /DISCONNECTING/
+:               BZFT    /"07"07 DATA LOST FROM TERMINAL /
+:               BZTT    /"07"07 DATA LOST TOWARD TERMINAL /
+:       PCODE(c0,...,c9)
+:       HST(n)
+:       SINDXP(POS)
+:	HSKEY(HK,COST)
+:       SHST(gggg,x0,...,x9)
+:    PT(op1,...,opn)
+:               ECHO
+:               ELFCR
+:               ECRLF
+:               ECTLI
+:               ECTLH
+:               CRDLY
+:               LCTLH
+:               BKGOB
+:               BKDSC
+:               GINDL
+:               GUNAM
+:               RNGTG
+:               RNGDR
+:               RLSPT
+:               CAPFT
+:               CAPFH
+:               BZAPM
+:               TICAP
+:		RXENA
+:		DETDL
+:		E8BTM
+:		CTSBP
+:       PARITY(pv)
+:       DTRP(SEC)
+:       RINGTO(SEC)
+:       HDROP(SEC)
+:       INACT(MIN)
+:       BKSND(CNT,DELAY)
+:       EOTC(CHAR)
+:       HETM(CHAR)
+:       UETM(CHAR)
+:       CTLESC(CHAR,SYM)
+:       ABNDM(TXT)
+:       LOGINS(TXT)
+:	TINTMS(TXT)
+:	TBYEMS(TXT,PARITY)
+:       XON(onc,offc)
+:       RXON(onc,offc)
+:       HOSTDE(edec,ldec)
+:       HOSTEC(neonc,neoffc,neona,neoffa)
+:	TERMEC(onc,offc)
+:	POLFLO(pollc,ackc)
+:       T2741(TIC,HIC
+:       UDCHAR(C1,...,CN)
+:	HDCHAR(C1,...,CN)
+:       GOBBLE(c1,...,cn)
+:       FLTRFT(c1,...,cn)
+:       FLTRFH(c1,...,cn)
+:       DEMEC(c1,...,cn)
+:       STIC(T1,...,TN,TIC,TI,...,TJ,TIC,...)
+:       BARNOD(N1,...,NN)
+:       OKNODE(N1,...,NN)
+:       PN(p1,p2,...,pn)
+:       PTYP(t1,...,tn,p1,...,pn)
+:       PSPD(sp,p1,...,p10)
+:       PCAN(ty,p1,...,p10)
+:	PSIG(ty,p1,...,p10)
+        SUBTTL  UTILITY MACROS AND SYMBOL INITIALIZATION
+        LIST -X,F,-R,L
+
+        RA      0
+
+        GL      SEEGEN
+  IF    1-\SEEGEN
+SEEGEN  EQ      0
+  EI
+
+
+::      .XX. MACROS
+:       THE FOLLOWING MACROS EVALUATE THE RELATIONSHIP BETWEEN TWO
+:       EXPRESSIONS.  THEY EVALUATE TO 0 FOR FALSE AND 1 FOR TRUE.
+:       THEY MAY BE USED IN ANY EXPRESSION AND ARE PARTICULARLY USEFUL
+:       FOR IF STATMENTS.
+:
+:       E.G.    IF      .LE.(.-LABEL,30)
+:               REMARK %>>>> ERROR **** LABEL AREA NOT > 30 BYTES ****%
+:               EI
+
+.NE.    MACRO(P1,P2)[(((P1)-(P2))!((P2)-(P1)))^-(7*5)]
+.EQ.    MACRO(P1,P2)[((((P1)-(P2))!((P2)-(P1)))%(1^(7*5)))^-(7*5)]
+.GT.    MACRO(P1,P2)[((P2)-(P1))^-(7*5)]
+.LT.    MACRO(P1,P2)[((P1)-(P2))^-(7*5)]
+.GE.    MACRO(P1,P2)[((P2)-(P1)-1)^-(7*5)]
+.LE.    MACRO(P1,P2)[((P1)-(P2)-1)^-(7*5)]
+
+::      .MAX.(A,B)      EVALUATES TO THE LARGER OF A OR B
+
+.MAX.   MACRO(P1,P2)[(((P1)-(P2))^-(7*5))*((P2)-(P1))+(P1))]
+
+::      GEQ(A,B)        SET A EQ TO B AND GLOBAL A.
+
+GEQ     MACRO(A,B)[; GL A;A EQ B;]
+
+::      SDV(X,Y,Z)      IF X NOT DEFINED, SET VALUE TO Y
+:       IF SEEGEN>Z, DISPLAY VALUE (DEFAULT Z=1)
+
+SDV     MACRO(X,Y,Z)[
+  IF    1-\X
+X       EQ      Y
+  EI
+QGEN    EQ      Z 1
+  IF    SEEGEN-QGEN
+        REMARK %`X = ; NUMBER $A X; REMARK d;
+  EI
+]
+
+::      SGV     SETS VALUE TO GL AND CALLS SDV
+
+SGV     MACRO(X,Y,Z)[; GL X;SDV(X,Y,Z)]
+
+::      ZAPBUF  CALLED BY BUFFER LIBRARY WHEN A BUFFER IS ZAPPED.
+
+ZAPBUF  MACRO[.
+	GL	ZBUF
+	JAL	R6,ZBUF]
+
+::      DEFINE START OF SEGMENTS
+
+Q       EQ      0
+        RE      0F
+        SEG     Q
+        GL      SEG|Q|
+SEG|Q|
+Q       EQ      Q+1
+        ER
+
+
+::      DEFINE CRASH REPORTER
+:
+:       TRAP(REG,TYPE)
+
+GEQ(CER.20,20)          :ILLEGAL ISIS MSG TYPE
+GEQ(CER.21,21)          :BAD I/O SVC
+GEQ(CER.22,22)          :(UNUSED)
+GEQ(CER.23,23)          :INSUFFICIENT LOGICAL UNITS IN CONFIGURATION
+GEQ(CER.24,24)          :HOST NOT ACCEPTABLE MSG FROM ISIS
+GEQ(CER.25,25)          :CONFIGURATION USES UNSUPPORTED BAUD RATE
+GEQ(CER.26,26)          :HOST PORT ASSIGNED TO 2 PROCESSES
+GEQ(CER.27,27)          :(UNUSED)
+GEQ(CER.28,28)          :0 FROM/TO DRIVER WITH NOTHING AFTER
+GEQ(CER.29,29)          :TOM LOGIC ERROR (GCTOM CRASH)
+
+
+TRAP    MACRO(REG,TYP)[
+        JAL     R10,CRASH,,
+        HC      0
+        BC      4*`REG
+        BC      CER.`TYP
+]
+
+
+::      MARK(LM,RX,MX,P1,...,P9)        CALLED TO MARK RANGES OF VALUES
+:
+:       pi      may be a single # n, a range of #s ni-nj with 0=<ni<nj,
+:               or null
+:       rx      is radix of #s n
+:       mx      is max value of n (given in radix rx),
+:               range is 0 to $0 0FFFFFFFF
+:       lm      is a loop macro which will be called for each single
+:               value n with QQ = n (each value in a range ni-nj is one
+:               call).  lm must not destroy Q, QQ, QR, or Qk, QQk, QQQk,
+:               (k=0,...,9).  Any other symbol name may be used.  For
+:               convience, if QQQ is used it will be killed on exit
+:               from MARK.
+
+MARK    MACRO(lm,rx,mx,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+Q0      EQ      $`RX -(0/P0+0)  :FOR Pi = n-m, Qi = -(0/n-m) = m
+QQ0     EQ      $`RX Q0+(P0+0)  :FOR Pi = n-m, Qi=m, QQi = m+(n-m) = n
+QQQ0    EQ      $`RX P0 $0100000000     :FOR Pi = null, QQQi = $0100000000
+Q1      EQ      $`RX -(0/P1+0)
+QQ1     EQ      $`RX Q1+(P1+0)
+QQQ1    EQ      $`RX P1 $0100000000
+Q2      EQ      $`RX -(0/P2+0)
+QQ2     EQ      $`RX Q2+(P2+0)
+QQQ2    EQ      $`RX P2 $0100000000
+Q3      EQ      $`RX -(0/P3+0)
+QQ3     EQ      $`RX Q3+(P3+0)
+QQQ3    EQ      $`RX P3 $0100000000
+Q4      EQ      $`RX -(0/P4+0)
+QQ4     EQ      $`RX Q4+(P4+0)
+QQQ4    EQ      $`RX P4 $0100000000
+Q5      EQ      $`RX -(0/P5+0)
+QQ5     EQ      $`RX Q5+(P5+0)
+QQQ5    EQ      $`RX P5 $0100000000
+Q6      EQ      $`RX -(0/P6+0)
+QQ6     EQ      $`RX Q6+(P6+0)
+QQQ6    EQ      $`RX P6 $0100000000
+Q7      EQ      $`RX -(0/P7+0)
+QQ7     EQ      $`RX Q7+(P7+0)
+QQQ7    EQ      $`RX P7 $0100000000
+Q8      EQ      $`RX -(0/P8+0)
+QQ8     EQ      $`RX Q8+(P8+0)
+QQQ8    EQ      $`RX P8 $0100000000
+Q9      EQ      $`RX -(0/P9+0)
+QQ9     EQ      $`RX Q9+(P9+0)
+QQQ9    EQ      $`RX P9 $0100000000
+Q       EQ      0
+        RE      $0 0A
+  IF    -QQ|Q|
+        REMARK %>>>> ERROR **** PARAMETER ; NUMBER $`RX QQ|Q|
+        REMARK  NOT POSITIVE ****%
+  EI
+  IF    $0 QQQ|Q|&1FFFFFFFF%100000000   :IF PI NOT NULL
+        MRK(rx,mx)
+QQ      EQ      QQ|Q|
+        RE      QR
+        lm
+QQ      EQ      QQ+1
+        ER
+  EI
+        KILL    Q|Q|,QQ|Q|,QQQ|Q|
+Q       EQ      Q+1
+        ER
+        KILL    Q,QQ,QQQ,QR
+]
+:       INTERNAL MARK MACRO TO TEST FOR ERRORS AND RETURN QR= COUNT OF
+:       NUMBERS IN RANGE.
+MRK     MACRO(rx,mx)[
+   IF   Q|Q|    :IF M NOT NULL
+    IF  QQ|Q|-($`RX`MX)
+        REMARK %>>>> ERROR **** PARAMETER ; NUMBER $`RX QQ|Q|
+        REMARK  GREATER THAN ; NUMBER $`RX`MX; REMARK  ****%
+    EI
+    IF  Q|Q|-($`RX`MX)
+        REMARK %>>>> ERROR **** PARAMETER ; NUMBER $`RX Q|Q|
+        REMARK  GREATER THAN ; NUMBER $`RX`MX; REMARK  ****%
+    EI
+    IF  QQ|Q|-Q|Q|
+        REMARK %>>>> ERROR **** RANGE ; NUMBER $`RX QQ|Q|
+        REMARK -; NUMBER $`RX Q|Q|; REMARK  BACKWARD ****%
+    EI
+QR      EQ      Q|Q|-QQ|Q|+1
+   ELSE
+    IF	.NE.(QQ|Q|,OFF)
+     IF  QQ|Q|-($`RX`MX)
+        REMARK %>>>> ERROR **** PARAMETER ; NUMBER $`RX QQ|Q|
+        REMARK  GREATER THAN ; NUMBER $`RX`MX; REMARK  ****%
+     EI
+    EI
+QR      EQ      1
+   EI
+]
+
+
+::      STIMK   STIC MARK LOOP MACRO
+STIMK   MACRO[
+QQQQ    EQ      0       :NO ERRORS YET
+  IF    QQ-$00FFFF      :IF TERMINAL TYPE
+QT      EQ      QT+1
+QT|QT|  EQ      QQ-$010000
+  ELSE  QT+1    :IF NOT TERMINAL TYPE AND TYPE WAS PREVIOUSLY DEFINED
+QQQ     EQ      0
+        RE      QT+1
+   IF   QT|QQQ|-MAXTYP  :IF TYPE> MAX ALLOWED
+QQQQ    EQ      1
+   ELSE
+QTX     EQ      QT|QQQ|
+T|STICNT|I|QTX| EQ      QQ
+   EI
+QQQ     EQ      QQQ+1
+        ER
+QT      EQ      -1
+   IF   QQ-STIMAX       :IF A NEW MAX FOR CHAR PAIR VALUE
+STIMAX  EQ      QQ
+   EI
+  ELSE
+QQQQ    EQ      1
+  EI
+  IF    QQQQ
+ REMARK %>>>> ERROR **** INVALID STIC PARAMETER ****
+  EI
+]
+
+::      SYMK(sy,bv)     SYMBOL MARK LOOP MACRO
+:
+:       SETS UP A MASK SYMBOL syN where N is
+:       a group number of bv bits (bv in hex).  A bit is set to 1 if pi
+:       is specified for this number.
+:       QN COUNTS THE # OF CALLS AND SHOULD BE INITIALIZED BEFORE
+:       CALLING MARK IF A VALID COUNT IS DESIRED.
+QN      EQ      0
+SYMK    MACRO(SY,BV)[
+QN      EQ      QN+1
+  IF	.EQ.(QQ,OFF)
+SY`0	EQ	0
+  ELSE
+QQQ     EQ      $0 QQ-(QQ/bv)*bv
+   IF   1-(\SY`|QQ/$0`bv|)
+SY`|QQ/$0`bv|   EQ      0
+   EI
+SY`|QQ/$0`bv| EQ $0 SY`|QQ/bv|!(1^(bv-1-QQQ))
+  EI
+]
+
+
+::      MVMK(SY,SA,SB)  MULTIPLE VALUE MARK
+:       SY`P = POINTER TO LAST VALUE MARKED
+:       SY`CNT = MAX SY`P ENCOUNTERED
+:       SA|SY`P|SB|NSORDS-1| WILL = NEXT VALUE IN RANGE
+MVMK    MACRO(SY,SA,SB)[
+SY`P    EQ      SY`P+1
+  IF    SY`P-SY`CNT
+SY`CNT  EQ      SY`P
+  EI
+SA|SY`P|SB|NSORDS-1|    EQ      QQ
+]
+
+::      PTMK    PTYP MARK LOOP MACRO
+PTMK    MACRO[
+  IF    QQ-$00FFFF      :IF A TYPE
+QQQQ    EQ      0       :NO ERRORS SO FAR
+QT      EQ      QT+1
+QT|QT|  EQ      QQ-$010000      :ACCUMULATE TYPES
+  ELSE  QT+1            :IF NOT A TYPE AND SOME TYPES PREVIOUSLY DEFINED
+   IF   QQ-$A127        :IF PORT # > 127
+QQQQ    EQ      1
+   ELSE
+QQQQ    EQ      0       :MARK NO ERROR
+QQQ     EQ      0
+        RE      QT+1    :FOR EACH TYPE DEFINED
+    IF  QT|QQQ|-MAXTYP  :IF TYPE > MAX POSSIBLE
+QQQQ    EQ      1       :MARK ERROR
+    ELSE
+QTX     EQ      QT|QQQ|
+P|QTX|P|QQ|     EQ      1       :FLAG THIS TYPE FOR THIS PORT
+    EI
+QQQ     EQ      QQQ+1
+        ER
+   EI
+  ELSE
+QQQQ    EQ      1       :ERROR, QQ NOT A TYPE BUT NO TYPES DEFINED
+  EI
+  IF    QQQQ
+ REMARK %>>>> ERROR **** INVALID PTYP PARAMETER ****
+  EI
+]
+
+
+::      PSMK    PSPD MARK LOOP MACRO
+PSMK    MACRO   [
+  IF  \PSPD|QQ|
+        REMARK %>>>> ERROR **** ONLY 1 SPEED ALLOWED PER PORT ****%
+        REMARK %           **** PORT NUMBER ; NUMBER $A QQ
+        REMARK  DEFINED TWICE ****%
+  ELSE
+   IF	.EQ.(QQQ,SB)
+    IF	.LT.(QQ,NAPORT)
+	REMARK	%>>>> ERROR **** SPEED SB ALLOWED ONLY FOR SIO PORTS ****
+    EI
+   EI
+PSPD|QQ|        EQ      QQQ-$02000
+  EI
+]
+
+
+::      DEFINE HARDWARE ENVIRONMENT MACROS
+
+::      NALU(CNT)       # OF ASYNC LOGICAL UNITS
+SGV(NAPORT,$A16,10)     :INIT # OF PORTS
+SGV(NMPORT,0,10)        :INIT NMBR OF SIO PORTS
+SGV(NTPORT,NAPORT+NMPORT,10)
+NALU    MACRO(CNT)[
+ IF SEEGEN; REMARK %NALU(CNT); EI
+Q       EQ      $A CNT 1
+NAPORT  EQ      $A16*Q
+NTPORT  EQ      NAPORT+NMPORT
+]
+
+::      NMLU(CNT)       NMBR OF SIO PORTS
+NMLU    MACRO(CNT)[
+ IF SEEGEN; REMARK %NMLU(CNT); EI
+NMPORT  EQ      $A CNT 1
+NTPORT  EQ      NAPORT+NMPORT
+]
+
+
+::      TYMNET(LVL)     LEVEL OF NODE CODE (TYMNET I OR TYMNET II)
+TYMNET  MACRO(LVL)[
+ IF SEEGEN; REMARK %TYMNET(LVL); EI
+TYMN    EQ      LVL 2
+]
+
+
+::      DEFINE TOM OPTION MACROS
+
+
+::      MUTOM(CNT)      MAX USERS OF TOM
+MUTOM   MACRO(CNT)[
+ IF SEEGEN; REMARK %MUTOM(CNT); EI
+NTOMPT  EQ      $A CNT 14
+  IF    .GT.(NTOMPT,$A14)
+ REMARK >>>> ERROR **** NUMBER OF TOM PORTS MUST BE < 15 DECIMAL ****%
+NTOMPT  EQ      $A14
+  EI
+]
+
+
+::      TOMCL(LEV,CN)   TOM COMMAND LEVEL
+GEQ(NTMCL,0)
+TOMCL   MACRO(lev,cn)[
+ IF SEEGEN; REMARK %TOMCL(lev,cn); EI
+TMLM|NTMCL| MACRO[
+  IF    .EQ.(lev,Q1)
+        AC      /cn/
+        HC      TOM`cn-.S
+  EI
+]
+NTMCL   EQ      NTMCL+1
+]
+
+
+::      TOMGG(unam)     SET TOM GOOD GUY NAME
+TOMGG   MACRO(unam)[
+TOMGGM  MACRO[.
+        SC      \unam\
+]
+]
+
+
+::      TOMTR(MIN)      TOM TIMESTAMP RATE
+TOMTR   MACRO(MIN)[
+ IF SEEGEN; REMARK %TOMTR(MIN); EI
+TIMRAT  EQ      $A MIN 15
+]
+
+
+::      TOMTZ(BIAS)     TOM TIMEZONE BIAS
+TOMTZ   MACRO(BIAS)[
+ IF SEEGEN; REMARK %TOMTZ(BIAS); EI
+TZONE   EQ      $A BIAS 0
+]
+
+
+::      NHAMT(MIN)      NO HOST ACK MESSAGE TIME RATE
+NHAMT   MACRO(MIN)[
+ IF SEEGEN; REMARK %NHAMT(MIN); EI
+NHAMRT  EQ      $A MIN 5
+]
+
+
+::      TOMPW(PWRD)     DEFINE TOM CHANGE PASSWORD
+
+TOMPW   MACRO(PWRD)[
+ IF SEEGEN; REMARK %TOMPW(PWRD); EI
+TOMPWM  MACRO[.
+        AC      \PWRD\
+]]
+
+
+::      DEFINE GLOBAL OPTION MACROS
+
+
+::      PNRADX(RX)      PORT # RADIX (TO USER)
+PR.DEC  EQ      0A
+PR.HEX  EQ      10
+PR.OCT  EQ      8
+PR.     EQ      0A      :DEFAULT IS DECIMAL
+PNRADX  MACRO(RX)[
+ IF SEEGEN; REMARK %PNRADX(RX); EI
+PMRAD   EQ      PR.`RX
+]
+
+
+::      MTEXT(MNAM,MTXT,POS)    DEFINE MESSAGE TEXT
+
+MTEXT   MACRO(MNAM,MTXT,POS)[
+ IF SEEGEN; REMARK %MTEXT(MNAM,MTXT,POS); EI
+MNAM`M  MACRO[.
+Q       SC      \MTXT\
+  IF    .GE.(.-Q-1,9E)
+        REMARK %>>>> ERROR **** MESSAGE TEXT 'MNAM' TOO LONG%
+  EI
+]
+        GL      MNAM`P
+MNAM`P  EQ      $A POS+0
+]
+
+
+::      PCODE(C0,...,C9)        DEFINE HEX CHARACTERS FOR PCODE TERMINATION
+:       IF MACRO CALLED WITHOUT VALUES, PCODE SAVED FOR 26 CHARS.
+PROJT   EQ      0       :NO PROJECT TERMINATION CHAR
+PCODE   MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %PCODE(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+OFF	EQ	$0100000000
+QC0	EQ	$0 C0 $0100000000
+  IF    $0 QC0&1FFFFFFFF%100000000    :IF NOT NULL
+PROJT   EQ      1       :PROJECT TERMINATION CHAR DEFINED
+MARK(SYMK(PROJ,20),0,0FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+PROJ    EQ      1
+OFF	EQ	$0 0FF
+]
+
+
+::	SPECIAL GTID PARAMETER
+
+GPARS	MACRO(XA,XB,XC)[
+ IF SEEGEN; REMARK %GPARS(XA,XB,XC); EI
+  IF OPLVL	:GPARS IS A GLOBAL OPTION
+ REMARK %>>> WARNING *** GPARS IS A GLOBAL OPTION%
+  EI
+
+GTID0	EQ	$0 XA 3
+GTID1	EQ	$0 XB 5
+GTID2	EQ	$0 XC 8
+
+]
+
+	 	
+::      DEFINE HOST, SUBHOST AND PORT MACROS AND SYMBOLS.
+:       A COMPLETE DEFINITION OF THEIR USE IS IN THE GEN FILE.
+
+
+GEQ(MAXHST,0)   :# OF HOSTS DEFINED SO FAR
+GEQ(NSORDS,0)   :# OF SORDS DEFINED SO FAR
+OPLVL   EQ      0       :0= GLOBAL, 1=HST, 2=SHST
+QGOP    EQ      0       :NO GLOBAL OPTIONS DEFINED YET
+QPOP    EQ      0       :NO PREVIOUS SORD OPTION SAVED
+OFF     EQ      $00FF
+
+
+::      HST(N)  DEFINE NETWORK HOST NUMBER N (DECIMAL)
+HST     MACRO(HN)[
+  IF    .EQ.(OPLVL,1)   :IF PREVIOUS HST DIDN'T HAVE ANY SHST
+        SHST    :DEFINE A SUBHOST
+  EI
+NSHST   EQ      0       :INIT # OF SHSTS THIS HST
+ IF SEEGEN; REMARK %HST(HN)
+ ELSE
+ REMARK HST; NUMBER $A`HN; REMARK  ; IF MAXHST-7&7; ELSE; REMARK %; EI
+ EI
+  IF    1-OPLVL :IF THIS IS FIRST HST DEF
+QHOP    EQ      QGOP    :SAVE COUNT OF GLOBAL OPTION MACS
+  ELSE
+   IF   .GT.(QGOP,QHOP) :IF SOME HOST LEVEL OPTIONS WERE DEFINED
+Q       EQ      QHOP
+        RE      QGOP-QHOP
+        KILL    SOP|Q|  :REMOVE HST LEVEL OPTS FROM LAST HST
+Q       EQ      Q+1
+        ER
+QGOP    EQ      QHOP    :MOVE PTR BACK TO GLOBAL VALUE
+   EI
+  EI
+OPLVL   EQ      1       :SET LEVEL TO HST
+        GL      HOST|MAXHST|,HPRT|MAXHST|
+HOST|MAXHST| EQ $A HN
+HPRT|MAXHST|    EQ      0
+MAXHST  EQ      MAXHST+1
+BARP    EQ      -1
+BARADD  EQ      1
+BNP     EQ      0
+STIADD  EQ      1
+]
+
+
+::      SINDXP(POS)     DEFINE SUBHOST INDEX POSITION FOR SUBHOSTS
+:			OF CURRENT HOST
+GEQ(SNDXN,-1)		:LEVEL DEFINED AT
+GEQ(SNDX0,-2)           :DEFAULT POSITION
+SINDXP  MACRO(POS)[
+ IF SEEGEN; REMARK %SINDXP(POS); EI
+  IF    OPLVL-1         :IF SHST ALREADY CALLED
+ REMARK %>>>> ERROR **** SINDXP(POS) MUST OCCUR BEFORE SHST CALLS FOR HST ****%
+  ELSE
+SNDX|MAXHST|    EQ      $A POS -2
+SNDXN   EQ      OPLVL
+  EI
+]
+
+::	HSKEY(HK,COST)	DEFINE HOST KEY FOR REPORT HOST COST
+:
+GEQ(HKEYN,-1)		:LEVEL DEFINED  AT
+GEQ(HKEY0,0)		:GLOBAL KEY DEFAULTS TO 0
+GEQ(HCST0,0)		:GLOBAL COST DEFAULTS
+HSKEY	MACRO(HK,COST)[
+ IF SEEGEN; REMARK %HSKEY(HK,COST); EI
+  IF	OPLVL-1		:IF SHST ALREADY CALLED
+ REMARK %>>>> ERROR **** HSKEY MUST OCCUR BEFORE SHST CALLS FOR HST ****%
+  ELSE
+HCST|MAXHST|	EQ	$A COST 0
+HKEY|MAXHST|	EQ	$A HK 0
+HKEYN	EQ	OPLVL
+  EI
+]
+
+::      SHST(GGGG,X0,...,X9)    DEFINE SUBHOST WITH GREETING GGGG AND
+:               INDEXS X0 THROUGH X9.
+NSHST   EQ      -1      :# OF SHST CALLS FOR CURRENT HST
+SHST    MACRO(GGGG,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9)[
+ IF SEEGEN; REMARK %SHST(GGGG,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9); EI
+OPLVL   EQ      2               :SET LEVEL TO SHST
+NSHST   EQ      NSHST+1
+  IF    NSHST
+   IF   NSORDS          :IF AFTER 1ST SHST CALL
+    IF  QPOP            :IF SOME OPTIONS WERE DEFERED
+QSHST   EQ      0
+        RE      QPOP
+        POP|QSHST|
+        KILL    POP|QSHST|
+QSHST   EQ      QSHST+1
+        ER
+QPOP    EQ      0
+    EI
+   EI
+S|NSORDS|HST    EQ      MAXHST-1
+:       DEFINE HNT ENTRY FOR THIS SORD
+HNT|NSORDS|     MACRO[
+  IF    SEEGEN
+Q2      EQ      S|Q1|HST
+ REMARK %SORD ; NUMBER $A Q1; REMARK    HOST ; NUMBER $A HOST|Q2|
+ REMARK         INDEXS: X0 X1 X2 X3 X4 X5 X6 X7 X8 X9
+  EI
+:       DEFINE X0 ENTRY
+Q2      HC      S|Q1|HST        :HOST ORDINAL
+        AC      /X0/    :FIRST SUBHOST INDEX
+   IF   .EQ.(.,Q2+2)    :IF X0 WAS NULL
+        HC      0
+    IF  .EQ.(S|Q1|HST,S|Q1+1|HST)
+        REMARK %>>>> ERROR **** UNINDEXED SHST NOT LAST SHST FOR HST ;
+        NUMBER $A S|Q1|HST; REMARK  ****%
+    EI
+   EI
+   IF   .NE.(.,Q2+4)
+        REMARK %>>>> ERROR **** SHST INDEX X0 NOT 2 CHARACTERS ****%
+   EI
+        HC      Q1      :SUBHOST ORDINAL
+:       DEFINE X1,...,X9 ENTRIES (SEE X0 ENTRY ABOVE FOR SOME HELP)
+Q2 EQ .; ORG .+2; AC /X1/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X2/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X3/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X4/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X5/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X6/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X7/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X8/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+Q2 EQ .; ORG .+2; AC /X9/; IF .-3-Q2
+ ORG Q2; HC S|Q1|HST; ORG Q2+4; HC Q1
+ ELSE; ORG Q2; EI; ELSE; ORG Q2; EI; ELSE; ORG Q2; EI
+ ELSE; ORG Q2; EI; ELSE; ORG Q2; EI; ELSE; ORG Q2; EI
+ ELSE; ORG Q2; EI; ELSE; ORG Q2; EI; ELSE; ORG Q2; EI
+]
+:       DEFINE HOST GREETING TABLE ENTRY
+HGRT|NSORDS|    MACRO[
+  IF    SEEGEN
+ REMARK %SORD ; NUMBER $A Q1; REMARK  GREETING: GGGG
+  EI
+Q2      AC      /GGGG/
+   IF   .EQ.(.,Q2)      :IF NO GREETING
+        WC      0
+   EI
+        RE      4
+   IF   .LT.(.,Q2+4)    :IF NOT FULL 4 CHARACTER GREETING
+        BC      $0 0A0  :PAD WITH BLANKS
+   EI
+        ER
+   IF   .NE.(.,Q2+4)
+        REMARK %>>>> ERROR **** GREETING GGGG IS > 4 CHARACTERS ****%
+   EI
+]
+NSORDS  EQ      NSORDS+1
+BARP    EQ      -1
+BARADD  EQ      1
+STIADD  EQ      1
+   IF   QGOP    :IF SOME GLOBAL OPTIONS DEFINED
+QSOP    EQ      0
+        RE      QGOP
+ SOP|QSOP|      :INVOKE GLOBAL OPTION FOR THIS SHST
+QSOP    EQ      QSOP+1
+        ER
+   EI
+HDP     EQ      -1	:RESET POINTERS
+HEP     EQ      -1
+  ELSE
+        REMARK %>>>> ERROR **** HST CALL MUST PRECEED FIRST SHST CALL ****%
+  EI
+]
+
+
+::      SOPT(OP0,...,OP9)       DEFINE SWITCH OPTIONS
+
+QQ      EQ      .
+        ORG     0
+        GL      ECHO.,ELFCR.,ECRLF.,ECTLI.,ECTLH.,CRDLY.,LCTLH.
+        GL      BKGOB.,BKDSC.,GINDL.,GUNAM.,RNGTG.,RNGDR.
+        GL      RLSPT.,CAPFT.,CAPFH.,E8BTM.,RXENA.,CTSBP.
+        BS      1               :0=NULL PARAMETER
+GEQ(OP|.|,0)
+ECHO.   BS      1
+GEQ(OP|.|,0)
+ELFCR.  BS      1
+GEQ(OP|.|,0)
+ECRLF.  BS      1
+GEQ(OP|.|,0)
+ECTLI.  BS      1
+GEQ(OP|.|,0)
+ECTLH.  BS      1
+GEQ(OP|.|,0)
+CRDLY.  BS      1
+GEQ(OP|.|,0)
+LCTLH.  BS      1
+GEQ(OP|.|,0)
+BKGOB.  BS      1
+GEQ(OP|.|,0)
+BKDSC.  BS      1
+GEQ(OP|.|,0)
+GINDL.  BS      1
+GEQ(OP|.|,0)
+GUNAM.  BS      1
+GEQ(OP|.|,0)
+RNGTG.  BS      1
+GEQ(OP|.|,0)
+RNGDR.  BS      1
+GEQ(OP|.|,0)
+RLSPT.  BS      1
+GEQ(OP|.|,0)
+CAPFT.  BS      1
+GEQ(OP|.|,0)
+CAPFH.  BS      1
+GEQ(OP|.|,0)
+BZAPM.  BS      1
+GEQ(OP|.|,0)
+TICAP.  BS      1
+GEQ(OP|.|,0)
+GNHEX.	BS	1
+GEQ(OP|.|,0)
+RXENA.	BS	1
+GEQ(OP|.|,0)
+DETDL.	BS	1
+GEQ(OP|.|,0)
+E8BTM.	BS	1		
+GEQ(OP|.|,0)
+CTSBP.	BS	1
+NSOPT   EQ      .-1
+        ORG     QQ
+
+SOPT    MACRO(Y0,Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,Y9)[
+ IF SEEGEN; REMARK %SOPT(Y0,Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,Y9); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+QGEN    EQ      SEEGEN
+SEEGEN  EQ      0
+ SOPT(Y0,Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,Y9)
+SEEGEN  EQ      QGEN
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+QQ      EQ      .
+        ORG     0
+Q0      EQ      Y0`.+0
+Q1      EQ      Y1`.+0
+Q2      EQ      Y2`.+0
+Q3      EQ      Y3`.+0
+Q4      EQ      Y4`.+0
+Q5      EQ      Y5`.+0
+Q6      EQ      Y6`.+0
+Q7      EQ      Y7`.+0
+Q8      EQ      Y8`.+0
+Q9      EQ      Y9`.+0
+Q       EQ      0
+        RE      $00A
+QQQ     EQ      Q|Q|
+  IF    QQQ
+S|NSORDS-1|O|QQQ| EQ    1
+OP|QQQ| EQ      1
+  EI
+  IF    -QQQ
+S|NSORDS-1|O|-QQQ| EQ   0
+  EI
+        KILL    Q|Q|
+Q       EQ      Q+1
+        ER
+        ORG     QQ
+        KILL    Q,QQ,QQQ
+  EI
+]
+
+
+::      PARITY(PV)      PV = EVEN,ODD,MARK,SPACE,SAVE
+:
+:       THIS IS REALLY A SWITCH VALUE OPTION WITH 3 SWITCHES:
+:       PARC    1 IF PARITY CHECK, ELSE 0
+:       PAEO    1 IF EVEN OR ODD PARITY, 0 IF SPACE OR MARK
+:       PAEM    1 IF EVEN OR MARK PARITY, 0 IF ODD OR SPACE
+SAVE.   EQ      $00+3000
+SPACE.  EQ      $01+3000
+MARK.   EQ      $02+3000
+ODD.    EQ      $03+3000
+EVEN.   EQ      $04+3000
+GEQ(PARC.,NSOPT+1)
+GEQ(OP|PARC.|,0)
+GEQ(PAEO.,NSOPT+2)
+GEQ(OP|PAEO.|,0)
+GEQ(PAEM.,NSOPT+3)
+GEQ(OP|PAEM.|,0)
+NSOPT   EQ      NSOPT+3
+GEQ(PARN,-1)
+
+PARITY  MACRO(PV)[
+ IF SEEGEN; REMARK %PARITY(PV); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+QGEN    EQ      SEEGEN
+SEEGEN  EQ      0
+QN      EQ      PARN
+ PARITY(PV)
+SEEGEN  EQ      QGEN
+PARN    EQ      QN
+]
+QGOP    EQ      QGOP+1
+  ELSE
+QQ      EQ      .
+        ORG     $03000
+QQQ     EQ      PV`.    :PARITY VALUE PB
+   IF   .EQ.(QQQ,SAVE.)
+S|NSORDS-1|O|PARC.| EQ 0
+S|NSORDS-1|O|PAEO.| EQ 0
+S|NSORDS-1|O|PAEM.| EQ 0
+   ELSE .EQ.(QQQ,SPACE.)
+OP|PARC.|       EQ      1
+S|NSORDS-1|O|PARC.| EQ 1
+S|NSORDS-1|O|PAEO.| EQ 0
+S|NSORDS-1|O|PAEM.| EQ 0
+   ELSE .EQ.(QQQ,MARK.)
+OP|PARC.|       EQ      1
+S|NSORDS-1|O|PARC.| EQ 1
+S|NSORDS-1|O|PAEO.| EQ 0
+S|NSORDS-1|O|PAEM.| EQ 1
+   ELSE .EQ.(QQQ,ODD.)
+OP|PARC.|       EQ      1
+S|NSORDS-1|O|PARC.| EQ 1
+S|NSORDS-1|O|PAEO.| EQ 1
+S|NSORDS-1|O|PAEM.| EQ 0
+   ELSE .EQ.(QQQ,EVEN.)
+OP|PARC.|       EQ      1
+S|NSORDS-1|O|PARC.| EQ 1
+S|NSORDS-1|O|PAEO.| EQ 1
+S|NSORDS-1|O|PAEM.| EQ 1
+   ELSE
+ REMARK %>>>> ERROR **** UNKNOWN PARITY VALUE PV ****
+   EI
+        ORG     QQ
+  EI
+PARN    EQ      OPLVL
+]
+
+
+::      DEFINE SINGLE VALUED OPTION MACROS
+
+
+::      DTRP(SEC)       SEC TO PAUSE AFTER RAISING DTR
+GEQ(DTRPN,-1)   :HIGHEST LEVEL OPTION DEFINED
+DTRP    MACRO(SEC)[
+ IF SEEGEN; REMARK %DTRP(SEC); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+DTRP|NSORDS-1| EQ $A SEC 1
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+DTRP|NSORDS-1| EQ $A SEC 1
+  EI
+DTRPN   EQ      OPLVL
+]
+
+
+::      RINGTO(SEC)     SEC TO RING BEFORE TIMING OUT
+GEQ(RNGTN,-1)
+RINGTO  MACRO(SEC)[
+ IF SEEGEN; REMARK %RINGTO(SEC); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+RNGT|NSORDS-1| EQ $A SEC 4
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+RNGT|NSORDS-1| EQ $A SEC 4
+  EI
+RNGTN   EQ      OPLVL
+]
+
+
+::      HDROP(SEC)      SEC TO WAIT FOR HOST TO DROP SIGNAL ON ZAPPER
+GEQ(NHAN,-1)
+HDROP   MACRO(SEC)[
+ IF SEEGEN; REMARK %HDROP(SEC); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+NHA|NSORDS-1| EQ $A SEC 4
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+NHA|NSORDS-1| EQ $A SEC 4
+  EI
+NHAN    EQ      OPLVL
+]
+
+
+::      INACT(MIN)      :MIN TO ALLOW TERMINAL TO BE INACTIVE WITHOUT DROP
+GEQ(INAN,-1)    :INACT NOT CALLED)
+INACT   MACRO(MIN)[
+ IF SEEGEN; REMARK %INACT(MIN); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+INA|NSORDS-1|   EQ      $A MIN 15
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+INA|NSORDS-1| EQ $A MIN 15
+  EI
+INAN    EQ      OPLVL
+]
+
+
+::      BKSND(CNT,DELAY)      SEND CNT 75MS BREAKS TO HOST
+::				FLLOWED BY DELAY*1/30 SEC WAIT
+GEQ(BKSN,-1)
+GEQ(BKDN,-1)
+BKSND   MACRO(CNT,DELAY)[
+ IF SEEGEN; REMARK %BKSND(CNT,DELAY); EI
+QQQ	EQ	$A DELAY 0
+ IF .GT.(QQQ,8F)
+  REMARK %PARAMETER DELAY CANNOT BE GREATER THAN 143
+  REMARK %BKSND CALL IGNORED
+ ELSE
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+BKS|NSORDS-1|   EQ      $A CNT 2
+BKD|NSORDS-1|	EQ	$A DELAY 0
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+BKS|NSORDS-1| EQ $A CNT 2
+BKD|NSORDS-1| EQ $A DELAY 0
+  EI
+BKSN    EQ      OPLVL
+BKDN	EQ	OPLVL
+ EI
+]
+
+
+::      EOTC(CAR)       HOST END OF TRANSMISSION CHARACTER
+GEQ(EOTCN,-1)
+EOTC    MACRO(CAR)[
+ IF SEEGEN; REMARK %EOTC(CAR); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO [
+EOTC|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(EO|NSORDS-1|V,20),0,0FF,EOTC|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+EOTC|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(EO|NSORDS-1|W,20),0,0FF,EOTC|NSORDS-1|)
+  EI
+EOTCN   EQ      OPLVL
+]
+
+
+::      HETM(CAR)       HOST ENTER TRANSPARENCY CHARACTER
+GEQ(HETMN,-1)
+HETM    MACRO(CAR)[
+ IF SEEGEN; REMARK %HETM(CAR); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO [
+HETM|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(HT|NSORDS-1|V,20),0,0FF,HETM|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+HETM|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(HT|NSORDS-1|W,20),0,0FF,HETM|NSORDS-1|)
+  EI
+HETMN   EQ      OPLVL
+]
+
+
+::      UETM(CAR)       USER ENTER TRANSPARENCY CHARACTER
+GEQ(UETMN,-1)
+UETM    MACRO(CAR)[
+ IF SEEGEN; REMARK %UETM(CAR); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO [
+UETM|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(UT|NSORDS-1|V,20),0,00FF,UETM|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+UETM|NSORDS-1| EQ $0 CAR 0FF
+MARK(SYMK(UT|NSORDS-1|W,20),0,00FF,UETM|NSORDS-1|)
+  EI
+UETMN   EQ      OPLVL
+]
+
+
+::      CTLESC(CAR,SYM)     CTL CHAR ESC CHAR
+GEQ(ESCN,-1)
+GEQ(PASS,1)
+CTLESC  MACRO(CAR,SYM)[
+ IF SEEGEN; REMARK %CTLESC(CAR,SYM); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO [
+   IF   CAR 0
+ESC|NSORDS-1| EQ $0 CAR
+MARK(SYMK(ES|NSORDS-1|V,20),0,00FF,ESC|NSORDS-1|)
+   ELSE
+ESC|NSORDS-1| EQ $0 0FF
+   EI
+   
+ESPS|NSORDS-1|	EQ $0 SYM -1
+]
+QGOP    EQ      QGOP+1
+  ELSE
+   IF   CAR 0
+ESC|NSORDS-1| EQ $0 CAR
+MARK(SYMK(ES|NSORDS-1|W,20),0,00FF,ESC|NSORDS-1|)
+   ELSE
+ESC|NSORDS-1| EQ $0 0FF
+   EI
+
+ESPS|NSORDS-1| EQ $0 SYM -1
+   
+  EI
+
+ESCN    EQ      OPLVL
+]
+
+
+::      ABNDM(TXT)      TXT TO SEND TO HOST ON USER DISCONNECT
+GEQ(ABNDN,-1)   :ABNDM NOT CALLED
+ABNDM   MACRO(TXT)[
+ IF SEEGEN; REMARK %ABNDM(TXT); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+        KILL    ABND|NSORDS-1|
+ABND|NSORDS-1|  MACRO[.
+        SC      \TXT\
+]
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+        KILL    ABND|NSORDS-1|
+ABND|NSORDS-1| MACRO[.
+        SC      \TXT\
+]
+  EI
+ABNDN   EQ      OPLVL
+]
+
+
+::      LOGINS(TXT)     TXT TO SEND TO HOST ON USER LOGIN
+GEQ(LGSN,-1)    :LOGINS NOT CALLED
+LOGINS  MACRO(TXT)[
+ IF SEEGEN; REMARK %LOGINS(TXT); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+        KILL    LGS|NSORDS-1|
+LGS|NSORDS-1|   MACRO[.
+        SC      \TXT\
+]
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+        KILL    LGS|NSORDS-1|
+LGS|NSORDS-1| MACRO[.
+        SC      \TXT\
+]
+  EI
+LGSN    EQ      OPLVL
+]
+
+
+::      TINTMS(TXT)     ENTER TERMINAL INIT. MSG TO SEND TO USER AT LOGIN
+GEQ(TINTN,-1)    :TINTMS NOT CALLED
+TINTMS  MACRO(TXT)[
+ IF SEEGEN; REMARK %TINTMS(TXT); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+        KILL    TINT|NSORDS-1|
+TINT|NSORDS-1|   MACRO[.
+        SC      \TXT\
+]
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+        KILL    TINT|NSORDS-1|
+TINT|NSORDS-1| MACRO[.
+        SC      \TXT\
+]
+  EI
+TINTN    EQ      OPLVL
+]
+::      SGRTMS(TXT)     SUBHOST GREETING MESSAGE TO SEND TO USER AT LOGIN
+GEQ(SGRTN,-1)           : SGRTMS NOT CALLED
+SGRTMS  MACRO(TXT)[
+ IF SEEGEN; REMARK %SGRTMS(TXT); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+        KILL    SGRT|NSORDS-1|
+SGRT|NSORDS-1|   MACRO[.
+        SC      \TXT\
+]
+]
+QGOP    EQ      QGOP+1  : COUNT SAVED MACROS
+  ELSE
+        KILL    SGRT|NSORDS-1|
+SGRT|NSORDS-1| MACRO[.
+        SC      \TXT\
+]
+  EI
+SGRTN   EQ      OPLVL
+]
+
+EVEN	EQ	3
+SPACE	EQ	2
+SAVE	EQ	1
+NOPAR	EQ	0
+
+::TBYEMS(TXT,PARITY)     ENTER TERMINAL BYE MSG TO BE SENT TO THE CONSAT
+::      		:WHICH SENDS IT TO USER UPON ZAP.
+GEQ(TBYEN,-1)    :TBYEMS NOT CALLED
+TBYEMS  MACRO(TXT,BYEPAR)[
+ IF SEEGEN; REMARK %TBYEMS(TXT); EI
+  IF    2-OPLVL
+:       SAVE OPTION UNTIL SHST DEFINED
+SOP|QGOP|       MACRO[
+        KILL    TBYE|NSORDS-1|
+TBYE|NSORDS-1|   MACRO[.
+QBYE    EQ      .
+	BC	0,0C0,81
+QBYE1	BC      0
+	BC	BYEPAR
+	AC	/TXT/
+QBYE2	EQ	.
+	ORG	QBYE1
+	BC	QBYE2-QBYE1-2
+	ORG	QBYE
+	BC	QBYE2-QBYE-1
+        ORG	QBYE2
+]
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+        KILL    TBYE|NSORDS-1|
+TBYE|NSORDS-1| MACRO[.
+QBYE    EQ      .
+	BC	0,0C0,81
+QBYE1	BC      0
+	BC	BYEPAR
+	AC	/TXT/
+QBYE2	EQ	.
+	ORG	QBYE1
+	BC	QBYE2-QBYE1-2
+	ORG	QBYE
+	BC	QBYE2-QBYE-1
+        ORG	QBYE2
+]
+  EI
+TBYEN    EQ      OPLVL
+]
+
+::      XON(ONC,OFFC)
+GEQ(XONN,-1)
+XON     MACRO(ONC,OFFC)[
+ IF SEEGEN; REMARK %XON(ONC,OFFC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+   IF   ONC+0
+XON|NSORDS-1| EQ $0 ONC
+   ELSE
+XON|NSORDS-1| EQ $0 11
+   EI
+XOF|NSORDS-1| EQ $0 OFFC ONC 13
+   IF 1-XOF|NSORDS-1|
+XOF|NSORDS-1| EQ $0 13
+   EI
+]
+QGOP    EQ      QGOP+1
+  ELSE
+   IF   ONC+0
+XON|NSORDS-1| EQ $0 ONC
+   ELSE
+XON|NSORDS-1| EQ $0 11
+   EI
+XOF|NSORDS-1| EQ $0 OFFC ONC 13
+   IF 1-XOF|NSORDS-1|
+XOF|NSORDS-1| EQ $0 13
+   EI
+  EI
+XONN    EQ      OPLVL
+]
+
+
+::      RXON(ONC,OFFC)
+GEQ(RXONN,-1)
+RXON    MACRO(ONC,OFFC)[
+ IF SEEGEN; REMARK %RXON(ONC,OFFC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+   IF   ONC+0
+RXON|NSORDS-1| EQ $0 ONC
+   ELSE
+RXON|NSORDS-1| EQ $0 11
+   EI
+RXOF|NSORDS-1| EQ $0 OFFC ONC 13
+   IF 1-RXOF|NSORDS-1|
+RXOF|NSORDS-1| EQ $0 13
+   EI
+MARK(SYMK(RX|NSORDS-1|V,20),0,00FF,RXON|NSORDS-1|,RXOF|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+   IF   ONC+0
+RXON|NSORDS-1| EQ $0 ONC
+   ELSE
+RXON|NSORDS-1| EQ $0 11
+   EI
+RXOF|NSORDS-1| EQ $0 OFFC ONC 13
+   IF 1-RXOF|NSORDS-1|
+RXOF|NSORDS-1| EQ $0 13
+   EI
+MARK(SYMK(RX|NSORDS-1|W,20),0,00FF,RXON|NSORDS-1|,RXOF|NSORDS-1|)
+  EI
+RXONN   EQ      OPLVL
+]
+
+
+::      DEFINE MULTIPLE VALUED OPTION MACROS
+
+
+::      HOSTDE(EDEC,LDEC)       HOST HANDELS DEFERED ECHO
+GEQ(EDEC,0)
+GEQ(LDEC,1)
+GEQ(HDN,-1)
+HDP     EQ      -1
+HDCNT   EQ      -1
+HOSTDE  MACRO(EDEC,LDEC)[
+ IF SEEGEN; REMARK %HOSTDE(EDEC,LDEC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+   IF   EDEC+0
+QEDEC   EQ      $0 EDEC
+   ELSE
+QEDEC   EQ      $0 0FF
+   EI
+QLDEC   EQ      $0 LDEC EDEC 0FF
+   IF   1-QLDEC
+QLDEC   EQ      $0 0FF
+   EI
+MARK(MVMK(HD,HD,S),0,00FF,QEDEC,QLDEC)
+POP|QPOP| MACRO[
+   IF   1-(\ESC|NSORDS-1|)
+FLTRFT(EDEC,LDEC)
+   EI
+]
+QPOP    EQ      QPOP+1
+]
+QGOP    EQ      QGOP+1
+  ELSE
+   IF   EDEC+0
+QEDEC   EQ      $0 EDEC
+   ELSE
+QEDEC   EQ      $0 0FF
+   EI
+QLDEC   EQ      $0 LDEC EDEC 0FF
+   IF   1-QLDEC
+QLDEC   EQ      $0 0FF
+   EI
+MARK(MVMK(HD,HD,S),0,00FF,QEDEC,QLDEC)
+POP|QPOP| MACRO[
+   IF   1-(\ESC|NSORDS-1|)
+FLTRFT(EDEC,LDEC)
+   EI
+]
+QPOP    EQ      QPOP+1
+  EI
+HDN     EQ      OPLVL
+]
+
+
+::      HOSTEC(NEONC,NEOFFC,NEONA,NEOFFA)       HOST CONTROL OF NET ECHO
+GEQ(NEONC,0)
+GEQ(NEOFFC,1)
+GEQ(NEONA,2)
+GEQ(NEOFFA,3)
+GEQ(HEN,-1)
+HEP     EQ      -1
+GEQ(HECNT,-1)
+HOSTEC  MACRO(NEONC,NEOFFC,NEONA,NEOFFA)[
+ IF SEEGEN; REMARK %HOSTEC(NEONC,NEOFFC,NEONA,NEOFFA); EI
+  IF 2-OPLVL
+SOP|QGOP| MACRO[
+QNEONC  EQ      $0 NEONC 0FF
+QNEOFC  EQ      $0 NEOFFC NEONC 0FF
+   IF   NEONA+0
+QNEONA  EQ      $0 NEONA
+   ELSE
+QNEONA  EQ      $0 0FF
+   EI
+QNEOFA  EQ      $0 NEOFFA NEONA 0FF
+   IF   1-QNEOFA
+QNEOFA  EQ      $0 0FF
+   EI
+MARK(MVMK(HE,HE,S),0,00FF,QNEONC,QNEOFC,QNEONA,QNEOFA)
+MARK(SYMK(HC|NSORDS-1|V,20),0,00FF,QNEONC,QNEOFC)
+POP|QPOP| MACRO[
+   IF   1-(\ESC|NSORDS-1|)
+FLTRFT(NEONA,NEOFFA)
+   EI
+]
+QPOP    EQ      QPOP+1
+]
+QGOP    EQ      QGOP+1
+  ELSE
+QNEONC  EQ      $0 NEONC 0FF
+QNEOFC  EQ      $0 NEOFFC NEONC 0FF
+   IF   NEONA+0
+QNEONA  EQ      $0 NEONA
+   ELSE
+QNEONA  EQ      $0 0FF
+   EI
+QNEOFA  EQ      $0 NEOFFA NEONA 0FF
+   IF   1-QNEOFA
+QNEOFA  EQ      $0 0FF
+   EI
+MARK(MVMK(HE,HE,S),0,00FF,QNEONC,QNEOFC,QNEONA,QNEOFA)
+MARK(SYMK(HC|NSORDS-1|W,20),0,00FF,QNEONC,QNEOFC)
+POP|QPOP| MACRO[
+   IF   1-(\ESC|NSORDS-1|)
+FLTRFT(NEONA,NEOFFA)
+   EI
+]
+QPOP    EQ      QPOP+1
+  EI
+HEN     EQ      OPLVL
+]
+
+
+::      TERMEC(ONC,OFFC)
+GEQ(TEONN,-1)
+TERMEC  MACRO(ONC,OFFC)[
+ IF SEEGEN; REMARK %TERMEC(ONC,OFFC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+   IF	ONC+0
+TEON|NSORDS-1|	EQ $0 ONC
+   ELSE
+TEON|NSORDS-1|	EQ $0 0FF
+   EI
+TEOF|NSORDS-1|	EQ $0 OFFC ONC 0FF
+   IF 1-TEOF|NSORDS-1|
+TEOF|NSORDS-1|	EQ $0 0FF
+   EI
+MARK(SYMK(TC|NSORDS-1|V,20),0,00FF,TEON|NSORDS-1|,TEOF|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+   IF	ONC+0
+TEON|NSORDS-1|	EQ $0 ONC
+   ELSE
+TEON|NSORDS-1|	EQ $0 0FF
+   EI
+TEOF|NSORDS-1|	EQ $0 OFFC ONC 0FF
+   IF 1-TEOF|NSORDS-1|
+TEOF|NSORDS-1|	EQ $0 0FF
+   EI
+MARK(SYMK(TC|NSORDS-1|W,20),0,00FF,TEON|NSORDS-1|,TEOF|NSORDS-1|)
+  EI
+TEONN   EQ      OPLVL
+]
+
+
+::      POLFLO(POLC,ACKC)
+GEQ(PFQN,-1)
+POLFLO  MACRO(POLC,ACKC)[
+ IF SEEGEN; REMARK %POLFLO(POLC,ACKC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+   IF	POLC+0
+PFQ|NSORDS-1|	EQ $0 POLC
+   ELSE
+PFQ|NSORDS-1|	EQ $0 05
+   EI
+PFA|NSORDS-1|	EQ $0 ACKC POLC 06
+   IF 1-PFA|NSORDS-1|
+PFA|NSORDS-1|	EQ $0 06
+   EI
+MARK(SYMK(PF|NSORDS-1|V,20),0,00FF,PFQ|NSORDS-1|)
+]
+QGOP    EQ      QGOP+1  :COUNT SAVED MACROS
+  ELSE
+   IF	POLC+0
+PFQ|NSORDS-1|	EQ $0 POLC
+   ELSE
+PFQ|NSORDS-1|	EQ $0 05
+   EI
+PFA|NSORDS-1|	EQ $0 ACKC POLC 06
+   IF 1-PFA|NSORDS-1|
+PFA|NSORDS-1|	EQ $0 06
+   EI
+MARK(SYMK(PF|NSORDS-1|W,20),0,00FF,PFQ|NSORDS-1|)
+  EI
+PFQN    EQ      OPLVL
+]
+
+
+::      T2741(TIC,HIC)  DEFINE 2741 TRANSPARENCY
+NSOPT   EQ      NSOPT+1 :NEXT SWITCH OPTION
+GEQ(T2741.,NSOPT)
+GEQ(OP|T2741.|,0)
+GEQ(TIC27,0)    :TERMINAL INITIALIZATION CHAR POSITION
+GEQ(HIC27,1)    :HOST INITIALIZATION CHAR POSITION
+GEQ(T27N,-1)
+GEQ(T27CNT,-1)
+T2741   MACRO(TIC,HIC)[
+ IF SEEGEN; REMARK %T2741(TIC,HIC); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+OFF     EQ      0
+QTIC    EQ      $0 TIC $0100000000
+QHIC    EQ      $0 HIC $0100000000
+OP|T2741.| EQ 1
+S|NSORDS-1|O|T2741.| EQ 1
+   IF   $0 QTIC&1FFFFFFFF%100000000     :IF NOT NULL
+T|TIC27|T|NSORDS-1| EQ $0 TIC
+    IF  -T27CNT         :IF FIRST TIME
+T27CNT  EQ      0
+    EI
+   EI
+   IF   $0 QHIC&1FFFFFFFF%100000000     :IF NOT NULL
+T|HIC27|T|NSORDS-1| EQ $0 HIC
+T27CNT  EQ      1
+   EI
+OFF     EQ      $0 0FF
+]
+QGOP    EQ      QGOP+1
+  ELSE
+OFF     EQ      0
+QTIC    EQ      $0 TIC $0100000000
+QHIC    EQ      $0 HIC $0100000000
+OP|T2741.| EQ 1
+S|NSORDS-1|O|T2741.| EQ 1
+   IF   $0 QTIC&1FFFFFFFF%100000000     :IF NOT NULL
+T|TIC27|T|NSORDS-1| EQ $0 TIC
+    IF  -T27CNT         :IF FIRST TIME
+T27CNT  EQ      0
+    EI
+   EI
+   IF   $0 QHIC&1FFFFFFFF%100000000     :IF NOT NULL
+T|HIC27|T|NSORDS-1| EQ $0 HIC
+T27CNT  EQ      1
+   EI
+OFF     EQ      $0 0FF
+  EI
+T27N    EQ      OPLVL
+]
+
+
+::      UDCHAR(C0,...,C9)       DEFINE USER DISCONNECT CHARACTERS
+
+GEQ(UDN,-1)
+
+UDCHAR  MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %UDCHAR(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(UD|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(UD|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+UDN     EQ      OPLVL
+]
+
+
+::      HDCHAR(C0,...,C9)       DEFINE HOST DISCONNECT CHARACTERS
+
+GEQ(HXN,-1)
+
+HDCHAR  MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %HDCHAR(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(HX|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(HX|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+HXN     EQ      OPLVL
+]
+
+
+::      GOBBLE(C0,...,C9)       DEFINE GOBBLER CHARACTERS
+
+GEQ(GBN,-1)
+
+GOBBLE  MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %GOBBLE(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(GB|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(GB|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+GBN     EQ      OPLVL
+]
+
+
+::      FLTRFT(C0,...,C9)       DEFINE FROM TERMINAL FILTERED CHARACTERS
+
+GEQ(TFN,-1)
+
+FLTRFT  MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %FLTRFT(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(TF|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(TF|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+TFN     EQ      OPLVL
+]
+
+
+::      FLTRFH(C0,...,C9)       DEFINE FROM HOST FILTERED CHARACTERS
+
+GEQ(HFN,-1)
+
+FLTRFH  MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %FLTRFH(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(HF|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(HF|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+HFN     EQ      OPLVL
+]
+
+
+::      DEMEC(C0,...,C9)        ECHOABLE CHARACTERS FOR DE
+GEQ(DEN,0)
+
+DEMEC   MACRO(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)[
+ IF SEEGEN; REMARK %DEMEC(C0,C1,C2,C3,C4,C5,C6,C7,C8,C9); EI
+  IF    2-OPLVL
+SOP|QGOP| MACRO[
+MARK(SYMK(DE|NSORDS-1|V,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+]
+QGOP    EQ      QGOP+1
+  ELSE
+MARK(SYMK(DE|NSORDS-1|W,20),0,00FF,C0,C1,C2,C3,C4,C5,C6,C7,C8,C9)
+  EI
+DEN     EQ      OPLVL
+]
+
+
+::      STIC(P0,...,PN) SUBHOST TERMINAL ID CHARACTERS
+STICNT  EQ      -1
+GEQ(STIN,-1)
+STIADD  EQ      1
+GEQ(STIMAX,0)
+STIC    MACRO(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+QT      EQ      -1
+ IF SEEGEN; REMARK %STIC(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+STICNT  EQ      STICNT+STIADD
+STIADD  EQ      0
+OFF	EQ	$0100000000
+MARK(STIMK,0,MAXTYP+$010000,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+OFF	EQ	$0 0FF
+  IF    2-OPLVL
+QSTIC   EQ      STICNT
+SOP|QGOP| MACRO[
+STIS|NSORDS-1| EQ QSTIC
+]
+QGOP    EQ      QGOP+1
+  ELSE
+STIS|NSORDS-1| EQ       STICNT
+  EI
+STIN    EQ      OPLVL
+]
+
+
+::      BARNOD(N0,...,N9)       LIST OF NODES TO BAR
+GEQ(BNN,-1)
+BARCNT  EQ      -1
+BARADD  EQ      1
+BARP    EQ      -1
+BARNOD  MACRO(N0,N1,N2,N3,N4,N5,N6,N7,N8,N9)[
+ IF SEEGEN; REMARK %BARNOD(N0,N1,N2,N3,N4,N5,N6,N7,N8,N9); EI
+  IF    $8 0`N0&77777   :IF NOT NULL
+BARCNT  EQ      BARCNT+BARADD
+BARADD  EQ      0
+BARP    EQ      BARP+1
+B|BARCNT|N|BARP| EQ $8 N0
+   IF $80`N1&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N1
+   IF $80`N2&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N2
+   IF $80`N3&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N3
+   IF $80`N4&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N4
+   IF $80`N5&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N5
+   IF $80`N6&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N6
+   IF $80`N7&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N7
+   IF $80`N8&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N8
+   IF $80`N9&77777;BARP EQ BARP+1;B|BARCNT|N|BARP| EQ $8 N9
+   EI; EI; EI; EI; EI; EI; EI; EI; EI
+   IF   2-OPLVL
+BNP     EQ      BARCNT
+SOP|QGOP| MACRO[
+BARS|NSORDS-1| EQ BNP
+]
+QGOP    EQ      QGOP+1
+   ELSE
+BARS|NSORDS-1|  EQ      BARCNT
+   EI
+BNN     EQ      OPLVL
+  EI
+]
+
+
+::      OKNODE(N0,...,N9)       NODES TO ALLOW
+OKNODE  MACRO(N0,N1,N2,N3,N4,N5,N6,N7,N8,N9)[
+ IF SEEGEN; REMARK %OKNODE(N0,N1,N2,N3,N4,N5,N6,N7,N8,N9); EI
+QGEN    EQ      SEEGEN
+SEEGEN  EQ      0
+Q       EQ      $8 100000
+BARNOD(N0!Q,N1!Q,N2!Q,N3!Q,N4!Q,N5!Q,N6!Q,N7!Q,N8!Q,N9!Q)
+SEEGEN  EQ      QGEN
+]
+
+
+::      DEFINE PORT OPTION MACROS
+
+::      PN(P1,P2,...)   DEFINE UP TO 10 PORT RANGES
+:
+:       SETS UP A MASK SYMBOL SNGRM WHERE N IS SORD NUMBER AND M IS
+:       PORT GROUP NUMBER.  A BIT IS 1 IF THE PORT IS ASSIGNED TO THIS SORD.
+:	
+:	SETS UP A MASK SYMBOL HNPTM WHERE N IS HOST ORDINAL NUMBER AND
+:	M IS PORT GROUP NUMBER. A BIT IS 1 IF THE PORT IS ASSIGNED TO THIS HOST
+
+PN      MACRO(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PN(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+  IF    2-OPLVL
+        SHST
+  EI
+QN      EQ      0
+MARK(SYMK(S|NSORDS-1|GR,10),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+HPRT|MAXHST-1|  EQ HPRT|MAXHST-1|+QN	:UPDATE PORT COUNT FOR HTIS HOST
+MARK(SYMK(H|MAXHST-1|PT,10),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+]
+
+
+::      PTYP(P0,...,P9) DEFINE TYPE ALLOWED FOR PORTS
+
+T0      EQ      $010000 :AUX    120CPS
+T1      EQ      $010001 :A      30CPS
+T2      EQ      $010002 :C      30CPS
+T3      EQ      $010003 :E      30CPS
+T4      EQ      $010004 :G      30CPS
+T5      EQ      $010005 :B      15CPS
+T6      EQ      $010006 :F      15CPS
+T7      EQ      $010007 :J      15CPS
+T8      EQ      $010008 :       32.4CPS (3767 IN 2741 MODE)
+T9      EQ      $010009 :       14.6CPS (2741)
+T10     EQ      $01000A :D      10CPS
+T11     EQ      $01000B :       (2780)
+T12     EQ      $01000C :A      120CPS
+T13     EQ      $01000D :       (BORROUGHS POLLED)
+T14     EQ      $01000E :AUX    120CPS (THROUGH GATEWAY)
+T15     EQ      $01000F :       (BAUDOT)
+T16     EQ      $010010 :A      240CPS
+T17     EQ      $010011 :       (3270)
+T18     EQ      $010012 :       (3270 W/PRTR)
+T19     EQ      $010013 :A      480CPS
+T20     EQ      $010014 :A      960CPS
+T21     EQ      $010015 :       (MUX PVC)
+T22     EQ      $010016 :       (AUDIO RESP)
+T23     EQ      $010017 :
+T24     EQ      $010018 :
+T25     EQ      $010019 :
+T26     EQ      $01001A :
+T27     EQ      $01001B :
+T28     EQ      $01001C :
+T29     EQ      $01001D :
+T30     EQ      $01001E :
+T31     EQ      $01001F :
+GEQ(MAXTYP,$A 31)       :MAXIMUM TYPE INDEX FOR PORT TERMINAL TYPES
+
+PTYP    MACRO(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PTYP(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+QT      EQ      -1      :INIT TYPE INDEX
+MARK(PTMK,A,MAXTYP+$010000,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+]
+
+
+::      PSPD(SP,P0,...,P9)      DEFINE SPEED OF A PORT
+
+        GL      SB,SF
+S0      EQ      $00+2000        :10 CPS
+S1      EQ      $01+2000        :15 CPS
+S2      EQ      $02+2000        :30 CPS
+S3      EQ      $03+2000        :40 CPS
+S4      EQ      $04+2000        :60 CPS
+S5      EQ      $05+2000        :120 CPS
+S6      EQ      $06+2000        :30 (3767)
+S7      EQ      $07+2000        :14.7 (2741)
+S8      EQ      $08+2000        :10 CPS   300 BAUD
+S9      EQ      $09+2000        :10 CPS  1200 BAUD
+S10     EQ      $00A+2000       :240 CPS
+S11     EQ      $00B+2000       :480 CPS
+S12     EQ      $00C+2000       :960 CPS
+S13     EQ      $00D+2000       :
+S14     EQ      $00E+2000       :
+S15     EQ      $00F+2000       :
+SB      EQ      $010+2000       :BAUDOT (SIO)
+SF      EQ      $00FF+2000      :ALL SPEEDS
+GEQ(MAXSPD,0F)  :MAXIMUM TYPE INDEX FOR PORT TERMINAL TYPES
+
+PSPD    MACRO(SP,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PSPD(SP,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+QQQ     EQ      SP      :SPEED FROM PSPD CALL
+
+  IF    $02000-QQQ
+        REMARK %>>>> ERROR **** UNKNOWN PORT SPEED SP ****%
+  ELSE
+    IF  .EQ.(QQQ,SB)
+      IF  1-NMPORT
+        REMARK %>>>> ERROR **** BAUDOT NOT ALLOWED WITHOUT SIO ****%
+      EI
+    EI
+MARK(PSMK,A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+  EI
+]
+
+
+::      PCAN(TY,P0,...,P9)      DEFINE SIGNAL/IFUP CANDIDATES
+
+IFUP    EQ      $00+4000
+SIG     EQ      $01+4000
+
+PCAN    MACRO(TY,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PCAN(TY,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+QQQ     EQ      TY      :CANDIDATE TYPE FROM PCAN CALL
+
+  IF    $04000-QQQ
+        REMARK %>>>> ERROR **** UNKNOWN CANDIDATE TYPE TY ****%
+  ELSE
+   IF   QQQ-$04000
+MARK(SYMK(SCANG,10),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   EI
+  EI
+]
+
+
+::	PSIG(TY,P0,...,P10)	DEFINE SIGNAL/IFUP SIGNAL INPUT
+
+PSIG	MACRO(TY,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PSIG(TY,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+QQQ     EQ      TY      :SIGNAL TYPE FROM PSIG CALL
+
+  IF    $04000-QQQ
+        REMARK %>>>> ERROR **** UNKNOWN SIGNAL TYPE TY ****%
+  ELSE
+   IF   $04001-QQQ
+MARK(SYMK(SANSG,10),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   EI
+  EI
+]
+
+: PFILE(LET,LET1,LET2,LET3,ACH,P0,...,P10) DEFINE CANDIDATES FOR FILE TRANSFER
+: LET is the letter is used to answer the port and start logon processing
+: LET1 acks LET.  LET2 is returned on circuit built.  LET3 is returned on
+: any logon failure.
+
+PFILE   MACRO(LET,LET1,LET2,LET3,ACH,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)[
+ IF SEEGEN; REMARK %PFILE(TY,ACH,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9); EI
+MARK(SYMK(FTPTG,10),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+
+QQQ     EQ      $A LET
+   IF   $A 256-QQQ  :ACTUAL CHAR
+MARK(.SET(FTCH,QQQ),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   ELSE
+  REMARFK %>>>>  ERROR **** PFILE - NOT A VALID CHARACTER ****%
+   EI
+
+QQQ     EQ      $A LET1
+   IF   $A 256-QQQ  :ACTUAL CHAR
+MARK(.SET(FTC1,QQQ),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   ELSE
+  REMARFK %>>>>  ERROR **** PFILE - NOT A VALID CHARACTER ****%
+   EI
+
+QQQ     EQ      $A LET2
+   IF   $A 256-QQQ  :ACTUAL CHAR
+MARK(.SET(FTC2,QQQ),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   ELSE
+  REMARFK %>>>>  ERROR **** PFILE - NOT A VALID CHARACTER ****%
+   EI
+
+QQQ     EQ      $A LET3
+   IF   $A 256-QQQ  :ACTUAL CHAR
+MARK(.SET(FTC3,QQQ),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+   ELSE
+  REMARFK %>>>>  ERROR **** PFILE - NOT A VALID CHARACTER ****%
+   EI
+
+QQQ     EQ      $A ACH          :ACCOUNTING HOST NUMBER
+MARK(.SET(.ACH,QQQ),A,NTPORT-1,P0,P1,P2,P3,P4,P5,P6,P7,P8,P9)
+
+]
+
+.SET    MACRO(LA,VL)[
+LA|QQ|  EQ      VL
+]
+ ?G`1À
