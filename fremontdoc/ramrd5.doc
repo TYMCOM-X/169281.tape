@@ -1,0 +1,5493 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                          RAM
+
+                                   REFERENCE MANUAL
+
+
+                                     Version 10.05
+
+
+
+
+                                    August 30, 1984
+
+
+
+
+
+
+
+
+
+                                        TYMNET
+
+
+                            Network Technology Development
+
+
+
+
+
+
+
+
+                 This document  is the sole property  and confidential
+                 information of Tymnet and may  not be copied in whole
+                 or part or  disclosed to any third  party without the
+                 prior written consent of Tymnet.
+
+
+
+                 Copyright 1984 by Tymnet--A McDonnell Douglas Company
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  SUMMARY OF CHANGES
+
+                                 RAM Reference Manual
+                                Publications Number 529
+
+                                    August 30, 1984
+
+            This manual documents software version 10.05 of RAM.  It super-
+            cedes the RAM  Reference Manual  of May  25, 1983,  which docu-
+            mented software version 10.01.
+
+
+            Version 10.02            _____________
+
+              1. Many new RAM  messages were added in  conjunction with the
+                 Grab command to  minimize confusion on who  the privileged
+                 user is.
+
+              2. The Status command  includes RAM's  host number  and tape-
+                 blocking  factor.   In  addition,  when  this  command  is
+                 issued, if a Supervisor has  not been accessed, the values
+                 under the  RAM and Supervisor  block headings will  be "NO
+                 DATA" instead of "0 0".
+
+              3. The Control-Q and Control-H  special characters were added
+                 and escape was modified.
+
+              4. A new optional macro, SECTRS, was added to the Tymfile.
+
+              5. The Drain  command has been changed  to pause and  to tell
+                 you when it is done draining.
+
+            Version 10.03            _____________
+
+              1. The Setblock command now confirms what the next block num-
+                 ber will be.
+
+            Version 10.04            _____________
+
+              1. The control-A  and control-H special characters  have been
+                 modified.  When  control-A is entered,  deleted characters
+                 are echoed; when  control-H is  entered, the  cursor back-
+                 spaces.
+
+              2. When the Help command is  entered RAM responds with "VALID
+                 RAM COMMANDS ARE:" and lists the commands.
+
+              3. All dates in the status report now include the year.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              4. The status report will show the date  of JAN 1, 1974 for a
+                 supervisor from which accounting data  has never been col-
+                 lected.
+
+              5. In Appendix B,  the descriptions of the  following Tymfile
+                 macros  have been  expanded:  MXBLK,  MXBLKn, MXNODE,  and
+                 MXSES0.
+
+              6. A new macro, PRJSPC, was added to the Tymfile.
+
+            Version 10.05            _____________
+
+            Version 10.05 code changes do not impact this document.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        PREFACE
+
+
+            This manual describes the Raw  Accounting Merger (RAM) program,
+            which collects accounting data from the network Supervisors and
+            records it on magnetic  tape.  The manual is  intended for net-
+            work operators  and system programmers.   It is  organized into
+            three major chapters.
+
+            The first chapter  provides an overview of RAM.   It includes a
+            description of RAM tapes, system  startup and login procedures,
+            command format and syntax, and special characters.
+
+            The second chapter contains a detailed description of nonprivi-
+            leged and privileged RAM commands.  These are used primarily by
+            network operations personnel.
+
+            The  third  chapter  contains a  detailed  description  of  the
+            accounting data processed by RAM.
+
+            The main text is followed by  five appendixes:  Restricted Com-
+            mands, RAM Tymfile  Definition, Sample RAM Tymfile,  RAM System
+            Messages, and Command Table.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                                       CONTENTS                                       ________
+
+
+            OVERVIEW .................................................... 1
+
+               RAM Tapes ................................................ 1
+
+                  Login ................................................. 3
+
+                  Command Format and Syntax ............................. 5
+
+                  Special Characters .................................... 7
+
+            COMMANDS .................................................... 8
+
+               Nonprivileged Commands ................................... 8
+
+                  Exit Command .......................................... 8
+
+                  Help Command .......................................... 8
+
+                  Profile Command ....................................... 9
+
+                  Status Command ....................................... 14
+
+               Privileged Commands ..................................... 19
+
+                  Attach Command ....................................... 19
+
+                  Coldstart Command .................................... 21
+
+                  Detach Command ....................................... 22
+
+                  Drain Command ........................................ 23
+
+                  Grab Command ......................................... 24
+
+                  Label Command ........................................ 25
+
+                  Pause Command ........................................ 27
+
+                  Resetprofile Command ................................. 27
+
+                  Run Command .......................................... 28
+
+                  Setblock Command ..................................... 28
+
+                  Slave Command ........................................ 30
+
+
+                                                                     Page i
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                  Tape Command ......................................... 31
+
+                  Warmstart Command .................................... 32
+
+            SESSION RECORD DATA ........................................ 34
+
+               Primary Session Record Data ............................. 34
+
+                  Record Type .......................................... 34
+
+                  Sequence Number ...................................... 35
+
+                  Completeness Factor .................................. 35
+
+                  Session Number ....................................... 36
+
+                  Originating Node Number .............................. 36
+
+                  Originating Logical Port Number ...................... 37
+
+                  Destination Node Number .............................. 37
+
+                  Destination Logical Port Number ...................... 37
+
+                  Originating Host Number .............................. 37
+
+                  Destination Host ..................................... 37
+
+                  Destination Physical Port Number ..................... 37
+
+                  Start Date ........................................... 38
+
+                  Start Time ........................................... 38
+
+                  Input Octet Count .................................... 38
+
+                  Output Octet Count ................................... 38
+
+                  Stop Date ............................................ 39
+
+                  Stop Time ............................................ 39
+
+                  Connect Time ......................................... 39
+
+                  Circuit Characteristic Type .......................... 39
+
+                  Termination Code ..................................... 42
+
+
+
+                                                                    Page ii
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                  International Record Carrier ......................... 44
+
+                  Universal User Number ................................ 44
+
+                  Throughput Class ..................................... 45
+
+                  Username ............................................. 45
+
+                  Project Code ......................................... 45
+
+                  Called DTE Address ................................... 46
+
+                  IRC Reported by Gateway .............................. 46
+
+                  Charge Location ...................................... 47
+
+                  Access ............................................... 47
+
+                  Gateway Session Number ............................... 48
+
+                  Calling DTE Address .................................. 48
+
+                  Originating Physical Port Number ..................... 48
+
+                  MPVC Sessions ........................................ 49
+
+                  MPVC Sessions Aggregate Time ......................... 49
+
+                  Terminal Address (Extended) .......................... 49
+
+                  Originating Physical Port Type ....................... 49
+
+                  Filler ............................................... 50
+
+                  Flags ................................................ 50
+
+                  Carriage Return ...................................... 50
+
+               Secondary Session Record Data ........................... 51
+
+                  Record Type .......................................... 51
+
+                  Origination Input Packet Count ....................... 51
+
+                  Origination Output Packet Count ...................... 51
+
+                  Origination Input Segment Count ...................... 51
+
+
+
+                                                                   Page iii
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                  Origination Output Segment Count ..................... 51
+
+                  Destination Input Packet Count ....................... 52
+
+                  Destination Output Packet Count ...................... 52
+
+                  Destination Input Segment Count ...................... 52
+
+                  Destination Output Segment Count ..................... 52
+
+                  Transit Network Count ................................ 53
+
+                  Transit DNIC List .................................... 53
+
+                  DATAPAC Tariff Class ................................. 53
+
+                  Called DTE Address ................................... 53
+
+                  IRC Reported by Gateway .............................. 54
+
+                  Charge Location ...................................... 54
+
+                  Access ............................................... 54
+
+                  Gateway Session Number ............................... 55
+
+                  Calling DTE Address .................................. 55
+
+                  Filler ............................................... 55
+
+                  Flags ................................................ 55
+
+                  Carriage Return ...................................... 56
+
+               Blank Session Record Data ............................... 56
+
+                  Record Type .......................................... 56
+
+                  Filler ............................................... 56
+
+                  Carriage Return ...................................... 56
+
+               Types of Interfaces ..................................... 57
+
+                  TYMSAT-to-TYMCOM Interface (other than X.25) ......... 57
+
+                  TYMSAT-to-X.25 Interface (or X.75 gateway) ........... 57
+
+
+
+                                                                    Page iv
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                  X.25-to-TYMCOM Interface ............................. 58
+
+                  X.25-to-X.25 Interface ............................... 58
+
+                  TYMSAT-to-ISIS-Kernel Interface ...................... 58
+
+            Appendix A, RESTRICTED COMMANDS ............................ 59
+
+            Appendix B, RAM TYMFILE DEFINITION ......................... 62
+
+            Appendix C, SAMPLE RAM TYMFILE ............................. 68
+
+            Appendix D, RAM SYSTEM MESSAGES ............................ 70
+
+            Appendix E, COMMAND TABLE .................................. 74
+
+            INDEX ...................................................... 76
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                     Page v
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                                      CHAPTER ONE
+
+
+            OVERVIEW            ________
+
+            The  Raw Accounting  Merger (RAM)  program collects  accounting
+            information from network Supervisors, assembles the information
+            into session records, and writes them on magnetic tape.
+
+            Each  Supervisor writes  accounting information  to a  circular
+            file on a disk, which can store  data for at least several days
+            before earlier data  is overwritten.  It is  important that RAM
+            retrieve the data before it is overwritten.
+
+            To collect accounting data,  RAM builds a circuit  to each net-
+            work Supervisor and  starts the ACCOUNT program.   ACCOUNT is a
+            Supervisor slave program with read-only access to the disk file
+            on which the Supervisor writes the accounting information.  RAM
+            instructs the ACCOUNT slave program to send it accounting data,
+            one block at  a time.  If  a network  has more than  one Super-
+            visor, RAM collects the stored data in chronological order.
+
+            RAM consolidates  the accounting  information it  collects from
+            the Supervisors into session records.  A typical session record
+            includes such information as login time, logout time, input and
+            output octet counts, username, and  origin and destination node
+            numbers.  RAM then writes the session records to tape.
+
+
+            RAM Tapes            _________
+
+            RAM may be configured for one or two tape units.  In a one unit
+            configuration, the unit is assigned unit 0.  In a two unit con-
+            figuration, the units are 0 and 1.  The number of tape units is
+            specified at system generation.
+
+            The operation of the tape units  and tapes is controlled by the
+            Attach  and Tape  commands (see  Chapter  Two, Commands).   The
+            state of  the tape  units and the  status of  the tapes  may be
+            determined with the Status command.
+
+            The information  stored on the RAM  tapes is formatted  to ANSI
+            standards to be compatible with  the widest possible variety of
+            machines on which the information  might be processed.  Whether
+            the ASCII data  stored on the tape is written  with mark parity
+            or space parity is specified at system generation.
+
+
+
+
+                                                         OVERVIEW    Page 1
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Each RAM tape begins with an ANSI standard volume label (VOL1),
+            which contains  owner identification  and a  serial number  for
+            tape identification.  These are specified  using the Label com-
+            mand.  If the  Label command is not entered,  the serial number
+            will be filled  with ASCII zeros; the remaining  fields will be
+            filled with blanks.
+
+            One or  more files follow the  VOL1 label.  Each  file contains
+            the following in this sequence:
+
+              1. Two header labels (HDR1 and  HDR2) containing file identi-
+                 fication information, creation/expiration dates,  and sys-
+                 tem code.  The Label command  permits you to specify these
+                 fields.  If unspecified, the fields are set to blank.
+
+              2. Tape mark.
+
+              3. Logical session  records, each containing  240 characters.
+                 A file may contain up to 256 primary session records.  The
+                 format  of the  records  is  described in  detail  Chapter
+                 Three, Session Record Data.  The number of logical records
+                 in a  physical record  is specified  at system  generation
+                 using the TAPBLK macro call parameter (see Appendix C, RAM
+                 Tymfile Definitions).  The physical  records are separated
+                 by inter-record gaps.
+
+              4. Tape mark.
+
+              5. End of file label (EOF1).
+
+              6. Tape mark.
+
+            If RAM finds that the last  logical record in a physical record
+            is the  first record  of a multiple  session record  (a primary
+            session record  followed by  a secondary  session record),  the
+            last logical record is  written as a blank  session record con-
+            taining 239 blanks and a carriage return char.  The multi-
+            ple session record then begins the next block written to tape.
+
+            The last file  written on the tape ends with  two adjacent tape
+            marks.  The second tape mark is  overwritten when the next file
+            is written to tape.
+
+            For a more detailed description of  the format of ANSI standard
+            tapes, refer  to IBM Systems  Reference Library manual  OS Tape                                                                    _______
+            Labels or  to American National  Standard Magnetic  Tape Labels            ______        _________________________________________________
+            for Information Interchange, X3.27 - 1969.            _________________________________________
+
+
+
+                                                         OVERVIEW    Page 2
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Login            _____
+
+            Valid usernames  and user privilege  levels are  assembled into
+            RAM at system  generation.  Any valid username may  be used for
+            logging in, and  several users may be  logged in to RAM  at the
+            same time with the same username.  If the username specified at
+            login has  not been assembled  into RAM, the  following message
+            will be displayed and the circuit will be terminated:
+
+                 LOGIN NOT ACCEPTED BY RAM, USERNAME UNRECOGNIZED
+
+            RAM accepts logins without interrupting  normal accounting pro-
+            cesses.  To log in to RAM, enter
+
+                 username;password
+
+                       or
+
+                 username:host number;password
+
+            The colon (:) and  the host number need not be  entered if your
+            default host number is RAM's host number.
+
+            When you first  log in, RAM displays the name  RAM, the current
+            version number, and an asterisk (*).   The asterisk is the sys-
+            tem prompt.  At  that point, you may enter  commands.  Also, if
+            you have privileged status, the username  of the current privi-
+            leged  user  will be  displayed  after  the version  number  if
+            another user with privileged status is currently logged in.
+
+            At login,  if you are the  only user with privileged  or system
+            programmer status logged in, the message
+
+                 YOU ARE THE PRIVILEGED USER
+
+            will be displayed at your terminal.
+
+            RAM commands are  divided into three status  levels:  nonprivi-
+            leged, privileged, and restricted.   Nonprivileged commands may
+            be used by all valid RAM users to request basic system informa-
+            tion.  Privileged commands may be used by RAM users with privi-
+            leged or restricted status to alter the status of RAM, its tape
+            units, or its  tapes.  Restricted commands may be  used only by
+            system programmers for debugging.
+
+            To prevent two users from  entering conflicting privileged com-
+            mands  simultaneously  (e.g.,  Pause and  Run,  or  Attach  and
+
+
+
+                                                         OVERVIEW    Page 3
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Detach), only one user with privileged or restricted status may
+            use the  privileged or restricted  commands at any  given time.
+            This user is called the privileged user.
+
+            Note the  distinction between privileged status  and privileged
+            user.  The first  user with privileged or  restricted status to
+            log in to RAM  when no other user with either  status is logged
+            in  is the  privileged user.   Other users  with privileged  or
+            restricted status may log in to  RAM while that privileged user
+            is logged in, but they may use only the nonprivileged commands.
+
+            It is possible for a user  with privileged or restricted status
+            to obtain privilege  from the current privileged  user with the
+            Grab command.   The Grab command should  be used only if  it is
+            necessary  to  perform  a  crucial  operation  that  cannot  be
+            delayed.  Try  to contact  the current  privileged user  before
+            using the Grab command.
+
+            If you are not the privileged user and you try to enter a priv-
+            ileged command, RAM ignores  the command and displays  the mes-
+            sage
+
+                 YOU ARE NOT THE PRIVILEGED USER
+
+            If you  are not  a system  programmer and  you try  to enter  a
+            restricted command,  RAM ignores the  command and  displays the
+            message
+
+                 THIS IS A RESTRICTED COMMAND
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         OVERVIEW    Page 4
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Command Format and Syntax            _________________________
+
+            The following notations are used in this manual to describe the
+            command syntax:
+
+                 UPPERCASE   Show  the minimum  segment of  the command  or
+                 CHARACTERS  parameter required  to define  the command  or
+                             parameter.
+
+                 lowercase   Show variable or optional entries.
+                 characters
+
+                 [ ]         Enclose a  list of  parameter options,  one of
+                             which must be chosen.   The brackets are never
+                             entered as part of the command.
+
+                 |           Represents  an  "or" choice  between  optional
+                             parameters.  It  is never  entered as  part of
+                             the command.
+
+            The command  word (RUN,  PAUSE, TAPE,  etc.) is  followed by  a
+            space and the parameter, or, if there are no parameters, a car-
+            riage return.  Commands may be entered  using uppercase or low-
+            ercase characters.  RAM responds to invalid commands or parame-
+            ters with a question mark (?) and repeats the command.
+
+            Commands that require one or more  parameters may be entered in
+            two ways.  The first is to enter the command followed by a car-
+            riage return.   RAM will  prompt for  each required  parameter.
+            The prompt consists of the parameter  name followed by an equal
+            sign (=).   At each prompt, enter  a value appropriate  to that
+            parameter.  RAM will return to the asterisk (*) prompt when all
+            required parameters have  been entered and any  output has been
+            displayed.
+
+            The second way is to enter the command, a space, and the param-
+            eter(s).  If  more than one parameter  is to be specified  on a
+            command line, the parameters must be separated by commas but no
+            spacese status is correct, the operator can indicate that the drive
+has been turned off and if this has not been done, the program will not 
+proceed.
+
+The SAVEP command can be shortened to SP though this is not in the help list.
+
+
+LOADC                         LOAD CRASHED CODE FROM DISK
+
+
+The LOADC command is used to load crashed slot code from disk into a 
+backup engine where a LOADII dump will be taken.  An INF dump using the
+program will also be run on this node.
+
+The LOADC command also builds it's own circuit to any PDP-10 system to
+locate the slot NIB file so it is not necessary that the NIB file be located
+on the system where the dump is being run.  The LOADC command is the simplest
+of the four and there are no special options included.
+
+The LOADC command may be shortened to LC.  This is not in the help listing.
+
+
+SAVEC                         SAVE CRASHED CODE TO DISK
+
+
+The SAVEC command is used to save a slot crash to disk so that the disk may
+be moved to another node and the dumps taken without interfering with the
+host.  This function works closely with the INF command.
+
+The SAVEC command is responsible for renaming any old existing dump files
+to a standard naming convention which will be Dnnnn.INF or Dnnnn.BKx where
+nnnn isp ?                                                               7¤   pº      K
+ØCRMEMOACTO CREDIT INVOICE 299529          DATED 7/31/82                     CANCELLED 7/31/82                                                       7%   mÔ      K
+ØCRMEMOACTO CREDIT INVOICE 286425          DATED 4/30/82                     SALE EFFEC. 12/1/81                                                     7¥  I'      K
+ØCRMEMOACTO CREDIT INVOICE 300861          DATED 7/31/82                     PURCHASE EFFEC. 7/1/82                                                  7&   n¥      K
+ØCRMEMOACTO CREDIT INVOICE 293753          DATED 6/30/82     x ?                     PURCHASE EFFEC. 7/1/82                                                  7¦   n¤      K
+ØCRMEMOACTO CREDIT INVOICE 293871          DATED 6/30/82                     CANCELLED 6/30/82                                                       7'   n¬      K
+ØCRMEMOACTO CREDIT INVOICE 300912          DATED 7/31/82                     CANCELLED EFFEC. 6/30/82          BYK                               A   7§  §      K
+ØCRMEMOACTO CREDIT INVOICE 282558          DATED 3/31/82                     SALE EFFEC. 12/1/81                                                     7(  I§      K
+ØCRMEMOACTO CREDIT INVOICE 2788sed to delete the current line and return to the
+            asterisk (*)  prompt.  RAM ignores  the current input  line and
+            displays
+
+                  ESCAPE !!
+                 *
+
+            at your terminal.
+
+            The control-Q is used to delete  the current line.  RAM ignores
+            the current line and repeats  the current prompt.  This applies
+            while entering a  command name at an asterisk  prompt and while
+            entering a value at a parameter  prompt.  Note that a control-Q
+            entered at a parameter prompt does not return you to the aster-
+            isk prompt; it causes the parameter prompt to be repeated.
+
+            The  control-A or  control-H may  be  used to  delete the  most
+            recent  character(s) entered.   If  control-A  is entered,  the
+            deleted character(s) will  be echoed at your  terminal, one for
+            each control-A  entered.  If control-H  is entered,  the cursor
+            will backspace  one character for  each control-H  entered.  If
+            the number  of control-A's or  control-H's entered  exceeds the
+            number  of  characters  originally  entered,  RAM  repeats  the
+            prompt.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         OVERVIEW    Page 7
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                                      CHAPTER TWO
+
+
+            COMMANDS            ________
+
+            This section describes RAM commands used by network operators.
+
+
+            Nonprivileged Commands            ______________________
+
+            The nonprivileged RAM commands  are primarily for informational
+            purposes.  They allow you  to check the status  of RAM process-
+            ing, print  a list  of current  error or  exception conditions,
+            display a  list of valid  commands, and terminate  the session.
+            The commands  are listed  in alphabetical  order.  You  may use
+            these commands regardless of your user status.
+
+
+            Exit Command            ____________
+
+            Syntax:  Exit
+
+            This command terminates  your RAM session.  Other  users logged
+            in to RAM are not affected.
+
+            Example:
+
+                 *exit
+
+                 PLEASE LOG IN:
+
+
+            Help Command            ____________
+
+            Syntax:  Help
+
+            This  command  displays a  list  of  valid RAM  commands.   The
+            resulting list will include only  those commands appropriate to
+            your status level.
+
+            Example:
+
+                 *help
+                 VALID RAM COMMANDS ARE:
+                 EXIT
+                 HELP
+                 PROFILE
+                 STATUS
+
+
+                                                         COMMANDS    Page 8
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The following commands are also  displayed if you are currently
+            the privileged user:
+
+                 Coldstart
+                 Warmstart
+                 Attach
+                 Detach
+                 Label
+                 Tape
+                 Drain
+                 Grab
+                 Pause
+                 Resetprofile
+                 Run
+                 Setblock
+                 Slave
+
+            The following  commands are also  displayed if you  have system
+            programmer status and if you are currently the privileged user:
+
+                 Dump
+                 Print
+
+                 *
+
+
+            Profile Command            _______________
+
+            Syntax:  PROfile
+
+            RAM displays a  list of status, error,  and exception condition
+            messages related to  its tape or disk units.   All messages are
+            cleared at system initialization or following a coldstart.  The
+            Resetprofile command  may be used  to clear all  messages while
+            RAM is running.
+
+            The following  list shows  messages that  may be  displayed.  A
+            brief explanation  of each  message follows  the message.   The
+            device responsible for the message is indicated in parentheses.
+            Messages that  represent serious  error conditions  are flagged
+            with an exclamation point (!).  The spaces between the exclama-
+            tion point  and the  start of  the error  message indicate  the
+            importance of the message.  The  less the indentation, that is,
+            the nearer the  message is to the left margin,  the greater its
+            importance.
+
+
+
+
+
+                                                         COMMANDS    Page 9
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            !DISK ACC NOT ALLOWED  (Disk Unit) Disk  protection caused  the
+            failure of a read, write, or attach operation.
+
+            !  DISK ADD ERROR  (MSC-1400 Disk Controller) During a  read or
+            write  operation, the  disk controller  read an  identification
+            field and the address it contained  did not match the specified
+            target address.
+
+            !DISK ATT BUT WR PROT  (Disk Unit)  The disk  was  successfully
+            attached, but it is write protected.
+
+            !DISK ATT TO ANOTHER SLOT  (Disk Unit) The  requested disk  was
+            attached to a slot other than the one in which RAM is running.
+
+            !DISK BAD CYL ADD  (Disk Unit) A  problem in the  Kernel tables
+            caused  the cylinder  address of  the virtual  block number  to
+            overflow past the end of volume.
+
+            !DISK BAD MEM ACC  (Disk Unit)  An  invalid memory  access  was
+            attempted.
+
+            !  DISK BAD SEC  (MSC-1400 Disk Controller)  During a  read  or
+            write  operation, the  disk controller  read an  identification
+            field that had an invalid sector bit set.
+
+            !  DISK BSY  (MSC-1400 Disk Controller) The  target disk  drive
+            was busy (held by another controller) for more than one second.
+
+            !DISK CYL OVERFLOW  (Disk Unit)  An invalid  cylinder  overflow
+            indicator was detected.
+
+            !  DISK DATA ERR  (MSC-1400 Disk Controller)   During  a   read
+            operation, the  disk controller read a  data field that  had an
+            uncorrectable Error Checking and Correction (ECC) error.
+
+            !DISK DEF SEC IN ALT CYL  (Disk Unit)  A defective  sector  was
+            detected on the alternative cylinder.
+
+            !DISK DEF SEC, ALT CYL ASSIGN  (Disk Unit)  A defective  sector
+            was detected on the primary cylinder, and an alternate cylinder
+            was assigned.  Some data may be lost if this occurs.
+
+            !DISK DEF SEC, NO ALT CYL  (Disk Unit) A  defective sector  was
+            detected on the  primary cylinder, and no  alternative cylinder
+            was available.
+
+
+
+
+
+                                                        COMMANDS    Page 10
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            !DISK DEV UNAVAIL  (Disk Unit) The requested disk  unit was not
+            available.
+
+            !  DISK DRIVE FAULT  (MSC-1400 Disk Controller)  A  disk  drive
+            fault was  detected.  Normally, this  will be corrected  by the
+            system.
+
+            !DISK ERR - CONT  (Disk Unit) The  disk controller  reported an
+            error (e.g.,  a data  transfer error)  during a  read or  write
+            operation.
+
+            !DISK ERR - UNIT  (Disk Unit) The  disk unit reported  an error
+            (e.g., a seek error).
+
+            !DISK ERR RECOVERY  (Disk Unit)  The  disk  unit  performed  an
+            error recovery routine.
+
+            !  DISK ID ECC ERR  (MSC-1400 Disk Controller) During a read or
+            write  operation, the  disk controller  read an  identification
+            field that had an ECC error.
+
+            !DISK MAP BAD  (Disk Unit) The cylinder maps for the disk could
+            not be read.
+
+            !DISK NO ACC TO UNIT  (Disk Unit) Access  to a  disk unit  that
+            RAM attempted to attach was denied.
+
+            !  DISK NOT RDY  (MSC-1400 Disk Controller)  The   target  disk
+            drive was not  ready.  This condition can occur  when the heads
+            are not loaded or if there is a disk drive fault.
+
+            !  DISK NOT SEL  (MSC-1400 Disk Controller)   Either  no   disk
+            drive or more than one disk drive responded to a request.
+
+            !DISK OP ABORT BY QUIT CHAR  (Disk Unit)  A  Dynamic  Debugging
+            Tool (DDT) quit character caused a disk operation to abort.
+
+            !DISK OP IGNORED  (Disk Unit) An operation not appropriate to a
+            disk unit was attempted and ignored.
+
+            !  DISK PROT SEC  (MSC-1400 Disk Controller)  During   a  write
+            operation,  the disk  controller read  an identification  field
+            that had a protected sector bit set.
+
+            !  DISK RD ONLY  (MSC-1400 Disk Controller)   During  a   write
+            operation, the target disk drive had the read-only switch set.
+
+
+
+
+                                                        COMMANDS    Page 11
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            !DISK REQ BYTE CNT 0 OR ODD  (Disk Unit)  The   requested  byte
+            count was zero or odd.
+
+            !  DISK SEEK ERR  (MSC-1400 Disk Controller) A disk  seek error
+            was detected.  Normally, this will be corrected by the system.
+
+            !DISK SEL CHAN TIMEOUT  (Disk Unit)  The selector  channel  did
+            not respond within the required interval.
+
+            ! DISK SYS FAULT  (MSC-1400 Disk Controller) The  ISIS  shared-
+            device handler detected a disk system fault.
+
+            !DISK VIRT BLK NO. OUT OF AREA  (Disk Unit) The requested  vir-
+            tual block number was outside the allowed area.
+
+            !DISK WR PROT  (Disk Unit)  The  disk  could  not  be  attached
+            because it is write protected.
+
+            TAPE AT BOT  (Tape Unit) The beginning-of-tape mark was encoun-
+            tered.
+
+            TAPE AT BOT OR EOT  (Tape Unit) The tape reached the beginning-
+            of-tape or end-of-tape mark.
+
+            !TAPE ATT BUT VOL IS WR PROT  (Tape Unit)  The  tape  unit  was
+            successfully attached  but cannot be  written on because  it is
+            write protected.
+
+            !TAPE ATT TO ANOTHER SLOT  (Tape Unit) The requested  tape unit
+            is attached to a slot  other than the one in which  RAM is run-
+            ning.
+
+            !TAPE ATTEMPT TO WR ON WR PROT VOL  (Tape Unit)  An attempt  to
+            write on a  tape was  rejected because the  tape is  write pro-
+            tected.
+
+            !TAPE BAD MEM ACC  (Tape Unit)  An  invalid memory  access  was
+            attempted.
+
+            !TAPE CON or ESELCH TIMEOUT  (Tape Unit)  The  tape  controller
+            did not respond within the required interval.
+
+            !  TAPE DEV UNAVAIL  (Tape Unit)  The requested  tape unit  was
+            unavailable.
+
+            TAPE EOF DURING RD WR BSP OR SKIP  (Tape Unit) A  tape  end-of-
+            file mark was  encountered during a read,  write, backspace, or
+            skip operation.
+
+
+                                                        COMMANDS    Page 12
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            TAPE EOF DURING WR RD BSP OR SKIP  (Tape Unit) A  tape  end-of-
+            file mark was  encountered during a write,  read, backspace, or
+            skip operation.
+
+            TAPE EOV DURING WR RD OR SKIP  (Tape Unit) A tape end-of-volume
+            mark was encountered during a write, read, or skip operation.
+
+            !TAPE ERR - CONT  (Tape Unit) The  tape controller  reported an
+            error (e.g., data transfer error or parity error) during a read
+            or write operation.
+
+            !TAPE ERR - UNIT  (Tape Unit) The tape unit reported an error.
+
+            TAPE HI DEN SEL  (Tape Unit) High density  was selected (normal
+            selection).
+
+            !  TAPE ILL OP ATTEMPT  (Tape Unit) An  illegal tape  operation
+            was  attempted, that  is,  an erase  or  write  operation on  a
+            write-protected tape.
+
+            !TAPE NO ACC TO UNIT  (Tape Unit) No access was  permitted to a
+            tape unit RAM attempted to attach.
+
+            !TAPE OP ABORT BY QUIT CHARACTER  (Tape Unit) A DDT  quit char-
+            acter caused a tape operation to abort.
+
+            !TAPE OP IGNORED  (Tape Unit) An operation not appropriate to a
+            tape unit was attempted and ignored.
+
+            !    TAPE PARITY ERROR  (Tape Unit) A bad  spot was encountered
+            on the tape.
+
+            !TAPE RD WR ATT PROT FAIL  (Tape Unit)  Tape protection  caused
+            the failure of a read, write, or attach operation.
+
+            !  TAPE RD-WR ERROR OR BAD TAPE ERROR  (Tape Unit)  A  read  or
+            write tape operation encountered a data overrun or error.
+
+            !TAPE REQ BYTE CNT 0 OR ODD  (Tape Unit)  The   requested  byte
+            count was zero or odd.
+
+            !    TAPE TIMING ERROR  (Tape Unit)    The   tape    controller
+            detected a tape speed error.
+
+            !  TAPE WR PROT  (Tape Unit) The tape was write protected.
+
+
+
+
+
+                                                        COMMANDS    Page 13
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Example:
+
+                 *profile
+                 TAPE EOF DURING WR RD BSP OR SKIP
+                 TAPE AT BOT OR EOT
+                 TAPE HI DEN SEL
+                 TAPE AT BOT
+                 !  DISK SEEK ERROR
+                 *
+
+
+            Status Command            ______________
+
+            Syntax:  STatus
+
+            This command displays a RAM status  report, an example of which
+            follows.  The  numbers in parentheses on  the left side  of the
+            example are not part of the report; the explanation of the sta-
+            tus report following  the example references specific  lines of
+            the report using these numbers.
+
+            Example:
+
+            (1) RAM VERSION 10.05 - PAUSED -  17:33:27 JUN 23, 1984
+            (2) RAM HOST NUMBER:  69
+            (3) RAM DISK:  UP
+            (4) COLD START:  0:00:00 JUN 21, 1984
+                WARM START: 12:30:13 JUN 22, 1984
+            (5) BACKUP AT:  17:23:37 JUN 23, 1984
+            (6) RESTART COUNT:  1
+            (7) CIRCUIT COUNT:  4
+            (8) SESSIONS:   256 /   512
+
+            (9) BLOCKING FACTOR:  1
+                UNIT STATE  TAPE   TIME                FILES SEQUENCE ERRORS
+            (10)   0 ONLINE IN USE 12:31:00 JUN 22, 1984 128     7F31      1
+            (11)   1 TAPE UNIT IS NOT ATTACHED TO RAM'S SLOT !!
+
+                   SUP#  RAM  SUP
+                    121 100F 1010 17:10:33 JUN 23, 1984 CAUGHT UP
+                --> 122  C00  FAB 17:00:11 JUN 23, 1984 GOOD DATA RECEIVED
+                    123   BC   BD 17:11:02 JUN 23, 1984 CAUGHT UP
+                    125   NO DATA   ** DISABLED  **
+                    127   NO DATA 00:00:00 JAN  1, 1974
+
+
+
+
+
+
+                                                        COMMANDS    Page 14
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The information in  the status report is  described below.  All
+            dates and times in the report are in Greenwich Mean Time (GMT).
+
+            Line 1 shows  three fields of information.  The  first is RAM's
+            version  number.  The  second is  RAM's  current state,  either
+            Draining, Paused, or  Running (see Drain,  Pause, and  Run Com-
+            mands  for complete  descriptions of  each  state).  The  third
+            field contains the current date and time.
+
+            Line 2 shows the host number.
+
+            Line 3 reflects the status of the RAM disk.  If the disk status
+            is down, RAM's status will be paused.
+
+            Line 4 shows the date and time  of the most recent startup com-
+            mands.  If the  most recent startup  was a coldstart,  no warm-
+            start information  will be  displayed; a  coldstart clears  all
+            history information.
+
+            Line 5 shows the  most recent date and time that  RAM backed up
+            its session pool  to disk.  RAM performs a backup  each time it
+            finishes writing  a file to tape.   If 15 minutes  have elapsed
+            since the last backup, RAM terminates the current tape file and
+            performs a backup.  In addition, the  session pool is backed up
+            when the Pause command  is issued.  This line will  not be dis-
+            played if a backup has not occurred since the last coldstart.
+
+            Line 6 shows  the number of times RAM has  been restarted since
+            the slot was started initially.  The  initial start counts as a
+            restart, so this number will always be one or greater.
+
+            Line 7  shows the total number  of circuits currently  built to
+            ACCOUNT slaves and  to RAM users.  The count  will fluctuate as
+            users log  in and  log out  and as  ACCOUNT slave  circuits are
+            built and terminated.
+
+            Line 8 indicates  the number of session  records currently held
+            in the session  pool and the maximum number  of session records
+            that may be in memory at any given time.
+
+            Line 9 indicates the tape-blocking factor.
+
+            Lines 10 and 11 show the state of  the RAM tape units, the sta-
+            tus of the RAM tapes, the last time the tape unit state or tape
+            status was  changed, the number (in  decimal) of files  RAM has
+            written to tape, the sequence  number (in hexadecimal) assigned
+            to the next session record to be  written to tape, and the num-
+            ber of uncorrectable parity errors for that tape.
+
+
+                                                        COMMANDS    Page 15
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The state of the tape units may be one of the following:
+
+                 TAPE UNIT IS NOT ATTACHED TO RAM'S SLOT !!
+
+            The tape  unit is not  assigned to  RAM.  Loading the  RAM slot
+            will appear  to cause the  RAM tape  units to be  detached.  In
+            this case, the Attach command should be issued again.
+
+                 OFFLINE
+
+            The tape  unit is attached to  RAM.  However, the tape  unit is
+            not online.
+
+                 ONLINE
+
+            The tape unit is  attached to RAM, and the tape  unit is ready.
+            However, the tape on the tape unit may not be ready for use.
+
+
+            The status of the tapes may be one of the following:
+
+                 NOT READY
+
+            The tape unit  is offline.  This message may  also be displayed
+            if the  tape unit is  online, but RAM  was unable to  write the
+            VOL1 label on  the tape.  The tape should be  replaced as there
+            is no valid data on it.
+
+                 DISABLED
+
+            Too many  parity errors were found  on the tape.  The  tape was
+            rewound, and the  tape unit was taken offline.   There is valid
+            data on the tape.
+
+                 FINISHED
+
+            The tape was completed normally.  The tape was rewound, and the
+            tape unit was taken offline.  There is valid data on the tape.
+
+                 READ ONLY
+
+            No  write ring  is  inserted in  the tape.   The  tape unit  is
+            online.
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 16
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                 READY
+
+            The tape is  ready to be written  to by RAM.  A  tape must have
+            this status for  RAM to write accounting data to  it.  Only RAM
+            can promote the tape state from Ready to In Use.  The tape unit
+            is online.
+
+                 IN USE
+
+            RAM is  currently writing to this  tape.  Only one tape  can be
+            designated In Use at any given time.   The tape will be demoted
+            to Finished  when RAM encounters  the end-of-tape marker  or to
+            Disabled if RAM encounters too many  parity errors on the tape.
+            The tape unit is online.
+
+            The remainder of the report displays five columns of RAM infor-
+            mation for  each Supervisor in  the network.  The  first column
+            shows the Supervisor host number.  An  arrow to the left of the
+            column of Supervisors  points to the Supervisor  from which RAM
+            will process data  next.  The second column  contains the block
+            number (in  hexadecimal) of the  accounting block that  RAM has
+            most recently  received.  The third  column contains  the block
+            number (in  hexadecimal) that  the Supervisor  will write  into
+            next.  The notation  NO DATA appears in columns 2 and  3 if RAM
+            has never collected accounting data  from that Supervisor.  The
+            fourth column displays either the  timestamp of the oldest data
+            RAM processed when the most recent accounting data was received
+            from the Supervisor or the message
+
+                 ** DISABLED **
+
+            if the  SLAVE command has  been executed  to signal RAM  that a
+            Supervisor or  its ACCOUNT slave  is down (see  Slave Command).
+            If accounting data  has never been collected  from a Supervisor
+            that is up, then the date of  JAN 1, 1974 is displayed for that
+            Supervisor.   The fifth  column displays,  for each  Supervisor
+            that is not disabled, a message  describing the status of RAM's
+            collecting of  data from the  Supervisor's ACCOUNT  slave.  The
+            following messages may be displayed:
+
+                 BAD CHECKSUM
+
+            The checksum sent by the ACCOUNT slave with an accounting block
+            did not match RAM's checksum of the block.
+
+
+
+
+
+
+                                                        COMMANDS    Page 17
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                 CANNOT BUILD CIRCUIT
+
+            RAM could not build a circuit to  an ACCOUNT slave because of a
+            network failure, and  RAM builds a circuit to  the next ACCOUNT
+            slave.  RAM returns to the unresponsive  ACCOUNT slave at peri-
+            odic intervals and attempts to build a circuit.
+
+                 CAUGHT UP
+
+            RAM has processed all accounting blocks up to but not including
+            the block into which the Supervisor last wrote.  This block may
+            not be complete.
+
+                 CIRCUIT BUILT
+
+            A circuit has been  built to an ACCOUNT slave, but  no data has
+            been received yet.
+
+                 GOOD DATA RECEIVED
+
+            RAM encountered no errors when the most recent accounting block
+            was received from the Supervisor.
+
+                 NORMAL WAIT
+
+            The time required to complete a given process has not elapsed.
+
+                 NOT YET ACCESSED
+
+            RAM has not  yet built a circuit  to an ACCOUNT slave  that was
+            recently declared up with the SLAVE command.
+
+                 TIMEOUT
+
+            A process did not finish within the required interval.
+
+                 UNEXPECTED MESSAGE RECEIVED
+
+            The data  preceding an accounting block  was not in  the proper
+            sequence, and RAM was unable to interpret the block as account-
+            ing data.
+
+                 WAITING FOR CIRCUIT
+
+            RAM has requested a  circuit to an ACCOUNT slave,  but the cir-
+            cuit has not been completed.
+
+
+
+
+                                                        COMMANDS    Page 18
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Privileged Commands            ___________________
+
+            This section describes privileged commands, which permit you to
+            start and  stop RAM processing and  to change the state  of the
+            RAM tape units  and the status of  the RAM tapes.  You  may use
+            privileged commands if you have privileged or system programmer
+            status, and if you are the privileged user.
+
+
+            Attach Command            ______________
+
+            Syntax:  Attach Unit=[0|1],Position=[TMTM|BACK|RW]
+
+            RAM attaches the specified tape unit  to its slot and moves the
+            tape to the specified position.  However, the tape is not actu-
+            ally physically moved until the tape  is promoted to In Use.  A
+            tape is promoted  to In Use after issuing the  Drain command or
+            the Run command.
+
+            The tape unit parameter must be either  zero or one.  The posi-
+            tion parameter must be one of the three codes listed below.
+
+            TMTM  This causes  the tape  to be  positioned at  the pair  of
+                  adjacent tape marks at the end of the last completed file
+                  written on  the tape.  This  parameter is  appropriate if
+                  the  tape  has  been partially  used  and  contains  good
+                  accounting  data.  It  is  also  appropriate if  RAM  was
+                  paused before the Attach command was issued, since only a
+                  pause causes a pair of adjacent  tape marks to be written
+                  on the tape.  This parameter  is recommended if the Print
+                  command is going to be used immediately.
+
+            BACK  This causes  the tape to backspace  to the HDR1  label at
+                  the beginning  of the  current file.   This parameter  is
+                  appropriate if the tape being attached has been partially
+                  used and contains some good  accounting data.  It is also
+                  appropriate if RAM was not paused  before the Attach com-
+                  mand is  issued.  This  might happen  if a  power failure
+                  occurred, preventing you from pausing RAM.
+
+            RW    This causes the tape to be rewound and initialized.  Dur-
+                  ing initialization, RAM  writes the VOL1, HDR1,  and HDR2
+                  labels and  prepares to write  the first tape  file.  Any
+                  existing  data on  the tape  will  be overwritten.   This
+                  parameter is appropriate only for a scratch tape.
+
+
+
+
+
+                                                        COMMANDS    Page 19
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            RAM responds  to the Attach command  with one of  the following
+            messages:
+
+                 TAPE UNIT ATTACHED AND TAPE IS READY
+
+            The tape unit is attached, and the tape is ready to write on.
+
+                 TAPE UNIT ATTACHED BUT TAPE IS NOT READY
+                    (TAPE UNIT IS NOT ONLINE) !!
+
+            The tape unit is attached, but the tape unit is offline.
+
+                 TAPE UNIT ATTACHED AND TAPE IS READ ONLY
+                    (TAPE HAS NO WRITE RING) !!
+
+            The tape unit is attached and online, but the tape has no write
+            ring.
+
+                 TAPE UNIT NOT ATTACHED BECAUSE TAPE UNIT OWNED
+                    BY SLOT nn !!
+
+            The attempt to attach the tape unit is unsuccessful because the
+            tape unit is owned  by another ISIS slot, where nn  is the ISIS                                                            __
+            slot number that has attached the tape unit.
+
+                 TAPE UNIT NOT ATTACHED !!
+
+            The attempt is unsuccessful for any other reason.
+
+            RAM must be paused before the Attach command is entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            Example:
+
+                 *attach unit=0,position=rw
+                 TAPE UNIT ATTACHED AND TAPE IS READY
+                 *
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 20
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Coldstart Command            _________________
+
+            Syntax:  COLDstart
+
+            RAM initializes memory without  reading any history information
+            or session information from disk.  Any data on the disk will be
+            lost the next time a backup is performed.
+
+            RAM acknowledges the Coldstart command by displaying
+
+                 COLDSTART:  RAM SESSION TABLES CLEARED.
+
+            RAM must be paused before the  Coldstart command is entered, or
+            the message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            The  status of  the RAM  tape is  not affected  by a  coldstart
+            unless tape  status was  In Use (see  Status Command).   If the
+            tape status was In Use, the status  of the tape will be changed
+            to Ready.   To reposition the  tape, issue the  Attach command.
+            If the  Run command is  issued, the  tape will be  rewound, and
+            data will be written to the tape.   The state of the tape units
+            is not affected.
+
+            Example:
+
+                 *coldstart
+                 COLDSTART:  RAM SESSION TABLES CLEARED
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 21
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Detach Command            ______________
+
+            Syntax:  DEtach Unit=[0|1]
+
+            RAM releases the specified tape unit  to other ISIS slots.  The
+            tape unit parameter must be zero or one.
+
+            RAM responds  to the Detach command  with one of  the following
+            messages:
+
+                 TAPE UNIT DETACHED
+
+            RAM detached the tape unit successfully.
+
+                 TAPE UNIT NOT DETACHED BECAUSE TAPE UNIT
+                    OWNED BY SLOT nn !!
+
+            The attempt is  unsuccessful because the tape unit  is owned by
+            another ISIS  slot, where nn is  the ISIS slot number  that has                                      __
+            attached the tape unit.
+
+                 TAPE UNIT NOT DETACHED !!
+
+            The attempt is unsuccessful for any other reason.
+
+            RAM must be paused before the Detach command is entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            Example:
+
+                 *detach unit=0
+                 TAPE UNIT DETACHED
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 22
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Drain Command            _____________
+
+            Syntax:  DRain
+
+            RAM  stops collecting  new  accounting  data from  the  ACCOUNT
+            slaves, finishes processing all session  records in memory, and
+            writes them  to tape, even if  they are incomplete.   The Drain
+            command is used before loading a new  version of RAM.  RAM can-
+            not read session or history information  from disk after a dif-
+            ferent version of RAM is loaded.
+
+            RAM acknowledges the Drain command by displaying the message
+
+                 -- DRAINING --
+
+            At least one  tape unit must be  attached to the slot  in which
+            RAM is running.  The tape must have the status Ready or In Use,
+            or RAM pauses.  RAM also pauses if the disk is unavailable when
+            the Drain command  is entered.  The  following message  is dis-
+            played:
+
+                 -- PAUSED --
+                 DISK UNAVAILABLE
+
+            RAM will  pause when  the session  pool has  been drained  com-
+            pletely, and will display the message
+
+                 FINISHED DRAINING SESSION POOL
+                 -- PAUSED --
+
+            Example:
+
+                 *drain
+                 -- DRAINING --
+                 *
+                  FINISHED DRAINING SESSION POOL
+                  -- PAUSED --
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 23
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Grab Command            ____________
+
+            Syntax:  Grab
+
+            This command  makes you the  new privileged user.   Because the
+            Grab command  will take privilege  from the  current privileged
+            user and assign it to you, it  should be used only to perform a
+            crucial  operation that  cannot be  delayed  until the  current
+            privileged user completes his session.  The message
+
+                 name IS NOW THE PRIVILEGED USER !!
+
+            where name indicates  the username grabbing privilege,  is dis-
+            played at the terminal of the  user losing privilege.  The mes-
+            sage
+
+                 name IS NO LONGER THE PRIVILEGED USER
+
+            where name indicates  the user who is no  longer the privileged
+            user, is displayed at the terminal  of the user grabbing privi-
+            lege.
+
+            If you enter the Grab command  and you are the privileged user,
+            both messages are displayed and  your privileged user status is
+            unchanged.
+
+            When two users with privileged status are logged in and the one
+            who is the privileged user logs out, the other user with privi-
+            leged status  must execute the Grab  command to become  the new
+            privileged user.  RAM will display the message
+
+                 YOU ARE THE PRIVILEGED USER
+
+            at the terminal of the new privileged user.
+
+            If the Grab command is unsuccessful, the message
+
+                 name UNABLE TO COMPLETE GRAB !!
+
+            where name indicates the user trying to grab privilege, is dis-
+            played at the terminal of the user trying to grab privilege.
+
+            If a user with operator status issues the Grab command the mes-
+            sage
+
+                 YOU DO NOT HAVE PRIVILEGED STATUS
+
+            will be displayed at his terminal.
+
+
+                                                        COMMANDS    Page 24
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Example:
+
+                 *grab
+                 USER1 IS NO LONGER THE PRIVILEGED USER
+                 *
+
+
+            Label Command            _____________
+
+            Syntax:
+            Label Volume=vvvvvv,Owner=owner,Date=yyddd,File=file,System=sys
+
+            RAM  writes  the specified  information  to  tape in  the  tape
+            labels.  The volume  and owner parameters are part  of the VOL1
+            label that is  recorded at the beginning of each  tape.  When a
+            tape is in use, the date,  file identification, and system code
+            will be written to the beginning of each file as HDR1 and HDR2.
+
+            If the Label command is not entered, RAM sets the volume serial
+            number to ASCII  zeros and the remaining  parameters to blanks.
+            The following are the parameters and their formats:
+
+            vvvvvv  Specifies the  tape serial number  and may  contain six
+                    alphanumeric characters.  If fewer  than six characters
+                    are entered, they  are left justified, and  the rest of
+                    the field is padded with ASCII zeros.
+
+            owner   Specifies the tape  owner and  may contain  14 alphanu-
+                    meric  characters.  If  fewer  than  14 characters  are
+                    entered, they are  left justified, and the  rest of the
+                    field is padded with blanks.
+
+            yyddd   Specifies the  tape creation  date.  The  ANSI standard
+                    requires that the date be  entered in the format yyddd,
+                    where yy  is the last two  digits of the  current year,
+                    and ddd is the Julian date.
+
+            file    Specifies the file identification  code and may contain
+                    17 alphanumeric characters.   If fewer than  17 charac-
+                    ters are entered, they are left justified, and the rest
+                    of the field is padded with blanks.
+
+            Sys     Specifies the system  identification code and  may con-
+                    tain  13 alphanumeric  characters.   If  fewer than  13
+                    characters are  entered, they  are left  justified, and
+                    the rest of the field is padded with blanks.
+
+
+
+
+                                                        COMMANDS    Page 25
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            None of the parameters may contain embedded blanks.  If a blank
+            is entered, RAM accepts all characters up to the blank and dis-
+            cards the rest.
+
+            Again, to avoid exceeding the maximum allowed line length of 63
+            characters, let RAM prompt for each  parameter rather than try-
+            ing to string the parameters together on the command line.
+
+            If you respond to any of  the parameter prompts with a carriage
+            return, RAM will  use values set by the  previous Label command
+            for that parameter.
+
+            RAM must be paused before the  Label command is entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            Check with your operations manager to determine what values the
+            host  computer that  will  process the  tapes  requires in  the
+            parameter fields.
+
+            Example:
+
+                 *label
+
+                 VOLUME=840621
+
+                 OWNER=netacctg
+
+                 DATE=84173
+
+                 FILE=netacctg84jun21
+
+                 SYSTEM=vm370
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 26
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Pause Command            _____________
+
+            Syntax:  PAuse
+
+            RAM stops collecting  new accounting data, terminates  the cur-
+            rent tape file  (even though it may not contain  the maximum of
+            256 primary  sessions), and  writes all  completed sessions  in
+            memory to disk.
+
+            RAM responds to the Pause command with the message
+
+                  -- PAUSED --
+
+            RAM remains paused until you enter the Run command.  A pause is
+            forced if  neither tape is  Ready or In Use  at the time  a Run
+            command is entered.
+
+            Example:
+
+                 *pause
+                 -- PAUSED --
+                 *
+
+
+            Resetprofile Command            ____________________
+
+            Syntax:  REsetprofile
+
+            This command clears the messages displayed  by the Profile com-
+            mand.  If the condition that  initially caused an error message
+            still exists,  RAM will  display the  associated message  again
+            when the Profile command is entered.
+
+            Example:
+
+                 *resetprofile
+
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 27
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Run Command            ___________
+
+            Syntax:  RUn
+
+            RAM resumes normal  data collection and processing  following a
+            Pause, Drain, Coldstart, or Warmstart command.
+
+            RAM acknowledges the Run command with the message
+
+                  -- RUNNING --
+
+            At least  one tape unit  must be attached  to the ISIS  slot in
+            which RAM  is running when the  Run command is entered,  or RAM
+            pauses.  Also, the tape unit state must be Online, and the sta-
+            tus of the  tape must be Ready or In Use  (see Status Command).
+            Therefore, you must  enter the Attach command  before you enter
+            the Run command.
+
+            In addition, if the disk is unavailable when the Run command is
+            entered, a pause is  forced, and the following  message is dis-
+            played:
+
+                 -- PAUSED --
+                 DISK UNAVAILABLE
+
+            Example:
+
+                 *run
+                 -- RUNNING --
+                 *
+
+
+            Setblock Command            ________________
+
+            Syntax:  SEtblock Supervisor=sss,Block=bbbb
+
+            RAM begins collecting accounting data from the specified Super-
+            visor at  the specified block number.   The parameter sss  is a                                                                  ___
+            3-digit decimal Supervisor host number, and bbbb is a hexadeci-                                                        ____
+            mal block number of four or  fewer digits.  Both parameters are
+            mandatory.
+
+            RAM acknowledges the Setblock command with the message
+
+                 BLOCK NUMBER bbbb TO BE COLLECTED NEXT FROM SUPERVISOR sss
+
+
+
+
+
+                                                        COMMANDS    Page 28
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The message
+
+                 MAXIMUM BLOCK NUMBER ALLOWED IS nnnn !!
+
+            is displayed if  the specified block number is  too large.  The
+            value nnnn  is the number defined  by the macro  call parameter                  ____
+            MXBLK (see  the Maximum Block  Number parameter in  Appendix B,
+            RAM Tymfile Definitions).
+
+            This command  overrides RAM's determination  of the  next block
+            number to be  processed.  If the block number  pointer is moved
+            forward, data in  the intervening area of  the ACCOUNT circular
+            file will not be collected.
+
+            Typically, this command  is required after a  PROBE user issues
+            the Accounting File Initialization (INITA) command to clear and
+            initialize the accounting file on  a Supervisor disk.  Refer to
+            the PROBE Reference Manual.  The block  number should be set to                ______________________
+            zero when this occurs.
+
+            RAM must be  paused before the Setblock command  is entered or,
+            the message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed,  and the  command is  ignored.  In  addition, the
+            specified Supervisor  must be declared  up (see  Slave Command)
+            for the Setblock command to be accepted.  Otherwise the message
+
+                 CANNOT USE THIS COMMAND, SUPERVISOR IS DISABLED !!
+
+            is displayed, and the command is ignored.
+
+                                        CAUTION                                        _______
+
+                 This  command  is  powerful and  must  be  used  with
+                 extreme caution.   If the Setblock command  is issued
+                 for an accounting block that  has been collected, the
+                 data may be written to tape as an incomplete session.
+                 The Coldstart  command must  be issued  to clear  the
+                 table RAM uses to track collected session records.
+
+            Example:
+
+                 *setblock supervisor=121,block=200
+                 BLOCK NUMBER 200 TO BE COLLECTED NEXT FROM SUPERVISOR 121
+                 *
+
+
+
+                                                        COMMANDS    Page 29
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Slave Command            _____________
+
+            Syntax:  SLave [Up|Down]=nnn
+
+            This command informs  RAM that the specified  Supervisor number
+            nnn (or its  ACCOUNT slave) is up or down.   Each Supervisor in            ___
+            the network  is considered  up by RAM  until the  Slave command
+            declares  it down.   Once a  Supervisor is  declared down,  RAM
+            stops trying  to build  a circuit to  the ACCOUNT  slave.  This
+            prevents RAM from continuously attempting to build a circuit to
+            an ACCOUNT slave that has accounting data but that is currently
+            unavailable.  RAM  will not attempt to  build a circuit  to the
+            specified Supervisor until it is declared up again.
+
+            Several up and down parameters may  be put on one command line.
+            However, if the  same Supervisor number is  specified more than
+            once, only the  last occurrence of  that number will  be recog-
+            nized.  All previous occurrences will be ignored.
+
+            Example:
+
+                 *slave up=121,down=122,down=121
+                 *
+
+            In this  example, Supervisor  121 was  first declared  up, then
+            declared down later in the same command line.  The first occur-
+            rence of the number 121 will  be ignored, and RAM will consider
+            Supervisor 121 down until the Slave command is entered again to
+            declare Supervisor 121 up.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 30
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Tape Command            ____________
+
+            Syntax:  Tape Unit=[0|1],Count=nn,Operation=[RR|BR|AF|BF|EF|RW]
+
+            RAM performs the specified tape operation.   The tape unit num-
+            ber must be 0 or 1.  The value nn indicates the number (in dec-                                           __
+            imal) of times the operation is to be performed.  The operation
+            parameter must be one of the following 2-character codes:
+
+                 RR  Read Record.  This advances the  tape by the number of
+                     records specified in the count parameter.
+
+                 BR  Backspace Record.   This backspaces  the  tape by  the
+                     number of records specified in the count parameter.
+
+                 AF  Advance File.  This advances the tape by the number of
+                     files specified in the count parameter.
+
+                 BF  Backspace File.   This backspaces the tape  the number
+                     of files specified in the count parameter.
+
+                 EF  Write End-of-File.  This writes  at  the current posi-
+                     tion the number  of tape marks specified  in the count
+                     parameter.
+
+                 RW  Rewind tape.  This rewinds the  tape to the VOL1 label
+                     at the start  of the tape.  The  count parameter value
+                     for this operation should always be 1.
+
+            The VOL1, HDR1, HDR2, and EOF1 labels each count as one record,
+            as does a tape mark.  In addition,  there will be multiple ses-
+            sion records in a tape record if the output is blocked.
+
+            With the exception of the rewind operation, RAM responds with
+
+                 TAPE OPERATION COMPLETED
+
+            RAM responds to the rewind operation with the message
+
+                 TAPE REWIND INITIATED
+
+            RAM will not issue a message when  the rewind operation is com-
+            pleted.
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 31
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The tape unit must be attached to the slot in which RAM is run-
+            ning, the tape unit state must be Online, and the status of the
+            tape must be Read Only, Ready, or In Use.  However, if the tape
+            operation parameter  is set  to EF, the  tape status  cannot be
+            Read Only.  If it is, the following message is displayed:
+
+                 TAPE UNIT ATTACHED AND TAPE IS READ ONLY
+                    (TAPE HAS NO WRITE RING) !!
+
+            RAM must be  paused before the Tape command is  entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            Examples:
+
+                 *tape unit=0,count=1,operation=rw
+                 TAPE REWIND INITIATED
+
+                 *tape unit=0,count=1,operation=af
+                 TAPE OPERATION COMPLETED
+                 *
+
+
+            Warmstart Command            _________________
+
+            Syntax:  WARMstart
+
+            RAM reads  the history and  session information stored  on disk
+            into memory  when performing  a warmstart.   Incomplete session
+            records will be processed along with new data received from the
+            ACCOUNT slaves.
+
+            RAM acknowledges the Warmstart command with the message
+
+                 WARMSTART:  RAM DISK BACKUP RELOADED.
+
+            RAM must be paused before the  Warmstart command is entered, or
+            the message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+
+
+
+
+                                                        COMMANDS    Page 32
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            RAM tape status is not affected by  a warmstart unless the sta-
+            tus is  In Use (see  Status Command).  If  the tape  status was
+            In Use, the status  of that tape will be changed  to Ready.  To
+            reposition the tape, you must issue the Attach command.  If the
+            Run command is issued, the tape  will be rewound, and data will
+            be written to  that tape.  The state  of the tape units  is not
+            affected by a warmstart.
+
+            If the version and revision number of  RAM backed up to disk is
+            not the same  as the  version and revision  number of  RAM cur-
+            rently running, a coldstart will be forced.
+
+            Example:
+
+                 *warmstart
+                 WARMSTART:  RAM DISK BACKUP RELOADED
+                 *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        COMMANDS    Page 33
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                                     CHAPTER THREE
+
+
+            SESSION RECORD DATA            ___________________
+
+            There are three  types of RAM session  records: primary session
+            records, secondary session records,  and blank session records.
+            A primary session record contains all  the accounting data com-
+            mon to all types of circuits.   A primary session record exists
+            for each circuit built within the network.  A secondary session
+            record will  be present only  if an  X.25 or X.75  interface is
+            involved in  the  circuit,  and it  will appear  on RAM's  tape
+            immediately following the primary session  record with which it
+            is associated.  A  blank session record is used to  pad a block
+            that does not have enough room for a primary session record and
+            a secondary session record.  As a result, both the primary ses-
+            sion record and  the secondary session record  will be recorded
+            in the next block on the tape  unless the blocking factor is 1.
+            Blank session  records are  also used  to pad  blocks when  the
+            Drain command is issued.
+
+            The sections titled Primary Session Record Data, Secondary Ses-
+            sion Record  Data, and Blank  Session Record Data  describe the
+            three types of session records.   Each of these session records
+            contains 240  eight-bit ASCII characters (octets).   The fields
+            of information within a record are identified by their relative
+            character position within the record.
+
+            The following sections indicate the position and length of each
+            field.  The  section titled Types  of Interfaces  discusses the
+            fields of  information that  are affected  by an  X.25 or  X.75
+            interface.
+
+
+            Primary Session Record Data            ___________________________
+
+            The  fields of  information  in a  primary  session record  are
+            described in the following sections.
+
+
+            Record Type            ___________
+
+            Field Position 1 (Length 1)
+
+            A value of 0 in this field indicates a primary session record.
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 34
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Sequence Number            _______________
+
+            Field Position 2-3 (Length 2)
+
+            This  field  contains  a 2-digit  hexadecimal  sequence  number
+            assigned by  RAM when  the session record  is written  to tape.
+            The number is in the range 00  to FF and is the primary session
+            record number within the tape file.
+
+
+            Completeness Factor            ___________________
+
+            Field Position 4 (Length 1)
+
+            The completeness factor indicates whether  a record is complete
+            at the time it is written to tape.  The possible values are
+
+                 1 = Record complete
+
+                 2 = Record incomplete
+
+            A complete  session record  contains all  accounting data  from
+            login to  logout, including a final  count of input  and output
+            octets.  An incomplete session record  lacks either login data,
+            logout data,  or final  octet count.   An incomplete  record is
+            written to tape under the following circumstances.
+
+              o  If the session duration is  longer than a specified period
+                 and no record of logout  is received, a checkpoint session
+                 record is written to tape.  The time interval is specified
+                 at system generation and must be set to one of the follow-
+                 ing:
+
+                       2 hours, 16 minutes
+
+                       4 hours, 33 minutes
+
+                       9 hours,  6 minutes
+
+                      18 hours, 12 minutes
+
+                      36 hours, 24 minutes
+
+                 (See the Checkpoint  parameter in Appendix B,  RAM Tymfile
+                 Definitions  for the  values used  to  specify these  time
+                 intervals.)
+
+
+
+
+                                             SESSION RECORD DATA    Page 35
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+              o  If no accounting data for the current session arrives dur-
+                 ing a  32-minute interval,  the session  is considered  to
+                 have been  terminated.  RAM  holds the  session in  memory
+                 until all data has been collected from all Supervisors for
+                 that  period.  If  all  data has  been  collected and  the
+                 record  is still  incomplete,  RAM  assumes that  no  more
+                 accounting data  is available for  the session  and writes
+                 the record to tape.  This might occur if the ACCOUNT slave
+                 could not read a portion of  data from the Supervisor disk
+                 because of a disk error or if the destination node crashed
+                 before  the session  terminated  and  thus was  unable  to
+                 report the termination.
+
+              o  If the International  Record Carrier (IRC) code  is either
+                 decimal  14 (used  by the  Supervisor to  report the  last
+                 unused session number of  a gap created by  an initializa-
+                 tion of the Supervisor) or decimal  15 (used by the Super-
+                 visor to  report a session number  that was assigned  to a
+                 command circuit for a node),  the completeness factor will
+                 be 1  even though the only  data in the session  record is
+                 the session number and the IRC code.  Also, the checkpoint
+                 time is checked only upon receipt of an octet count update
+                 message or a session  termination.  Because these messages
+                 may arrive only  once every 32 minutes, a  particular ses-
+                 sion may be checkpointed as much  as 16 hours after check-
+                 point time (see Checkpoint in Appendix B).
+
+
+            Session Number            ______________
+
+            Field Position 5-12 (Length  8)
+
+            This  field contains  an 8-digit  session  number (in  decimal)
+            assigned by the Supervisor at the time the circuit is built.
+
+
+            Originating Node Number            _______________________
+
+            Field Position 13-17 (Length 5)
+
+            This field contains the originating node number (in octal).
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 36
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Originating Logical Port Number            _______________________________
+
+            Field Position 18-22 (Length 5)
+
+            This field  contains the  originating logical  port number  (in
+            decimal).  This field is obsolete and  will be removed from the
+            primary session record in the near future.
+
+
+            Destination Node Number            _______________________
+
+            Field Position 23-27 (Length 5)
+
+            This field  contains the number  (in octal) of  the destination
+            node.
+
+
+            Destination Logical Port Number            _______________________________
+
+            Field Position 28-32 (Length 5)
+
+            This field contains the number (in decimal) of the logical des-
+            tination port  between the node  and the interface  assigned by
+            the Supervisor.  If  the destination node is a  TYMNET II node,
+            the value of  this field will be zero.  This  field is obsolete
+            and will  be removed  from the  primary session  record in  the
+            future.
+
+
+            Originating Host Number            _______________________
+
+            Field Position 33-37 (Length 5)
+
+            This field  contains the host number  (in decimal) of  the host
+            originating the session.
+
+
+            Destination Host            ________________
+
+            Field Position 38-42 (Length 5)
+
+            This field contains the destination host number (in decimal).
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 37
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+
+
+            Destination Physical Port Number            ________________________________
+
+            Field Position 43-47 (Length 5)
+
+            This field contains the number  (in decimal) of the destination
+            physical port, assigned by the interface.
+
+
+            Start Date            __________
+
+            Field Position 48-53 (Length 6)
+
+            This field contains  a 6-digit session start date  (GMT) in the
+            format yymmdd (e.g., 840206 represents February 6, 1984).
+
+
+            Start Time            __________
+
+            Field Position 54-58 (Length 5)
+
+            This field contains a 5-digit session  start time (GMT) in sec-
+            onds, counting from 0 (00:00:00) to 86399 (23:59:59).
+
+
+            Input Octet Count            _________________
+
+            Field Position 59-67 (Length 9)
+
+            This  field contains  the final  count (in  decimal) of  octets
+            input to  the circuit's destination  point during  the session.
+            Only the destination  node reports final octet  counts.  If the
+            record is incomplete, this is a checkpoint count.
+
+
+            Output Octet Count            __________________
+
+            Field Position 68-76 (Length 9)
+
+            This field contains the final count (in decimal) of octets out-
+            put from  the circuit's destination  point during  the session.
+            Only the destination  node reports final octet  counts.  If the
+            record is incomplete, this is a checkpoint count.
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 38
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Stop Date            _________
+
+            Field Position 77-82 (Length 6)
+
+            This field  contains a 6-digit session  stop date (GMT)  in the
+            format yymmdd.
+
+
+            Stop Time            _________
+
+            Field Position 83-87 (Length 5)
+
+            This field contains a  5-digit session stop time  (GMT) in sec-
+            onds, counting from 0 (00:00:00) to 86399 (23:59:59).
+
+
+            Connect Time            ____________
+
+            Field Position 88-94 (Length 7)
+
+            This field contains the duration of  the session in seconds (in
+            decimal).
+
+
+            Circuit Characteristic Type            ___________________________
+
+            Field Position 95-96 (Length 2)
+
+            Each circuit  has associated with it  (at the point  of circuit
+            origination) a Circuit  Characteristic Type (CCT).  If  it is a
+            terminal port, it  may also have associated with  it a Terminal
+            Identifier (TID).
+
+            The default circuit  is full duplex.  Half  duplex circuits are
+            indicated in the following table by HDX.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 39
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                  CCT        TID   Baud_Rate*          Protocol                  ___        ___   ____ ____           ________
+
+                    0**       -        -        Auxiliary circuit
+                    1         A       300       Async: ASCII
+                    2         C       300       Async: ASCII
+                    3        E,I      300       Async: ASCII
+                    4         G       300       Async: ASCII
+                    5         B       150       Async: ASCII
+                    6         F       150       Async: ASCII
+                    7         J       150       Async: ASCII
+                    8        <CR>     300       Async: 3767
+                    9        <CR>     134       Async: 2741
+                   10         D       110       Async: ASCII
+                   11         -        -        Sync: HSA
+                   12       A,G,I     1200      Async: ASCII
+                   13         -        -        Async: polled terminal
+                   14***      -        -        Aux through gateway
+                   15         -       Var       Async: baudot
+                   16       A,G,I     2400      Async: ASCII
+                   17         -        -        Sync: polled terminals
+                   18         -        -        Sync: point-to-point
+                   19       A,G,I     4800      Async: ASCII
+                   20       A,G,I     9600      Async: ASCII
+                   21         -        -        Multiplexed PVC
+                   22         -        -        Async: audio response
+                   23         -       75/1200   Async: ASCII
+                   24         -        -        Sync: SDLC
+                   25         Y        -        Transaction terminals
+                   26         -        -        Host-originated
+                 27-32                          Not in use
+                   33         A       300       Async: HDX ASCII
+
+                   *Input baud  rate.  If two  figures are  shown, the
+                    second is the output baud rate.
+
+                  **An auxiliary circuit is a  special case. It is not
+                    a CCT  presented to  the Supervisor  as part  of a
+                    normal  circuit-building  request,  rather  it  is
+                    keyed to the method of  building the circuit. Thus
+                    it is not valid  in a request, but  it is informa-
+                    tion made available to the destination host.
+
+                 ***An auxiliary through a  gateway is another special
+                    case.   Effectively, it  is the  complement of  an
+                    auxiliary circuit. An interface can request a nor-
+                    mal circuit using this CCT, and it is presented to
+                    the host as an auxiliary circuit.
+
+
+
+                                             SESSION RECORD DATA    Page 40
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+
+
+                  CCT        TID   Baud_Rate*          Protocol                  ___        ___   ____ ____           ________
+
+                   34         C       300       Async: HDX ASCII
+                   35        E,I      300       Async: HDX ASCII
+                   36         G       300       Async: HDX ASCII
+                   37         B       150       Async: HDX ASCII
+                   38         F       150       Async: HDX ASCII
+                   39         J       150       Async: HDX ASCII
+                 40-41                          Not in use
+                   42         D       110       Async: HDX ASCII
+                   43                           Not in use
+                   44       A,G,I     1200      Async: HDX ASCII
+                 45-46                          Not in use
+                   47         -       Var       Async: HDX baudot
+                   48       A,G,I     2400      Async: HDX ASCII
+                 49-50                          Not in use
+                   51       A,G,I     4800      Async: HDX ASCII
+                   52       A,G,I     9600      Async: HDX ASCII
+
+
+                   *Input baud  rate.  If two  figures are  shown, the
+                    second is the output baud rate.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 41
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Termination Code            ________________
+
+            Field Position 97-98 (Length 2)
+
+            This field contains  the circuit termination code,  which indi-
+            cates the  cause of  circuit terminations.   The following  are
+            possible values:
+
+                 0 = The termination code  is unknown.  This occurs  if the
+                     session is still active.  The  flag in character posi-
+                     tion 238 will be set to 1 to indicate that logout data
+                     is missing for the session.
+
+                 1 = The destination host went down during the session.
+
+                 2 = The circuit  was dropped  by the  destination host  or
+                     host subprocess.
+
+                 3 = The circuit was dropped by  the user or was terminated
+                     as a  result of link or  node outage in  the circuit's
+                     path.
+
+                 4 = The destination host or host subprocess was not avail-
+                     able.
+
+                 5 = The destination host or host subprocess was down.
+
+                 6 = The destination host or host subprocess was shut.
+
+                 7 = The destination host  or host subprocess had  no ports
+                     available.
+
+                 8 = The destination host was out of channels.
+
+                 9 = The specified  terminal type did  not match  the types
+                     allowed on the available ports.
+
+                10 = The circuit request was rejected  by the TYMCOM, based
+                     on the originating node number.
+
+                11 = The circuit request was rejected  by the TYMCOM, based
+                     on the username.
+
+                12 = The circuit request was rejected  by the TYMCOM, based
+                     on illegal use of foreign origin.
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 42
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                13 = The circuit  was dropped  because the  maximum allowed
+                     camp-on interval was exceeded.
+
+                14 = The circuit was terminated by a network disconnect.
+
+                15 = The destination node was out of Dispatcher ports.
+
+                16 = The destination ISIS slot was out of Dispatcher ports.
+
+                17 = The circuit was rejected by  the ISIS slot because the
+                     host was out of ports.
+
+                18 = The circuit  was rejected  by the  TYMCOM because  the
+                     host did not answer.
+
+                19 = The circuit was rejected by the host.
+
+                20 = The circuit was  dropped because of a  protocol viola-
+                     tion.
+
+                21 = The  resource  limit was  exceeded.   The  application
+                     exceeded the buffer space allotted to it.
+
+                22 = Synchronization was lost.
+
+                83 = A specified interval elapsed during which RAM received
+                     no updated  accounting or  logout information  for the
+                     session.  The  interval is  set at  system generation.
+                     The origin and destination nodes normally send session
+                     updates every 30 minutes, and RAM assumes that no more
+                     information will  be sent for this  session, considers
+                     the session  to have been  terminated, and  writes the
+                     record to tape.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 43
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            International Record Carrier            ____________________________
+
+            Field Position 99-100 (Length 2)
+
+            This field contains  the IRC code (in decimal)  assigned by the
+            Supervisor in the current network (see IRC Reported by Gateway,
+            Field Position 154-155).  The following are possible values:
+
+                  0 = none
+
+                  1 = WUI
+
+                  2 = ITT
+
+                  3 = RCA
+
+                  4 = TLG
+
+                  5 = TRT
+
+                  6 = FTCC
+
+                  7 = TYM
+
+                 14 = reserved for Supervisor (session number gap)
+
+                 15 = reserved for Supervisor (node takeovers)
+
+            The IRC  option in the Supervisor  normally is not  enabled for
+            independent networks.  If the option  is not enabled, the value
+            of this field  will be 0, 14,  or 15.  Also, the  assignment of
+            numbers to  IRCs may be altered  at system generation.   An IRC
+            code of 14 is used by the  Supervisor to indicate that the last
+            unused session number gap was  caused by Supervisor initializa-
+            tion.  An IRC code of 15 is  used by the Supervisor to indicate
+            that a command circuit was built for a node takeover.
+
+
+            Universal User Number            _____________________
+
+            Field Position 101-106 (Length 6)
+
+            This field contains the 6-digit Universal User Number (UUN) (in
+            octal).  A UUN  is assigned to each  username when it  is vali-
+            dated in the network.
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 44
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Throughput Class            ________________
+
+            Field Position 107 (Length 1)
+
+            This field contains the throughput class  of the circuit.  Pos-
+            sible values are
+
+                 0 =   64 characters per second
+
+                 1 =  160 characters per second
+
+                 2 =  512 characters per second
+
+                 3 = 2048 characters per second
+
+
+            Username            ________
+
+            Field Position 108-127 (Length 20)
+
+            This field  contains the username, in  alphanumeric characters.
+            Semicolons (;), colons (:),  and control  characters are  unac-
+            ceptable.  The username is left justified  in the field, and if
+            it consists of  fewer than 20 characters, the  remainder of the
+            field is padded with blanks.
+
+
+            Project Code            ____________
+
+            Field Position 128-139 (Length 12)
+
+            This field contains  the project code specified  at login.  The
+            project code is left justified in the field, and if it consists
+            of fewer than 12 characters, the remainder of the field is pad-
+            ded with blanks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 45
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Called DTE Address            __________________
+
+            Field Position 140-153 (Length 14)
+
+            This field  contains the called  Data Terminal  Equipment (DTE)
+            address  (in decimal).   It  appears  only in  session  records
+            involved in an X.25, X.28, or  X.75 interface.  If present, the
+            address is  left justified  in the  field.  If  the address  is
+            fewer than  14 characters, the remainder  of the field  will be
+            padded with blanks.
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+            IRC Reported by Gateway            _______________________
+
+            Field Position 154-155 (Length 2)
+
+            This field contains the IRC number (in decimal) reported by the
+            gateway.  This field  is present only if  a circuit originating
+            in or  transiting the user's  network was connected  to another
+            network through  a gateway having  lines from multiple  IRCs to
+            the other network (see Internation  Record Carrier, Field Posi-
+            tion 99-100).
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 46
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Charge Location            _______________
+
+            Field Position 156 (Length 1)
+
+            This  field indicates  whether or  not  reverse charges  apply.
+            Possible values are
+
+                 0 = normal charges
+
+                 1 = reverse charges
+
+            Reverse  charges occur  only if  the circuit  originated in  an
+            X.25, X.28, or X.75 interface that requested reverse charges.
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+            Access            ______
+
+            Field Position 157 (Length 1)
+
+            This field indicates the circuit type.  Possible values are
+
+                 0 = access from host
+
+                 1 = access from terminal
+
+            Access from host means  that the circuit was  an auxiliary cir-
+            cuit  or an  X.25-originated call  with  a protocol  identifier
+            other than Packet Assembly/Disassembly (PAD).
+
+            This field has meaning  only if the circuit is an  X.25 or X.75
+            circuit.
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 47
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Gateway Session Number            ______________________
+
+            Field Position 158-165 (Length 8)
+
+            This field contains the 8-character session number (in decimal)
+            assigned to  the call by the  network from which this  call was
+            received.  It is present  only if the circuit  entered the net-
+            work through  a gateway  from another  network that  supplied a
+            session number.
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+            Calling DTE Address            ___________________
+
+            Field Position 166-179 (Length 14)
+
+            This field contains  the calling DTE address  (in decimal).  It
+            appears only in  session records involved in an  X.25, X.28, or
+            X.75 interface.  If  present, the address is  left justified in
+            the field.   If the  address is fewer  than 14  characters, the
+            remainder of the field will be padded with blanks.
+
+            Sessions that  include this data  will always have  a secondary
+            session record  in which  this field is  also included.   It is
+            included in the primary session  record to maintain compatibil-
+            ity between different versions of RAM.  It will be removed from
+            the primary session record in the future.
+
+
+            Originating Physical Port Number            ________________________________
+
+            Field Position 180-184 (Length 5)
+
+            This field  contains the originating  physical port  number (in
+            decimal).  If the physical port  is a Serial Input/Output (SIO)
+            port, the physical port number is specified as four bits of SIO
+            board identification (in hexadecimal) followed  by four bits of
+            channel number  (in hexadecimal),  which is  then converted  to
+            decimal.
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 48
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            MPVC Sessions            _____________
+
+            Field Position 185-189 (Length 5)
+
+            This field contains the number of port sessions (in decimal) on
+            a Multiplexed Permanent Virtual Circuit (MPVC).
+
+
+            MPVC Sessions Aggregate Time            ____________________________
+
+            Field Position 190-194 (Length 5)
+
+            This field contains the aggregate duration of all sessions con-
+            structed through the MPVC in minutes (in decimal).
+
+
+            Terminal Address (Extended)            ___________________________
+
+            Field Position 195-198 (Length 4)
+
+            This field contains the specific terminal address (in hexadeci-
+            mal) on a multiple terminal  physical port (e.g., multiple drop
+            lines).
+
+
+            Originating Physical Port Type            ______________________________
+
+            Field Position 199-200 (Length 2)
+
+            This field  contains the physical  port type  (in hexadecimal).
+            The following are possible values:
+
+                     0  =  uncontrolled ports
+
+                 1 - 4  =  asynchronous ports
+
+                     5  =  synchronous ports
+
+                     6  =  SIO ports
+
+                     7  =  reserved for future use
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 49
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Filler            ______
+
+            Field Position 201-234 (Length 34)
+
+            This field contains 34 blanks.
+
+
+            Flags            _____
+
+            Field Position 235-239 (Length 5)
+
+            This field contains assorted flags, which are usually zero.  If
+            set to 1, these flags have the following meanings:
+
+              Position              ________
+
+                235 = this field is not used
+
+                236 = this is a checkpoint record
+
+                237 = login data  is missing from  the session  record (see
+                      Termination Code, Field Position 97-98)
+
+                238 = logout data is  missing from the session  record (see
+                      Termination Code, Field Position 97-98)
+
+                239 = a secondary session record follows this record
+
+
+
+            Carriage Return            _______________
+
+            Field Position 240 (Length 1)
+
+            The final character  in a primary session record  is a carriage
+            return.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 50
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Secondary Session Record Data            _____________________________
+
+            The fields  of information  in a  secondary session  record are
+            described in the following sections.
+
+
+            Record Type            ___________
+
+            Field Position 1 (Length 1)
+
+            A  value of  1  in this  field  indicates  a secondary  session
+            record.
+
+
+            Origination Input Packet Count            ______________________________
+
+            Field Position 2-9 (Length: 8)
+
+            This field  contains the number  (in decimal) of  packets input
+            from the originating Data Terminal  Equipment (DTE) to the Data
+            Communications Equipment (DCE), that is, a network node.
+
+
+            Origination Output Packet Count            _______________________________
+
+            Field Position 10-17 (Length: 8)
+
+            This field contains  the number (in decimal)  of packets output
+            from the DCE to the originating DTE.
+
+
+            Origination Input Segment Count            _______________________________
+
+            Field Position 18-25 (Length: 8)
+
+            This field contains  the number (in decimal)  of segments input
+            from the originating DTE to the DCE.
+
+
+            Origination Output Segment Count            ________________________________
+
+            Field Position 26-33 (Length 8)
+
+            This field contains the number  (in decimal) of segments output
+            from the DCE to the originating DTE.
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 51
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Destination Input Packet Count            ______________________________
+
+            Field Position 34-41 (Length 8)
+
+            This field  contains the number  (in decimal) of  packets input
+            from the destination DTE to the DCE.  If the circuit originated
+            and terminated  in an X.25, X.28,  or X.75 interface,  only the
+            originating DCE reports packet counts.
+
+
+            Destination Output Packet Count            _______________________________
+
+            Field Position 42-49 (Length 8)
+
+            This field contains  the number (in decimal)  of packets output
+            from the DCE to the destination DTE.  If the circuit originated
+            and terminated  in an X.25, X.28,  or X.75 interface,  only the
+            originating DCE reports packet counts.
+
+
+            Destination Input Segment Count            _______________________________
+
+            Field Position 50-57 (Length 8)
+
+            This field contains  the number (in decimal)  of segments input
+            from the destination DTE to the DCE.  If the circuit originated
+            and terminated  in an X.25, X.28,  or X.75 interface,  only the
+            originating DCE reports segment counts.
+
+
+            Destination Output Segment Count            ________________________________
+
+            Field Position 58-65 (Length 8)
+
+            This field contains the number  (in decimal) of segments output
+            from the DCE to the destination DTE.  If the circuit originated
+            and terminated  in an X.25, X.28,  or X.75 interface,  only the
+            originating DCE reports segment counts.
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 52
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Transit Network Count            _____________________
+
+            Field Position 66-67 (Length 2)
+
+            This field contains the number (in decimal) of transit networks
+            involved in  a circuit.  A  transit network is  an intermediate
+            network that the virtual circuit must  pass through to get from
+            the originating network to the destination network (i.e., three
+            or more networks are required to complete the circuit).  A cir-
+            cuit built from the originating network  directly to the desti-
+            nation network does not enter a transit network.
+
+
+            Transit DNIC List            _________________
+
+            Field Position 68-147 (Length 80)
+
+            This  field  contains  the Data  Network  Identification  Codes
+            (DNICs) of each of the transit networks counted in the previous
+            field.  Each DNIC  is a 4-digit decimal number.   The DNICs are
+            listed in the order in which  the transit networks were entered
+            as the circuit was built.
+
+
+            DATAPAC Tariff Class            ____________________
+
+            Field Position 148-151 (Length 4)
+
+            This field contains the DATAPAC  tariff class (in hexadecimal).
+            The DATAPAC tariff class is a national X.75 utility.
+
+
+            Called DTE Address            __________________
+
+            Field Position 152-165 (Length 14)
+
+            This field  contains the called  DTE address (in  decimal).  It
+            appears only in  session records involved in an  X.25, X.28, or
+            X.75 interface.  If  present, the address is  left justified in
+            the field.   If the  address is fewer  than 14  characters, the
+            remainder of the field will be padded with blanks.
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 53
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            IRC Reported by Gateway            _______________________
+
+            Field Position 166-167 (Length 2)
+
+            This field contains the IRC number (in decimal) reported by the
+            gateway.  This field  is present only if  a circuit originating
+            in or  transiting the user's  network was connected  to another
+            network through  a gateway having  lines from multiple  IRCs to
+            the  other network  (see International  Record Carriers,  Field
+            Positions 99-100, in Primary Session Record Data).
+
+
+            Charge Location            _______________
+
+            Field Position 168 (Length 1)
+
+            This field  indicates whether reverse charges  apply.  Possible
+            values are
+
+                 0 = normal charges
+
+                 1 = reverse charges
+
+            Reverse  charges occur  only if  the circuit  originated in  an
+            X.25, X.28, or X.75 interface that requested reverse charges.
+
+
+            Access            ______
+
+            Field Position 169 (Length 1)
+
+            This field indicates the circuit type.  Possible values are
+
+                 0 = access from host
+
+                 1 = access from terminal
+
+            Access from host means  that the circuit was  an auxiliary cir-
+            cuit  or an  X.25-originated call  with  a protocol  identifier
+            other than PAD.
+
+            This field has meaning  only if the circuit is an  X.25 or X.75
+            circuit.
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 54
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Gateway Session Number            ______________________
+
+            Field Position 170-177 (Length 8)
+
+            This field contains the 8-character session number (in decimal)
+            assigned to  the call by the  network from which this  call was
+            received.  It is present  only if the circuit  entered the net-
+            work through  a gateway  from another  network that  supplied a
+            session number.
+
+
+            Calling DTE Address            ___________________
+
+            Field Position 178-191 (Length 14)
+
+            This field contains  the calling DTE address  (in decimal).  It
+            appears only in  session records involved in an  X.25, X.28, or
+            X.75 interface.  If  present, the address is  left justified in
+            the field.   If the  address is fewer  than 14  characters, the
+            remainder of the field will be padded with blanks.
+
+
+            Filler            ______
+
+            Field Position 192-237 (Length 46)
+
+            This field contains 46 blanks.
+
+
+            Flags            _____
+
+            Field Position 238-239 (Length 2)
+
+            This field contains two flags, which  are usually 0.  If set to
+            1, the flags have the following meaning:
+
+              Position              ________
+
+                238 = The count of transit network  DNICs did not match the
+                      number reported.
+
+                239 = A tertiary record follows this  record.  This flag is
+                      not used currently; it is set to zero.
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 55
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Carriage Return            _______________
+
+            Field Position 240 (Length 1)
+
+            The final character in a secondary session record is a carriage
+            return.
+
+
+            Blank Session Record Data            _________________________
+
+            The  fields  of  information  in a  blank  session  record  are
+            described in the following sections.
+
+
+            Record Type            ___________
+
+            Field Position 1 (Length 1)
+
+            A blank in this field indicates a blank session record.
+
+
+            Filler            ______
+
+            Field Position 2-239 (Length 239)
+
+            This field contains 238 blanks.
+
+
+            Carriage Return            _______________
+
+            Field Position 240 (Length 1)
+
+            The final  character in  a blank session  record is  a carriage
+            return.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                             SESSION RECORD DATA    Page 56
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Types of Interfaces            ___________________
+
+            This  section describes  the values  of  the accounting  fields
+            affected by  the types of interfaces  at the ends of  a virtual
+            circuit.  The following five types of interfaces are discussed:
+
+              o  TYMSAT-to-TYMCOM interface (other than X.25)
+
+              o  TYMSAT-to-X.25 interface (or X.75 gateway)
+
+              o  X.25-to-TYMCOM interface
+
+              o  X.25-to-X.25 interface
+
+              o  TYMSAT-to-ISIS-Kernel interface
+
+            With the exception of  the TYMSAT-to-ISIS-Kernel interface, the
+            fields involved are as follows:
+
+                 A = destination physical port
+
+                 B = called DTE address
+
+                 C = calling DTE address
+
+                 D = IRC reported by gateway
+
+                 E = transit network list
+
+                 F = origination packet and segment counts
+
+                 G = destination packet and segment counts
+
+
+            TYMSAT-to-TYMCOM Interface (other than X.25)            ____________________________________________
+
+            The  port  selected  by  the TYMCOM  is  reported  in  field A.
+            Fields B and C  are all blanks, and  fields D, E, F,  and G are
+            all zeros.
+
+
+            TYMSAT-to-X.25 Interface (or X.75 gateway)            __________________________________________
+
+            Field A  is always  zero.  Field B  is the  called DTE  address
+            entered  by the  user  and sent  in  the  call request  packet.
+            Field C is the calling  DTE address created by  the X.25 inter-
+            face.   Refer  to  X.25/X.75  Reference  Manual  for  available                               ____________________________
+
+
+
+                                             SESSION RECORD DATA    Page 57
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            options.  If the interface is a gateway with IRC lines, the IRC
+            selected is reported in field D.  Otherwise, field D is zero.
+
+            If the  interface is  X.75, and the  circuit crosses  a transit
+            network, field E contains a list of  the transit DNICs.  Other-
+            wise, field E is zero.
+
+            Field F is  always zero,  and field G  contains the  packet and
+            segment  counts.  Q-bit  packets  are  included in  the  packet
+            count, and,  as of  Version 2.0 of  the TYMNET  X.25 Interface,
+            they are  included in the  segment counts.  Call  request, call
+            connected, and call clear packets are not counted.
+
+
+            X.25-to-TYMCOM Interface            ________________________
+
+            The  port  selected  by  the TYMCOM  is  reported  in  field A.
+            Fields B and C  are the called  and calling DTE  addresses from
+            the call request packet.
+
+            If the  interface is  X.75, and the  circuit crosses  a transit
+            network, field E contains a list of the transit  DNICs.  Other-
+            wise, field E is blank.
+
+            Fields D and G are zero.  Field F contains  the packet and seg-
+            ment counts.  If  the interface is X.75, the origin  IRC may be
+            determined by the origin host number.
+
+
+            X.25-to-X.25 Interface            ______________________
+
+            The  fields  for  this  interface  are  the  same  as  for  the
+            TYMSAT-to-X.25 interface,  except that field F  contains packet
+            and segment counts and field G will be zero.
+
+
+            TYMSAT-to-ISIS-Kernel Interface            _______________________________
+
+            This is a special case.  The  ISIS Kernel is used for debugging
+            and down-line loading and  by various system utilities  to per-
+            form support functions.  The ISIS Kernel is a special interface
+            and does not report any accounting data.  The accounting record
+            for any connection  to an ISIS Kernel will  show a completeness
+            factor of 2  (incomplete).  For  further information,  see Com-
+            pleteness Factor, Field  Position 4, in Primary  Session Record
+            Data.  Logins to an ISIS Kernel are not billable sessions.
+
+
+
+
+                                             SESSION RECORD DATA    Page 58
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                            Appendix A, RESTRICTED COMMANDS
+
+
+            This appendix describes  the restricted commands, which  may be
+            used only by users with restricted status.
+
+
+            Dump Command            ____________
+
+            Syntax:  DUmp Supervisor=sss,Block=bbbb
+
+            RAM outputs the contents of the specified block from the speci-
+            fied  Supervisor's accounting  file.  The  parameter  sss is  a                                                                  ___
+            3-digit  Supervisor host  number (in  decimal), and  bbbb is  a                                                                 ____
+            block number of four or fewer digits (in hexadecimal).
+
+            RAM must be  paused before the Dump command is  entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.  The message
+
+                 MAXIMUM BLOCK NUMBER ALLOWED IS nnnn !!
+
+            is  displayed if  the block  number  specified in  bbbb is  too                                                               ____
+            large.  The value nnnn is the  number defined in the macro call                              ____
+            parameter MXBLK (see  the Maximum Blocks parameter  in Appendix
+            B, RAM Tymfile Definitions).  In addition, the specified Super-
+            visor must be  declared up (see Status Command  in Chapter Two,
+            Commands).  Otherwise, the message
+
+                 CANNOT USE THIS COMMAND, SUPERVISOR IS DISABLED !!
+
+            is displayed, and the command is ignored.
+
+            When the Dump  command is entered, RAM will  print the contents
+            of the  specified block  in hexadecimal.   Each block  contains
+            1024 bytes, arranged in 32 lines.
+
+            The first four  bytes in each line contain  the timestamp.  The
+            timestamp is the  number (in hexadecimal) of  seconds that have
+            elapsed since 00:00:00, January 1, 1974 (GMT).
+
+            If the value of the timestamp is -1, the Supervisor's clock was
+            not set, and no time is  associated with the accounting data in
+            that line.  If a Supervisor receives accounting data from nodes
+
+
+
+                                 Appendix A, RESTRICTED COMMANDS    Page 59
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            in the network at infrequent intervals,  the data written to an
+            accounting block  may not fill  the 32-byte record.   When this
+            happens, the partial line is padded  with zeros.  Further, if a
+            partial accounting  block has  been accumulated  at the  time a
+            Supervisor  goes to  sleep, the  partial block  is padded  with
+            zeros.
+
+            The Dump command causes the ACCOUNT slave to update the pointer
+            showing the block number last sent to RAM.  Unless the Setblock
+            command is  subsequently entered and the  pointer repositioned,
+            RAM's data will be inaccurate.  Either  the slave will send the
+            same block(s)  several times  and duplicate  some data,  or the
+            slave will not send one or more  blocks at all and data will be
+            missing.
+
+            RAM's circuit to an ACCOUNT slave is terminated by the slave if
+            the circuit is inactive for more than 5 minutes.  If no circuit
+            exists between RAM and a slave at  the time the Dump command is
+            issued to  print data from  that Supervisor's  accounting file,
+            RAM will build a circuit to the specified Supervisor.
+
+
+            Print Command            _____________
+
+            Syntax:  PRInt Unit=uu,Count=c,Length=nn
+
+            RAM prints the  first nn characters of the  specified number of                                  __
+            physical records  c from  the tape unit  uu, starting  from the                              _                      __
+            current tape  position.  The Tape  command is used  to position
+            the tape  at the  desired location.  The  VOL1, HDR1,  HDR2 and
+            EOF1 labels each count as one record, as does a tape mark.
+
+            The input length cannot exceed  the record length multiplied by
+            the tape-blocking factor.  If  the value is exceeded,  the mes-
+            sage
+
+                 MAXIMUM LENGTH IS nnnnn !!
+
+            is displayed, where nnnnn is the integer value.  The command is                                _____
+            ignored.  If  the tape encounters  either two  consecutive tape
+            marks or the end-of-tape foil  marker, the following message is
+            displayed:
+
+                 END OF TAPE !!
+
+
+
+
+
+
+                                 Appendix A, RESTRICTED COMMANDS    Page 60
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            The tape unit must be attached to the slot in which RAM is run-
+            ning.  The state of the tape unit  must be Online, and the tape
+            itself  must be  Read Only, Ready,  or  In Use.  Otherwise,  an
+            error message is displayed (see  Attach Command in Chapter Two,
+            Commands).
+
+            RAM must be paused before the  Print command is entered, or the
+            message
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            is displayed, and the command is ignored.
+
+            The record length should be 240 multiplied by the tape-blocking
+            factor specified in  the Tymfile (see the  Tape-Blocking Factor
+            parameter in Appendix B, RAM Tymfile Definitions).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                 Appendix A, RESTRICTED COMMANDS    Page 61
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                          Appendix B, RAM TYMFILE DEFINITION
+
+
+            This appendix contains a description of the RAM macro call Tym-
+            file  parameters, which  are  used to  define  RAM options  and
+            resources.
+
+            The RAM Tymfile is processed  by the Network Assembler/Debugger
+            (NAD) at system  generation.  The sample Tymfile  contains com-
+            ments, preceded by a colon (:), that provide brief descriptions
+            of the parameters in the Tymfile.
+
+            The following  macro call parameters  must be  specified unless
+            otherwise noted.  There are no  default values unless otherwise
+            noted.  Macro  call parameters may  start in any  column except
+            column 1.   The first  set of macro  call parameters  require a
+            numeric value n  (in decimal unless otherwise  specified).  The                          _
+            second set of macro call parameters requires a yes or no value.
+            The  last macro  call  parameter requires  a  username and  the
+            license status for that username.
+
+            The  parentheses  indicated in  the  syntax  of each  macro  is
+            required.  Where  it appears,  a vertical  bar (|)  separates a
+            choice of options, one of which must be chosen.
+
+
+            Checkpoint            __________
+
+            Syntax:  CHKPT(n)
+
+            This parameter  specifies the  interval for  writing checkpoint
+            sessions to tape for incomplete sessions.   The only valid val-
+            ues and their meanings are as follows:
+
+                   4 =  2 hours, 16 minutes
+
+                   8 =  4 hours, 33 minutes
+
+                  12 =  9 hours,  6 minutes
+
+                  16 = 18 hours, 12 minutes
+
+                  20 = 36 hours, 24 minutes
+
+            Sessions are written to tape  only when RAM collects accounting
+            blocks.  If  the interval between accounting  block collections
+            is not equal to the checkpoint interval, the longer interval is
+            used for writing checkpoint sessions to tape.  This occurs if a
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 62
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            network has a small number of simultaneous sessions.  For exam-
+            ple, if  only one or  two users are  logged in, it  is possible
+            that 16 hours will elapse before a complete accounting block is
+            collected.
+
+
+            Disk LUN            ________
+
+            Syntax:  DISK(n)
+
+            This parameter specifies the slot  extended Logical Unit Number
+            (LUN) (in hexadecimal) for the disk unit, as defined in the DSC
+            file of the ISIS Kernel in which RAM is to run.
+
+
+            Host Number            ___________
+
+            Syntax:  HSTNUM(n)
+
+            This parameter specifies the host number used to log in to RAM.
+
+
+            Maximum Blocks            ______________
+
+            Syntax:  MXBLK(n)
+
+            This parameter  specifies the  largest accounting  block number
+            (in hexadecimal) that  may be defined in the  Setblock and Dump
+            commands for Supervisors not specified by MAXBLKn.
+
+            If the left-most digit specified in the macro call parameter is
+            in the range A to F, it must  be preceded by a zero.  The value
+            for  this parameter  can be  calculated from  the ACTEND  value
+            found in the Supervisor parameter file.  To calculate the MXBLK
+            value, the lowest hexadecimal ACTEND  value found among all the
+            Supervisors in the network is ANDed with hexadecimal 1FFF, then
+            1 is subtracted.
+
+
+            Maximum Blocks Per Supervisor            _____________________________
+
+            Syntax:  MXBLKn(n)
+
+            This parameter  specifies the  largest accounting  block number
+            (in hexadecimal) that  may be defined in the  Setblock and Dump
+            commands for a  specific Supervisor n.  The value n  must be in                                                _             _
+            the range 1 to 7, and it  specifies the Supervisor in the range
+            121 to 127 respectively.
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 63
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            If the left-most digit specified in the macro call parameter is
+            in  the range  A to  F, it  must be  preceded by  a zero.   The
+            default for MXBLKn is MXBLK.  The  value for the MXBLKn parame-
+            ter can be calculated from the ACTEND value found in the Super-
+            visor parameter file.  To  calculate a MXBLKn value  for a spe-
+            cific Supervisor, the  hexadecimal ACTEND value for  the Super-
+            visor is ANDed with the hexadecimal 1FFF, then 1 is subtracted.
+
+
+            Maximum Nodes            _____________
+
+            Syntax:  MXNODE(n)
+
+            This parameter  specifies the  maximum number  of nodes  in the
+            network from which RAM expects to collect accounting data.  The
+            MXNODE parameter value  for the Tymfile should be  equal to the
+            maximum number of nodes as specified  in the Supervisor parame-
+            ter  file.  If  it is  known that  the actual  number of  nodes
+            within the network  will be less than what is  specified in the
+            Supervisor parameter file,  then the actual number  of physical
+            nodes can be used.  However, it must be understood that network
+            expansion due to an increase in  the number of nodes will cause
+            problems with  RAM's accounting data  collection if  the MXNODE
+            parameter value in RAM's Tymfile is exceeded.
+
+
+            Maximum Primary Sessions            ________________________
+
+            Syntax:  MXSES0(n)
+
+            This parameter specifies the maximum allowable number of simul-
+            taneous primary sessions in the session pool.  The session pool
+            is where accounting data fragments  are collected from account-
+            ing blocks and formed into session records.
+
+
+            Maximum Secondary Sessions            __________________________
+
+            Syntax:  MXSES1(n)
+
+            This parameter specifies the maximum allowable number of simul-
+            taneous secondary sessions (i.e., X.25 or X.75 sessions) in the
+            session pool.
+
+
+
+
+
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 64
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Disk Sectors            ____________
+
+            Syntax:  SECTRS(n)
+
+            This parameter  specifies the number  (in hexadecimal)  of disk
+            sectors that may be backed up with a single write operation.  A
+            sector is equal to 100 hexadecimal or 256 decimal bytes. Use of
+            the the SECTRS parameter is optional.  Users whose hardware has
+            difficulty handling  large disk writes  may choose to  use this
+            parameter.
+
+            If it is not used, RAM will  backup segment zero with one write
+            operation and segment two with  one write operation.  If SECTRS
+            is used, RAM limits each write  operation to the specified num-
+            ber of  sectors and  performs as many  write operations  as are
+            needed to back up all the sectors being written to disk.
+
+
+            Supervisor Specification            ________________________
+
+            Syntax:  SUPERS(s1,s2,..,s7)
+
+            This parameter specifies the Supervisors from which the network
+            accounting data  is to be  collected.  Valid  Supervisor values
+            are 1, 2, 3, 4, 5, 6, and 7.  At least one value must be speci-
+            fied.  The maximum number of  Supervisors from which accounting
+            data may be collected is seven.
+
+
+            Tape-Blocking Factor            ____________________
+
+            Syntax:  TAPBLK(n)
+
+            This parameter  specifies the tape-blocking factor,  (i.e., the
+            number of logical records per physical record written to tape).
+            If the value  of TAPBLK is 1,  tape output is unblocked.   If a
+            primary session record and its  secondary session record cannot
+            be placed in the  same block, the block is padded  with a blank
+            session record containing blanks and  a single carriage return,
+            and the multiple session record is placed in the next block.
+
+
+
+
+
+
+
+
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 65
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Tape Unit 0            ___________
+
+            Syntax:  TAPE0(n)
+
+            This parameter specifies the slot-extended LUN (in hexadecimal)
+            for tape unit 0, as defined in  the DSC file of the ISIS Kernel
+            in which RAM is to run.
+
+
+            Tape Unit 1            ___________
+
+            Syntax:  TAPE1(n)
+
+            This parameter specifies the slot-extended LUN (in hexadecimal)
+            for tape unit 1, as defined in  the DSC file of the ISIS Kernel
+            in which RAM is to run.  If  this macro call parameter is used,
+            it must  follow the  TAPE0 macro call  parameter.  If  the ISIS
+            Kernel in  which RAM  is to run  has only  one tape  unit, this
+            parameter should not be specified.
+
+
+            Crash On            ________
+
+            Syntax:  CRSHON(YES|NO)
+
+            This parameter specifies whether or not the slot running RAM is
+            to halt  if RAM crashes.  This  parameter should be set  to YES
+            only if RAM is in a test environment.
+
+
+            MSC-1400 Disk Controller            ________________________
+
+            Syntax:  DK1400(YES|NO)
+
+            This parameter should  be set to YES  if an MSC-1400  disk con-
+            troller is being used, otherwise it should be set to NO.
+
+
+            Mark Parity            ___________
+
+            Syntax:  MRKPAR(YES|NO)
+
+            This parameter specifies whether or not  the the high order bit
+            of tape output is  to be set (mark parity).  A  YES value indi-
+            cates that  mark parity  is used.   A NO  value indicates  that
+            space parity is used.
+
+
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 66
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Project Code Specification            __________________________
+
+            Syntax:  PRJSPC(YES|NO)
+
+            This parameter specifies if carriage  return and linefeed char-
+            acters within  the Project  Code field are  to be  converted to
+            ASCII space characters prior to  writing the Project Code field
+            to tape.  A YES value converts all carriage return and linefeed
+            characters within the  Project Code to ASCII  space characters.
+            A NO  value does  not convert any  carriage return  or linefeed
+            characters within the  Project Code field.  If  this macro call
+            Tymfile parameter is not used, the default value is NO.
+
+
+            RAM Good Guy Access List            ________________________
+
+            Syntax:  RAMGG(username,[OPER|PRIV|SP])
+
+            This parameter specifies the usernames  that may access RAM and
+            their status.  The  first argument is the  username; the second
+            argument is the  status.  Only one status may  be specified for
+            each  username.  A  username with  Operator  (OPER) status  may
+            issue only nonprivileged commands.   A username with Privileged
+            (PRIV) status may issue only  nonprivileged and privileged com-
+            mands.  A username with Special (SP) status may issue nonprivi-
+            leged, privileged, and restricted commands.
+
+            The brackets in the syntax indicate that one of the status lev-
+            els must be  chosen.  The brackets are not to  be included when
+            the parameter is specified in the Tymfile.
+
+            In order that Tymshare provide  prompt technical support, it is
+            strongly recommended that the following username be included in
+            all RAM Tymfiles:
+
+                 RAMGG(RAMDBUG,SP)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              Appendix B, RAM TYMFILE DEFINITION    Page 67
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                            Appendix C, SAMPLE RAM TYMFILE
+
+
+            : SAMPLE RAM TYMFILE FOR A PRIVATE NETWORK
+
+              CHKPT(4)       :SET THE INTERVAL FOR CHECKPOINT SESSIONS.
+            :                :THE ONLY VALID VALUES AND THEIR MEANINGS:
+            :                :  4       2 HOURS, 16 MINUTES
+            :                :  8       4 HOURS, 33 MINUTES
+            :                : 12       9 HOURS,  6 MINUTES
+            :                : 16      18 HOURS, 12 MINUTES
+            :                : 20      36 HOURS, 24 MINUTES
+
+              DISK(2)        :SLOT'S LOGICAL UNIT NUMBER FOR DISK DRIVE.
+
+              HSTNUM(69)     :RAM HOST NUMBER.
+
+              MXBLK(7FF)     :MAXIMUM BLOCK NUMBER FOR NONSPECIFIC SUPS.
+
+              MXBLK2(0FFF)   :MAXIMUM BLOCK NUMBER FOR SUPERVISOR 122.
+
+              MXNODE(50)     :MAXIMUM NUMBER OF NODES IN THE NETWORK.
+
+              MXSES0(200)    :MAXIMUM NUMBER OF SIMULTANEOUS SESSIONS.
+
+              MXSES1(100)    :MAXIMUM NUMBER OF SIMULTANEOUS
+            :                :X.25/X.75 SESSIONS.
+
+              SECTRS(10)     :NUMBER OF DISK SECTORS PER BACKUP
+            :                :WRITE OPERATION.
+
+              SUPERS(1,2)    :SUPERVISORS TO COLLECT ACCOUNTING DATA FROM.
+
+              TAPBLK(1)      :NUMBER OF LOGICAL RECORDS TO BLOCK ON TAPE
+            :                :WITHIN A SINGLE PHYSICAL RECORD.  IF = 1,
+            :                :OUTPUT IS UNBLOCKED.  OTHERWISE PRIMARY AND
+            :                :CONTINUATION RECORDS WILL BE PLACED IN THE
+            :                :SAME PHYSICAL RECORD, WHICH WILL BE PADDED
+            :                :WITH BLANKS AND ONE CARRIAGE RETURN FOR EACH
+            :                :UNUSED RECORD.
+
+              TAPE0(0)       :SLOT'S LOGICAL UNIT NUMBER FOR TAPE DRIVE 0.
+
+              TAPE1(1)       :SLOT'S LOGICAL UNIT NUMBER FOR TAPE DRIVE 1.
+
+              CRSHON(NO)     :SHOULD SLOT HALT ON CRASH?
+
+              DK1400(NO)     :IS A MSC-1400 DISK CONTROLLER USED?
+
+
+                                  Appendix C, SAMPLE RAM TYMFILE    Page 68
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+              MRKPAR(NO)     :IS MARK PARITY TAPE OUTPUT USED?
+            :                :IF NOT, SPACE PARITY TAPE OUTPUT IS USED.
+
+              PRJSPC(YES)    :CONVERT CARRIAGE RETURNS AND
+            :                :LINEFEEDS IN PROJECT CODE TO SPACES?
+
+              RAMGG(RAMDBUG,SP)   :RAM GOOD GUY ACCESS LIST.
+              RAMGG(RAM,PRIV)     :THE FIRST ARGUMENT IS A VALID USERNAME.
+              RAMGG(RAMOPER,OPER) :THE SECOND ARGUMENT IS THE LICENSE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  Appendix C, SAMPLE RAM TYMFILE    Page 69
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                            Appendix D, RAM SYSTEM MESSAGES
+
+
+            RAM messages  are divided into  two categories:   messages that
+            are displayed  at your terminal and  messages that are  sent by
+            RAM to the active Supervisor's error log.
+
+
+            Terminal Messages            _________________
+
+            The following are messages that may be displayed on your termi-
+            nal.
+
+                 ?
+
+            A question mark indicates you have entered a command containing
+            a syntax error or a command that is longer than 63 characters.
+
+                 DISK UNAVAILABLE
+
+            This is displayed if RAM's disk is not available.
+
+                 LOGIN NOT ACCEPTED BY RAM, USERNAME NOT RECOGNIZED
+
+            This indicates that you have attempted to  log in to RAM with a
+            username that has not been assembled into RAM.
+
+                 name CURRENTLY IS THE PRIVILEGED USER
+
+            This message is displayed only to users with privileged or sys-
+            tem programmer status at login.  It tells you that another user
+            with privileged status is logged in to RAM and currently is the
+            privileged user.
+
+                 name IS NO LONGER THE PRIVILEGED USER
+
+            This indicates  you are gaining user  privilege as a  result of
+            having issued the Grab command.  The  username is losing privi-
+            lege.
+
+                 name IS NOW THE PRIVILEGED USER !!
+
+            This  indicates you  are losing  privilege, where  name is  the
+            username entering the Grab command to gain privilege.
+
+
+
+
+
+
+                                 Appendix D, RAM SYSTEM MESSAGES    Page 70
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                 RAM MUST BE PAUSED FOR THIS COMMAND
+
+            This indicates  that you have  entered a command  that requires
+            that RAM be  paused first.  The commands that  must be preceded
+            by a Pause command are  Attach, Coldstart, Detach, Dump, Label,
+            Print, Setblock, Tape, and Warmstart.
+
+                 SESSION POOL FULL !!
+
+            This indicates  that the  number of  session records  currently
+            held in  memory is the maximum  number of session  records that
+            may be in memory at any given time.  RAM will force a pause.
+
+                 SUPERVISOR PASSED RAM (WRAP AROUND) !!
+
+            This indicates  that the  block number  into which  the current
+            Supervisor  is writing  has passed  the block  number RAM  most
+            recently received.
+
+            This is a serious condition because it  means that RAM was una-
+            ble to collect accounting data  before the accounting block was
+            written over.   Some accounting  data was  probably lost.   RAM
+            automatically resets its pointer, moving  it ahead 64 blocks to
+            prevent a second wraparound.
+
+                 TAPE UNIT n UNUSABLE - TAPE DISABLED
+
+            This is displayed  on the terminal(s) of all  current RAM users
+            if RAM attempts a tape operation  and gets no response from the
+            specified tape unit  n within 9 minutes.  RAM  assumes the tape                                 _
+            unit to be offline and demotes the tape status to Disabled.  If
+            a second tape  unit is online and  its tape is ready,  RAM will
+            promote this unit  to the In Use state.  If the  second unit is
+            not online with its tape ready, RAM will force a pause.
+
+                 THIS IS A RESTRICTED COMMAND
+
+            This indicates that a user without system programmer status has
+            entered a restricted command.
+
+                 YOU ARE NOT THE PRIVILEGED USER
+
+            This indicates that a nonprivileged  user has entered a command
+            requiring privileged status.
+
+
+
+
+
+
+                                 Appendix D, RAM SYSTEM MESSAGES    Page 71
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Supervisor Error Log Messages            _____________________________
+
+            The following message is sent  to the active Supervisor's error
+            log when a RAM error occurs.  To read the messages in the error
+            log, log in to TMCS or PROBE  and enter the Log command.  Refer
+            to the TMCS User's Guide or the PROBE Reference Manual for fur-                   _________________        ______________________
+            ther information.
+
+            The TMCS format is
+
+                 node# NODE REPORT FROM SLOT slot# RAM TYPE aa bbbb
+
+            TMCS event number:  8
+
+            The PROBE format is
+
+                 NODE REPORT node# FROM SLOT slot# RAM TYPE aa bbbb
+
+            PROBE message number:  40
+
+            where: node# = the node number
+                   slot# = the slot number
+                      aa = the RAM error type
+                    bbbb = indicates a submessage failure reason, if not 0
+
+            If aa is 22,  RAM cannot write to a tape  unit because the tape               __
+            status is not  Ready or In Use.  This message  repeats every 15
+            minutes for as long as the condition exist.
+
+            If aa is 23, there is a  disk error.  The message repeats every               __
+            15 minutes for as long as the disk is unusable.  The reason for
+            the failure, indicated by bbbb, is                                      ____
+
+                 0001  The disk area is too small for RAM's use.
+
+                 0002  A bad  status condition was  returned from  the disk
+                       unit or the controller.
+
+                 0003  A checksum  error occurred with data  retrieved from
+                       the disk.
+
+            If aa is 24, invalid accounting data was received from the net-               __
+            work, and  RAM will not process  it.  The value  bbbb indicates                                                             ____
+            the number of  invalid records that were ignored  by RAM.  This
+            message repeats  every 15  minutes for as  long as  the invalid
+            data exist.
+
+
+
+
+                                 Appendix D, RAM SYSTEM MESSAGES    Page 72
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            If aa is  25, the ACCOUNT slave program  transmitted an invalid               __
+            checksum disk block  to RAM.  This message will be  sent if any
+            invalid checksums  were detected  in the  preceding 15 minutes.
+            The  value  bbbb  indicates the  number  of  invalid  checksums                        ____
+            received since the last coldstart.
+
+            If aa is 27, the session pool overflowed.  RAM pauses when this               __
+            occurs.  The value bbbb indicates the  number of times the ses-                               ____
+            sion pool has overflowed.
+
+            If aa is 28, the current session number is not one greater than               __
+            the previous session number.  This occurs when a new Supervisor
+            is awakened, in which case approximately 45 session numbers may
+            be skipped.  It also  occurs when the Supervisor  builds a com-
+            mand circuit, in which case  the session counter is incremented
+            but  no accounting  data is  reported.  The  Supervisor can  be
+            optioned to  generate a special  accounting message  to account
+            for these  command circuits.  This  reduces the  occurrences of
+            this message.
+
+            This message  will be  sent if any  discrepancy in  the session
+            number count  was detected  in the  preceding 15 minutes.   The
+            value bbbb indicates the number  of times the increment between                  ____
+            successive session numbers is other than one.
+
+            If aa is  29, the Supervisor has passed  RAM (wraparound).  The               __
+            value bbbb indicates  the RAM accounting block  number that was                  ____
+            passed by the Supervisor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                 Appendix D, RAM SYSTEM MESSAGES    Page 73
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                               Appendix E, COMMAND TABLE
+
+
+            Nonprivileged Commands            ______________________
+
+            Exit      Terminates the current RAM session.
+
+            Help      Displays a list of valid RAM commands.
+
+            PROfile   Displays a list of disk or tape status messages.
+
+            STatus    Displays a RAM status report.
+
+            Privileged Commands            ___________________
+
+            Attach Unit=[0|1],Position=[TMTM|BACK|RW]
+                      Attaches the specified tape unit to the RAM slot.
+
+            COLDstart Initializes RAM's memory.
+
+            DEtach Unit=[0|1]
+                      Detaches the specified tape unit from the RAM slot.
+
+            DRain     Stops collecting  accounting  data  from  the  Super-
+                      visors,  writes  the  session records  to  tape,  and
+                      deletes session records from RAM's memory.
+
+            Grab      Takes privilege from the privileged user.
+
+            Label Volume=vv,Owner=oo,Date=yyddd,File=ff,System=ss
+                      Specifies tape label information.
+
+            PAuse     Terminates  normal  RAM  processing  and  performs  a
+                      backup.
+
+            REsetprofile
+                      Clears the list of messages  displayed by the Profile
+                      command.
+
+            RUn       Resumes normal RAM processing.
+
+            SEtblock Supervisor=sss,Block=bbb
+                      Specifies the accounting block  number from which RAM
+                      will collect data next.
+
+
+
+
+
+
+                                       Appendix E, COMMAND TABLE    Page 74
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            SLave [Up|Down]=nnn
+                      Informs RAM  whether or not  data is to  be collected
+                      from the specified supervisor.
+
+            Tape Unit=[0|1],Count=#,Operation=[RR|BR|AF|BF|RW]
+                      Performs the specified tape operation.
+
+            WARMstart Copies  history  and session  information  stored  on
+                      RAM's disk to RAM's memory.
+
+            Restricted Commands            ___________________
+
+            DUmp Supervisor=sss,Block=bbbb
+                      Outputs the contents of block  bbbb from the account-                                                     ____
+                      ing file of Supervisor sss.                                             ___
+
+            PRInt Unit=uu,Count=c,Length=nn
+                      Prints the first nn characters  of the specified num-                                       __
+                      ber of physical records c from the tape unit uu.                                              _                    __
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                       Appendix E, COMMAND TABLE    Page 75
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+                                         INDEX
+
+
+
+            Access ............................................ 47, 54
+            Attach command .................................... 19
+            Auxiliary circuit ................................. 47
+
+            Blank session record data ......................... 56
+
+            Called DTE address ................................ 46, 53
+            Calling DTE address ............................... 48, 55
+            Carriage return ................................... 56
+            Carriage return field ............................. 50, 56
+            Charge location ................................... 47, 54
+            Checkpoint parameter .............................. 62
+            CHKPT parameter ................................... 62
+            Circuit Characteristic Type (CCT) ................. 39
+            Coldstart command ................................. 21
+            Command format and syntax ......................... 5
+            Commands .......................................... 8
+            Completeness factor ............................... 35
+            Connect time ...................................... 39
+            Control-A ......................................... 7
+            Control-H ......................................... 7
+            Crash On parameter ................................ 66
+            CRSHON parameter .................................. 66
+
+            Data Communications Equipment (DCE) ............... 51
+            Data Network Identification Code (DNIC) ........... 53
+            Data Terminal Equipment (DTE) ..................... 46
+            DATAPAC Tariff Class .............................. 53
+            Destination host .................................. 37
+            Destination input packet count .................... 52
+            Destination input segment count ................... 52
+            Destination logical port number ................... 37
+            Destination node number ........................... 37
+            Destination output packet count ................... 52
+            Destination output segment count .................. 52
+            Destination port .................................. 37
+            Detach command .................................... 22
+            Disk LUN parameter ................................ 63
+            DISK parameter .................................... 63
+            Disk Sectors parameter ............................ 65
+            DK1400 parameter .................................. 66
+            DNIC list ......................................... 53
+
+
+
+
+                                                           INDEX    Page 76
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Drain command ..................................... 23
+            Dump command ...................................... 59
+            Dynamic Debugging Tool (DDT) ...................... 11
+
+            Error messages .................................... 70
+            Escape character .................................. 7
+            Exit command ...................................... 8
+
+            Filler ............................................ 50, 55, 56
+            Flags ............................................. 50, 55
+            Format ............................................ 5
+
+            Gateway ........................................... 46, 54
+            Gateway session number ............................ 48, 55
+            Grab command ...................................... 24
+
+            Help command ...................................... 8
+            Host Number parameter ............................. 63
+            HSTNUM parameter .................................. 63
+
+            International Record Carrier (IRC) ................ 36, 44
+            IRC reported by gateway ........................... 46, 54
+            ISIS Kernel ....................................... 58
+
+            Label command ..................................... 25
+            Logical port number ............................... 37
+            Logical Unit Number (LUN) ......................... 63
+            Login ............................................. 3
+
+            Mark Parity parameter ............................. 66
+            Maximum Blocks parameter .......................... 63
+            Maximum Blocks Per Supervisor parameter ........... 63
+            Maximum Nodes parameter ........................... 64
+            Maximum Primary Sessions parameter ................ 64
+            Maximum Secondary Sessions parameter .............. 64
+            MPVC sessions ..................................... 49
+            MPVC sessions aggregate time ...................... 49
+            MRKPAR parameter .................................. 66
+            MSC-1400 Disk Controller parameter ................ 66
+            MXBLK parameter ................................... 63
+            MXNODE parameter .................................. 64
+            MXSES0 parameter .................................. 64
+
+
+
+
+
+
+
+
+                                                           INDEX    Page 77
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            MXSES1 parameter .................................. 64
+
+            Nonprivileged commands ............................ 8
+            Normal charge circuit ............................. 47, 54
+
+            Octet count ....................................... 38
+            Originating host number ........................... 37
+            Originating logical port number ................... 37
+            Originating node number ........................... 36
+            Originating physical port number .................. 48
+            Originating physical port type .................... 49
+            Origination input packet count .................... 51
+            Origination input segment count ................... 51
+            Origination output packet count ................... 51
+            Origination output segment count .................. 51
+            Overview .......................................... 1
+
+            Packet Assembly/Disassembly (PAD) ................. 47
+            Packet count ...................................... 51, 52
+            Pause command ..................................... 27
+            Primary session record data ....................... 34
+            Print command ..................................... 60
+            Privileged commands ............................... 19
+            Profile command ................................... 9
+            Project code ...................................... 45
+
+            RAM Good Guy Access List parameter ................ 67
+            RAM tapes ......................................... 1, 2, 31
+            RAM Tymfile parameters ............................ 62
+            RAMGG parameter ................................... 67
+            Record type ....................................... 34, 51, 56
+            Resetprofile command .............................. 27
+            Restricted commands ............................... 59
+            Reverse charge circuit ............................ 47, 54
+            Run command ....................................... 28
+
+            Secondary session record data ..................... 51
+            SECTRS parameter .................................. 65
+            Segment count ..................................... 51, 52
+            Sequence number ................................... 35
+            Serial Input/Output (SIO) ......................... 48
+            Session number .................................... 36, 48, 55
+            Session record .................................... 1
+            Session record data ............................... 34
+            Setblock command .................................. 28
+            Slave command ..................................... 30
+
+
+
+
+                                                           INDEX    Page 78
+
+
+
+
+
+
+
+
+
+            RAM Reference Manual                            August 30, 1984
+
+
+            Special characters ................................ 7
+            Start date ........................................ 38
+            Start time ........................................ 38
+            Status command .................................... 14
+            Stop date ......................................... 39
+            Stop time ......................................... 39
+            SUPERS parameter .................................. 65
+            Supervisor Specification parameter ................ 65
+            Syntax ............................................ 5
+
+            TAPBLK parameter .................................. 65
+            Tape-Blocking Factor parameter .................... 65
+            Tape command ...................................... 31, 32
+            Tape Unit 0 parameter ............................. 66
+            Tape Unit 1 parameter ............................. 66
+            Tapes ............................................. 1, 2, 31
+            TAPE0 parameter ................................... 66
+            TAPE1 parameter ................................... 66
+            Terminal address (extended) ....................... 49
+            Termination code .................................. 42
+            Throughput class .................................. 45
+            Transit DNIC list ................................. 53
+            Transit network count ............................. 53
+            Tymfile parameters ................................ 62
+            TYMSAT interfaces ................................. 57
+
+            Universal User Number (UUN) ....................... 44
+            Username .......................................... 45
+
+            Warmstart command ................................. 32
+
+            X interfaces ...................................... 57, 58
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                           INDEX    Page 79
+
+
+
+
+
+BsÖ
