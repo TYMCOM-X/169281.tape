@@ -1,0 +1,1408 @@
+
+::*********************************************************************
+::
+::	T-II NODE CODE VERSION 05.31 PATCH FILE
+::
+::*********************************************************************
+
+
+:       See if the NETID is not 0 and if so then tell them which network
+:       the netid is for.
+:
+        kill    net
+netdok  eq      0               :find a known NETID?
+
+        if      1-netid         :0 is not a valid netid
+        Remark%%%       ERROR!!!!   NETID of 0 is not valid.%%%
+        quit    ;       kill rseg0,privbg :prevent writeout.
+        ei
+net     macro(na,nb)[
+ne      eq      nb
+        if      (netid/ne)*(ne/netid)   :if they are equal
+netdok  eq      1               :we found a netid
+        remark%%%       NETID is ;
+ number $a ne ; remark d.  This is a NA network node.%%%
+mnetid  macro[  ac /NA/  ]
+        ei
+]
+:	NETWORKS AS OF 7/20/88
+
+	net(TYMNET,1)
+	net(BUBBNET,2)
+	net(TRWNET,$A 3)
+	net(DECNET,$A 4)
+	net(ITALNET,$A 5)
+        net(SWEDNET,$A 6)
+        net(NETHERNET,$A 7)
+        net(SUNNET,$A 8)
+        net(SWISSNET$A 9)
+        net(UCCPAC,$A 10)
+        net(XEROXNET,$A 11)
+        net(BOFANET,$A 12)
+        net(VANET,$A 13)
+        net(CHASENET,$A 14)
+        net(CODAN,$A 15)
+        net(BPNET,$A 16)
+        net(DUNET,$A 17)
+        net(LENET,$A 18)
+        net(AVISO,$A 19)
+        net(DIALOG,$A 20)
+        net(MGT,$A 21)
+        net(STAGENET,$A 22)
+        net(GEONET,$A 23)
+        net(ALASCOM,$A 24)
+        net(CASNET,$A 25)
+        net(EXXON,$A 26)
+        net(INSNET,$A 27)
+        net(HSBCNET,$A 28)
+        net(FIRNNET,$A 29)
+        net(DOLNET,$A 30)
+        net(CTS,$A 31)
+        net(SWBNET,$A 32)
+        net(ITALCABLE,$A 34)
+        net(TELEVERKET,$A 36)
+        net(PHILIPS,$A 37)
+        net(UKLAB,$A 38)
+        net(EASTNETLAB,$A 39)
+        net(DATAPAC,$A 40)
+        net(TRAINING,$A 41)
+        net(LENG,$A 42)
+        net(SLIGOS,$A 43)
+        net(WESTREGLAB,$A 44)
+        net(REPAIRDEPOT,$A 45)
+        net(WESTPUB,$A 46)
+        net(WYNET,$A 47)
+        net(HGNET,$A 48)
+        net(MDISINET,$A 49)
+        net(NISNET,$A 50)
+        net(BABYLON,$A 52)
+        net(ANZNET,$A 53)
+        net(FTS2000,$A 54)
+        net(CONNNET,$A 55)
+        net(NTSNET,$A 56)
+        net(MERCURYNET,$A 57)
+        net(DEVNET,$A 58)
+        net(EDS-ELECT DT,$A 59)
+        net(MDISI-SWEDEN,$A 60)
+        net(TELEVERKLAB1,$A 61)
+        net(TELEVERKLAB2,$A 62)
+        net(WTS LABS,$A 63)
+        net(TELERATE,$A 64)
+        net(ICINET-IMPER,$A 65)
+        net(FMC,$A 66)
+        net(MAURUZEN,$A 67)
+        net(AUSTRALIAN FEDS,$A 68)
+        net(INTL TELECOM,$A 69)        
+	net(AIR FRANCE,$A 70)
+        net(MDISNET,$A 71)
+        net(MFGNET,$A 72)
+        net(UKTSINET,$A 74)
+        net(CEINET,$A 75)
+        net(EUSKONET,$A 76)
+        net(TESTNET,$A 99)
+
+        if      1-netdok        :if didn't find a known netid
+        remark%%%       NETID is ;
+ number $a netid ; remark d.  This NETID is unknown.
+        remark%%        Please make sure this NETID is correct.%%%
+mnetid  macro[ ac /Unknown/ ]
+       ei       :not a known netid.
+
+:       display at assembly time the maximum number of nodes in the net
+:       for a supe base config before running the risk of crashing node code
+:       base with 68C3 with its supe wakes up.
+
+        if      super
+ remark%% Maximum number of nodes in network:  NNODES = 
+ number $a NNODES
+ remark d%
+        ei      :super
+
+
+
+:       fix the patch macros to kill the assembly if an error occurs and
+:       to print out which parameter to change when patch space overflows.
+:       Also, the extremely annoying ^G (bells) have been removed.  Bells
+:       are normally reserved for assembly errors and do not belong in a
+:       properly assembling patch file.
+	KILL	PATCH
+PATCH	macro(day,tim,usr,fba,lba1,len)[
+  IF	PATACT
+ REMARK %>>>> ERROR **** Previous PATCH not ended with ENDPATCH <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  ELSE
+PATACT	EQ	1
+  EI
+ REMARK %%PATCH added on day at tim by usr`.
+	SEG	0
+	ORG	PAHPTR
+   IF	(PAHPTR+1)-(PATHIS+PHSIZE)
+ REMARK %>>>> ERROR **** Too many PATCHs, increase PHSIZE beyond ; NUMBER $0PHSIZE
+ REMARK x and reassemble <<<<%
+ remark %>>>> NOTE: PHSIZE is a Tymfile equate.  example:  PHSIZE EQ $0 300 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+   EI
+	WC	$0 day!19000000
+	HC	$0 tim
+Q	AC	\usr\
+Q1	HS
+	ORG	Q+$a10	:skip to next history area
+PAHPTR	HS
+  IF	Q1-.	:IF UNAME>10 CHARARACTERS, CLEAR OVERFLOW
+	RE	Q1-.
+	BC	0
+	ER
+  EI
+
+QPATS	EQ	((fba)&$00FF0000)^-$010
+QPATB	EQ	fba
+QPATC	EQ	lba1
+  IF	lba1 0
+QPATL	EQ	(lba1)-(fba)
+  ELSE
+QPATL	EQ	len 2
+  EI
+  IF	(.NE.(QPATC,0))&(.GT.(QPATB-QPATC+2,0))
+ REMARK %>>>> ERROR **** Address of patch end < address of patch start <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	(QPATB+1)-(PATCH1)	:IF PATCHING IN PATCH1,
+   IF	(PATCH1+P1SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+    IF	(QPATB+QPATL)-(PATCH1+P1SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH1 area overflow <<<<%
+ REMARK %>>>> Expand P1SIZE beyond ; NUMBER (QPATB+QPATL-PATCH1)
+ REMARK x and reassemble. <<<<%
+ remark %>>>> NOTE: P1SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 0C00 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	(QPATB+1)-(PATCH0)	:IF PATCHING IN PATCH0,
+   IF	(PATCH0+P0SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	0	:PATCHING PATCH0 AREA
+    IF	(QPATB+QPATL)-(PATCH0+P0SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH0 area overflow <<<<%
+ REMARK %>>>> Expand P0SIZE beyond ; NUMBER (QPATB+QPATL-PATCH0)
+ REMARK x and reassemble. <<<<%
+ remark %>>>> NOTE: P0SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 200 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	QPATA+1		:IF PATCHING IN PATCH0 OR PATCH1 AREA
+ REMARK %	Starts at PATCH; NUMBER $0QPATA; REMARK +
+ NUMBER	$0PA|QPATA|PTR-PATCH|QPATA|
+ REMARK  and is ; NUMBER $0QPATL; REMARK x bytes long%
+  ELSE
+ REMARK %     Starts at fba and is 
+ NUMBER $0 QPATL
+ REMARK x bytes long%
+  EI
+
+	SEG	QPATS
+	ORG	QPATB
+	RE	QPATL
+	BC	0
+	ER
+  IF	(.+1)-(S|QPATS|SIZE+SEG|QPATS|)
+ REMARK %>>>> ERROR **** PATCH causes SEG; NUMBER $0qpats
+ REMARK  overflow <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+QPATRM  EQ      0                       :last macro was PATCH   ###sdw
+	ORG	QPATB
+
+]               :end PATCH
+
+:	>>CONPAT(fba,lba1,len)<<	CONTINUE A PATCH
+
+	KILL	CONPAT
+CONPAT	MACRO(cfba,clba1,clen)[
+PATACT	EQ	PATACT+1
+  IF	2-PATACT
+REMARK %>>>> ERROR **** CONPAT not preceded by a PATCH <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	QPATA+1		:IF PATCH WAS IN A PATCH AREA
+PA|QPATA|PTR	EQ	.
+  EI
+QPATA	EQ	-1	:CLEAR FLAG
+QPATS	EQ	((cfba)&$00FF0000)^-$010
+QPATB	EQ	cfba
+QPATC	EQ	clba1
+  IF	clba1 0
+QPATL	EQ	(clba1)-(cfba)
+  ELSE
+QPATL	EQ	clen 2
+  EI
+  IF	(.NE.(QPATC,0))&(.GT.(QPATB-QPATC+2,0))
+ REMARK %>>>> ERROR **** Address of conpatch end < address of conpatch start <<<<%
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	(QPATB+1)-(PATCH1)	:IF PATCHING IN PATCH1,
+   IF	(PATCH1+P1SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+QPATA	EQ	1	:PATCHING PATCH1 AREA
+    IF	(QPATB+QPATL)-(PATCH1+P1SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH1 area overflow <<<<%
+ REMARK %>>>> Expand P1SIZE beyond ; NUMBER (QPATB+QPATL-PATCH1)
+ REMARK x and reassemble. <<<<
+ remark %>>>> NOTE: P1SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 0C00 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	(QPATB+1)-(PATCH0)	:IF PATCHING IN PATCH0,
+   IF	(PATCH0+P0SIZE)-QPATB	: BUT NOT OUTSIDE IT,
+QPATA	EQ	0	:PATCHING PATCH0 AREA
+    IF	(QPATB+QPATL)-(PATCH0+P0SIZE)	:BUT NO PATCH AREA LEFT
+ REMARK %>>>> ERROR  **** PATCH0 area overflow <<<<%
+ REMARK %>>>> Expand P0SIZE beyond ; NUMBER (QPATB+QPATL-PATCH0)
+ REMARK x and reassemble. <<<<%%
+ remark %>>>> NOTE: P0SIZE is a Tymfile equate.  example:  P1SIZE EQ $0 200 <<<<%%
+        QUIT    ; KILL SEG0,PRIVBG
+    EI
+   EI
+  EI
+  IF	QPATA+1		:IF PATCHING IN PATCH0 OR PATCH1 AREA
+ REMARK 	Continues at PATCH; NUMBER $0QPATA; REMARK +
+ NUMBER	$0PA|QPATA|PTR-PATCH|QPATA|
+ REMARK  and is ; NUMBER $0QPATL; REMARK x bytes long%
+  ELSE
+ REMARK 	Continues at cfba and is 
+ NUMBER $0 QPATL
+ REMARK x bytes long%
+  EI
+	SEG	QPATS
+	ORG	QPATB
+	RE	QPATL
+	BC	0
+	ER
+  IF	.-(S|QPATS|SIZE+SEG|QPATS|)
+ REMARK %>>>> ERROR **** PATCH causes SEG; NUMBER $0qpats
+ REMARK overflow <<<<$
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+qpatrm  eq      1               :last macro run was CONPATCH
+	ORG	QPATB
+]
+
+:	>>ENDPATCH(com)<<  End a patch - does error checking, outputs comment
+
+	KILL	ENDPATCH
+ENDPATCH	macro(c1,c2,c3,c4,c5)[
+PATACT	EQ	0
+  IF	.-(QPATB+QPATL)
+        IF      QPATRM          :if last was CONPATCH
+ REMARK %>>>> ERROR **** BAD CONPATCH **** <<<<%
+        else                    :last was PATCH
+ REMARK %>>>> ERROR **** BAD PATCH **** <<<<%
+        ei                      :print correct remark
+        QUIT    ; KILL SEG0,PRIVBG
+  EI
+  IF	QPATA+1		:IF PATCH WAS IN A PATCH AREA
+PA|QPATA|PTR	EQ	.
+  EI
+QPATA	EQ	-1	:CLEAR FLAG
+	SEG	1
+ REMARK <<< c1 >>>
+]
+
+        if      t2gate
+ REMARK%% NODE CODE VERSION 5.31 DOES NOT SUPPORT GATEWAY VERSION
+ REMARK % ASSEMBLY KILLED.  PLEASE USE A VERSION OF NODE CODE WHICH
+ REMARK % HAS NO KNOWN GATEWAY BUGS.
+        QUIT    ; KILL SEG0
+          ei    :t2gate
+
+
+
+        IF      SILINS
+        PATCH(880512,2020,sdw.SIOT29,SIOT29+12,,4)
+        JGE     SIOT3
+        ENDPATCH(Correct incorrect jump in SIO retransmit logic)
+        EI      :SILINS
+        
+
+:       GATEWAY bug of a misplaced register shift.  certain logon
+:       cases jumped to the shift right without going through the
+:       shift left, causing further tests with the logon status byte
+:       to be invalid.  result was that HNET-INET IIX transparent
+:       logons were zapped if the INET supe requested a password.
+:
+:       Patch takes advantage of GB4X4 doing what WCIE does and so by
+:       calling WCIE directly, there is room for the patch without jumping
+:       to the patch area.
+
+       IF       T2GATE
+        PATCH(880601,0040,sdw.GDB4A,GB4DX4,,16)
+        LR      R1,R11                  :old logic here is just a WCIE
+        JAL     R9,WCIE,,               :now have created room for the patch
+        TBT     CHN,GTTRNS              :transparent?
+        JE      DSOIRP,,                :no, done
+        J       GDB45+0A                :after the misplaced SRLS r11,2
+  ENDPATCH(Fix zap of HNET to INET IIX transparent logons requiring a password)
+       EI       :T2GATE
+
+
+:       Dispatcher crash caused by not properly starting the detach
+:       after a node code generated ICRS msg.   NSR#1800
+       IF       LOGII
+        PATCH(880601,1350,sdw.ICRSN2,ICRSN2+18,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,12)
+        AIS     PRD,3                   :+3, was wrong at +4
+        NHI     PRD,DRSZ-4              :get to word boundary
+        STH     R5,DIRNG,PRD,           :existing instruction
+        J       ICRSN2+22,,
+       ENDPATCH(Fix Dispatcher crash when sending Log II message)
+       EI       :LOGII
+
+:       Bug of displaying the entire NCRM (log II msg) which might
+:       contain a password.  
+
+      IF        LOGII
+        PATCH(880601,1610,sdw.TRCS10,TRCS10+0A,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,10)
+        LB      R0,TRRING,R1,           :existing instruction
+        NHI     R0,7F                   :NCRM doesn't set this bit
+        J       TRCS10+10,,
+        ENDPATCH(FIX XRAY TD DISPLAY FOR LOG II NCRM MSG)
+       EI       :LOGII
+
+:       Patch to display the neighbor's host number in the KD command.
+      IF	XRSZLV			:				###cwc
+       IF       2-XRYTMC
+        PATCH(880606,1640,sdw.KDHOST,XNEI8A+24,,6)
+        L       R3,KHOST0,KX,           :was wrong as LHL
+  ENDPATCH(Fix Xray KD command to correctly display the neighbor's host number)
+       EI       :2-XRYTMC
+      EI	:XRSZLV			:				###cwc
+
+:       patch to put the data in the password MO immediately after the
+:       needle when the destination is LOG I.                           ###sdw
+       IF       LOGII
+        PATCH(880608,1420,sdw.L2PSWD,LGCVEX+10,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,3E)
+        LB      R0,NEDFLG               :First make sure dest is LOG I
+        THI     R0,L2F.N2               :bit is 1 if dest log I
+        JE      LGCVP9                  :dest log II, nothing to do
+        LHI     R4,ID.PWD               :and if password present
+        JAL     R7,X4PARC,,
+        SKIPAD(LGCVP9)                  :not there so exit
+        LR      R6,R0                   :get length
+        LR      R4,R3                   :setup PCIER4
+LGCVP2  JAL     R9,PCIER4,,             :get a char
+        JAL     R9,WCIE,,               :write it
+        SIS     R6,1
+        JGBS    LGCVP2
+        LHI     R1,8D                   :supe striped CR off
+        JAL     R8,WCI,,
+LGCVP9  L       R9,LEPAS1
+        JR      R9
+        ENDPATCH(Send destination any data in the LOG II PASSWORD MO)
+       EI       :logii
+
+:       Mainly cosmetic problem of possibly setting bits in what is
+:       an used bytes.
+:       second part is real problem of sending out the two 1A messages
+:       for host status which contains the collect call bits before
+:       processing the collect call bits.  Patch simply reproduces the
+:       collect call bit handling but does it before the 1A message is
+:       sent out.  This patch wouldn't be needed if the host status logic
+:       was rewritten to get and store the status and then see which msgs
+:       need to be sent, but current code being a mess.....
+       if       logii
+        PATCH(880610,259,sdw.CCHOST,DZHS21+16,,4)
+        NHI     R4,0FF                  :not 7FFF to do a one byte field
+        CONPATCH(DZHS06+4,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,2a)
+        LR      R1,PRD                  :get ahead and do CC bits before
+        AIS     R1,4                    :sending the 1A msg.
+        NR      R1,TC                   :get r1 to point to byte with CC bits
+        LB      R3,DORNG,R1,            :get byte with CC bits
+        NHI     R3,1C                   :remove all other bits
+        LB      R1,HSTAT3,HN
+        NHI     R1,@1C                  :remove CC bits from saved
+        OR      R3,R1                   :combine new CC bits with old other
+        STB     R3,HSTAT3,HN            :save it away
+        LB      R1,DORNG+2,PRD,         :old instruction
+        J       DZHS06+0A,,
+ ENDPATCH(Fix host status to properly handle collect call bits)
+       ei       :logii
+
+
+:       Routine to handle multiline SIO links, did not handle a multiline
+:       link mixing SIO and SYNC.  Node Code would crash.  This fixes
+:       the crash.  This does not fix lines going up and down for mixed
+:       sio and sync multiline links.  That has never worked in any
+:       version of node code running under ISIS and requires rewriting of
+:       the node code sync output driver.
+
+       IF       SILINS
+        PATCH(880614,1500,sdw.BSIOST,BSIOST,,3A)
+        KILL    BSIOS0,BSIOS2,BSIOS4,BSIOS3
+BSIOST  LHI     R4,(nlines-1)*2         :do all lines
+        LIS     R2,0                    :pointer within rotation
+        STB     R2,SIOROR,KD
+BSIOS0  LH      R1,NGSVLN,R4,           :link on this line?
+        JGFS    BSIOS2                  :nope, check next line
+        NHI     R1,7FFF                 :remove high bit
+        CLH     R1,NDID,KD              :on this link?
+        JEFS    BSIOS3
+BSIOS2  SIS     R4,2
+        JGEBS   BSIOS0
+        JR      R7                      :done
+
+BSIOS3  LR      R3,R4                   :setup for store
+        CLHI    R4,(NLINES-SILINS)*2
+        JGEFS   BSIOS4                  :is a sync line
+        LB      R3,SIOROT,KD            :not, just put first sio into rot
+BSIOS4  STB     R3,SIOROT,KD,R2
+        AIS     R2,1
+        J       BSIOS2
+     ENDPATCH(Fix crash caused by a mixing SYNC and SIO on a multi-line link)
+       EI       :SILINS
+
+:       Not a true patch, but a verification that none of the tymstar
+:       stuff was enabled.
+       IF       NAKCOD!APLYBP!STRHUB!RBTHUB!RBTRMT!STRDCD!STRRMT!MAKNUL
+
+        REMARK%%%%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%
+        REMARK!!!  FATAL CONFIGURATION ERROR             !!!%
+        REMARK!!!  ASSEMBLY HAS BEEN KILLED              !!!%
+        REMARK!!!  THIS VERSION DOES NOT SUPPORT TYMSTAR !!!%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%
+        KILL    SEG0,PRIVBG     :prevent writeout of file
+       EI       :any of the tymstar stuff
+
+:       Patch to fix crash when SIO line is not available.
+:       just reorder to setup SIOROS and SIOROL before jumping out
+        IF      SILINS
+        PATCH(880614,2042,sdw.dedSIO,SIOUT,,14)
+        TS      SIOROS
+        TS      SIOROL
+        LR      R0,LN
+        SRLS    R0,1
+        TBT     R0,SIOPTA
+        JN      SIOIDL
+        ENDPATCH(Fix crash when first SIO port is unavailable)
+        EI      :SILINS
+
+:	Patch to correct a wrong register use to call WCI.
+	PATCH(880728,1130,EV,LOGES4+8,,4)
+	JAL	R8,WCI		: write 80+chr back to buffer
+	ENDPATCH(Fix wrong register usage to call WCI)
+:       PATCH TO FIX KILLING R3 WHEN CONVERTING LOG II TO LOG I NEEDLES
+       IF       LOGII
+        PATCH(881011,1630,DLG,LGCV10+0E,,6)
+        J       PA1PTR,,
+        CONPATCH(PA1PTR,,20)
+        LR      R1,R4           :EXISTING
+        LR      R15,R3          :NEW
+        JAL     R9,WHWI,,       :EXISTING
+        LR      R3,R15          :EXISTING
+        J       LGCV10+14,,
+        ENDPATCH(FIX CONVERTING LOG II TO LOG I NEEDLES)
+       EI       :LOGII
+
+:****************************************************************
+: Patch name:  trclg2.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  swb   		       Date Written:  12/30/88
+: Reason for patcost not saved in DHSTIX so probe Trace cmd no work
+:****************************************************************
+
+        if      logii
+        patch(881230,1355,sdw.TRCLG2,crqhs2+28,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,30)
+        lhl     r0,cqhost
+        sth     r0,dhstix,r1,r1
+        sbt     r1,disbpv
+        sbt     r1,disbpx
+        j       crqhs2+30,,
+        endpatch(Fix node code so probe trace command works)
+        ei
+
+:****************************************************************
+: Patch name:  xrdbuf.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/29/88
+: Reason for patch: The RB command does not range check buffer number.
+:****************************************************************
+
+        if      xrszlv-2
+        patch(881230,1655,sdw.FIX RB,xrdbu3+4,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        ci      r2,lbufn
+        jg      comerr,,
+        lr      r2,r2
+        jl      comerr,,
+        jal     r8,cbcct,,
+        j       xrdbu3+0a,,
+        endpatch(Put a range check on Xray RB command)
+
+        patch(881230,1656,sdw.FIX WB,xwrbuf+0c,,0a)
+        nhi     r2,-4
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        clhi    r2,4
+        jle     comerr,,
+        ci      r2,lbufn
+        jg      comerr,,
+        j       xwrbuf+18,,
+        endpatch(Put a range check on Xray WB command)
+        ei
+
+:****************************************************************
+: Patch name:  LG2TCL.TST	Product and Version:  TII 5.31
+:     Author:  SCOTT WEDEL  	       Organization:  STS
+:   Customer:  SWB   		       Date Written:  10/22/88
+: Reason for patch:  When a log II needle is converted to a log 1 for
+:       nonlog II passthroughs then if the log ii needle data is bigger
+:       than the throughput class then that data won't arrive at the 
+:       destination since the destination won't release bp and let the
+:       neighbor send the rest of the data.  Solution is to set maximum
+:       tclass while waiting for the rest of the data to arrive and when
+:       it has all arrived then restore the intended tclass.  The patch
+:       leaves the circuit actual tclass in the transmit IOTAB and sets
+:       class d in the receive IOTAB.  Once the data arrivs then it puts the
+:       transmit tclass into the receive IOTAB.  The job is done.  I go out.
+:       another boring day.
+:****************************************************************
+
+        if      logii
+        patch(881022,1245,sdw.LG2TCL,ISNCV0,,6)
+        j       pa1ptr,,
+        conpatch(isncv1,,6)
+        j       isncvp,,
+        conpatch(pa1ptr,,60)
+        xhi     r2,4                    :flip to link chn's buffer
+        lhl     r1,bf,r2,               :receiving chn #
+        xhi     r2,4                    :restore to Dport buffer
+        lis     r0,3
+        oh      r0,iotab,r1,r1          :class d
+        sth     r0,iotab,r1,r1          :saved
+        lhi     r1,needcv               :existing
+        jal     r8,wcd,,                :existing
+        j       isncv0+8,,
+isncvp  xhi     r2,4                    :to link chn buffer
+        lhl     r1,bf,r2,
+        xhi     r2,4                    :restore to dispi
+        lis     r0,3                    :speed bits
+        nh      r0,diotab,chn,chn       :the circuit's actual tclass
+        or      r0,r2                   :receiving buffer is our buffer
+        sth     r0,iotab,r1,r1          :saved
+        sis     prd,1                   :existing
+        lhi     r1,dm.isn^8             :existing
+        j       isncv1+6,,
+     endpatch(Fix bug with throughput class and LOG II with LOG I passthroughs)
+        ei      :logii
+
+
+:****************************************************************
+:       NSR#1861
+: Patch name:  sioch2.531	Product and Version:  TII 5.31
+:     Author:  scott wedel	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/28/88
+:       Also, idle should be when have a free CCW, not only when not
+:       sending anything.  A free CCW means that the line is probably
+:       idle between this and the next foreground.
+:****************************************************************
+
+        if      silins
+        patch(890317,1500,sdw.SIOCH2,sion4-6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,12)
+        chvr    r6,r6                   :existing instruction
+        jg      sion4,,                 :existing logic
+        ts      idle,r4                 :inserted instruction
+        j       sioids,,                :existing instruction
+     endpatch(Correct logic which flagged an unloaded line as saturated)
+       ei       :silins
+
+
+:****************************************************************
+:       NSR#1862
+: Patch name:  oops.531  	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  06/23/88
+: Reason for patch:  R0 are not saved on Software detected crashes.
+:       Patch so that R0 and R1 are saved when doing software detected
+:       crashes.  The crash logic saves all registers before calling OOPS
+:       but OOPS then falls through to SFAIL which saves all registers
+:       again.  Patch has OOPS jumping over the SFAIL STM so that the
+:       registers at time of crash are preserved.
+:****************************************************************
+
+        patch(880623,1330,sdw.OOPS,SFAIL-0a,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,10)
+        lhl     r1,crcdtb,r1,           :existing instructions
+        sth     r1,crshid
+        j       sfail+4,,               :inserted instruction
+        endpatch(Save R0 and R1 when doing software crashes)
+
+:****************************************************************
+: Patch name:  XRDBRM.531	Product and Version:  TII 5.31
+:     Author:  Clive Rowe	       Organization:  STS
+:   Customer:  Exxon		       Date Written:  07/06/88
+: Reason for patch:
+:    This patch makes sure that the 'Remote XRAY User Flag' is
+:    not set when entering delay measurement routines.
+:****************************************************************
+:
+				:********************************
+        if      xrszlv-1
+        if      2-xrytmc
+	PATCH(880706,1301,CMR.XRDBRM,DBEG35,,6)
+	J	PA1PTR,,	:
+				:********************************
+	CONPATCH(PA1PTR,,20)	:
+	RBT	R14,INTXRF	: Reset 'Remote XRAY User' flag
+	LIS	R4,1		:
+	STH	R4,DLSTAT,R6	: Mark new status : needle req
+	J	DBEG35+6,,	: Return
+				:********************************
+	ENDPATCH(Reset INTXRF flag when entering 'DB' command)
+        ei      :xrszlv
+        ei      :2-xrytmc
+				:********************************
+
+
+:****************************************************************
+: Patch name:  dbfill.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/25/88
+: Reason for patch:  When using the DB command, specifying a large fill
+:       count can crash the machine since that many characters will be moved
+:       into the buffers and if there aren't enough buffers to handle it
+:       then crash.  Solution is to not allow setting more than 400
+:       (1024) as fill since that is the maximum throughput.
+:****************************************************************
+
+        if      xrszlv-1
+        if      2-xrytmc                :if DB exists
+        patch(880725,1500,sdw.DBFILL,DBEG23,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,1e)
+        lhl     r3,dlyfil,r6            :get current value
+        shi     r3,200                  :maximum circuit speed/2
+        jlfs    pdbg00                  :within range
+        lhi     r3,1ff
+        sth     r3,dlyfil,r6
+pdbg00  la      r2,prtint,,
+        j       dbeg23+6,,
+        endpatch(Prevent crash caused by delay circuits using all bufferlets)
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  ZR7263.TST	Product and Version:  TII 5.31
+:     Author:  Scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/29/88
+: Reason for patch:  If the zapper has already been sent out on the port
+:       then the ZAP with reason logic should not clear the port stuff
+:       but what for the ZAP ACK.  Patch is to add a check to exit after
+:       doing the host status stuff and before the port clearout stuff.
+:****************************************************************
+
+        IF      1-T2GATE                :nc running under ISIS
+        patch(880729,1600,SDW.ZR7263,dsozw7,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,1C)
+        lhl     r2,diotab,r4,r4         :existing
+        nhi     r2,-4                   :existing
+        lhl     r0,bf,r2,               :port cleared?
+        je      dsoirp,,                :yes, not detach stuff to do
+        j       dsozw7+0a,,             :return to existing
+  endpatch(Fix problem with Zap With Reason which leads to a 7263 crash)
+        ei      :1-t2gate
+
+
+:****************************************************************
+: Patch name:  newni.tst 	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  09/30/88
+: Reason for patch:  There is no way to determine what are the current NETID
+:       for each line or the NETID for that value.  Since it is unlikely that
+:       many NETIDs are different than genned in, the name of the original
+:       network is included in the header as well as the NETID.
+:****************************************************************
+
+        if      xrszlv-2
+        patch(880930,115,sdw.NI cmd,XNID+10,,6)
+        sis     r2,8                    :instead of clhi r2,8
+        jn      xnid20,,                :print out NETIDs
+        conpatch(xnid+38,,6)
+        j       xnid30,,                :print out NETIDS
+        conpatch(pa1ptr,,140)
+xnid20  ais     r2,8                    :if no args then okay
+        jn      comerr,,                :gave some arguments, syntax error
+xnid30  la      r2,xnidh0               :get address of header
+        jal     r7,typasc,,             :print it
+        lhi     r3,netid
+        jal     r9,typhwd,,
+        la      r2,xnidh1
+        jal     r7,typasc,,
+        lis     r5,0                    :line number
+xnid33  lr      r10,r5                  :last line number displayed
+        lh      r6,lnetid,r5,r5         :last netid displayed
+        lr      r3,r5
+        jal     r9,typbyd,,              :print line #
+xnid36  clh     r6,lnetid+2,r5,r5       :netid of next line
+        jnfs    xnid50
+        ais     r5,1
+        clhi    r5,nlines
+        jlbs    xnid36                  :see how many match
+        sis     r5,1                    :let display discover this is last line
+xnid50  cr      r5,r10                  :a range of just one line
+        jnfs    xnid53
+        jal     r7,typ8sp,,
+        j       xnid56
+xnid53  lhi     r1,ascdsh               :print '-'
+        jal     r13,xryout,,
+        jal     r7,typ2sp,,
+        lr      r3,r5                   :high end of range
+        jal     r9,typbyd,,
+        la      r2,asc1sp,,
+        jal     r7,typasc,,
+xnid56  jal     r7,typ8sp,,
+        lr      r3,r6                   :print the netid
+        jal     r9,typhwd,,
+        jal     r7,typcrl,,             :new line
+        ais     r5,1                    :see if at end
+        clhi    r5,nlines
+        jl      xnid33                  :do remaining lines
+        lh      r2,argct,xd             :only wanted netids?
+        je      xrcrlf,,
+        cli     xd,ttyxd
+        j       xnid+3e,,
+
+xnidh0  sc      /"8d"8aAssembled in NETID: /
+xnidh1  bc      0
+        ac      /(decimal)  /
+q       eq      .                       :limit network name to 10d bytes
+        mnetid
+        if      .-q-0a                  :if more than 10 bytes
+        org     q+0a
+        re .-q-0a ; bc 0 ; er           :clear excess
+        org     q+0a
+        ei                              :handling of overwrite
+        ac      /'s NETID."8d"8a  LINES           NETID (in decimal)"8d"8a/
+q       eq      .
+        org     xnidh1
+        bc      q-xnidh1-1              :length (not includind length field)
+        org     q                       :restore pc
+        hs      0
+
+     endpatch(Change Xray NI command to also display the NETIDs for each line)
+        ei
+
+:****************************************************************
+: Patch name:  gtpwr5.531	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  11/28/88
+: Reason for patch: Xray GP doesn't work for five digit kernel hosts.
+:       Instead ofthe most correct solution of correcting DECHEX to handle
+:       five digits, the patch simply has the comparision compare against
+:       the decimal host.
+:****************************************************************
+
+        if      xrszlv-1                :only when the cmd exists
+        patch(881128,0113,sdw.GETPWR,getpwr+18,,0c)
+        c       r3,hst0.p,,
+        jn      comerr                  :existing
+        jfs     .+2                     :get back to normal
+        conpatch(pa1ptr,,4)
+hst0.p  bc      0                       :save it in decimal form
+        ra      0a
+q1      eq      10000
+q2      eq      hst0
+        re      3
+q3      eq      (q2/(q1*10))
+q2      eq      q2-(q3*q1*10)
+q4      eq      (q2/q1)
+q2      eq      q2-(q4*q1)
+q1      eq      q1/100
+        bc      q3^4+q4
+        er
+        ra      0
+        hs      0
+        endpatch(Fix Xray GP to work for all Node and Host numbers)
+        ei
+
+
+:****************************************************************
+: Patch name:  misnet.tst       Product and Version:  TII 5.22
+:     Author:  scott wedel             Organization:  STS
+:   Customer:  all                     Date Written:  12/01/88
+: Reason for patch:  Prevent two versions which both know expanded resets
+:       from letting a link come up on old resets.  This is not nontrivial
+:       because still have to work with 5.10 and with the ATCs which put
+:       psuedo random garbage as its version number.  Thus, have to
+:       verify that the version number is really okay.
+:****************************************************************
+
+        patch(890625,2255,sdw.ExpOld,attl06+0c,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,50)
+        tbt     ln,xrstbt,,
+        jn      attl06+12,,             :coming up expanded so do netid check
+        lh      r0,vrstp+4,sd           :any version present?
+        je      attl07,,                :nope, something old
+        lh      r9,vrstp+6,sd           :get 1s complement
+        xr      r9,r0                   :verify version
+        ais     r9,1
+        jn      attl07,,                :some garbage, not a version
+        clhi    r0,$8 520               :this neighbor 5.20 or later?
+        jl      attl07,,                :old guy so okay
+        lhi     r0,txrshd
+        sth     r0,vrstp,sd
+        j       attld4,,                :recent version, make it come up on
+                                        :expanded resets
+ endpatch(Don't let links between v5.20+ neighbors come up on old style resets)
+
+        kill    gentim                  :just in case defined
+qpc     eq      .
+
+GENTIM	MACRO(TIME) [
+
+	RA	$0 0A
+
+QQQQYS	EQ	365*4+1			:quad year size in days
+QQQDAZ	EQ	(TIME)/(24*60*60)+365	:days since 1/1/74 + 365
+QQQNQY	EQ	QQQDAZ/QQQQYS		:# of quad yrs since 1/1/74
+QQQROD	EQ	QQQDAZ-QQQNQY*QQQQYS	:remainder of days 
+QQQLEA	EQ	QQQROD/365		:year in current quad yr
+
+	IF	QQQLEA-3
+QQQLEA	EQ	3
+	EI
+
+QQQYR	EQ	QQQNQY*4+QQQLEA+73
+QQQDAY	EQ	QQQROD-QQQLEA*365+1
+
+QQQM1	EQ	31
+	IF	QQQLEA-2
+QQQM2	EQ	29
+	ELSE
+QQQM2	EQ	28
+	EI
+QQQM3	EQ	31
+QQQM4	EQ	30
+QQQM5	EQ	31
+QQQM6	EQ	30
+QQQM7	EQ	31
+QQQM8	EQ	31
+QQQM9	EQ	30
+QQQM10	EQ	31
+QQQM11	EQ	30
+QQQM12	EQ	31
+
+QQQMON	EQ	1
+QQQNOT	EQ	1
+
+	RE	
+	IF	QQQDAY-QQQM|QQQMON|
+QQQDAY	EQ	QQQDAY-QQQM|QQQMON|
+QQQMON	EQ	QQQMON+1
+	ELSE
+QQQNOT	EQ	0
+	EI
+	ER	QQQNOT
+
+QQQRS1	EQ	(TIME)-((QQQDAZ-365)*(24*60*60))
+QQQHRS	EQ	QQQRS1/(60*60)
+QQQRS2	EQ	QQQRS1-QQQHRS*(60*60)
+QQQMIN	EQ	QQQRS2/60
+QQQSEC	EQ	QQQRS2-QQQMIN*60
+        RA      0
+]
+
+ patch(881202,2313,sdw.?slot,0e00a4,,6)
+qq      CURGMT
+        gentim(qq)
+        org     0e00a4                  :put time for ISIS ?slot
+        bc      qqqmon,qqqday,qqqyr,qqqhrs,qqqmin,qqqsec
+
+        org     0e0096
+        if      t2gate
+        hc      8b                      :gateway's PID
+        else
+        hc      37                      :isis's PID
+        ei
+        org     qpc                     :restore PC
+        endpatch(Set up Segment E so that DDT ?SLOT command works properly)
+
+
+
+:****************************************************************
+: Patch name:  wssege.tst       Product and Version:  TII 5.22
+:     Author:  scott wedel             Organization:  STS
+:   Customer:  all                     Date Written:  12/02/88
+: Reason for patch:  In ISIS xray will allow an attempted write to
+:       segments E and F even though when xray does the write then
+:       node code will be crashed since node code can never write
+:       segment E and Segment F since the svc to remove write
+:       protection does not apply to SEG E and F.
+:****************************************************************
+
+
+        patch(881202,2255,sdw.W.SegE,write4+0a,,6)
+        j       pa1ptr,,
+        conpatch(writf4+0a,,6)          :applies to Write fullword as well
+        j       writf6,,
+        conpatch(chkdat+0f*4,,4)
+        wc      4ff                     :size of seg F
+        conpatch(pa1ptr,,40)
+        ci      r11,0e0000              :going for Seg E
+        jge     chkma1,,
+        jal     r9,typadd,,             :existing
+        j       write4+10,,
+
+writf6  ci      r11,0e0000
+        jge     chkma1,,
+        jal     r9,typadd,,
+        j       writf4+10,,
+ endpatch(Prevent Xray W or WS command from writing to Seg E or Seg F)
+
+:****************************************************************
+: Patch name:  xrstmg.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/13/88
+: Reason for patch: The SM and AP commands do not range check for
+:       negative numbers and thus allow a typo to crash node code
+:****************************************************************
+
+        if      xrszlv-1
+        patch(881213,1655,sdw.FIX SM,setme0+6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        l       r0,value1-4,xd,r2
+        jl      comerr,,
+        j       setme0+0c,,
+        endpatch(Put a range check on Xray SM command)
+        ei
+
+
+:****************************************************************
+: Patch name:  xrstmg.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  12/13/88
+: Reason for patch: The SM and AP commands do not range check for
+:       negative numbers and thus allow a typo to crash node code
+:****************************************************************
+
+        if      xrszlv-2
+        if      primsg
+        patch(881213,1655,sdw.FIX AP,setpr0+6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        l       r0,value1-4,xd,r2
+        jl      comerr,,
+        j       setpr0+0c,,
+        endpatch(Put a range check on Xray AP command)
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  hsslot.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/07/89
+: Reason for patch: HS <value> S only shows 1st host for slot instead of
+:       all hosts for slot.
+:****************************************************************
+
+       if       1-t2gate                :not for gateway
+        if      xrszlv-1
+        if      2-xrytmc
+:       note: hstdi5+6 for 5.31 and hstdi5+8 for 5.22
+        patch(890207,250,sdw.HSslot,hstdi5+6,,4)
+        je      hstdi8                  :instead of hstdi9
+    endpatch(Fix Xray HS <value> S command to display all hosts for that slot)
+        ei
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  kdlcs8.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/22/89
+: Reason for patch:  fix crash of link going down while doing KD cmd
+:****************************************************************
+
+        if      2-xrytmc
+        if      xrszlv
+        patch(890222,141,sdw.KD r8,xneig2-16,,12)
+        lcs     r8,1                    :don't display if no lines
+        LB      R0,NLAT,KX
+        JNFS    XNEIG2                  :GOT SOME
+        LA      R2,ASCZIP,,
+        JAL     R7,TYPASC               :NO LINES ATTACHED - SAY 'ZIP'
+        endpatch(Fix potential crash due to improperly orderred instructions)
+        ei
+        ei
+
+:****************************************************************
+: Patch name:  hdlcsm.tst	Product and Version:  TII 5.22
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  02/22/89
+: Reason for patch:
+:****************************************************************
+
+        if      silins
+        patch(890222,0059,sdw.crHDLC,ldrp54-1a,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,40)
+        lhl     r10,rcrcvd,ln,                  :packets received
+        srls    r10,7                           :over 128
+        cr      r0,r10                          :hdlc errors>=packets/128?
+        jl      ldrp54,,                        :not enough errors to worry
+        jal     r10,siosur,,                    :existing
+        jal     r8,crypto,,
+        hc      crye4a                          :existing
+        j       ldrp54-0e,,                     :done
+       endpatch(Only put HDLC CKSUM ERROR in Crypto log when line is bad)
+       ei
+
+
+:       patch to fix bug of having NEDHWM (in NS cmd) set to 9999 after
+:       building a delay circuit.  bug is that circuit origination time
+:       was never set when the needle was created.
+
+        patch(890322,0010,sdw.NEDHWM,makoob-6,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,20)
+        sbt     r3,crqend                       :existing
+        LR      R1,R2
+        SRLS    R1,1                    :SET UP BUFTIM INDEX
+        L       R0,FASTC,,
+        ST      R0,BUFTIM,R1,           :TIME THAT NEEDLE ORIGINATES IN NODE
+        jr      r10
+        endpatch(Correctly calculate NEDHWM for delay circuits)
+
+:       patch to not clear high halfword of time of sio interupt when
+:       reinitializing the line due to the interupt.  the time of the
+:       interupt is often important in tracing line/hardware problems
+
+       if       silins          :only for sio
+        patch(890321,1755,sdw.SIOSTT,stlp2+2,,2)
+        jfs     stlp2+6         :remove the sth halfword which kills
+        endpatch(Correct code to not clear time of sio interupt)
+        ei      :silins
+:****************************************************************
+: Patch name:  swtchr.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  tymnet		       Date Written:  06/08/89
+: Reason for patch:  for an ISIS switcher remove the dismiss from the BG
+:    #
+:****************************************************************
+
+	if	1-SUP
+        if      1-t2gate
+        if      1-nslot         :only if no other slots
+        patch(890607,0008,sdw.swtchr,exidl-12,,4)
+        jfs     .+4
+        endpatch(Be an isis switcher)
+        if      1-\CPUOVL
+      remark%%ISIS switchers should set CPUOVL EQ 0 in the tymfile%%
+        ei
+        if      1-\fgfreq
+       remark%%FGFREQ EQ 7 should be in the tymfile to ensure minimal delay.
+        ei      :1-\fgfreq
+        if      1-ncslot
+        remark%%ISIS switcher requires setting NCSLOT to 1 in the tymfile.
+        quit
+        ei      :1-ncslot
+       ei       :1-nslot
+       ei       :1-t2gate
+
+       if       1-effexc
+ REMARK%%For improved performance set EFFEXC EQ 1 in the tymfile%%
+       ei       :1-effexc
+       ei	:1-SUP
+
+:****************************************************************
+: Patch name: CPYINT.531	   Product and Version:  TII 5.31
+:     Author: STEVE MURRAY    	       Organization:  STS
+:   Customer: ALL    		       Date Written:  12/4/89
+: Reason for patch: This patch fixes a timing problem detected
+: while using a PICO engine.  Node code is sending a sioint
+: ccw address to the sio firmware for processing. the sio
+: firmware is still processing the previous output ccw
+: and the picos mail box interupt is not detected until the
+: previous output ccw is finished.  Therefore when the output ccw
+: finishes it writes back the 0100 (output complete) code to
+: the sioint ccw and not the output ccw it should write to.
+: The sioint ccw is then messed up and when the sio firmware
+: tries to execute the init it recieves a ccw error.
+: The solution is to restore the sioint ccw initialization
+: code just prior to all initialization attempts.
+:****************************************************************
+
+	IF	SILINS 
+
+	IF	(1-SIOFXI)
+PATCH(890929,1100,SHM,SIOIZ4,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,30)		        
+CPYINT	LHI	R1,(SIOIND-SIOINT)
+CP1INT	L	R0,SIOINT,R1,           
+	ST	R0,SIOIPG,R1,		
+	SIS	R1,4
+	JGEBS	CP1INT
+	LIS	R0,0
+	STH	R0,8,R3
+	J	SIOIZ4+6,,
+ENDPATCH(RESTORE SIOINT CCW, CAN BE CORRUPTED BY SIO FIRMWARE)
+	ELSE 	:SIOFXI	
+
+PATCH(890929,1100,SHM,SIOIZ4,,6)
+	J	PA1PTR,,
+CONPATCH(PA1PTR,,30)		  
+CPYINT	LHI	R1,(SIOIND-SIOINT)
+	L	R8,SIOIPG,LN,LN	
+CP1INT	L	R0,SIOINT,R1,           
+	ST	R0,0,R1,R8	
+	SIS	R1,4
+	JGEBS	CP1INT
+	LIS	R0,0
+	STH	R0,8,R3
+	J	SIOIZ4+6,,
+ENDPATCH(RESTORE SIOINT CCW, CAN BE CORRUPTED BY SIO FIRMWARE)
+	EI	:(1-SIOFXI)
+	EI	:SILINS 
+
+
+
+
+:****************************************************************
+: Patch name:  XRAYGG.tst	Product and Version:  TII 5.31
+:     Author:  scott wedel  	       Organization:  STS
+:   Customer:  all   		       Date Written:  07/07/89
+: Reason for patch:  If the name in the xray GG macro is lower case
+:       it must convert the name to upper case upon initialization,
+:	because when a user logs is all usernames are converted to
+:	upper case.
+:       Also, another quick patch to allow entering of nonalpha chars
+:       (numbers, dot) when adding an xray user name via the XG command.
+:       trouble was it was masking every char even if it wasn't lowercase.
+:	Updated 5.22 patch to 5.31 patch by Steve Murray on
+:	12/19/89
+:****************************************************************
+
+        patch(890707,1431,sdw.XRAYGG,xggad4+8,,6)
+        clhi    r1,40                   :big enough to be alpha?
+        jlefs   .+6                     :if so don't mask
+        conpatch(switch-0a,,6)
+        j       pa1ptr,,
+        conpatch(pa1ptr,,80)
+        lhi     r0,rpthce
+        sth     r0,nc.ths               :existing
+
+:       initialize the xray user names to uppercase
+        LI      R0,XSG1WA               :ISIS SVC FOR WRITE ENABLE
+        SVC     SYS,11
+        LI      R0,XSGDWA               :NEED SEGD WRITE ENABLE ALSO
+        SVC     SYS,11
+        lis     r1,0                    :index into tables
+izxrgg  lis     r2,0                    :index to char
+izxrg2  lb      r0,xraygg+xggnam,r1,r2  :get char
+        ohi     r0,80
+        clhi    r0,0e1                  :lower case?
+        jlfs    izxrg1
+        clhi    r0,0fa                  :lc z?
+        jgfs    izxrg1
+        nhi     r0,0df                  :make uppercase
+        stb     r0,xraygg+xggnam,r1,r2
+izxrg1  ais     r2,1                    :next char
+        clhi    r2,0c                   :upto 12 (D) chars
+        jle     izxrg2                  :next char
+        ahi     r1,xggsiz               :next entry
+        clhi    r1,xgglen               :all entries done?
+        jl      izxrgg
+        LI      R0,XSG1WP               :ISIS SVC FOR WRITE PROTECT 
+        SVC     SYS,11
+        LI      R0,XSGDWP               :ALSO RESTORE SEGD WRITE PROTECT
+        SVC     SYS,11
+
+:	Return when done
+	JR	R10			:RETURN
+  endpatch(Patch to allow GG macro to have lowercase Xray usernames)
+
+
+
+:****************************************************************
+: Patch name:  TDMASK.531	Product and Version:  TII 5.31
+:     Author:  Sandra Nilluka 	       Organization:  NTS
+:   Customer:  All		       Date Written:  10/09/89
+: Reason for patch:
+: Prob:	Xray TA/TD/TE masks p/w from display of cmd chnl msgs, but
+:	does not distinguish between input and output msg formats,
+:	so it masks input msgs that should be displayed.
+:       Updated for 5.31 from 5.22 patch by Steve Murray
+:	on 12/19/89	
+: Fix:	Set XRAY TA/TD/TE to mask on output msgs only
+:****************************************************************
+:
+	IF	2-XRYTMC
+	PATCH(891009,1305,sln.tdmask,TRCS07,,06)
+	J	PA1PTR,,
+	CONPATCH(PA1PTR,,14)
+	LIS	R1,1		:Q.R4 eq -1
+	AR	R1,R4		:  .  for output msg
+	JN	4,R10		:N.Return, no need to mask
+	LR	R13,R6		:overlaid instructions
+	LHI	R12,TRRSIZ-1	:  .
+	J	TRCSUP+1E,,	:return
+	ENDPATCH(Set XRAY TA/TD/TE to properly mask cmd chnl msgs)
+	EI	:2-XRYTMC
+
+
+:****************************************************************
+: Patch name:  FIXTA.531	Product and Version:  TII 5.31
+:     Author:  Sandra Nilluka 	       Organization:  NTS
+:   Customer:  All		       Date Written:  07/16/87
+: Reason for patch:
+: Prob:	Xray TA outputs ascii-control characters, which screws up
+:	output device format.
+: Fix:	Set XRAY TA command to output period if char is ascii control,
+:	thereby preserving the output format.
+:	NOTE:  This eliminates special handling of carriage return.
+:****************************************************************
+:
+	IF	2-XRYTMC
+	PATCH(870716,1220,sln.fixta,TRCDUX+10,,1A)
+	OHI	R1,0080		:FORCE PARITY
+	CHI	R1,00A0		:Q.ASCII CONTROL CHAR
+	JLFS	PSN19A		:Y.REPLACE WITH PERIOD
+	CHI	R1,00FF		:Q.ASCII DELETE CHAR
+	JLFS	PSN19B		:N.SKIP, USE AS IS
+PSN19A	LHI	R1,00AE		:Y.REPLACE WITH PERIOD
+PSN19B	JAL	0D,XRYOUT	:OUTPUT THE CHARACTER
+	JFS	TRCD12		:CONTINUE
+	ENDPATCH(Set XRAY TA command to output period for ascii-ctrl)
+	EI	:2-XRYTMC
+
+:****************************************************************
+: Patch name: NTDOPS.TST 	       Product and Version:TII 5.31
+:     Author: STEVE MURRAY	       Organization: STS
+:   Customer: ALL   		       Date Written: 01/19/90
+: Reason for patch: At NTDOPS-2 which is currently a JFS to a
+:	routine which calls SUP12 needs to be changed to a 
+:	JR R9.  The problem is that if an output SVC
+:	(such as in SIOTT + a few and SIOTT is part of the fg)
+:	fails then it goes to SVCE3B which could jump to SIOBZO
+:	or SIOXXX.  SIOXXX is fine since it only calls crypto and
+:	exits.  SIOBZO is not fine since NETDGN is called and that
+:	has a fatal jump to SUP12.  It is fine to drop that SUP
+:	message considering the choice.  
+:****************************************************************
+
+	PATCH(900130,1430,SHM.NTDOPS,NTDOPS-2,,2)
+	JR	R9		:RETURN  AVOID FATAL JUMP
+	ENDPATCH(AVOID FG BG COLLISION)
+
+:****************************************************************
+: Patch name:  cnvinv.531	Product and Version:  TII 5.31
+:     Author:  scott wedel	       Organization:  STS
+:   Customer:  swb		       Date Written:  01/02/91
+: Reason for patch:  invoice number not saved at lepacv and it needs to
+:    saved to cqinv in order to setup rebuild parameters.
+:****************************************************************
+
+	if	nslot			:if no other slots (switcher)
+	if	rebild!logii
+	patch(910102,0020,sdw.cnvinv,lgcv06+20,,6)
+	j	pa1ptr,,
+	conpatch(pa1ptr,,20)
+	st	r4,cqinv		:inserted instruction
+	exhr	r1,r4
+	jal	r9,whwi,,
+	j	lgcv06+26,,
+	endpatch(Save correct invoice number for rebuild)
+	ei
+	ei
+
+:****************************************************************
+: Patch name: lowspd.531	   Product and Version:  TII 5.31
+:     Author: STEVE MURRAY    	       Organization:  STS
+:   Customer: ALL    		       Date Written:  07/12/91
+:
+: This patch by passes code that did not allow line speeds less than
+: 28.8 to be reported via the TIILNK macro.
+:****************************************************************
+
+PATCH(910712,1100,SHM,XND26+1C,,6)
+	JFS	XND26+28
+CONPATCH(ATLNR1+4,,6)
+	JFS	ATLNR1+0e
+ENDPATCH(Allow low speed lines to use the TIILNK value)
+
+
+
+:****************************************************************
+: Patch name: SUPGON.531	   Product and Version:  TII 5.31
+:     Author: STEVE MURRAY    	       Organization:  STS
+:   Customer: ALL    		       Date Written:  06/18/91
+: Reason for patch: In 5.31 in the routine DISOUT at DISOU3 there
+: was an attempt made to clear histogram fields unfortunately the
+: index used was R1,R1  when it should have just been R1,.  This
+: caused TVRSUP (the sup number) to be cleared.  This caused node
+: code to think it had no SUP circuit.
+:****************************************************************
+
+PATCH(072591,1100,SHM,DISOU3-12,,4)
+	NHI	R3,1C			:use correct offset
+CONPATCH(DISOU3-4,,4)
+	LHI	R1,1C			:use correct offset
+CONPATCH(DISOU3,,6)
+	ST	R0,DSIHGM,R1,		:clear histograms correctly
+CONPATCH(DSIOR2+4,,4)
+	NHI	R3,1C			:use correct offset
+CONPATCH(DSIOR3-4,,4)
+	LHI	R1,1C			:use correct offset
+CONPATCH(DSIOR3,,6)
+	ST	R0,DSIHGM,R1,		:clear histograms correctly
+ENDPATCH(Fix instruction so it does not clear sup number field)
+
+	
+
+
+
+
+:  At assembly time If HMICRO = 1 then SIOFXI must be set to 0
+:  to avoid an assembly error. 
+
+	if 	SIOFXI&HMICRO
+	remark%%%%
+	remark<<<ERROR, IF HMICRO = 1 YOU MUST EQUATE SIOFXI TO 0>>>%
+	remark<<<IN THE TYMFILE. EXAMPLE:    SIOFXI EQ 0	 >>>%%%
+	KILL	SEG0,PRIVBG
+	ei
+
+
+::*************************END OF PATCH FILE***************************
+
+:       this should always be at the end of the patch file.
+PATERR  ERRCNT
+        if      paterr-badcod           :any assembly errors in patchs
+        REMARK%%%%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%
+        REMARK!!! PATCH ASSEMBLY ERRORS !!! FATAL ERROR  !!!%
+        REMARK!!! ASSEMBLY HAS BEEN KILLED               !!!%
+        REMARK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%
+        KILL    SEG0,PRIVBG
+        ei      :patch check
+
+
+
+ 	2Q/Ž
