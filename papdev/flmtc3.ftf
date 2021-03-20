@@ -1,0 +1,313 @@
+C**********************************************************************
+C
+C                            FLMTC3.FTF
+C
+C          GENERATES REPORT ON ELAPSED TIME GOAL FOR CS&S          
+C          (95% < 5 hrs).                                    01/5/93
+C                                                            MB
+C
+C***********************************************************************
+C
+C
+        INTEGER START,END,TNUM,STDAT,CLDAT,SM,SD,SY,EM,ED,EY
+        INTEGER IERT,IERC,NUMBER,I,ONUM,SDAT,CDAT,B1,OM,OD,OY
+        INTEGER CM,CD,CY,HOST,NODE,TIME,TUP,TNUM,HRGN,SVE
+        INTEGER COC(2),RE(2),GROUP(2),HN
+        INTEGER TIM1,SDAT,PROD
+        REAL UNDR5,UNDR10,UN5,UN10
+        REAL OVR,UNDR
+        REAL OV,UN
+        REAL ELM
+        REAL TOT
+        REAL AVG
+        REAL MAINT
+        DIMENSION NETOP(22)
+        DATA (NETOP(I),I=1,22)/'NSSC','NETCN','ONTYM','CS800','CNCRD',
+     1  'NTENG','BTAUS','DBTAR','ORDPR','NISOP','BTUK','BTHK','NTS  ',
+     2  'EDICN','BTSFB','PORTS','SSTMS','MSGCN','IPLCN','BTSNG',
+     3  'ECSC ','ENMC '/
+
+        CALL DBSTRT(-1,1,-4,0,1,0,5,0,-1,0,-4,1,1,1,5,1)
+        TYPE 10
+10      FORMAT(/5X,'Enter Target Severity Level for Report (#) : ',$)
+        ACCEPT 15,SVE
+15      FORMAT (I1)
+        TYPE 16
+16      FORMAT(/5X,'ENTER THE SUPPORT GROUP TARGETED (GROUP) : ',$)
+        ACCEPT 17,GROUP
+17      FORMAT(4A5)
+        TYPE 20
+20      FORMAT(/5X,'ENTER THE STARTING DATE (MM/DD/YY) :  ',$)
+        ACCEPT 21,SM,SD,SY
+21      FORMAT(I2,1X,I2,1X,I2)
+        SY=SY+1900
+        CALL DBDATN(START,SM,SD,SY)
+        TYPE 30
+30      FORMAT(/5X,'ENTER THE ENDING DATE (MM/DD/YY)   :  ',$)
+        ACCEPT 31,EM,ED,EY
+31      FORMAT(I2,1X,I2,1X,I2)
+        EY=EY+1900
+        CALL DBDATN(END,EM,ED,EY)
+        CALL DBERR($100,IERT,IERC,0)
+        GOTO 101
+100     IF (IERT.NE.7) GOTO 9000
+        TYPE 103
+103     FORMAT(/1X,'DATABASE BUSY, PLEASE WAIT.')
+        CALL WAIT(5.0)
+101     TYPE 102
+102     FORMAT(/2X,'BT North America',$)
+        TYPE 105
+105     FORMAT(/2X,'Customer Service & Support',$)
+        TYPE 110
+110     FORMAT(/2x,'MTTR Quality Report',$)
+        TYPE 104,SVE
+104     FORMAT(/2X,'Sver. Lvl. ',I1)
+        TYPE 22,GROUP
+22      FORMAT(/2X,4A5)
+        TYPE 23,SM,SD,SY
+23      FORMAT(/2X,I2,'/',I2,'/',I4)
+        TYPE 106
+106     FORMAT(/2X,'-----------------------------------------------',$)
+
+        OPEN(8,'(TNT)FLMTC3.RPT',OUTPUT)
+
+        
+580     WRITE(8,581)GROUP
+581     FORMAT(/37X,4A5)
+582     WRITE(8,583)SM,SD,SY
+583     FORMAT(/36X,I2,'/',I2,'/',I4)
+
+601     WRITE(8,602)
+602     FORMAT(/2X,'BT North America',$)
+        WRITE(8,606)
+606     FORMAT(/2X,'Customer Service & Support',$)
+        WRITE(8,610)
+610     FORMAT(/2x,'MTTR Quality Report',$)
+        WRITE(8,604)SVE
+604     FORMAT(/2X,'Sver. Lvl. ',I1)
+
+        WRITE(8,605)
+605     FORMAT(/2X,'-----------------------------------------------',$)
+
+        CALL DBOPEN('(TNT)BASE7','(TNT)BASE4')
+        CALL DBFIND('SDAT',6,START,1,'SDAT',4,END,1,'MAINT',1,GROUP,
+     1  1,'SVER',1,SVE)
+C       CALL DBSRCH('MAINT',1,GROUP)
+C       CALL DBSRCH('SVER',1,SVE)
+        CALL DBMAP(2,'TNUM','TNUM')
+        CALL DBFIND('LAST',1,'HN',1,4)
+C       CALL DBEXEC('USE XMAP.DMC')
+C-----------------------------------------------------
+C       Saving Captured Records (all exclusions made)
+C-----------------------------------------------------  
+        CALL DBSAVE('XXXXX')
+C-----------------------------------------------------  
+
+        CALL DBNREC(NUMBER)
+        IF (NUMBER.EQ.0) GOTO 8000
+
+
+        IF(SVE.EQ.2)GOTO 299
+
+
+        DO 200 I=1,NUMBER
+        CALL DBGREC($9000,I)
+
+        CALL DBVAL(54,ELM)
+
+
+
+        IF(ELM.LE.300)UNDR5=UNDR5+1
+        IF(ELM.LE.600)UNDR10=UNDR10+1
+
+
+        TOT=TOT+ELM
+
+
+
+200     CONTINUE
+
+        TYPE 210,NUMBER
+210     FORMAT(/2X,'Number of Incidents = ',I4)
+
+        WRITE(8,215)NUMBER
+215     FORMAT(/2X,'Number of Incidents = ',I4)
+        
+        TYPE 220
+220     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,225)
+225     FORMAT(/2X,'-----------------------------------------------',$)
+
+        AVG=(TOT/NUMBER)/60
+        TYPE 230,AVG
+230     FORMAT(/2X,'Mean Time to Repair (hrs.) = ',F8.2)
+
+        WRITE(8,235)AVG
+235     FORMAT(/2X,'Mean Time to Repair (hrs.) = ',F8.2)
+
+        TYPE 240
+240     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,245)
+245     FORMAT(/2X,'-----------------------------------------------',$)
+
+        UN5=100*(UNDR5/NUMBER)
+        TYPE 250,UN5
+250     FORMAT(/2X,'% <= 5 Hrs. =  ',F8.2)
+
+        WRITE(8,255)UN5
+255     FORMAT(/2X,'% <= 5 Hrs. =  ',F8.2)
+
+        TYPE 260
+260     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,265)
+265     FORMAT(/2X,'-----------------------------------------------',$)
+
+        UN10=100*(UNDR10/NUMBER)
+        TYPE 270,UN10
+270     FORMAT(/2X,'% < 10 Hrs. =  ',F8.2)
+
+        WRITE(8,275)UN10
+275     FORMAT(/2X,'% < 10 Hrs. =  ',F8.2)
+
+        TYPE 280
+280     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,285)
+285     FORMAT(/2X,'---------------------------------------',$)
+
+        GOTO 500
+
+299     DO 300 I=1,NUMBER
+        CALL DBGREC($9000,I)
+
+        CALL DBVAL(54,ELM)
+C-----------------------------------------------------
+C       accumulating <> 12 hour counters
+C-----------------------------------------------------  
+        IF(ELM.LE.720)UNDR=UNDR+1
+        IF(ELM.GT.720)OVR=OVR+1
+
+        TOT=TOT+ELM
+
+300     CONTINUE
+
+        TYPE 310,NUMBER
+310     FORMAT(/2X,'Number of Incidents = ',I4)
+
+        WRITE(8,315)NUMBER
+315     FORMAT(/2X,'Number of Incidents = ',I4)
+
+        TYPE 320
+320     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,325)
+325     FORMAT(/2X,'-----------------------------------------------',$)
+
+        AVG=(TOT/NUMBER)/60
+
+        TYPE 330,AVG
+330     FORMAT(/2X,'Mean Time to Repair (hrs.) = ',F8.2)
+
+        WRITE(8,335)AVG
+335     FORMAT(/2X,'Mean Time to Repair (hrs.) = ',F8.2)
+
+        TYPE 340
+340     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,345)
+345     FORMAT(/2X,'-----------------------------------------------',$)
+
+        UN=100*(UNDR/NUMBER)
+
+        TYPE 350,UN
+350     FORMAT(/2X,'% <= 12 Hrs. =  ',F8.2)
+
+        WRITE(8,355)UN
+355     FORMAT(/2X,'% <= 12 Hrs. =  ',F8.2)
+
+        TYPE 360
+360     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,365)
+365     FORMAT(/2X,'-----------------------------------------------',$)
+
+        OV=100*(OVR/NUMBER)
+        TYPE 370,OV
+370     FORMAT(/2X,'% > 12 Hrs. =  ',F8.2)
+
+        WRITE(8,375)OV
+375     FORMAT(/2X,'% > 12 Hrs. =  ',F8.2)
+
+        TYPE 380
+380     FORMAT(/2X,'-----------------------------------------------',$)
+
+        WRITE(8,385)
+385     FORMAT(/2X,'-----------------------------------------------',$)
+
+
+500     WRITE(8,510)
+510     FORMAT(/2X,'Tkt #   ',1X,'Rept Prob ',1X,'Control Gp',
+     1  1X,'ELM (hrs)',1X,'Product',1X,'Time Opened (GMT)',1X
+     2  'Day',$)
+        WRITE(8,520)
+520     FORMAT(/2X,'--------',1X,'----------',1X,'----------',
+     1  1X,'---------',1X,'-------',1X,'----------------',$)
+
+        TYPE 530
+530     FORMAT(/2X,'Tkt #   ',1X,'Rept Prob ',1X,'Control Gp',
+     1  1X,'ELM (hrs)',1X,'Product',1X,'Time Opened (GMT)',1X
+     2  'Day',$)
+
+        TYPE 531
+531     FORMAT(/2X,'--------',1X,'----------',1X,'----------',
+     1  1X,'---------',1X,'-------',1X,'----------------',$)
+
+        CALL DBNREC(NUMBER)
+        IF (NUMBER.EQ.0) GOTO 8000
+
+        DO 600 I=1,NUMBER
+        CALL DBGREC($9000,I)
+
+
+        CALL DBVAL(54,ELM)
+        CALL DBVAL(1,TNUM)
+        CALL DBVAL(5,SDAT)
+        CALL DBVAL(57,RE)
+        CALL DBVAL(6,TIME)
+        CALL DBVAL(14,PROD)
+        CALL DBVAL(53,HN)
+        CALL DBNDAT(SDAT,OM,OD,OY)
+        OY=OY-1900
+
+536     ELM=ELM/60
+
+        WRITE(8,540)TNUM,RE,NETOP(HN),ELM,PROD,TIME,OM,OD,OY
+540     FORMAT(/,I8,3X,2A5,4X,A5,4X,F8.1,2X,A5,4X,A5,6X,I2,'/',
+     1  I2,'/',I2)
+
+        TYPE 550,TNUM,RE,NETOP(HN),ELM,PROD,TIME,OM,OD,OY
+550     FORMAT(/,I8,3X,2A5,4X,A5,4X,F8.1,2X,A5,4X,A5,6X,I2,'/',
+     1  I2,'/',I2)
+
+
+600     CONTINUE
+
+        GOTO 9990
+8000    TYPE 8001
+8001    FORMAT(/5X,'NO RECORDS FOUND')
+        GOTO 9990
+9000    TYPE 9001,IERT,IERC
+9001    FORMAT(/3X,'ERROR TYPE = ',I5,4X,'ERROR CODE = ',I5,
+     1  /,/3X,'PLEASE REPORT THIS TO NSSC!')
+9990    TYPE 9995
+9995    FORMAT(/,2X,'>> REPORT GENERATED -- FLMTC3.RPT <<',$)
+        CALL DBCLOSE
+        CALL DBEND
+        STOP
+        END
+
+
+    
