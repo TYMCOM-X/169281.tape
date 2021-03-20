@@ -1,0 +1,475 @@
+begin "tar"
+
+require "(SAILIB)SAIL.DEF"   source!file;
+require "(SAILIB)UUOSYM.DEF" source!file;
+require "(SAILIB)MFDSCN.REQ" source!file;
+require "(SAILIB)CVPPN.REQ"  source!file;
+require "(SAILIB)CVNAME.REQ" source!file;
+require "(SAILIB)FNDKEY.REQ" source!file;
+require "(SAILIB)ARGS.REQ"   source!file;
+require '1 lsh 24 version;
+
+
+Define BrkString =
+    {(If Brk="*" then "######" else if Brk="?" then "#" else null)};
+
+Define !FILE = 0, !EXT = 1;		! Lookup block offset data ;
+
+Define Gettab(x,y) = { calli( !Xwd( (x),(y) ), calli!GETTAB ) };
+
+
+string  FileSpec, CopySpec;		! file spec strings ;
+string  TempFile;			! storage for temp file ;
+string  Text, UserName;			! text line and username ;
+string  tarfile, iexcludefile, excludefile, includefile, tardir, currentdir;
+
+integer Inbrk, InLst, Quest, Brk;	! various break table stuff ;
+integer File, Ext, UserPPN, LastPPN;	! file information ;
+integer ProcessedFiles, CIndex;		! file counter, cmd index ;
+integer c,i,tarcommand;
+integer itarfile, iblocksize, blocksize, iincludefile, omitlevel;
+boolean multiread, errorexit, errorlink, symbolic, verbose, reverse;
+boolean ignorechecksum, ignoredate, ignoreowner, overridemode, confirmwait;
+
+record!class E( Integer Ext; r!p (E) Next );
+record!class F( Integer File; r!p (E) Ext; r!p (F) Next );
+record!class P( Integer Ppn; string User; r!p (F) File, Omit; r!p (P) Next );
+
+r!p (P) Omits, Users, ThisUser, ThatUser;
+r!p (F) Files, That, Name;
+r!p (E) Last, This;
+
+Preset!with "TAR", "TAR10";
+Safe String Array LegalCommands[ 1:2 ];
+
+Preset!with '17, cvsix("DSK"), 0;	! open block for DSK: ;
+Safe Integer Array DSK[ 0:2 ];
+
+
+simple boolean procedure ADot( string Str );
+begin "a dot"
+    boolean dot, user;
+
+    dot_ user_ false;
+    while length( Str )
+     do case lop( Str ) of begin	 
+	["("] user_ true;
+	[")"] user_ false;
+	["."] if not user then dot_ true;
+	else
+     end;
+
+    return( dot );
+
+end "a dot";
+
+
+procedure exclude!file( string Filename, Extension );
+begin "exclude file"
+    Integer N, Fnam, Enam;
+
+    Name_ P:Omit[ ThisUser ];			! Head of list  ;
+    While ( That_ F:Next[ Name ] )		! While ( more ) ;
+     do if ( Fnam = N_ F:File[ That ] )		!  do if same    ;
+	 then begin "New extension"		!   then add ext ;
+	    Last_ F:Ext[ That ];		!   : first one  ;
+	    While ( This_ E:Next[ Last ] )	!   : scan list  ;
+	     do if ( !lh( Enam ) < !lh( E:Ext[This] ) )
+		 then if ( reverse )		! test direction ;
+		       then Last_ This		!  loop for more ;
+		       else done		!   : insert it  ;
+		 else if ( reverse )		! test direction ;
+		       then if ( !lh( Enam ) > !lh( E:Ext[This] ) )
+			     then done		!   : insert it  ;
+			     else Last_ This	!   : make ext!  ;
+		       else Last_ This;		!   : make ext!  ;
+	    if ( !lh(Enam) = !lh(E:Ext[Last]) )
+	     then return;			! skip identical ;
+	    E:Next[ Last_ E:Next[ Last ]_ new!record( E ) ]_ This;
+	    E:Ext[ Last ]_ Enam;		!   : in place   ;
+	    Return;				! then return.   ;
+	 end "New extension"
+	 else if ( Fnam < N )			!  else insert?  ;
+	       then if ( reverse )		! test direction ;
+		     then Name_ That		! no, re do scan ;
+		     else done			!    yes, skip!  ;
+	       else if ( reverse ) 		! test direction ;
+		     then if ( Fnam > N )	!  else insert?  ;
+			   then done		!    yes, skip!	 ;
+			   else Name_ That	! no, re do scan ;
+		     else Name_ That;		! no, re do scan ;
+
+    F:Next[ Name_ F:Next[ Name ]_ new!record( F ) ]_ That;
+    F:File[ Name ]_ Fnam;
+    This_ F:Ext[ Name ]_ new!record( E );
+    E:Ext[ E:Next[ This ]_ new!record( E ) ]_ Enam;
+
+end "exclude file";
+
+
+boolean procedure WantFile( Reference Integer Filename, Extension );
+begin
+    Integer N;
+    Integer Fnam, ENam;
+
+    Fnam_ cvsix( Filename );
+    Enam_ cvsix( Extension );
+
+    Name_ P:Omit[ Omits ];			! Head of * omit ;
+    While ( That_ F:Next[ Name ] )		! While ( more ) ;
+     do if ( Fnam = N_ F:File[ That ] )		!  do if same    ;
+	 then begin "file match"		!   then see ext ;
+	    Last_ F:Ext[ That ];		!   : first one  ;
+	    While ( This_ E:Next[ Last ] )	!   : scan list  ;
+	     do if ( !lh( Enam ) = !lh( E:Ext[This] ) )
+		 then return( false )		!   : reject it  ;
+		 else Last_ This;		!   : check next ;
+	 end "file match"
+	 else Name_ That;			! : check next   ;
+
+    Name_ P:Omit[ ThisUser ];			! Head of list   ;
+    While ( That_ F:Next[ Name ] )		! While ( more ) ;
+     do if ( Fnam = N_ F:File[ That ] )		!  do if same    ;
+	 then begin "file match"		!   then see ext ;
+	    Last_ F:Ext[ That ];		!   : first one  ;
+	    While ( This_ E:Next[ Last ] )	!   : scan list  ;
+	     do if ( !lh( Enam ) = !lh( E:Ext[This] ) )
+		 then return( false )		!   : reject it  ;
+		 else Last_ This;		!   : check next ;
+	 end "file match"
+	 else Name_ That;			! : check next   ;
+
+    return( true );				! not excepted!  ;
+
+end;
+
+
+procedure FileProc( Reference Integer Chan, Cnt, Brk, FileEof;
+		    Integer Array LKB );
+Begin "Each File"
+    Integer N;
+
+    Name_ P:File[ ThisUser ];			! Head of list   ;
+
+    While ( That_ F:Next[ Name ] )		! While ( more ) ;
+     do if ( LKB[!File] = N_ F:File[ That ] )	!  do if same    ;
+	 then begin "New extension"		!   then add ext ;
+	    Last_ F:Ext[ That ];		!   : first one  ;
+	    While ( This_ E:Next[ Last ] )	!   : scan list  ;
+	     do if ( !lh( LKB[!Ext] ) < !lh( E:Ext[This] ) )
+		 then if ( reverse )		! test direction ;
+		       then Last_ This		!  loop for more ;
+		       else done		!   : insert it  ;
+		 else if ( reverse )		! test direction ;
+		       then if ( !lh( LKB[!Ext] ) > !lh( E:Ext[This] ) )
+			     then done		!   : insert it  ;
+			     else Last_ This	!   : make ext!  ;
+		       else Last_ This;		!   : make ext!  ;
+	    if ( !lh(LKB[!Ext]) = !lh(E:Ext[Last]) )
+	     then return;			! skip identical ;
+	    E:Next[ Last_ E:Next[ Last ]_ new!record( E ) ]_ This;
+	    E:Ext[ Last ]_ LKB[!Ext];		!   : in place   ;
+	    Return;				! then return.   ;
+	 end "New extension"
+	 else if ( LKB[!File] < N )		!  else insert?  ;
+	       then if ( reverse )		! test direction ;
+		     then Name_ That		! no, re do scan ;
+		     else done			!    yes, skip!  ;
+	       else if ( reverse ) 		! test direction ;
+		     then if ( LKB[!File] > N )	!  else insert?  ;
+			   then done		!    yes, skip!	 ;
+			   else Name_ That	! no, re do scan ;
+		     else Name_ That;		! no, re do scan ;
+
+    F:Next[ Name_ F:Next[ Name ]_ new!record( F ) ]_ That;
+    F:File[ Name ]_ LKB[!File];
+    This_ F:Ext[ Name ]_ new!record( E );
+    E:Ext[ E:Next[ This ]_ new!record( E ) ]_ LKB[!Ext];
+
+end "Each File";
+
+
+simple string procedure cvlower( string str );
+begin "cvlower"
+  start!code
+    define a=1, b=2, lpsa='13, temp='14, user='15, sp='16, p='17;
+    define ! = "comment";
+    label klup, kret;
+
+	MOVE	LPSA,(SP);	! THE BYTE POINTER ;
+	HRRZ	USER,-1(SP);	! COPY SIZE ;
+	JUMPLE	USER,KRET;	! track length of "STR";
+KLUP:	ILDB	TEMP,LPSA;	! ONE CHAR;
+	CAIL	TEMP,"A";	! check for upper case range ;
+	CAILE	TEMP,"Z";	!  either upper case or lower case;
+	  CAIA;			!  not in range - ignore ;
+	 MOVEI	TEMP," "(TEMP);	! make it lower case ;
+	DPB	TEMP,LPSA;	! re-store character in place ;
+	SOJG	USER,KLUP;	! loop if any more ;
+KRET:
+  end;
+  return( str );
+
+end "cvlower";
+
+
+simple procedure Package;
+begin "pack it in"
+    string Name;
+
+    ProcessedFiles_ ProcessedFiles + 1;		! increment counter ;
+
+    Name_ Cv6str( F:File[That] ) &		! let user see what ;
+	  (if !lh( E:Ext[This] )		! file we are doing ;
+	      then "." & Cv6str( E:Ext[This] )	!  at the moment.   ;
+	      else null);
+
+    print( cvlower( Name ), crlf );
+
+end "pack it in";
+
+
+procedure process!file( string name );
+begin "normal files"
+
+    if ( verbose )
+     then print( "file: ", name, crlf );
+
+    While Length( name )			! for each spec typed ;
+     do begin "line typed"
+	FileSpec_ Scan(name,inlst,brk);		! gobble one file-spec ;
+	if ( brk = "[" )			! handle [,] ;
+	 then FileSpec_ FileSpec & "[" &
+		Scan(name,inlst,brk) & brk
+		& Scan(name,inlst,brk);
+	if Length( FileSpec )			! if it has substance ;
+	 then begin "file typed"
+	    CopySpec_ Null;			! init copy variables ;
+	    Brk_ 0;
+	    While ( length( FileSpec ) )
+	     do CopySpec_ CopySpec & BrkString & Scan( FileSpec, quest, Brk );
+	    CopySpec_ CopySpec & BrkString;		! translate *,? to # ;
+	    File_ cvfil( CopySpec, Ext, UserPpn );	! dissect into parts ;
+	    if ( 0 neq (File lor Ext lor UserPpn) )	! any non-null ok ;
+	     then begin "use GFD ppn"
+		if UserPpn = 0				! handle null ppn ;
+		 then UserPpn_ LastPpn;			! previous username ;
+		if !lh( UserPpn ) = 0			! pointer to UNAME ;
+		 then UserPpn_ CvPPN( Cv6str( memory[ UserPpn   ] ) &
+				      Cv6str( memory[ UserPpn+1 ] ) );
+	     end "use GFD ppn";
+	    if File = 0 then File_ cvsix("*");		! handle null file ;
+	    if Ext = 0 and not( ADot( CopySpec ) )	! handle null ext ;
+	     then Ext_ cvsix("*");			! when no dot typed ;
+
+	    ThisUser_ Users;				! While ( more ) ;
+	    While ( ThisUser_ P:Next[ ThatUser_ ThisUser ] )
+	     do if ( UserPpn = P:Ppn[ ThisUser ] )	!  do if same    ;
+		 then done;				!   have a match ;
+	    if not( ThisUser )				! Got one?       ;
+	     then begin "first time"			! No, set one up ;
+		ThisUser_ P:Next[ ThatUser ]_ new!record( P );
+		P:Ppn[ ThisUser ]_ UserPpn;		! store username ;
+		P:User[ ThisUser ]_ CvName( UserPpn );	! in both forms  ;
+		P:File[ ThisUser ]_ new!record( F );	! init file area ;
+		P:Omit[ ThisUser ]_ new!record( F );	! init omit area ;
+	     end "first time";
+
+	    UfdScn( UserPpn, File, Ext, 1, WantFile, FileProc );
+	    LastPpn_ UserPpn;			! remember last user ;
+
+	 end "file typed"
+     end "line typed";
+
+end "normal files";
+
+
+simple procedure process!directory( string dir, file );
+begin "normal directory"
+
+    if ( verbose )
+     then print( "dir: ", dir, "/", file, crlf );
+
+end "normal directory";
+
+
+simple procedure process!exclude( string file );
+begin "exclude files"
+
+    if ( verbose )
+     then print( "excludefile: ", file, crlf );
+
+end "exclude files";
+
+
+simple procedure process!include( string file );
+begin "include files"
+
+    if ( verbose )
+     then print( "includefile: ", file, crlf );
+
+end "include files";
+
+
+simple procedure init!tarfile( string file );
+begin "use tarfile"
+
+    if ( verbose )
+     then print( " tarfile: ", file, crlf );
+
+end "use tarfile";
+
+
+simple procedure close!tarfile( string file );
+begin "finish tarfile"
+
+    if ( verbose )
+     then print( " tarfile: ", file, crlf );
+
+end "finish tarfile";
+
+!	***  M A I N   P R O G R A M   L O O P  ***
+;
+
+if ARGV[1] = "-"			! if optional "-" ;
+ then c_ lop( ARGV[1] );		!  eat it ;
+
+if ( ARGC = 1 )
+	or ( length( ARGV[1] ) = 0 )
+	or ( ARGC=2 and equ(ARGV[1],"?") )
+ then print(
+    "  tar [-]crtux[bBefFhilmopvwX014578] [tarfile] [blocksize]"& crlf &
+    "         [excludefile] [-I includefile] filename1 filename2 ..." & crlf &
+    "         [-C directory filename] ... [-C directory filename]" &
+    crlf, call(0,"EXIT") );
+
+if not( 0 < CIndex_ FndKey( ArgV[0], LegalCommands ) )
+ then Usererr( 0,0, "Illegal command: "&ArgV[0], "X" );
+
+IFCR FALSE
+ THENC
+   for i_ 0 upto ARGC-1			! print this for me ;
+    do print(" {",ARGV[i],"}");
+   print (crlf );
+ ENDC
+
+setbreak(inbrk_getbreak,#LF&#FF,null,"INS");	! break on LF FF;
+setbreak(inlst_getbreak,",[ "," "&#HT,"KTINS");	! break on comma;
+setbreak(quest_getbreak,"?*",Null,"INS");	! break on qmark;
+MFDset( 0, 4, 0, 132 );				! ascii, in, out, count;
+
+LastPpn_ Calli(!Xwd(-1,!GtPPN), Calli!GETTAB);	! initially self ;
+Users_ new!record( P );				! initialize...;
+P:Omit[ Omits_ new!record( P ) ]_ new!record( F );
+
+tarfile_ iexcludefile_ excludefile_ includefile_ tardir_ currentdir_ NULL;
+itarfile_ iblocksize_ iincludefile_ -1;
+ignorechecksum_ ignoredate_ ignoreowner_ overridemode_ confirmwait_
+multiread_ errorexit_ errorlink_ symbolic_ verbose_ false;
+
+blocksize_ 20;				! default = 20 * 512 bytes ;
+omitlevel_ 0;				! default = omit nothing ;
+tarcommand_ "";				! default = --none-- ;
+
+i_ 1;					! initial argument counter ;
+
+while ( length( ARGV[1] ) )
+ do case c_ lop( ARGV[1] ) of begin
+
+    ["c"] tarcommand_ "c";		! command c = create ;
+    ["r"] tarcommand_ "r";		! command r = append at end ;
+    ["t"] tarcommand_ "t";		! command t = table of contents ;
+    ["u"] tarcommand_ "u";		! command u = update (if needed) ;
+    ["x"] tarcommand_ "x";		! command x = extract ;
+
+    ["b"] iblocksize_ i_ i + 1;		! blocksize token is ith+1 ;
+    ["B"] multiread_ true;		! force multiple reads on stream ;
+    ["e"] errorexit_ true;		! exit on errors immediately ;
+    ["f"] itarfile_   i_ i + 1;		! tarfile token is ith + 1 ;
+    ["F"] omitlevel_ omitlevel + 1;	! increment omition level ;
+    ["h"] symbolic_ true;		! follow symbolic links ;
+    ["i"] ignorechecksum_ true;		! enable ignore checksum errors ;
+    ["l"] errorlink_ true;		! for unresolved links to files ;
+    ["m"] ignoredate_ true;		! ignore modification date ;
+    ["o"] ignoreowner_ true;		! ignore owner/gid fields on extract ;
+    ["p"] overridemode_ true;		! override mode, use that from tape ;
+    ["v"] verbose_ true;		! enable verbose mode ;
+    ["w"] confirmwait_ true;		! wait for confirmation (y) = yes ;
+    ["X"] iexcludefile_			! Note: may want to process here! ;
+	    iexcludefile & (i_ i + 1);	! excludefile token is ith+1 ;
+
+    [else] print( "%ignored bad option: -", c& crlf )
+    end;
+
+if ( verbose )
+ then print( "tar" );
+
+if ( iblocksize > 0 )
+ then begin "new blocksize"
+    blocksize_ cvd( ARGV[ iblocksize ] );
+    if ( verbose )
+     then print( "blocking: ", blocksize, crlf );
+ end "new blocksize";
+
+if ( itarfile > 0 )
+ then tarfile_ ARGV[ itarfile ];
+init!tarfile( tarfile );
+
+while length( iexcludefile )
+ do process!exclude( excludefile_ ARGV[ c_ lop( iexcludefile ) ] );
+
+if ( verbose )
+ then print( crlf );
+
+while( ARGC > i_ i + 1 )
+ do if ( ARGV[i] = "-" )
+     then case ( ARGV[i][2 for 1] ) of begin
+	["I"] process!include( ARGV[i_i+1] );
+	["C"] process!directory( ARGV[i_i+1], ARGV[i_i+1] );
+	[else] print( "%ignored bad option: -", c&" ",ARGV[i_i+1], crlf )
+        end
+     else process!file( ARGV[i] );
+
+
+!	option setting.
+;
+
+    if ( length( UserName ) = 0 )	! no Username:Name specified ;
+     then UserName_ CvName( Gettab( -1,!gtPPN ) );
+
+!	actually handle processing
+!	this assumes "c" option at present *** please note ***
+;
+
+    ProcessedFiles_ 0;				! initialize count   ;
+    ThatUser_ Users;				! one user at a time ;
+    while( ThisUser_ P:Next[ ThatUser ] )	! if any at all      ;
+     do begin "each user"			!  P:Ppn[ ThisUser ] ;
+
+	Name_ P:File[ ThisUser ];		! get name pointer   ;
+	While ( That_ F:Next[ Name ] )		! look one at a time ;
+	 do begin "each name"			!  F:File[ That ]    ;
+
+	    This_ F:Ext[ That ];		! get ext pointer    ;
+	    While ( This_ E:Next[ This ] )	! one at a time      ;
+	     do begin "each ext"		!  E:Ext[ This ]     ;
+
+		Case ( CIndex - 1 ) of
+		begin
+		  [0][1] Package;		! oh no, do it to it ;
+		  [else] usererr( 0,0, "Bad command", "C" )
+		end;
+
+	     end "each ext";		! ran of end of list ;
+
+	    Name_ That;			! setup for next "F" ;
+
+	 end "each name";
+	ThatUser_ ThisUser;		! setup for next "P" ;
+
+     end "each user";
+
+    calli(0,calli!EXIT);		!  then we are done. ;
+    start!code uuo!EXIT 0, end;		! really exit! on continue ;
+
+end
