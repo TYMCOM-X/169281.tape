@@ -1,0 +1,168 @@
+
+							       02 March 1990
+
+The  purpose of this  document is to  outline  those steps necessary to pull
+the  PICO firmware code down to a prom burned and burn the proms.  It should
+be noted that the responses from the prom burner  may differ depending  upon
+the manufacturer of the prom burner.
+
+
+The path for the firmware code for PICO Version 1.10 is:
+
+     /home/gemini/nts/bruces/pico
+
+
+The filename for the code is:
+
+     PICO110.rom		(Note UPPER and lower case letters)
+
+
+
+The  addresses used for  splitting the file  and  burning  the proms depends
+on the amount of RAM in the prom burner:
+
+     128K RAM  uses address 10000
+     256K RAM  uses address 20000
+
+
+The family code and pin out for the different proms we use are as
+follows:
+
+     Manufacturer	Family Code	Pin Out Code
+     -----------	------ ----	--- --- ----
+
+     Toshiba     	   5A		    4E
+     Intel
+
+
+Checksums for the EVEn and ODD proms for PICO 1.10 firmware are as follows:
+
+     EVEN	
+     ODD	
+
+
+
+The  following  steps  will  be  necessary  to  insure  the  proms  are done
+successfully:
+
+
+  o  Log terminal connected to prom burner into GEMINI and CD to  the  above
+     directory.  Verify the checksum of the firmware file  is good  by using
+     CSUM10 command.  The checksum should be:
+
+       0WIZFIM5
+
+
+  o  Ready the prom burner:
+
+       Command Entered			Response From
+       On  Prom Burner			 Prom Burner
+       ---------------			-------------
+
+
+       SELECT 8 7 START			MOT EXORMAX
+     
+       START				FORMAT NO 087 **
+     
+       COPY PORT RAM START		INPUT PORT 0
+
+     
+  o  On the terminal logged into GEMINI, type
+  
+       cat PICO110.rom          (Note UPPER and lower case letters)
+
+
+     If the download is working the 0 (from INPUT PORT 0) will change into a
+     clock, with a rapidly moving hand.  When the input is finished the prom
+     burner will display:
+
+    
+       INPUT DONE xxxx
+
+  
+  o  Splitting  of the  data in  the prom  burner RAM is the next step.  The 
+     starting  address  will depend  upon the  number of  bytes in the  prom
+     burner RAM (see above):
+
+
+       Command Entered			Response From
+       On  Prom Burner			 Prom Burner
+       ---------------			-------------
+       
+       SELECT A 5 START			SPLIT RAM 20000
+       
+       START
+       
+     
+     The  prom burner will  once again change  the 0  (from SPLIT RAM 20000)
+     into a clock,  indicating the RAM  is being split.   Once the splitting
+     is complete the prom burner will display:
+
+       SPLIT RAM **
+
+
+  o  Burn  the  EVEN  half of  the  prom set.  The EVEN half  goes  into IOC
+     location 5H.
+
+       Command Entered			Response From
+       On  Prom Burner			 Prom Burner
+       ---------------			-------------
+       
+       COPY				COPY RAM FROM
+       RAM				RAM ADDR/SIZE
+       0				RAM 0000/SIZE
+       DEVICE				CO RAM>DEV ADDR
+       
+       START				FAM 00 PIN 00
+       5 E A 4 				FAM 5E PIN A4
+       
+       At this point a red LED should light up on the UniPak 2 (or whichever
+       device is being)  used to  indicate the  a the  blank prom  is  to be
+       inserted into.  
+       
+
+       START				TEST DEVICE     0
+ 				       	PROGRAM DEVICE  0
+					VERIFY DEVICE   0
+					PROGRAM DONE xx yyyy
+
+
+       The "xx yyyy"  is the  checksum for the  EVEN prom,  and should match
+       the  checksum listed in the beginning of this document.  Note this on
+       the  label to be used to cover the window  on the prom  after it  has
+       been burned.
+
+  o  Burn  the  ODD  half of  the  prom  set.  The  ODD half  goes  into IOC
+     location 5L.
+
+       Command Entered			Response From
+       On  Prom Burner			 Prom Burner
+       ---------------			-------------
+       
+       COPY				COPY RAM FROM
+       RAM				RAM ADDR/SIZE
+       20000				RAM 20000/SIZE
+       DEVICE				CO RAM>DEV ADDR
+       
+       START				FAM 00 PIN 00
+       5 E A 4 				FAM 5E PIN A4
+       
+       At this point a red LED should light up on the UniPak 2 (or whichever
+       device is being)  used to  indicate the  a the  blank prom  is  to be
+       inserted into.  
+       
+
+       START				TEST DEVICE     0
+ 				       	PROGRAM DEVICE  0
+					VERIFY DEVICE   0
+					PROGRAM DONE xx yyyy
+
+
+       The "xx yyyy"  is the  checksum for the  EVEN prom,  and should match
+       the  checksum listed in the beginning of this document.  Note this on
+       the  label to be used to cover the window  on the prom  after it  has
+       been burned.
+
+
+  o  The  process is  complete,  insert  the proms  into a  PICO engine  and 
+     run the IOCBug Self Tests 1-9.
