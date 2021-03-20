@@ -1,0 +1,499 @@
+!SYSNO
+TYMSHARE F33-P035/E01-1 1-25-91
+!DAYTIME
+25-JUN-1992 16:53:23 PDT
+
+!; This CTL file rebuilds the BND file for an EBUS base from scratch.
+!; The following files must exist:
+!DIRECT (EBUS)EBUS02.O02
+
+EBUS02  O02       9   9-MAY-88 1336    ALL RD  NO      4096          
+
+!DIRECT ND3374.TYM,ND3374.T01,ND3374.CMD,ND3374.C00,ND3374.C01
+
+ND3374  C00       2  25-JUN-92 1633    ALL RD  NO        42          
+ND3374  TYM       3  27-APR-92 1634    ALL RD  NO       614          
+ND3374  C01       2  27-MAR-92 2246    ALL RD  NO        36          
+ND3374  CMD       2  27-MAR-92 2246    ALL RD  NO        42          
+ND3374  T01       2  27-MAR-92 2246    ALL RD  NO        53          
+
+!DIRECT ISXRAY.GGY,GOODGY.NQA
+
+GOODGY  NQA       2  14-NOV-88  906    ALL RD  NO       362          
+ISXRAY  GGY       2   2-JUL-87 1305    ALL RD  NO       128          
+
+!
+!; Create the ISIS Kernel from NDxxxx.TYM
+!R (SYS)NAD
+1.5
+;X   ND3374.CMD
+
+;; ISIS-II Version 7.03 for host 23
+;@   (SOURCE)I2IS07.I03
+
+End of assembly
+;@   ND3374.TYM
+
+End of assembly
+;@   (TYMNET)GOODGY.NQA
+
+End of assembly
+;@   (SOURCE)I2IS07.R03
+
+SYNC specified but not assigned...(warning only, no change)
+SYNC 1BD6 2442
+CLOCKS 2442 2582
+MBOARD 2582 26E8
+IPI 26E8 2946
+FLASH 2946 2DE6
+KCAREA 2DE6 2FDC
+TTY 2FDC 3300
+KERNEL 3300 7B7C
+DDT 7B7C 0AB00
+   3273d bufferlets allocated to dispatcher
+DISPAT 0AB00 16400
+.............................................
+
+
+
+    ***  ISIS-II  ***
+      Version 7.3d
+
+TYMNET-II Node 3374, Kernel Host 6713
+Maximum slot number is 2
+
+       >>> HARDWARE CONFIGURATION <<<
+
+Expects enhanced sync microcode
+Expects enhanced async microcode
+Expects MAC II
+Expects maximum baud rate of 1200
+Expects 1 sync board(s)
+Expects 1 SIO mother-board processor(s)
+   Board 0 has 2 channel(s), device address 80
+Expects 1 IPI processor(s)
+   IPI device 0 has device address 88
+
+       >>> SLOT CONFIGURATIONS <<<
+
+SLOT 0, NODE CODE, has 350 K-bytes of core, from 16400 to 6DBFF
+   2 logical unit(s)
+   L.U. 0 is M.Board channel 0
+   L.U. 1 is M.Board channel 1
+
+SLOT 1 has 266 K-bytes of core, from 6DC00 to 0B03FF
+   1 logical unit(s)
+   L.U. 0 is M.Board channel 0
+
+SLOT 2 has 100 K-bytes of core, from 0B0400 to 0C93FF
+   no logical units
+
+***Highest location used in this configuration is 0C9400
+
+Requires 809d k-bytes of core
+
+
+.............................................
+
+
+Code Generated:  06/25/92  23:55:31 GMT
+
+.............................................
+
+End of assembly
+;X   (SOURCE)I2IS07.P03
+
+;; ISIS-II Version 7.03 Patch File
+
+;@   (SOURCE)I2IS07.Q03
+
+ISIS 7.03 PATCH 1
+  Fixes reversed CTS and DSR on HDLC micro.
+
+ISIS 7.03 PATCH 2
+  This patch is superseded by patch 4.
+
+ISIS 7.03 PATCH 3
+  Causes ISIS to read memory error log before crashing.
+
+ISIS 7.03 PATCH 4
+  Refreshes CPU and MAC registers to avoid degradation.
+  (Updated version of patch 2)
+
+ISIS 7.03 PATCH 5
+  Correctly initializes registers for checking newlog bit array
+
+ISIS 7.03 PATCH 6
+  Wraps around accounting char counts when count exceeds 28 bits
+
+ISIS 7.03 PATCH 7
+Patch to prevent disk from doing retries on a 
+controller errror
+
+ISIS 7.03 PATCH 8
+  Corrects initialization order of Emulated Sync.
+  Also it allows window for interrupts to be flushed
+  during initialization.
+
+ISIS 7.03 PATCH 9
+have DCSLOT free channels for ports in time-out
+or clean-up
+
+ISIS 7.03 PATCH 10
+Have KRASHI report crashes to dispatcher
+and pause slot for 4 seconds
+
+ISIS 7.03 PATCH 11
+Keep DDT Mask command from crashing machine
+
+ISIS 7.03 PATCH 12
+Have restart SVC disable watch-frog timer
+
+ISIS 7.03 PATCH 13
+Crash ISIS on DMA parity error
+
+ISIS 7.03 PATCH 14 
+ CLEAR DHANG ON SYSTEM CRASH 
+
+ISIS 7.03 PATCH 15 
+THIS PATCH IS USED TO CORRECT  A TID RECOGNITION5 
+FOR 300 BAUD WHEN USING HIGH SPEED INTERRUPTS.
+
+ISIS 7.03 PATCH 16 
+ISIS VERSION GREATER 6 ALLOWS WRITING PAST SEGMENT 
+BOUNDARIES WITHOUT PROTECTION.  CHANGES MADE FOR  
+MULTIMEG SUPPORT INDUCED THIS PROBLEM.  THIS PATCH 
+PROTECTS ISIS FROM OVER WRITING BOUNDARIES. 
+See NSR 1772 
+
+ISIS 7.03 PATCH 17
+This patch fixes timing problems associated
+with the initialization of HDLC micro-engine
+channels that are emulation TYMNET sync.
+
+ISIS 10.01 PATCH 18
+Fixes problems with breakpoints that has
+existed from time immemorial.
+
+
+ISIS-II version 7.03 patch number 19
+This patch is to fix wrong link req. when calling
+DEMPTY which led to a system crash eventually.
+
+End of assembly
+
+
+1;F   ND3374.NIB
+
+70;T
+0,SUMTBL;P
+INTLEN,IEND-INTLEN;P
+%P
+SEGF,SFSIZE;P
+%Q
+EXIT
+
+!
+!; Create the node code for slot 0 from NDxxxx.TYM
+!R (SYS)NAD
+1.5
+;X   ND3374.C00
+
+;; Node Code 5.35 for host 23
+;A   (NTS)TII05.I35
+
+End of assembly
+;A   ND3374.TYM
+
+End of assembly
+;A   (TYMNET)ISXRAY.GGY
+
+End of assembly
+;A   (NTS)TII05.R35
+
+This is special test code.  Unauthorized use is strictly prohibited
+and very unwise.  The code is to be used only where authorized by
+NTS/STS.                                    sdw    03/02/90
+
+
+
+WARNING -- Node cannot downline load neighbor unless an Xray
+    goodguy entry is targeted to T.DLOAD.
+
+       NETID is 1d.  This is a TYMNET network node.
+
+
+
+
+TYMNET-II Node Code, Version 5.35, ISIS Node
+
+Node: 3374  Kernel Host: 6713
+
+Ports:		Lines:		Links:
+   128d Pthru	     0d Sync	     2d TIILNK
+     3d Xray	     2d SIO	     0d XLNK
+		     2d Total	     2d Total
+   256d Disp
+     4d Krnl
+
+Maximum number of circuits =  432d 
+
+
+Bufferlet storage space:
+
+  68A0x bytes (  27d KB) for  432d circuit buffers ( 62d bytes per circuit)
+ 22BD2x bytes ( 139d KB) for  272d history buffers (523d bytes per termination)
+ 29472x bytes ( 166d KB) for  432d total circuits  (391d bytes per circuit)
+
+
+Memory used by this configuration = 57800x, 350d KB.
+
+Optimal amount of memory for this configuration =   241d  KB.
+
+Neighor  Window  Link   Link              Neighor  Window  Link   Link
+Number    Size   Speed  Type              Number    Size   Speed  Type
+ 2276        8      MS   TII               2275        8      MS   TII      
+
+End of assembly
+;A   (NTS)TII05.P35
+
+
+PATCH added on 900527 at 1544 by fix.shrk#2.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Code has link shrink fix parts I and II >>>
+
+PATCH added on 900615 at 1544 by iz.hostn.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix host checking to reject Kernel Host imitators >>>
+
+PATCH added on 900615 at 1544 by newbuf.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< New bufferlet logic that helps in debugging crashes >>>
+
+PATCH added on 900705 at 0001 by fstcirc.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Allow test usage of high speed circuits >>>
+
+PATCH added on 900720 at 0001 by Fix.gobble.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix Gobbler handling >>>
+
+PATCH added on 900727 at 0001 by Fix.MULTLN.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug killing multi-line links >>>
+
+PATCH added on 900730 at 0005 by sdw.xlack.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug in handling of Performance monitoring XLACK char >>>
+
+PATCH added on 900914 at 0006 by sdw.shrink.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Reduce the need to do shrinks and trace shrinks better >>>
+
+PATCH added on 900925 at 0006 by sdw.splice.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Avoid optimization routine SPLICE due to fundamental design booboo >>>
+
+PATCH added on 900926 at 0007 by sdw.merge.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug in Rebuild's counting of characters >>>
+
+PATCH added on 900928 at 0008 by sdw.rstrip.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bugs allowing code to lose track of bufferlets >>>
+
+PATCH added on 901101 at 0009 by sdw.secure.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Change some xray priviledges to enhance security >>>
+
+PATCH added on 901101 at 0010 by sdw.siortd.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug in determining packets to process.  Killed multiline links >>>
+
+PATCH added on 901205 at 0011 by Line.Test.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug which allowed sync line to hang after ending Line Test >>>
+
+PATCH added on 901205 at 0012 by sdw.BOOT.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug causing neighbor nodes to ignore Downline Loads >>>
+
+PATCH added on 911021 at 0013 by sdw.secur2.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Another changing of some xray privileges >>>
+
+PATCH added on 910203 at 0014 by sdw.FE63.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Don't crash if ISIS is slow in releasing a Dispatcher port >>>
+
+PATCH added on 910226 at 0016 by sdw.BZ9263.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Prevent crash due to wrapped BCT >>>
+
+PATCH added on 910308 at 0017 by sdw.BZAPClear.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug in Buffer Zap routine which caused loop in bufferlet Chain >>>
+
+PATCH added on 910212 at 0018 by Fix.monMAC.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Periodically check SEG E and SEG F for MAC SET corruptions >>>
+
+PATCH added on 910318 at 0019 by Fix.ZAPCLR.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix saving of register when ZAPHRD calls LOGCLR >>>
+
+PATCH added on 910725 at 0020 by SHM.
+	Starts at PATCH0+0 and is 4x bytes long
+<<< Fix To not zero out wrong areas of memory >>>
+
+PATCH added on 911021 at 0021 by sln.xraygg.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Move Xray good-guy list to Seg D for expanded capacity >>>
+
+PATCH added on 911023 at 0022 by jay.buflet.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Fix bug in SPLICE which freed wrong blet >>>
+
+PATCH added on 911105 at 0023 by sln.secure.
+	Starts at PATCH0+0 and is 2x bytes long
+<<< Security-related change >>>
+End of assembly
+1;F   ND3374.N00
+
+SEG0,S0SIZE;P
+SEG1,S1SIZE;P
+SEGD,SDSIZE;P
+SEGF,SFSIZE;P
+CTA,CTASIZ;P
+%P
+%Q
+EXIT
+
+!
+!; Create the Engine code that runs in Slot 1 from NDxxxx.T01
+!R (SYS)NAD
+1.5
+;X   ND3374.C01
+
+;;      EBUS INTERFACE COMMAND FILE - HOST 23
+;@   (SOURCE)EBUS02.I00
+
+End of assembly
+;@   ND3374.T01
+
+End of assembly
+;@   (SOURCE)EBUS02.R00
+
+Start.Lib Version 0.05
+SEG 2 SIZE = 1100
+
+RING 0E0000 101BA 
+CRASH.LIB    11-15-84 AWT
+THIS VERSION HAS AN OPTION FOR EXTENDED CRASH PROCESSING.
+CRASH 101BA 103B8
+STATUS 103B8 105EE
+EBUS 105EE 10CA4
+DEFAULT AREA PROTECTIONS ASSUMED.
+
+SEGMENT 0-length 404d, requires 200x bytes of core.
+SEGMENT 1-length 3364d, requires 0E00x bytes of core.
+SEGMENT 2-length 4480d, requires 1200x bytes of core.
+SEGMENT 3-length 65536d, requires 10000x bytes of core.
+SEGMENT 4-length 65536d, requires 10000x bytes of core.
+SEGMENT 5-length 65536d, requires 10000x bytes of core.
+SEGMENT 6-length 65536d, requires 10000x bytes of core.
+SEGMENT 0E-length 476d, requires 200x bytes of core.
+       265d K-bytes of core
+End of assembly
+1;F   ND3374.N01
+
+CTA,CTASIZ;P
+SEG0,S0SIZE;P
+SEG1,S1SIZE;P
+SEG2,S2SIZE;P
+%P
+%Q
+EXIT
+
+!
+!; Build BND file.  Note that the 68K code is the same in all bases.
+!R (SYS)MERLIN
+MERGE AND LINK ISIS SLOTS OR SPLIT KERNEL
+VERSION  4.00
+* ND3374.BND=ND3374.NIB,ND3374.N00,ND3374.N01,(EBUS)EBUS02.O02/S
+
+
+
+
+         SLOT MAP
+
+SLOT BEGINS ENDS
+ 0   16400  6DBFF
+ 1   6DC00  B03FF
+ 2   B0400  C93FF
+
+
+
+
+    MAP OF SLOT  0
+
+SEG  BEGINS ENDS
+ 0   16800  19CFF
+ 1   19D00  27CFF
+ 2   27D00  37CFF
+ 3   37D00  47CFF
+ 4   47D00  57CFF
+ 5   57D00  63FFF
+13   64000  6DBFF
+14   16400  167FF
+
+
+
+
+    MAP OF SLOT  1
+
+SEG  BEGINS ENDS
+ 0   6DE00  6DF93
+ 1   6E000  6ED23
+ 2   6EE00  6FF7F
+ 3   70000  7FFFF
+ 4   80000  8FFFF
+ 5   90000  9FFFF
+ 6   A0000  AFFFF
+14   6DC00  6DDDB
+
+
+
+
+    MAP OF SLOT  2   (S-RECORD)
+
+BEGINS ENDS
+B0400  B26AC
+
+EXIT
+
+!
+!;The NIB files are not needed and can be deleted.
+!DELETE ND3374.NIB,ND3374.N00,ND3374.N01
+
+
+!R (SYS)CKSUM
+INPUT: ND3374.*
+YUHSAQ ND3374.LOG
+RANQUP ND3374.C01
+DAXGEL ND3374.CMD
+QIPGOR ND3374.BAK
+POFFEK ND3374.TYM
+XATXEF ND3374.C00
+DUDBIM ND3374.BND
+MANCUH ND3374.T01
+INPUT: 
+
+!DIRECT ND3374.BND
+
+ND3374  BND      75  25-JUN-92 1658    ALL RD  NO     37888          
+
+!LOGOUT
+1461.07 tru
+terminal time: 0:05:58
+ 
