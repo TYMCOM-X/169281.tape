@@ -1,0 +1,31 @@
+This command is run only by Resource to valid a list of usernames on 370
+with common cid, gan, costcode, host and pack. The original input file
+is on (TNE01SUP:38)NEWUSR.DAT, the first line of the data file consists
+of following information:
+     
+         I3   DISTRICT
+         I5   CID
+         I6   GAN (right justified)
+         I4   COSTCODE
+         I3   HOST (right justified)
+         I2   SALESMAN NO.
+ 
+These information should be written down then deleted. The rest of data
+(which are in the same format) will be telecopied to (SRA:35)FILEA. To
+convert this file into USRVAL input file format, we have to:
+ 
+  1. get into FTMAGNUM -- type FTMAGNUM REFORMAT
+  2. delete all instances in the relation MASTER (which has been used last
+     time) -- type  DELETE FROM MASTER ALL
+  3. load input file into MASTER -- type RUN LOADIN, then type FILEA when
+     prompt for input file name.
+  4. check password in Tymshare standard -- type RUN CHKPSW, delete all the
+     instances with bad passwords.
+  5. write instances of MASTER to file in USRVAL format -- type RUN WRITEOUT
+     then type FILEB when prompt for output file name.
+  6. get out from FTMAGNUM -- type QUIT
+  7. edit FILEB, the number of lines in this file should be equal to 17 times
+     number of lines in FILEA, delete the extra (blank) lines at the bottom
+     of the file.
+ 
+With above information, we are able to run NEW SPC1 in USRVAL correctly.
