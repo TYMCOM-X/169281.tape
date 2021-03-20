@@ -1,0 +1,453 @@
+This is ND6720.tym
+:       ISIS-II - T-II - DEFINITION PARAMETERS - 22-Aug-88  JMS
+:       KERNEL CODE: 7.03       NODE CODE: 5.22
+:       MEMORY: 1024 SEMI       LOCATION: FREMONT, CA.
+:       ORDER #: 5.22 Deployment
+:       LOAD DATE: 22-Aug-88
+
+:       PARAMETERS WITH ':*' ARE DEFAULTED TO ZERO (0) IF NOT PRESENT.
+
+:               HARDWARE CONFIGURATION
+MACHIN	EQ	1               : Mini-Engine, not Turbo
+MICRO   EQ      2               :* 1=ASYNC ENHANCED, 2=SYNC ENHANCED
+N.ADA   EQ      1               :* 1 IF NEW ASYNC ADDRESSING
+NASYNG  EQ      0               :* NO. OF ASYNC GROUPS (2 GRP/CD)
+M.NCARD EQ      1               :* OF SIO MOTHER BOARDS
+M.DA0   EQ      $0 80           :  DEVICE ADDRESS FOR MOTHER-BOARD 0
+M.NP0   EQ      2               :  NO. OF PORTS FOR MOTHER-BOARD 0
+:# OF DAUGHTER CARDS INSTALLED  : _   V.24  CARDS INSTALLED (_ PORTS EACH)
+:                               : _   V.35  CARDS INSTALLED (_ PORTS EACH)
+:                               : 1   OCL   CARDS INSTALLED (2 PORTS EACH)
+:                               : _   SYNC  CARDS INSTALLED (_ PORTS EACH)
+:                               : _   ASYNC CARDS INSTALLED (_ PORTS EACH)
+:                               : _   SIO ASYNC CARDS INSTALLED (_ PORTS)
+LBOOT   EQ      1               :  NEW BOOT PROM
+ZITEL   EQ      1
+IPINUM  EQ      1               :  INTELL. PERPIHP. INTERFACE--IPI (68010 BRD)
+
+:               ISIS CONFIGURATION CONSTRAINTS
+NSLOT   EQ      2               :  NO. OF SLOTS TO CONNECT
+NLU     EQ      $A 2            :  MAX. NO. OF LOGICAL UNITS/SLOT
+NDP     EQ      $A 256          :  NUMBER OF DISPATCHER PORTS
+
+:               NODE CONFIGURATION
+TII     EQ      1               :  1 IF TYMNET-II ON NODE
+TIINEW  EQ      1               :  1 IF VERSION 4.00 OR ABOVE
+PTHRU   EQ      0               :* IF PASSTHROUGH INHIBITTED
+NPTHR   EQ      $A 128          :  NO. OF PASSTHROUGHS
+MACHNM  EQ      $8 6720         :  NODE NUMBER
+HST0    EQ      $A 4481         :  ISIS KERNEL HOST NUMBER
+NLINES  EQ      0               :  NO. OF LINKS (MUST EQ NLUS0)
+SILINS  EQ      2               :  NO. OF SIO LINES
+ASYNEW  EQ      1               :*0=OLD DRIVER,2=NEW DRIVER,1=BOTH
+CONSAT  EQ      1               :  
+BAUDR   EQ      0               :  MUST EQ 2 FOR HIGH SPEED INTERUPTS
+IKNRNG	EQ	1		:  New KIO rings
+P1SIZE	EQ	$0 800		: Increase size of PATCH1 area
+PHSIZE	EQ	$0 400		: More patch stuff
+REBTST	EQ	1		:** Required by patch to REBUILD **
+        OPTION(REBLD)
+
+:               NETWORK CONFIGURATION
+
+NETID	EQ	1		:this is in TYMNET
+        TIILNK(2275,8,8,,MS)    :LEV. 3 SWITCHER
+        TIILNK(2276,8,8,,MS)    :LEV. 3 SWITCHER
+
+
+:       SLOT 0 - THE NODE CODE
+S0CORE  EQ      $A 350
+NLUS0   EQ      $A 2
+S0L0    M.REF(0,0)
+S0L1    M.REF(0,1)
+
+:       SLOT 1 - MCDONNEL DOUGLAS - PDP10 BASE (E-BUS INTERFACE)
+S1CORE  EQ      $A 266
+S1LIC   EQ      TL.AUX
+NLUS1   EQ      1
+        IF      \IPIDEV         :  THIS TEST MADE FOR COMPATABILITY W/
+S1L0    IP.REF(0)               :  WITH TII005.I06 (NODE CODE FILE)
+        EI
+:       PARAMETERS FOR IPI DEVICE 0
+IPRES0  EQ      1               :  RESET AT INITIALIZATION
+IPDLC0  EQ      2               :  DOWN-LOAD CODE IN SLOT 2
+IPGMB0  EQ      -1              :  NO GO TO MACSBUG AT INITIALIZATION
+
+:       SLOT 2 - E-BUS MEMORY IMAGE (DOWN-LOADED TO E-BUS BY ISIS)
+S2CORE  EQ      $A 100        
+S2LIC   EQ      0
+NLUS2   EQ      0
+ 
+
+	END
+
+This is ND6415.TYM
+:: Warning: the current version of BITS can not load EBUS code into slot 2.
+:: This node MUST be loaded from a PDP-10.  See me for more info.
+::     Joe Smith, (408)922-6220        13-Mar-90
+:       ISIS-II - T-II - DEFINITION PARAMETERS - 17/Apr/91  RLV
+:       KERNEL CODE: 7.03       NODE CODE: 5.35
+:       MEMORY: 1024 SEMI       LOCATION: FREMONT, CA.
+:       ORDER #: 67801
+:       LOAD DATE: 19-jul-91	:add sync/security gw
+
+:       THIS NODE IS FOR SYSTEM 38 IN FREMONT, CA.
+:       PLEASE NOTIFY OPERATIONS IN ADVANCE OF ANY PROJECT REPORT
+:       INCLUDING HAND WRITTEN ONES INVOLVING THIS NODE SO THAT
+:       SYSTEMS CAN BE SCHEDULED ACCORDINGLY.
+:       CONTACT - GARY PEREZ (IPC.G/PEREZ) OR SUE PAL (IPC.S/PAL)
+:       PHONE # (408)446-7705
+
+:       PARAMETERS WITH ':*' ARE DEFAULTED TO ZERO (0) IF NOT PRESENT.
+
+:               HARDWARE CONFIGURATION
+MACHIN	EQ	1               : Mini-Engine, not Turbo
+MICRO   EQ      2               :* 1=ASYNC ENHANCED, 2=SYNC ENHANCED
+N.ADA   EQ      1               :* 1 IF NEW ASYNC ADDRESSING
+NASYNG  EQ      0               :* NO. OF ASYNC GROUPS (2 GRP/CD)
+NSYNC	EQ	1		: 1 sync card
+M.NCARD EQ      1               :* OF SIO MOTHER BOARDS
+M.DA0   EQ      $0 80           :  DEVICE ADDRESS FOR MOTHER-BOARD 0
+M.NP0   EQ      2               :  NO. OF PORTS FOR MOTHER-BOARD 0
+:# OF DAUGHTER CARDS INSTALLED  : _   V.24  CARDS INSTALLED (_ PORTS EACH)
+:                               : _   V.35  CARDS INSTALLED (_ PORTS EACH)
+:                               : 1   OCL   CARDS INSTALLED (2 PORTS EACH)
+:                               : _   SYNC  CARDS INSTALLED (_ PORTS EACH)
+:                               : _   ASYNC CARDS INSTALLED (_ PORTS EACH)
+:                               : _   SIO ASYNC CARDS INSTALLED (_ PORTS)
+LBOOT   EQ      1               :  NEW BOOT PROM
+ZITEL   EQ      1
+IPINUM  EQ      1               :  INTELL. PERPIHP. INTERFACE--IPI (68010 BRD)
+
+:               ISIS CONFIGURATION CONSTRAINTS
+NSLOT   EQ      3               :  NO. OF SLOTS TO CONNECT
+NLU     EQ      $A 3            :  MAX. NO. OF LOGICAL UNITS/SLOT
+NDP     EQ      $A 256          :  NUMBER OF DISPATCHER PORTS
+
+:               NODE CONFIGURATION
+TII     EQ      1               :  1 IF TYMNET-II ON NODE
+TIINEW  EQ      1               :  1 IF VERSION 4.00 OR ABOVE
+PTHRU   EQ      0               :* IF PASSTHROUGH INHIBITTED
+NPTHR   EQ      $A 128          :  NO. OF PASSTHROUGHS
+MACHNM  EQ      $8 6415         :  NODE NUMBER
+HST0    EQ      $A 4399         :  ISIS KERNEL HOST NUMBER
+NLINES  EQ      1               :  NO. OF sync lines slot 0
+SILINS  EQ      2               :  NO. OF SIO LINES slot 0
+ASYNEW  EQ      1               :*0=OLD DRIVER,2=NEW DRIVER,1=BOTH
+BAUDR   EQ      0               :  MUST EQ 2 FOR HIGH SPEED INTERUPTS
+IKNRNG	EQ	1		:  New KIO rings
+P1SIZE	EQ	$0 800		: Increase size of PATCH1 area
+PHSIZE	EQ	$0 400		: More patch stuff
+REBTST	EQ	1		:** Required by patch to REBUILD **
+        OPTION(REBLD)
+
+:               NETWORK CONFIGURATION
+
+NETID	EQ	1		:this is in TYMNET
+        TIILNK(2275,8,8,,MS)
+        TIILNK(2276,8,8,,MS)
+	TIILNK(12011,8,8)	:to sec gw slot 3
+
+
+:       SLOT 0 - THE NODE CODE
+S0CORE  EQ      $A 350
+NLUS0   EQ      $A 3
+S0L0	S.REF(0)
+S0L1    M.REF(0,0)
+S0L2    M.REF(0,1)
+
+:       SLOT 1 - MCDONNEL DOUGLAS - PDP10 BASE (E-BUS INTERFACE)
+S1CORE  EQ      $A 266
+S1LIC   EQ      TL.AUX
+NLUS1   EQ      1
+        IF      \IPIDEV         :  THIS TEST MADE FOR COMPATABILITY W/
+S1L0    IP.REF(0)               :  WITH TII005.I06 (NODE CODE FILE)
+        EI
+:       PARAMETERS FOR IPI DEVICE 0
+IPRES0  EQ      1               :  RESET AT INITIALIZATION
+IPDLC0  EQ      2               :  DOWN-LOAD CODE IN SLOT 2
+IPGMB0  EQ      -1              :  NO GO TO MACSBUG AT INITIALIZATION
+
+:       SLOT 2 - E-BUS MEMORY IMAGE (DOWN-LOADED TO E-BUS BY ISIS)
+S2CORE  EQ      $A 100        
+S2LIC   EQ      0
+NLUS2   EQ      0
+ 
+
+:	SLOT 3 - Gateway for Security
+S3CORE	EQ	$A 160
+S3LIC	EQ	0
+NLUS3	EQ	1
+S3L0	S.REF(1)
+
+
+	END
+This is ND2333.TYM
+:: Warning: the current version of BITS can not load EBUS code into slot 2.
+:: This node MUST be loaded from a PDP-10.  See me for more info.
+::     Joe Smith, (408)922-6220        13-Mar-90
+:       ISIS-II - T-II - DEFINITION PARAMETERS - 17/Apr/91  RLV
+:       KERNEL CODE: 7.03       NODE CODE: 5.35
+:       MEMORY: 1024 SEMI       LOCATION: FREMONT, CA.
+:       ORDER #: 65519
+:       LOAD DATE: 29-Mar-91	:JMS - changed TIILNK 3220 -> 2355
+
+:       PARAMETERS WITH ':*' ARE DEFAULTED TO ZERO (0) IF NOT PRESENT.
+
+:               HARDWARE CONFIGURATION
+MACHIN	EQ	1               : Mini-Engine, not Turbo
+MICRO   EQ      2               :* 1=ASYNC ENHANCED, 2=SYNC ENHANCED
+N.ADA   EQ      1               :* 1 IF NEW ASYNC ADDRESSING
+NASYNG  EQ      0               :* NO. OF ASYNC GROUPS (2 GRP/CD)
+M.NCARD EQ      0               :* OF SIO MOTHER BOARDS
+M.DA0   EQ      0               :  DEVICE ADDRESS FOR MOTHER-BOARD 0
+M.NP0   EQ      0               :  NO. OF PORTS FOR MOTHER-BOARD 0
+LBOOT   EQ      1               :  NEW BOOT PROM
+ZITEL   EQ      1
+IPINUM  EQ      1               :  INTELL. PERPIHP. INTERFACE--IPI (68010 BRD)
+
+:               ISIS CONFIGURATION CONSTRAINTS
+NSLOT   EQ      3               :  NO. OF SLOTS TO CONNECT
+NLU     EQ      $A 4            :  MAX. NO. OF LOGICAL UNITS/SLOT
+NDP     EQ      $A 256          :  NUMBER OF DISPATCHER PORTS
+
+:               NODE CONFIGURATION
+TII     EQ      1               :  1 IF TYMNET-II ON NODE
+TIINEW  EQ      1               :  1 IF VERSION 4.00 OR ABOVE
+PTHRU   EQ      0               :* IF PASSTHROUGH INHIBITTED
+NPTHR   EQ      $A 128          :  NO. OF PASSTHROUGHS
+MACHNM  EQ      $8 2333         :  NODE NUMBER
+HST0    EQ      $A 4459         :  ISIS KERNEL HOST NUMBER
+NLINES  EQ      4               :  NO. OF LINKS (MUST EQ NLUS0)
+NUMWS8  EQ      3               :  NO. OF WINDOW SIZE 8 LINES
+ASYNEW  EQ      1               :*0=OLD DRIVER,2=NEW DRIVER,1=BOTH
+CONSAT  EQ      1               :  
+BAUDR   EQ      0               :  MUST EQ 2 FOR HIGH SPEED INTERUPTS
+IKNRNG	EQ	1		:  New KIO rings
+P1SIZE	EQ	$0 800		: Increase size of PATCH1 area
+PHSIZE	EQ	$0 400		: More patch stuff
+REBTST	EQ	1		:** Required by patch to REBUILD **
+        OPTION(REBLD)
+
+:               NETWORK CONFIGURATION
+
+NETID	EQ	1		: NETID = 1 FOR Public Net
+        TIILNK(2355,8,8)	: LEV. 3 SWITCHER
+        TIILNK(2275,8,8)        : LEV. 3 SWITCHER
+        TIILNK(2276,8,8)        : LEV. 3 SWITCHER
+	TIILNK(10721,8,8)	: Special Gateway
+
+
+:       SLOT 0 - THE NODE CODE
+S0CORE  EQ      $A 350
+NLUS0   EQ      $A 4
+S0L0    S.REF(0)
+S0L1    S.REF(1)
+S0L2    S.REF(2)
+S0L3	S.REF(3)
+
+:       SLOT 1 - MCDONNEL DOUGLAS - PDP10 BASE (E-BUS INTERFACE) HOST-33
+S1CORE  EQ      $A 266
+S1LIC   EQ      TL.AUX
+NLUS1   EQ      1
+        IF      \IPIDEV         :  THIS TEST MADE FOR COMPATABILITY W/
+S1L0    IP.REF(0)               :  WITH TII005.I06 (NODE CODE FILE)
+        EI
+:       PARAMETERS FOR IPI DEVICE 0
+IPRES0  EQ      1               :  RESET AT INITIALIZATION
+IPDLC0  EQ      2               :  DOWN-LOAD CODE IN SLOT 2
+IPGMB0  EQ      -1              :  NO GO TO MACSBUG AT INITIALIZATION
+
+:       SLOT 2 - E-BUS MEMORY IMAGE (DOWN-LOADED TO E-BUS BY ISIS)
+S2CORE  EQ      $A 100        
+S2LIC   EQ      0
+NLUS2   EQ      0
+ 
+:	SLOT 3 - Gateway for Security
+S3CORE	EQ	$A 160
+S3LIC	EQ	0
+NLUS3	EQ	1
+S3L0	S.REF(4)
+
+	END
+
+
+;; ISIS-II Version 7.03 Sample Command File
+;@(SOURCE)I2IS07.I03
+;@(tymnet)nd2333.tym
+;@(tymnet)ggisis.ltd
+;@(SOURCE)I2IS07.R03
+;X(SOURCE)I2IS07.P03
+1;Fnd2333.nib
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%P%Q
+;; ISIS-II Version 7.03 Sample Command File
+;@(SOURCE)I2IS07.I03
+;@nd6415.tym
+;@ggisis.ltd
+;@(SOURCE)I2IS07.R03
+;X(SOURCE)I2IS07.P03
+1;Fnd6415.nib
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%P%Q
+;; ISIS-II Version 7.03 Sample Command File
+;@(SOURCE)I2IS07.I03
+;@ND6720.TYM
+;@(TYMNET)GOODGY.NQA
+;@(SOURCE)I2IS07.R03
+;X(SOURCE)I2IS07.P03
+1;FND6720.NIB
+70;T0,SUMTBL;PINTLEN,IEND-INTLEN;P%PSEGF,SFSIZE;P%Q
+
+
+;; updated  17-dec-87  nd2021  gateway ntsnet-2010	rlv
+;a(nts)tii05.i35
+;a(tymnet)nd2333.t03
+;a(tymnet)ggxray.ltd
+;a(nts)tii05.r35
+;a(nts)tii05.p35
+1;fnd2333.n03
+seg0,rseg0;pseg1,s1size;psegd,sdsize;pcta,ctasiz;p%p%q
+:       ISIS-II - TYMNET-II GATEWAY PARAMETER FILE - VERSION 5.35
+:	UPDATED 16-Apr-91	RLV
+:: GATEWAY GENERATION PARAMETERS
+T2GATE	EQ	1		:Generate T-II Gateway
+MEMORY	EQ	$A 160		:Slot size available must be specified
+T2SYLU	EQ	1		:Number of Sync Logical Units for Gateway 
+				:(Must match ISIS specification for slot)
+SILINS	EQ	0		:Number of sio lines
+NLINES	EQ	1		:
+NDP	EQ	$A 64		:Number of Gateway ports available
+NPTHR	EQ	$A 0		:Number of passthroughs available
+autrac	eq	1
+EXPHST	EQ	1
+
+::REQUIRED IDENTIFICATION FOR BOTH NETWORKS
+NETID	EQ	$A 1		:SET HOME NETOWRK TO BE TYMNET
+MACHNM  EQ      $8 10721        :Node number in home network (HNET)
+HHOST	EQ	$A 14626	:Host number for home network (HNET)
+IHOST	EQ	$A 14622	:Host number for "other" (ISIS) network (INET)
+
+cbszl	eq	8		:run with extra big buflets to make tracing easier
+tii.fg	eq	0
+
+	option(nhts,nhth)	:halt on crash
+
+
+::Required Network configuration specification
+	TIILNK(2333,8,8)
+
+::	GATEWAY OPTIONS
+::ACCOUNTING PARAMETERS
+ACCT	EQ	1		:Accounting (Gateway only)
+INCOST	EQ	$A 5		:Host cost to INET
+HNCOST	EQ	$A 5		:Host cost to HNET
+IRC0	EQ	3		:Accounting IRC Value for line IRC#
+
+::Gateway Operations Manager Configuration Options
+NXUBLK	EQ	3		:Number of remote G. O. M.  users
+XRSZLV	EQ	3		:XRAY size assembly levels switch(1-3)
+				:Level 1, ND,NS,KD,DC,PQ only
+				:Level 2, add Crypto and Trace...
+				:Level 3,  all commands
+
+NETNAM	EQ	1		:Use Network Names
+INAME	MACRO[AC	/PDP-10/]
+HNAME	MACRO[AC	/TYMNET/]
+        END
+
+
+:       ISIS-II - TYMNET-II GATEWAY PARAMETER FILE - VERSION 5.35
+:	19-july-91 sln
+:: GATEWAY GENERATION PARAMETERS
+T2GATE	EQ	1		:Generate T-II Gateway
+MEMORY	EQ	$A 160		:Slot size available must be specified
+T2SYLU	EQ	1		:Number of Sync Logical Units for Gateway 
+				:(Must match ISIS specification for slot)
+SILINS	EQ	0		:Number of sio lines
+NLINES	EQ	1		:
+NDP	EQ	$A 64		:Number of Gateway ports available
+NPTHR	EQ	$A 0		:Number of passthroughs available
+autrac	eq	1
+EXPHST	EQ	1
+
+::REQUIRED IDENTIFICATION FOR BOTH NETWORKS
+NETID	EQ	$A 1		:SET HOME NETOWRK TO BE TYMNET
+MACHNM  EQ      $8 12011        :Node number in home network (HNET)
+HHOST	EQ	$A 15369	:Host number for home network (HNET)
+IHOST	EQ	$A 15371	:Host number for "other" (ISIS) network (INET)
+
+cbszl	eq	8		:run with extra big buflets to make tracing easier
+tii.fg	eq	0
+
+	option(nhts,nhth)	:halt on crash
+
+
+::Required Network configuration specification
+	TIILNK(6415,8,8)
+
+::	GATEWAY OPTIONS
+::ACCOUNTING PARAMETERS
+ACCT	EQ	1		:Accounting (Gateway only)
+INCOST	EQ	$A 5		:Host cost to INET
+HNCOST	EQ	$A 5		:Host cost to HNET
+IRC0	EQ	3		:Accounting IRC Value for line IRC#
+
+::Gateway Operations Manager Configuration Options
+NXUBLK	EQ	3		:Number of remote G. O. M.  users
+XRSZLV	EQ	3		:XRAY size assembly levels switch(1-3)
+				:Level 1, ND,NS,KD,DC,PQ only
+				:Level 2, add Crypto and Trace...
+				:Level 3,  all commands
+
+NETNAM	EQ	1		:Use Network Names
+INAME	MACRO[AC	/PDP-10/]
+HNAME	MACRO[AC	/TYMNET/]
+        END
+
+
+:       ISIS-II - TYMNET-II GATEWAY PARAMETER FILE - VERSION 5.35
+:	UPDATED 16-Apr-91	RLV
+:: GATEWAY GENERATION PARAMETERS
+T2GATE	EQ	1		:Generate T-II Gateway
+MEMORY	EQ	$A 160		:Slot size available must be specified
+T2SYLU	EQ	0		:Number of Sync Logical Units for Gateway 
+				:(Must match ISIS specification for slot)
+SILINS	EQ	1		:Number of sio lines
+NDP	EQ	$A 64		:Number of Gateway ports available
+NPTHR	EQ	$A 0		:Number of passthroughs available
+autrac	eq	1
+EXPHST	EQ	1
+
+::REQUIRED IDENTIFICATION FOR BOTH NETWORKS
+NETID	EQ	$A 1		:SET HOME NETOWRK TO BE TYMNET
+MACHNM  EQ      $8 11050        :Node number in home network (HNET)
+HHOST	EQ	$A 14627	:Host number for home network (HNET)
+IHOST	EQ	$A 14623	:Host number for "other" (ISIS) network (INET)
+
+cbszl	eq	8		:run with extra big buflets to make tracing easier
+tii.fg	eq	0
+
+	option(nhts,nhth)	:halt on crash
+
+
+::Required Network configuration specification
+	TIILNK(10350,8,8,,MS)
+
+::	GATEWAY OPTIONS
+::ACCOUNTING PARAMETERS
+ACCT	EQ	1		:Accounting (Gateway only)
+INCOST	EQ	$A 5		:Host cost to INET
+HNCOST	EQ	$A 5		:Host cost to HNET
+IRC0	EQ	3		:Accounting IRC Value for line IRC#
+
+::Gateway Operations Manager Configuration Options
+NXUBLK	EQ	3		:Number of remote G. O. M.  users
+XRSZLV	EQ	3		:XRAY size assembly levels switch(1-3)
+				:Level 1, ND,NS,KD,DC,PQ only
+				:Level 2, add Crypto and Trace...
+				:Level 3,  all commands
+
+NETNAM	EQ	1		:Use Network Names
+INAME	MACRO[AC	/PDP-10/]
+HNAME	MACRO[AC	/TYMNET/]
+        END
+   
