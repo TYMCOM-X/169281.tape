@@ -1,0 +1,102 @@
+*** /release/lib/t2e/05.37/src/t2e05.i37	Mon Dec  6 14:18:54 1993
+--- /release/ts/t2e/05.37/psrc/t2e05.i37	Mon Sep 18 02:43:28 1995
+***************
+*** 51,58 ****
+  TER	EQ	$0 80		:DEFAULT LINK TYPE IS TERRESTRIAL
+  MS	EQ	$0 1F		:REPORTING VALUE FOR MEMORY SHUFFLER SPEED
+  TIWS8	EQ	$0 40		:T-I WSIZ 8 LINK
+! A.BP	eq	$0 1		:indicate link is to request active bp
+! SWCKSM	eq	$0 2		:indicate link is to send 
+  
+  ::*********************************************************************
+  ::
+--- 51,58 ----
+  TER	EQ	$0 80		:DEFAULT LINK TYPE IS TERRESTRIAL
+  MS	EQ	$0 1F		:REPORTING VALUE FOR MEMORY SHUFFLER SPEED
+  TIWS8	EQ	$0 40		:T-I WSIZ 8 LINK
+! A.BP	eq	$0 100		:indicate link is to request active bp
+! SWCKSM	eq	$0 200		:indicate link is to send 
+  
+  ::*********************************************************************
+  ::
+***************
+*** 129,134 ****
+--- 129,137 ----
+  :	highest slot number possible
+  DSCSLT	MACRO(P) [
+  dcslot	eq	$a P 0 ]	: for ISIS 16
++ SIOTYPE	MACRO(P,Q) [ ]		: macro from tymhlp2.ini (jms 9/18/95)
++ BGTICKS	MACRO(P) [ ]		: macro from tymhlp2.ini (jms 9/18/95)
++ FGTICKS	MACRO(P) [ ]		: macro from tymhlp2.ini (jms 9/18/95)
+  
+  	SUBTTL	TIIINT (OPTION MACRO)
+  
+***************
+*** 310,315 ****
+--- 313,331 ----
+  	EI	:$A WSZ
+  
+  XSAT    EQ      SATL		:for TII links
++ 
++ 
++         if      xsat&$00c50     :Is it a valid SAT parameter
++                                 :xsat&$0c50    No complain and kill assembly
++ 
++         REMARK % ***SATELITE FIELD PARAMETER IS INVALID IN TIILNK MACRO FOR NODE
++         NUMBER $8 NBR
++         REMARK ***%
++         REMARK         ***ASSEMBLY KILLED***%
++         KILLER(1)
++ 
++         ELSE                     :xsat&$0c50  OK
++ 
+  XABP|$aN| eq	XSAT&A.BP	:get active bp indicator
+         if	xabp|$aN|
+  aplybp	eq	1		:set enable BP on if a link requests it	
+***************
+*** 320,331 ****
+  S.CKSM	eq	1		:enable software checksum transmit logic
+         ei	:
+  
+! xsat	eq	xsat&($0-20)	:mask out extraneous bits
+  	IF	XSAT
+  KSAT|$AN| EQ	$0 XSAT
+  	ELSE	:NOT XSAT (Default value)
+  KSAT|$AN| EQ	$0 80
+  	EI	:XSAT
+  KSP	EQ	$A SPD 		:Value of SPD argument
+  
+  	IF	KSP
+--- 336,350 ----
+  S.CKSM	eq	1		:enable software checksum transmit logic
+         ei	:
+  
+! xsat	eq	xsat&$00e0	:mask out extraneous bits
+  	IF	XSAT
+  KSAT|$AN| EQ	$0 XSAT
+  	ELSE	:NOT XSAT (Default value)
+  KSAT|$AN| EQ	$0 80
+  	EI	:XSAT
++ 
++ 	EI	:xsat&$0c50
++ 
+  KSP	EQ	$A SPD 		:Value of SPD argument
+  
+  	IF	KSP
+***************
+*** 3223,3229 ****
+  	KILL	ITI,UTST,TOM,LEM,MUX,PBOM,SOM,PAOM,TLXG,XOM,NTRT
+  	KILL	XPC,SNA,SNAT,SNAH,TNTH,CMTU,NTCN,ISRM,MSRV,MSV
+  	KILL	SHMN,IHSA,I2G2,LHOS,MDT,MDH,PTI,CMH,MBAS,PHI
+! 	KILL	EXPE,MCP,TUNL
+  	KILL	.SETG.,SETGL
+  
+  	KILL	SYN,ASN,PRN,XSIO,M.CARD,TL.AUX,TL.SUS,DK,MT,RD,WR
+--- 3242,3248 ----
+  	KILL	ITI,UTST,TOM,LEM,MUX,PBOM,SOM,PAOM,TLXG,XOM,NTRT
+  	KILL	XPC,SNA,SNAT,SNAH,TNTH,CMTU,NTCN,ISRM,MSRV,MSV
+  	KILL	SHMN,IHSA,I2G2,LHOS,MDT,MDH,PTI,CMH,MBAS,PHI
+! 	KILL	EXPE,MCP,TUNL,SIOTYPE,BGTICKS,FGTICKS	#jms 9/18/95
+  	KILL	.SETG.,SETGL
+  
+  	KILL	SYN,ASN,PRN,XSIO,M.CARD,TL.AUX,TL.SUS,DK,MT,RD,WR
