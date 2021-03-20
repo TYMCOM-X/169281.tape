@@ -1,0 +1,180 @@
+
+                        M  E  M  O  R  A  N  D  U  M
+
+                         BRITISH TELECOMMUNICATIONS
+                                TYMNET, INC.
+
+Date:     25 February 1991
+
+To:       Thom Kelley     	                     Copies:  See CC List
+
+From:     Bruce Shepherd                               
+
+Subject:  Response to NTD Memorandum
+
+--------------------------------------------------------------------------
+
+There  still appears  to be some major points of contention concerning the
+memorandum I wrote on 13 February 1991.
+
+From  the NTS  perspective  the  PXL  hardware and software is viewed as a
+complete system,  with no differentiation  between  either.   Any  problem
+that surfaces  is a problem for the entire product regardless of where the
+fault lies.
+
+With this in mind,  the following  points need  to be noted concerning the
+response from Stan King on 13 February 1991.
+
+
+  1.  NSR 4077 (10/10/91) - DDT ?CPU command non-functional.
+
+      This problem was reported immediately  after the initial  release
+      of ISIS 13.00,  and  at that time the  direction we proceeded  on
+      was to remove the ?CPU command and utilize  the ?SPAM command  as
+      the replacement for it.  It was subsequently discovered  that the
+      ?SPAM resource utilization could  have a  detrimental  effect  on
+      nodes configured for heavy  async usage and the  ?CPU did in fact
+      need to be corrected.
+
+  2.  NSR 4250 (2/05/91)  -  Gateway loading via LOADII.
+
+      This is  an  inherent  problem  in  ISIS version  13.01  and  has
+      absolutely nothing to do with the PICO engine.  The problem deals
+      with any loading  mechanism  (BITS  or  LOADII)  going through  a
+      gateway and  having the CCT  characteristics cause  ISIS  to fail
+      on the string comparison of usernames having the ability to issue
+      restricted  commands.   This bug impacts  not  only the  PXL  and
+      PICO, but all  hardware lines  (CXL, MXC, Engine, MICROx) running
+      under the ISIS 13.01 umbrella.  
+
+  3.  EAR 2383 (1/16/91)  -  Async addressing implementation.
+
+      Initially this was  reported as an implementation to meet a THUGS
+      customer request.    After  discussions with Don Johnson and Bill
+      Euske the source of this  request can not be  determined,  nor is
+      there any  overriding need  for the async  addressing to skip the
+      16  ports in  the first  group.  It  is  unlikely that any of our
+      customers  have  intimate   knowledge  of  the   hardware   async
+      addressing, but  most  likely the  request was  for our  software
+      (ISIS and CONSAT/TYMCOM)  be given the  ability to split a single
+      async board into usage by multiple  slots (which we  already have
+      the  capability of  doing on all hardware except the MICRO II and
+      III).  This gap in  the  async  ports  is a  potential cause  for
+      significant support as it is very unlikely that each installation
+      will know before-hand of  the missing 16 ports and configure both
+      the ISIS  and  application software appropriately.   In  addition
+      to    avoiding   this   confusion    concerning   the    software
+      configurations, this EAR (if implemented)  will  recover 3-5%  of
+      the  CPU  resources  as  the  async  microcode  will  not have to
+      constantly  scan 16 non-existent ports.
+
+  4.  EAR 2380 (1/15/91)  -  Power reset hanging up the hardware.
+
+      This EAR is not completely addressed at this point.  The cause of
+      the problem has  been relayed  to NTS, but we do  not have  a fix
+      for it  as of this time.  With no power filter available, a quick
+      momentary  power surge/loss can  result  in  this  failure.  At a
+      remote  unmanned sites  this could  lead to extensive down times.
+      The  method of  leaving the PXL switched off for several  seconds
+      does nothing to address the issuse of power glitches.  Given that
+      the possibility of this failure increases with the deployment  of
+      the  PXL,  we  should  not  risk  violation  of  any contractural
+      agreement or icurr and penalties with  a private network customer
+      due to this possibility.
+
+  5.  NSR 4256 (2/11/91)  -  ISIS  13.01   recovery  taking  between  5
+      minutes to over 2 hours following an INI.
+
+      This  issue is still  open and  will remain  a priority one until
+      resolved satisfactorily.
+
+  6.  Diagnostic   modifications  to   Enhanced  Sync  and   Sync/Async
+      diagnostics  have  not  yet  been  made  or  released.   This  is
+      extremely  visible  as  without changes  to  have  each of  these
+      standalone diagnostics capable of testing as few as 6 ports,  the
+      PXL has no released or support diagnostics  for the sync or async
+      option cards.   TRW has already  asked about  these  diagnostics,
+      and  NOVADYNE  will need  these  when we  eventually  go to  full
+      deployment.  Without these diagnostics all PXL hardware with sync
+      or  async options  cards will  be  installed  without  benefit of
+      testing prior to loading production code.
+
+
+Since  accountability is a major focus in the company these days, there is
+no  way that NTS is ready to accept  the PXL  system  at  this  time.   In
+addition to the  above problems,  several additional  ones have been noted
+with NSR's generated against  the software  and EAR's generated pertaining
+to the hardware.  Briefly, the additional ones are as follows:
+
+  o  EAR Unassigned (2/20/91)  -  Changing the state of  the  PXL front
+     console  following  a  system  reset  (boot/power  recycle)   from
+     UNLOCKED to LOCKED.  This EAR was generated at the request of TRW.
+
+  o  NSR  4282  (2/20/91)  -  CONSAT  version  11.00  SIO  async   port
+     transmitter being disabled during initialization  and  hang/answer
+     sequence.  This is a result of successive commands being sent down
+     to  the SIO  and the  second command  coming down before the first
+     command is completed.   This  problem is also  relevant  to CONSAT
+     version 6.03,  6.04, and 6.40  but has been  corrected by a  patch
+     (DELAY.xxx).  The fix is trivial and should be  incorporated  into
+     the  latest source code  so future  versions are  not subjected to
+     the failure.    This  was uncovered  due to a problem  encountered
+     at TRW.
+
+  o  NSR 4280 (CONSAT 6.40) and  4281 (CONSAT 11.00)  (2/20/91)  -  The
+     extended DDT command for async port status (AS) does not  properly
+     reflect the SIO port status for the signals CP, DSR and DCD.  This
+     problem was reported by TRW.
+
+  o  NSR 4260  (2/12/91)  -  Node  code  5.6x  CCW  error  during  port
+     initialization.  This problem was discovered during testing of the
+     ISIS initialization problem.   A recent patch has been written  to
+     address this issue for the TURBO  engine in version  5.61, but the
+     source code should be modified to incorporate this.
+
+  o  Node Code crash 5062  - Illegal call to GCI routine.  This problem
+     was reported  via UNIX mail to  NTD and a  dump of  the node  code
+     taken for  their analysis.   The XRAY manual states that  there is
+     no known cause for this crash and it should not happen.
+
+  o  SIO  async  ports  having BUSY (pin 25) following  initialization.
+     This problem was reported by TRW and although there is a patch now
+     to correct this problem, it has not been determined what course of
+     should be taken:  NSR or EAR.  The PXL appears to bridge  RTS (pin
+     4) to BUSY (pin 25) which causes no problem when async devices are
+     hardwired, but prevents modems  from answering  due  to  the  BUSY
+     signal always being present.  This apparently is not a new problem
+     but goes back to the PSM SIO async days and has always been masked
+     by a patch to the CONSAT.
+
+The  testing being done in NTS can not focus simply on the PXL as there is
+an  inadequate betatest and lab environment population to cover testing of
+all software  modifications.   As a result,  non-MAC 5 hardware  platforms
+have been utilized  to enhance  the test bed for ISIS and node code.   All
+software released and  initially  targeted for the PXL  hardware platform,
+must also be completely portable  to all existing  hardware platforms.  We
+can not afford to release  the  new versions of  code and find  later they
+are  not compatible  with  the  rest  of our hardware.   Inclusion of  the
+non-MAC 5  hardware has  uncovered several  problems in both ISIS and node
+code.
+
+From  the perspective  of support  the PXL "product" is not ready for full
+deployment as collectively all of the problems outlined have the potential
+for a support nightmare.   I grant that very few are in fact PXL specific,
+but  the field  and our  customers  see the  PXL as a single  product that
+encompasses both hardware  and software.   At this point I am not ready to
+subject  the NTS group  (which provides 24 hours, 7 days a week world wide
+support), NOVADYNE field engineers  or BT  TYMNET support personnel to the
+problems outlined previously.  Nor am  I willing to  accept responsibility
+for a product that would be released substandard and with  known problems.
+
+At this point I can not  give you  an  estimate  on  when  the  entire PXL
+product will be ready for full  release, as addressing and  correcting all
+outstanding issues  (and any  found between then and now)  requires action
+by NTD for resolution.  A better  estimate  of when  these  issues will be
+satisfactorily   resolved  should   be  solicited  from  the   development
+management.   Unfortunately we don't seem to be proceeding along the  same
+path,  as  issues  relating to immediate and future support are not always
+viewed the same by  development as by those who have to  deal with them on
+a day to day basis.
+   
