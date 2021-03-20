@@ -1,0 +1,531 @@
+
+
+
+
+
+
+
+
+
+
+
+
+                                   TI   Pro-Lite
+
+
+			      File Transfer Procedures
+
+
+
+
+
+
+
+
+
+                                  Kimberley Holland
+
+ 
+				     Tymnet Inc.
+
+
+                             National Technical Support
+
+
+				 September 20, 1985
+
+
+
+
+
+
+
+
+
+         ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	 +                                                                  +
+         + This document is the sole  property and confidential information +
+         + of Tymnet, Inc., and may not be copied  in whole or part or dis- +
+         + closed to any  third party without the prior  written consent of +
+         + Tymnet, Inc.                                                     +
+         +                                                                  +
+         ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+  
+  
+	 TI Pro-Lite File Transfer Procedures
+
+
+
+
+				 TABLE OF CONTENTS
+                                 _____ __ ________
+
+
+	 1.0 Introduction ................................................. 1
+         2.0 TYMCOM-X NAD Files to TI Pro-Lite ............................ 2
+         3.0 TI Pro-Lite to TYMNET Engine Transfer ........................ 5
+         4.0 TI Pro to TI Pro-Lite Transfer ............................... 6
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+								       PAGE i
+  
+  
+	 TI Pro-Lite File Transfer Procedures
+
+
+         SECTION 1.0 Introduction
+         _______ _ _ ____________
+
+
+         The following  procedure is  designed to  provide TI  Pro-Lite users
+         with the steps necessary to download  NIB and BND files to diskettes
+         and transfer  these files  to the TYMNET  Engine.  These  steps will
+         function on any  NIB file including diagnostic files,  slot files or
+         node bound  files.  Two  primary pieces  of software  are needed  to
+         accomplish the transfer process:  NAD  (on the TYMCOM-X) and TERMITE
+         (on the TI Pro-Lite).  The following equipment is necessary in order
+         to perform the load/transfer process:
+
+          o  TYMNET Engine, MINI-Engine or MICRO-Engine (with console).
+
+          o  TI Pro-Lite PC (with diskette containing the TERMITE Program).
+
+          o  Straight-through cable #ASC140-02PP (to  connect TI Pro-Lite to
+             Engine for TTYLOAD through multifunction port).
+
+ 
+
+        Connecting TI Pro-Lite to TYMNET Engine for down-loading:
+
+
+                                               +---------------+
+					       +               +
+                                               +               +
+            +-----------+                      +               +
+            + Pro-Lite  +    <==============   + TYMNET Engine +
+            + Comm Port +       async line     +  ASYNC Board  +
+            +-----------+                      +               +
+                                               +               +
+                                               +---------------+
+
+ 
+
+ 
+         Connecting TI Pro-Lite to TYMNET Engine for TTYLOAD of BND/NIB file:
+
+
+                                               +---------------+
+                                               +               +
+                                               +               +
+            +-----------+                      +               +
+            + Pro-Lite  +    ==============>   + TYMNET Engine +
+            + Comm Port +     ASC140-02PP      +   TTY  Port   +
+            +-----------+                      +               +
+                                               +               +
+                                               +---------------+
+
+ 
+
+						       Introduction    PAGE 1
+
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+         SECTION 2.0 TYMCOM-X NAD Files to TI Pro-Lite
+         _______ _ _ ________ ___ _____ __ __ ________
+
+
+         The transferring  of NAD files  from a  TYMCOM-X to the  TI Pro-Lite
+         involves four main steps:
+
+           o  Logging into the the TYMCOM-X where  the file to be transferred
+              resides.
+
+              This step is accomplished  by booting the TI  Pro-Lite with the
+              Network diskette containing  the TERMITE program.  If  the ver-
+              sion of TERMITE is less than  version 2.01 is is important that
+              the SLOT  A ON command  in MS-DOS  be issued before  TERMITE is
+              invoked.   TERMITE version  2.01 will  automatically issue  the
+              SLOT A ON command.  It is also important to note that when log-
+              ging  in  the  following control  character  sequence  MUST  be
+              entered:
+
+                    CNTL-X, CNTL-R and CNTL-<gouging level>
+
+                    where
+                       <gouging level> = D for 4800 baud
+                       <gouging level> = C for 2400 baud
+                       <gouging level> = B for all  other baud rates
+
+              The CNTL-X requests  that TYMNET control  the flow  of terminal
+              output with X-ON  and X-OFF to prevents data  loss.  The CNTL-R
+              allows terminal  control of  received data  flow with  X-ON and
+              X-OFF.  The CNTL-<gouging level> determines the number of char-
+              acters that can be transmitted over the circuit every half sec-
+              ond.
+
+           o  Initializing the TYMCOM-X to TI Pro-Lite transfer software.
+
+              The TI Pro-Lite software  is initialized by typing  an ALT-X to
+              get to the TERMITE command prompt  "Enter Command:" on the bot-
+              tom line and setting the TI  Pro-Lite in receive mode by typing
+              "BRECEIVE <pc  filename>" followed  by a  carriage return.   At
+              this point is  is necessary to insure that  the terminal itself
+              doen not  become involved  in any  character backpressuring  by
+              typing the command "TERMINAL  DUMB".  Return to the  XEXEC com-
+              mand level by typing a carriage return.
+
+              The TYMCOM-X software is initiated by entering NAD by typing "R
+              NAD" followed by a carriage return.   The NAD file is then read
+              into NAD's local memory to determine the last address contained
+              in the  file.  This is  accomplished by entering  the following
+              NAD commands: "%F <filename>" and  ";G".  The "%F" command will
+              open the file for read-only, while  the ";G" will get the local
+              image and print to the terminal the data ranges read.
+
+
+                                  TYMCOM-X NAD Files to TI Pro-Lite    PAGE 2
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+           o  Transferring the file from the TYMCOM-X to the TI Pro-Lite:
+
+              This step involves starting the NAD  sending process and start-
+              ing the TI  Pro-Lite receive process.  The  NAD sending process
+              is done by the command "0, <last  data range read + 1>;8".  The
+              TI Pro-Lite receive process is commenced  by typing an ALT-F as
+              soon as NAD echoes a carriage  return following the ";8".  Note
+              that the NAD command does NOT  end with a carriage return.  The
+              ALT-F must  be done after NAD  echoes the carriage  return, and
+              before the file begins printing on the terminal.  The ";8" com-
+              mand signals  NAD to transfer the  core image (range from  0 to
+              the last byte + 1 ) to the terminal (and the TI Pro-Lite simul-
+              taneously via TERMITE)  at the current login  baud rate.  After
+              issuing  these two commands, the NAD  file will be sent to both
+              the TI  Pro-Lite and the users  terminal, which will  result in
+              some strange  output to the terminal,  this is expected  and is
+              not a problem.  NAD will print  "Loaded" when the file transfer
+              is complete.
+
+           o  Terminating the TYMCOM-X to TI Pro-Lite transfer software.
+ 
+              The TI Pro-Lite software is terminated  by typing ALT-F,  while
+              the TYMCOM-X  software is terminated by  typing a "%Q"  to exit
+              NAD.
+
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+                                  TYMCOM-X NAD Files to TI Pro-Lite    PAGE 3
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+
+         The  following is  a sample  of the  above sequence,  with all  user
+         entered commands appearing in UPPERCASE characters:
+
+                 [ insure that slot a is on by either by a 	 ]
+		 [ previous SLOT A ON command or  by using 	 ]
+		 [ TERMITE version 2.01 			 ]
+
+           please log in: <CNTL-X><CNTL-R><CNTL-goug>NTS:70;<password><@CR>
+
+           tymshare   1514  18-sept-1985
+
+           -     [ type  ALT-X  to get to the TERMITE prompt     ]
+                 [ Enter Command: BREC MEMORY.NIB<@CR>           ]
+                 [ Enter Command: TERM DUMB<@CR>                 ]
+                 [ Enter Command: <@CR>                          ]
+
+           -R NAD<@CR>
+           1.1
+           %F   MEMORY.NIB<@CR>
+
+           ;G
+           Data ranges read:
+           0-7FFD 7FFE-0A415
+
+           0,A416;8
+
+                 [ As soon as NAD responds with a <@CR>, type    ]
+                 [ ALT-F   to  start  the  PC  file   receive    ]
+                 [ process in  TERMITE.                          ]
+
+                 ** NOTE:  The file will  be sent  to both  the PC
+                           and  the terminal, therefore  it   will
+                           appear as garbage intermixed with text.
+
+           Loaded
+
+                 [ Type an  ALT-F to stop the receive process    ]
+                 [ in TERMITE.                                   ]
+
+           %Q
+           -LOG<@CR>
+
+                 [ Type an  ALT-X  to transfer control to the    ]
+                 [ TERMITE program.                              ]
+
+ 
+
+ 
+
+ 
+
+
+				  TYMCOM-X NAD Files to TI Pro-Lite    PAGE 4
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+
+         SECTION 3.0 TI Pro-Lite to TYMNET Engine Transfer
+         _______ _ _ __ ________ __ ______ ______ ________
+
+
+         The transferring  of files  between the TI  Pro-Lite and  the TYMNET
+         Engine involves connecting the TI Pro-Lite directly to the  TTY port
+         (on the Multifunction board on Full/Mini  Engines) or the Multifunc-
+         tion port on the Micro Engine.  When loading a Micro Engine, a front
+         console is also necessary  for execution of the NAD file  once it is
+         loaded.  The transfer rate from the  TI Pro-Lite is solely dependent
+         upon the speed selected on the  Multifunction Board or Micro Engine.
+         The transfer process involves the following steps:
+
+           o  Connecting the TI Pro-Lite to the TTY or Multifunction port
+
+           o  Invoking the TERMITE program by typing the following:
+
+                TERMITE DUMB 1 <speed> CYAN
+
+           o  Initializing   the   transfer  process   by   typing   "TTYLOAD
+              <pc-filename>" followed by  a carriage return.  This  step will
+              direct the user to place the machine in boot and enter the fol-
+              lowing on the console:
+
+                DTA 60 ADR RUN
+
+              which will allow  the machine to  receive the file  being sent.
+              Following this  a carriage return  is typed  on the PC  and the
+              file transfer begins, with the  display on the Engine's console
+              cycling through the  addresses received.  When the  transfer is
+              complete, the   leftmost 5 digits  on the Engines  console will
+              display "F FFFF"  is the transfer was  successful.  If anything
+              other  than   "F FFFF"  is  displayed,  the  transfer  must  be
+              attempted again.
+
+           o  At this point the object  file just sent is ready  to be execu-
+              ted.  The following instructions are entered via the console:
+
+                DTA SET <start> ADR RUN
+
+                where
+                  <start> = 0200 is file loaded was a diagnostic file
+                  <start> = 0070 if file loaded was a bound file
+ 
+           o  At this point the Engine will begin executing the code.  If the
+              code was a diagnostic program the  TI Pro-Lite will now display
+              the diagnostic banner and prompt  indicating the TI Pro-Lite is
+              now acting  as a  terminal connected  to the  TTY/Multifunction
+              port.  If the  file was a bound  file, the node will  begin the
+              process of bringup and entrance into the network.
+
+ 
+                              TI Pro-Lite to TYMNET Engine Transfer    PAGE 5
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+
+         SECTION 4.0 TI Pro to TI Pro-Lite Transfer
+         _______ _ _ __ ___ __ __ ________ ________
+
+
+	 The transferring of  files between the TI  Professional Computer and
+         the TI Pro-Lite  PC is done through  the TERMITE program and  can be
+         run at speeds up to 19.2K.  The transfer requires a cross-over cable
+         (#ASC140-20) connecting  the comm port  on the  TI Pro and  the comm
+         port (slot a/b) on the Pro-Lite PC:
+
+ 
+              +-------------+                      +--------------+
+              +   TI  Pro   +   ===============>   +  TI Pro-Lite +
+              +  Comm Port  +       ASC140-20      +   Slot  A/B  +
+              +-------------+                      +--------------+
+
+ 
+         The first step  in the transfer process  is to create a  direct link
+         between the comm cards  on both TI computers.  This is  done by con-
+         necting the  cross-over cable and  executing the TERMITE  program on
+         each PC with the following specifications:
+
+             TERMITE DUMB 1 19200 CYAN
+
+ 	 Once this connection  has been made, any characters typed  on one PC
+         will echo on the other PC (if the character echoes on the PC that it
+         is typed on, the connection has not been made and must be re-tried).
+         The following sequence of commands on the sending and receiving PC's
+         is then performed:
+
+           o  On the sending PC, type an ALT-X to  return to the TERMITE com-
+              mand prompt and enter "BSEND <pc-filename>"  followed by a car-
+              riage return.  This will place TERMITE in the send mode.   Type
+	      another carriage  return to  return to  the direct link between
+	      the PC comm boards.
+
+	   o  On the receiving  PC, type  an ALT-X to  return to  the TERMITE
+              command prompt and enter "BRECEIVE <pc-filename>" followed by a
+              carriage return.  This will place  TERMITE in the receive mode.
+              Type  another carriage  return  to return  to  the direct  link
+              between the PC comm cards, and type ALT-F to begin receiving.
+
+	   o  On the sending  PC, type  an ALT-S  to begin  sending the  file
+              across the  direct link.  The file  will echo on  the receiving
+              PC, and  following completion of  the transfer, the  sending PC
+              will display "Transfer complete" on the bottom line.
+
+
+
+
+                                     TI Pro to TI Pro-Lite Transfer    PAGE 6
+
+
+
+	 TI Pro-Lite File Transfer Procedures
+
+
+           o  After the  file is  transferred, on  the receiving  PC type  an
+              ALT-F to stop receiving data.
+
+	   o  On the sending PC, type an ALT-S to terminate the sending proc-
+              ess.
+
+           o  On the receiving  PC, type  an ALT-X to  return to  the TERMITE
+              command prompt  and type "CLOSE"  followed by two  (2) carriage
+              returns.   This will  insure  that the  file  just received  is
+              closed and ready for use.  Type an ALT-Q to return to MS-DOS.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				    TI Pro to TI Pro-Lite Transfer     PAGE 7
+
+    
