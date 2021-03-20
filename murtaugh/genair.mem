@@ -1,0 +1,4898 @@
+
+
+
+
+
+                       NETWORK OPERATIONS PROCEDURE (GENERIC)
+
+
+
+
+
+
+
+                               CREATED:  MARCH, 1984
+
+
+                                                    PAGE   2
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                           NON-HARDWIRED INTERNODAL LINE
+
+
+
+          I.  PURPOSE
+
+                  This procedure outlines a method for  trouble-shooting  a
+                  non-hardwired internodal line.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to the LINTST.REL test file.
+                  2. Access to a code loading utility, LOADII or ELF.
+                  3. Ability to loopback modems on the line.
+                  4. Knowledge of which physical ports connect to the line.
+                  5. Access to PROBE, XRAY and/or TMCS.
+
+
+          III.  PROCEDURE
+
+                  (Diagram A will be referenced in the following steps)
+
+      ..........     .........                    .........    ..........
+      :        :     :       :                    :       :    :        :
+      : NODE A :_____:MODEM A:____________________:MODEM B:____: NODE B :
+      :        :     :.......:   \__Telco Line    :.......:    :        :
+      :........:                                               :........:
+
+                   ^      ^                   ^      ^     
+                   |      |                   |      |   
+                   |      |                   |      |   
+                   |      |                   |      |
+                   |      |                   |      |  
+              ______________  MODEM A   MODEM B   ______________
+     DATA IO--______________)<---in AL   in AL-->(______________--DATA IO
+
+               ___________________________________________    MODEM B
+     DATA IO-- ___________________________________________)<-- in DL 
+
+          MODEM A  ______________________________________________
+           in DL-->(______________________________________________ --DATA
+      IO
+
+                                                    PAGE   3
+INTER NODAL LINK
+
+
+                      NOTE: The points at  which  to  loopbacks  occur  are
+                      depicted above.
+
+              1.  If the problem is link error-rates, Log into XRAY in each
+                  of the nodes into which the link terminates.
+
+                  a.  Type: ND in XRAY in both nodes to obtain WINDOW SIZE
+
+                  b.  Compare the WINDOW SIZE parameter for the  link.   If
+                      they   do  not  match,  the  TYM  file(s)  should  be
+                      corrected and the new code should  be  generated  and
+                      loaded into the machines.
+
+                  c.  The health of the line/link should then be  monitored
+                      to determine if the errors on the line have stopped.
+
+                  d.  If the problem has been cleared, you need proceed  no
+                      further.
+
+              2.  Using PROBE place a  SHUT  in  the  line  and  when  XRAY
+                  indicates the number of users on the line is sufficiently
+                  low, proceed to STEP 2.
+
+                                                    PAGE   4
+INTER NODAL LINK
+
+
+              3.  Run a self test on both modems.  If either  modem  fails,
+                  request service on the modem and then go to STEP 13.
+
+              4.  Run an end-to-end test between the modems to  verify  the
+                  line  condition.   If the test fails, service on the line
+                  and possibly one  or  more  modems  is  required.   After
+                  servicing, go to STEP 13.
+
+              5.  Place MODEM A and MODEM B in AL loopback (LL  if  digital
+                  modems are being used.)
+
+              6.  Using either LOADII or ELF  start  a  load  of  the  file
+                  LINTST.REL from NODE A toward NODE B.
+
+              7.  If the load utility shows that data is being "lost",  you
+                  have  an  indication  that  either  NODE A is at fault or
+                  there is a cabling problem between NODE A  and  MODEM  A.
+                  (A  fault  in  MODEM A which was not detected during self
+                  testing is  also  remotely  possible.)  After  corrective
+                  action has been taken, go to STEP 13.
+
+              8.  Terminate any loads in progress and using LOADII  or  ELF
+                  start  a  load  of the file LINTST.REL from NODE B toward
+                  NODE A.
+
+              9.  If the load utility shows that data is being "lost",  you
+                  have an indication that either NODE B is at fault or that
+                  there is cabling problem between NODE B and MODEM B.   (A
+                  fault   in   MODEM   B   which  is  not  detected  during
+                  self-testing is also remotely possible.) After corrective
+                  action has been taken, go to STEP 13.
+
+             10.  If no faults have been discovered thus  far,  verify  the
+                  modem  end-to-end  test  by  placing  MODEM  B in DL (RT)
+                  loopback.  MODEM A should be out of loopback.
+
+             11.  Terminate any loads in progress and using LOADII or  ELF,
+                  load LINTST.REL through NODE A toward NODE B.  Any "lost"
+                  data will indicate a previously undetected line or  modem
+                  problem.  After servicing is completed, go to STEP 14.
+
+             12.  Take MODEM B out of loopback and place MODEM A in DL (LT)
+                  loopback.
+
+             13.  Terminate any loads in progress and using LOADII or  ELF,
+                  load LINTST.REL through NODE B toward NODE A.  Any "lost"
+                  data will indicate a previously undetected line or  modem
+                  problem.
+
+             14.   After  servicing  to  clear  any  faults,   verify   the
+                  effectiveness  of  the  servicing by rerunning those test
+                  which failed.
+
+                                                    PAGE   5
+INTER NODAL LINK
+
+
+             15.  Take all modems out of loopback and terminate  any  loads
+                  which may be in progress.
+
+             16.  Observe the line with PROBE, XRAY  and/or  TMCS  for  any
+                  further indications of trouble.
+
+                                                    PAGE   6
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                            GATEWAY FAILURE AND RECOVERY
+
+
+
+          I.  PURPOSE
+
+                  This   procedure    describes    the    techniques    for
+                  trouble-shooting a failure of a gateway and its recovery.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to both networks involved with gateway.
+                  2. Knowledge of TYM files.
+                  3. Access to XRAY and DDT in both networks.
+                  4. DDT license required: L.Halt, L.E., L.SOA
+                  5. Access to SLSYNC diagnostic.
+                  6. Access to loading facility, LOADII.
+                  7. Access to circuit numbers and Telco trouble numbers.
+                  8. Ability to run SLSYNC diagnostic.
+
+
+               COMMENTS:
+
+                  For procedural purposes, we will identify the 2  networks
+                  involved by letter.
+
+                  NET-A will contain the following:
+                  GATEWAY HOST NUMBER
+                  GATEWAY SLOT CODE
+                  SYNC LINE TO NET-B (referenced in TYM file for slot  with
+                                     gateway code) 
+
+                  NET-B will contain the following:
+                  PSEUDO NODE NUMBER
+                  SYNC LINE TO NET-A (referenced in TYM file for slot 0  of
+                                     the  REAL  NODE  that  the  gateway is
+                                     connected to)
+                  REAL NODE (has the physical connection of the  sync  line
+                                     for  the  gateway  via  slot  0.   The
+                                     PSEUDO NODE  will  be  listed  as  the
+                                     neighbor.)
+
+                                                    PAGE   7
+GATEWAY FAILURE
+
+
+               GENERAL INFO:
+
+                  Circuit number on both sides of the gateway is always the
+                   same.
+                  Gateway pseudo-node number is always TYMNET I (less than
+                   2000).
+
+
+          III.  PROCEDURE FOR "HOST SHUT"
+
+              1.  This message indicates that the REAL NODE  in  NET-B  has
+                  gone  out  of  the network or the circuit for the gateway
+                  has been lost.
+
+              2.  Verify that the REAL NODE is up by snapping it  in  PROBE
+                  in  NET-B.   If node is down, follow procedure to restore
+                  node to a network, once it is back up, the  gateway  will
+                  come back up.
+
+              3.  If REAL NODE is up,  the  indication  is  then  that  the
+                  circuit  has been lost between NET-A and NET-B.  Turn the
+                  circuit over to Telco to test the line.  If Telco reports
+                  no problem found and gateway is still shut, SLSYNC should
+                  be run to determine which end has  the  problem.   Follow
+                  the procedure to run SLSYNC.
+
+
+          IV.  PROCEDURE FOR "HOST NOT AVAILABLE THROUGH NET"
+
+              1.  This message indicates that the node in NET-A  containing
+                  the  gateway slot code is out of the network, or that the
+                  slot containing the gateway code has stopped operating.
+
+              2.  To check if node is up, snap it in PROBE  in  NET-A.   If
+                  the  node  is  down, follow the procedure to bring a node
+                  back up.  Once node is back up,  the  gateway  will  come
+                  back up.
+
+              3.  If the node is up, snap the gateway host number in  PROBE
+                  in  NET-A.   If "NO SUCH HOST", the slot is down.  Follow
+                  the procedure to bring a slot back  up.   The  host  will
+                  show  as "shut" for a moment, once slot is running again.
+                  This is the time  it  takes  for  it  to  initialize  and
+                  establish contact.  Once the host is "ANSWERED" in PROBE,
+                  the gateway will be back up.
+
+                                                    PAGE   8
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              CLEARING PORTS IN PROBE
+
+
+
+          I.  PURPOSE
+
+                  To free a job in PROBE to allow access to it.
+
+
+          II.  REQUIREMENTS
+
+                  1. Must be logged into PROBE.
+                  2. Must have "01" status in PROBE.
+
+
+          III.  PROCEDURE
+
+              1.  All the PROBE prompts are the ":".
+
+              2.  At the prompt, type: "WHO".  This will list all the users
+                  logged  into PROBE with the left hand list indicating the
+                  "job label".  This job  will  identify  the  user  to  be
+                  removed.
+
+              3.  At the next prompt, type "HANG 'x'" with  'x'  being  the
+                  job label of the username to be removed.
+
+              4.  At the next prompt, type: "WHO" again to verify that  the
+                  job label has cleared.
+
+                                                    PAGE   9
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                         MOVING LOGICAL UNITS IN ISIS SLOTS
+
+
+
+          I.  PURPOSE 
+
+                  This procedure allows a  user  to  move  a  logical  unit
+                  within an ISIS slot and from one slot to another.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to node with DDT.
+                  2. "SYS" license required to move L.U.
+                  3. Knowledge of TYM files.
+
+
+          III.  PROCEDURE
+
+              1.  Check the TYM file for the Logical Unit (L.U.) that is to
+                  be moved.
+
+              2.  Log into the node with DDT, containing the slot with  the
+                  L.U.  to be moved.
+
+              3.  At the "slot#" prompt, put in the number  of  the  source
+                  slot with the L.U.  that is to be moved.
+
+              4.  Once the "*" prompt is displayed the user is connected to
+                  the slot.
+
+              5.  Type in ?LU.  This will display  all  the  logical  units
+                  assigned  to  the slot and hardware referenced to each in
+                  the TYM file.
+
+              6.  Type in ?TRAN.
+
+              7.  At the "Source L.U." prompt, type in the  number  of  the
+                  logical unit to be moved.
+
+              8.  At the "Destination slot" prompt, type in the  number  of
+                  the slot the L.U.  is moving to.
+
+              9.  At the "Destination L.U." prompt, type in the number  the
+                  L.U.  will be in the slot is moved to.
+
+                                                    PAGE  10
+MOVE LOGICAL UNITS
+
+
+                         (All responses are expected in hexadecimal)
+
+                         (The source and destination slot can be the same)
+
+             10.   At  the  *  prompt,  issue  the^  (up  arrow)  and   the
+                  destination slot number that L.U.  was moved to.
+
+             11.  Type ?LU to verify that the L.U.  was moved and  that  it
+                  has the correct number.
+
+
+               WARNING:
+
+                  In some interfaces, when transferring the L.U.   back  to
+                  the  source  slot,  the  slot  will  halt.   It  will  be
+                  necessary to restart it using the "E" command (EXECUTE).
+
+                                                    PAGE  11
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                               CLEARING PORTS IN TMCS
+
+
+
+          I.  PURPOSE
+
+                  To free a port in TMCS to allow access to it.
+
+
+          II.  REQUIREMENTS
+
+                  1. Must be logged into TMCS.
+                  2. Must have "HANG" license in TMCS.
+
+
+          III.  PROCEDURE
+
+              1.  At the asterick prompt (*), type "WHO".  This  will  list
+                  the  ports in TMCS and the one with the * next to it will
+                  be the one that the user is currently in on.
+
+              2.  At the next * prompt, type "HANG XX", with "XX" being the
+                  port number that is to be cleared.
+
+              3.  At the next * prompt, type "WHO" again.  This will  again
+                  list  the ports and then it can be verified that the port
+                  is cleared by it being missing  from  the  list  of  port
+                  numbers.
+
+
+               COMMENT:
+
+                  You may clear all  users  by  typing  "HANG  ALL"  and  a
+                  carriage return.
+
+                                                    PAGE  12
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                CHANGING SUPERVISORS
+
+
+
+          I.  PURPOSE
+
+                  This procedure will outline the method  of  changing  the
+                  supervisors.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to PROBE on both supervisors involved in the
+                       change.
+                  2. 01 status is required in PROBE on both supervisors to
+                       alter their state.
+
+
+          III.  PROCEDURE
+
+              1.   Log  into  PROBE  on  the  active  supervisor  and   the
+                  supervisor  that  is  to  be  brought  up  as  the active
+                  supervisor.
+
+              2.  All PROBE commands are issued at the ":" prompt.
+
+              3.  Issue the "COUNT" command.  This will give a count of the
+                  nodes   that  are  currently  controlled  by  the  active
+                  supervisor.
+
+              4.  Issue the "LSHUT" command.  This will give a list of  the
+                  links that are shut throughout the network.
+
+                       (You can compare these results with the results from
+                        the supervisor that will become active.)
+
+              5.  Issue to the ACTIVE supervisor the "TSLEEP" command.
+
+              6.  At the PASSWORD prompt, type in the current  password  of
+                  the  user  changing  the  supervisor  but  DO  NOT type a
+                  "RETURN".
+
+              7.  Issue to the "SLEEPING" supervisor the "TWAKE" command.
+
+                                                    PAGE  13
+SUP MOVE
+
+
+              8.  At the PASSWORD prompt, type in the current  password  of
+                  the  user  changing  the  supervisors  but  DO NOT type a
+                  "RETURN".
+
+              9.  Type a "RETURN" on the supervisor that is to  be  put  to
+                  sleep.  
+
+             10.  Wait 10 seconds.
+
+             11.  Type a "RETURN" on the supervisor that is to  be  brought
+                  active.
+
+             12.  Issue to "COUNT" and "LSHUT" commands on the  new  active
+                  supervisor  and compare these results with the results of
+                  STEPs 3 and 4.  Be sure all the nodes were taken over and
+                  all the link shuts are in place.
+
+             13.   If  they  are  the  same,  the  supervisors  have   been
+                  successfully changed.
+
+                                                    PAGE  14
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                           REMOVING USERS FROM ISIS SLOTS
+
+
+
+          I.  PURPOSE
+
+                  This procedure allows a user to clear another from a
+                  specified slot.
+
+
+          II.  REQUIREMENTS
+
+                  1.  License to access slot
+
+                        A.  L.SOA - License to log into slot 0
+                        B.  L.SYA - License to log into slot 0FF (The  ISIS
+                            System)
+                        C.  L.E.  - Normal Execution  Access  (Permits  the
+                            starting and halting of a slot) 
+
+                  2.  DDT access to node
+
+
+          III.  PROCEDURE 
+
+              1.  Log into node with DDT which  contains  the  slot  to  be
+                  cleared.
+
+              2.  Type in a slot number other than the number of  the  slot
+                  to  be cleared.  When the "*" prompt appears, the user is
+                  connected to the slot.
+
+              3.  Type "?WHO".  DDT outputs a  table  showing  the  current
+                  status  of  each  slot.  The * to the right of the slot  
+                  shows that you are the active user in that slot.   The  @
+                  to the right of the slot # shows who are the active users
+                  in the other slots.
+
+              4.  Type in "?PORT".  Lists the users on  their  kernel  port
+                  numbers.
+
+              5.  Type in "?HANG XX".  With  "XX"  being  the  port  to  be
+                  cleared.   This  command  clears the user from the kernel
+                  port specified.
+
+                                                    PAGE  15
+ISIS DDT HANG
+
+
+              6.  Type "?WHO".  To verify slot is now  cleared  of  the  @.
+                  The  username  will remain.  Now slot is clear and can be
+                  accessed.
+
+                                                    PAGE  16
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                           ISIS SLOT FAILURE AND RECOVERY
+
+
+
+          I.  PURPOSE
+
+                  This   procedure    describes    the    techniques    for
+                  trouble-shooting  a  failure  of  an  ISIS  slot  and its
+                  recovery.
+
+
+          II.  REQUIREMENTS
+
+                  1. Knowledge of TYM files.
+                  2. Ability to use DDT.
+                  3. Access to loading facility, LOADII or ELF.
+                  4. Access to the SLOT CODE for the slot that is down.
+
+
+          III.  PROCEDURE
+
+              1.  Check TYM file to see what slot number  corresponds  with
+                  the host number in trouble.
+
+              2.  Log into  the  node  with  DDT  that  contains  the  slot
+                  suspected of being down.
+
+              3.  At the "slot#" prompt, type in the  number  to  the  slot
+                  that is to be checked.
+
+              4.  When the "*" prompt appears, the user is connected to the
+                  slot.
+
+              5.  Look for any greeting message  to  the  slot  that  might
+                  indicate trouble, ie.  "HALTED" or "STOPPED", etc.
+
+              6.  ALWAYS type ?HOST in the slot.  If "Dispatcher  indicates
+                  slot is down" shows, this is a definite response that the
+                  slot is down.
+
+              7.  Should the slot be running  a  constant  "RESTART",  also
+                  referred  to  as "crashing continuously", the "H" command
+                  should be  issued.   This  will  halt  the  slot.   (L.H.
+                  license is required for this command.)
+
+                                                    PAGE  17
+ISIS SLOT FAILURE
+
+
+              8.  Type ?HIST for a history of any slot halts.  Look for the
+                  slot  that  is  being  checked  to  see  when  it stopped
+                  running.
+
+              9.  Exit from slot by typing 2 "Z"'s.
+
+             10.  Run the CRASH  program.   This  may  give  some  valuable
+                  information  as to the crash count of the slot as well as
+                  the crash id.
+
+             11.  Dump the slot, using the "U"  command  in  LOADII.   This
+                  will  allow  the software support to analyze the software
+                  in  the  condition  it  was  in  when  the  slot  stopped
+                  operating.   (The  kernel  host  of the node and the slot
+                  number will be necessary for this step.)
+
+             12.  Reload the slot using the "S" command  in  LOADII.   Load
+                  the production code for the slot.
+
+             13.  Log back into node containing the slot.  Repeat  STEPs  3
+                  through 6.
+
+             14.  If the slot is back up, there will be a report as to  the
+                  condition of the host when the ?HOST is issued.
+
+             15.  Should the slot still be down, the support agency  should
+                  be   notified  as  soon  as  possible.   All  information
+                  gathered in STEPs 9 and 10 (name of the dump)  should  be
+                  passed  onto  them.   There  may  be  a  problem with the
+                  software or the hardware.
+
+             16.  Exit the slot using the double "Z" command.
+
+                                                    PAGE  18
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                             NODE FAILURE AND RECOVERY
+
+
+
+          I.  PURPOSE
+
+                  This   procedure    describes    the    techniques    for
+                  trouble-shooting a failure of a node and its recovery.
+
+
+          II.  REQUIREMENTS
+
+                  1. Knowledge of TYM files.
+                  2. Ability to use XRAY.
+                  3. Access to loading facility, LOADII or ELF.
+                  4. Access to the NODE CODE for the node that is down.
+                  5. Access to PROBE.
+                  6. Access to NAD (not essential).
+
+
+          III.  PROCEDURE
+
+              1.  Verify that the node that is down is not DEADENDED  (only
+                  1  connection  to  the  network).   This  can  be done by
+                  checking the TYM file for the node that is down  (Network
+                  Configuration section).
+
+              2.  If the node is deadended, check its only neighbor using a
+                  probe snap to verify that the neighbor is up.
+
+              3.  If the neighbor node is down, it must first  be  returned
+                  to  the  network  before  the  original node can come up.
+                  Should the neighbor be  down,  go  back  to  STEP  1  and
+                  proceed  until there is a node that is up to be used as a
+                  neighbor, then proceed.
+
+              4.  Check the TYM file of the neighbor to get its KERNEL HOST
+                  number.
+
+              5.  Log into the neighbor node with XRAY and get the  LINE   
+                  that goes to the node that is down.
+
+              6.  Try a CRASH DUMP using LOADII.
+
+                                                    PAGE  19
+NODE FAILURE
+
+
+              7.  If a crash table address is received (valid or not),  the
+                  crash dump has been received and is completed when "EXIT"
+                  is displayed.  Go to STEP 12.
+
+              8.  If a crash table is not received, the crash dump must  be
+                  attempted from another neighbor and LINE   (get this info
+                  using STEP 4).
+
+              9.  If still no success, the  node  may  have  to  be  booted
+                  manually.
+
+             10.  Contact the site and request them to boot the  node.   To
+                  boot a full engine or mini-engine, have the site open the
+                  front door of the node and on the 4th board down there is
+                  a silver toggle switch on the right side.  They must push
+                  this switch all the way up and release it.  If it was  in
+                  the  snapped down position originally, they should put it
+                  back that way.  To boot a micro-engine, have  them  press
+                  in the "BOOT" button on the back of the micro-engine.
+
+             11.  If there is no one on site to boot the node, the hardware
+                  support agency should be contacted to check out the node.
+
+             12.  Once node is booted, repeat STEPs 5 and 6.
+
+             13.  Reload the node with the production code, using the  same
+                  neighbor and LINE   that was used in STEP 5.
+
+             14.  If the node does not return to the network, try the  load
+                  again.   If  the node still does not come up, contact the
+                  support agency.
+
+             15.  Verify node is back up with PROBE snap.
+
+             16.  Verify all lines to node are back up by logging into node
+                  with XRAY.
+
+             17.  Analysis of crash dump can be performed using NAD and the
+                  ENGDMP  program.  If there is no access to NAD or ENGDMP,
+                  turn the crash dump over to the support agency.
+
+                                                    PAGE  20
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                            TMCS: LINK/LINE PERFORMANCE
+
+
+
+          I.  PURPOSE
+
+                  The purpose of this procedure is to define the methods by
+                  which  information  relative to a link/line's performance
+                  can be obtained with the utility TMCS.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to TMCS in the target node.
+                  2. Access to TMCS documentation.
+
+
+          III.  PROCEDURE
+
+              A.  Obtaining LINE SPEED and STATUS
+
+                  1.  Log into TMCS
+
+                  2.  At the prompt, type: LIS SEL
+
+                  3.  Make certain  that  the  desired  LINK  and  LINE  is
+                      included under the "LINKS" and "LINES" parameters.
+
+                         (If the LINK or LINE is not  included  it  can  be
+                          included again with the RESTORE command providing
+                          both neighbors on the line or link  are  included
+                          in  the  NODES  parameter  recovered  via STEP 2.
+                          Example: RESTORE LINK 2001:2055)
+
+                  4.  At the TMCS prompt, type: PROBE
+
+                  5.  You may now issue Probe's  "NODE"  command  and  LINE
+                      SPEED  and  STATUS  will be printed under the heading
+                      "LINK STATUS".
+
+                      NOTE: The status OUT means a link has been out and is
+                             in process or returning to service.
+
+                             The SHUT status indicates a  network  operator
+                             has taken the link out of service.
+
+                                                    PAGE  21
+LINE PERFORMANCE
+
+
+                             The FROZEN status indicates that the link  has
+                             been  detached  but  has not yet been declared
+                             down.
+
+                  6.  To return to TMCS from  PROBE  simply  type:  EXI  in
+                      response to the PROBE prompt.
+
+              B.  Obtaining LOGGER Reports for LINK/LINES
+
+                  1.  Both Historical and Realtime  LINK  and  LINE  Logger
+                      reports   can  be  collected  through  TMCS.   It  is
+                      possible, in fact, to restrict the logger  report  to
+                      just specific LINES and/or LINKS.
+
+                  2.  Log into TMCS
+
+                  3.  At the TMCS prompt, type: LIS SEL
+
+                  4.  At the TMCS prompt, type the following:
+
+                          IGNORE LINKS
+                          IGNORE LINES
+                          IGNORE EVENTS
+                          IGNORE ISIS
+                          RESTORE EVENTS 18 19 26 27 28 33 36 43 47 48 
+                          RESTORE LINKS xxxx:yyyy wwww:zzzz  (Note 1)
+                          RESTORE LINES aaaa:cc              (Note 2)
+                          LOG bbbbbbbb                       (Note 3)
+
+                      Note 1: xxxx yyyy and wwww zzzz are the node  numbers
+                              on  which  the  LINK  terminates.   Skip  the
+                              "RESTORE LINKS" command if LINK messages  are
+                              not required.
+
+                      Note 2: aaaa is a neighbor number on a line and cc is
+                              a port number which could be obtained through
+                              XRAY's  "ND"  command  or   through   PROBE's
+                              "SYNPRT"  command.   If LINE messages are not
+                              required, skip the RESTORE LINES command.
+
+                      Note 3: bbbbbbbb represents the number of minutes you
+                              wish  to  have the logger backed up or it can
+                              represent the DATE and TIME (GMT) from  which
+                              you want the logger to start.
+
+                                       EXAMPLE:  LOG 304
+                                                 LOG 07/22/85 12:15
+
+                  5.  TMCS will now output link and  line  logger  messages
+                      for  those  lines and links specified in the "RESTORE
+                      LINKS" and "RESTORE LINES" commands indicated in STEP
+                      B.4 above.
+
+                                                    PAGE  22
+LINE PERFORMANCE
+
+
+                  6.  By changing the events used, it is  possible  to  see
+                      very  specific  logger  messages.  Reference the TMCS
+                      documentation for identification of message numbers.
+
+              C.  Using the TMCS DISPLAY Mode
+
+                  1.  Log into TMCS 
+
+                  2.  At the TMCS prompt, type: LIS SEL
+
+                  3.  Verify that LINES and LINKS of interest are selected.
+
+                         (Use the "RESTORE LINKS", "RESTORE LINES", "IGNORE
+                          LINKS"  and "IGNORE LINES" commands to adjust the
+                          SELECTIONS to the existing requirements.)
+
+                  4.  At the TMCS prompt, type: LIS PRO
+
+                  5.  In the first line of the  response  a  terminal  type
+                      will be identified just to the right of the user name
+                      with which you logged into TMCS.
+
+                  6.  If your terminal is not comparable  to  the  terminal
+                      type  identified  in the LIS PRO output, use the TMCS
+                      "TER" command  to  set  TMCS  up  for  your  specific
+                      terminal.
+
+                              Type: TER ? in response to the TMCS prompt to
+                                     obtain  a  list  of  possible terminal
+                                     types.
+
+                              Type:  TER  xxxxxxx  to  set  TMCS  for  your
+                                     terminal.    (where   xxxxxxx   =  the
+                                     terminal type)
+
+                  7.  Now in response to the TMCS prompt, type: DISPLAY
+
+                  8.  A display listing LINK/LINE condition  will  then  be
+                      presented.   Node  and  host  conditions will also be
+                      displayed.
+
+                                                    PAGE  23
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                             MUX IN NETWORK OPERATIONS
+
+
+
+          I.  PURPOSE
+
+                  The  ability  to  have  a  single  terminal  logged  into
+                  multiple  hosts  and  utilities is essential to a network
+                  operations group.  Another feature of the Tymnet  MUX  is
+                  its  ability  to  be  used  as  a realtime communications
+                  device.
+
+
+          II.  GENERAL INFORMATION
+
+              1.  When usernames are "genned" into the MUX slot code,  both
+                  LABELING and HEAR parameters should be specified.
+
+              2.  A sufficient number of names should be "genned" into  the
+                  MUX code and validated on the network for the MUX host so
+                  that all network operators have access to the MUX.
+
+              3.  In the following procedures the form (ESC) represents the
+                  depression of the ESCAPE key.
+
+
+          III.  PROCEDURE
+
+              A.  Using the MUX for Multiple Host and/or Utility Logins:
+
+                  1.  Log into the MUX
+
+                  2.  At the MUX prompt, type: M xxxxxxxx
+
+                             (where xxxxxxxx = a label you  would  like  to
+                              assign to the port being used for the circuit
+                              that is about to be built)
+
+                  3.  At the "PLEASE LOG IN" prompt,  you  proceed  with  a
+                      normal login process appropriate for the desired host
+                      or utility.
+
+                  4.  To return to the MUX command level, type: (ESC)Z
+
+                                                    PAGE  24
+MUX
+
+
+                  5.  If you wish to build another circuit, go  to  STEP  2
+                      again.  
+
+                  6.  To transfer from a terminal circuit and return to the
+                      MUX command level, you simply type: (ESC)Z .
+
+                  7.  To transfer from the MUX command level to an existing
+                      circuit,  simply  type:  S xxxxxxx (xxxxxxx = circuit
+                      label, see STEP 2).
+
+                  8.  To backpressure a circuit, you must have the terminal
+                      currently  connected to the circuit and there must be
+                      at least one other circuit built.
+
+                      a.  Then simply type (ESC)B and the circuit to  which
+                          your  terminal is connected will be backpressured
+                          and your terminal will transferred  to  the  next
+                          circuit.
+
+                      b.  To release backpressure, you need  only  transfer
+                          back   into  the  backpressured  port  by  either
+                          transferring to that port from  the  MUX  command
+                          level  or  by  transferring  to  it  from another
+                          circuit by typing (ESC)B or (ESC)G .
+
+                  9.  If circuits are not backpressured,  any  output  from
+                      those  ports  will  be  labeled  and displayed on the
+                      terminal.  It is possible to display the output of  a
+                      running  logger,  for instance, while also displaying
+                      the output of a code loading facility such as  LOADII
+                      or  ELF.  You can, therefore, watch the load proceed,
+                      know when  the  load  ends  and  observe  the  logger
+                      indications  of  the  node  and/or  slot's  return to
+                      service.
+
+              B.   Using  the  MUX  for   Direct   Terminal   to   Terminal
+                  Communications
+
+                  1.   If  a  network  is  spread  out  around  the  world,
+                      communications   costs  between  related  to  network
+                      operations can be reduced by utilizing the MUX's TALK
+                      and HEAR capabilities.
+
+                  2.  If you have need to communicate with  someone,  type:
+                      WHO at the MUX's command level.
+
+                  3.  If the user you want is logged in :
+
+                      a.  At the MUX command level prompt, type: HEAR Y
+
+                      b.  Again at the MUX command level prompt, type: TALK
+                          xxxxxxx
+
+                                                    PAGE  25
+MUX
+
+
+                             (where  xxxxxxx  =   user   name   with   whom
+                              communications must be established)
+
+                      c.  Everything you type will now  be  transferred  to
+                          the  desired  user  as soon as you terminate your
+                          input with a carriage return.
+
+                      d.  As soon as he performs STEP B.3.a and STEP B.3.b,
+                          whatever  he  types  will  be transferred to your
+                          terminal as soon as he types a carrriage return.
+
+                      e.  To terminate the session, (ESC)Z should be  typed
+                          and the talk feature will be diabled and you will
+                          be returned to the MUX command level.
+
+                                                    PAGE  26
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              ISIS: MEMORY ALLOCATIONS
+
+
+
+          I.  PURPOSE
+
+                  This procedure describes the process for determining  the
+                  memory  allocations  made to the various slots in an ISIS
+                  node.  This procedure is applicable  to  those  instances
+                  where  dumps  of  the code from lowest memory through the
+                  entirety  of  some  specific  slot  is   required.    For
+                  instance,  dumps  are  often  required  starting with low
+                  memory and including the entirety of SLOT 0.
+
+
+          II.  REQUIREMENTS
+
+              1.  Access to the BND file for the node on which  the  memory
+                  allocations are to be determined.
+
+              2.  Access to the utility program MERLIN.
+
+
+          III.  PROCEDURE 
+
+              1.  Log into a system where MERLIN and the  node's  BND  file
+                  are accessible or can be made accessible.
+
+              2.  At the executive prompt, type: R MERLIN
+
+              3.  At MERLIN's prompt, type: RUN
+
+              4.  In response to MERLIN's "ENTER KERNEL FILE NAME"  prompt,
+                  type the file name for the BND file.
+
+              5.  In response to MERLIN's "SLOT x PRESENT OPTION:"  or  the
+                  "SLOT xx NOT PRESENT OPTION" prompts, type: /N
+
+              6.  Repeat STEP 5 until the prompts cease and the SLOT MAP is
+                  printed.  The SLOT MAP will have the form:
+
+                                      SLOT MAP
+
+                  SLOT BEGINS ENDS
+                   0   15400  62C00  <----As an example, to dump the entire
+
+                                                    PAGE  27
+MEMORY ALLOCATION
+
+
+                   1   66100  714FF       node from Loc 0 through all of   
+                       
+                   2   71500  794FF       Slot O, addresses through        
+                                 
+                   3   79500  860FF       62C00 would have to be dumped.   
+                                
+
+              7.  MERLIN will then return to the system's executive prompt.
+
+
+               COMMENT:
+
+                  This process is useful for determining in  memory  errors
+                  at  some  specific  locations  fall within a slot that is
+                  experiencing distress.
+
+                                                    PAGE  28
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                            TMCS: FUNCTIONING IN DISPLAY
+
+
+
+          I.  PURPOSE
+
+                  This procedure will outline the proper method of  setting
+                  up TMCS to function in the DISPLAY more.
+
+
+          II.  PROCEDURE 
+
+              1.  Log into TMCS
+
+              2.  At the TMCS prompt, type: LIS PRO
+
+              3.  At the TMCS prompt, type: LIS SEL
+
+              4.  Check the output from STEP 3 and use the  TMCS  "RESTORE"
+                  and/or  "IGNORE"  commands  to establish the LIMITS which
+                  will be required to obtain the DISPLAY coverage  that  is
+                  required.
+
+                  NOTE: It will be impossible to restore anything which  is
+                         not  listed  in  the  output from STEP 2.  Consult
+                         TMCS documentation for procedure  for  having  the
+                         PROFILE changed.
+
+              5.  Locate the terminal identifier just to the right  of  the
+                  TMCS  user  name in the first line of the output obtained
+                  in STEP 2.
+
+              6.  If your terminal is not comparable to the  terminal  type
+                  identified  in  STEP 5, use the TMCS "TER" command to set
+                  TMCS up for your specific terminal.
+
+                  Type: TER ? in response to the TMCS prompt  to  obtain  a
+                        list of acceptable terminal types.
+
+                  Type: TER xxxxxxx in response to the TMCS prompt  to  set
+                        TMCS  up  for  the  terminal  now  in  use.  (where
+                        xxxxxxx = the terminal type)
+
+              7.  In response to the TMCS prompt, type: DISPLAY
+
+                                                    PAGE  29
+TMCS DIS
+
+
+              8.  The current NODE, HOST, LINE and LINK statuses will  then
+                  appear on the terminal.
+
+                                                    PAGE  30
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                            XRAY: LINK/LINE PERFORMANCE
+
+
+
+          I.  PURPOSE
+
+                  The purpose of this procedure is to define the methods by
+                  which  information  relative to a link/line's performance
+                  can be obtained with the utility XRAY.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to XRAY in the target node
+                  2. Access to XRAY documentation
+
+
+          III.  PROCEDURE
+
+              A.  To obtain the following parameters:
+
+                        1. LINK STATUS
+                        2. WINDOW SIZE
+                        3. NUMBER of CIRCUITS
+                        4. LINK and LINE TYPES
+                        5. SPEED
+                        6. TIME LINK ATTACHED/DETACHED
+
+                  1.  Log into XRAY in one of  the  nodes  into  which  the
+                      target LINK/LINE terminates.
+
+                  2.  In response to the XRAY prompt, type: ND
+
+                  3.  The above information will be printed out in response
+                      to the "ND" command.
+
+                      NOTE: The ERRATE is an indication of the  error  rate
+                            which  exists  on  the  line.   The  best  line
+                            condition is  represented  by  no  entry  under
+                            ERRATE  for that line.  The worst error rate is
+                            represented by ****.  A single "star" (*) would
+                            indicate a line is degrading, a double ** would
+                            indicate  a  poor  line,  a  triple  ***  would
+                            indicate  a  bad  line,  and  four  ****  would
+                            indicate a very bad line.
+
+                                                    PAGE  31
+XRAY LINK PERFORMANCE
+
+
+              B.  To obtain the following:
+
+              1.  TP        TYPE of Link
+              2.  BO        BORI
+              3.  NL        Number of up lines attached to a LINK
+              4.  WS        WINDOW SIZE
+              5.  SP        Link SPEED Index
+              6.  NM        Link NUMBER
+              7.  NCHN      NUMBER of CHANNELS currently on the link
+              8.  ISEC      Pointer to INITIAL INPUT SECTOR DESCRIPTOR
+              9.  NRTR      Pointer to RECORD DESCRIPTOR of next rec for RTEAR
+              10. OSEC      Pointer to INITIAL OUTPUT SECTOR DESCRIPTOR
+              11. NRMK      Pointer to RECORD DESCRIPTOR of next rec for RMAKE
+              12. NRXM      Pointer for the RECORD DESCRIPTOR to be transmitted
+              13. LRT       Record NUMBER of the last record torn down
+              14. LAS       Record NUMBER of the last packet the node
+              15. LRM       Record NUMBER of the last record made
+              16. LAR       Record NUMBER of the last packet the neighbor ACKed
+              17. NAS       Record NUMBER of next ACK to be sent
+              18. BNOD      NEIGHBOR numbers
+              19. CHND      Absolute CHANNEL NUMBER of relative channel 0
+              20. B.PT      OFFSET into NIOTAB for beginning of permuter table
+              21. E.PT      OFFSET into NIOTAB for end of permuter table
+              22. ACHN      Number of ACTIVE CHANNELS on the link
+              23. VERS      Octal VERSION number from the neighbor
+              24. LINES     NUMBERS of all the LINES attached to the link
+              25. CMDCKTS   NUMBER of COMMAND circuits carried by the link
+
+                  1.   Log  into  XRAY  in  a  node  into  which  the  link
+                      terminates 
+
+                  2.  At the XRAY prompt,  type:  KD  xxxx  (where  xxxx  =
+                      neighbor node number for th link)
+
+                  3.  Observe the output for the above parameters.
+
+              C.  To obtain following:
+
+              1.  NUMBER of LOGICAL LINK (Data) CHARACTERS IN and OUT
+              2.  NUMBER of PHYSICAL LINK CHARACTERS IN and OUT
+              3.  PACKET OVERHEAD IN and OUT
+              4.  BANDWIDTH UTILIZATION IN and OUT
+              5.  CHARACTERS PER SECOND PER CIRCUIT IN and OUT
+              6.  PACKET/SEC
+              7.  RECORDS/PACKET
+              8.  AVERAGE SIZE
+              9.  IN QUEUE link delay
+              10. RTEAR Delay
+              11. BUFFER Delay
+              12. OUT QUEUE 
+              13. XMIT Delay
+              14. TOTAL Delay
+
+                                                    PAGE  32
+XRAY LINK PERFORMANCE
+
+
+                  1.  Log into XRAY in the node at end of the target link.
+
+                  2.  At the XRAY prompt, type: KS xxxx (where xxxx =  node
+                      number of the neighbor at the other end of the link)
+
+                  3.  Observe the terminal output for the above parameters.
+
+              D.  To obtain an XRAY CRYPTO  Log  Output  of  Specific  Link
+                  Messages
+
+                  1.  It is possible  to  retrieve  specific  link  related
+                      CRYPTO  LOG  outputs  from the pool of the "last 256"
+                      CRYPTO LOG messages by:
+
+                      a.  Logging into XRAY in a node at one end of a link.
+
+                      b.  Typing: CM n1 n2 ---- n8 (where n1 n2 ---- n8 are
+                          CRYPTO LOG message numbers)
+
+                              EXAMPLE: CM 1 2 4 
+
+                              The EXAMPLE CM command shown above will yield
+                              all Link Up, DOWN, and DETACHED Crypto Logger
+                              messages that are  in  the  last  256  Crypto
+                              Logger messages generated by the node.
+
+                  2.   Use  the  XRAY  documentation  for  Message   Number
+                      definitions.
+
+                                                    PAGE  33
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                             NODE FAILURE AND RECOVERY
+
+
+
+          I.  PURPOSE
+
+                  This   procedure    describes    the    techniques    for
+                  trouble-shooting a failure of a node and its recovery.
+
+
+          II.  REQUIREMENTS
+
+                  1. knowledge of TYM files.
+                  2. Ability to use XRAY.
+                  3. Access to loading facility, LOADII or ELF.
+                  4. Access to the NODE CODE for the node that is down.
+                  5. Access to PROBE.
+                  6. Access to NAD (not essential).
+
+
+          III.  PROCEDURES
+
+              1.  Verify that the node that is down is not DEADENDED  (only
+                  1  connection  to  the  network).   This  can  be done by
+                  checking the TYM file for the node that is down  (Network
+                  Configuration section).
+
+              2.  If the node is deadended, check its only neighbor using a
+                  probe snap to verify that the neighbor is up.
+
+              3.  If the neighbor node is down, it must first  be  returned
+                  to  the  network  before  the  original node can come up.
+                  Should the neighbor be down go back to STEP 1 and proceed
+                  until  there  is  a  node  that  is  up  to  be used as a
+                  neighbor, then proceed.
+
+              4.  Check the TYM file of the neighbor to get its KERNEL HOST
+                  number.
+
+              5.  Log into the neighbor node with XRAY and get the  LINE   
+                  that goes to the node that is down.
+
+             5a.  Enter CL 10 for indication  of  line  problems  prior  to
+                  leaving the network.
+
+                                                    PAGE  34
+NODE FAILURE
+
+
+              6.  Try a CRASH DUMP using LOADII.
+
+              7.  If a crash table address is received (valid or not),  the
+                  crash  dump  has  been received and is completed when the
+                  "EXIT" is displayed.  Go to STEP 12.
+
+              8.  If a crash table is not received, the crash dump must  be
+                  attempted from another neighbor and LINE   (get this info
+                  using STEP 4).
+
+              9.  If still no success, the  node  may  have  to  be  booted
+                  manually,  or  the  lines  on  the  target machine is not
+                  raising "RS".
+
+             10.  Contact the site and request them to boot the  node.   To
+                  boot  a full Engine or MiniEngine, have the site open the
+                  front door of the node and on the fourth board down there
+                  is  a  silver toggle switch on the right side.  They must
+                  push this switch all the way up and release  it.   If  it
+                  was  in the snapped down position originally, they should
+                  put it back that way.  To boot a MicroEngine,  have  them
+                  press   in   the   "BOOT"  button  on  the  back  of  the
+                  MicroEngine.
+
+             11.  If there is no one on site to boot the node, the hardware
+                  support agency should be contacted to check out the node.
+
+             12.  Once the node is booted, repeat STEPs 5 and 6.
+
+             13.  Reload the node with the production code, using the  same
+                  neighbor and LINE   that was used in STEP 5.
+
+             14.  If the node does not return to the network, try the  load
+                  again.   If  the node still does not come up, contact the
+                  support agency.
+
+             15.  Verify node is back up with PROBE snap.
+
+             16.  Verify all lines to node are back up by logging into node
+                  with XRAY.
+
+             17.  Analysis of crash dump can be performed using NAD and the
+                  ENGDMP  command  file.   If  there is no access to NAD or
+                  ENGDMP, turn the crash dump over to the support agency.
+
+                                                    PAGE  35
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              FORCE NODE TO BOOTSTRAP
+
+
+
+          I.  PURPOSE
+
+                  This procedure describes various ways  in  which  a  node
+                  running  on  the  network can be forced to go to its BOOT
+                  for DOWNLINE access by LOADII or ELF.
+
+
+          II.  REQUIREMENTS
+
+                  1.  Access to the node directly or through a third party.
+                  2.  Access to XRAY (with privileged status) in the target
+                      node.
+                  3.  Access to DDT (with  license  L.SYA)  in  the  target
+                      node.
+                  4.  Access to PROBE with Status "10".
+
+
+          III.  PROCEDURES
+
+              I.  To  send  Engine  or  MiniEngine  to  its  DOWNLINE  BOOT
+                  manually:
+
+                  1.  Open the front door of the engine.
+
+                  2.  Locate the toggle-switch on the  right  side  of  the
+                      Multi-Function card.  (The MF card is the fourth card
+                      down from the top of the card cage.)
+
+                  3.  Lift the Multi-Function  card  toggle-switch  against
+                      the  internal  spring  loading  until it is fully up.
+                      Then move the switch to the full down position.
+
+                  4.  The left most digit  displayed  on  the  front  panel
+                      should begin to sequence from 0 through F repeatedly.
+                      The right side of the front panel  will  display  the
+                      version  of  the  boot resident in the Multi-Function
+                      card.
+
+                      NOTE: A MiniEngine will not necessarily  be  equipped
+                             with a front panel.
+
+                                                    PAGE  36
+BOOT NODE
+
+
+                  5.  Close the front door of the machine.
+
+              II.  To send a MicroEngine to its DOWNLINE BOOT manually:
+
+                  1.  Locate the Boot Switch on the rear  of  the  machine.
+                      The switch will be a protected pushbutton and will be
+                      marked "BOOT".
+
+                  2.  Depress the Boot Switch and release it.
+
+                  3.  The "RUN" indicator on  the  front  panel  should  be
+                      illuminated.
+
+                  4.  The machine will now be running in its DOWNLINE BOOT.
+
+             III.  To Boot  an  Asynchronous  Terminal  Concentrator  (ATC)
+                  manually:
+
+                  1.  The ATC boot  brings  the  entire  node's  code  into
+                      memory  from  the node's internal PROMs.  (Booting an
+                      ATC does not load a DOWNLINE BOOTSTRAP.)
+
+                  2.  To Boot the code into  the  ATC's  memory,  turn  the
+                      power  switch OFF, wait for ten seconds and then turn
+                      the power switch ON.
+
+                  3.  The machine will then initialize  and  begin  to  run
+                      it's code.
+
+              IV.  To force a Micro, Mini or Engine to it Boot via PROBE:
+
+                   NOTE: For this procedure to work the machine must be  on
+                         the  network.   Also, be aware that this procedure
+                         is the preferred method of forcing a node  to  its
+                         Boot through the network.
+
+                  1.  Log into PROBE in the active supervisor.
+
+                  2.  At the PROBE prompt, type: DLOAD xxxx (where xxxx  is
+                      the  number  of  the  node you wish to have go to its
+                      Bootstrap).
+
+                  3.  If the command fails to send the node to its Boot, it
+                      is probably because:
+
+                      a.  The MiniEngine  or  Engine  Boot  switch  on  the
+                          Multi-Function  card  is  disabled,  ie.  in it's
+                          center rather than down position.
+                      b.  The MicroEngine has been internally  optioned  to
+                          prevent  DLOAD  commands from forcing the machine
+                          to it's Boot.
+                      c.  Attempt Procedures V.  and VI.  if this procedure
+                          fails.
+
+                                                    PAGE  37
+BOOT NODE
+
+
+              V.  To force a Micro, Mini or Engine to BOOT via XRAY:
+
+                  NOTE: For this procedure to work the machine must  be  on
+                         the network.
+
+                  1.  Log into XRAY in the target node.
+
+                  2.  Set privileged status in XRAY.
+
+                  3.  Type: BT in response to the XRAY prompt.
+
+                  4.  Attempt Procedures IV.  and VI.   if  this  procedure
+                      fails.
+
+              VI.  To force an ISIS Micro, Mini or Engine to  it  Boot  via
+                  DDT:
+
+                  NOTE: For this procedure to work the machine must  be  on
+                         the  network and the copy of the bootstrap left in
+                         memory from the last  booting  operation  MUST  be
+                         intact.
+
+                  1.  Log into DDT in the target machine.
+
+                  2.  In response to the SLOT? prompt, type: !
+
+                  3.  At the next DDT prompt, type: ?SLOT .
+
+                  4.  If the slot is identified as FF  proceed.   Otherwise
+                      get into Slot FF.
+
+                  5.  In response to the DDT prompt, type: G 5A
+
+                  6.  In a few seconds the machine will leave  the  network
+                      and your DDT circuit will drop.
+
+                  7.  If you cannot access the machine then through  LOADII
+                      or  ELF, you will have to assume that the copy of the
+                      Boot resident in memory was corrupted  and  you  will
+                      have to have the machine MANUALLY booted.
+
+
+               COMMENTS:
+
+                  Putting a machine into its boot will interrupt all of the
+                  service being provided by the machine.  It should also be
+                  remembered that preferred sequence of  methods  attempted
+                  to force a machine to its boot is:
+
+                         1. PROBE's "DLOAD" command.
+                         2. XRAY's "BT" command.
+                         3. DDT's "Go location" command.
+
+                                                    PAGE  38
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                  HEALTH OF A NODE
+
+
+
+          I.  PURPOSE
+
+                  This procedure outlines methods of obtaining  information
+                  relative  to a node's general health without interrupting
+                  users of that node.
+
+
+          II.  REQUIREMENTS
+
+                  1. XRAY access to the target node.
+                  2. Access to an unused slot within ISIS nodes.
+                  3. Access to LOADII or ELF IF the target node is an ISIS
+                       machine.
+                  4. Access to the file: SLCRSH.NIB if the target is an
+                       ISIS node.
+
+
+          III.  PROCEDURES
+
+              I.  To determine fundamental condition of the node:
+
+                  1.  Log into XRAY in the target node.
+
+                  2.  In response to the XRAY prompt type: ND
+
+                  3.  Observe the XRAY output and note the following:
+
+                      a.  Elapsed time since "NODE FIRST CAME UP"
+
+                             (This is time since node was last loaded  with
+                              code.)
+
+                      b.  Elapsed time since "NODE LAST CAME UP"
+
+                             (This is time since node last recovered from a
+                              crash.)
+
+                      c.  The crash COUNT, TYPE and ADDRESS.
+
+                      d.  The STATUS of the lines.
+
+                                                    PAGE  39
+NODE HEALTH
+
+
+                      e.  The ERRATE of the lines.
+
+                      f.   The  TIILNK  NEIGHBORS  DOWN  list.   These  are
+                          neighbors  which  were specified for this node in
+                          its TYM file but which have not communicated with
+                          the  target  node  since  it was last loaded with
+                          code.
+
+                  4.  At the XRAY prompt type: CL xx .
+
+                      A.  THE QUALITY XX WILL BE THE  NUMBER  OF  THE  MOST
+                          RECENT  CRYPTO  LOGGER messages you wish to view.
+                          (XRAY expects xx to be entered in HEX.  A maximum
+                          of  256 (DECIMAL), ie.  FF (HEX), messages can be
+                          displayed.)
+
+                      b.   Observe  the  XRAY  crypto  logger  output   for
+                          indications  of kernel overloads, line anomalies,
+                          slot reports, etc.
+
+                  5.  Again at the XRAY prompt type: NS
+
+                      a.  Observe the EXCT (Executive  Loop  Count)  value.
+                          It should be greater than 40 on a properly loaded
+                          node.
+
+                      b.   Observe  the  EXLW  value.   (This   is   lowest
+                          Executive   Loop   Count   which   the  node  has
+                          experienced since the values were last reset.)
+
+                      c.  Observe the EXWH value.  (This  is  the  greatest
+                          Executive   Loop  Count  which  the  machine  has
+                          experienced since the values were last reset.)
+
+                          NOTE: The EXCT, EXLW and EXWH counts can be reset
+                                 by  typing:  NS  Z IN response to the XRAY
+                                 prompt.   This  will  allow  the  user  to
+                                 observe   Executive  Loop  Count  behavior
+                                 during specific time frames
+
+                      d.  Observe the TOTAL value for CODE DELAY and H-WARE
+                          DELAY.  The value should be less than 50.
+
+                  6.  At the XRAY prompt type: KS xxxx (where  xxxx  =  the
+                      node number of a neighbor).
+
+                      a.  Observe the PACKET OVERHEAD values  but  remember
+                          that  overhead  is inversely proportional to data
+                          traffic.  The overhead remains roughly fixed  and
+                          if   there   is  little  data  on  the  line  the
+                          percentage of overhead will be driven up.
+
+                                                    PAGE  40
+NODE HEALTH
+
+
+                      b.  Observe the BANDWIDTH utilization.  It should  be
+                          less than 60% and not greater than 70%.
+
+                      c.  Observe the TOTAL for LINK DELAY.  It  should  be
+                          less than 50 ms.
+
+                      d.  Observe the OVERLOAD COUNT.  This is  the  number
+                          of  times the RMAKE routine could not service all
+                          channels with data within 500 ms.  A threshold of
+                          10/min exists for this measurement.
+
+                      e.  Observe the SATURATION COUNT.  This indicated the
+                          number of times the link was never idle for a 1/2
+                          second period.  A threshold of 30/min exists  for
+                          this measurement.
+
+                      f.  Observe the BACKLOG COUNT.  This is the number of
+                          times  the  RMAKE routine could not make a packet
+                          due to closed window.
+
+                              NOTE:  The KS command should be exercised on
+                                      every active neighbor.
+
+              II.  To obtain CRASH TABLE information from  a  running  ISIS
+                  node:
+
+                  1.  Using LOADII or ELF load SLCRSH.NIB  into  an  unused
+                      slot in the target node.
+
+                  2.  Log into DDT in the target node.
+
+                  3.  Enter the slot just loaded with SLCRSH.NIB.
+
+                  4.  Run SLCRSH by typing ?STAT at the DDT prompt.
+
+                  5.  SLCRSH will return information relative to the  node,
+                      the  node  type, version of code, crash count and the
+                      time the node was last taken over by the  supervisor.
+                      It  will  also  display  the SUMMARY CRASH TABLE, the
+                      DETAIL CRASH TABLES, REGISTER SET 0 and  F  contents,
+                      MAC Status and Segmentation Register contents.
+
+
+               COMMENTS:
+
+                  With reasonable care being used while working in DDT, the
+                  procedures outlined above will not be disruptive to users
+                  of the node.
+
+                                                    PAGE  41
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                               CLEARING PORTS IN TMCS
+
+
+
+          I.  PURPOSE
+
+                  To free a port in TMCS to allow access to it.
+
+
+          II.  REQUIREMENTS
+
+                  1. Must be logged into TMCS.
+                  2. Must have "HANG" license in TMCS.
+
+
+          III.  PROCEDURE
+
+              1.  At the asterick prompt (*) type "WHO".   This  will  list
+                  the  ports in TMCS and the one with the * next to it will
+                  be the one that the user is currently in on.
+
+              2.  At the next * prompt type "HANG XX", with "XX" being  the
+                  port number that is to be cleared.
+
+              3.  At the next * prompt type "WHO" again.  This  will  again
+                  list  the ports and then it can be verified that the port
+                  is cleared by it being missing  from  the  list  of  port
+                  numbers.
+
+
+               COMMENTS:
+
+                  You may clear all users except yourself by  typing  "HANG
+                  ALL" and a carriage return.
+
+                                                    PAGE  42
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                HEALTH OF ISIS SLOT
+
+
+
+          I.  PURPOSE
+
+                  This procedure will  outline  some  of  the  more  common
+                  methods  which  can  be utilized to ascertain the general
+                  health of an ISIS slot.
+
+
+          II.  REQUIREMENTS
+
+                  1. DDT access to the node containing the target slot.
+                  2. XRAY access to the node containing the target slot.
+                  3. Access to a loading facility, LOADII or ELF.
+                  4. Access to the program CRASH.
+
+
+          III.  PROCEDURES
+
+              I.  To determine if the target slot is RUNNING:
+
+                  1.  Log into DDT in the target node.
+
+                  2.  Enter the target slot.
+
+                          (If the slot is  halted,  you  should  receive  a
+                           "SLOT   HALTED"   message.    However,   further
+                           verification of slot operation according to  the
+                           following steps is recommended.)
+
+                  3.  At the DDT prompt type: ?CPU
+
+                  4.  Observe the response.  If the  quantities  for  "RATE
+                      USER"  and  "RATE  SYSTEM" are greater than zero (0),
+                      the slot is running.
+
+                  5.  Further verification that the slot is running can  be
+                      obtained by typing: ?HISTORY .
+
+                  6.  Observe  the  "Comments"  column.   If  the  slot  is
+                      running  the  most recent history for the target slot
+                      will indicate "STARTED" and then "RESTARTED".
+
+                                                    PAGE  43
+ISIS SLOT HEALTH
+
+
+              II.  To determine the date and time the slot was last HALTED:
+
+                  1.  Log into DDT in the target node.
+
+                  2.  Enter the target slot.
+
+                  3.  In response to the DDT prompt, type: ?HISTORY .
+
+                  4.  Observe the "Comment" column.   "HALTED  BY  COMMAND"
+                      indicates  that  the  slot  was  manually halted with
+                      DDT's "H" command.  "HALTED" indicates that the  slot
+                      crashed.
+
+                  5.  Observe the right most column  for  the  most  recent
+                      indication  that  the slot was HALTED.  The left most
+                      column will indicate the time lapse  since  the  slot
+                      halt.   The  elapsed  time will be displayed in days,
+                      hours, minutes and seconds or if the elapsed time was
+                      less  than  one  day  the  time  will be displayed in
+                      hours, minutes and seconds.
+
+                  6.  The date and time of the most  recent  slot  stoppage
+                      can  then  be  calculated  using the current date and
+                      time and the elapsed time.
+
+
+              III.  To recover a slot's CRASH TABLE:
+
+                  1.  Run the program CRASH.
+
+                  2.  If you have to pass through a gateway  to  reach  the
+                      target  node,  type  a  "G" in response to the "ENTER
+                      KERNEL HOST NUMBER" prompt.
+
+                  3.  Respond to the remaining CRASH  program  prompts  and
+                      CRASH  will  print  out  the  slot's  host  info, the
+                      versions of code in the ISIS  kernel  and  the  slot,
+                      identification  of  the slot type, information on the
+                      last crash and finally the slot's crash table.
+
+
+               COMMENTS:
+
+                  If the user exercises sufficient care while in DDT,  none
+                  of  the  procedures specified above will be disruptive to
+                  users of the target node.
+
+                                                    PAGE  44
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                INTER-NODAL OCL LINE
+
+
+
+          I.  PURPOSE
+
+                  This   procedure    describes    the    techniques    for
+                  trouble-shooting  an inter-nodal OCL line which is either
+                  out of service or providing degraded service.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to the LINST.REL test file.
+                  2. Access to a code loading utility, LOADII or ELF.
+                  3. Ability to have breakout box loopbacks set up.
+                  4. Knowledge of which physical node ports connect to the
+                      line.
+                  5. Access to PROBE, XRAY and/or TMCS.
+
+
+          III.  PROCEDURE
+
+                  (Diagram A will be referenced in the following steps.)
+
+           ............                                      ............ 
+           :          :                                      :          :
+           :  NODE A  :______________________________________:  NODE B  :
+           :          :\                                   /:          :
+           :..........: \__Port x               Port y__/ :..........:
+
+                                     Diagram A
+
+
+              1.  Using PROBE place a  SHUT  in  the  line  and  when  XRAY
+                  indicates the number of users on the line is sufficiently
+                  low, proceed to STEP 2.
+
+              2.  Jumper Pin 4 to Pin 11 on a breakout box.
+
+              3.  Remove the cable from Port x of Node A.
+
+              4.  Install the breakout box on Port x but do not connect the
+                  cable to the breakout box.
+
+                                                    PAGE  45
+OCL LINK
+
+
+              5.  Using LOADII or ELF, attempt to load  LINTST.REL  through
+                  Port  x  of  NODE  A.   (The breakout box will act as the
+                  target for the load)
+
+              6.  If the terminal logged into the load utility  (LOADII  or
+                  ELF)  displays  any  indications  of "Lost Data", you are
+                  receiving an indication of errors and NODE A will require
+                  servicing.   After  servicing  has  been completed, go to
+                  STEP 14.
+
+              7.  If LINTST.REL loads without loosing data, disconnect  the
+                  breakout  box from Port x and connect the breakout box to
+                  the cable end which was initially disconnected from  Port
+                  x.
+
+              8.  Terminate any "loading" of LINTST.REL currently  underway
+                  through  NODE  A  and  attempt to do a load of LINTST.REL
+                  through Port y of NODE B.
+
+              9.  If the load utility being used does not indicate any lost
+                  data, go to STEP 11.
+
+             10.  If no data is being "lost", remove the breakout box  from
+                  the cable, disconnect the cable from Port y of NODE B and
+                  connect the breakout box to Port y of NODE  A.   (Do  not
+                  connect the cable to the breakout box.)
+
+             11.  Stop and restart the load of LINTST.REL through Port y of
+                  NODE  B.   If  data  is  still  lost, NODE B will require
+                  servicing.  If data is not lost, either the cable is  bad
+                  or the drivers and/or receivers in Port y are not able to
+                  support the cable load.  In either event  servicing  will
+                  be  required.   After  the  servicing is completed, go to
+                  STEP 14.
+
+             12.  Make certain that the cable is reconnected to Port  x  of
+                  NODE A and disconnected from Port y of NODE B.
+
+             13.  Connect the breakout box to the cable  end  removed  from
+                  Port y but do not connect the breakout box to Port y.
+
+             14.  Terminate any loads which are in progress and restart the
+                  loading  of LINTST.REL through Port x of NODE A.  If data
+                  is lost during the load, you may  be  observing  a  cable
+                  program  but  you  are probably observing an inability of
+                  NODE A to properly drive the cable load.
+
+             15.  After servicing is complete, rerun any tests which failed
+                  to verify the effectiveness of the service effort.
+
+             16.  Reconnect the inter-nodal line to the appropriate ports.
+
+                                                    PAGE  46
+OCL LINK
+
+
+             17.  Terminate any loads which are underway.
+
+             18.  Observe the line with PROBE, XRAY or TMCS for any further
+                  indications of problems.
+
+
+               COMMENTS:
+
+                  The   procedure   used   here    to    trouble-shoot    a
+                  Memory-Shuffler  line  will not cause any interruption of
+                  service on the remainder of either node.
+
+                                                    PAGE  47
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                ISIS ASYNC PORT PRB
+
+
+
+          I.  PURPOSE
+
+                  This procedure describes the process for trouble-shooting
+                  a suspected failure in asynchronous ports which have been
+                  assigned to an ISIS slot.
+
+
+          II.  REQUIREMENTS
+
+                  1. A working knowledge of the interpretation of TYM
+                   files.
+                  2. An ability to use DDT.
+                  3. Access to SLASYN.NIB.
+                  4. Means of loading SLASYN.NIB.
+                  5. Ability to run and interpret SLASYN.NIB.
+                  6. Means of providing loopbacks on AYSNC ports.
+
+
+          III.  PROCEDURES
+
+              1.  Disconnect  the  modem(s),  terminal  device(s)  or  host
+                  port(s) from the suspected Engine ASYNC ports.
+
+              2.  Loopback the  suspected  port(s)  in  one  of  the  three
+                  following ways:
+
+                  a.  By removing the ASYNC RIBBON CABLE(S) from  the  edge
+                      of  the  ASYNC  Board  and  installing  TYMNET  ASYNC
+                      LOOP-BACK PLUGS (P/N AST6-1) in place of  the  ribbon
+                      cable(s).
+
+                      NOTE: The ribbon cable connector on the edge  of  the
+                             ASYNC board service the ports indicated below:
+
+                                  CONNECTOR              PORTS
+
+                                  _________             _____
+
+                                     X3              0 - 3
+                                     X4              4 - 7
+                                     X5              8 - 11
+
+                                                    PAGE  48
+ISIS ASYNC PORT
+
+
+                                     X6             12 - 15
+                                     X7             16 - 19
+                                     X8             20 - 23
+                                     X9             24 - 27
+                                     X10            28 - 31
+
+                      NOTE: The TYM files and the  physical  addressing  of
+                             ASYNC  Board  can  be  used  to  determine the
+                             correct AYSNC board to jumper.
+
+                             The ribbon cables from the connector panel  to
+                             the   AYSNC   Board  can  also  be  traced  to
+                             determine the correct board to be jumpered.
+
+                  b.   By  installing  TYMNET  loop-back   plugs   on   the
+                      appropriate  Engine  connector-panel jacks.  (Use P/N
+                      AST7-1 for 37pin connectors, P/N 630030-001 for 25pin
+                      connectors)
+
+                  c.  By installing a breakout box on a specific port  with
+                      RD looped back to TD, DSR looped back to DTR and with
+                      RTS looped back to DCD.
+
+              3.  Load SLASYN.NIB into the appropriate slot.
+
+              4.  Log into DDT in  the  target  machine,  transfer  to  the
+                  appropriate   slot   and   gain   access  to  the  SLASYN
+                  diagnostic.
+
+              5.   Establish  the  parameters  for  SLASYN  which   closely
+                  approximate  the  conditions  on  the  port  when  it  is
+                  failing.  Signal  toggling  should  normally  be  enabled
+                  during testing.
+
+              6.  Reset and Start the diagnostic then display  the  results
+                  periodically to observe the testing process.
+
+              7.  If the  test  fails,  the  appropriate  hardware  support
+                  agency  should  be  called upon for assistance.  When the
+                  problem  is  reported  cleared  verify  that  the  SLASYN
+                  diagnostic runs by repeating STEPS 3 though 6.
+
+              8.  Insure that the proper production is loaded into the slot
+                  and verify with DDT that the slot is running.
+
+              9.  Make certain that  all  loopbacks  are  removed  and  the
+                  cables are connected.
+
+             10.  Verify with the person reporting the problem that service
+                  has, in actual fact, been restored.
+
+                                                    PAGE  49
+ISIS ASYNC PORT
+
+
+               COMMENTS:
+
+                  When the diagnostic SLASYN.NIB is loaded into a slot, all
+                  production  service  in  that  slot  will be interrupted.
+                  However, service in other slots within the target machine
+                  will not be affected.
+
+                                                    PAGE  50
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                          SYNCHRONOUS COMMUNICATIONS LINE
+
+
+
+          I.  PURPOSE
+
+                  This    procedure    describes    the    technique    for
+                  trouble-shooting  a  suspected  failure  of a synchronous
+                  communications line which is assigned to an ISIS slot.
+
+
+          II.  REQUIREMENTS
+
+                  1. A knowledge of TYM files.
+                  2. An ability to use DDT.
+                  3. Access to SLSYNC.NIB or SLSIO.NIB 
+                  4. Means of loading SLSYNC.NIB or SLSIO.NIB
+                  5. Ability to run SLSYNC.NIB or SLSIO.NIB
+                  6. Direct or indirect means of looping back modems.
+
+
+          III.  PROCEDURE
+
+              1.  Run a loopback test  between  the  modems  on  the  line.
+                  (Return  modems  to  normal  configuration  after test is
+                  completed)
+
+              2.  If the loopback test  fails,  run  a  self  test  on  the
+                  modems.   (Return  modems  to  normal configuration after
+                  test is completed)
+
+              3.  If the self tests fail, turn  the  problem  over  to  the
+                  agency  responsible for the maintenance of the modems and
+                  go to STEP 18.
+
+              4.  If the self test passes, turn the  problem  over  to  the
+                  appropriate  telephone  service  group and have loopbacks
+                  run to the CIU's at both ends of the line.
+
+              5.  If the loopbacks fail,  turn  the  problem  over  to  the
+                  telephone service group for resolution and go to STEP 18.
+
+              6.  Using the Node and  Slot  TYM  files  or  using  the  ?LU
+                  command  in  DDT, determine if the suspect line is driven
+                  by SYNC Brd or by SIO Brd hardware.
+
+                                                    PAGE  51
+SYNC LINE
+
+
+              7.  If more than one logical unit is assigned  to  the  slot,
+                  use  the  Node TYM files, Slot TYM files and notes on the
+                  configuration of the network to determine  which  logical
+                  unit is suspect.
+
+              8.   If  the  line  is  supported  by  SYNC  hardware,   load
+                  SLSYNC.NIB into the slot.
+
+              9.  If the line is supported by SIO hardware, load  SLSIO.NIB
+                  into the slot.
+
+             10.  Log into the slot diagnostic just loaded and  assign  the
+                  suspect logical unit to the diagnostic.
+
+             11.  Place the modem cabled to the  suspect  logical  unit  in
+                  analog (line) loopback.
+
+             12.  Start the slot diagnostic and  periodically  display  the
+                  test results.
+
+             13.  If the slot diagnostic fails, turn the  problem  over  to
+                  the  appropriate  hardware  support agency and go to STEP
+                  18.
+
+             14.  If the slot diagnostic runs without error, have the modem
+                  taken  out  of loopback and have the distant modem placed
+                  in digital loopback.
+
+             15.  Stop, Reset and Restart the slot diagnostic.
+
+             16.  If the diagnostic now fails, you have either a  modem  or
+                  line  problem not detected in previous testing.  Have the
+                  problem cleared by the appropriate support agency and  go
+                  to STEP XX.
+
+             17.  If the diagnostic does not fail in STEP 16, the node  and
+                  slot  code  should be considered suspect and the terminal
+                  or host device at the end of the line should  be  checked
+                  for malfunction.
+
+             18.  Insure that the production code is loaded into  the  slot
+                  and  that  the  production  code  is running.  Use DDT to
+                  verify this.
+
+             19.  Insure that loopbacks are removed from all modems.
+
+             20.  After the problem is found and thought to  be  corrected,
+                  verify with the person reporting the problem that service
+                  has been restored.
+
+
+               COMMENTS:
+
+                                                    PAGE  52
+SYNC LINE
+
+
+                  When SLSYNC.NIB or SLSIO.NIB is loaded into  a  slot  all
+                  production service in that slot is interrupted.  However,
+                  there is no interruption to the service provided by other
+                  slots within the machine.
+
+                                                    PAGE  53
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              PROBE ACCESS OPERATIONS
+
+
+
+          I.  PURPOSE
+
+                  To define the criteria of access controls  to  the  PROBE
+                  job slot.
+
+
+          II.  SCOPE
+
+                  Access to `PROBE' commands  is  delegated  at  validation
+                  time.   Each  user name is assigned an OCTAL value.  Each
+                  bit  in  this  OCTAL  value  represents  a  character  of
+                  privilege.   The  maximum  value  is  77 octal.  The bits
+                  break down is as follows:
+
+                       Cannot be hung      100 000
+                       STATUS 20 commands  010 000
+                       STATUS 10 commands  001 000
+                       *No Timeout set     000 100
+                       STATUS 2 commands   000 010
+                       STATUS 1 commands   000 001
+
+                  Classes of user access may be set up as follows:
+
+                       Look do not touch    status  00/04
+                       Specific statistics  status  20/24
+                       Change topology      status  30/34
+                       Control supervisor   status  31/35
+                       Initialize& Control status  33/37
+
+                * If a user's connect time to PROBE is to be checked,  turn
+                  bit  4 of the low order off.  This will automatically log
+                  the user off after an assembled in time frame.
+
+                  There are two groups of user names in PROBE.   The  first
+                  and  most  important  is the assembled in group.  This is
+                  one or more names, password and status which is  compiled
+                  into  the  PROBE software at system generation time.  YOU
+                  MUST HAVE ONE ASSEMBLED IN PROBE NAME.  The second  group
+                  is  Disk  resident names, passwords and status level.  To
+                  bring  a  supervisor  up  from  scratch,  you  need   the
+                  assembled  in  name  to  enter  at  least your first Disk
+
+                                                    PAGE  54
+PROBE ACCESS OPERATIONS
+
+
+                  resident name.  Any Disk resident name of 35  or  37  may
+                  enter probe names on disk.
+
+                  Having access to an assembled in user name for day to day
+                  operation  is important.  This is to the possibility of a
+                  disk failure barring any Disk resident name from  logging
+                  in.   If this occurs, the only control of supervisor will
+                  be through the power off switch.   PROBE  has  a  maximum
+                  limit  on simultaneous users.  One slot is always held in
+                  reserve for  an  assembled  in  user,  thus  guaranteeing
+                  access to your Network Control personnel.
+
+
+          III.  PROCEDURE
+
+              1.  Use the `list' command to determine a free disk slot.
+
+              2.  Type "ENTER [Job slot] [user name]  [STATUS  level]"  The
+                  slot number should be used in each supervisor.
+
+                     Example: ENTER 127 NETWORK1 37 - will give  access  to
+                              the  user  name NETWORK1 with a status of 37.
+                              The password will be a defaulted value.   See
+                              your network administrator for the password.
+
+              3.  To delete a user name, use the list command to  find  the
+                  slot number.  Type "ENTER [slot number]"
+
+                     Example: ENTER 127 - This will delete the name created
+                              in step 2 above.
+
+              4.   The  list  command  will  list  all  probe  names.   All
+                  assembled  in  names will be preceded by "AAA".  All Disk
+                  names will be preceded by a number 0 through your  system
+                  generation  maiximum.   Any name having an asteric by the
+                  slot number has a default password.  The owner or user of
+                  that  PROBE  name should be reminded to change it or have
+                  the name removed.
+
+              5.  For assembled in names, the `PSWD' should be used to find
+                  a  hexhex cipher for a user name and password.  These two
+                  values should  be  given  to  the  system  programmer  to
+                  generate  into PROBE.  This is the only method of adding,
+                  deleting or changing the default password of this name.
+
+              6.  Any PROBE user name may change  the  password  using  the
+                  `Password' command.
+
+                                                    PAGE  55
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              PERFORMANCE OF LINK/LINE
+
+
+
+          I.  PURPOSE
+
+                  The purpose of this procedure is to define the methods by
+                  which  information  relative to a link/line's performance
+                  can be recovered with the utility PROBE.
+
+
+          II.  REQUIREMENTS
+
+                  1. Access to PROBE in the Active Supervisor
+                  2. Access to PROBE documentation for Reference
+
+
+          III.  PROCEDURE
+
+              A.  Obtaining LINE SPEED and STATUS
+
+                  1.  Log into PROBE  in  the  active  supervisor  for  the
+                      network containing THE LINES WHICH ARE TO BE CHECKED.
+
+                  2.  To determine the current LINE SPEED and STATUS (Shut,
+                      Out  Frozen)  can be obtained by using PROBE's "NODE"
+                      command.
+
+                          The  resulting  PROBE  output  will  contain  the
+                          desired   information   under  the  heading  LINK
+                          STATUS.
+
+                          PLEASE NOTE: An OUT status indicates a link is in
+                                       the  process  of  being  returned to
+                                       service after outage.
+
+                                       If a link  is  out  of  service  and
+                                       attempts   are  not  being  made  to
+                                       restore it to service, there will be
+                                       no indication of the link under LINK
+                                       STATUS.
+
+                                       SHUT  indicates   that   a   network
+                                       operator  has  taken the link out of
+                                       service.
+
+                                                    PAGE  56
+PROBE LINE PERFORMANCE
+
+
+                                       FROZEN indicates that the  link  has
+                                       been  detached  but has not yet been
+                                       declared down.
+
+              B.  Obtaining a LINK  LOGGER  REPORTS,  both  Historical  and
+                  Realtime
+
+                  1.  A HISTORY of link reports or the ability  to  MONITOR
+                      link  reports  in  realtime  can be obtained with the
+                      PROBE "RNODE" "LOG" commands.  The  resulting  output
+                      will  contain  link  reports  for  all  links  on the
+                      specified node.  It is not  possible  with  PROBE  to
+                      restrict link reports down to a single link.  If TMCS
+                      is available, it's ability to restrict to a  specific
+                      link   would  make  it  a  more  logical  choice  for
+                      obtaining this type of information.
+
+                      EXAMPLE OF PROBE COMMAND SEQUENCE:
+
+                           RNODE xxxx (where xxxx = one of  the  two  nodes
+                                       attached to the target link)
+
+                           LOG zzzzESX (where zzzz = the number of  minutes
+                                       back  from the current time that you
+                                       wish to back up the logger (ie.  LOG
+                                       34ESX) or the date (julian) and time
+                                       (GMT) from which you would  like  to
+                                       begin   receiving  information  (ie.
+                                       241:12:45))
+
+              C.  Obtaining STATUS on all the Links Assigned to a Node
+
+                  1.  In PROBE only the SYNPRT command displays the  status
+                      of all of the LINKS assigned to the node.
+
+                  2.  To  obtain  the  SYNPRT  command  output  respond  to
+                      PROBE's prompt with the following sequence:
+
+                           RLOG 1D0
+                           SYNPRT xxxx (where xxxx = target node number)
+                           LOG 1C
+
+                  3.  The command output will be displayed on the terminal.
+                      Even  information  relative  to  assigned  but UNUSED
+                      links will be displayed.
+
+                                                    PAGE  57
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                NETWORK NODE OUTAGE
+
+
+
+          I.  PURPOSE
+
+               This procedure outlines actions to be taken in the
+               event of a Network Node Outage.
+
+          II.  DEFINITION
+
+               NETWORK NODE OUTAGE:  A  network  node  outage  is
+               defined as a node which is not accessable, nor can
+               it be accounted for  by  the  network  Supervisor.
+               This   may   result   from   a   hardware/software
+               malfunction, or a  transmission  facility  company
+               problem.
+
+          III.  PROCEDURE
+
+               In the event of a  public  network  node  failure,
+               Network Control will follow the procedure below to
+               restore service:
+
+           A.  Wait for ten minutes to determine  if  the  outage
+               will clear itself (ie.  power failure).
+
+              1.  If the outage clears,  record  the  outage  per
+                  existing documented procedures.  
+
+              2.  If the problem does not clear, proceed  to  the
+                  next step.
+
+           B.  Site Evaluation: This step  involves  calling  the
+               site of the nodal location for evaluation of Telco
+               equipment,   machinery    environment,    customer
+               equipment   and   nodal   hardware.   It  will  be
+               necessary to call the site and locate someone that
+               is  familiar  with  the  node  and  its associated
+               equipment.
+
+              1.  Determine if the customer has  taken  the  node
+                  down  for  any  reason.   If  yes,  ask  to  be
+                  notified when it is returned to service.  Leave
+                  a  call  back  number and then OnTyme the field
+
+                                                    PAGE  58
+NODE OUTAGE
+
+
+                  engineering group.
+
+              2.  Determine if there has  been  an  environmental
+                  failure.  Environmental problems are defined as
+                  a loss  of  power,  loss  of  air  conditioning
+                  (A/C),  or  a  site  fire.   In the event of an
+                  environmental failure, proceed as follows:
+
+                  * Ask to be notified when the environment
+                   returns to 
+                    normal.
+
+                  * Leave call-back information.
+
+                  * Send OnTyme to the regional field engineering
+                   personnel.
+
+                  If the  environment  has  returned  to  normal,
+                  continue the evaluation.
+
+              3.  Have the customer perform a  visual  inspection
+                  of  the  node.   Determine if the node is in an
+                  operational  state.   If  it  is  not,   notify
+                  Network   Field   Engineering  of  the  outage.
+                  Specify the type of equipment involved.
+
+              4.  Perform an evaluation of associated  equipment.
+                  Have the customer visually inspect the modem or
+                  DSU for an obvious malfunction.  Perform  tests
+                  on  the  DSU  or modem as appropriate including
+                  loopback test and self tests.
+
+                  * If either of these test should fail, report
+                   the problem
+                    and results to appropriate Telco group or
+                   modem vendor.
+
+                  * Send an OnTyme to maintenance to advise of
+                   status.
+
+              5.  If all of the above items  prove  inconclusive,
+                  then  the problem should be reported to Network
+                  Field Engineering.
+
+              6.  If it is not possible to contact the site do to
+                  a ring-no-answer (R/NA), Netcon will attempt to
+                  dump  and   reload   the   node   (notify   the
+                  maintenance group via OnTyme).
+
+              7.  During regular working hours, node outages will
+                  be    reported   to   the   appropriate   field
+                  engineering  region  via  telephone,  and  then
+                  followed  up  with  and  OnTyme (an OnTyme will
+
+                                                    PAGE  59
+NODE OUTAGE
+
+
+                  also be sent  when  the  node  returns  to  the
+                  Network).
+
+                                                    PAGE  60
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                  SECURITY BREACH
+
+
+
+          I.  PURPOSE
+
+                  To determine what data is being sent to the supervisor on
+                  a  command  circuit  for a login that is being flagged as
+                  garbage.
+
+
+          II.  SCOPE
+
+                  Many bad login attempts are caused by  poor  Async  data.
+                  This  data  is  garbled by the communication equipment on
+                  the engine.  This procedure helps determine which.
+
+
+          III.  PROCEDURE
+
+              1.   Log  into  XRAY  on  the  effected  node  with  a  super
+                  privileged name.
+
+              2.  Set license in XRAY.
+
+              3.  Issue a "TD 20" command with a printer turned on.   ("20"
+                  represents  the  sup  command port.  It will always be 20
+                  and 21.)
+
+              4.  Issue a "TA 20" command with the printer turned on.
+
+              5.  Issue a second "TA 20" command.
+
+              6.  Look at the data for login request and the username.   If
+                  the name is readable, someone or program may be trying to
+                  get in.
+
+                  Many times the data will be garbage.   The  "TA"  command
+                  displays  ASCII  characters  for  the bit patterns.  This
+                  data may cause your terminal to do unpredictable things.
+
+                  NOTE: The XRAY logic will not display passwords.  No  one
+                         can  get  to  them.   This command does not pose a
+                         security problem.
+
+                                                    PAGE  61
+SECURITY BREACH
+
+
+              7.  If you see garbage, halt and restart  the  node  or  slot
+                  (whichever  is  applicable).   When  DTR is present on an
+                  Async terminal port, the port is hung on startup.  If the
+                  garbage  continues  immediately  after  the  start,  then
+                  Tymnet hardware should be suspected.
+
+              8.  If the problem does not reappear, then terminal equipment
+                  is suspect.
+
+                                                    PAGE  62
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                RECONFIGURING THE TYMNET MONITOR AND CONTROL SYSTEM
+
+
+
+          I.  PURPOSE
+
+                  To  define  the   steps   necessary   for   the
+                  Reconfiguring  of  NEM  and  provide  for error
+                  recovery.
+
+
+          II.  SCOPE
+
+                  This procedure has been  quite  work  out  over
+                  time.    If   followed,  it  will  ensure  Disk
+                  recovery in the event of an error.
+
+
+          III.  PROCEDURE
+
+              1.  Rename the ND####.NI1 to BK####.NI1.   (Do  not
+                  ever write over code.)
+
+              2.  Rename the  ND####.N01  to  BK####.N01.   (This
+                  never works the first time.)
+
+              3.  Rename the ND####.BND to  BK####.BND.   (Always
+                  do this in order!)
+
+              4.  Rename the ND####.D01 to BK####.D01.  (Old disk
+                  configuration)
+
+              5.  Rename the ND####.A01 to ND####.D01.  (This  is
+                  current configuration.)
+
+              6.  Copy the ND####.D01 to ND####.A01.  (After  the
+                  copy,  make changes to the new A01 file.  Leave
+                  the D01 alone.)
+
+              7.  Log into the TMCS host  and  type  the  command
+                  [ARCH  STORE  0].  This will take a copy of all
+                  the node names and host name and user  profiles
+                  and  all  kinds  of related material that makes
+                  TMCS work.  If there is a I/O error,  call  the
+                  site  and ask them to check the tape drive.  If
+
+                                                    PAGE  63
+TMCS RECONFIGURING
+
+
+                  the drive is online have them ini the  node  or
+                  hault and execute the slot.  The code sometimes
+                  hangs up the tape drive.  By  initializing  the
+                  node, the host sees the tape drive again.
+
+                  A.  Before you make  changes  to  the  new  A01
+                      file, you must run TMRE.  This program will
+                      make a memory estimate for the  slot.   The
+                      procedure  is "R(SOURCE)TMRE".  The program
+                      will prompt the user for configuration.
+
+                  B.  Create a NI1 file by running the ND    .CI1
+                      file.   This  will take about 15 minutes at
+                      non-peak time or 1.5 hours  at  peak  time.
+                      Each  interface  takes about 26000 TRU'S so
+                      you will need a username with  a  unlimited
+                      budget.   Also  the  directory will need at
+                      least 10,000 pages.  After each gen, delete
+                      *.TMP files.  The Pascal compiler creates a
+                      lot of TMP files.
+
+                  C.  After generating  the  NI1  file  known  as
+                      'TMDM',  the  file  needs to be loaded into
+                      the slot.  There are 2 procedures, first is
+                      for  a  1  MEG  machine.   The  second is a
+                      procedure for a multi MEG machine.
+
+                      1.  R LOADII;SLOT,KHOST,1,ND####.NI1
+
+                      2.  R COM;ND####.LI1  (This  is  a  command
+                          file for the code to be loaded into the
+                          second MEG through DDT.  The file  does
+                          all the work.)
+
+                  D.  After the slot has been loaded  with  TMDM,
+                      it  will  return  to the network.  When the
+                      slot comes up, you will need to login right
+                      away.   The slot will only let one user in.
+                      After that point, the host will show up  no
+                      ports.   If  a  TMCS  user beats you to the
+                      host, you will need to  log  into  DDT  and
+                      hault  and execute the slot.  Then login to
+                      slot right after doing this process.   This
+                      problem  comes  from  users  that  have PVC
+                      ports.
+
+                  E.  When you get into the TMCS host,  you  will
+                      see  a heading refering to disk maintenance
+                      program with some version number with a '*'
+                      for a prompt.  At this point, TMCS is ready
+                      for your next command.  Your first  command
+                      is 'SEE BELOW'.
+
+                                                    PAGE  64
+TMCS RECONFIGURING
+
+
+                      1.  Type 'DISP CONFIG' (This  will  display
+                          the   old  configuration  and  the  new
+                          configuration.   Warning:   This   only
+                          shows   the   configurations  that  you
+                          referenced at the gen, not what  is  in
+                          the machine.)
+
+                      2.  Type 'RECONF' (At  this  time  TMDM  is
+                          reconfiguring  the  300  Megabite disk.
+                          On the display, if you did  right,  you
+                          will  see  the  areas  that  are  being
+                          relocated.  If you did this wrong,  you
+                          will see [CONFIG ERRORS].  This is only
+                          a  warning.   The  information  is  not
+                          lost.  When you see this error it means
+                          that your D01 file  is  wrong.   So  go
+                          back  to  the  system you gen it on and
+                          start over.  Keep  your  ckt  into  the
+                          TMCS  host.   If  you  do  not, someone
+                          could  log  into  the  host  and   type
+                          [INIT].   The  INIT  command is used to
+                          zero  out  the  disk.    This   deletes
+                          everything  off  the  disk.   Like node
+                          names and host name and  user  profiles
+                          and  all the related material that make
+                          TMCS work.  So if you  do  not  have  a
+                          good  copy  on tape, start crying.  But
+                          do not fear, you are not lost.   Get  a
+                          ARCH STORE off another TMCS host in the
+                          network.  When the ARCH STORE  is  done
+                          have the tape sent to wherever you need
+                          it.  Then have  the  tape  put  on  the
+                          drive  load  TMDM if you need to.  Then
+                          type [ARCH STORE 0].   This  will  dump
+                          all  information  from  tape  to  disk.
+                          This will take about 10 minutes.  After
+                          a  "RESTORE" command, you must halt and
+                          restart the slot.
+
+                      3.  Commands needed for TMDM:
+
+                          A.  DISP     CONFIG     -     (Displays
+                              configuration old and new)
+
+                          B.  RECONF - (Starts TMDM  to  relocate
+                              areas on 300 MEG disk)
+
+                      4.   Commands  needed  in  TMCS  for  error
+                          recovery:
+                          (TMCS username needs  oper  status  for
+                          commands to work)
+
+                                                    PAGE  65
+TMCS RECONFIGURING
+
+
+                          A.  ARCH STORE  0  -  (Copies  disk  to
+                              tape)
+
+                          B.  ARCH STORE 0 -  (Dumps  information
+                              from tape to disk)
+
+                                                    PAGE  66
+
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                     COLLECTOR
+
+
+
+          I.  PURPOSE
+
+                  This procedure describes the method  and  process  to  be
+                  used  when  monitoring  accounting  blocks.  It will also
+                  explain the process for monitoring the  accounting  block
+                  support program (Collector).
+
+
+          II.  DEFINITION
+
+              A.  Accounting Blocks - This is a  space  on  a  Supervisor's
+                  disk that stores accounting daytas.  The space is divided
+                  into  4305  (variable)  accounting  records.    The   raw
+                  information is stored in 1000 characters per block.  When
+                  the blocks reach zero, the Supervisor starts writing over
+                  old accounting information.
+
+              B.  Collector - This  program  creates  a  duplicate  of  the
+                  accounting  blocks, providing a backup file of the disk's
+                  information.  If the maximum 65,345 (variable) accounting
+                  records  are  filled,  causing  the  Supervisor  to start
+                  writing over old information, the old information is  not
+                  lost.
+
+
+          III.  PROCEDURE
+
+                  The accounting blocks should  be  monitored  through  all
+                  shifts.   This  is  accomplished  by  watching  the color
+                  monitors and using PROBE's "ACCT" command.
+
+                  When 50% of the total  available  accounting  blocks  are
+                  left,  a  message  will  be  displayed  across  TMS color
+                  monitors.  The latest  accounting  block  total  will  be
+                  displayed until either the Supervisor is changed, or more
+                  than 50% of the blocks become available.
+
+                  A  message  of  50%  of  less  availability  signifies  a
+                  Collector danger zone.  The Supervisor must be changed to
+                  avoid having old information "written" over".
+
+                                                    PAGE  67
+COLLECTOR
+
+
+                  At the danger zone, and after  every  Supervisor  change,
+                  the  Collector  program  should  be  checked  for  proper
+                  operation.
+
+                  Collector checks are implemented via the following steps:
+
+                  1.  Log into System 74 (i.e.  NETCON;74;password).
+
+                  2.   Set  system  license  (i.e.   0   All   -   carriage
+                      return;NETCON-carriage return; password).
+
+                  The following Collector features should be checked:
+
+                  1.  Do a systat command (see  example).   Check  to  make
+                      sure  that  PJ  is logged in.  This will be under the
+                      job name "PAM".
+
+                  2.  Check to make sure that Collector is logged into  the
+                      active  Supervisor.   Check  to see if it is creating
+                      files for the current date.  The  job  name  will  be
+                      "CPN   ".
+
+                  If either  PJ  or  Collector  are  not  logged  in,  call
+                  Fremont.   The  System 74 operator will have instructions
+                  for  manually  restarting  PJ.   They  are  outlined   as
+                  follows:
+
+                  1.  NetCon should instruct the system operator to log-off
+                      the  job  running  under  username  PJ,  and shut the
+                      system.
+
+                  2.  The operator will log the job off and shut the system
+                      by  typing  "SCHED  40000"  at  the  exec level.  The
+                      operators have the license to do this.
+
+                      After a few minutes, the  operator  will  unshut  the
+                      system.   On  System 74, the operator will restart PJ
+                      manualy.
+
+                      Within 15-20  minutes,  COLLECTR  should  be  started
+                      automatically by PJ.
+
+                                                    PAGE  68
+COLLECTOR
+
+
+                  To  verify  that  COLLECTR  and  PJ   have   successfully
+                  restarted:
+
+                  1.  Do a systat to see that they are logged  in  for  the
+                      current date.
+
+                  2.  Do a systat on "PAM" job number  followed  by  "CONT"
+                      (for continued).  This will show PJ running.
+
+                  3.  Do a systat on COLLECTR number followed by CONT.  The
+                      two  (2)  digit  numbers  in  the fourth (4th) column
+                      should change periodically to show COLLECTR progress.
+                      Example - syst(COLLECTOR)/CONT.
+
+                  4.  The Supervisor should be changed when there  are  500
+                      accounting  blocks  left  available.   TSTAT and ACCT
+                      commands should be performed on a  Supervisor  before
+                      moving  to  it.   This  will  give  the status of the
+                      Supervisor and its available disk storage space (4305
+                      accounting  blocks  for  public  neworks;  27,000 for
+                      private networks).
+
+                  5.  If COLLECTR and PJ are both  logged  in  but  do  not
+                      appear  to be collecting, notify Fred Cannon or Nancy
+                      Burriesci.
+
+
+                  Note hardcopy attachment "Example (1)" has not been input
+                  here.
+
+                                                    PAGE  69
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                   NETWORK SHUTS
+
+
+
+          I.   PURPOSE
+               This procedure is intended as a  guideline  for  individuals
+               attempting to control routing paths within the network.  Any
+               individual having access authority to PROBE will be required
+               to use this structured approach.
+
+
+          II.  DEFINITIONS
+               Shut.  A condition known to the Supervisor that eliminates a
+               particular  link  from  consideration  in the cost algorithm
+               used in data routing.  Note that  a  shut  is  on  the  link
+               level, not on the line level.
+
+               Line.  A connection between two or more  points  over  which
+               data is transmitted.  One or more comprise a link.
+
+               Link.  A communications  path  between  any  pair  of  nodal
+               communications  processors.   Telecommunicatyions  equipment
+               and  procedures   for   transmitting   information   between
+               locations in the network.
+
+
+          III. PROCEDURE
+
+               A. A shut, or multiple shuts, is used by network control  to
+                  handle  routing  problems  caused by anomalies or project
+                  work.  It constitutes the removal of a link or node  from
+                  the network.
+
+               B. Project oriented shuts are used to limit  the  amount  of
+                  pass-throughs  that  a  particular node or communications
+                  link carries.  Anode scheduled for temorary removal  from
+                  the  network  should  have  its  traffic  restricted to a
+                  minimum prior to the scheduled outage.
+
+               C. Individuals having a status of 20 in PROBE are capable of
+                  initiating shuts on links, facilitating rapid reaction to
+                  a variety of situations.
+
+
+                                                    PAGE  70
+SHUTS
+
+
+               D. Any shut(s) placed on a network line must be reported  to
+                  Network  Control  via  telephone  or OnTyme.  This report
+                  should be made before the shut occurs,  or  within  a  30
+                  minute timeframe.
+
+               E. Shuts degrade circuit building and  response  times,  and
+                  Network  Control personnel will remove unidentified shuts
+                  at their discretion.
+
+               F. Nodes will always have one line which enters the  network
+                  left  open  (un-shut),  and all dead-ended neighbors left
+                  open (un-shut).
+
+               G. Dead-ended customers will not  be  denied  access  to  an
+                  interface until it is removed from the network.
+
+               H. Multiline-links do not require a shut if  maintenance  is
+                  to  be  performed  on  a link while the link is still up.
+                  The exception to this is when a  56KB  multiline-link  is
+                  involved,  and the line to be removed is the 56KB section
+                  and not the 9.6KB back-up.
+
+               I. When a failure occurs in a 56KB primary line, a  shut  is
+                  placed  on the whole link until the 56KB line is restored
+                  to the network.  This keeps its 9.6 back-up from becoming
+                  overloaded for a sustained period.
+
+               J. NSHUT= Shut complete node
+                  RSHUT= Remove shut between two specified nodes
+                  ESHUT= Enter a shut specified between two node numbers
+                  CLEAR= Remove entire shuts from node specified
+                  FULL= (When received after entering a shut command)
+                  Indicates that the shut table has exceeded its capacity
+                  and can make no more entries at this time.
+
+               K. All shuts entered are recorded on the  active  Supervisor
+                  shut  table list, and will remain there until the shut is
+                  removed.
+
+               L. All line outages require shuts until they are restored to
+                  operation.   An  exception  to  this  is  when  a node is
+                  dead-ended.
+
+                                                    PAGE  71
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              NETWORK SUPERVISOR MOVES
+
+
+
+          I.  PURPOSE
+
+                  This document specifies the  procedure  to  be  used  for
+                  moving  the  Network  Supervisor.  This procedure will be
+                  defined in two different categories.  Scheduled moves and
+                  unscheduled moves.
+
+
+          II.  SCHEDULED MOVES
+
+                  A scheduled Supervisor move is when  the  active  Network
+                  Supervisor is put to sleep at a scheduled period of time,
+                  and access to the Network is denied until another Network
+                  Supervisor  is  awakened, and taken control of 75 percent
+                  of the Network (75 percent of the nodes the Sup had  last
+                  time active).
+
+              1.  Prior to the actual move, make a copy of  the  ALL  NODES
+                  List  (AN),  the  SHUT  TABLE  (LSHUT),  and the COUNT OF
+                  MACHINES (COUNT)>
+
+              2.  On the active Supervisor, do TSLEEP, enter the  PASSWORD,
+                  but do not do a carriage return at this time.
+
+              3.  On the sleeping Supervisor,  you  are  moving  to,  do  a
+                  TWAKE,  enter  the  Password,  but  do  not do a carriage
+                  return.
+
+              4.  You are now set to do the actual Supervisor move.
+
+                  A.  Hit a carriage return on the active Supervisor.   You
+                      will  get  the  time  the  Supervisor  went to sleep.
+                      (024:ll:00:38)
+
+                  B.  Ten seconds after sleeping the active supervisor, hit
+                      a carriage return on the sleeping Supervisor you wish
+                      to take over  the  Net.   You'll  get  the  time  the
+                      Supervisor was awakened.
+
+                                                    PAGE  72
+SUPERVISOR MOVES
+
+
+                      SLEEPING
+                      :TWAKE
+                      PASSWORD:
+                      83:11:01:09
+                      83:11:01:25
+                      LOGIN RATE 10838
+                       131 8 0 82 26 243 235
+                      DF 0 REJECTS 000
+                      83:11:01:40
+                      LOGIN RATE 0
+                       137 40 0 60 122 111 437
+                      DF 0 REJECTS 000
+                      83:11:01:55
+                      LOGIN RATE 0
+                       58 18 0 65 270 29 544
+                      DF 0 REJECTS 0 0 0
+                      83:11:02:10
+                      LOGIN RATE 0
+                       7 0 0 14 423 0 580
+                      DF 0 REJECTS 0 0 0
+                      83:11:02:25
+                      LOGIN RATE 16
+                       1 0 0 2 446 0 580
+                      DF 0 REJECTS 0 0 0
+                      83:11:02:40
+                      LOGIN RATE 33
+                       0 0 0 0 447 0 580
+                      DF 0 REJECTS 0 0 0
+
+                      The Supervisor takeover is complete when it  has  all
+                      Tymnet  I  and  II  nodes  are  under its control and
+                      nothing is in TAKEOVER failure.
+
+                      NOTE: Takeover failure is when a node is stuck in one
+                      of its takeover states.  Tymnet I nodes have five (5)
+                      states.  Tymnet II has two takeover states.  
+
+                      On the color logger, you'll get the  node  number  of
+                      the node in takeover failure and which state the node
+                      is currently in.  TYMNET I has states 0-3.  TYMNET II
+                      has  state 0 only.  If you cannot correct the problem
+                      with a retake of the upstream neighbor, notify  Field
+                      Engineering (FE) of that particular region.
+
+              5.  After the takeover is completed, the  following  must  be
+                  accomplished.
+
+                  A.  Do a LSTMIN on the Supervisor you have  just  put  to
+                      sleep.  Get total logins.
+
+                                                    PAGE  73
+SUPERVISOR MOVES
+
+
+                  B.  Type version on the active  Supervisor  and  get  the
+                      version of code running PROBE, KERNEL and SUPER.
+
+                  C.  Do an ALL NODES  (AN)  and  LIST  SHUTS  (LSHUT)  and
+                      COUNT.   Compare  the  LSHUT  from the current active
+                      Supervisor with the LSHUT  from  the  Supervisor  you
+                      have   just   put  to  sleep.   There  should  be  no
+                      difference  on  LSHUT  and  COUNT.   If  there  is  a
+                      different  in  the COUNT, use the AN to determine the
+                      discrepancy.
+
+              6.  A Netcon incident report  must  be  filled  out  for  all
+                  unscheduled supervisor Moves.
+
+                                                    PAGE  74
+
+
+
+
+
+
+
+
+                            NETWORK OPERATIONS PROCEDURE
+
+
+                                SUPERVISOR FAILURES
+
+
+
+          I.  PURPOSE
+
+          This procedure provides for orderly restoration in the event of a
+          network Supervisor failure.
+
+          II.  DEFINITION
+
+          Supervisor Failure:  A  Supervisor  failure  can  be  defined  as
+          anytime   a  Supervisor  leaves  the  network  and  the  stand-by
+          Supervisor fails to take control of the network.
+
+          III PROCEDURE
+
+          When the Network Specialists have  determined  that  the  Network
+          Supervisor has failed, they should take the following steps:
+
+              1.  Contact the manager for Network Control.
+
+              2.  Check to see that the stand-by terminals  are  logged  in
+                  and that they are operational.If stats indicate that more
+                  than one Supervisor is active sleep any Supe which is:
+
+                  - Active, but  known  to  be  an  unacceptable  Supe  (as
+                    specified by the shift supervisor).
+                  - Is higher in number than any other Supe which is awake.
+
+              3.  Call Computer Operations.  Request assistance from one of
+                  the  operators.   Have  the  operator look at the display
+                  pannel to  identify  the  indicator  in  the  right  most
+                  oposition.  The following displays are possible:
+
+                  - Digit alternating between 0 and 1.  This indicates that
+                    the Supe is inactive and is recovering from a crash.
+
+                                                    PAGE  75
+SUPERVISOR FAILURES
+
+
+                  - Digit alternating between 0 and 2.  This indicates that
+                    the  Supe  is  inactive,  and  probably  does  not have
+                    working Supervisor or Kernel software.
+                  - Digit alternating between 0 and 3.  This indicates that
+                    the Supe is inactive, frozen, or off of the run queue.
+                  - Digit alternating between 0 and 4.  This indicates that
+                    the Supe is inactive and sleeping (go to step 6).
+                  - Digit alternating between 0 and 5.  This indicates that
+                    the Supe is active ( go to step 4).
+                  -  Digit  not  alternating.   This  indicates  that   the
+                    Supervisor node code is looping or is haulted.
+
+              4.  If more than one Supe is active (alternating  0  and  5),
+                  the  Supe with the highest number should be powered down.
+                  This is accomplished by turning off the machine with  the
+                  keyed  power  switch  located  on  the  left  side of the
+                  console.  Restore power  to  the  machine  after  waiting
+                  three (3) minutes.
+
+              5.  Continue to monitor the Supes *.
+
+                  * Do nothing if you can't talk via PROBE to an acceptable
+                    back-up  Supe.   If  there is no active Supe within ten
+                    (10) minutes go to step six (6).
+                  * Awaken an acceptable back-up via the TWAKE  command  in
+                    PROBE and then go to step nine (9).
+
+              6.  If there is still not  an  active  Supe  after  ten  (10)
+                  minutes,   turn   the   key  to  'on'  on  both  engines.
+                  Simultaneously press the  'INI'  button  for  the  lowest
+                  numbered acceptable Supe.
+
+              7.  If there is not an active Super after ten  (10)  minutes,
+                  repeat  the  procedure  in step 6 on the next higher Supe
+                  number.  Repeat this procedure every twelve (12)  minutes
+                  until  you  run out of Supes.  When you run out of Supes,
+                  go to the donut wheel  and  buy  two  (2)  dozen  donuts.
+                  Bring  them  back for your fellow operations personnel to
+                  eat while  they  scan  the  want-ads,  and  update  their
+                  resume's.
+
+              8.  Monitor the takeover.  If all looks  good,  and  you  can
+                  log-in, congrats! If it doesn't, go back to step 7.
+
+                                                    PAGE  76
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                      PROJECTS
+
+
+
+          I.  PURPOSE
+
+                  The purpose of network project control procedures  is  to
+                  schedule  in advance, any and all events occurring in the
+                  network.
+
+
+          II.  DEFINITION
+
+                  Network  Project.   A  network  project  is   any   event
+                  scheduled   to  occur  within  the  network,  such  as  a
+                  reconfiguration, upgrades, additions, and  deletions.   A
+                  network  project  may  include  hardware  and/or software
+                  events.
+
+
+          III.  PROCEDURES
+
+              A.  At the  beginning  of  each  shift,  check  all  incoming
+                  projects  and  their  current  status.  Note problems and
+                  expected project completion dates and times.
+
+              B.  List projects scheduled for future implementation in  the
+                  project  log  book  and  file  numerically by date in the
+                  project book.  
+
+              C.  Verify  all  codes  issued  on  a  daily  basis.    Match
+                  checksums  on  the  checksum  list.   Note that checksums
+                  should  be  on  both  the  primary  Go  Load  II  program
+                  currently  on  System  70  and  backed  on the secondary,
+                  System 25.
+
+              D.  Check all projects along with shut   load  times,  making                                                     _
+                  sure  that  all  nodes  are in the checksum list.  Have a
+                  project or hand written report scheduled  for  that  day.
+                  All   projects  or  hand  written  reports  with  special
+                  instructions will be followed as  such  and  document  if
+                  instructed otherwise.
+
+              E.  Fill out a detailed project tracking form for every  node
+                  involved in a project.
+
+                                                    PAGE  77
+PROJECTS
+
+
+              F.  When specific instructions have  been  followed  and  all
+                  Network  Control responsibilities have been completed for
+                  each node, mark it "complete".
+
+              G.  All incomplete items should be  marked  "incomplete"  and
+                  documented   on   a   tracking   form  with  the  project
+                  description.  If a code problem is involved,  an  attempt
+                  should  be made to contact code generators to correct and
+                  regenn the code.  If a hardware problem is  involved  and
+                  no  OnTyme has been sent concerning its latest status, it
+                  should  be  described  on  the  tracking  form  and   all
+                  operation  centers should be notified at the beginning of
+                  their shifts.
+
+              H.  All projects started on one shift and carried  over  into
+                  the next shift, should be marked "In Progress".
+
+              I.  Note all code loads pertaining to scheduled  projects  on
+                  the  end-of-shift  summary.   A  detailed  outline of the
+                  current status of all code loads completed, in  progress,
+                  or not completed, should be sent to all concerned.
+
+                                                    PAGE  78
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              CHANGE NEIGHBOR COMMAND
+
+
+
+          I.  PURPOSE
+
+                  This procedure is to define  the  process  by  which  the
+                  change neighbor command is used.
+
+
+          II.  DEFINITION
+
+                  Change neighbor command - This command enables a user  to
+                  change  the  indicated  neighbor  on  a line in the nodes
+                  memory.  The Supervisor will not make this change to  its
+                  node descriptor table until a retake occurs.
+
+
+          III.  PROCEDURE
+
+                  The change neighbor command should only be  used  when  a
+                  network  node  cannot  be  taken  down during a scheduled
+                  protect reconfiguration, or if a neighbor to a dead-ended
+                  node  is  to be reconfigured, or upgraded to a Tymnet II.
+                  This command should only be used for temporary conditions
+                  until the actual changes can be made in the code, and the
+                  nodes are reloaded to refect these changes.  Example:
+
+                  :CN      X       Y       Z
+                  :RETAKE  X
+                  :BORI    X       Y
+                  X = The constant node number
+                  Y = The line number in node X
+                  Z = The new neighbor number to which the line is to be
+                   connected.
+
+                  The change neighbor command will not take effect until  a
+                  retake  is Bori.  A notation in the log book is made when
+                  this command has been issued.  Note: The change  neighbor
+                  command  does  not apply to Tymnet II nodes.  If the node
+                  is reloaded with the  same  generation  of  software  the
+                  patch will be lost.
+
+                                                    PAGE  79
+   
+
+
+                            NETWORK OPERATIONS PROCEDURE
+
+
+                                      TURNOVER
+
+
+
+
+                  I.  PURPOSE
+
+                  This document describes the process used for transferring
+                  outage  tickets  and  other information from one shift to
+                  the next.
+
+
+                  II.  DEFINITION
+
+                  Turnover is the process of transferring information about
+                  outages  reported  and  actions taken during one shift to
+                  the next/previous shift's personnel.
+
+
+                  III.  PROCEDURE
+
+                  Separate  turnover  procedures  have  been  set  up   for
+                  current-shift personnel and for next-shift personnel.
+
+                  A.  Current-shift procedures
+
+                  One hour before the end of the shift, a  summary  of  all
+                  node  and  host  outages  must  be  sent  out.  It should
+                  include the date/time an outage was reported, as well  as
+                  the  most  recent  status  of  the  outage.  It must also
+                  account for the shut table in PROBE and  give  status  of
+                  all  Supervisors.   This  summary  should  be  created on
+                  System 70 and copied to Systems 25 and 28 (see Example).
+
+
+                  At 22:45GMT a hard copy of TMS display for  hosts,  nodes
+                  and  lines must be snapped.  Corresponding outage tickets
+                  must exist, and should have been updated within the  last
+                  2  hours.   All  outages should have been referred to the
+                  proper support group and a record kept on each ticket.
+
+
+                  Hard  copies  of  PROBE's  Exc,  and  LShut   should   be
+                  available.
+
+
+
+                                                    PAGE  80
+TURNOVER
+
+
+                  Copies of the Supervisor Incident Reports and  the  Close
+                  Out  Log  should  be stapled to filed closed out tickets.
+                  Copies of the Supervisor Incident Reports and  the  Close
+                  Out  Log  should  be  deposited  in  the  Network Control
+                  Manager's IN basket.
+
+
+
+                  B.  Next-shift procedures
+
+                  Read the log book for the two previous shifts.  Look  for
+                  problems or requests for action pertinent to the upcoming
+                  shift.  Initial all log book pages  read.   Take  a  hard
+                  copy  of  all Ontyme hosts and accounting blocks.  Attach
+                  this to the log book.
+
+
+                  Check all terminals, making sure they are logged into the
+                  proper  programs.   The  pilot  position should be logged
+                  into PROBE under  the  user  name  "Netcon".   Check  all
+                  Supervisor  Standby and Consolidator terminals for proper
+                  login.  Get information from  previous  controller  about
+                  all abnormalities observed.
+
+
+                  Check Ontyme and project book for any items that may need
+                  action  during  upcoming shift.  Put all projects on clip
+                  board.
+
+
+                  Examine all incomplete projects for most  recent/accurate
+                  status.
+
+
+                  Check Collector for proper  operation  (as  described  in
+                  Collector procedures).
+
+
+                  Check the previous shift summary against all  outstanding
+                  open node and host outage tickets.  Check that the outage
+                  ticket's most recent status description is  the  same  as
+                  that of the Shift Summary.
+
+
+                  Check  the  L-shut  table  against  the  previous   Shift
+                  Summary.   Make  sure  all  shuts  are accounted for with
+                  brief descriptions.
+
+
+
+                                                    PAGE  81
+TURNOVER
+
+
+                  Take a hard copy of the TMS display for nodes, lines, and
+                  hosts  at  14:45GMT.   Verify  that an outasge ticket has
+                  been generated on all outages displayed on the hard copy.
+                  Check  that  the  last  status of the outage tickets have
+                  been updated within the last 2 hours.   Verify  that  all
+                  outages   which  should  have  been  referred  to  Telco,
+                  Customer Service, or the maintenance  regions  have  been
+                  relayed.   Review  each  ticket,  making  sure  that  all
+                  procedures have been followed properly.
+
+
+                  Check all monitor tickets for validity.  Make  sure  that
+                  resolutions have resulted in closed out tickets.
+
+
+                  Read all Netcon mail.
+
+
+                  Note: Oversights or inaccuracies must be corrected by the
+                  previous shift's supervisor or controller.
+
+                                                    PAGE  82
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                            END-OF-SHIFT PROJECT SUMMARY
+
+
+
+          I.  PURPOSE
+
+                  This procedure is to define the  progress  in  which  the
+                  outgoing  shift can account for all scheduled projects in
+                  the public network during that shift.
+
+
+          II.  DEFINITION
+
+                  End of shift project summary.  The end of  shift  project
+                  summary  is a detailed status report of all projects on a
+                  daily basis which have been executed on a specific shift,
+                  and are either completed or incomplete.  Projects pending
+                  notification from various  maintenance  groups  in  which
+                  network  control  has yet to be notified via telephone or
+                  Ontyme, will be  labled  inprogress,  by  the  off  going
+                  shift.
+
+
+          III.  PROCEDURE
+
+                  At the end  of  each  shift,  network  control  staff  is
+                  required to publish a report via Ontyme called the End of
+                  Shift Project Summary.  This report should be concise  on
+                  all  projects  attempted,  as  well as completed for that
+                  shift.  The report should be generated on Ontyme and sent
+                  out  to  *projects.   Hardcopies  on  the project summary
+                  should be attached to the shift turnover report for  that
+                  specific shift, as well as one on the project clip board.
+
+                                                    PAGE  83
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                  CIRCUIT TRACING
+
+
+
+          I.  PURPOSE
+
+                  This procedure defines the process by which circuits  are
+                  traced through the Network.
+
+
+          II.  DEFINITION
+
+                  The TRACE command traces a circuit in Tymnet  II  from  a
+                  specified  host  and  port  on a specified node.  It also
+                  traces the Tymnet II portion of a  circuit  that  corsses
+                  from  Tymnet  I  into  Tymnet  II.   The trace informatin
+                  consists of a list of Tymnet II nodes the circuit  passes
+                  through.
+
+
+          III.  PROCEDURE
+
+                  Syntax:  TRACE tymnet II node     Ntymnet I node  channel
+                    
+                  or       TRACE tymnet II node     Hhost     port 
+
+                  For use with the CHAN command (Section 2.1.5) to trace
+                   control circuits,
+                  the syntax is:
+
+                            TRACE active-supervisor-sport -node 
+
+                  Description: The TRACE command traces a circuit in Tymnet
+                  II  from  a  specified host and port on a specified node.
+                  It also traces the Tymnet II portion of  a  circuit  that
+                  crosses   from  Tymnet  I  into  Tymnet  II.   The  trace
+                  information consists of a list of  Tymnet  II  nodes  the
+                  circuit passes through.
+
+                  Following is  a  sample  command  and  response  sequence
+                  tracing  a  circuit  ending  on Tymnet II node 2005, host
+                  125, and port 5:
+
+                  :TRACE 2005 H125 5
+                  HOST 125 PORT 5 2005 2010 2017 NODE 1306 CHANNEL 27
+
+                                                    PAGE  84
+CIRCUIT TRACING
+
+
+                  Note that the previous  circuit  traced  in  the  example
+                  crossed into Tymnet I.
+
+                  When tracing this same circuit starting from the Tymnet I
+                  portion,  PROBE  types  the Tymnet II node number TII ( )
+                  where   is the decimal channel number used  on  the  link
+                  from the Tymnet I node to the Tymnet II node.
+
+                  Example:
+
+                  :CT 1303
+                  TII (27) 2005 1306 1326 1303 P19
+
+                  The syntax to trace the Tymnet II portion of the circuit
+                   is:
+
+                  TRACE tymnet II node    Ntymnet I node   channel 
+
+                  A sample command/response sequence is:
+
+                  :TRACE 2005 N1306 27
+                  NODE 1306 CHANNEL 27 2017 2005 HOST 125 PORT 5
+
+                  NOTE:  The  user  should  be  aware  that  this   command
+                  generates  data  flow  in the network and may have a slow
+                  response time.
+
+
+          IV.  LIMITATION
+
+              1.  There is only one trace buffer in the  Supervisor.   This
+                  limits  one  execution  of  the  trace  command until the
+                  buffer is cleared.  If you get data back and  it  appears
+                  wrong,  you may have someone elses command.  The issuance
+                  of trace command is sent to the logger in order to  alert
+                  you of the buffer uses.
+
+                                                    PAGE  85
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                 PASSWORD SECURITY
+
+
+
+          I.  PURPOSE
+
+                  To establish the necessary attitude needed to insure  the
+                  integrity of our network access.
+
+
+          II.  DEFINITIONS
+
+                  Password - A collection of characters numbering at  least
+                  seven  (7)  and  not more than twenty (20).  At least one
+                  non-alpha character will be embedded in  the  collection.
+                  A semi-colon or a control-M may not be used.
+
+
+          III.  PROCEDURE
+
+              1.  All passwords will be changed on the first Monday of each
+                  month.
+
+              2.  When an employee is  involuntarily  discharged  from  the
+                  company,   said   employee  will  be  escorted  from  the
+                  building.  After  the  employee  is  out  the  door,  all
+                  passwords will be changed.
+
+              3.  In the case of voluntary discharge, the next  shift  will
+                  be responsible for changing of all passwords.
+
+              4.  No password will be dispensed to any party out  of  their
+                  unit.
+
+              5.  The list of passwords to be changed will be:
+
+                  All - probe user names
+                  All - Tymshare host user names
+                  All - Network patrol user name
+                  Group - Ontyme user name
+                  All - Terminal multiplexer user name
+                  PIP 10 - Operators license
+
+                                                    PAGE  86
+PASSWORD SECURITY
+
+
+              6.  Upon termination of  employment  the  unit  manager  will
+                  cancel any individual user names, or operator license the
+                  person had sole  access  to.   If  the  unit  manager  is
+                  unavailable,  then  the  next  available  manager will be
+                  notified of the necessary change.
+
+              7.  Passwords will not be  transmitted  via  readable  media.
+                  This includes Ontymes.
+
+              8.  Divulging passwords is reprehensible and not  limited  to
+                  termination.
+
+                                                    PAGE  87
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                   NETWORK PATROL
+
+
+
+          I.  SCOPE
+
+                  To provide a consistency needed to maintain a monitor  of
+                  the network.
+
+
+          II.  DEFINITIONS
+
+                  TMCS = Tymnet Monitoring and Control System
+
+
+          III.  PROCEDURE
+
+              1.  Define a person to be the data base administrator for the
+                  monitoring group.
+
+              2.  This person will need a  minimum  license  of  'UPD'  and
+                  'SETN'  with  all  node  and host numbers in the profile.
+                  This user name must be valid on all TMCS systems.
+
+              3.  All additions and deletions will have to be made  on  all
+                  TMCS  systems  in  order  to  maintain  consistency  with
+                  systems.
+
+
+                                                    PAGE  88
+NETWORK PATROL
+
+
+              4.  The naming conventions will be as follows:
+
+                  A) All node names for  machines  in  North  America  will
+                      follow the following format:
+
+                      XXXXXX-DT
+                      Where XXXXXX is the node name
+                      - is an underscore
+                      D is the maintenance district
+                      T is the type of application
+
+                      Example for 'D' are:
+
+                      A = China Basin
+                      B = Boston and New England District
+                      C = Chicago
+                      D = Dallas
+                      H = Houston
+                      L = Los Angeles
+                      N = New York
+                      P = Philadelphia
+                      S = Santa Clara
+                      T = Seatle, Wash.
+                      V = Denver
+                      W = Washington
+                      X = Phoenix
+
+                      Example for 'T' are:
+
+                      A = ASYNC Tymsat on an engine
+                      B = Base that computer maintenance handles
+                      I = Isis
+                      S = Switcher
+                      V = All varian data machines
+                      U = Micro node
+                      M = Mini Enginer
+
+                                                    PAGE  89
+NETWORK PATROL
+
+
+                      Example for 'XXXXXX' will bear two ways.
+
+                      If the machine is located at  a  Tymnet  or  Tymshare
+                      location,  then the name will be the city in which it
+                      is located.
+
+                      If the machine is at a customer  location,  then  the
+                      name  will  be  that of the customer, even if it is a
+                      Tymnet machine being housed by someone.  We only have
+                      access during their work hours.
+
+                      Upon seeing a city as the name then it  is  known  we
+                      have access to site any time of the day or night.
+
+
+                  B) Node names of machines out of North America will  bear
+                      the name of the city in which it is located.
+
+
+                  C) Host names will bear the following formats:
+
+                      XXXXX3270 = 3270 host on Tymnet machine
+                      YYYYYYX25 = X25 host on Tymnet machine
+                      YYYYYYX75 = X75 host on Tymnet machine
+                      XXXXXGATE = Gateway to private network
+                      ASYNC     = ASYNC Tymcom slot on customer machine
+                      XXXXXBISY = BISYNC Tymcom host on Tymnet machine
+                      BISYNC    = BISYNC host on customer machine
+                      327ONH    = 3270 Native host on customer machine
+                      327OVH    = 3270 Virtual host on customer machine
+                      3270VTERM = 3270 Virtual terminal interface
+                      3270TERM  = 3270 Terminal interface
+
+                  *Note: Where the host is on  a  customer  machine,  their
+                  name  can be deleted from the host name as all host print
+                  outs also contain  mention  of  the  machine  it  is  on.
+                  Therefore, you do not need to see the name twice.
+
+
+              5.  Groups found not adhereing to the policy will have  their
+                  license removed.
+
+                                                    PAGE  90
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                    NPLI REPORT
+
+
+
+          I.  PURPOSE
+
+                  This procedure is to  define  the  amount  of  number  of
+                  please  log  in's  (NPLI)  only  induced by "dloading" of
+                  nodes scheduled for network reconfiguration.
+
+
+          II.  DEFINITION
+
+                  Number of please log in - a recorded amount of data users
+                  lost  while  on  a  circuit  or link which has broken its
+                  constant carrier momentarily, or otherwise.
+
+
+          III.  PROCEDURE
+
+              A.  Fill out NPLI tracking form by numberical date  of  shut.
+                  (Attached on back.)
+
+              B.  Sub-total both Tymnet I and Tymnet II nodes with a  final
+                  total of both.
+
+              C.  Total all code loads by corresponding shift.
+
+              D.  Sub-total aal NPLI's induced by shift, with a  total  sum
+                  of all recorded.
+
+              E.  Compile all statistics in  outline  form  with  all  NPLI
+                  tracking forms attached.  
+
+                                                    PAGE  91
+  
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                        STANDBY NETWORK SUPERVISOR TERMINALS
+
+
+
+          I.  PURPOSE
+
+                  The procedure defines the way the standby Supervisors are
+                  utilized.
+
+
+          II.  DEFINITION
+
+                  The standby Supervisors  have  terminals  located  within
+                  Network  Control.   Each terminal will be logged into one
+                  of the Network Supervisors, via PROBE> One terminal  will
+                  have  an  active  Supervisor, the other terminals will be
+                  logged into the other supervisors in a "ready" state.  
+
+
+          III.  PROCEDURE
+
+              1.  The standby Network Supervisor terminals  should  be  the
+                  first  item  checked when starting turnover.  Each should
+                  be logged in via PROBE into Hosts 121, 122, 123, 124  and
+                  125  (whatever  hosts are applicable).  The username will
+                  be "standby".  There are three primary phone numbers used
+                  for  accessing  the Network, these numbers are located on
+                  the side of the Supervisor 1 standby terminal.
+
+              2.  Checking the standby terminals, you  should  verify  that
+                  the  terminal  is logged into the correct Host.  Check to
+                  see that the terminal has a sufficient amount  of  paper.
+                  Check  and  verify  the "TIME", the (DF) Drowiness Factor
+                  and the state of the standby supervisor.
+
+                  If a Supervisor is found to have a (DF) Drowiness  factor
+                  other  than (0) zero, and/or in a state other than Active
+                  or Sleeping, should  be  noted  in  the  Network  Control
+                  logbook.   Check  wih  the offgoing shift for the current
+                  status on these Supervisors.   Also,  a  Network  Control
+                  Incident  ticket  should  be  open  until  the problem is
+                  resolved.
+
+                                                    PAGE  92
+STANDBY TERMINALS
+
+
+              3.   A  "LOG  S"  command  will  be  issued  on  all  standby
+                  Supervisors.   This  will  give us a logger by seconds on
+                  the Active Supervisor.   On  the  other  Supervisors,  we
+                  should  get the last time that particular Supervisor went
+                  to sleep, whether by command or otherwise.  Each terminal
+                  should  be  set  to  run  on  hardcopy, except the Active
+                  Supervisor.  The purpose of the hardcopy  is  to  give  a
+                  record of takeover, should the active Supervisor fail and
+                  a standby Supervisor automatically starts taking over the
+                  Net.
+
+              4.  If there is a problem with one of the terminals used  for
+                  accessing   the  standby  Supervisors,  another  terminal
+                  within Network Control will be designated  as  a  standby
+                  terminal until the regular terminal is repaired.
+
+              5.  Each standby terminal should be checked  at  least  three
+                  (3) times during each shift, not including turnover.
+
+              6.  Problem with the standby Supervisors and terminals should
+                  be reported to the appropriate people.
+
+                  A.   Being  unable  to  log  into  a   sleeping   standby
+                      Supervisor  should  be  reported  to  the  Manager of
+                      Network Control or designate, and NTD contacts.
+
+                  B.  Ring No Answer (RNA) on our access numbers, should be
+                      reported to Western Network Field Engineering (WNFE).
+
+                  C.  Terminal problems will be reported to Hewlitt-Packard
+                      for  repair.   Any other problems will be reported to
+                      the shift Supervisor.
+
+                                                    PAGE  93
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                              PORT SPEWING CHARACTERS
+
+
+
+          I.  PURPOSE
+
+                  This procedure defines the steps  taken  when  the  "Port
+                  Spewing Characters" message is received.
+
+
+          II.  DEFINITION
+
+                  Port Spewing Characters.  Port Spewing Characters can  be
+                  defined as a condition where an asynchonous port is in an
+                  open  condition  and  continuously  floods  the   Network
+                  Supervisor with characters.  If this condition is allowed
+                  to continue, it could possibly cause the  active  Network
+                  Supervisor to crash.
+
+
+          III.  PROCEDURE
+
+                  *4/29/83 23:02:28 node  PORT port  <in  decimal>  SPEWING
+                  CHARACTERS
+
+                  Event number: 30
+
+                  The specified async port was running  free  and  flooding
+                  the supervisor with logon characters.
+
+                  NOTE: *This network message  will  be  displayed  on  the
+                  logger whenever a 'SPEWING CHARACTERS' problem occurs.
+
+              1.  Do a retake of the node 'SPEWING CHARACTERS'.  This  will
+                  cause  the active Supervisor to take another look at that
+                  particular node and hopefully  reset  the  port  that  is
+                  'SPEWING CHARACTERS'.
+
+              2.  Notify the regional Network Field  Engineer  and  see  if
+                  they can go busy out that port.
+
+
+                                                    PAGE  94
+PORT SPEWING CHARACTERS
+
+
+              3.  If a (FE) Field Engineer cannot be reached or if the node
+                  is  in  a  remote  location, try taking the node down and
+                  reloading it.
+
+              4.  If a reload does not correct your problem, DLOAD the node
+                  and leave it down until maintenance can go to the site.
+
+                                                    PAGE  95
+   
+
+
+                            NETWORK OPERATIONS PROCEDURE
+
+
+                                DELOADS AND RELOADS
+
+
+
+          I.  OVERVIEW
+
+                  A  condition  that  necessitates   loading   code   which
+                  includes:  The  introduction  of a new version of code, a
+                  change in the local configuration, or reloading  after  a
+                  maintenance procedure.
+
+          II.  DEFINITION
+
+              A.  DLOAD: The process by which the first few instructions of
+                  executable  code  are entered into the node.  This forces
+                  the machine online to go  into  the  boot  strap  program
+                  (leave the network), and await further instruction.
+
+              B.  RELOAD: A downline loading program used to load a  binary
+                  image  of executable code and interface parameters into a
+                  Tymnet technology network.
+
+          III.  PROCEDURE
+
+              A.  Choosing a neighbor node: The controller must be able  to
+                  build  a virtual circuit from the host system running the
+                  LOADII program to the neighbor node or  the  node  to  be
+                  reloaded.   The  neighbor  node must be running and under
+                  the Supervisors control.  It must also  have  passthrough
+                  capacity.   To  act  as  a downline loading neighbor, the
+                  machine must be running a downline  loadable  version  of
+                  code itself.  Some Bisync Varian Tymcoms do not meet this
+                  requirement.
+
+              B.  Choosing a line: There are differences between loading an
+                  Engine,  and  loading  a Varian.  A Varian may have up to
+                  sixteen (16) lines.  Only the first eight (8) can be used
+                  for  loading.   Engines  may  have  up to thirty-two (32)
+                  lines, of which the first sixteen (16) may  be  used  for
+                  loading.   Whenever  possible  it  is  recommended that a
+                  hardwired line be used for loading both  the  Engine  and
+                  the Varian.
+
+              C.   DLOADing  Varians:  It  is  always  recommended  to  the
+                  neighbor  on  line  zero (0) when possible.  Varians must
+                  always have  the  line  number  of  the  neighbor  chosen
+                  specified  when  DLOADing,  and  the same line number and
+                  neighbor must be used for RELOADing.  (If a  line  number
+                  is omitted from the command, a zero is assumed.
+
+                                                    PAGE  96
+DELOADS AND RELOADS
+
+
+              D.  DELOADing and RELOADing Engines: No special  instructions
+                  are required other than choosing the correct neighbor and
+                  line    number.     ***    WARNING:    Physical     lines
+                  2,3,6,7,10,11,14  and  15  do  not  raise request to send
+                  signals while running the boot strap.  This may  cause  a
+                  loss  of  some  records.   It is therefore prefereable to
+                  choose a line which does raise request to send.
+
+          IV.  EXAMPLES
+
+              A.  Example of a Varian Load:
+
+                         - go LOADII
+                         :l
+                         ENTER NEIGHBOR NUMBER:1212
+                         ENTER LINE NUMBER: 6
+                         ENTER OBJECT FILE NAME: TTT64.REL
+                         NODE:0064   VERSION:031310
+                         MACH:V70  MEMORY:24K   PASSTHRUS:
+                         LINE TABLES:
+                         LINE NEIGH GROUPS:
+                            0  1212   1
+                            1  1077   2
+                         HOST(S)
+                         BUILDING CUIRCUIT
+                         CIRCUIT BUILT
+                         NODE 1212 HAS ACKNOWLEDGED THE REQUEST
+                         LOADER SENT
+                         LOADER RECEIVED
+                         LOADING
+                           40-XMT    18-RCV    0-LOST
+                           80-XMT    60-RCV    0-LOST
+                          120-XMT    90-RCV    0-LOST
+                          160-XMT   127-RCV    0-LOST
+                          200-XMT   169-RCV    0-LOST
+                          240-XMT   218-RCV    0-LOST
+                          280-XMT   254-RCV    0-LOST
+                          320-XMT   284-RCV    0-LOST
+                          360-XMT   327-RCV    0-LOST
+                          400-XMT   363-RCV    0-LOST
+                         ALL DATA TRANSFERRED
+                         SENDING STARTUP
+                         EXIT
+
+                                                    PAGE  97
+DELOADS AND RELOADS
+
+
+
+
+
+
+
+                  B.  Example of an Engine Reload:
+
+                         -go LOADII
+                         NODE LOADR VERSION-2.00
+                         ENTER NEIGHBOR NUMBER: 1212
+                         ENTER LINE NUMBER: 1
+                         ENTER OBJECT FILE NAME: (isis)ND3043.BND
+                         BUILDING CIRCUIT
+                         CIRCUIT BUILT
+                         NODE 1212 HAS ACKNOWLEDGED THE REQUEST
+                         LOADING
+                            40-XMT    12-RCV    0-LOST
+                            80-XMT    36-RCV    0-LOST
+                           120-XMT    72-RCV    0-LOST
+                           160-XMT   115-RCV    0-LOST
+                           200-XMT   151-RCV    0-LOST
+                           240-XMT   193-RCV    0-LOST
+                           280-XMT   230-RCV    0-LOST
+                           320-XMT   272-RCV    0-LOST
+                           360-XMT   315-RCV    0-LOST
+                           520-XMT   472-RCV    0-LOST
+                           600-XMT   550-RCV    0-LOST
+                           680-XMT   630-RCV    0-LOST
+                           720-XMT   672-RCV    0-LOST
+                         ALL DATA TRANSFERRED
+                         SENDING STARTUP
+                         EXIT
+
+                                                    PAGE  98
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                       FOR MODEMS ALREADY ON PARADYNE TABLES
+
+
+
+          Within  Diagnostic  Functions  Menu,  there  exists  a   Specific
+          Interface Test (Letter B):
+
+
+              1.  Do this test for  the  MASTER  Modem,  check  levels  and
+                  status  on  both  pages  of  output  using  the F2 key to
+                  advance to the next page.
+
+              2.  Do this test once again for the SLAVE Modem and check the
+                  levels and status.
+
+
+          *NOTE: Check Appendix for an example of Specific  Interface  Test
+          results.
+
+                                                    PAGE  99
+PARADYNE TABLES
+
+
+                      PROCEDURES TO FOLLOW AFTER TEST RESULTS
+
+
+
+              I.  If you receive a question mark (?)  in  the  Drop  and/or
+                  Line  Field, it indicates a data entry error or a certain
+                  location has yet to be added to the Analysis System.
+
+
+              II.  If you receive Specific Interface Test results:
+
+                  A.  Check both  pages  for  any  alarms  which  may  have
+                      occurred.
+
+                  B.  For receive signal level only - the  value  shown  on
+                      the  table  is  -3DB off from the actual count due to
+                      the  Analysis  System  (example:  -28DB   should   be
+                      reported  to  Telco  as -25DB, and so forth).  Levels
+                      from -10DB to -24DB are alright.
+
+                  C.   Phase  jitter  and  signal/noise  ratio  should   be
+                      interpreted  as  they are shown on the screen.  NOTE:
+                      Signal/noise alarm parameters are set based upon line
+                      conditioning.
+
+
+              III.  If you receive a Transmission Failure:
+
+                  A.   Verify  the  PVC  is  working  properly   for   that
+                      particular line.
+
+                      Within the Diagnostic  Functions  Menu,  there  is  a
+                      Control   Test Menu (Letter C), do the following test                               _
+                      from that Menu.
+
+                  B.  'A' Initialize  Remote  Diagnostic  Board  on  MASTER
+                      Modem.
+
+                  C.  'A' Initialize RD Board on SLAVE Modem.
+
+                      If both  the  MASTER  and  SLAVE  Modems  fail,  call
+                      Maintenance.   If  either  one or both pass, continue
+                      on.
+
+                                                    PAGE 100
+PARADYNE TABLES
+
+
+                  D.  'E' Self-test remote diagnosis of the  MASTER  modem.
+                      If this test fails, have the field engineer check the
+                      RD board in the MASTER Modem.  Proceed to do steps BD                                                                          _
+                      once again.
+
+                      If  the  test  is  correct,  however,  the  test   to
+                      initialize the RD Board, as in Step B fails, have the
+                      Field Engineer check strapping on the  RD  Board  and
+                      proceed with Steps BD again.                                          _
+
+                  E.  'F' Self-test MASTER  Modem.   If  this  test  fails,
+                      check  Interface  (INTF)  Board strapping or replace,
+                      then check RD Board strapping or replace.
+
+                      NOTE: This test interferes with system operation  for
+                      up  to ten (10) seconds.  Operator should insure that
+                      said interference can be tolerated before  initiating
+                      the test.
+
+                                                    PAGE 101
+PARADYNE TABLES
+
+
+                  F.  'E' Self-test remote diagnosis of  the  SLAVE  Modem.
+                      If  this  test  fails, have the Field Engineer do the
+                      following steps (suggestion only).
+
+                      1.  Check strapping of RD Board on the SLAVE Modem.
+
+                      2.  Replace RD Board on the SLAVE Modem.
+
+                      3.  Check strapping of RD Board on the MASTER Modem.
+
+                      4.  Replace RD Board on the MASTER Modem.
+
+                      5.  Check  strapping  on  Forward  Secondary  Channel
+                          Board on the SLAVE Modem.
+
+                      6.  Replace FSC Board on the SLAVE Modem.
+
+                      7.  Check strapping of FSC Board on the MASTER Modem.
+
+                      8.  Replace FSC Board on the MASTER Modem.
+
+                      9.  Check strapping on INTF Board on the SLAVE Modem.
+
+                     l0.  Replace INTF Board on the SLAVE Modem.
+
+                     11.  Check strapping of INTF Board on MASTER Modem.
+
+                     12.  Replace the INTF Board on the MASTER Modem.
+
+                      If  the  test  is  correct,  however,  the  test   to
+                      initialize the RD Board, as in Step C fails, have the
+                      Field Engineer check strapping on the RD  Board,  and
+                      do the following steps once again, Steps CF.                                                                _
+
+                                                    PAGE 102
+PARADYNE TABLES
+
+
+                  G.  'F' Self test SLAVE Modem.  If this test fails,  have
+                      the Field Engineer do these steps (suggestion only).
+
+                      1.  Check strapping of INTF Board on the SLAVE Modem.
+
+                      2.  Replace INTF Board on the SLAVE Modem.
+
+                      3.  Check strapping of RD Board on the SLAVE Modem.
+
+                      4.  Replace RD Board on the SLAVE Modem.
+
+                      5.  Check strapping of FSC Board on the SLAVE Modem.
+
+                      6.  Replace FSC Boardd on the SLAVE Modem.
+
+                      7.  Check strapping of MP Board on the SLAVE Modem.
+
+                      8.  Replace MP Board on the SLAVE Modem.
+
+                      NOTE: This test interfaces with System operation  for
+                      up  to ten (l0) seconds.  Operator should insure that
+                      this interference can be tolerated before  initiating
+                      the test.
+
+                  H.  Other tests can be used to help isolate the  problem.
+                      These tests include PINPOINT TEST, TRANSMISSION TEST,
+                      and LOOPBACK TEST.
+
+                                                    PAGE 103
+PARADYNE TABLES
+
+
+                             FOR NEWLY INSTALLED MODEMS
+
+
+
+                  Within the Diagnostic  Functions  Menu,  there  exists  a
+                  Control    Test  Menu  (Letter C), do the following tests                           _
+                  from this Menu.
+
+
+                  1.  'B' Lamp "ON"  to  verify  MASTER  Modem;  the  Field
+                      Engineer  at  the  site  will confirm this.  Turn the
+                      light "OFF" using this command.
+
+                  2.  'B' Lamp  "ON"  to  verify  SLAVE  Modem;  the  Field
+                      Engineer  at  the  site  will confirm this.  Turn the
+                      light "OFF" using this command.
+
+                  3.  'A' Initialize RD Board on MASTER Modem.  If the test
+                      fails, continue on (further explanation below).
+
+                  4.  'A' Initialize RD Board on SLAVE Modem.  If the  test
+                      fails, continue on (further explanation below).
+
+                  5.  'E' Self-test remote diagnosis on the  MASTER  Modem.
+                      If this test fails, have the field Engineer check the
+                      RD Board in the MASTER Modem.  Proceed to do Steps  3
+                      and 5 once again.
+
+                  6.  'F' Self-test MASTER  Modem.   If  this  test  fails,
+                      check INTF Board strapping or replace.  Then check RD
+                      Board strapping or replace.
+
+                      NOTE: This test interferes with System  Operatin  for
+                      up  to ten (l0) seconds.  Operator should insure that
+                      this interference can be tolerated before  initiating
+                      the test.
+
+                                                    PAGE 104
+PARADYNE TABLES
+
+
+                  7.  'E' Self-test remote diagnosis of  the  SLAVE  Modem.
+                      If  this  test  fails, have the Field Engineer do the
+                      following steps (suggestion only).
+
+                      a.  Check strapping of RD Board on the SLAVE Modem.
+
+                      b.  Replace RD Board on the SLAVE Modem.
+
+                      c.  Check strapping of RD Board on the MASTER Modem.
+
+                      d.  Replace RD Board on the MASTER Modem.
+
+                      e.  Check strapping of FSC Board on the SLAVE Modem.
+
+                      f.  Replace FSC Board on the SLAVE Modem.
+
+                      g.  Check strapping of FSC Board on the MASTER Modem.
+
+                      h.  Replace FSC Board on the MASTER Modem.
+
+                      i.  Check strapping of INTF Board on the SLAVE Modem.
+
+                      j.  Replace INTF Board on the SLAVE Modem.
+
+                      k.  Check strapping  on  INTF  Board  on  the  MASTER
+                          Modem.
+
+                      l.  Replace INTF Board on the MASTER Modem.
+
+                                                    PAGE 105
+PARADYNE TABLES
+
+
+                  8.  'F' Self-test SLAVE Modem.  If this test fails,  have
+                      the Field Engineer do these steps (suggestion only).
+
+                      a.  Check strapping of INTF Board on the SLAVE Modem.
+
+                      b.  Replace INTF Board on the SLAVE Modem.
+
+                      c.  Check strapping of RD Board on the SLAVE Modem.
+
+                      d.  Replace RD Board on the SLAVE Modem.
+
+                      e.  Check strapping of FSC Board on the SLAVE Modem.
+
+                      f.  Replace FSC Board on the SLAVE Modem.
+
+                      g.  Check strapping of MP Board on the SLAVE Modem.
+
+                      h.  Replace MP Board on the SLAVE Modem.
+
+                      NOTE: This test interferes with the System  operation
+                      for  up  to ten (l0) seconds.  Operator should insure
+                      that  this  interference  can  be  tolerated   before
+                      initiating the test.
+
+                  9.  Return to the Diagnostic Functins Menu and do  a  "B"
+                      Specific  Interface Test on both the MASTER and SLAVE
+                      Modems.  Check the levels and status for each Modem.
+
+                                                    PAGE 106
+PARADYNE TABLES
+
+
+                      appendix normal eia, line and modem status
+
+                                                    PAGE 107
+PARADYNE TABLES
+
+
+                      appendix transmission failure
+
+                                                    PAGE 108
+   
+
+
+
+
+
+
+
+                           NETWORK OPERATIONS PROCEDURES
+
+
+                                  UTILITY PROGRAMS
+                               (TMCS, XRAY AND PROBE)
+
+
+
+          I.  PURPOSE
+
+                  This procedure defines the process by  which  TMCS,  XRAY
+                  and  PROBE  are  used  by  Network  Control.   A detailed
+                  description of TMCS, XRAY and PROBE  and  their  uses  is
+                  documented   in  their  appropriate  manuals  located  on
+                  Tymnet's System (NETDVDOC:33).  
+                  (NETDVDOC:33) PROBE.DOC
+                  (NETDVDOC:33) TMCS.DOC
+                  (NETDVDOC:33) XRAY.DOC
+
+
+          II.  DEFINITION
+
+           NOTE: This procedure contains specific user names.  These  names
+                  are included as examples only.
+
+              1.  PROBE: PROBE is a utility package  that  resides  on  all
+                  Network  Supervisors.   It allows you to query all of the
+                  Network nodes, lines and host interfaces and control some
+                  supervisor functions.
+
+              2.  TMCS: The Tymnet monitoring and control  system  (Product
+                  Title)  is  an inter-active system which provide multiple
+                  users with selective access to the status of  the  Tymnet
+                  Technology Network.
+
+              3.  XRAY: XRAY is an  interactive  monitoring  and  debugging
+                  system  that provides a real-time window into a Tymnet II
+                  node.  Through it,  the  user  can  conveniently  display
+                  information  about  the node's configuration, performance
+                  and history.  Remember, this is only the local node.
+
+
+          III.  PROCEDURE
+
+              1.  PROBE: Network Control should have  one  terminal  logged
+                  into  job  slot of each supervisor at all times.  One (1)
+                  should be logged  into  the  active  Supervisor  and  the
+                  others should be logged into our standby supervisors.
+
+                                                    PAGE 109
+UTILITY PROGRAMS
+
+
+                  A.  The username "NETCON" will only be used by the  pilot
+                      of  the  Network.   All other PROBE terminals will be
+                      logged in using the username of "NETCON2".  Remember,
+                      there  should  never be two (2) "NETCONS" logged into
+                      PROBE at the same time.
+
+                  B.  The standby terminals after being logged into  PROBE,
+                      and  the  printer  turned  on, should have an "LOG S"
+                      command issued.  This command serves two purposes:
+
+                      1.  It starts a  logger  by  seconds  on  the  active
+                          Supervisor.
+
+                      2.  It will give  you  the  last  time  the  inactive
+                          Supervisor  went  to sleep.  Also, if the Sup had
+                          taken a crash, the time the crash occurred.   The
+                          inactive  Supervisor paper log is also set to run
+                          in  this  mode,  should  one  of   the   inactive
+                          Supervisors start a Takeover.
+
+                  C.  The tasks that are most often  performed  by  Network
+                      Control using PROBE:
+
+                      1.  Snapping nodes, hosts and lines
+                      2.  Shutting/clearing lines
+                      3.  All nodes list
+                      4.  Sleeping/waking Supervisors
+                      5.  RNODE
+                      6. SYNPORT
+                      7. DLOAD
+                      8. Exceptions List (EXC)
+                      9.  TSTAT
+                     10.  BORI and T2BORI
+                     11.  Change Neighbors
+                     12.  LSTMIN
+                     13.  PERDAT
+
+                  D.  A PROBE Manual is located in  Network  Control  in  a
+                      binder  marked  "PROBE".   Also,  each  controller is
+                      required to have their own personal copy  of  "PROBE"
+                      and they should be familiar with the commands within.
+                      Any  questions  should  be  directed  to  the   Shift
+                      Supervisor.
+
+              2.  TMCS.  At the beginning of each  shift,  all  Controllers
+                  are  required  to  make  sure  the  required terminals in
+                  Network  Control  are  logged  into  TMCS   and   running
+                  properly.
+
+                                                    PAGE 110
+UTILITY PROGRAMS
+
+
+                  A.  The required programs used within Network Control:
+
+          PROGRAM            USERNAME               USE
+
+          HOST               NETCON3         MONITOR 24 HOUR HOSTS
+          COLORNODE          COLORNODE       MONITOR PUBLIC NODES  HOSTS                                                                  _
+          COLORLINE          COLORLINE       MONITOR LINES
+          COLORINFO          COLORINFO       NETWORK LOGIN INFORMATION
+          LOG                NETCON/NETCON 2 RUN A NETWORK LOG
+          DISPLAY            NETCON/NETCON 2 DISPLAY ALL NETWORK OUTAGES
+          GATEWAYS           GATEWAY       MONITOR PRIVATE NET GATEWAYS
+
+                  B.  The primary systems used to run TMCS is  Hosts  40l                                                                             _
+                      1400.  Both systems should have identical databases.
+
+                  C.  A TMCS Manual is located  in  Network  Control  in  a
+                      binder  marked  "TMCS".   Also, each cntroller should
+                      have his own personal copy of "TMCS" and they  should
+                      be  familiar with the commands within.  Any questions
+                      should be directed to the Shift Supervisor.  
+
+                                                    PAGE 111
+UTILITY PROGRAMS
+
+
+                      list something
+
+                                                    PAGE 112
+UTILITY PROGRAMS
+
+
+                      list something
+
+                                                    PAGE 113
+UTILITY PROGRAMS
+
+
+              3.  XRAY: XRAY provides a real-time window into a  Tymnet  II
+                  node.   Through  it,  the  user  can conveniently display
+                  information about the node's  configuration,  performance
+                  and  history.   XRAY  also  has  commands  to monitor the
+                  status of a node's  links,  trace  activity  and  isolate
+                  problems in the node.  Last (and perhaps least) XRAY is a
+                  debugging tool for programmers who can use it to diagnose
+                  nodecode and network bugs.
+
+                  A.  Network control uses what is known as "REMOTE  XRAY".
+                      Remote  access is gained by remotely logging into the
+                      kernel host of a node that is up in the network.
+
+                  B.  "ND" - Node Descriptor.  This is the primary  command
+                      used  within  Network Control.  This command lets the
+                      controller find out more, in less time, about a  node
+                      configuration  and current status in the node than he
+                      could through any  number  of  PROBE<  TMCS  and  DDT
+                      (De-bugger) commands.
+
+                  C.  An "XRAY" manual is located in Network Control  in  a
+                      binder  marked  "XRAY".  Also, each controller should
+                      have their own personal copy of "XRAY".  They  should
+                      be  familiar with the commands within.  Any questions
+                      should be directed to the Shift Supervisor.  
+
+                                                    PAGE 114
+UTILITY PROGRAMS
+
+
+          add figure
+
+                                                    PAGE 115
+   
+
+
+
+          BOOT NODE  . . . . . . . . . . . . . . 35
+
+          CHANGE NEIGHBOR COMMAND  . . . . . . . 78
+          CIRCUIT TRACING  . . . . . . . . . . . 83
+          CLEAR TMCS . . . . . . . . . . . . . . 11
+          CLEAR TMCS     . . . . . . . . . . . . 41
+          COLLECTOR  . . . . . . . . . . . . . . 66
+
+          DELOADS AND RELOADS  . . . . . . . . . 95
+
+          END OF SHIFT PROJECT SUMMARY . . . . . 82
+
+          GATEWAY FAILURE  . . . . . . . . . . . 6
+
+          HANG DDT USERS . . . . . . . . . . . . 14
+          HANG PROBE USERS . . . . . . . . . . . 8
+
+          ISIS ASYNC PORT  . . . . . . . . . . . 47
+          ISIS LOGICAL UNIT  . . . . . . . . . . 9
+          ISIS SLOT FAILURE  . . . . . . . . . . 16
+          ISIS SLOT HEALTH     . . . . . . . . . 42
+
+          LINE PERFORMANCE . . . . . . . . . . . 20
+
+          MEMORY ALLOCATION  . . . . . . . . . . 26
+          MUX  . . . . . . . . . . . . . . . . . 23
+
+          NETWORK PATROL . . . . . . . . . . . . 87
+          NODE FAILURE . . . . . . . . . . . . . 18, 33
+          NODE HEALTH    . . . . . . . . . . . . 38
+          NODE OUTAGE  . . . . . . . . . . . . . 57
+          NON H-W LINK . . . . . . . . . . . . . 2
+          NPLI REPORT  . . . . . . . . . . . . . 90
+
+          OCL LINK . . . . . . . . . . . . . . . 44
+
+          PARADYNE TABLES  . . . . . . . . . . . 98
+          PASSWORD SECURITY  . . . . . . . . . . 85
+          PORT SPEWING CHARACTERS  . . . . . . . 93
+          PROBE ACCESS OPERATIONS  . . . . . . . 53
+          PROBE LINE PERFORMANCE . . . . . . . . 55
+          PROJECTS . . . . . . . . . . . . . . . 76
+
+          SECURITY BREACH  . . . . . . . . . . . 60
+          SHUTS  . . . . . . . . . . . . . . . . 69
+          STANDBY NETWORK SUPERVISOR TERMINALS . 91
+          SUP MOVE . . . . . . . . . . . . . . . 12
+          SUPERVISOR FAILURES  . . . . . . . . . 74
+          SUPERVISOR MOVES . . . . . . . . . . . 71
+          SYNC LINE  . . . . . . . . . . . . . . 50
+
+          TMCS DIS . . . . . . . . . . . . . . . 28
+
+                                                    PAGE 116
+   
+
+
+          TMCS RECONFIGURING . . . . . . . . . . 62
+          TURNOVER . . . . . . . . . . . . . . . 79
+
+          UTILITY PROGRAMS . . . . . . . . . . . 108
+
+          XRAY LINK  . . . . . . . . . . . . . . 30
+   @7ü
