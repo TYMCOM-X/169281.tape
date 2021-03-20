@@ -1,0 +1,223 @@
+
+
+
+                                HOW TO USE THE
+                                ___ __ ___ ___
+
+                              JOURNAL MULTIPLEXER
+                              _______ ___________
+
+
+          COMMAND                      DESCRIPTION
+          
+            J n              To build a circuit to host n (A-T).
+            S n              To send commands to host n (A-T), <CR> to exit.
+            T n              To type out contents of buffer for host n (A-T).
+            Q                To exit the journal multiplexer program.
+            ?                To type out this list.
+          
+          
+
+          The Journal Multiplexer program allows the  user  to  create  ONE
+     circuit  to each ontyme production host.  This eliminates the need for
+     separate terminals for each ontyme host.  The Journal Mux for hosts  A
+     through J is accessed by logging into  OPER:6707;(oper password).  The
+     Journal Mux for ontyme hosts  K through T  is accessed by logging into
+     OPER:4260;(oper password).  Both programs will respond with :
+     
+     Journal Multiplexer Version 2.0
+     
+     Type ? for help.
+     
+     >
+     
+     
+
+          Only one user may be logged into each Journal Multiplexer at  one
+     time.   If  an attempt is made to log into a  journal mux  while it is
+     being  used,  the  message  "Only  one   user   allowed   on   Journal
+     Multiplexer."  will  appear.   When  the user leaves the program, with
+     either a "Q" or "shift" "control" "break", a flag is reset to indicate
+     that  the  program  is  no  longer  in  use.   If there is an abnormal
+     termination then the flag may not be reset.  This means that the  slot
+     must be reloaded.
+
+          The ">"  is  the  program  prompt.   To  build  a  circuit  to  a
+     production  host, e.g.  HS832, type "J A" after the prompt.  This will
+     cause one of two messages to appear,  one  message  indicates  that  a
+     circuit  is  being  built  to the host specified and the other message
+     issues a warning that a circuit is already built to the specified host
+     (remember, only one circuit to each production host).  
+
+          If the ontyme host does not have a circuit built to it and the "J
+     n"  command  (n  for  host  letter)  is  issued, then the program will
+     attempt to build a circuit to the specified ontyme host.  This is done
+     via  an aux circuit request which responds with either a successful or
+     unsuccessful  circuit  completion  message.   Unfortunately,  the  aux
+     circuit  request  does not detect all forms of an unsuccessful circuit
+     request.  For example, if the ontyme host is out  of  ports,  the  aux
+     circuit  request  will initially respond with a successful (or circuit
+     granted) message and will not detect that the host is  out  of  ports.
+     The  aux  circuit  request  will  detect  certain unsuccessful circuit
+     requests, e.g.  the host is not available.
+                                                                         Page 2
+
+
+          The  inability  of  the  aux  circuit  request  to   detect   all
+     unsuccessful  circuit  requests,  means  that after a "J n" command is
+     processed, the circuit may not be built to the specified ontyme  host.
+     After  issuing  a "J n" command, DO NOT type ahead.  Wait for either a
+     "Circuit request completed." or "Circuit NOT built." message  and  the
+     ">"  prompt, before issuing any further commands.  If the "Circuit NOT
+     built." message appears, then it is obvious that  the  "J  n"  command
+     must  be reissued.  After a few unsuccessful attempts, investigate the
+     status of the specified ontyme host to determine why a circuit  cannot
+     be built to it.  
+
+          The "Circuit request completed." message means that  the  circuit
+     request  has  been  processed  and the program is ready to accept more
+     commands.  But because of the  inadequate  detection  of  unsuccessful
+     circuit  requests  (described above) it does not mean that the circuit
+     has actually been built to the specified ontyme host.  If  the  "S  n"
+     command  (send)  is  unsuccessful  for  an  ontyme host then the "J n"
+     command should be reissued after using the "T n" command (type) to see
+     why the circuit was not built to the ontyme host (see below).
+     
+     Example of building a circuit :
+     
+     >J A
+     
+     Building circuit to EMSAA, please wait for '>'.
+     
+     Circuit request completed.
+     
+     >
+     
+     If the circuit was built then the "S A" command should work :
+     
+     >S A
+     A>                The program responds with "A>" so the circuit has
+                       been completed.
+     
+     >S A
+     
+     No circuit to this host.
+     
+     >                           The program  indicates  that  there  is no
+                                 circuit  built to  the host.  To find  out
+                                 why  the circuit  was not  built,  use the
+                                 "T  A"  command  to look  at  the  buffer
+     >T A                        contents.
+                                 Note : It is  possible  to  type out  the
+     EMSAA :                            contents of a  buffer  before  the
+                                        host has sent  the message  to the
+                                        slot.  If the buffer is empty then
+     host out of ports                  reissue  the "T n" command  so the
+                                        message  has a chance  to get into
+                                        the buffer.
+     
+     
+     Example of trying to build a circuit to an ontyme host
+     and the request was detected as being unsuccessful :
+     
+                                                                         Page 3
+
+
+     
+     >J A
+     
+     Building circuit to EMSAA, please wait for '>'.
+     
+     Circuit NOT built.
+     
+     >
+     
+     
+     Example of trying to build a second circuit to an ontyme host :
+     
+     >J A
+     Circuit already built to this host.
+     
+     >
+     
+      
+
+          Once a circuit is built to an ontyme host the "S" (send)  command
+     is used to send commands to the host.  Once in the send mode, anything
+     typed at the terminal will be passed on to the  specified  host.   The
+     send  mode  is indicated by the presence of the host letter before the
+     prompt (see below).
+     
+     
+     Example of getting into send mode for host A :
+     
+     >S A
+     A>              The program responds with A> to indicate that anything
+                     typed at the terminal will be passed to host A.
+     
+     Example of leaving send mode for host A :
+     
+     >S A
+     A>:EXEC * SPECIALJ         User sends command to start journal.
+     A><CR>                     User types a carriage return to get 
+                                back to the program prompt.
+     >
+     
+     
+     Example of trying to get into send mode with a host which doesn't
+     have a circuit built to it :
+     
+     >S A
+     No circuit to this host.
+     
+
+          All commands issued to a host are stored in a buffer, along  with
+     all output from the host.  This means that any response from a host is
+     not visible to the user.  To  see  any  responses  from  a  host,  the
+     corresponding  buffer  must be typed out.  The buffer can be typed out
+     at anytime (e.g.  during the execution of a  journal  to  monitor  its
+     progress).   The  "T"  (type)  command allows the user to look at each
+     hosts buffer.  After issuing the type command the current contents  of
+     the buffer will be displayed.  NOTE:  Each time a new circuit is built
+     to a host, the previous contents of that host's buffer will  be  lost.
+                                                                         Page 4
+
+
+     So  be  sure  to type out the contents of the buffer before building a
+     circuit to a particular host.
+
+          During execution of a journal for an ontyme host,  a  warning  is
+     issued  for two reasons, a buffer full message and a journal completed
+     message (see below).
+     
+     Example of starting a journal session on host A :
+     
+     >J A
+     Building circuit to EMSAA...
+     
+     >S A
+     A>:EXEC * SPECIALJ
+     A><CR>
+     
+     >** Host A Journal completed **           
+     
+     >T A
+     
+     
+     The above command will type out the host A buffer contents.
+     
+     If the buffer filled up during execution of the journal
+     then the following warning will be sent to the user :
+     
+     ** Warning ** Host A buffer full.
+     
+
+          If this occurs, then type out the buffer to see  if  the  journal
+     completed.   If the journal needs to be run again, then send ":log" in
+     the send mode to the host (to log off) and create another  circuit  to
+     the  host  which  will  reset  the  buffer  and  start  filling at the
+     beginning.
+
+          To   exit   the   Journal   Mux   type   "Q"   (for   quit)    or
+     "shift","ctrl","break" simultaneously.
+ 
