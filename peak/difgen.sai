@@ -1,0 +1,852 @@
+define !  = "comment", !! = "comment";
+!! title Program DifGen ;
+! *************************************************************************
+*************************************+*************************************
+*                                                                         *
+*                                                                         *
+*                                 DifGen                                  *
+*                                                                         *
+*       Compare the checksums of specified files from two directories     *
+*       and generate a list of those which are different.                 *
+*                                                                         *
+*                                                                         *
+*************************************+*************************************
+
+  edit history
+    16-Apr-86   v1.0(76)  kmd   First test version.
+    11-Apr-86   v1.0(73)  kmd   Rewrite most of the logic in the
+                                mainline and want file and file
+                                processing code.  Remove
+                                UFD-processing routines which were
+                                never referenced.
+     7-Apr-86   v1.0(72)  kmd   Make the gross structural changes to
+                                create DifGen.
+
+         This program was derived from SLAM.SAI, and shares the
+         following history with it:
+
+    19-Mar-86   v1.1(70)  kmd   VMLine first indicates EOF or BOF by
+                                returning 0 in Brk.  Remove
+                                "length(Str)" from the EOF
+                                consideration.
+    13-Mar-86   v1.1(67)  kmd   Improve check for help character.  Add
+                                protection violation error to input
+                                open.
+    11-Mar-86   v1.1(63)  kmd   Make FileProc return when Out.Slot is
+                                negative.  Clarify protection
+                                violation error on Out.Slot open.
+                                Refine Is.Wild.Card to only check Fn
+                                and Ext fields.
+    10-Mar-86   v1.1(60)  kmd   Add indirect files.
+     6-Mar-86   v1.0(56)  kmd   Fix some error messages.
+     5-Mar-86   v0.5(55)  kmd   Parse the <Destination.File>
+                                specification, and indicate when an
+                                input Filespec is unmatched.
+     4-Mar-86   v0.1(54)  kmd   Add NoticeToQuit logic, as well as
+                                Append.Switch logic.
+    26-Feb-86   v0.1(52)  kmd   Initial changes to make Slam a different
+                                concept.
+
+
+         This program was derived from PUT.SAI, and shares the
+         following history with it:
+
+    25-Feb-86   v1.2(51)  kmd   Make all loops - including the hidden
+                                loop inside the UFDscn call - obey the
+                                escape condition.
+    24-Feb-86   v1.2(50)  kmd   Support escape (= ^C or ESC) interrupts,
+                                doing the correct thing while printing to
+                                the device.
+     9-Jan-86   v1.1(40)  kmd   Change call to MFDscn to call of UFDscn for
+                                uninteresting filespecs (ie, no wildcards
+                                in UFD).  This was occasioned due to the
+                                fact that the user needs RF license to read
+                                the MFD, and this blocks the former routine
+                                from accessing even UFDs to which it has
+                                access through other means (eg, RP license)
+     4-Dec-85   v1.0(37)  kmd   Change a few output messages.
+    25-Nov-85   v1.0(36)  kmd   Inject MFDSCN into the scheme, adding
+                                vanilla flavored wildcarding to filespecs.
+    23-Nov-85   v1.0(31)  kmd   Add "Printing..." message.
+    21-Nov-85   v1.0(27)  kmd   Pick up filespecs from the command line, if
+                                they are present, otherwise, prompt.
+    15-Nov-85   v1.0(16)  kmd   Strip leading and redundant embedded
+                                FFs from the output.  Restructure to
+                                loop the prompt until done.
+    21-Oct-85   v1.0(12)  kmd   Change over to VMFILE for input.
+     7-Oct-85   v0.1(11)  kmd   Skip leading FFs.
+    14-Aug-85   v0.1(6)   kmd   Adapt for printer output.
+    12-Aug-85   v0.1(5)   kmd   Install copy logic
+     9-Aug-85   v0.1(4)   kmd   Do file lookup calls.
+     6-Aug-85   v0.1(4)   kmd   Add requires for the world.
+     5-Aug-85   v0.1(1)   kmd   First Edit - just a skeleton in some
+                                closet.
+
+
+***************************************************************************
+
+    Future developments outstanding:
+
+        o  Interesting Filespecs
+
+          -  correct wildcards in Fn and Ext fields
+
+          -  wildcards in UFD field (must check for RF license (or RP
+             inside same GAN))
+
+
+**************************************************************************;
+
+begin "DifGen"
+  require "(KLib)Sail.Hdr"      source!file;
+  require "(KLib)Sys.Req"       source!file;
+  require "(KLib)Util.Req"      source!file;
+  require "(Klib)CmdLin.Req"    source!file;
+  require "(Klib)VMFile.Req"    source!file;
+  require "(Sailib)MFDscn.Req"  source!file;
+  require "(Klib)MemChk.Req"    source!file;
+
+
+! ************************************************************************;
+
+  define
+    EscChn = 10,
+    NtqChn = 11;
+
+  boolean
+    Append.Switch,
+    Esc.Occured,
+    File.Matched,
+    Ntq.Occured,
+    Proceed;
+
+  integer
+    Index,
+    Old.PrtStrLength,
+    Out.Slot;
+
+  string
+    Out.FileSpec;
+
+!                                 *  *  *
+;
+
+  record!class IF.Rec
+  (
+    integer
+      Slot;
+    record!pointer (IF.Rec)
+      Prev
+  );
+  
+  record!pointer (IF.Rec)
+    Ptr;
+
+!                                 *  *  *
+;
+
+  record!class File
+  (
+    integer
+      PPN;
+    string
+      UFD,
+      Fn,
+      Ext,
+      Full
+  );
+
+  record!pointer (File)
+    Master,
+    Slave;
+
+
+! ************************************************************************;
+!! title Rtn WantFile ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                              Rtn WantFile                               =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+    Determine whether we want to process the given filespec with the
+    FileProc routine.  This consists of determining the existence of
+    the slave file corresponding to this master file.
+
+    This routine exprects the UFD field to already be filled in for
+    both master and slave, and it fills in the Fn, Ext and Full fields
+    for each before returning.
+
+==========================================================================;
+
+
+  boolean procedure WantFile (reference integer Fn1, Ext1);
+  begin "WantFile"
+    string
+      Str;
+
+    if (not Proceed) then
+      return(false);
+
+    File:Fn[Master]  _ File:Fn[Slave]  _ cv6str(Fn1);
+    File:Ext[Master] _ File:Ext[Slave] _ cv6str(Ext1);
+    Str _ null;
+
+    if (File:UFD[Slave] = "(") then
+      Str _ File:UFD[Slave];
+
+    appnd(Str, File:Fn[Slave]);
+    
+    if (length(File:Ext[Slave])) then
+      appnd(Str, "." & File:Ext[Slave]);
+
+    if (File:UFD[Slave] = "[") then
+      appnd(Str, File:UFD[Slave]);
+
+    File:Full[Slave] _ Str;
+
+    if (not File.Exists(Str)) then
+      return(false);
+
+    Str _ null;
+
+    if (File:UFD[Master] = "(") then
+      Str _ File:UFD[Master];
+
+    appnd(Str, File:Fn[Master]);
+    
+    if (length(File:Ext[Master])) then
+      appnd(Str, "." & File:Ext[Master]);
+
+    if (File:UFD[Master] = "[") then
+      appnd(Str, File:UFD[Master]);
+
+    File:Full[Master] _ Str;
+    set(File.Matched);
+    return(Proceed);
+  end "WantFile";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn FileProc ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                              Rtn FileProc                               =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  procedure FileProc (reference integer Ch, Cnt, Brk1, Eof;
+      integer array LkB);
+  begin "FileProc"
+    integer
+      Eof1,
+      Eof2,
+      MChan,
+      MCksum,
+      MSize,
+      SChan,
+      SCksum,
+      SSize;
+    own integer array
+      MData [1 : 512],
+      SData [1 : 512];
+
+    if (not Proceed) then
+      return;
+
+    if (length(Out.Filespec) and Out.Slot = 0) then
+    begin
+      integer
+        Mode;
+
+      Mode _ if (Append.Switch) then VM$Update else VM$Write;
+
+      if ((Out.Slot _ VMFile(Out.FileSpec, Mode)) <= 0) then
+      begin
+        if (rh(Out.Slot) = !erprt) then
+          print("Protection failure on """, Out.FileSpec, """", crlf)
+        else
+          print("VMFile Failed (""", Out.FileSpec, """, ",
+              xwdstr(Out.Slot), ")", crlf);
+
+        clear(Proceed);
+        return;
+      end;
+
+      if (Append.Switch) then
+      begin
+        VMMove(Out.Slot, -1);
+        VMMove(Out.Slot);
+
+          ! This little sleight of hand establishes the character position
+          ! as the end of file.  Were it not done, the next write operation
+          ! would begin at the beginning of the file.
+          ;
+      end;
+    end;
+
+!                                 *  *  *
+;
+
+    open(Mchan _ getchan, "DSK", $F.BINARY, 4, 0, 0, 0, Eof1 _ -1);
+
+    if (Eof1) then
+    begin
+      print("Open Error on Master Channel, Error Code = ", xwdstr(Eof1),
+          crlf);
+      return;
+    end;
+
+    lookup(MChan, File:Full[Master], Eof1 _ -1);
+
+    if (Eof1) then
+    begin
+      print("Cannot find file """, File:Full[Master], """", crlf);
+      release(MChan);
+      return;
+    end;
+
+    open(SChan _ getchan, "DSK", $F.BINARY, 4, 0, 0, 0, Eof2 _ -1);
+
+    if (Eof2) then
+    begin
+      print("Open Error on Slave Channel, Error Code = ", xwdstr(Eof2),
+          crlf);
+      release(MChan);
+      return;
+    end;
+
+    lookup(SChan, File:Full[Slave], Eof2 _ -1);
+
+    if (Eof2) then
+    begin
+      print("Cannot find file """, File:Full[Slave], """", crlf);
+      release(MChan);
+      release(SChan);
+      return;
+    end;
+
+!                                 *  *  *
+;
+
+    begin
+      string
+        Str;
+
+      if (Out.Slot) then
+        print(cr, Out.FileSpec,
+            (if (Append.Switch) then " << " else " < "))
+      else
+        print(cr);
+
+      Str _ "Checksum (" & File:Full[Master] & ", " & File:Full[Slave] &
+          ")";
+      print(Str, blanks(Old.PrtStrLength-length(Str)));
+      Old.PrtStrLength _ length(Str);
+    end;
+
+!                                 *  *  *
+;
+
+    MSize  _ SSize  _ 512;
+    MCksum _ SCksum _ 0;
+
+    while (not Eof1 and not Eof2 and MCksum = SCksum) do
+    begin
+      arrclr(MData);
+      arryin(MChan, MData[1], MSize);
+
+      if (Eof1) then
+        MSize _ rh(Eof1);
+
+      arrclr(SData);
+      arryin(SChan, SData[1], SSize);
+
+      if (Eof2) then
+        SSize _ rh(Eof2);
+
+      memchk(MCksum, location(MData[1]), MSize);
+      memchk(SCksum, location(SData[1]), SSize);
+    end;
+
+    release(MChan);
+    release(SChan);
+
+!                                 *  *  *
+;
+
+    if (MCksum neq SCksum) then
+    begin
+      if (Out.Slot) then
+      begin
+        VMText(Out.Slot, crlf & "differ " & File:Full[Master] & ", " &
+            File:Full[Slave]);
+      end
+      else
+      begin
+        print(crlf & "differ " & File:Full[Master] & ", " &
+            File:Full[Slave] & crlf);
+      end;
+    end;
+  end "FileProc";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn EscSvc ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                               Rtn EscSvc                                =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  simple procedure EscSvc;
+  begin "EscSvc"
+    set(Esc.Occured);
+    clear(Proceed);
+  end "EscSvc";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn NtqSvc ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                               Rtn NtqSvc                                =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  simple procedure NtqSvc;
+  begin "NtqSvc"
+    set(Ntq.Occured);
+    clear(Proceed);
+  end "NtqSvc";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn Print.Usage ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                             Rtn Print.Usage                             =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  simple procedure Print.Usage;
+  begin "Print.Usage"
+    print("Usage: DIFGEN <Destination.File> = <Wildcard_FileSpec>",
+        " <(Username) or [Gan,Aun]>", crlf);
+  end "Print.Usage";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn Print.Help ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                             Rtn Print.Help                              =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  simple procedure Print.Help;
+  begin "Print.Help"
+    print("Help goes here");
+  end "Print.Help";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn New.IF.Record ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                            Rtn New.IF.Record                            =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  record!pointer (IF.Rec) procedure New.IF.Record
+      (record!pointer (IF.Rec) Ptr1);
+  begin "New.IF.Record"
+    record!pointer (IF.Rec)
+      X;
+
+    X _ new!record(IF.Rec);
+    IF.Rec:Slot[X] _ 0;
+    IF.Rec:Prev[X] _ Ptr1;
+    return(X);
+  end "New.IF.Record";
+
+
+! ===================================+=====================================
+=====================================================================;
+!! title Rtn Get.Next.FS.Pair ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                             Rtn Get.Next.FS.Pair                        =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+
+==========================================================================;
+
+
+  string procedure Get.Next.FS.Pair (reference string Str1);
+  begin "Get.Next.FS.Pair"
+    string
+      Str;
+
+    Str _ Str1 _ null;
+
+    while (not length(Str)) do
+    begin
+      if (Ptr = null!record) then
+      begin
+        if (Index >= ArgC) then
+          return(null)
+        else
+        begin
+          Str _ ArgV[Index];
+          inc(Index);
+
+          if (Str neq "@" and Index < ArgC) then
+          begin
+            Str1 _ ArgV[Index];
+            inc(Index);
+          end;
+        end;
+      end
+      else
+      begin
+        integer
+          Brk;
+        string
+          Str2;
+
+        Str _ VMLine(IF.Rec:Slot[Ptr], Brk);
+
+        if (not (Str or Brk)) then
+        begin
+          VMFree(IF.Rec:Slot[Ptr]);
+          Ptr _ IF.Rec:Prev[Ptr];
+          continue;
+        end
+        else if (Str neq "@") then
+        begin
+          own string array
+            NewArgs [0 : 1];
+
+          arrclr(NewArgs);
+          Decompose.Cmdline(Str, NewArgs);
+          Str  _ NewArgs[0];
+          Str1 _ NewArgs[1];
+        end;
+      end;
+
+      if (Str = "@") then
+      begin
+        lop(Str);
+        Ptr _ New.IF.Record(Ptr);
+
+        if ((IF.Rec:Slot[Ptr] _ VMFile(Str, VM$Read)) <= 0) then
+        begin
+          print("No such indirect file as """, Str, """", crlf);
+          Ptr _ IF.Rec:Prev[Ptr];
+        end;
+
+        Str _ null;
+      end;
+    end;
+
+    return(Str);
+  end "Get.Next.FS.Pair";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Rtn Make.UFD.Str ;
+! =========================================================================
+=====================================+=====================================
+=                                                                         =
+=                                                                         =
+=                            Rtn Make.UFD.Str                             =
+=                                                                         =
+=                                                                         =
+=====================================+=====================================
+
+    Form a string consisting of either the username (in parentheses)
+    or the PPN (in brackets), and retrurn it.  If the Useranme
+    provided or the PPN provided does not exists, return null.
+
+==========================================================================;
+
+
+  simple string procedure Make.UFD.Str (string UnStr, PPNStr);
+  begin "Make.UFD.Str"
+    integer
+      PPN;
+
+    if (length(UnStr)) then
+    begin
+      if (not (PPN _ Cv.Username(UnStr))) then
+      begin
+        print("There is no user named """, UnStr, """", crlf);
+        return(null);
+      end;
+    end
+    else if (length(PPNStr)) then
+    begin
+      if (not Is.Valid.PPN(PPN _ cvo(PPNStr))) then
+      begin
+        print("Invalid PPN """, xwdstr(PPN), crlf);
+        return(null);
+      end;
+    end
+    else
+      PPN _ Get.Gfd.PPN;
+
+    if (length(Unstr _ Cv.PPN(PPN))) then
+      return("(" & UnStr & ")")
+    else
+      return(xwdstr(PPN));
+  end "Make.UFD.Str";
+
+
+! ===================================+=====================================
+==========================================================================;
+!! title Mainline Code;
+! ***********************************+*************************************
+*                                                                         *
+*                                                                         *
+*			       Mainline Code				  *
+*                                                                         *
+*                                                                         *
+*************************************+************************************;
+
+
+  begin "Mainline Code"
+    integer
+      I;
+    string
+      MasterFS,
+      SlaveFS,
+      Tmp;
+
+    !version(!ver('1, '0), !edit('100), !date(16-April-1986));
+    do.banner("DifGen - List files with differing checksums");
+
+    print(crlf);
+    Old.PrtStrLength _ 0;
+    Out.Slot _ 0;
+    set(Proceed);
+
+    Master _ new!record(File);
+    Slave  _ new!record(File);
+
+    clear(Esc.Occured);
+    intmap(tinass(-1, !iaesc, EscChn), EscSvc, 0);
+    enable(newenb(EscChn));
+
+    clear(Ntq.Occured);
+    intmap(intass(!iantq, NtqChn), NtqSvc, 0);
+    enable(newenb(NtqChn));
+
+!                                 *  *  *
+;
+
+    if (ArgC <= 1) then
+    begin
+      Print.Usage;
+      exit;
+    end;
+
+    for I _ 1 step 1 until ArgC-1 do
+    begin
+      integer
+        C;
+      string
+        Str;
+
+      Str _ null;
+
+      while ((C _ lop(ArgV[I]))) do
+      begin
+        if (C = "?") then
+        begin
+          Print.Help;
+          exit;
+        end;
+
+        if (C = "=" or C = "_") then
+        begin
+          if (I neq 2) then
+          begin
+            Print.Usage;
+            exit;
+          end;
+
+          C _ "<";
+        end;
+
+        appnd(Str, C);
+      end;
+
+      ArgV[I] _ Str;
+    end;
+
+    if (ArgV[2] = "<") then
+    begin
+      if (length(ArgV[2]) > 2) then
+      begin
+        Print.Usage;
+        exit;
+      end;
+
+      Out.Filespec _ ArgV[1];
+
+      if (Is.Wild.Spec(Out.Filespec)) then
+      begin
+        print("No wildcard characters allowed in <Destination.File>,
+            crlf");
+        exit;
+      end;
+
+      if (not Parse.Filespec(Out.Filespec, Tmp, Tmp, Tmp, Tmp)) then
+      begin
+        print("Bad Filespec """, Out.Filespec, """", crlf);
+        exit;
+      end;
+
+      Append.Switch _ equ(Argv[2], "<<");
+    end;
+
+!                                 *  *  *
+;
+
+    Ptr   _ null!record;
+    Index _ if length(Out.Filespec) then 3 else 1;
+
+    while (Proceed and length(MasterFS _ Get.Next.FS.Pair(SlaveFS))) do
+    begin
+      integer
+        Ext,
+        Fn,
+        PPN;
+      string
+        ExtStr,
+        FnStr,
+        PPNStr,
+        UnStr;
+
+
+      if (not Parse.Filespec(MasterFS, UnStr, FnStr, ExtStr, PPNStr)) then
+      begin
+        print("Bad Filespec """, MasterFS, """", crlf);
+        continue;
+      end;
+
+      if (not length(FnStr)) then
+        FnStr _ "*";
+
+      if (not length(ExtStr)) then
+        ExtStr _ ".*";
+
+      Fn  _ cvsix(FnStr);
+      Ext _ cvsix(ExtStr[2 to inf]);
+
+      if (not length(File:UFD[Master] _ Make.UFD.Str(UnStr, PPNStr))) then
+        continue
+      else if (File:UFD[Master] = "[") then
+        File:PPN[Master] _ cvo(PPNStr)
+      else
+        File:PPN[Master] _ Cv.Username(UnStr);
+
+      if (not Parse.Filespec(SlaveFS, UnStr, FnStr, ExtStr, PPNStr)) then
+      begin
+        print("Bad Username or PPN specification """, SlaveFS, """",
+            crlf);
+        continue;
+      end;
+
+      if (length(FnStr) or length(ExtStr)) then
+      begin
+        print("Bad Username or PPN specification """, SlaveFS, """",
+            crlf);
+        continue;
+      end;
+
+      if (not length(File:UFD[Slave] _ Make.UFD.Str(UnStr, PPNStr))) then
+        continue;      
+
+      clear(File.Matched);
+      UFDscn(File:PPN[Master], Fn, Ext, -1, WantFile, FileProc);
+
+      if (not File.Matched) then
+        print(crlf, "No file matched filespec """, MasterFS,
+            """ in ", SlaveFS,  crlf);
+    end;
+
+    if (Ntq.Occured) then
+      print("Notice to Quit received - please log out");
+
+    if (Esc.Occured) then
+      print(" - ABORTED");
+
+    if (Out.Slot) then
+      VMFree(Out.Slot);
+
+    exit;
+  end "Mainline Code";
+end "DifGen";
+
+
+! ***********************************+*************************************
+**************************************************************************;
+ P7 EI
