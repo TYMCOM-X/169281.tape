@@ -1,0 +1,233 @@
+!
+(************************************************************************)
+(*          FILE:  TMCS/TMDM CONFIGURATION FILE                         *)
+(*  COMPANY NAME:  TRW                                                  *)
+(*   NODE NUMBER:  2135                       LOCATION:  ANAHEIM, CA    *)
+(*   KERNAL HOST:  2135                         HOST #:  978            *)
+(*   SLOT NUMBER:  01                                                   *)
+(*       VERSION:  TMCS - 11.06       TMDM - 11.06                      *)
+(*    UPDATED BY:  ROBERT NOWELL                  DATE:  01/24/91       *)
+(************************************************************************)
+(* >>>>>>>>>>>>>>>>>>>>>>  REVISION HISTORY  <<<<<<<<<<<<<<<<<<<<<<<<<< *)
+(* INSTALLED VERSION 10.20 OF TMCS CODE.                  05/25/89  RRN *)
+(* INSTALLED VERSION 11.06 OF TMCS CODE.                  07/26/89  RRN *)
+(* * Code verificationa and productionalization.          01/24/91  RRN *)
+(************************************************************************)
+
+(************************************************************************)
+(*                                                                      *)
+(*      Sample TMCS configuration file for version 11.06                *)
+(*                                                                      *)
+(************************************************************************)
+
+
+(************************************************************************)
+(*  Concurrent PASCAL Preprocessor flags for conditional compilation    *)
+(*  to include selected TMCS facilities.                                *)
+(*                                                                      *)
+(*  alarm        - alarm facility                                       *)
+(*									*)
+(*  archive	- archive facility code					*)
+(*									*)
+(*  archive_auto_compare 						*)
+(*		- when archiving, compare automatically			*)
+(*		  files on tape with the one on disk			*)
+(*									*)
+(*  auto_backup	- multiple sites keeping				*)
+(*		  identical data. 					*)
+(*									*)
+(*  clusternodes - allow definition of MXP clusters                     *)
+(*									*)
+(*  ddt		- Extended DDT interface code				*)
+(*									*)
+(*  multiple_shut_link_table_maintenance - allow multiple shut link 	*)
+(*		   table maintenance facilities				*)
+(*									*)
+(*  probe        - PROBE interface code                                 *)
+(*                                                                      *)
+(*  reload       - automatic reload facility                            *)
+(*									*)
+(*  shut_link_table_maintenance	- shut link table maintenance facility	*)
+(*									*)
+(*  version_1020_to_1100	- this flag has to be enabled in the 	*)
+(*				  TMDM D-file when TMCS disk is 	*)
+(*				  reconfigured from version 10.20 to	*)
+(*				  11.00					*)
+(*									*)
+(*  xcom	- access XOM by an XCOM host number			*)
+(*									*)
+(*  xom		- X25/X75 operation manager code			*)
+(*									*)
+(*  xom_restore	- saving X25/X75 configuration parameters		*)
+(*									*)
+(*  xray        - XRAY interface code                                   *)
+(*                                                                      *)
+(************************************************************************)
+
+
+(*
+:$enable alarm
+:$enable auto_backup
+:$enable clusternodes
+:$enable multiple_host_message
+:$enable old_shut_link_table
+:$enable archive
+:$enable archive_auto_compare
+:$enable xom
+:$enable xom_restore
+:$enable xray
+:$enable ddt
+*)
+$enable multiple_shut_link_table_maintenance
+$enable probe
+$enable shut_link_table_maintenance
+$enable reload
+
+(* TMCS user index *)
+
+const
+  user_max         = 15 (* users *) ;
+
+const
+  username_max     = 40 (* unique user names in profile *) ;
+
+const
+  user_message_max = 4 (* message send per user *) ;
+  
+const
+  limit_set_max    = 3 (* limits set stored per user *) ;
+
+
+(* supervisor parameters *)
+
+const
+  supervisor_max   = 4 (* supervisors *) ;
+
+(* Network configuration parameters *)
+
+const
+  btree_max = 256 (* number of nodes in btree. Multiple of 256 *) ;
+
+(****************************************************************************)
+(* The following lines are ONLY include when the XOM_RESTORE switch is 	    *)
+(* enabled.   						    		    *)
+(****************************************************************************)
+
+(* The number of xom hosts for which parameters will be saved.	       *)
+
+(*  const  
+      xom_host_max = 32;   *)
+
+
+(* The average number of pages for a xom host in the XOM files. That	*)
+(* must be defined only if the xom_restore version has been enabled.	*)
+
+(*  const  
+      pages_per_xomhost = 20;    *)
+
+(****************************************************************************)
+(* End of lines includes ONLY if XOM_RESTORE switch is enabled 	    	    *)
+(****************************************************************************)
+
+const
+  tymnet_ii_node_max  = 191 (* nodes 2001-2200 *) ;
+
+const
+  host_number_max     = 2277;
+
+const
+  node_configuration_max          = 150;
+  host_configuration_max          = 450;
+  links_per_node                  =   7;
+  ports_per_node                  =   7;
+  link_shut_percentage            =  15;
+  port_out_percentage             =  20;
+
+const
+  node_hash_max                   = 167;
+  host_hash_max                   = 491;
+
+const
+  oper_log_page_max               = 1000;
+
+(* A simple help message of less than 64 characters *)
+
+const
+  help_text                       = 'See TMCS Operators Guide\ ';
+
+(*  Simple TMCS logon banner title  *)
+
+const
+  banner_title                    = '>>>  TRW  Datalink - TMCS  <<<\ ';
+
+(*  Offset for time calcs when daylight savings time is in effect *)
+
+const
+  daylight_savings_offset         = 60 (* minutes *) ;
+
+(* Network Event Monitor username. Used without host to find nem *)
+
+const
+  network_event_monitor_user_name = 'NETEVENT;\';
+
+(* Probe username. Used to login to Probe on supervisor *)
+
+const
+  probe_network_login_name = 'PROBE\';
+
+(* Probe username which is used for the second login to Probe *)
+
+const
+  probe_second_login_name  = 'NETPAT\ ';
+
+
+(****************************************************************************)
+(* The following lines are ONLY include when the RELOAD switch is enabled.  *)
+(****************************************************************************)
+
+(*  ELF filename descriptors for node and slot files stored in          *)
+(*  ELF but used by the reload facility.                                *)
+
+const
+  elf_node_designator = 'ND\ ';
+  
+(*  Reload facility sleep interval between processing of nodes and slots *)
+const
+  reload_sleep_interval        = 90 (* seconds *) ;
+
+(*  ELF parameters for dumping node/slot memory (used by reload facility)  *)
+const
+  elf_device_for_dumping       = 'D';
+  elf_unit_for_dumping         =  1 ;
+
+(*  Secondary network console login parameters - (used by reload facility) *)
+const
+  network_console_user_name    = 'NTCN\ ';
+  network_console_password     = 'XOM ACCESS\ ';
+  max_xom_restore_attempts     = 5;
+
+(****************************************************************************)
+(* End of lines includes ONLY if RELOAD switch is enabled.                  *)
+(****************************************************************************)
+
+(****************************************************************************)
+(* The following lines are ONLY include when the SHUT_LINK_TABLE_MAINTENANCE*)
+(* switch is enabled.   						    *)
+(****************************************************************************)
+
+(*  The number of shut sectors which is defined as SHTSEC in Supervisor     *)
+(*  tymfile 								    *)
+
+const
+  shut_sector_max	= 1;
+
+(****************************************************************************)
+(* End of lines includes ONLY if SHUT_LINK_TABLE_MAINTENANCE switch is 	    *)
+(* enabled.                  						    *)
+(****************************************************************************)
+
+
+const
+  host_status_message_max = (host_configuration_max*25 + 99) div 100;
+
+   
