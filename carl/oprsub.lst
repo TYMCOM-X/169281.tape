@@ -1,0 +1,948 @@
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 1
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+1	entry
+2		AllLic		comment  Return all license for an entry ;
+3	,	Audit		comment  Make an audit trail entry ;
+4	,	BinLock		comment  Lock the binary file ;
+5	,	BinUnlock	comment  Unlock the binary file ;
+6	,	BinWait		comment  Wait for binary file unlock ;
+7	,	CvPRT		comment  Return decimal value/default ;
+8	,	Display		comment  Display pertinent data ;
+9	,	EolTrm		comment  EOL character from prompt routine ;
+10	,	FndName		comment  Find a name in a tree ;
+11	,	Fnd4wd		comment  Find a 4word block for use ;
+12	,	FndEwd		comment  Find 4 4word blocks for use ;
+13	,	FndGwd		comment  Find a 4word block for use ;
+14	,	Itemize		comment  Perform something regular ;
+15	,	LCheck		comment  Return true if grants to self ;
+16	,	LTake		comment  Remove license from lower grants ;
+17	,	Prompt		comment  Return a string after message ;
+18	,	SendMail	comment  Send mail to address ;
+19	,	Subordinate	comment  Make this entry a subordinate ;
+20	,	Token		comment  Return the next token ;
+21	,	TokNam		comment  Return the next name token ;
+22	,	Traverse	comment  Return the next tree leaf ;
+23	,	TxtLock		comment  Lock the text file ;
+24	,	TxtUnlock	comment  Unlock the text file ;
+25	,	TxtWait		comment  Wait for text file unlock ;
+26	;
+27	begin
+28	
+29	require "(SAILIB)SAIL.DEF"   source!file;
+30	require "(SAILIB)UUOSYM.DEF" source!file;
+31	require "(SAILIB)BITARY.REQ" source!file;
+32	require "(SAILIB)FRMRUN.REQ" source!file;
+33	require "(CARL)DEFOPR.DEF"   source!file;
+34	require "(CARL)DEFOPR.DCL"   source!file;
+35	require "(CARL)DAYTIM.REQ"   source!file;
+36	require "(CARL)BRKINI.REQ"   source!file;
+37	require "(CARL)STXLIB.REQ"   source!file;
+38	require "(CARL)LICSUB.REQ"   source!file;
+39	require "(CARL)LOGPKG.REQ"   source!file;
+40	
+41	define Bomb(text) = {begin print(text&crlf&crlf); return end};
+42	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 2
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+43	
+44	internal integer EolTrm;		! holds !skip! after inchrw ;
+45	
+46	preset!with !bit(0),  !bit(1),  !bit(2),  !bit(3),  !bit(4),  !bit(5),
+47		    !bit(6),  !bit(7),  !bit(8),  !bit(9),  !bit(10), !bit(11),
+48		    !bit(12), !bit(13), !bit(14), !bit(15), !bit(16), !bit(17),
+49		    !bit(18), !bit(19), !bit(20), !bit(21), !bit(22), !bit(23),
+50		    !bit(24), !bit(25), !bit(26), !bit(27), !bit(28), !bit(29),
+51		    !bit(30), !bit(31), !bit(32), !bit(33), !bit(34), !bit(35);
+52	own safe integer array Bittbl[ 0:35 ];
+53	
+54	preset!with '740000000000, '036000000000, '001700000000,
+55		    '000074000000, '000003600000, '000000170000,
+56		    '000000007400, '000000000360, '000000000017;
+57	own safe integer array BitMsk[ 0:8 ];
+58	
+59	
+60	internal simple integer procedure Fnd4wd;
+61	begin!code
+62	    Label Try, Got, Ret;
+63	    define T1 = '1, T2 = '2, Idx = '13;
+64	    define SatCnt = 512 - I!Sat;
+65	
+66		Movsi	Idx,-SatCnt;		! index count ;
+67		Add	Idx,vmi;		!  page address of table ;
+68		Addi	Idx,I!Sat;		!  offset to SATs ;
+69	Try:	Setcm	T1,(Idx);		! use complement to find holes ;
+70		Jffo	T1,Got;			! as ones (with hardware) ;
+71		Aobjn	Idx,Try;		! none here, try next ;
+72		Setz	T1,;			! none available, clear result ;
+73		Jrst	Ret;			! and return ;
+74	
+75	Got:	Move	T1,Bittbl[0](T2);	! get bit from table ;
+76		Iorm	T1,(Idx);		! and mark it in use ;
+77		Hlre	T1,Idx;			! get index value ;
+78		Addi	T1,SatCnt;		! convert to word number ;
+79		Imuli	T1,36;			! multiply by wordsize ;
+80		Add	T1,T2;			! add in bit number ;
+81		Lsh	T1,2;			! convert to word number ;
+82	Ret:
+83	
+84	end;
+85	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 3
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+86	
+87	internal simple integer procedure FndGwd;
+88	return( Fnd4wd );
+89	
+90	
+91	internal simple integer procedure FndEwd;
+92	begin!code
+93	    Label Try, MTry, MNxt, Got, Ret;
+94	    define T1 = '1, T2 = '2, Idx = '13;
+95	    define SatCnt = 512 - I!Sat;
+96	
+97		Movsi	Idx,-SatCnt;		! index count ;
+98		Add	Idx,vmi;		!  page address of table ;
+99		Addi	Idx,I!Sat;		!  offset to SATs ;
+100	Try:	Setcm	T1,(Idx);		! use complement to find holes ;
+101		Jumpe	T1,MNxt;		! none in this word, so try next ;
+102		Setcm	T1,T1;			! re-complement for testing ;
+103		Movsi	T2,-9;			! index count ;
+104	MTry:	Tdnn	T1,BitMsk[0](T2);	! is it available ;
+105		  Jrst	Got;			! yes, mark it ;
+106		Aobjn	T2,MTry;		! no, try next field ;
+107	MNxt:	Aobjn	Idx,Try;		! none here, try next ;
+108		Setz	T1,;			! none available, clear result ;
+109		Jrst	Ret;			! and return ;
+110	
+111	Got:	Move	T1,BitMsk[0](T2);	! get mask from table ;
+112		Iorm	T1,(Idx);		! and mark it in use ;
+113		Hlre	T1,Idx;			! get index value ;
+114		Addi	T1,SatCnt;		! convert to word number ;
+115		Imuli	T1,36;			! multiply by wordsize ;
+116		Hlre	T2,T2;			! get offset value ;
+117		Addi	T2,9;			! convert to field number ;
+118		Lsh	T2,2;			! multiply by 4 bits (mask size) ;
+119		Add	T1,T2;			! add in bit number ;
+120		Lsh	T1,2;			! convert to word number ;
+121	Ret:
+122	
+123	end;
+124	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 4
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+125	
+126	internal simple procedure BinLock;
+127	begin "lock binary file"
+128	
+129	    begin!code
+130	
+131		label bloop, bdone;
+132		define t1='1, scr='13;
+133	
+134		Push	p,scr;				! save sail scratch register ;
+135	bloop:	Move	t1,vmi;				! index page address ;
+136		Move	scr,MyLock;			! get unique lock id ;
+137		Camn	scr,I!WhoLock(t1);		! check against lock id ;
+138		  Jrst	bdone;				! yes, we already have it ;
+139		Aosg	t1,I!Lock(t1);			! see if already locked ;
+140		  Jrst	bdone;				! no, we have the lock ;
+141	;	Hrli	t1,1;				! milliseconds ;
+142		Hrri	t1,'200;			! a few ;
+143		uuo!HIBER t1,;				! sleep a bit ;
+144		  Jfcl;					! ignore errors ;
+145		Jrst	bloop;
+146	
+147	bdone:	Move	scr,MyLock;			! get unique lock id ;
+148		Movem	scr,I!WhoLock(t1);		! mark we have the lock ;
+149		Pop	p,scr;				! restore scratch ;
+150		Aos	BinLevel;			! increase lock level ;
+151	
+152	    end;
+153	
+154	end "lock binary file";
+155	
+156	
+157	internal simple procedure BinUnlock;
+158	if ( 0 = BinLevel_ 0 max (BinLevel - 1) )	! if last level ;
+159	 then memory[ vmi + I!Lock ]_ -1;		!  unlock file ;
+160	
+161	
+162	internal simple procedure BinWait;
+163	while ( memory[ vmi + I!Lock ] geq 0  )		! if locked and ;
+164	 do if ( memory[ vmi + I!WhoLock ] neq MyLock )	!  not MyLock ;
+165	     then begin
+166		if ( 40 < LockWait_ LockWait + 1 )
+167		 then memory[ vmi + I!Lock ]_ LockWait_ -1
+168		 else calli( !xwd( '0,'200 ), calli!HIBER );	! wait here ;
+169	     end
+170	     else return;
+171	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 5
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+172	
+173	internal simple procedure TxtLock;
+174	begin "lock text file"
+175	
+176	    BinLock;					! lock binary file first ;
+177	
+178	    begin!code
+179	
+180		label tloop, tdone;
+181		define t1='1, scr='13;
+182	
+183		Push	p,scr;				! save sail scratch register ;
+184	tloop:	Move	t1,vmi;				! index page address ;
+185		Move	scr,MyLock;			! get unique lock id ;
+186		Camn	scr,I!WhoText(t1);		! check against lock id ;
+187		  Jrst	tdone;				! yes, we already have it ;
+188		Aosg	t1,I!Text(t1);			! see if already locked ;
+189		  Jrst	tdone;				! no, we have the lock ;
+190	!	Hrli	t1,1;				! milliseconds ;
+191		Hrri	t1,'200;			! a few ;
+192		uuo!HIBER t1,;				! sleep a bit ;
+193		  Jfcl;					! ignore errors ;
+194		Jrst	tloop;
+195	
+196	tdone:	Movem	scr,I!WhoText(t1);		! mark we have the lock ;
+197		Pop	p,scr;				! restore scratch ;
+198		Aos	TxtLevel;			! increase lock level ;
+199	
+200	    end;
+201	
+202	end "lock text file";
+203	
+204	
+205	internal simple procedure TxtUnlock;
+206	if ( 0 = TxtLevel_ 0 max (TxtLevel - 1) )
+207	 then begin
+208	    memory[ vmi + I!Text ]_ -1;			! unlock file ;
+209	    BinUnLock;
+210	 end;
+211	
+212	internal simple procedure TxtWait;
+213	while ( memory[ vmi + I!Text ] geq 0  )		! if locked and ;
+214	 do if ( memory[ vmi + I!WhoText ] neq MyLock )	!  not MyLock ;
+215	     then begin
+216		if ( 40 < LockWait_ LockWait + 1 )
+217		 then memory[ vmi + I!Text ]_ LockWait_ -1
+218		 else calli( !xwd( '0,'200 ), calli!HIBER );	! wait here ;
+219	     end
+220	     else return;
+221	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 6
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+222	
+223	internal simple integer procedure Traverse( integer r );
+224	begin "traverse tree"
+225	    own integer t;
+226	
+227	    BinWait;				! wait for binary unlock ;
+228	
+229	    if ( t_ Sub( r ) )			! if a subordinate ;
+230	     then begin "down a level"
+231		Level_ Level + 1;		! count levels downward ;
+232		return( t );			!  that is who is next ;
+233	     end "down a level";
+234	
+235	    if ( t_ Sib( r ) )			! if a sibling ;
+236	     then return( t );			!  that is who is next ;
+237	
+238	    while ( r_ Man( r ) )		! go up one level at a time ;
+239	     do begin "up a level"
+240		Level_ Level - 1;		! no more downward travel ;
+241		if ( t_ Sib( r ) )		!  checking for siblings ;
+242		 then return( t );		!  return if found, else loop ;
+243	     end "up a level";
+244	
+245	    level_ Level - 1;			! nothing left at this level ;
+246	    return( 0 );			! so decrement and return 0 ;
+247	
+248	end "traverse tree";
+249	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 7
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+250	
+251	internal recursive boolean procedure LCheck( integer r, f, lic );
+252	begin "license check"
+253	    own integer TDT, Val;
+254	
+255	    TDT_ Today lsh -18;			! get current date ;
+256	
+257	    while ( f_ Glk( f ) )		! if any grant packages ;
+258	     do if ( not( Rdt( f ) ) ) or 	!  check date range for expiration ;
+259		   ( Gdt( f ) leq TDT leq Rdt( f ) )
+260		 then if ( Val_ LicAnd( lic, GlcRlc( f ) ) )
+261		       then if ( r = Rix( f ) )
+262			     then return( Val )
+263			     else if ( Val_ LCheck( r, Rix( f ), lic ) )
+264				   then return( Val );
+265	
+266	    return( false );
+267	
+268	end "license check";
+269	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 8
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+270	
+271	internal simple integer procedure AllLic( integer r, except(0), miss(0) );
+272	begin "all license"
+273	    integer l, t, TDT, v;
+274	
+275	    ! if on hold, then return L!HOLD as the entire license field ;
+276	
+277	    TDT_ Today lsh -18;			! get current date ;
+278	    if ( L!Hold land (l_ Licens( r )) )	! initial license (on hold?) ;
+279	     then return( L!Hold );		! yes, holding so report none ;
+280	
+281	    ! l contains, initial capabilities after hold check ;
+282	    ! now, accumulate all gifts to get total license from all grants ;
+283	
+284	    t_ r;
+285	    while ( t_ Rlk( t ) )		! if any gift packages ;
+286	     do if ( r = Rix( t ) ) or		!  make sure they are for me ;
+287		   ( not( Rdt(t) ) ) or 	!  check date range for expiration ;
+288		   ( Gdt(t) leq TDT leq Rdt(t) )
+289		 then l_ LicOr( l, (if t = except
+290				     then LicNot( GlcRlc( t ), miss )
+291				     else GlcRlc( t ) ) );
+292	
+293	    return( l );			! return accumulated license ;
+294	
+295	end "all license";
+296	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 9
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+297	
+298	internal simple procedure Audit( integer M, r; string Text );
+299	begin
+300	    string  Today;
+301	
+302	    Today_ TymDay( GetTDT );
+303	    SetLog( "(REQUESTOP)SETOP."& today[4 for 3] );
+304	
+305	!    Format:  dd-mmm-yy hh:mm:ss MMMMMMMMMMMM OOOOOOOOOOOO  Text-string ;
+306	    LogOnly(  Sxt( Opr( M ) )  &" "& Sxt( Opr( r ) ) &"  "&
+307		      Text & crlf, false );
+308	end;
+309	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 10
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+310	
+311	internal recursive procedure LTake( integer f, r, l );
+312	begin "license taking"
+313	    integer g, h;			! lic & grant, actual lic ;
+314	    own integer t, v, w, x;		! temporary pointers to records ;
+315	
+316	    if ( w_ x_ Grt( f ) )		! get grant list for grantor ;
+317	     then while( Rix( w ) neq r )	! search for matching gift ;
+318		   do if not( w_ Glk( x_ w ) )	! remembering previous grant ;
+319		   then bomb( ["?OPRNGF No grant found for ",NoSp(Sxt(Opr(r))),"."] );
+320						! w should = grant, x = previous ;
+321	
+322	    if ( t_ v_ Gft( r ) )		! get gift list for grantee ;
+323	     then while( Gix( t ) neq f )	! search for matching grant ;
+324		   do if not( t_ Rlk( v_ t ) )	! remembering previous gift ;
+325		       then bomb( ["?OPRNGF No gift found from ",NoSp(Sxt(Opr(f))),"."] );
+326						! t should = gift, v = previous ;
+327						! t = w, x and v are unrelated ;
+328	
+329	    if ( l land '14 )			! if any of WA WF WP ;
+330	     then l_ l lor '14;			!  then remove all WA-WP ;
+331	    if ( l land  '3 )			! if any of RA RF RP ;
+332	     then l_ l lor  '3;			!  then remove all RA-RP ;
+333	
+334	    g_ GlcRlc( t );			! variable for work ;
+335	    h_ g land l;			! license actually removed ;
+336	
+337	    Audit( Myself, r, "Remove: "& LicPrt( h ) );
+338	
+339	    if not( GlcRlc( t )_ g land lnot l )
+340	     then begin "remove link"
+341	
+342		if ( w = x )			! grant link = grant block ;
+343		 then Grants( f )_ !xwd( Glk( w ), Grants( f ) )
+344		 else GlkRlk( x )_ !xwd( Glk( w ), GlkRlk( x ) );
+345	
+346		if ( t = v )			! gift link = reserved gift block ;
+347		 then begin "cheat first link"
+348	
+349		    ! ** Grants( r )_ !xwd( Grt( r ), Rlk( t ) ) ** ;
+350		    if ( t_ Rlk( v ) )
+351		     then begin "copy entry"
+352	
+353			GixRix( v )_ GixRix( t );  GlkRlk( v )_ GlkRlk( t );
+354			GdtRdt( v )_ GdtRdt( t );  GlcRlc( v )_ GlcRlc( t );
+355	
+356			if ( t = w_ Grt( x_ Gix( t ) ) )
+357			 then Grants( x )_ !xwd( v, Gft( x ) )
+358			 else begin "transfer grant"
+359			    while ( w_ Glk( x_ w ) )
+360			     do if ( w = t )
+361				 then done;
+362			    GlkRlk( x )_ !xwd( v, Rlk( x ) );
+363			    if not( w )
+364			     then print( " --missing grant from ",
+365					NoSp( Sxt( Opr( Gix( t ) ) ) ), crlf );
+366			 end "transfer grant";OPRSUB.SAI          created 10-Feb-89 14:54                      Page 10.1
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+367	
+368		     end "copy entry"
+369		     else GixRix( v )_ !xwd( GlkRlk( v )_ GdtRdt( v )_ 0, r );
+370	
+371		 end "cheat first link"
+372		 else GlkRlk( v )_ !xwd( Glk( v ), Rlk( t ) );
+373	
+374		if ( t )
+375		 then begin "free grant block"
+376		    GixRix( t )_ GlkRlk( t )_ GdtRdt( t )_ 0;
+377		    idpb( 0, t_ BitPtr( t lsh -2 ) + vmi + I!Sat );
+378		 end "free grant block";
+379	
+380	     end "remove link";
+381	
+382	    l_ h;				! remember any taken license as arg ;
+383	    h_ AllLic( r ) land lnot (L!CAP);	! current total ;
+384	    if ( h land '14 )			! any of WA-WP still available ;
+385	     then h_ h lor '14;			!  then mask entire field ;
+386	    if ( h land  '3 )			! any of RA-RP still available ;
+387	     then h_ h lor  '3;			!  then mask entire field ;
+388	
+389	    if ( l )				! any license taken ;
+390	     then begin
+391		print( " ", Sxt( Opr( f ) ) );
+392		print( " to ", Sxt( Opr( r ) ), " ", LicPrt( l ), crlf );
+393	     end;
+394	
+395	    if ( l_ ( l land lnot h ) )		! don't remove what we still have ;
+396	     then begin "license removed"
+397	
+398		g_ h_ r;			! copy pointers ;
+399		while ( g_ Glk( h_ g ) )	! if any grants by this opername ;
+400		 do begin "take grants"
+401		    LTake( r, Rix( g ), l );	!  take the license away ;
+402		    if ( Glk( h ) neq g )	! if previous link points to ;
+403		     then g_ h;			!  a new link, use previous ;
+404		 end "take grants";
+405	
+406	     end "license removed";
+407	
+408	end "license taking";
+409	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 11
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+410	
+411	internal simple string procedure Token (reference string S);
+412	! ----------------------------------------------------------------------;
+413	!									;
+414	!	Token		Scan the string S and return the first word	;
+415	!			or punctuation character to the caller.		;
+416	!									;
+417	! ----------------------------------------------------------------------;
+418	begin
+419	    own string L;
+420	
+421	    scan( S, BrkWht, Brk );	! clear whitespace;
+422	    L _ scan(S, BrkBrk, Brk);	! get the next word;
+423	    if length(L) = 0		! null?;
+424		then if length(S) = 0	!   null source also?;
+425		    then return (null)	!    yes - return null;
+426		    else L _ lop(S);	!    no  - get a character;
+427	    scan( S, BrkWht, Brk );	! clear whitespace;
+428	    return(L);			! return the token;
+429	
+430	end;
+431	
+432	
+433	
+434	internal simple string procedure TokNam(reference string S);
+435	! ----------------------------------------------------------------------;
+436	!									;
+437	!	TokNam		Scan the string S and return the first name	;
+438	!			or punctuation character to the caller.		;
+439	!									;
+440	! ----------------------------------------------------------------------;
+441	begin
+442	    own string L;
+443	
+444	    scan( S, BrkWht, Brk );	! clear whitespace;
+445	    L_ scan( S, BrkBrk, Brk );	! get the next word;
+446	    if ( Brk = "." or Brk = "/" or Brk = "-" or Brk = "*" )
+447	     then L_ L & (Brk_ lop( S )) & scan( S, BrkBrk, Brk );
+448	    if length( L ) = 0		! null?;
+449		then if length( S ) = 0	!   null source also?;
+450		    then return (null)	!    yes - return null;
+451		    else L_ lop( S );	!    no  - get a character;
+452	    scan( S, BrkWht, Brk );	! clear whitespace;
+453	    return( L );		! return the token;
+454	
+455	end;
+456	
+457	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 12
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+458	
+459	ial simple string procedure Prompt( String P );
+460	! ----------------------------------------------------------------------;
+461	!									;
+462	!	Prompt		Print a line and read an answer.		;
+463	!									;
+464	! ----------------------------------------------------------------------;
+465	begin
+466	    own string str;
+467	
+468	    print( P );				! print prompt ;
+469	    str_ inchwl;			! get line ;
+470	    EolTrm_ !skip!;			! return skip character ;
+471	    return( str );
+472	
+473	end;
+474	
+475	
+476	
+477	internal simple integer procedure CvPrt( String P; Integer D );
+478	! ----------------------------------------------------------------------;
+479	!									;
+480	!	CvPrt		Convert the response from Prompt to decimal	;
+481	!			and return that value if geq 0, else return	;
+482	!			the specified default.				;
+483	!									;
+484	! ----------------------------------------------------------------------;
+485	begin
+486	    own string L;
+487	    own integer I;
+488	
+489	    return( if Length( L_ Prompt(P) ) and 0 leq I_ cvd(L)
+490		 then I
+491		 else D  );
+492	
+493	end;
+494	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 13
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+495	
+496	internal simple boolean procedure SendMail( String Address, Type, Text );
+497	begin "sending mail"
+498	    Own string Mail, System;
+499	    Own integer Code;
+500	    define MailerName = { "(MAIL)MAILER.SAV" };
+501	    redefine gettab( x,y ) = { calli( !xwd(x,y), calli!GETTAB ) };
+502	
+503	    System_ cvstr( Gettab( 0,!gtCNF ) )[1 for 1] &
+504		    cvs( Gettab( !cnSYS,!gtCNF ) );
+505	
+506	   
+507	    Mail_
+508		"From:  "& cv6str( Gettab( -1,!gtUNM ) ) &
+509			   cv6str( Gettab( -1,!gtUN1 ) ) &
+510		     "@" & System & ".Tymnet" & crlf &
+511		"To:  "& Address & crlf &
+512		"Subject:  "& Type &" request at "& TymDay( GetTDT ) & crlf &
+513		crlf &
+514		Text & crlf &
+515		#EOT;
+516	
+517	    return( FrmRun( MailerName,
+518			    F.CCL lor F.NTTY lor F.NWAI lor F.NEOL,
+519			    Code, "MAI", Mail
+520			  )
+521		);
+522	
+523	end "sending mail";
+524	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 14
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+525	
+526	internal simple procedure Subordinate( integer r, M );
+527	begin "make subordinate"
+528	    integer t, v;
+529	
+530	    if ( t_ Sub( M ) )			! any subordinates ;
+531	     then begin "sort subordinates"
+532	
+533		while ( t )			! yes, check order ;
+534		 do if ( Slt( Opr(t),Opr(r) ) )	! of opernames provided ;
+535		     then t_ Sib( (v_ t) )	! try next subordinate ;
+536		     else done;			! we are in front ;
+537	
+538		if ( t )			! found one ;
+539		 then begin "insert new subordinate"
+540		    GniSib( r )_ !xwd( v_Gni( t ), t );	! setup last,next sibling ;
+541		    GniSib( t )_ !xwd( r, Sib( t ) );	! set next to point to me ;
+542		    if ( v )				! if any back pointer ;
+543		     then GniSib( v )_ !xwd( Gni( v ), r )
+544		     else ManSub( M )_ !xwd( Man( M ), r );
+545		 end "insert new subordinate"
+546		 else begin "tack on the end"
+547		    GniSib( v )_ !xwd( Gni( v ), r );	! I must be next for previous ;
+548		    GniSib( r )_ !xwd( v, Sib( r ) );	! and previous is my previous ;
+549		 end "tack on the end";
+550	
+551	     end "sort subordinates"
+552	     else ManSub( M )_ !xwd( Man( M ), r );	! set as only subordinate ;
+553	
+554	    ManSub( r )_ !xwd( M, Sub( r ) );		! set as manager ;
+555	
+556	end "make subordinate";
+557	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 15
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+558	
+559	internal simple integer procedure FndName( string s; integer r );
+560	begin "find a name"
+561	    integer MyOper1, MyOper2;
+562	    string  Msg;
+563	
+564	    Msg_ (if ( r ) then "on your branch" else "in tree");
+565	
+566	    MyOper1_ cvSix( S[1 for 6] );	! make string more suitable ;
+567	    MyOper2_ cvSix( S[7 for 6] );	!  for repeated comparisons ;
+568	
+569	    Level_ 0;				! initialize level indicator ;
+570	!    print( "FndName ",s," from ",r, crlf );
+571	
+572	     do begin "check one"		! while anything to check ;
+573	
+574		if ( ( MyOper1 = OprNam( r ) ) and
+575		     ( MyOper2 = OprNa1( r ) )  )
+576		 then return( r )		! a match... a winner ;
+577		 else r_ traverse( r );		! try the next twig ;
+578	
+579	     end "check one" until Level leq 0;	! is this twig on the level? ;
+580	
+581	    while ( s[inf for 1] = " " )
+582	     do s_ s[1 to inf-1];
+583	
+584	    print( "?OPRNNF Opername ", s ," not found ", Msg, crlf&crlf );
+585	    return( 0 );
+586	
+587	end "find a name";
+588	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 16
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+589	
+590	internal simple procedure itemize( integer req, slf, who; procedure what; string p,q );
+591	begin "itemize entry"
+592	    own integer r;
+593	
+594	    if not( slf  or  Licens( MySelf ) land req )
+595	     then bomb( ["?OPRREQ Requires ",LicPrt( req )," to do that."] );
+596	
+597	    if not( Licens( MySelf ) land req ) ! make believe we said self ;
+598	     then Line_ Sxt( Opr( MySelf ) ) & " " & Line
+599	     else if not( length( Line ) )
+600		   then Line_ prompt( p );
+601	
+602	    if length( Line )
+603	     then begin "find name"
+604	
+605		if not( r_ FndName( TokNam( Line ), who ) )
+606		 then return;			! ?OPRNNF message already printed ;
+607	
+608		if ( r = RootNode )		! trying to do root? ;
+609		 then bomb( q &" ROOT." );
+610	
+611		if ( slf )			! is self allowed? ;
+612		 then if ( r = MySelf )		! trying to do self? ;
+613		       then
+614		       else if not( Licens( MySelf ) land req )
+615			     then bomb( ["?OPRREQ Requires ",LicPrt( req )," to do that."] )
+616			     else
+617		 else if ( r = MySelf )		! trying to do self? ;
+618		       then bomb( q &" Self." );
+619	
+620		what( r );
+621	
+622	     end "find name"
+623	     else bomb( "?OPRSYN Syntax error: opername required in command." );
+624	
+625	    print( Crlf );
+626	
+627	end "itemize entry";
+628	
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 17
+Program Listing     by CRFSYM %5 at 23-May-89 15:35
+
+629	
+630	internal simple procedure Display( procedure Dispatch );
+631	begin "display entry"
+632	    own integer r;
+633	
+634	    if length( Line )			! anything specified? ;
+635	     then begin "find name"		! allow display of anyone ;
+636	
+637		if ( r_ FndName( TokNam( Line ), 0 ) )
+638		 then Dispatch( r )		! found it... type it ;
+639		 else return;			! not there, goodbye. ;
+640	
+641	     end "find name"
+642	     else begin "all names"
+643	
+644		level_ 0;			! initialize level indicator ;
+645		r_ MySelf;			! setup major trunk ;
+646	
+647		 do begin "list all"		! while any wood left ;
+648	
+649		    Dispatch( r );		! put it on the screen ;
+650		    r_ traverse( r );		! any more wood? ;
+651	
+652		 end "list all" until Level leq 0;
+653	
+654	     end "all names";
+655	
+656	    print( Crlf );
+657	
+658	end "display entry";
+659	
+660	
+661	end;
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 18
+User Defined Symbolsby CRFSYM %5 at 23-May-89 15:35
+
+!BIT                        46    46    46    46    46    46    47    47    47
+                            47    47    47    48    48    48    48    48    48
+                            49    49    49    49    49    49    50    50    50
+                            50    50    50    51    51    51    51    51    51
+!CNSYS                     504
+!GTCNF                     503   504
+!GTUN1                     509
+!GTUNM                     508
+!SKIP!                     470
+!XWD                       168   218   343   344   357   362   369   372   540
+                           541   543   544   547   548   552   554
+#EOT                       515
+ADD                         67    80    98   119
+ADDI                        68    78    99   114   117
+ADDRESS                    496   511
+ALLLIC                       2   271   383
+AOBJN                       71   106   107
+AOS                        150   198
+AOSG                       139   188
+AUDIT                        3   298   337
+BDONE                      131   138   140   147
+BEGIN!CODE                  61    92   129   178
+BINLEVEL                   150   158   158
+BINLOCK                      4   126   176
+BINUNLOCK                    5   157   209
+BINWAIT                      6   162   227
+BITMSK                      57   104   111
+BITPTR                     377
+BITTBL                      52    75
+BLOOP                      131   135   145
+BOMB                       319   325   595   609   615   618   623
+BRK                        421   422   427   444   445   446   446   446   446
+                           447   447   452
+BRKBRK                     422   445   447
+BRKWHT                     421   427   444   452
+CALLI                      168   218
+CALLI!HIBER                168   218
+CAMN                       137   186
+CODE                       499   519
+CRLF                       307   365   392   510   511   512   513   514   584
+                           584   625   656
+CV6STR                     508   509
+CVD                        489
+CVPRT                        7   477
+CVS                        504
+CVSIX                      566   567
+CVSTR                      503
+D                          477   491
+DISPATCH                   630   638   649
+DISPLAY                      8   630
+EOLTRM                       9    44   470
+EXCEPT                     271   289
+F                          251   257   257   258   259   259   260   261   263
+                           311   316   323   325   343   343   391
+F.CCL                      518
+F.NEOL                     518
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 19
+User Defined Symbolsby CRFSYM %5 at 23-May-89 15:35
+
+F.NTTY                     518
+F.NWAI                     518
+FND4WD                      11    60    88
+FNDEWD                      12    91
+FNDGWD                      13    87
+FNDNAME                     10   559   605   637
+FRMRUN                     517
+G                          313   334   335   339   398   399   399   401   402
+                           403
+GDT                        259   288
+GDTRDT                     354   354   369   376
+GETTAB                     503   504   508   509
+GETTDT                     302   512
+GFT                        322   357
+GIX                        323   356   365
+GIXRIX                     353   353   369   376
+GLCRLC                     260   290   291   334   339   354   354
+GLK                        257   318   343   344   359   372   399   402
+GLKRLK                     344   344   353   353   362   369   372   376
+GNI                        540   543   547
+GNISIB                     540   541   543   547   548
+GOT                         62    70    75    93   105   111
+GRANTS                     343   343   357
+GRT                        316   356
+H                          313   335   337   382   383   384   385   385   386
+                           387   387   395   398   399   402   403
+HLRE                        77   113   116
+HRLI                       141
+HRRI                       142   191
+I                          487   489   490
+I!LOCK                     139   159   163   167
+I!SAT                       68    99   377
+I!TEXT                     188   208   213   217
+I!WHOLOCK                  137   148   164
+I!WHOTEXT                  186   196   214
+IDX                         66    67    68    69    71    76    77    97    98
+                            99   100   107   112   113
+IMULI                       79   115
+INCHWL                     469
+IORM                        76   112
+ITEMIZE                     14   590
+JFCL                       144   193
+JFFO                        70
+JRST                        73   105   109   138   140   145   187   189   194
+JUMPE                      101
+L                          273   278   289   289   293   311   329   330   330
+                           331   332   332   335   339   382   389   392   395
+                           395   401   419   422   423   426   428   442   445
+                           447   447   448   451   453   486   489   489
+L!CAP                      383
+L!HOLD                     278   279
+LCHECK                      15   251   263
+LEVEL                      231   231   240   240   245   245   569   579   644
+                           652
+LIC                        251   260   263
+LICAND                     260
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 20
+User Defined Symbolsby CRFSYM %5 at 23-May-89 15:35
+
+LICENS                     278   594   597   614
+LICNOT                     290
+LICOR                      289
+LICPRT                     337   392   595   615
+LINE                       598   598   599   600   602   605   634   637
+LOCKWAIT                   166   166   167   216   216   217
+LOGONLY                    306
+LTAKE                       16   311   401
+M                          298   306   526   530   544   544   552   552   554
+MAIL                       498   507   519
+MAILERNAME                 517
+MAN                        238   544   552
+MANSUB                     544   552   554
+MISS                       271   290
+MNXT                        93   101   107
+MOVE                        75   111   135   136   147   184   185
+MOVEM                      148   196
+MOVSI                       66    97   103
+MSG                        562   564   584
+MTRY                        93   104   106
+MYLOCK                     136   147   164   185   214
+MYOPER1                    561   566   574
+MYOPER2                    561   567   575
+MYSELF                     337   594   597   598   612   614   617   645
+NOSP                       319   325   365
+OPR                        306   306   319   325   365   391   392   534   534
+                           598
+OPRNA1                     575
+OPRNAM                     574
+P                          134   149   183   197   459   468   477   489   590
+                           600
+POP                        149   197
+PROMPT                      17   459   489   600
+PUSH                       134   183
+Q                          590   609   618
+R                          223   229   235   238   238   241   251   261   263
+                           271   278   284   286   298   306   311   317   319
+                           322   337   369   383   392   398   401   526   534
+                           540   541   543   544   547   548   548   552   554
+                           554   559   564   574   575   576   577   577   592
+                           605   608   612   617   620   632   637   638   645
+                           649   650   650
+RDT                        258   259   287   288
+REQ                        590   594   595   597   614   615
+RET                         62    73    82    93   109   121
+RIX                        261   263   286   317   401
+RLK                        285   324   350   362   372
+ROOTNODE                   608
+S                          411   421   422   424   426   427   434   444   445
+                           447   447   449   451   452   559   566   567   581
+                           582   582   584
+SATCNT                      66    78    97   114
+SCAN                       421   422   427   444   445   447   452
+SCR                        134   136   137   147   148   149   183   185   186
+                           196   197
+SENDMAIL                    18   496
+OPRSUB.SAI          created 10-Feb-89 14:54                      Page 21
+User Defined Symbolsby CRFSYM %5 at 23-May-89 15:35
+
+SETCM                       69   100   102
+SETLOG                     303
+SETZ                        72   108
+SIB                        235   241   535   541   548
+SLF                        590   594   611
+SLT                        534
+STR                        466   469   471
+SUB                        229   530   554
+SUBORDINATE                 19   526
+SXT                        306   306   319   325   365   391   392   598
+SYSTEM                     498   503   510
+T                          225   229   232   235   236   241   242   273   284
+                           285   285   286   287   288   288   289   290   291
+                           314   322   323   324   324   334   339   346   350
+                           353   353   354   354   356   356   360   365   372
+                           374   376   376   376   377   377   528   530   533
+                           534   535   535   538   540   540   541   541
+T1                          69    70    72    75    76    77    78    79    80
+                            81   100   101   102   102   104   108   111   112
+                           113   114   115   119   120   135   137   139   139
+                           141   142   143   148   184   186   188   188   191
+                           192   196
+T2                          75    80   103   104   106   111   116   116   117
+                           118   119
+TDNN                       104
+TDONE                      180   187   189   196
+TDT                        253   255   259   273   277   288
+TEXT                       298   307   496   514
+TLOOP                      180   184   194
+TODAY                      255   277   300   302   303
+TOKEN                       20   411
+TOKNAM                      21   434   605   637
+TRAVERSE                    22   223   577   650
+TRY                         62    69    71    93   100   107
+TXTLEVEL                   198   206   206
+TXTLOCK                     23   173
+TXTUNLOCK                   24   205
+TXTWAIT                     25   212
+TYMDAY                     302   512
+TYPE                       496   512
+UUO!HIBER                  143   192
+V                          273   314   322   324   346   350   353   353   354
+                           354   357   362   369   369   369   372   372   528
+                           535   540   542   543   543   547   547   548
+VAL                        253   260   262   263   264
+VMI                         67    98   135   159   163   164   167   184   208
+                           213   214   217   377
+W                          314   316   317   318   318   342   343   344   356
+                           359   359   360   363
+WHAT                       590   620
+WHO                        590   605
+X                          314   316   318   342   344   344   356   357   357
+                           359   362   362
+   @':
