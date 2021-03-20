@@ -1,0 +1,90 @@
+	.SBTTL	CG6657 - TXS micronet in 135 Nicholson Lane, San Jose, CA
+; Changed 14-Jun-90 by Joe Smith (408)922-6220
+;MACHNM	EQ	$8 6657		: Node number
+;HST0	EQ	$A 4511		: Kernel host
+;NLINES	EQ	2		: Number of engine-sync lines
+;NASYNG	EQ	1		: One group of async ports
+;CONSAT	EQ	1		: ATC-style CONSAT (async terminal) interface
+;BAUDR	EQ	2		: Supports 4800 baud terminals
+;	TIILNK(5416,8,8)	: Line 6 on 5416 supplies RXC+TXC @ 4.8Kb
+;	:::LNK(5561,8,8)	: (line has been disconnected)
+;NLUS0	EQ	2		: Node code
+;S0L0	S.REF(0)		: Connects to SYNC line on switcher
+;S0L1	S.REF(1)
+
+	.MACRO	CONFIG
+
+	NAME	6657
+	LINK	17    ,0,TF,16.,S,F,<167770,330,5,128.,KMC>	;DRV11 #1
+	LINK	6760,377,TF,8.,S,C,<167760,40,5>		;DRV11 #2
+;*;	LINK	NICK,377,TF,8.,S,C,<167750,50,5>		;DRV11 #3
+
+	THOST	4511
+	KHOST	4511,XRAY
+	LINK	TYMNET,0,TF,16.,S,I,<6657,15.>
+	 LNKH	 16,14		;KS2020 on other base
+	 LNKH	 17,17		;KS2020 on this base
+
+; TYMNET lines
+	 LNKL	128.,XLINK,4,S,A,<160010,400,5>	;ND5416, kh3732
+	 LNKL	128.,XLINK,4,S,A,<160020,410,5>	;ND5561, kh3734
+
+	DEV	ST,200,<300,340>
+	 SOC	 1.
+	 SOC	 2.
+
+	DEV	WD,200
+	 SOC	 1.
+	 SOC	 2.
+
+	HCL	A,<TYMNET>
+	MOD	<<CR><LF>"This is 17's base">
+	DHOST	TYMNET
+
+	DEFINE	JIFSEC,60.
+
+	LINX	A,<176500,300>
+	 LINE	 1,F, 9600,,TYM,CRT,ASC,TYMSHR,N,N,Y,N,Y,HW,A,200
+	LINX	A,<176510,310>
+	 LINE	 2,F, 9600,,TYM,CRT,ASC,TYMSHR,N,N,Y,N,Y,HW,A,200
+	LINX	A,<176520,320>
+	 LINE	 3,F, 9600,,TYM,CRT,ASC,TYMSHR,N,N,Y,N,Y,HW,A,200
+	LINX	A,<177560,60>
+	 LINE	 4,F, 9600,,TYM,CRT,ASC,TYMSHR,N,N,Y,N,Y,HW,A,377
+
+	.ENDM
+	
+	.SBTTL ROUTE - network routing map for the TXS lab
+; Changed 14-Jun-90 by Joe Smith (408)922-6220
+; Locations: 135 Nicholson Lane (the San Jose node room)
+; Nodes: 6657, 6760
+; Hosts: 14,15,16,17,4511,4681
+; Real hosts:
+;   14 is KS2020-B on node 6760
+;   17 is KS2020-A on node 6657
+; Alias hosts:
+;    15 is on 6760 as alias for host 17
+;    16 is on 6657 as alias for host 14
+; XRAY hosts:
+;  XRAY:4511 is XRAY:ST@6657 (X17's base)
+;  XRAY:4681 is XRAY:ST@6760 (X14's base)
+;  XRAY:3732 is on ND5416, neighbor to node 6657 (and formerly to 6760)
+;  XRAY:3734 is no ND5561, neighbor to node 6760 (and formerly to 6657)
+
+.macro	ROUTE
+
+	NODE	6657			; Base to KS2020 host 17
+	  NPATH  6760,6760		; DRV11 #2
+	 HPATH  TYMNET,*,6760		; DUV11 (2 connections) default host
+	  HPATH  14,6760,TYMNET		; KS on 6760
+	  HPATH  17,*			; DRV11 #1 to KS2020
+
+
+	NODE	6760			; Base to KS2020 host 14
+	  NPATH  6657,6657		; DRV11 #3
+	 HPATH  TYMNET,*,6657		; DUV11 (2 connections) default host
+	  HPATH  14,*			; DRV11 #1 to KS2020
+	  HPATH  17,6657,TYMNET		; KS on 6657
+
+
+.ENDM
