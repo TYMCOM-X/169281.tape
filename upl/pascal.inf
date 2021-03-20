@@ -1,0 +1,266 @@
+
+
+
+          Tymshare Pascal-10 Notes.
+          D.  E.  Grimes.
+          Phone:  (408)446-7173.
+          Last revision:  22 March 1979
+
+
+
+          1.0  HOW TO EXECUTE THE COMPILER.
+
+          Pascal can be invoked either directly:
+
+              .RUN(UPL)PASCAL
+
+          or via the Concise Command Language:
+
+              .COMPILE (or .LOAD or .EXECUTE) FAUX
+
+          when  you  have  a  file  named  FAUX.PAS  in   your   directory.
+          Unfortunately,  the  local  command  line  interpreter  does  not
+          automatically recognize the ".PAS"  extension.   You  can  easily
+          "customize" it, however, with the following commands:
+
+              .CTEST SETNON (UPL)PASCAL OUT=REL
+
+          This temporarily adds ".PAS" to the  table  of  known  extensions
+          that  the  command  line  interpreter  consults when processing a
+          COMPIL-class command and tells it what processor  to  invoke  and
+          what  extension  to  give  its output file.  The addition will go
+          away when you log off unless you follow the above command with:
+
+              .CTEST MAKINI
+
+          This builds the temporary table of known extensions into  a  file
+          named  RPG.INI  in  your directory.  The command line interpreter
+          uses this file, if it exists, to initialize the table  each  time
+          you log in.
+
+
+
+          2.0  HOW TO EXECUTE THE CROSS-REFERENCER.
+
+          To cross-reference  and  reformat  your  Pascal  program  without
+          compiling it, type
+
+              .RUN(UPL)CROSS <core>
+
+          The cross-referencer will prompt for the names  of  your  source,
+          reformatted  source,  and  cross-reference files.  A <core> of 50
+          suffices to cross-reference the compiler;  smaller programs  will
+          need correspondingly less.
+Tymshare Pascal-10 Notes.                                                      Page 2
+
+
+          3.0  REFERENCES.
+
+          1.  Jensen, K., and N.  Wirth,  Pascal  User  Manual  and  Report
+              (Second  edition),  Springer-Verlag, New York, 1978.  This is
+              the defining document for Pascal.
+
+          2.  (UPL)PASCAL.MAN.  A 55-page addendum to the  above  document,
+              describing  the PDP-10 implementation.  Spool it on TTY paper
+              without headings for the best appearance.
+
+          3.  Pascal News.  A quarterly publication of  the  Pascal  Users'
+              Group.  Anyone can join;  dues are $6 per year.  Contact:
+
+                  Pascal Users' Group, %Andy Mickel
+                  University Computer Center:  227 EX
+                  208 SE Union Street
+                  University of Minnesota
+                  Minneapolis, MN 55455
+
+
+
+
+          4.0  LOCAL MODIFICATIONS.
+
+          1.  The CLOCK built-in function  returns  accumulated  TRU's,  in
+              units of 10-4 TRU, rather than CPU milliseconds.
+
+          2.  The 'P' compiler option, which  formerly  was  equivalent  to
+              'D',  now  causes  a  page skip in the listing file after the
+              line in which it appears.  Note that, according to the syntax
+              for  compiler  options, the 'P' must be followed by '+', '-',
+              or a digit, all of which are ignored.  Note also that  Pascal
+              listings preserve the structure of source files with standard
+              line numbers and page marks, as produced by EDIT10.
+
+          3.  The 'U' compiler option (and the 'CARD' compiler switch)  now
+              accept an optional numeric argument.  Possible forms are:
+                switch    option    columns read
+                 CARD       U+             72
+                NOCARD      U-            132
+                CARD:n      Un      n = 0        ->  72
+                                    0 < n <= 132 ->   n
+                                    n > 132      -> 132
+
+          4.  The RESET procedure normally  has  the  effect  of  a  rewind
+              followed by a GET.  If the device is TTY, however, the GET is
+              suppressed and input of a null line is simulated:  after  the
+              RESET, EOF is FALSE, EOLN is TRUE, and the buffer variable is
+              a blank.
+
+Tymshare Pascal-10 Notes.                                                      Page 3
+
+
+          5.0  CHANGES INTRODUCED IN THE 22 MARCH 1979 VERSION.
+
+          5.1  Bug Fixes.
+
+          Obscure  bugs  have  been  fixed  in  MAX/MIN,  NEW/DISPOSE,  and
+          PACK/UNPACK.
+
+
+
+          5.2  New Predeclared Routines.
+
+          The following built-in routines are now available:
+
+          1.  FUNCTION  DEC_DATE:   INTEGER;   returns  the  date  in   DEC
+              standard format:
+              [(year-1964)*12 + (month-1)]*31 + (day-1).
+
+          2.  PROCEDURE SAVERANDOM(VAR I:  INTEGER);  sets its argument  to
+              the  last  random number (interpreted as an integer) that has
+              been generated by function RANDOM.
+
+          3.  PROCEDURE SETRANDOM(I:  INTEGER);  I must be  a  non-negative
+              integer < 2^31.  The starting value of the RANDOM function is
+              set to
+                  I, if I is nonzero;
+                  its normal starting value, if I is zero.
+
+
+
+
+          5.3  Listing Format.
+
+          1.  Each error message now points to the previous error  message,
+              if any.
+
+          2.  The location counter is always listed,  whether  or  not  the
+              CODE option is selected.
+
+
+
+
+          5.4  Case Error Checking.
+
+          If the case selector value matches  no  case  label,  no  OTHERS:
+          clause exists, and run-time checking is enabled, a run-time error
+          occurs.  Formerly, there was  always  an  implicit  null  OTHERS:
+          clause.
+
+
+
+          5.5  Type Compatibility.
+
+          Two  packed  array  types  are  now  compatible  only  if   their
+          components  occupy  the  same  amount  of  storage.   Since array
+          assignments are done by  block  copies,  the  result  is  garbage
+          otherwise.
+Tymshare Pascal-10 Notes.                                                      Page 4
+
+
+          6.0  NOTES ON FILE HANDLING.
+
+          These notes attempt to clarify chapters 2 and  4  of  PASCAL.MAN.
+          Pascal  provides  three  levels  of  automatic  opening  and name
+          substitution:
+
+
+
+          6.1  Predeclared Files.
+
+          Your  Pascal   program   effectively   contains   the   following
+          declaration:
+
+              VAR INPUT, OUTPUT, TTY, TTYOUTPUT:  TEXT;
+
+          Thus  you  need  not  (and  should  not)  declare   these   files
+          explicitly.   Note  that  the  pseudo  file variable TTY actually
+          refers to two files, one for  input  and  one  for  output;   the
+          compiler   translates  output  operations  on  TTY  to  the  same
+          operation on TTYOUTPUT, which you never see.
+
+          Your  Pascal  program  effectively  begins  with  the   following
+          statements:
+
+              RESET(TTY);  REWRITE(TTYOUTPUT);
+
+          In addition, if the program has no parameters  (see  below),  the
+          following statements are effectively present:
+
+              RESET(INPUT);  REWRITE(OUTPUT);
+
+          (This explains why the compiler, which is itself a Pascal program
+          with  no  parameters,  opens  a  null  file  named OUTPUT in your
+          directory.)
+
+
+
+          6.2  Files Named In The Program Header.
+
+          These files are not automatically declared;  you must  include  a
+          declaration for them.  For example:
+
+              PROGRAM EXAMPLE(INFILE*, OUTFILE);
+              ...
+              VAR INFILE, OUTFILE:  FILE OF INTEGER;
+
+          Pascal will, however, open these files for you at the  same  time
+          it  opens  the  predeclared files, and also allows you to specify
+          the name of the physical file with which the file variable is  to
+          be associated.  It looks for this information in three places, in
+          this order:
+
+          1.  A tempcore file whose name is the first three  characters  of
+              the program name (EXA in our example).
+Tymshare Pascal-10 Notes.                                                      Page 5
+
+
+          2.  A disk file whose name is the first  six  characters  of  the
+              program  name  with  the  extension  CMD  (EXAMPL.CMD, in our
+              example).
+
+          3.  The terminal, with prompts.  In our example:
+
+                  INFILE    = {your response}
+                  OUTFILE   = {your response}
+
+
+          This means that your program can  get  its  parameters  from  the
+          command line interpreter just as the compiler does.
+
+
+                                        NOTE
+
+              A word of warning:  Pascal decides whether  to  open  the
+              file  for  reading  or  writing (RESET or REWRITE) by the
+              presence or absence of an  asterisk  following  the  file
+              name in the program header.  If you accidentally omit the
+              asterisk, Pascal will discard  your  input  file  without
+              warning.
+
+
+
+
+
+          6.3  All Other Files.
+
+          If a file does not have one of the "magic" names  INPUT,  OUTPUT,
+          or  TTY,  and  is  not named in the program header, you must both
+          declare it and open it explicitly.  You  can  still  specify  the
+          name  of  the  physical file with which it is to be associated at
+          the  time  of  the  open  by  means  of  optional  parameters  to
+          RESET/REWRITE.
+
+
+          Finally, note that all three  kinds  of  file  variables  can  be
+          reopened  on  the  same or different physical files by subsequent
+          calls to RESET/REWRITE.
+   
