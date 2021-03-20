@@ -1,0 +1,46 @@
+        ENTRY   BLDCIR,ZAPC
+
+.CR==   15
+
+BLDCIR: SETO    0,
+        SETZM   @3(16)
+        SETZM   @4(16)
+        MOVEI   1,@0(16)
+        CREAUX  1,
+        JRST    ERROR
+        MOVEM   1,@2(16)
+        HRLZS   1
+        HRRI    1,4
+        AUXCAL  1,.CR
+        AUXCAL  1,.CR
+        AUXCAL  1,.CR
+        SKIPN   @1(16)
+        POPJ    17,
+        MOVE    2,1(16)
+        HRLI    2,(POINT 7,0)
+        MOVE    3,[POINT 7,PRGNAM,13]
+        MOVEI   5,6
+BLD1:   ILDB    4,2
+        CAIN    4,40
+        JRST    BLD2
+        IDPB    4,3
+        SOJG    5,BLD1
+BLD2:   MOVEI   4,.CR
+        IDPB    4,3
+        HRRI    1,52
+        AUXCAL  1,PRGNAM
+        POPJ    17,
+
+ERROR:  SETZ    0,
+        HLRM    1,@3(16)
+        HRRM    1,@4(16)
+        SETZM   @2(16)
+        POPJ    17,
+
+ZAPC:   MOVE    1,@0(16)
+        ZAPCIR  1,
+        POPJ    17,
+
+PRGNAM: ASCII   /R    /
+        0
+        END
