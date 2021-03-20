@@ -1,0 +1,3829 @@
+                                                               February 4, 1986
+
+
+
+
+
+
+
+                      ***** *   * *   * *   * ***** *****
+                        *    * *  ** ** **  * *       *  
+                        *     *   * * * * * * ****    *  
+                        *     *   *   * *  ** *       *  
+                        *     *   *   * *   * *****   *  
+
+                    ***  ***** ****   ***  *   * ***** *****
+                   *   *   *   *   * *   * *   *   *     *  
+                   *       *   ****  *     *   *   *     *  
+                   *   *   *   *  *  *   * *   *   *     *  
+                    ***  ***** *   *  ***   ***  *****   *  
+
+                ****  ****   ***  *****  ***   ***   ***  *    
+                *   * *   * *   *   *   *   * *   * *   * *    
+                ****  ****  *   *   *   *   * *     *   * *    
+                *     *  *  *   *   *   *   * *   * *   * *    
+                *     *   *  ***    *    ***   ***   ***  *****
+
+                               REFERENCE MANUAL
+
+                                   John Kopf
+
+                                    TYMNET
+                        NETWORK TECHNOLOGY DEVELOPMENT
+                               February 4, 1986
+
+
+
+
+
+
+
+
+
+
+     ====================================================================
+     |   Tymnet,  Inc.'s  proprietary  rights  are  included  in  the   |
+     |   information disclosed herein.   The recipient,  by receiving   |
+     |   this document,  agrees  that neither this  document nor  the   |
+     |   information  disclosed  herein nor any part thereof shall be   |
+     |   reproduced or transferred to  other  documents  or  used  or   |
+     |   disclosed  to  others  for  manufacturing  or  for any other   |
+     |   purpose except  as  specifically authorized  in  writing  by   |
+     |   Tymnet, Inc.                                                   |
+     ====================================================================
+
+
+
+
+                               TYMNET Circuit Protocols             CIRCUIT.DOC
+                                                               February 4, 1986
+
+
+
+
+
+
+
+                                   TABLE OF CONTENTS
+
+        Section                                                            Page
+
+
+             Preface                                                          1
+
+
+        1.   TYMNET Signals                                                   2
+          1.1   Circuit-Control Signals                                       3
+          1.2   End-to-end Control Signals                                    3
+             1.2.1    Echo-Control Control Signals                            3
+             1.2.2    Command- and Information-signals                        4
+
+          1.3   Parameter-exchange Signals                                    6
+             1.3.1    "Field"-parameter Signals                               6
+             1.3.2    "Bit"-Parameter signals                                 7
+
+
+        2.   Circuit Origination                                             10
+          2.1   CCT -- Circuit Characteristic Type                           10
+          2.2   Logging In                                                   12
+
+
+        3.   Interface Information Exchange in TYMNET                        14
+          3.1   Determining Intelligence                                     14
+          3.2   Interface Information Exchange                               15
+             3.2.1    IIX Detail                                             15
+             3.2.2    Global Messages                                        16
+             3.2.3    Dialect Values                                         17
+             3.2.4    Product ID                                             18
+
+          3.3   TYMNET Gateways                                              19
+             3.3.1    Implementation Requirements                            19
+
+
+        4.   ASYNC Terminals                                                 21
+          4.1   TID Detection                                                21
+          4.2   ASCII Terminals                                              23
+             4.2.1    ASCII Echo-control                                     23
+             4.2.2    ASCII Receiver                                         25
+             4.2.3    ASCII Transmitter                                      28
+             4.2.4    ASCII Delay Generation                                 30
+                4.2.4.1     Carriage-Return Delay                            31
+                4.2.4.2     Linefeed Delay                                   31
+                4.2.4.3     Alternate delay                                  32
+
+          4.3   Network Printers                                             32
+
+                               TYMNET Circuit Protocols             CIRCUIT.DOC
+                                                               February 4, 1986
+
+
+             4.3.1    Printer Device-Selection                               32
+             4.3.2    Programming Techniques                                 33
+             4.3.3    Miscellaneous                                          34
+
+          4.4   2741 Terminals                                               34
+          4.5   BAUDOT Terminals                                             35
+          4.6   VIDEOTEXT Terminals                                          36
+
+
+        5.   SYNC Terminals                                                  37
+          5.1   HSA (2780 and 3780 Terminals)                                37
+             5.1.1    Operating Characteristics                              37
+                5.1.1.1     2780 Block Format                                38
+                5.1.1.2     3780 Block Format                                38
+                5.1.1.3     Terminal Transparency                            38
+                5.1.1.4     Terminal Blank Compression                       38
+                5.1.1.5     Host Echo                                        38
+
+             5.1.2    Logon Procedure                                        39
+                5.1.2.1     Supported Logon Options                          39
+
+             5.1.3    Data Transfer                                          40
+                5.1.3.1     2780 Virtual Mode                                40
+                5.1.3.2     3780 Virtual Mode                                40
+                5.1.3.3     EBCDIC Transparency-Host-Bisync                  41
+                5.1.3.4     2780 Host-Bisync mode                            41
+                5.1.3.5     3780 Host-Bisync mode                            41
+                5.1.3.6     CDC Mode                                         41
+
+             5.1.4    Error Recovery                                         42
+             5.1.5    Flow-control                                           42
+                5.1.5.1     The Green_ball                                   42
+                5.1.5.2     Single-record Mode                               43
+
+             5.1.6    Host Control                                           43
+             5.1.7    KATAKANA                                               44
+                5.1.7.1     HSA to Host                                      44
+                5.1.7.2     Host to HSA                                      44
+
+          5.2   3270 Terminals                                               44
+
+
+        6.   Specialized Processes                                           46
+          6.1   Audio Response                                               46
+          6.2   Multiplexed PVC                                              47
+
+
+                                     APPENDICES
+                                     ==========
+
+
+        I.   Summary of TYMNET Virtual Terminal Signals                      51
+
+
+                               TYMNET Circuit Protocols             CIRCUIT.DOC
+                                                               February 4, 1986
+
+
+        II.  MPVC control-signal conventions                                 54
+
+
+        III. Buffers and Bufferlets                                          56
+          III-1 Buffer Flags                                                 57
+          III-2 Buffer Zaps                                                  58
+
+
+                                     GLOSSARY
+                                     ========                                59
+
+
+                                      INDEX
+                                      =====                                  61
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               TYMNET Circuit Protocols             CIRCUIT.DOC
+                                                               February 4, 1986
+
+
+
+
+
+
+                                        Preface
+
+
+
+             This document is one of  a family of documents related  to TYMNET,
+        and  describing  various aspects  of  the TYMNET  features  and related
+        protocols.
+
+             The various documents (and their subject) included are:
+
+         ACCT2.DOC    This   document   describes   TYMNET   accounting-II  (to
+                      supercede ACOUNT.DOC).
+
+         ACOUNT.DOC   This   document  describes   TYMNET  accounting   (to  be
+                      superceded by ACCT2.DOC.)
+
+         CIRCUI.DOC   This   document  describes   TYMNET   circuit  protocols,
+                      including ball logic and terminal characteristics.
+
+         DEVICE.DOC   This document describes  certain TYMNET devices,  as used
+                      on the TYMNET ENGINE.
+
+         NET1.DOC     This  document   describes  nodes,   line-protocols,  and
+                      supervisor communications within TYMNET-I.
+
+         TBASE.DOC    This document describes the TYMSHARE Base-Host interface.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        1                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+
+
+
+
+                                  1 -  TYMNET Signals
+
+
+             TYMNET has a  number of parameters which  can be set to  control a
+        terminal.  This chapter is intended to describe the  "virtual terminal"
+        described  by these  parameters,  and the  signals used  to  change the
+        parameters.  Some of these parameters may originate only at one  end of
+        the circuit, and are so described.
+
+             The actual  representation of the  signals used is  dependent upon
+        local  conventions,  and  may  vary  greatly  (e.g.  within  TYMNET the
+        representation  of  a  particular signal  is  very  different  than the
+        representation used within  ISIS).  The TYMNET representation  of these
+        signals may be found in the appendices.
+
+             Characters flowing through TYMNET are all 8-bit  quantities.  This
+        provides  a  character-space  of  256  (decimal)  distinct  quantities.
+        However, within TYMNET, certain characters in this space are  set aside
+        for network and  circuit control, and some  of the control  signals are
+        character pairs.  These control  signals are transparent to  the actual
+        data stream.
+
+             Reference will be  made to "Parameter-C Mapping"  ("C-MAP").  This
+        mapping translates a 4-bit quantity, and is described in an appendix.
+
+             Certain  signals  are  restricted  in  usage.   Thus,  it  becomes
+        necessary to  distinguish between  the Circuit-originator  (Caller) and
+        the Circuit-terminator (Callee, or Host).
+
+             Furthermore, certain signals are passed in only one direction over
+        a circuit (e.g.  EDEM), and others,  while passing around  the circuit,
+        may be initiated by only one end (e.g. Green_Ball).
+
+               NOTE:   The  usage  described  are  simply  the  standard
+                       conventions; the  individual signals may  be used
+                       for any desired purpose, provided that the Caller
+                       and Callee agree on the alternate protocol  to be
+                       used.
+
+
+
+
+
+
+
+
+
+
+
+
+        2                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+                             1.1  Circuit-Control Signals
+
+
+             Certain signals affect the circuit itself.  These are  detected at
+        every node and process  along the circuit, and the  appropriate actions
+        are taken.  These are:
+
+
+           GOBBLER:  used to flush all characters (preceding the  gobbler) from
+               a circuit, which are traveling in the same direction.
+
+           ZAPPER:  used to  empty all characters  (in both directions)  from a
+               circuit and tear the circuit down (delete the circuit).
+
+
+
+
+
+
+                            1.2  End-to-end Control Signals
+
+
+             ALL other signals are passed through the network circuit,  but are
+        serviced (take effect) only at the opposite end of the circuit.
+
+
+
+
+
+                    1.2.1  Echo-Control Control Signals
+
+             A  class  of signals  is  used to  implement  Echo-control.  These
+        permit the echoing of characters from either the terminal-interface, or
+        from the host.
+
+
+           EDEM:  (Entering_Defered_Echo_Mode)  report.   Originates  ONLY from
+               the Caller.
+
+           LDEM:  (Leaving_Defered_Echo_Mode) report.  Originates ONLY from the
+               Caller.
+
+
+             Additional signals  are used primarily  for echo control,  but may
+        also  be used  for  other functions.   In particular,  they  permit the
+        terminal  interface  to  detect the  host  program  state  "waiting for
+        input".
+
+
+           GREEN_BALL:  These are initiated only at Callers (TYMSATS),  and are
+               held by the callee (host) until released again to return  to the
+               TYMSAT.  The  receipt of  a Green_ball  by the  TYMSAT signifies
+
+
+        3                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+               that the host is  dismissed, waiting for input.   The Green_ball
+               may   be  used   by  the   TYMSAT  to   decide  when   to  leave
+               Defered_echo_mode on some terminals, and to decide when  to turn
+               other  (half-duplex)  terminals  around.   A  green_ball  may be
+               destroyed if a red_ball catches it;  especially if  this happens
+               while the green_ball  is resident at  the host, waiting  for the
+               appropriate host condition (waiting for input) to occur.
+
+           RED_BALL:  These are used to "cancel" Green_balls.  In particular, a
+               red_ball which catches a green_ball causes it to  disappear, and
+               the red_ball  then propagates  around the  circuit, immediately.
+               These are initiated only at  Callers (TYMSATS).  This  signal is
+               sent by the TYMSAT whenever a Red- or Green_ball  is outstanding
+               and:
+
+               1.  A character is received from the terminal;  or
+
+               2.  If  an  excessive  amount  of  time  has  passed  since  the
+                  Green_ball has been transmitted, and is feared lost;  or
+
+               3.  If an excessive amount  of time has passed since  a Red_ball
+                  has been transmitted, and is feared lost.
+
+
+
+
+
+                    1.2.2  Command- and Information-signals
+
+             An  additional  set  of  signals  is  used  to   transfer  control
+        information.
+
+
+           HANG_CHARACTER:  Causes  the  TYMSAT  port  to  be  hung  up (forced
+               disconnect).  Originated ONLY by host.
+
+           TURNAROUND_HANG_CHARACTER:  Causes the TYMSAT port to be hung  if it
+               is connected to a  true half-duplex device.  (This  is necessary
+               since, if the port is in input mode from an unattended terminal,
+               there is  no way  that the  normal HANG  signal can  be serviced
+               until the terminal  turns around, and the  port will be  tied up
+               for an extended period.)  Originated ONLY by host.
+
+           ENTER_TRANSPARENCY_MODE:  (GLASS_BALL):  Used  for  those  terminals
+               which have  character sets which  are translated by  the TYMSAT.
+               Originated ONLY by host.
+
+           LEAVE_TRANSPARENCY_MODE:  This  function  is  also  effected  if the
+               TYMSAT receives a ZAPPER.
+
+           ENTER_ALTERNATE_OUTPUT_DEVICE_MODE:  Used   to   switch   output  on
+               special  devices  or  ports.   Also  enables  the  expansion  of
+
+
+        4                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+               compressed-ASCII  data.    Ignored  on   all  ports   where  not
+               applicable.   Used  on CDC  printer  ports to  divert  output to
+               printer.  Originated ONLY by host.
+
+           LEAVE_ALTERNATE_OUTPUT_DEVICE_MODE:  This function is  also effected
+               if the TYMSAT receives a ZAPPER.
+
+           SIIX:  (Start of Interface Information eXchange).  This is an escape
+               flag to indicate the Start of an IIX.  (See the IIX  chapter for
+               details.)
+
+           TIIX:  (Termination of Interface Information eXchange).  This  is an
+               (optional) escape flag to indicate the End of an IIX.
+
+           ENTER_NETWORK_COMPRESS Used  (By   HSA  ONLY)  to   enable  the
+               transmission of compressed-ASCII data.
+
+           LEAVE_NETWORK_COMPRESSION:  Used  (By  HSA  ONLY)  to   disable  the
+               transmission of compressed-ASCII data.
+
+           BREAK_END:  Designates the end of a "break" condition.
+
+           BREAK_BEGIN:  Designates  the  beginning  of  a   "break"  condition
+               ("break" detected, if coming from TYMSAT).
+
+           BLACK_BALL:  Replaces  the  contents  of  a  buffer  which  has been
+               zapped.  Indicates  an unknown  amount of data  was lost.   If a
+               Black_ball reaches the end of a circuit, and the process at that
+               end does not  know how to react,  it must return a  Gray-ball to
+               inform the  other (hopefully,  more intelligent)  end-process of
+               the data-loss.
+
+           GRAY_BALL:  Indicates a Black_Ball has been detected at the opposite
+               end of the circuit.
+
+           YELLOW_BALL:  May  be  emitted by  any  port to  determine  when all
+               preceding characters have been flushed from the circuit  (by the
+               receipt of  the response,  Orange_Ball).  When  either end  of a
+               circuit detects the arrival of a Yellow_ball, it must respond by
+               returning an Orange_ball.
+
+           ORANGE_BALL:  The  response to  the receipt  of a  Yellow_ball.  The
+               receipt of the Orange_ball by the originator of  the Yellow_ball
+               indicates that the Yellow/Orange signal has made a complete trip
+               around  the circuit,  and  that any  data preceding  it  (in the
+               Yellow_ball  or outgoing  direction)  has been  consumed  by the
+               other end of the circuit.
+
+
+
+
+
+
+
+        5                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+                            1.3  Parameter-exchange Signals
+
+
+             Certain  signals  are used  to  manipulate and  test  the terminal
+        characteristics.
+
+             In general, "Queries" originate only at the host;  the response is
+        a "Set".   If the  characteristic is  not supported,  there will  be no
+        response.
+
+             "Sets" are initiated only at  the host;  the response is  a "Set",
+        and  the value  associated with  it is  the final  value used.   If the
+        characteristic is  not supported,  there will be  no response;   if the
+        usage is restricted, the value returned may not be the same as sent.
+
+
+
+
+
+                    1.3.1  "Field"-parameter Signals
+
+             Certain  parameters  are 4-bit  quantities;   these  are exchanged
+        using "field"-parameter signals.
+
+
+           Set_INPUT_BAUD_RATE:  Sets  the  input baud  rate  to  the specified
+               value, according to the key-value presented (see appendix).
+
+           Set_OUTPUT_BAUD_RATE:  Sets the  output baud  rate to  the specified
+               value, according to the key-value presented (see appendix).
+
+           Set_PARAMETER_A:  The VALUE is the parameter.
+
+           Set_PARAMETER_B:  The VALUE is the parameter.
+
+           Set_PARAMETER_C:  The VALUE maps into the parameter, using C-MAP.
+
+           Set_PARAMETER_D:  Parameter "D" is a terminal delay  parameter which
+               applies to the ALTERNATE  of the normal delay  parameters.  That
+               is,  if  CR_delay  is  set,  parameter  "D"  is  applied  to  LF
+               characters.  The VALUE maps into the parameter, using C-MAP.
+
+
+               NOTE -- Parameters  "A", "B",  "C", and  "D" are  used to
+                       generate  delays  on output  to  the  terminal to
+                       allow time for the carriage to return.  The delay
+                       is in units of 1/30 second.
+
+
+           Query_FIELD_PARAMETER:  The VALUE  is the  INDEX of  the appropriate
+               field parameter as above.  The response generated by  the TYMSAT
+               is of the form of the appropriate SET prefix code.
+
+
+        6                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+               NOTE -- "Field Parameters" have the designated usage ONLY
+                       when  applied   to  ASCII  terminals   which  are
+                       connected  to  an  ASYNC  TYMSAT  Interface.  For
+                       other  terminal   types  (e.g.  2741)   or  other
+                       interfaces  (e.g. SIO),  the designated  usage is
+                       meaningless.
+
+               NOTE -- In certain implementations (e.g. ISIS),  there is
+                       no  clear distinction  between "Field"  and "Bit"
+                       parameters;   the   whole  set  is   lumped  into
+                       "terminal Parameters".
+
+
+
+
+
+                    1.3.2  "Bit"-Parameter signals
+
+             Certain parameters consist  of only a  single bit;  these  are the
+        "bit"-parameter signals.  One  class of such  signals is used  to query
+        the  state of  these parameters  (the response  to these  types  is the
+        corresponding set_bit):
+
+
+           Query_ECHO_CONTROL:  A  "1"  indicates  that  the  TYMSAT  can  echo
+               characters (even if in Defered-Echo-Mode).  A "0" indicates that
+               the  TYMSAT will  NOT echo  characters under  any circumstances.
+               (The  normal  state  for  a  newly-built  circuit   is  Echo-Off
+               (Echo_Control = 0).
+
+           Query_ECHO_CONTROL-I:  This parameter determines if  ASCII control-I
+               (TAB) will be echoed.
+
+           Query_ECHO_LF_on_CR: If  "1" the TYMSAT  will echo LF  when a  CR is
+               input  (this  may be  preceeded  with CR,  e.g.  for full-duplex
+               terminals).
+
+           Query_ECHO_CR:Rubout_on_LF: If "1" the TYMSAT will echo  CR:RUB when
+               a LF  is input (this  may be preceeded  with LF, e.g.  for full-
+               duplex terminals).
+
+           Query-HALF-DUPLEX:  A  "1" indicates  a half-duplex  terminal; these
+               ports do not echo, except for CR and LF (see above).
+
+           Query_PARITY:  Certain drivers may  output either with no  parity or
+               with even parity; "1" indicates even parity.
+
+           Query_XON/XOFF_ENABLE:  "1"   indicates   that   the    driver   may
+               "backpressure"  the   terminal  by  emitting   XOFF  characters;
+               "backpressure" will be released via XON.
+
+           Query_CR_DELAY:  "1"   indicates  primary   delay  after   CR;   "0"
+               indicates delay after LF.
+
+        7                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+           Query_ECHO_CONTROL-H: If  "1", ASCII  Control-H (backspace)  will be
+               echoed.
+
+           Query_REVERSE_X-ENABLE:  "1"   indicates  that   the   terminal  may
+               "backpressure" the TYMSAT via XON and XOFF.  Note that  a single
+               occurrence of the  appropriate character provides  the function;
+               a second occurrence  of the same  character is treated  as data,
+               and passed through the circuit.
+
+           Query_KATAKANA.
+
+           Query_TERMINATE-OUTPUT-on-BREAK-DETECTED:  A "1" indicates  that the
+               TYMSAT will terminate ("eat") all subsequent output when a break
+               is  detected on  input;  this  state is  reset on  receipt  of a
+               Zapper or Gobbler from the host.
+
+           Query_ECHO-ESC: IF "1", ASCII  ESC character (x'1B) will  be echoed.
+               This  is  of  use to  certain  applications  which  input cursor
+               information from screen terminals;  the cursor (prefixed by ESC)
+               may be  echoed back  to the terminal  so that  the screen-cursor
+               "tracks" the user input immediately.
+
+           Query_Q-MODE:  Q-mode  is  designed  to  provide   certain  "screen"
+               primative  functions in  a  "line" protocol.   In  particular, a
+               terminal  driver  running  in  Q-mode  performs   the  following
+               functions:
+
+               Tilde   Always Echoed.
+               "}"     Always echoed.
+               LF      Never echoed, enter DEM.
+               CR      Echoed normally (with LF, depending upon Echo_LF_on_CR),
+                  then EDEM.  The exception is:
+                    If Echo_CR:RUB_on_LF is off, don't echo the CR, just EDEM.
+
+           Query_SPACE-PARITY:  Returns   the  state   of   the  "Space-Parity"
+               parameter.
+
+
+             A  second class  of  bit-parameter signals  is used  to  set those
+        terminal parameters which  can be specified by  one bit.  (A  "1" turns
+        the  parameter "on";   the  response is  the  corresponding "set-bit".)
+        These are:
+
+
+           Set_ECHO_CONTROL.
+
+           Set_ECHO_CONTROL-I.
+
+           Set_ECHO_LF_on_CR.
+
+           Set_ECHO_CR:Rubout_on_LF.
+
+           Set_HALF-DUPLEX.
+
+        8                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        TYMNET Signals                                         February 4, 1986
+
+
+           Set_PARITY.
+
+           Set_XON/XOFF_ENABLE.
+
+           Set_CR_DELAY.
+
+           Set_ECHO_CONTROL-H.
+
+           Set_REVERSE_X-ENABLE.
+
+           Set_KATAKANA.
+
+           Set_TERMINATE-OUTPUT-ON-BREAK-DETECTED.
+
+           Set_ECHO-ESC.
+
+           Set_Q-MODE.
+
+           Set_SPACE-PARITY.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        9                      TYMNET Circuit Protocols             CIRCUIT.DOC
+        Circuit Origination                                    February 4, 1986
+
+
+
+
+
+
+                               2 -  Circuit Origination
+
+
+             A TYMSAT port is a port that is handled by a TYMNET node (or slot)
+        called  a TYMSAT.   The most  common type  of TYMSAT  port is  an ASYNC
+        interface to a terminal.  A terminal may be connected to a  TYMSAT port
+        either directly or via dialed phone lines.
+
+
+
+
+
+
+                        2.1  CCT -- Circuit Characteristic Type
+
+
+             Each  circuit has  associated  with it  (at the  point  of circuit
+        origination) a Circuit Characteristic Type (CCT).  If a  terminal port,
+        it may also have associated with it a Terminal-ID (TID).
+
+           TC: Throughput  Class:  Specifies  the "Bandwidth"  of  the circuit.
+               Increasing value  corresponds to increased  bandwidth available:
+               0 = minimum (64  characters/second max.);  3 =  maximum (limited
+               to circuit paths available).
+           Service Type: Specifies  the  prefered circuit  routing:  B  = Batch
+               (route over Satellite paths); I = Interactive (route over normal
+               paths).
+            (NOTE: Throughput Class and Service Type are used by the Supervisor
+               to initialize and route  the circuit for the  service requested.
+               The values shown are defaults; they may be over-ridden as a part
+               of the normal login-process.)
+           HDX: Half-Duplex.
+           *:  Auxiliary circuit is a special case;  It is not a  CCT presented
+               to  the  supervisor  as  a  part  of  a  normal circuit-building
+               request,  rather  it is  keyed  to the  METHOD  of  building the
+               circuit.   It is  thus not  valid in  a normal  request,  but is
+               information made available to the destination host.
+           **: Aux Through Gateway is another special case;  It  is effectively
+               the complement of Auxiliary circuit.  That is, an  interface can
+               request a normal circuit using this CCT;  it is presented to the
+               host as an Auxiliary circuit.
+
+             The following CCT's are defined:
+
+
+
+
+
+
+
+        10                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Circuit Origination                                    February 4, 1986
+
+
+           Circuit             Input     Default:        Protocol
+        Characteristic   TID [/Output] TC:   Service   
+           Type              Baud Rate        type:
+           (CCT)
+
+            0*            -      -      2       B       Auxiliary circuit
+            1             A     300     0       I       ASYNC: ASCII
+            2             C     300     0       I       ASYNC: ASCII
+            3            E,I    300     0       I       ASYNC: ASCII
+            4             G     300     0       I       ASYNC: ASCII
+            5             B     150     0       I       ASYNC: ASCII
+            6             F     150     0       I       ASYNC: ASCII
+            7             J     150     0       I       ASYNC: ASCII
+            8            <CR>   300     0       I       ASYNC: 3767
+            9            <CR>   134     0       I       ASYNC: 2741
+           10             D     110     0       I       ASYNC: ASCII
+           11             -      -      3       B       SYNC: HSA
+           12           A,G,I   1200    1       I       ASYNC: ASCII
+           13             -      -      1       B       ASYNC: Polled Terminal
+           14**           -      -      2       B       Aux Through Gateway
+           15             -     Var.    0       I       ASYNC: Baudot
+           16           A,G,I   2400    2       I       ASYNC: ASCII
+           17             -      -      2       B       SYNC: Polled Terminals
+           18             -      -      3       B       SYNC: Point-to-Point
+           19           A,G,I   4800    2       I       ASYNC: ASCII
+           20           A,G,I   9600    3       I       ASYNC: ASCII
+           21             -      -      2       I       Multiplexed PVC
+           22             -      -      1       B       ASYNC: Audio Response
+           23             -     75/1200 1       I       ASYNC: ASCII
+           24             -      -      3       I       SYNC: SDLC
+           25             Y      -      0       I       Transaction Terminals
+           26             -      -      2       B       Host-Originated
+         27-30                                          not in use
+           31**           -      -      2       B       Aux Through Gateway
+                                                        (Transparant;  NET940
+                                                         Gateway ONLY!)
+           32*            -      -      2       B       HDX Auxiliary circuit
+           33             A     300     0       I       ASYNC: HDX ASCII
+           34             C     300     0       I       ASYNC: HDX ASCII
+           35            E,I    300     0       I       ASYNC: HDX ASCII
+           36             G     300     0       I       ASYNC: HDX ASCII
+           37             B     150     0       I       ASYNC: HDX ASCII
+           38             F     150     0       I       ASYNC: HDX ASCII
+           39             J     150     0       I       ASYNC: HDX ASCII
+         40-41                                          not in use
+           42             D     110     0       I       ASYNC: HDX ASCII
+           43                                           not in use
+           44           A,G,I   1200    1       I       ASYNC: HDX ASCII
+           45                                           not in use
+           46**           -      -      2       B       HDX Aux Through Gateway
+           47             -     Var.    0       I       ASYNC: HDX Baudot
+           48           A,G,I   2400    2       I       ASYNC: HDX ASCII
+         49-50                                          not in use
+
+        11                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Circuit Origination                                    February 4, 1986
+
+
+           51           A,G,I   4800    2       I       ASYNC: HDX ASCII
+           52           A,G,I   9600    3       I       ASYNC: HDX ASCII
+         53-62                                          not in use
+           63**           -      -      2       B       HDX Aux Through Gateway
+                                                        (Transparant;  NET940
+                                                         Gateway ONLY!)
+
+
+
+
+
+
+                                    2.2  Logging In
+
+
+             After the  terminal is  connected, the  calling port  enters login
+        state.  Variables are initialized according to the requirements  of the
+        terminal.
+
+             In this state  there is no network  circuit to the port.   A login
+        string is  requested, and  then ASCII characters  are accepted  for the
+        login string.  The login  consists of two parts:  the  username string,
+        and  the password  string.  The  username characters  are  echoed.  The
+        following characters, which may appear anywhere in the username string,
+        have special significance:
+
+           Control-A:  Causes the Throughput Class  of the circuit to  be built
+               using this logon string to be 64cps.
+           Control-B:  Causes the Throughput Class  of the circuit to  be built
+               using this login string to be 128 cps.
+           Control-C:  Causes the Throughput Class  of the circuit to  be built
+               using this login string to be 512 cps.  This is the  default for
+               type 0 (Aux circuit).
+           Control-D:  Causes the Throughput Class  of the circuit to  be built
+               using this login string to be 2048 cps.
+           Control-I:  Requests that  the circuit path  be selected  to enhance
+               response time, for Interactive usage.
+           Control-H:  Sets the Half Duplex (HDX) variable to 1.
+           Control-K:  Sets   the   KATAKANA  variable   to   1  (Configuration
+               dependent).
+           Control-P:  Sets the Parity variable to 1.
+           Control-R:  Sets the Reverse X-enable variable to 1.
+           Control-U:  Sets   the   Uppercase   (KATAKANA)   variable    to   1
+               (Configuration dependent).
+           Control-V:  Requests that  the circuit path  be selected  to enhance
+               bandwidth  (potentially at  the expense  of response  time), for
+               high-Volume traffic usage.
+           Control-W:  Erases characters in the login string back to a colon or
+               to the beginning  of the string  (i.e.  cancels the  username or
+               system number typed so far.
+           Control-X:  Sets the X-enable variable to 1.
+
+             The following characters apply to both the username and password:
+
+        12                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Circuit Origination                                    February 4, 1986
+
+
+           Escape:  Erases the login string and re-enters login state.
+           Carriage Return:  Terminates the login string.
+           Semicolon:  Terminates the login string.
+
+
+             The  username string  consists of  a username  (and  optionally, a
+        colon,  and the  "destination  host number").   If the  colon  and host
+        number are omitted,  the "home" system of  the username is used  as the
+        callee (destination host number).
+
+             The Supervisor  searches the Master  User Directory (MUD)  for the
+        specified username.
+
+             If the username is not  in the MUD, an error diagnostic  is issued
+        and the port re-enters login state.
+
+             If the username is in  the MUD, then a password is  accepted.  The
+        password and its terminator are not echoed.  The terminator  causes the
+        password to be verified;  if good, the circuit will be built.
+
+             If  the  login string  and  password are  not  completely received
+        within  about  2  minutes  of  entering  login  state,  then  an  error
+        diagnostic is issued, after which the terminal is disconnected.
+
+             A function  ("cipher") of  the password  is computed  and compared
+        with the  value stored in  the MUD.  If  they do not  match, or  if the
+        username is not valid on  the destination host, an error  diagnostic is
+        issued and the port re-enters login state.
+
+             If the passwords match, the supervisor tries to build a circuit to
+        the callee.  The originating  port is the caller.  If  unsuccessful, an
+        error diagnostic is issued and the port re-enters login state.
+
+             The terminal type  code for the circuit  is the type (CCT)  of the
+        terminal, plus 32d if the terminal is half-duplex (e.g. a Control-H was
+        typed in the login string);  this is passed to the callee.
+
+             A  variant  form of  login  is the  Auxiliary  Circuit.   This can
+        originate only at valid hosts, and requires a special form of protocol.
+        Usage is  similar to  that described for  normal circuits,  except that
+        there is  no password;  there  is also no  facility for retry  on error
+        conditions.
+
+
+
+
+
+
+
+
+
+
+
+
+        13                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+
+
+
+
+                     3 -  Interface Information Exchange in TYMNET
+
+
+             Several  interfaces  in the  network  have a  need  to communicate
+        information at a level that is below the level of the end  user ("super
+        signal").   Both  the  circuit  originator  (caller)  and  the  circuit
+        terminator (callee) of a circuit  need to know what form of  message is
+        acceptable to the other end before this communication may begin.
+
+             This  chapter describes  the  method that  is used  to  solve this
+        problem.
+
+             First, the method used to determine if both ends of a  circuit are
+        intelligent enough to communicate their needs is described.
+
+             Second, the method used to communicate these needs is defined.
+
+
+
+
+
+
+                             3.1  Determining Intelligence
+
+
+             Each end of a circuit must  know that the other end is  capable of
+        supporting IIX.   An interface  capable of  IIX is  considered "smart".
+        One that is not capable of IIX is "dumb".
+
+             Whenever  a  host status  message  is sent  to  the  supervisor an
+        indication of whether  this callee is smart  or dumb is also  sent.  If
+        this  information is  lacking (as  in older  interfaces) the  callee is
+        considered dumb.
+
+             When  an  caller  requests  a  circuit  from  the   supervisor  an
+        indication of whether  this caller is smart  or dumb is also  sent.  If
+        this  information is  lacking (as  in older  interfaces) the  caller is
+        considered dumb.
+
+             When the  circuit is  completed the  supervisor will  inform smart
+        interfaces (both ends if both are smart) whether the other end is smart
+        or dumb.  Dumb ends are  told nothing of the intelligence of  the other
+        end.  Therefore, if an end is smart it will expect an indication of the
+        other ends intelligence before it consideres the circuit  complete.  If
+        the other end is dumb this end will revert to being dumb.
+
+             At this point  both ends are either  smart or dumb.  If  both ends
+        are dumb then the  interaction is complete and  communication continues
+
+
+        14                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+        as if IIX had never been  invoked.  If both ends are smart then  IIX is
+        invoked.
+
+
+
+
+
+
+                          3.2  Interface Information Exchange
+
+
+             Before any other information  can be exchanged the caller  and the
+        callee must know  what dialect (if any)  will be used.   Therefore, the
+        callee of  a circuit will  send this information  as soon as  a circuit
+        from a  smart caller  is established.   The callee  will then  wait for
+        response from the caller.  The callee will send nothing on a circuit to
+        a smart caller until it has received this response from the caller.
+
+             This first message from the  circuit callee  is a list of  all the
+        dialects that the callee is willing to support at this time.   They are
+        listed in decending order of desirability.  The caller will pick one of
+        these dialects and send a  dialect accepted message to the  callee that
+        indicates the chosen dialect.   The callee can not send  anything until
+        it receives the response from the caller.  It then may start  using the
+        chosen dialect immediately.  The caller may use the dialect as  soon as
+        it sends the response.
+
+             A  dialect exchange  may be  initiated again  at any  time  and by
+        either  end of  the circuit.   It  is not  necessary to  list  the same
+        dialects each time the exchange is initiated.
+
+             For example, it may be desirable to start out  communicating using
+        only ASCII characters so as  to allow the user to perform  some initial
+        call setup.  Later the user might trigger a dialect message to  be sent
+        either from the caller or the callee.
+
+
+
+
+
+                    3.2.1  IIX Detail
+
+             An IIX command or response consists of the following.
+
+           1.  an escape flag to indicate the Start of an Interface Information
+               eXchange (SIIX, pronounced seeks),
+           2.  A 2 byte indication of the command or response type,
+           3.  an optional length  field to indicate the  size in bytes  of the
+               information field which follows,
+           4.  an  optional command  or response  information field  of varying
+               length depending on the command or response type,
+           5.  an  optional  escape  flag to  indicate  the  Termination  of an
+               Interface Information eXchange (TIIX).
+
+        15                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+               NOTE:   The  TIIX is  NOT  optional for  the  initial IIX
+                       negotiation transactions  -- A  particular callee
+                       or caller may not have an up-to-date list  of all
+                       possible   dialects;    he   must   then  discard
+                       unrecognized   data   until   a   point   of  re-
+                       synchronization is reached...this is  the purpose
+                       of TIIX.
+
+                       Furthermore, the instances where TIIX is declared
+                       optional  do  NOT  mean that  a  TIIX  will NEVER
+                       appear  in  that instance  --  any  interface may
+                       arbitrarily append a TIIX to ANY IIX-message, and
+                       thus all interfaces must be prepared to  accept a
+                       TIIX terminating an IIX-message.
+
+             The  command or  response  type are  the  two bytes  of  data that
+        immediately follow the SIIX on the circuit.
+
+             The types are further divided into two groups: global and dialect-
+        dependent;  global messages are  of a general nature and  are supported
+        by all smart interfaces.  Global messages can be sent at any  time even
+        when a particular dialect is in effect.
+
+             For network efficiency, only types which have bit 0 and 8  set are
+        assigned (i.e. types  have a bias of  8080x).  This allows up  to 8192d
+        possible global message  types (0000-3F7F)!8080.  Each dialect  also is
+        allowed 8192 message types (4000-7F7F)!8080.
+
+             Global messages are defined in sequential order from 0000  to 3F7F
+        (8080 to BFFF) as needed.  No  attempt is made to group messages  as to
+        class.
+
+             Messages 4000  to 7F7F  (C080 to  FFFF) are  reserved for  a given
+        dialect.   It  may  be  useful to  document  a  dialect  so  that other
+        interfaces can take advantage of it.
+
+
+
+
+
+                    3.2.2  Global Messages
+
+             The following global messages already exist:
+
+            0000 (8080) Select Dialect Command, a list of 16 bit dialect values
+                        follows.   This is  terminated by  a TIIX.   A  list of
+                        dialect  values  is  given  in  the  following section.
+                        (This  normally  originates  at  the  callee;   it  may
+                        originate at the caller if the caller and  callee agree
+                        on this usage as a part of the dialect used.)
+
+            0001 (8081) Selected  Dialect  Response, a  single  16  bit dialect
+
+
+        16                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+                        value follows.  This  message is sent only  in response
+                        to  0000  above.   A  response  dialect  value  of 8080
+                        indicates that  all dialects  have been  rejected.  The
+                        request originator  may either zap  the circuit  or try
+                        again.
+
+            0002 (8082) Gateway  reached  smart  host,  see  "TYMNET  Gateways"
+                        section.
+
+            0003 (8083) Gateway  reached  dumb  host,  see   "TYMNET  Gateways"
+                        section.
+
+            0004 (8084) Normal logon status,   8 bit status follows,  format is
+                        as in ISIS B4 message, see "TYMNET Gateways" section.
+
+            0005 (8085) Resyncronize interface  exchange, this message  is sent
+                        to  tell  the   receiver  to  stop   trashing  received
+                        messages.   When  an  interface  receives  a black_ball
+                        because data has been  lost toward it, or  the receiver
+                        expects  that  information  has  been  lost,  it should
+                        reflect a  grey_ball so the  the sender knows  that the
+                        data was  lost.  The receiver  should then  discard all
+                        data  received   until  the  resyncronize   message  is
+                        received.  When the sender receives a grey_ball it must
+                        determine if it  can recover and send  the resyncronize
+                        message or zap the circuit.  The accounting termination
+                        type   should   specify  "dropped   due   to   loss  of
+                        syncronization"   as   is  specified   in   the  TYMNET
+                        ACCOUNTING manual.
+
+            0006 (8086) Product id and version, the next 16 bits is the Product
+                        ID (see  Product Section).  The  following 16  bits are
+                        the 8  bit version  and 8  bit revision  numbers.  This
+                        message may be sent  unsolicitied or in response  to an
+                        product id and version request.
+
+            0007 (8087) Request product id and version.
+
+
+
+
+
+                    3.2.3  Dialect Values
+
+             The following dialects are assigned:
+
+            0000 (8080) all dialects were rejected.
+
+            0001 (8081) ASCII  data  (null  dialect)  (i.e.,  only  ASCII  data
+                        characters and global IIX messages may be sent).
+
+            0002 (8082) TYMNET/TYMNET  gateway (see  "TYMNET  Gateways" section
+                        below).
+
+        17                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+            0003 (8083) X.25/X.75 interface.
+
+            0004 (8084) 3270 DSP.
+
+            0005 (8085) IBM SDLC.
+
+            0006 (8086) IBM SNA.
+
+            0007 (8087) UTS 4000.
+
+            0008 (8088) Univac NTR.
+
+            0009 (8089) TINET.
+
+            000A (808A) Outdial.
+
+            000B (808B) 2780.
+
+            000C (808C) HASP.
+
+            000D (808D) Circuit Redirect.
+
+            000E (808E) UMB.
+
+            000F (808F) 3780.
+
+            0010 (8090) NETWORK CONSOLE.
+
+            0011 (8091) Microdata File Transfer.
+
+            0012 (8092) ICL Protocol.
+
+
+
+
+
+                    3.2.4  Product ID
+
+             The PID (product identifier) is a 15 bit value which specifies the
+        generic  type  of  the  interface  (ISIS  kernel,  X.25,  etc.).   (The
+        supervisor  currently only  accepts the  lower 8  bits.) It  is  not an
+        indication of dialects used by the host and is not reported  to circuit
+        callers (unless the product id and version IIX command is used).
+
+             The PID is not actually related to IIX.  It may be reported to the
+        Supervisor in a host-status message by the interface reguardless of the
+        host intelligence.  The Supervisor will save this value and it  will be
+        reported with the host number in PROBE (as a hex value initially).
+
+               NOTE:   The current  PID list may  be found at  all times
+                       in:
+
+                                 (BASELINE)PRODID.DOC
+
+        18                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+                       This  file  is  updated  periodically,   and  any
+                       inquiries  reguarding  the  PID  codes  and their
+                       assignment should  be directed to  the (BASELINE)
+                       manager.
+
+
+
+
+
+
+                                 3.3  TYMNET Gateways
+
+
+             TYMNET gateways  declare themselves  as smart  hosts.  If  a smart
+        caller builds  a circuit  to the  gateway, the  gateway sends  a select
+        dialect command with a dialect of "gateway" (8081/8082).  If the caller
+        supports  gateway calls,  no  response is  sent  at this  time.   For a
+        nontransparent call, or  a call that  requires a password,  the gateway
+        may need additional  information from the  caller in order  to complete
+        the  login.   The  exact  nature  of  the  information  needed  will be
+        indicated  in  SIIX  logon status  messages  from  the  gateway.  These
+        messages may be preceeded by ASCII text that can be passed to the user.
+        For example,  to start  a non-transparent login  the gateway  will send
+        text of the form "Interlink established from xxx to yyy" followed  by a
+        "please log in" SIIX status  message.  The text of the "please  log in"
+        message will not be sent.
+
+             When the gateway builds a circuit request it indicates that  it is
+        an intelligent caller if the original caller was intelligent.  When the
+        circuit is  complete, the  gateway will send  a "gateway  reached smart
+        host" command (8082) or  a "gateway reached dumb host"  command (8083).
+        If the latter, the circuit  is complete and the caller does  not expect
+        to receive and should not send additional IIX commands.  If  the former
+        is sent, the destination will send the "select dialect command" and the
+        gateway will pass it on.  The gateway is then transparent.
+
+               NOTE -- The circuit may  be to another gateway.   In this
+                       case the caller will receive the  gateway dialect
+                       command again and the procedure will be repeated.
+
+
+
+
+
+                    3.3.1  Implementation Requirements
+
+           1.  New messages have been  defined so that callees and  callers can
+               inform the supervisor of their intelligence.  Messages have also
+               been  defined so  the supervisor  can inform  smart  callees and
+               callers of the other ends intelligence.  They are  documented in
+               the TYMNET I and TYMNET II reference manuals.
+           4.  The TYMNET II node code will record the HYPE and report  it when
+
+
+        19                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Interface Information Exchange in TYMNET               February 4, 1986
+
+
+               it reports host  status.  This report will  be made if  the HYPE
+               changes  for  a  host  even  if  the  host  status  (DOWN, SHUT,
+               ANSWERED) does  not change.   The node code  will also  send the
+               required information for a new circuit request.
+           9.  The ISIS TYMSAT  will start reporting  an actual host  number to
+               the supervisor.  A new status message will define the  status as
+               "originate only".   Note that  a new  tymfile parameter  will be
+               added for the host number and TYMNET must be informed  that they
+               must  start assigning  and recording  TYMSAT host  numbers.  The
+               "accounting host number" currently generated by the  TYMSAT will
+               be removed.  Therefore, the method currently used  for assigning
+               hosts will be  used for assigning  TYMSAT host numbers  (i.e., a
+               sequential assignment).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        20                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+
+
+
+
+                                 4 -  ASYNC Terminals
+
+
+             Most  terminals  are  ASYNC;   These  have  a  number  of  related
+        characteristics.
+
+
+
+
+
+
+                                  4.1  TID Detection
+
+
+             As  part of  the procedure  of connecting  to a  TYMSAT  port, the
+        terminal user specifies  the parameters characteristic of  his terminal
+        by  entering  a   "Terminal  IDentification  character"   (TID).   This
+        character is detected by the TYMSAT.
+
+             TID  detection  performs  two  distinct  operations  upon  the TID
+        entered by the user:
+
+               1.  Terminal-speed detection;
+
+               2.  Terminal-characteristics initialization.
+
+             ASYNC input is sampled periodically.  The sample rate is dependent
+        upon the maximum  terminal-speed supported (3600 times/second  for max-
+        speed  of  1200  bps; 14400  times/second  for  4800  bps).  Additional
+        constraints are imposed upon the RANGE of speeds supported  (either 75-
+        1200 bps OR 300-4800 bps).  This discussion is based upon the range 75-
+        1200 bps  for illustration only  -- it applies  equally for  the higher
+        range supported.
+
+             When a port is  in TID-detection mode, the input  sample-stream is
+        examined  continuously for  the  transition from  marking-  to spacing-
+        state,  and  the  occurrence  of at  least  two  successive  samples of
+        spacing-state (to avoid detection of single-sample noise).  Once found,
+        the number  of highest-speed  baud-samples (1200  or 4800)  in spacing-
+        state (up to 36d)  are counted, and this  number is used to  generate a
+        pseudo-baud-rate code for  further processing.  The character  is input
+        at this  (assumed) pseudo-baud-rate,  and a table  is searched  for the
+        occurrence of this character at this baud-rate (only the low 5  bits of
+        the character  are used  for this  search).  If  successful, associated
+        table entries are used to initialize the terminal characteristics.
+
+             The TID characters have  been specially selected to  permit unique
+        detection according to the following table:
+
+
+        21                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+        TID     baud    binary  reverse-character representation
+                rate     code    (binary, including start-baud)
+
+        Case      50    1111x11         011x11  (Baudot)
+        Case      75    1111x11         001111  (Baudot, seen as 150baud)
+         D       110    1000100         000100
+        "P"      135    1111001         010011  (EBCD 2741)
+        "P"      135    0001011         011010  (Correspondance 2741)
+        CR       135    1101101         010110  (Correspondance 2741)
+         B       150    1000010         001000
+         F       150    1000110         001100
+         J       150    1001010         001010
+         A       300+   1000001         010000
+         C       300+   1000011         011000
+         E       300+   1000101         010100
+         G       300+   1000111         011100
+         I       300+   1001001         010010
+        CR(M)    300+   0001101         010110  (ASCII)
+         O       300+   1001111         011110
+         Y       300+   1011001         010011
+        "P"      300    1111001         010011  (EBCD 3767 [conflict with Y])
+        "P"      300    0001011         011010  (Correspondance 3767)
+        CR       300    1101101         010110  (EBCD 3767)
+
+         (Where "300+" applies to 300, 1200, 2400, and 4800 Baud.)
+
+             These TID's have been  ordered in this fashion to  show explicitly
+        that the  TID codes for  110 and 150  baud terminals are  selected such
+        that the period of  initial spacing-state (counting start-baud)  is two
+        baud-times  for 150  baud,  and three  baud-times for  110  baud.  This
+        permits greater discrimination between TID speeds, even on poor-quality
+        connections.
+
+             The  measured  baud-samples are  translated  into pseudo-baud-rate
+        according to:
+
+         1: 1200        10:   --        19:   --        28:   --
+         2:  300        11:   --        20:   --        29:  110
+         3:  300        12:   --        21:   --        30:  110
+         4:  300        13:   --        22:   --        31:  110
+         5:   --        14:  150        23:   --        32:  110
+         6:   --        15:  150        24:   --        33:  110
+         7:  134        16:  150        25:   --        34:  110
+         8:  134        17:   --        26:   --        35:  110
+         9:  134        18:   --        27:   --        36:  110
+
+               NOTE:   Alternately,  the  particular  port  used  may be
+                       configured  for  Auto-identification  (AID  port)
+                       using Permanent Virtual Circuit (PVC) technology,
+                       in   which   case  the   port   is  automatically
+                       identified as  part of  the process  of answering
+                       the port.
+
+
+        22                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+                                 4.2  ASCII Terminals
+
+
+             Each  ASCII  terminal  has  a  set  of  variables  called terminal
+        characteristics (see Bit-Parameters, Field-parameters).
+
+
+             On some TYMSATs,  Echo Control-H, Reverse X-enable,  Echo-ESC, and
+        "Q"-mode are always zero.
+
+             When  a  terminal  is  connected  (but  not  yet  identified), the
+        following variables are initialized to zero:
+                Echo Control-I
+                Half Duplex
+                Echo Control-H
+                Reverse X-enable
+                Echo ESCape
+                "Q" mode
+
+             The following variables are initialized depending upon the TID:
+
+        Terminal        Parameter     CR
+          Type           A  B  C  D  Delay  Parity
+         (TID)
+
+          A              0  0  0  0    1      0
+          B              6  0  2  0    1      0
+          C              4  0  4  9    1      0
+          D              0  0  0  0    1      0
+          E              4  6  6  1    1      0
+          F              4  0  4  9    1      0
+          G              3  5  8  0    0      0
+          I              1 12  8  6    1      0
+          J              6  0  2  0    1      1
+          Y              0  0  0  0    0      0 (H-dux)
+          O              0  0  0  0    0      0 (space-parity)
+         CR              0  0  0  0    1      0 (used for speed-detection)
+
+
+             The  input and  output  baud rates  and number  of  characters per
+        second are controlled by the Input and Output Baud Rate (see appendix).
+
+
+
+
+
+                    4.2.1  ASCII Echo-control
+
+             The ASCII  receiver and transmitter  (described below)  operate in
+        concert to provide echoing  capabilities.  Echoing is based  upon three
+        major echoing  modes:  Echo-off,  Defered-Echo, and  Local-echo.  These
+        are  in turn  divided into  states, by  the condition  of  four logical
+
+
+        23                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+        variables:  ECHO, Defered-Echo-Mode (DEM),  No-Balls-Outstanding (NBO),
+        and Green-Ball-Outstanding (GBO) (an additional, virtual state-variable
+        is  Red-Ball-Out, corresponding  to No-Balls-Out  = False  .AND. Green-
+        Ball-Out  =  False).   State-changes  are  predicated  upon  conditions
+        detected  by the  drivers,  and upon  the transmission  and  receipt of
+        special control-signals:  Echo-off, Echo-on, Enter-  and Leave-Defered-
+        Echo-Mode  (EDEM, LDEM),  Red- and  Green-Balls.  The  state-diagram is
+        shown below, and additional details may be gleaned from  the individual
+        driver descriptions.
+
+                ECHO OFF MODE           I       DEFERRED ECHO MODE
+                  DEM: F                I           DEM: T
+                 ECHO: F                I          ECHO: F
+                                        I
+                    _______________________
+        ---------- <    r/E-OFF         I  \----------
+        | GBO: F | <---> r/GB           I   | GBO: F | <---> r/GB
+        | NBO: F | <---> r/E-OFF        I   | NBO: F | <---> r/E-ON
+        ---------- \______________________> ----------
+            |     <     r/E-ON          I       A    \
+            | r/RB \_____________       I       |     \____________
+            |       s/RB r/E-OFF \      I       |                  \
+            V                     \     I       | s/RB              \
+        ---------- <---(Start)     \    I       | (input)            \
+        | GBO: F | <---> r/E-OFF    \   I       |                r/RB \
+        | NBO: T | <---> r/RB, r/GB  \  I   ----------                 \
+        ---------- <___________       \____ | GBO: T | <---> r/RB       |
+            A      \   r/E-OFF \      _____ | NBO: F | <---> r/E-ON     |
+            |       \_________  \    /  I   ----------                  |
+            |          r/E-ON \  \  /   I       A                       |
+        === | ================ \  \/ ===+       | s/GB                  |
+            | s/EDEM            \ /\    I       | (no-activity timeout) |
+            | r/E-OFF            X  \   I       |       _______________/
+            |                   / \  \  I   ---------- <
+        ----------  ___________/   \  \____ | GBO: F | <---> r/GB, r/RB
+        | GBO: F | <  s/LDEM r/GB   \_____> | NBO: T | <---> r/E-ON
+        | NBO: T | _______________________> ----------
+        ---------- (non-echo I/O) s/EDEM 
+          A    A                        I           Legend:
+          |    V                        I       s/ .....send      F ...False
+          V    r/RB, r/GB               I       r/ .....receive   T ...True
+          r/E-ON                        I       <___> ..no action (ignored)
+                                        I       EDEM ...Enter Defered Echo Mode
+                LOCAL ECHO MODE         I       LDEM ...Leave Defered Echo Mode
+                  DEM: F                I       GB .....Green-Ball
+                 ECHO: T                I       RB .....Red-Ball
+                                                DEM ....Defered-Echo Mode
+                                                ECHO ...Echo-Mode
+                                                GBO ....Green-Ball Out
+                                                NBO ....No-Ball Out
+
+                        State diagram for TYMSAT Echo-control.
+
+
+        24                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+                    4.2.2  ASCII Receiver
+
+             When an ASCII character  is received from the terminal  the effect
+        is as if the following PASCAL procedures were called:
+
+
+        PROCEDURE receive(VAR char: INTEGER) { process input character }
+            BEGIN
+            c := MOD(char, X'80') { character without parity bit };
+            IF reverse_x_enable = TRUE AND output_enable = FALSE AND
+                    c = X'11' { control-Q, DC1, XON }
+            THEN output_enable :=TRUE
+            ELSE
+                IF reverse_x_enable = TRUE AND output_enable = TRUE AND
+                        c = X'13' { control-S, DC3, XOFF }
+                THEN output_enable := FALSE
+                ELSE
+                    IF echo_on = TRUE
+                    THEN echo(c,char) {perform echo logic}
+                    ELSE send(char);
+            END;
+
+
+        PROCEDURE echo(VAR c, char: INTEGER) {echo input character }
+            BEGIN
+            IF deferred_echo_mode = TRUE
+            THEN
+                BEGIN
+                IF green_ball_out = TRUE
+                THEN
+                    BEGIN
+                    green_ball_out := FALSE;
+                    send(red_ball);
+                    END;
+                send(char);
+                END;
+            ELSE {NOT deferred_echo_mode}
+
+                IF output_buffer_empty AND output_enable = TRUE
+                THEN
+                    IF half_duplex = TRUE
+                    THEN
+                        BEGIN
+                        send(char);
+                        IF c = X'0D' { CR }
+                        THEN
+                            IF echo_lf_on_cr = TRUE THEN print (X'0A' { LF }) ;
+                        ELSE
+                            IF c = X'0A' { LF }
+                            THEN
+                                IF echo_cr_on_lf = TRUE THEN
+                                    BEGIN
+                                    print(X'0D' { CR }) ;
+
+        25                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+                                    print(X'FF' { DEL }) ;
+                                    END;
+                        END;
+                    ELSE { NOT half_duplex }
+
+                        CASE c OF
+                            c=X'7F': {DEL,RUBOUT}
+                                BEGIN
+                                enter_dem;
+                                send(char);
+                                END;
+                            c=X'7E': {tilde}
+                                BEGIN
+                                IF q.mode = TRUE
+                                    THEN print(char)
+                                    ELSE enter_dem;
+                                send(char);
+                                END;
+                            c=X'7D': {ALTMODE,"}"}
+                                BEGIN
+                                IF q.mode = TRUE
+                                    THEN print(char)
+                                    ELSE enter_dem;
+                                send(char);
+                                END
+                            c>X'20': {printable character}
+                                BEGIN
+                                print(char);
+                                send(char);
+                                END;
+                            c=X'1B': { ESC }
+                                BEGIN
+                                IF e.esc THEN print(char) ELSE enter_dem;
+                                send(char);
+                                END;
+                            c=X'0D': { CR }
+                                IF q.mode = TRUE
+                                THEN IF echo_cr_on_lf = TRUE
+                                     THEN BEGIN
+                                          print(char);
+                                          IF echo_lf_on_cr = TRUE
+                                          THEN print(X'0A' { LF });
+                                          send(char);
+                                          enter_dem;
+                                          END;
+                                     ELSE BEGIN
+                                          enter_dem;
+                                          send(char);
+                                          END;
+                                ELSE BEGIN
+                                     print(char) ;
+                                     IF echo_lf_on_cr
+                                     THEN print (X'0A' { LF }) ;
+
+        26                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+                                     send(char);
+                                     END;
+                            c=X'0A': { LF }
+                                BEGIN
+                                IF q.mode = TRUE
+                                    THEN enter_dem
+                                    ELSE BEGIN
+                                         print(char);
+                                         IF echo_cr_on_lf = TRUE
+                                         THEN BEGIN
+                                              print(X'0D' { CR });
+                                              print(X'FF' { DEL }) ;
+                                              END;
+                                         END;
+                                send(char);
+                                END;
+                            c=X'09': { HT }
+                                BEGIN
+                                IF ectli = TRUE
+                                THEN print(char);
+                                ELSE enter_dem;
+                                send(char);
+                                END;
+                            c=X'08': { BS }
+                                BEGIN
+                                IF ecthl = TRUE
+                                THEN print(char);
+                                ELSE enter_dem;
+                                send(char);
+                                END;
+                            other:
+                                BEGIN
+                                enter_dem;
+                                send(char);
+                                END;
+                        END;
+                ELSE {output buffer not empty OR output_enable := FALSE}
+
+                    BEGIN
+                    enter_dem;
+                    send(char);
+                    END;
+            END;
+
+        PROCEDURE enter_dem {enter Deferred-Echo-Mode}
+            BEGIN
+            deferred_echo_mode := TRUE;
+            send(edem);
+            END;
+
+             If  the  terminal sends  a  break  and the  TYMSAT  is  capable of
+        detecting breaks, a break_begin signal is sent on the circuit.
+
+
+        27                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+             If the terminal disconnects (e.g.  hangs up), a circuit  zapper is
+        sent.  (Note: If the terminal is connected through a modem with  a half
+        duplex  line protocol,  it is  not always  possible for  the  TYMSAT to
+        detect when the terminal hangs up.)
+
+             When x_enable is TRUE,  special control characters may  issue from
+        the port:  if the pipe leading from the TYMSAT port  becomes "crowded",
+        a DC3 (Control-S, XOFF) is issued;  if the pipe leading from the TYMSAT
+        port becomes  "not_crowded", a DC1  (Control-Q, XON) is  issued.  (Some
+        terminal devices  interpret these  characters as  commands to  stop and
+        resume sending, respectively.)
+
+             Whenever deferred_echo_mode is TRUE and no_ball_out_flag  is TRUE,
+        then as soon as there is no output in progress (or queued) no_ball_out_
+        flag is set  FALSE and green_ball_out is  set TRUE and a  Green_Ball is
+        sent on the circuit.
+
+             If a character  is input and defered_echo_mode  and green_ball_out
+        are both TRUE, a Red_Ball is sent and green_ball_out is set to FALSE.
+
+             If approximately  8 seconds  have elapsed since  either a  Red_ or
+        Green_Ball has been sent on the circuit, a Red_Ball is sent  and green_
+        ball_out is set to FALSE.
+
+
+
+
+
+                    4.2.3  ASCII Transmitter
+
+             When output_enable is FALSE, data and signals other than a circuit
+        zapper are  not accepted  from the circuit  (they will  back up  in the
+        pipe).  When output (toward the terminal) is received from the circuit,
+        the the following operations take place:
+
+        PROCEDURE xasci { process output character }
+            BEGIN
+            char := getchr(signal_exit);
+            c := MOD(char, X'80') { character without parity bit };
+
+            IF parity = TRUE AND parbit(c) = TRUE
+                THEN char := c OR X'80' { make correct parity if required } ;
+
+            IF c = X'09' { HT } THEN marge := marge OR 7;
+            IF c = X'0A' { LF } THEN
+                BEGIN
+                    IF cr_delay = FALSE THEN
+                         BEGIN
+                         IF marge > 0 THEN
+                             IF marge = 1 THEN adelay(par_a);
+                             ELSE BEGIN
+                                  c := max(c_map[par_c]-marge,0);
+                                  adelay(par_b + c);
+
+        28                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+                                  END;
+                         output(char);
+                         END;
+                    ELSE BEGIN
+                         output(char);
+                         adelay(c_map[par_d]);
+                         marge := marge + 1;
+                         END;
+                END;
+            ELSE
+                IF c = X'0D' { CR } THEN
+                    BEGIN
+                    output(char);
+                        IF cr_delay = TRUE THEN
+                             BEGIN
+                             c := par_b + marge/(2**par_a);
+                             adelay(min(c_map[par_c],c) );
+                             END;
+                        ELSE BEGIN
+                             adelay(c_map[par_d]);
+                             marge := marge + 1;
+                             END;
+                    END;
+                ELSE BEGIN
+                     output(char);
+                     marge := marge + 1;
+                     END;
+            END;
+
+             Signal_exit performs the following signal_dependent functions:
+
+            Circuit Zapper:  The port enters login state.
+
+            Character Gobbler:  Ignored.
+
+            Black_Ball:  A Gray_Ball is returned on the circuit.
+
+            Green_Ball:  If green_ball_out is FALSE, the Green_ball is ignored;
+                  else it and  ball_out_flag are set  to FALSE --  if deferred_
+                  echo_mode is TRUE then deferred_echo_mode is set FALSE  and a
+                  Leave_Deferred_Echo_Mode  control  signal  is  sent   on  the
+                  circuit.
+
+            Red_Ball:  ball_out_flag is set to FALSE.
+
+            Yellow_Ball:  An Orange_Ball is returned on the circuit.
+
+            Orange_Ball:  Ignored.
+
+            Enter_Transparency_Mode:  Ignored for ASCII terminals.
+
+            Leave_Transparency_Mode:  Ignored for ASCII terminals.
+
+
+        29                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+            Enter_Alternate_Output_Device_Mode:  if  this  port  has  a printer
+                  connected to it, output is diverted to the printer.
+
+            Leave_Alternate_Output_Device_Mode:  if the port output  process is
+                  currently connected to a printer, it is restored to terminal-
+                  output.
+
+            Set_Terminal_Characteristics:     The    terminal    characteristic
+                  specified  is set  to the  value, if  appropriate (note...for
+                  certain terminals and  modems, certain parameters  are either
+                  meaningless,  or  disallowed;   e.g.   Set_Baud_Rate  for SIO
+                  ports).  After the variable has been set, a response  is sent
+                  as though a Query_Terminal_Characteristics had been received.
+
+                Set_Echo_On:  A  special case of  set terminal  parameters:  If
+                    Echo_On  is set,  no action  (other than  normal response);
+                    else  enables  DEM  logic  to  perform  normal  sequence to
+                    restore local echo.
+
+                Set_Echo_Off:  A special  case of set terminal  parameters:  If
+                    Echo_On is  set, send DEM;   reset Echo_On, reset  DEM;  if
+                    Green_Ball_Out then  send Red_Ball;   reset Green_Ball_Out.
+                    The effect is to disable both the local-echo  function, and
+                    the DEM logic to restore local echo.
+
+            Query_Terminal_Characteristics:  A  set_terminal_characteristics is
+                  sent in response on the circuit.
+
+            Hang_Character:  Disconnects (i.e. hangs up) the terminal.   If the
+                  terminal has  a half duplex  line protocol (e.g.   2741), the
+                  hang up will not occur until the terminal is ready  to accept
+                  output from the TYMSAT.
+
+
+
+
+
+                    4.2.4  ASCII Delay Generation
+
+             This  discussion will  make frequent  reference to  "C-MAP".  This
+        relates the  4-bit parameter C  and the function  F(C) which  gives the
+        actual value used.  This mapping is shown in the following table:
+
+                 C     0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  15
+                F(C)   0  1  2  3  4  5  7 10 14 19 26 36 50 69 95 131
+
+
+                  (The sequence of numbers is calculated as follows:
+                                      1 --> V(1)
+                                      2 --> V(2)
+                                      3 --> V(3)
+                                      4 --> V(4)
+                             V(i) + V(i+3) --> V(i+4)  .)
+
+        30                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+             When a character is printed  it is sent to the  terminal.  Certain
+        terminals require that a delay occur after certain  characters, notably
+        CR and  LF, to permit  mechanical elements to  reach a  final position.
+        There   are  two   different   functions  used,   depending   upon  the
+        characteristics of the terminal.
+
+             The duration of a delay is the delay size times 1/30 of a second.
+
+             For  purpose of  computing  the carriage  position,  tab-stops are
+        assumed to be set every 8 characters.
+
+
+
+        4.2.4.1  Carriage-Return Delay
+
+             If the character is a  carriage return and CR_Delay is 1,  a delay
+        must occur before  another character can be  printed.  The size  of the
+        delay is:
+
+              Minimum(N/2**(Parameter_A) + (Parameter_B), F(Parameter_C))
+
+             Where N is the carriage position (number of characters  printed on
+        the line), and F(Parameter_C) is given by C-MAP.
+
+                Example of carriage-return delay (A=2, B=5, C=7)
+
+            | - - - - - - - - - -============================ F(C)
+            |                ====
+            |            ====
+         d  |        ====                              A
+         e  |    ====    slope of line related to (1/2)
+         l  |====
+         a  | \
+         y  |   B
+            |   
+            |   
+            +-------------------------------------------------- N
+                        (number of characters)
+
+
+
+        4.2.4.2  Linefeed Delay
+
+             Certain terminals (e.g. Terminet, or other "chain"  printers) have
+        the property  that the delay  required after a  Carriage-Return depends
+        upon how close to the RIGHT margin the last character has been printed;
+        the chain must circulate  from the last-character position back  to the
+        left margin.
+
+             If a line feed is printed and CR Delay is 0, a delay  is generated
+        (before the line feed; N is then reset to 0) whose size is:
+
+
+
+        31                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+            IF N = 1 THEN (Parameter_A)
+            ELSE maximum(0, F(Parameter_C) - N) + (Parameter_B)
+            FI
+
+                Example of line-feed delay (A=2, B=4, C=6)
+                    ---------------
+            | =                 |
+            |  =                |
+         d  |   =               } F(C)
+         e  |    =              |
+         l  |     =             |
+         a  |      =            |
+         y  |-------========================================== B
+            |
+            |=
+            | \ A
+            =-------------------------------------------------- N
+                        (number of characters)
+
+
+
+        4.2.4.3  Alternate delay
+
+             If a carriage return is printed and CR Delay is 0, or a  line feed
+        is printed and CR Delay is 1, a delay occurs ("alternate  delay") whose
+        size is F(Parameter_D).
+
+
+
+
+
+
+                                 4.3  Network Printers
+
+
+             TYMSATS have the capability of supporting one or more remote high-
+        speed printers attached directly to the TYMSAT.  These printers operate
+        using the output data streams of the lowest-numbered ASYNC  ports.  The
+        local operator, through execution of host programs, uses  the low-speed
+        terminal connected to these ports to control printing.
+
+
+
+
+
+                    4.3.1  Printer Device-Selection
+
+             Since both the low-speed terminal and the high-speed printer share
+        the same data stream, the host must route the data to the proper output
+        device by using a selection  code in the output stream.  A  control-B (
+        202[82] Octal 202; Hex 82)  character diverts the output stream  to the
+        high-speed printer.  A Control-C (203[83]) character resets  the stream
+
+
+        32                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+        back to the low-speed  terminal, as will ZAPPERS, GOBBLERS,  and BLACK-
+        BALL  (data  lost)  control  signals.   These  functions  may  also  be
+        performed  by  the  Enter-Alternate-Output-Device  and Leave-Alternate-
+        Output-Device control signals (which correspond to 202[82] and 203[83],
+        respectively, but which  are the prefered  usage).  When output  to the
+        high-speed  printer  is  selected, input  from  the  low-speed terminal
+        keyboard  is  still  active.  Upon  login,  the  low-speed  terminal is
+        selected as output device.
+
+
+
+
+
+                    4.3.2  Programming Techniques
+
+             Currently, three models of printers are used on TYMSATs for remote
+        printing.  They may all be programmed using the same  control-codes and
+        techniques.  the printers used are:
+
+        CDC Model 9322/64               - 200 LPM 64 char set
+        CDC Model 9322/96               - 150 LPM 96 char set
+        Data Printer Corp Model CT-4964 - 430 LPM 96 char set
+        Data Printer Corp Model CT-4664 - 600 LPM 64 char set
+
+             Once the printer is selected, the printer accepts data one line at
+        a time, in the format:
+
+                                   CC,data...data,CR
+
+             The first character of the line, "CC", is carriage control for the
+        line.  Carriage control is performed by the printer before the printing
+        of the data line.  The carriage control commands supported are:
+
+        200[80] or 204[84]      - space 0 lines (overprint)
+        201[81] or 205[85]      - space 1 line
+        202[82] or 206[86]      - space 2 lines
+              207[87]           - space 3 lines
+              240[A0]           - skip to channel 1 (top of form)
+              241[A1]           - skip to channel 2
+              242[A2]           - skip to channel 3
+              243[A3]           - skip to channel 4
+
+             Although the CDC printers have a 12 channel VFU, only channels 1-4
+        are supported.  The Data Printer supports an extended  carriage control
+        set and the following additional codes may be used:
+              244[A4]           - skip to channel 5
+              245[A5]           - skip to channel 6
+                 :                      :
+              253[AB]           - skip to channel 12
+              300[C0]           - space 0 lines (overprint)
+              301[C1]           - space 1 line
+                 :                      :
+              377[FF]           - space 63 lines
+
+        33                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+             The host program must confirm  it is outputting to a  Data Printer
+        before using these extended carriage control codes.  This  is typically
+        done by asking the operator to identify the printer type.
+
+
+
+             Data...Data  is  the  marking  ASCII  (High-order  bit  of 8-level
+        code=1) for the characters to  be printed.  0 to 132 characters  may be
+        printed per line.  THe  host may utilize PRINTER Blank  Compression and
+        reduce strings of 1 to  119 consecutive blanks into a  single character
+        code between 011[09] and 177[7F].
+
+             Each  line of  carriage control/print  data must  be ended  with a
+        carriage return code 215[8D].
+
+
+
+
+
+                    4.3.3  Miscellaneous
+
+             On some host systems (e.g. PDP-10's) the 242[A2] CC is  being used
+        instead  of the  201[81]  code (skip  to  channel 3  instead  of single
+        space).   This technique  works because  most printer  carriage control
+        tapes  used  have a  channel  3  punch in  every  line.   However, this
+        technique takes longer  to execute on the  Data Printer, and  should be
+        avoided.
+
+             Certain  printers may  be  configured as  KATAKANA  printers;  For
+        these, the  blank compression codes  are 340[E0] to  377[FF], providing
+        compression for 2 to 33 blanks.
+
+             On the Data  Printer, a backplane  option allows the  selection of
+        carriage-control performance either before or after the printing of the
+        data  line.    All  printers  should   be  selected  to   "before"  for
+        compatibility with Tymshare hosts.
+
+
+
+
+
+
+                                  4.4  2741 Terminals
+
+
+             This class  of terminals  includes the  IBM-2741 and  the IBM-3767
+        operating in 2741-mode.   These awkward (because they  are half-duplex,
+        by LINE of  text) devices are  treated somewhat differently  from ASCII
+        terminals.
+
+             There is a variable called Transparency_Mode which  is initialized
+        to  0 when  the terminal  enters login  state.  It  is set  to 1  and 0
+        respectively by the Enter_ and Leave_Transparency_Mode signals.
+
+        34                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+             When Transparency Mode is 1, data is sent to and from the terminal
+        with no  translation whatsoever.   (You will  have to  refer to  a 2741
+        manual to make  sense of this  mode.)  The low  order bit of  each data
+        byte is sent first.  The high  order bit should be 1.  If  the keyboard
+        is  locked the  attention key  sends a  begin-break signal  through the
+        network.
+
+             When Transparency Mode is 0, translation to and from ASCII occurs.
+        All 128  ASCII codes can  be input (one  data-character is  selected to
+        "escape" other data-characters; escape-A then is translated to control-
+        A, etc).  The  terminal is in one  of four states depending  on whether
+        the keyboard  is locked and  the value of  Defered_Echo_Mode (initially
+        false).  When the keyboard is unlocked, the output (to terminal) stream
+        is not  processed, except to  examine the first  element in  the output
+        stream for control signals.  When the keyboard becomes  locked (because
+        carriage-return was  input), DEM  is set, (causing  a green_ball  to be
+        sent  subsequently).   When the  keyboard  is locked  and  attention is
+        typed, the keyboard becomes unlocked and any outstanding  Green_ball is
+        canceled.  When a green  ball is received (and expected),  the keyboard
+        becomes unlocked.
+
+             The net effect is that for normal input, the keyboard is locked at
+        the end  of each line,  and a green_ball  is circulated, to  permit any
+        response  to  the  last  line to  be  typed.   When  the  green_ball is
+        returned, the  keyboard is once  again unlocked.  This  feature depends
+        upon the specification for  green_ball (this specifies that  the green_
+        ball will be returned when the host application dismisses,  looking for
+        more  input) to  insure that  input and  output appear  in  the correct
+        sequence on the terminal.
+
+
+
+
+
+
+                                 4.5  BAUDOT Terminals
+
+
+             Baudot terminals are supported at 50 and 75 baud.
+
+             Baudot terminals (like 2741) may be operated in  either translate-
+        or transparent- (glass) mode.
+
+             The normal  mode of  operation is  translation (BAUDOT  to ASCII).
+        The translation is performed according to the "Phillips"  mapping; this
+        is basically the CCITT BAUDOT character set, with the exceptions:
+
+                ASCII   BAUDOT (number-shift)
+
+                  $     WRU
+                  &     UNASSIGNED (G key)
+                  #     UNASSIGNED (H key)
+
+
+        35                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        ASYNC Terminals                                        February 4, 1986
+
+
+             On input, the character is translated to ASCII using table lookup.
+        Non-translatable  characters  are  thrown  away.    Special  characters
+        "Number-Shift" and "Letter-Shift" are intercepted and  permit recording
+        of the terminal shift-state.
+
+             On output, the  ASCII character is  translated to BAUDOT  by table
+        look-up.  Non-translatable  characters are discarded  (Lower-case ASCII
+        is translated to Upper-case,  thence to BAUDOT).  The  resulting BAUDOT
+        character may  be case-independent  (e.g. space), in  which case  it is
+        transmitted immediately.  Otherwise, the case required is compared with
+        the current case;  if different, the appropriate case-shift BAUDOT code
+        is output and the  new case-state is recorded.  Finally,  the character
+        is output.
+
+             The BAUDOT  filter may also  be operated in  Transparency- (Glass)
+        mode.  On  input, the  characters are passed  directly to  the network,
+        with  the  unused high-order  bits  set ("or-ed"  with  x'E0).  Special
+        characters "Number-Shift"  and "Letter-Shift"  are detected  and permit
+        recording of the terminal  shift-state.  On output, the  characters are
+        passed directly to the terminal.  Special characters "Number-Shift" and
+        "Letter-Shift" are detected and permit recording of the terminal shift-
+        state.
+
+
+
+
+
+
+                               4.6  VIDEOTEXT Terminals
+
+
+             The  VIDEOTEXT   driver  filter  has   two  modes   of  operation:
+        transparent and translate.
+
+             In translate mode, the terminal input is examined for the presence
+        of control-characters.   All but control-S  are thrown away,  since the
+        VIDEOTEXT terminal is incapable of generating them.
+
+             If control-S (x'13') is detected, the succeeding character is used
+        to map certain of the control-keys into useful functions.  Valid mapped
+        characters are:
+
+          KEY   mapped to:
+         SEND      CR
+        CANCEL    ESC
+
+             All others are currently discarded.
+
+
+             In transparent mode, all data input is processed using  the normal
+        ASCII handler.
+
+
+
+        36                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+
+
+
+
+                                  5 -  SYNC Terminals
+
+
+             A number of SYNC-line protocols are also supported:
+
+
+
+
+
+
+                          5.1  HSA (2780 and 3780 Terminals)
+
+
+             HSA (high  speed access) represents  a service whereby  remote job
+        entry equipment (IBM  compatible 2780 or 3780  bisynchronous terminals)
+        can interface  almost immediately  to any host  on the  network without
+        additional  host  software.  The  means  of achieving  this  goal, very
+        simply,  takes the  form of  a bisync-half-duplex  to async-full-duplex
+        translator.  However,  in addition  to the above  Virtual TTY  mode (as
+        it's referred to) are Host Bisync and CDC modes.  Other  submodes exist
+        -  transparency; Katakana;  and Single  Record Mode.   These  and other
+        features are discussed in the following.
+
+             Typically an RJE consists of  a card reader and a high  speed line
+        printer.  HSA allows a user to use these facilities without the typical
+        delay inherent in a batch environment.
+
+             HSA  is  an  interactive  service.   Inherent  in  an  interactive
+        environment is the  typical response to a  command.  A response  may be
+        long or short;  it may be as expected or it might be an  error response
+        - not expected.  This is  the bottleneck in HSA.  A series  of commands
+        can be entered blindly into  the card reader (similar to  typing ahead)
+        however  should  an  error  occur  where  the  following  commands were
+        dependant  on the  correct  action of  the erroneous  command  then the
+        results of that "job" are unpredictable and in fact could cause damage.
+        Additionally  terminals not  supporting RVI  will hang  when  data echo
+        begins to arrive while the card reader is still sending.
+
+
+
+
+
+                    5.1.1  Operating Characteristics
+
+             Before going into operation of the terminal a brief  discussion is
+        presented here to cover the parameters controled by the HSA user.
+
+
+
+
+        37                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+        5.1.1.1  2780 Block Format
+                 <STX>text<ITB>ck<STX>text<ITB>ck<STX>text<ETB/ETX>ck
+
+             Where  <SYN>'s  are  not  shown  and  checksums  are  'ck'.   Each
+        <STX>text<ITB/ETB/ETX>ck is a record.  A 2780 block may contain  from 1
+        to 7 records, depending on the terminal.
+
+
+
+        5.1.1.2  3780 Block Format
+                 <STX>text<IRS>text<IRS>text<IRS>text<IRS><ETB/ETX>ck
+
+             Where <SYN>'s are not shown.  Each text<IRS> is a record.   A 3780
+        block may contain any number of records up to some maximum  block size,
+        such as 512 characters.  A record may be of any length.
+
+
+
+        5.1.1.3  Terminal Transparency
+
+             In  addition,  a  terminal  may  transmit  or  receive transparent
+        blocks, where the control  characters are prefixed with <DLE>,  and the
+        same data codes may appear in the text.
+
+
+
+        5.1.1.4  Terminal Blank Compression
+
+             HSA  supports  blank compression  on  3780 terminals  only.   If a
+        terminal transmits an <IRS>  during the logon sequence the  terminal is
+        recognized  as  a   3780.   3780  terminals  generally   support  blank
+        compression although some don't and 2780 terminals don't  support blank
+        compression  though some  do.   An <IGS>  sequence  to or  from  a 2780
+        terminal  will be  treated as  data and  not expanded.   3780 terminals
+        unable to  handle <IGS>  sequences must  disable blank  compression (or
+        else they're in trouble).
+
+
+
+        5.1.1.5  Host Echo
+
+             When HSA comes up it is in deferred echo mode.  That is, data sent
+        from the terminal will  be echoed by the  host and be displayed  on the
+        line printer.  This is  identical to the situation for  an asynchronous
+        terminal.  This can be disabled by the disable host echo option.
+
+
+
+
+
+
+
+
+
+        38                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+                    5.1.2  Logon Procedure
+
+             When  the connection  is successfully  made from  the RJE  to HSA;
+        "PLEASE LOG IN:"  will appear on the line printer of the terminal.  The
+        response should be to transmit  (based on the proper technique  for the
+        given terminal) the logon card.  The general format starting  in column
+        1 is:
+                     [:options;]username:xx;password;project code
+
+             where xx = host number.  The brackets contain options which may be
+        omited. The brackets are not part of the input.
+
+
+
+        5.1.2.1  Supported Logon Options
+
+           0 -     infinite records per block
+           1 -     1 record per block
+           2 -     2 records per block
+           3 -     3 records per block
+           4 -     4 records per block
+           5 -     5 records per block
+           6 -     6 records per block
+           7 -     7 records per block
+           a -     buffer size = 80 bytes
+           b -     buffer size = 96 bytes
+           c -     buffer size = 120 bytes
+           d -     buffer size = 128 bytes
+           e -     buffer size = 170 bytes
+           f -     buffer size = 256 bytes
+           g -     buffer size = 400 bytes
+           h -     buffer size = 512 bytes
+           s -     select printer before each output record
+           u -     upper case output
+           v -     no host echo
+           w -     no IGS compression (blanks are not compressed)
+           x -     IGS compression - default for 3780 terminals
+           y -     terminal is 2780
+           z -     terminal is 3780
+
+             Order  of the  options on  the logon  card is  not  important. For
+        example:
+
+                         :w:6:u;dist10a;**password**;projcode
+
+             Following logon the user may  submit commands to the host  just as
+        if the  terminal were an  async terminal where  the card reader  is the
+        keyboard and the line printer the display.
+
+
+
+
+
+
+        39                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+                    5.1.3  Data Transfer
+
+             Data is  transmitted within  the network in  either of  two modes.
+        These are:  Virtual TTY mode  (the default mode)  and Transparent-Host-
+        Bisync.  Transparent is a mode functionally independent of Host-Bisync;
+        however, setting Transparent also activates Host-Bisync. In Host-Bisync
+        EBCDIC is transmitted.  In Virtual TTY mode ASCII is transmitted.
+
+
+
+        5.1.3.1  2780 Virtual Mode
+
+             The "Set_Parameter_A" message is used to define the maximum number
+        of  records/block  which can  be  built on  output.   On  input,text is
+        translated to ASCII,  and sent to the  host.  <ITB> and <ETB>  map into
+        carriage return  (x'8D'), and <ETX>  map into carriage  return (x'0D').
+        If  an  <EM> (end  of  media)  is encountered,  it  and  all succeeding
+        contiguous blanks are deleted  from that record (for example,  the COPE
+        does  not  use  <EM>  to  eject the  card  from  the  card  reader.  If
+        characters appear  on the record  after <EM>, they  will be  sent).  On
+        output, C/R (x'0D' or x'8D') maps into <ITB/ETB>, as decided by HSA.
+
+
+
+        5.1.3.2  3780 Virtual Mode
+
+             As above, Parameter_A  has a different significance:   the maximum
+        size of the block to be transmitted (subject to the maximum record size
+        of 152  characters); a=0,1,2...,7  corresponds to  block sizes  of 128,
+        170, 256, 400, 512, 512, 1000, 512 characters respectively.   On input,
+        text is  translated and  sent to   the host.  <IRS> maps  into carriage
+        return (x'8D').  The  same rules for <EM>  apply.  On output,  C/R maps
+        into <IRS>, and may  be followed by <ETB>  if HSA decides the  block is
+        full.
+
+             For both 2780 and 3780, the following additional rules apply:  The
+        maximum  output  record  is  assumed to  be  152  characters.   Thus if
+        terminating a record leaves less than this amount of space in  a block,
+        that block is terminated.
+
+             The  following  rules  apply  for  special  characters  (ASCII  is
+        examined in 7-bit format).
+
+           1.  An empty line - C/R _    C/R is padded with one blank  to insure
+               the terminal upspaces.
+           2.  L/F  is  ignored,  except  that any  change  to  parameter  A is
+               effected at the next L/F.
+           3.  F/F (x'0C')  causes any  existing record  to be  terminated, and
+               then maps into the sequence <ESC>_  A as an independent record.
+           4.  _^D (x'04') forces any pending record to be terminated,  and the
+               block terminated  with <ETX>,  which will cause  an <EOT>  to be
+               sent to the terminal.
+
+
+        40                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+           5.  _^B (must be  x'82') turns on  CDC mode. Thereafter,  data codes
+               are  greater  than  x'7F',   and  codes  less  than   x'7F'  are
+               compression codes.
+           6.  _^C (must be  x'83') cancels CDC mode  and switches HSA  back to
+               vanilla Virtual TTY mode.
+
+
+
+        5.1.3.3  EBCDIC Transparency-Host-Bisync
+
+             This   mode  is   entered   when  HSA   receives   a  "GLASS-BALL"
+        (enter_transparency).  Leave_transparency  turns it  off.  While  it is
+        active, all input except  for <SYN> and ck is  sent to the host,  as an
+        EBCDIC character stream.
+
+
+
+        5.1.3.4  2780 Host-Bisync mode
+
+             Each occurrence of <ITB/ETB/ETX>  does not translate into  C/R, in
+        addition,  each occurrence  of  <ETB/ETX> will  cause the  block  to be
+        terminated  and transmitted;  each occurrence  of <ETX>  will  cause an
+        <EOT> to be output.
+
+
+
+        5.1.3.5  3780 Host-Bisync mode
+
+             Each  occurrence of  <ETB/ETX> causes  a block  to  be transmited.
+        <ETX> will cause an <EOT> to be transmitted.
+
+               NOTE:  On  EBCDIC  output to  a  terminal  not supporting
+                       blank compression, the sequence <IGS>cnt  will be
+                       expanded  to  the appropriate  number  of blanks.
+                       This  permits  some  level  of  blank compression
+                       through  the  network,  but  must  be  taken into
+                       account by  the host program  to insure  that the
+                       expanded block length does not exceed the maximum
+                       for either the  terminal or for  the transmission
+                       buffer.
+
+
+
+        5.1.3.6  CDC Mode
+
+             The CDC mode can be enabled only while the current mode is Virtual
+        TTY mode (for either 2780 or 3780). That is, it cannot be enabled while
+        in Transparent-Host-Bisync mode.
+
+             Data sent in  CDC mode may  contain 2 compression  sequences.  The
+        first  is  blank compression.   Any  single byte  less  than  x'80' but
+        greater than  x'40' will be  replaced in the  data stream by  n blanks,
+        where n=(character)-x'40'.
+
+        41                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+             The second compression is a two byte sequence.  The first  byte is
+        a character greater than  x'7F' (the character that will  be repeated);
+        the second is a repeat count n+x'20' Where n is the number of times the
+        previous character will be repeated.  The value of n must be  less than
+        x'20'
+
+             The data will be expanded if the network compression  parameter is
+        on.  If the network compression  parameter is off the data will  not be
+        expanded.
+
+
+
+
+
+                    5.1.4  Error Recovery
+
+             Two independent error recovery mechanisms are implemented  in HSA.
+        When an  error occurs, it  is counted.  When  the count is  exceeded an
+        attempt is made to synchronize  with the terminal by sending an  EOT to
+        put it in the line-free state.  In addition the first occurrence  of an
+        error sequence starts  a timer.  If the  error does not  recover within
+        the  proscribed  period  it  is assumed  to  be  irrecoverable  and the
+        terminal is hung.   When the line-free  state is established  the error
+        count is reset.  However, the timer will still be active,  until either
+        ACK, WACK, TTD or RVI reset it.
+
+
+
+
+
+                    5.1.5  Flow-control
+
+             A bisync terminal is a device which is essentially half-duplex; it
+        can  either  receive  or  transmit  a  series  of  records,  but cannot
+        interleave  receive and  transmit.   As a  result, it  is  necessary to
+        impose the following traffic control rules.
+
+
+
+        5.1.5.1  The Green_ball
+
+             The green_ball is  relevant only in  the context of  Single Record
+        Mode.  Single  Record Mode (SRM)  controls response to  green_balls.  A
+        green_ball is sent  to the host  when an input  record from the  RJE is
+        terminated with an <ITB>, <ETB> or <ETX> when in SRM.  When not  in SRM
+        a green_ball is sent to the host only on <ETX>.  When the green_ball is
+        out no further data  will be sent to  the host until the  host responds
+        with a green_ball.  However response to the green_ball_out condition is
+        handled as such only when in  SRM.  If not in SRM data queued  from the
+        terminal  will   be  forwarded  to   the  host  independently   of  the
+        green_ball_out  state.   Two  green_ball  types  are   recognized:   1)
+        standard green_ball; 2) pseudo_green_ball.
+
+
+        42                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+        5.1.5.2  Single-record Mode
+
+             Single Record Mode (SRM) applies to 2780 and 3780 modes  in either
+        Transparent or Virtual TTY modes.  SRM works as follows:
+
+             A record received from  the terminal is disassembled  according to
+        the rules of  the current mode.   The data is  appropriately translated
+        until an <ITB>, <ETB>  or <ETX> is found.   Any of these cause  a green
+        ball to be sent to the host.  No further data will be sent to  the host
+        until a green_ball is sent back from the host.  The host will only send
+        a green_ball when it is dismissed for input.
+
+             Also acceptable as a green_ball is a pseudo_green_ball.  Under the
+        TYMNET virtual terminal standards the pseudo_green_ball is  the command
+        to set parity.
+
+             To set Single Record mode one of the 8 options to set  records per
+        block must be selected via  the logon card.  Setting records  per block
+        from the host will not enable SRM.
+
+             In 3780  mode a record  is delimited by  an <IRS>,  consequently a
+        green_ball is not sent at the end of each record but only at the end of
+        each block.  The result is  that some multiple of records will  be sent
+        unchecked up to the next <ETX>, <ETB> or <ITB>, whereupon  a green_ball
+        will be sent to the host.
+
+
+
+
+
+                    5.1.6  Host Control
+
+             The  following   section  summarizes   parameters  which   may  be
+        established by the  host.  Some of these  parameters may be  queried by
+        the  host.   The  majority of  the  parameters  are  sent/requested via
+        control  signals sent  to  the HSA  driver.  These  signals  have their
+        origin in the virtual terminal standards;  however, only a few function
+        - in HSA - as they are described for the standard virtual terminal.
+
+               2780_or 3780_MODE:  this is  the reuse of  CR_delay.  The
+                       response is  "0" if 2780  terminal, "1"  if 3780.
+                       This parameter may NOT BE SET!
+
+               SET_PARITY (to 0)  (pseudo_GREEN_BALL):  response   is  a
+                       LDEM.
+
+               BLANK_COMPRESSION:  this is a reuse of  half_Duplex.  "1"
+                       enables terminal-blank compression,  "0" disables
+                       it.
+
+               KATAKANA_MODE:  "1"   specifies   Katakana    mode,   "0"
+                       specifies non-Katakana.
+
+
+        43                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+               PARAMETER_A:  In the context of HSA, it sets  the records
+                       per block (2780) or buffer size (3780).
+
+               HOST-BYSYNC_MODE:  this  is  the  reuse  of transparancy_
+                       mode.
+
+               ENTER_NETWORK COMPRESSION:  HSA  will  accept compressed-
+                       ASCII data.
+
+               LEAVE NETWORK COMPRESSION:  HSA    will     not    accept
+                       compressed-ASCII data.
+
+
+
+
+
+                    5.1.7  KATAKANA
+
+
+
+        5.1.7.1  HSA to Host
+
+             Data  input  from  the RJE  arrives  in  reverse  EBCDIC (CIDCBE).
+        Before it is sent to the host it is converted into JIS 8 ASCII.
+
+
+
+        5.1.7.2  Host to HSA
+
+             Katakana normally accepts  blank compression through  the network.
+        A  Katakana character  value is  greater than  9 and  less  than x'7F'.
+        Blank compression  codes are  greater than x'E0'  and less  than x'FF'.
+        The   number   of   compressed   blanks   is    (character)-x'E0',   or
+        (character)=x'E0'+n where  n is  the number  of blanks.   A compression
+        code  in Katakana  mode is  always expanded.   Katakana  compression is
+        valid only in virtual mode.  Data sent to the RJE is converted from JIS
+        8 ASCII to CIDCBE.
+
+
+
+
+
+
+                                  5.2  3270 Terminals
+
+
+             This  class  of  terminals  includes all  the  IBM  327x  and 328x
+        printers, as well a certain ASCII terminals.
+
+             There are three moes of operation:
+
+           o   Native Mode -  A 3270  terminal communicating  with a  3270 host
+               application.
+
+        44                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        SYNC Terminals                                         February 4, 1986
+
+
+           o   Virtual-terminal Mode -  A 3270  terminal communicating  with an
+               ASYNC host application.
+           o   Virtual-Host Mode -  An ASCII terminal communicating with a 3270
+               host  application.   These  terminals  include  the Perkin-Elmer
+               1200, 1250; Tymshare 470; and the IBM 3101.
+
+             The  basic  operation  utilizes  the  standard  3270   polled  BSC
+        protocol.  Additionally, in native  moe, the data is transmitted  via a
+        packetized  network protocol  called  3270 DSP.   In this  moe,  a 3270
+        terminal can communicate  through an X-25 interface.   Furthermore, the
+        3270  host  and  terminal  interfaces  are  being  enhanced  to support
+        transparancy,  thus  enabling  3278  and  3279  users  to  operate with
+        extended features, such as extended color, highlighting, and programmed
+        symbols.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        45                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Specialized Processes                                  February 4, 1986
+
+
+
+
+
+
+                              6 -  Specialized Processes
+
+
+             Certain  network  circuit  originators  have  the   capability  of
+        performing special functions.  These functions are "inserted"  into the
+        data-pipe, such that  the actual circuit-terminator processes  need not
+        be aware of their presence.
+
+
+
+
+
+
+                                  6.1  Audio Response
+
+
+             Audio-response  usage  refers  specifically  to  a  process  which
+        performs initial interaction with  the user.  Note that the  LISA units
+        may also be connected to ASYNC PVC ports with no such interaction.
+
+             All  audio-response ports  are initialized  with PVC  usage.  This
+        causes  the standard  PVC  (Permanent Virtual  Circuit)  AID (Automatic
+        IDentification) initialization operations to be performed automatically
+        when  a  call  is  received.    It  sets  up  a  special   process  for
+        "application"  selection.   The  significant  special  feature  is  the
+        introduction  of the  IAP (Initial  Audio Process),  capable  of simple
+        interactions  with the  user, in  order to  simplify the  generation of
+        "application" logon strings.
+
+                     Figure 6.1.  Control flow for Audio Response:
+
+                             +-------------+
+                             |   Initial   |   Performs initial
+         P1         /------->|    Audio    |   "handshake" with
+         P2        /         |   Process   |   Audio user;  then
+         P3       /          +-------------+
+         ...     /                  |   Control transfered (with
+         Pj <---+                   V          Login string) to:
+         ...     \           +-------------+
+         Pn       \          |    Normal   |   Which performs
+                   \-------->|    Logon    |   connection to host;
+                    \        |   Process   |
+                     \       +-------------+
+                      \             |   Control transfered (with
+                       \            V          identifying TID) to:
+                        \    +-------------+
+                         \-->|     Host    |  Specific Host
+                             | Interaction |   processes
+                             +-------------+
+
+        46                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Specialized Processes                                  February 4, 1986
+
+
+             Except for the initial  identification and connection of  an Audio
+        Port to IAP (rather than directly to Logon), the TYMSAT pays no special
+        heed to  the Audio usage  -- ALL special  handling is  performed within
+        IAP, which eventually releases control to the Logon process.  The Logon
+        process may in turn provide additional standard TYMSAT  functions, such
+        as the application  of MPVC (Multiplexed  PVC) routing, based  upon the
+        IAP-generated logon string.  All further special interactions  with the
+        port occur at the host  (note that all candidate hosts must  be capable
+        of supporting Audio-Response Unit  protocol, as specified for  the LISA
+        unit).  This is illustrated in Figure 6.1.
+
+             The initial operation of IAP is to force the loading of a "BANNER"
+        into the LISA unit if it is not already present, and then  proceed with
+        the normal process.
+
+             The process  performed is  "logon-generation".  The  SPEECH "ENTER
+        APPLICATION CODE" is output, and the string input is examined.  Leading
+        "0" codes  are thrown  away.  If  the remaining  string is  non-null, a
+        username is built, of form:
+
+                                      "ssss@LISA"
+
+             where "ssss" is the (digit) string input.
+
+             If the string is null, the SPEAK "PLEASE LOG IN" is output,  and a
+        LOGIN-String  (numeric or  encoded  alphabetic) is  expected.   In this
+        mode,  any input  error causes  the string  to be  converted to  CR and
+        passed to LOGON, for SUPE attention.
+
+
+
+
+
+
+                                 6.2  Multiplexed PVC
+
+
+             The objective of MPVC  is to eliminate the circuit-build  time and
+        effort  for transaction-oriented  terminals --  characterized  by short
+        sessions and low volume  traffic.  This elimination both speeds  up the
+        response,  and reduces  the  port tie-up  time for  each  session.  The
+        mechanism  employed  involves  routing the  ports  to  MPVC  within the
+        CONSAT.
+
+             Any physical port will be a candidate for MPVC usage by the use of
+        Terminal-identifier "Y" (perhaps  via PVC) to support  this capability.
+        IF the username matches the criteria for any of the MPVCs, this port is
+        assigned to a sub-channel  of that circuit.  Thereafter, the  user sees
+        no  difference  in  his  interactions,  except  that  his  "circuit" is
+        normally established immediately (rather than having to wait  for LOGON
+        to proceed).
+
+
+
+        47                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Specialized Processes                                  February 4, 1986
+
+
+        Ports:           +--------------+    +----------------+
+        P1      /------->| normal Logon |--->| normal circuit |
+        P2     /         +--------------+    +----------------+
+        P3    / Non-candidate   A
+         ..  /                  |
+        Pj -+                   | search failed
+         ..  \                  |
+        Pn-1  \ Candidate       |
+        Pn     \         +--------------+    +-----------+    +-----------+
+                \------->| Pseudo Logon |--->|    MPVC   |--->|   MPVC    |
+                         |    Search    |    | Multiplex |    | Circuit k |
+                         | through list |    +-----------+    +-----------+
+                         | for username |   Search succeeded:
+                         +--------------+    Assign Port Pj to
+                                :             sub-channel j
+                                :               of MPVC(k) **
+                       + - - - - - - - - - - - - - - +
+                       | list of username + MPVC(id) |
+                       + - - - - - - - - - - - - - - +
+
+                               Figure 6.2.  MPVC usage:
+            Candidacy causes special search for match to ports USERNAME --
+                         failure causes normal LOGON process;
+                          success causes assignment to MPVC.
+
+               ** NOTE -- Assignment  of a  port to  a sub-channel  of a
+                       MPVC circuit which is not active causes that MPVC
+                       circuit to become established.
+
+             MPVCs  are assigned  a unique  NID code  (21), so  that  hosts may
+        easily identify the multiplexed  usage.  Each host must be  prepared to
+        receive and recognize  MPVC circuits, and  must be prepared  to perform
+        the  necessary  multiplexing  and demultiplexing  of  data  and control
+        information.  To this end,  standards and conventions are  specified to
+        permit  the host  to detect  and specify  individual  sub-circuits, and
+        control signals within those sub-circuits.
+
+             In particular, for physical ports which are assigned to MPVCs, the
+        entire  logon string  is passed  to the  host, in  a  multiplexed form,
+        prefixed with  a "new  sub-circuit/TID" signal  indication.  It  is the
+        responsibility  of   the  host  to   perform  the   necessary  security
+        validation.
+
+             Included is the  specification of constraints upon  the individual
+        MPVC   circuits,  such   that  the   capability  may   be  disconnected
+        automatically  under certain  conditions (e.g.  inactivity --  no ports
+        assigned to  sub-channels for  some period of  time) to  reduce connect
+        charges, and also the  various special conditions which may  be applied
+        under abnormal usage (e.g. inability to connect to MPVC circuit).
+
+             Internally,  each  MPVC service  is  assigned to  a  specific MPVC
+        pseudo-port, and all traffic is multiplexed over the circuit associated
+
+
+        48                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Specialized Processes                                  February 4, 1986
+
+
+        with this port.  The multiplexed traffic consists of blocks of data and
+        control  signals, each  block being  designated for  a  single physical
+        port.  Each block  is delimited by a  MPVC Block character,  which also
+        cause the switching  of the following  block to the  specified physical
+        sub-port.  An arbitrary limit  of 256 sub-channels may be  connected to
+        any one specific  pseudo-port, permitting the  selection of a  new sub-
+        channel with a single 8-bit byte of addressing.
+
+             Existing network control signals apply to the MPVC circuit;  it is
+        necessary  to  define  "virtual  control  signals"  to  apply   to  the
+        subchannels.  These are described in the appendix -- each occurrence is
+        prefaced (in the data-stream)  with a pseudo-port specific  MPVC Signal
+        Character  to permit  the distinction  between these  signals  and user
+        data, particularly from a host  which is not capable of  generating the
+        network signals.
+
+             In  order  to  permit  the encoding  of  data  which  is otherwise
+        indistinguishable from  Block and  Signal delimiters,  each pseudo-port
+        has assigned a  port-specific MPVC Escape  character;  this is  used to
+        escape data characters.
+
+             In addition, the  occurrence of certain  signals on the  main MPVC
+        circuit  (e.g.  Zappers,   Gobblers,  Black-Balls)  are   detected  and
+        broadcast to all  active sub-channel ports,  as well as  being serviced
+        for the circuit.
+
+             All  MPVC  usage is  performed  by standard  PVC  features.  These
+        specify  the  MPVC  circuit  usage.   In  addition,  there  may  be  an
+        "inactivity-timeout",  such  that  the  MPVC  circuit  is automatically
+        removed from  the network  whenever there  has been  no activity  for a
+        period greater than that specified.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        49                     TYMNET Circuit Protocols             CIRCUIT.DOC
+                                                               February 4, 1986
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                      *   ****  ****  ***** *   * ****  ***** *   *
+                     * *  *   * *   * *     **  * *   *   *    * * 
+                    ***** ****  ****  ****  * * * *   *   *     *  
+                    *   * *     *     *     *  ** *   *   *    * * 
+                    *   * *     *     ***** *   * ****  ***** *   *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        50                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Summary of TYMNET Virtual Terminal Signals             February 4, 1986
+
+
+
+
+
+
+               APPENDIX I.   Summary of TYMNET Virtual Terminal Signals
+
+
+
+             A set of one and two-character quantities are set aside to provide
+        out-of-band signal functions.  These are  selected in such a way  as to
+        minimize network bandwidth requirements.  These are abbreviated thus:
+
+        t   description                                  <________|
+                            - or -
+        t.* description                             <________|********>
+
+                where:
+
+                t       signal type (and subtype)
+                "_"     individual bits
+                "|"     byte delimiter
+                "<"     applies only in direction TO caller
+                ">"     applies only in direction FROM caller
+
+
+                        ---  Virtual Terminal Signal Codes ---
+
+        0.X  Escape                                 <00000000|XXXXXXXX>
+
+        1.X  Prefix code:                           <00000001|XXXXXXXX>
+        1.0   Echo Control (OBS)                    <00000001|0000xxxx|
+        1.1   CR delay & Input baud rate (OBS)      <00000001|0001drrr|
+        1.3   Input Baud Rate *                     <00000001|0011rrrr>
+        1.4   Parameter D **                        <00000001|0100dddd>
+        1.5   Parameter C **                        <00000001|0101cccc>
+        1.6   Parameter B                           <00000001|0110bbbb>
+        1.7   Parameter A                           <00000001|0111aaaa>
+        1.8   Output Baud Rate *                    <00000001|1000rrrr>
+        1.9   Query Field Parameter M ***           <00000001|1001MMMM|
+        1.0A.N  Query Bit Parameter N ****          <00000001|101NNNN_|
+        1.0C.N  Set Bit Parameter N ****            <00000001|110NNNNx>
+        1.0E  Not used
+        1.0F.0  Hang Character                      <00000001|11110000|
+        1.0F.1  Turnaround Hang Character           <00000001|11110001|
+        1.0F.2  Enter Transparency                  <00000001|11110010|
+        1.0F.3  Leave Transparency                  <00000001|11110011|
+        1.0F.4  Enter Alternate Output Device       <00000001|11110100|
+        1.0F.5  Leave Alternate Output Device       <00000001|11110101|
+        1.0F.6  SIIX                                <00000001|11110110>
+        1.0F.7  TIIX                                <00000001|11110111>
+        1.0F.8  Unused                              <00000001|11111000>
+        1.0F.9  Unused                              <00000001|11111001>
+        1.0F.0A Break End                           <00000001|11111010>
+
+        51                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Summary of TYMNET Virtual Terminal Signals             February 4, 1986
+
+
+        1.0F.0B Break Begin                         <00000001|11111011>
+        1.0F.0C Grey Ball                           <00000001|11111100>
+        1.0F.0D Black Ball                          <00000001|11111101>
+        1.0F.0E Orange Ball                         <00000001|11111110>
+        1.0F.0F Yellow Ball                         <00000001|11111111>
+
+        2   Gobbler                                      <00000010>
+        3   Zapper                                       <00000011>
+        4   Leave-Defered-Echo-Mode                      |00000100>
+        5   Green Ball                                   <00000101>
+        6   Red Ball                                     <00000110>
+        7   Enter-Defered-Echo-Mode                      |00000111>
+
+
+
+                                         NOTES
+
+
+        *       Baud Rate Codes
+
+             The Baud-rate codes map into:
+
+
+            baud rate           terminal speed or other
+                 0              110 baud (10 CPS)
+                 1              150 baud (15 CPS)
+                 2              300 baud (30 CPS)
+                 3              400 baud (40 CPS) (no terminals exist)
+                 4              600 baud (60 CPS)
+                 5              1200 baud (120 CPS)
+                 6              3767 type terminal (32.4 cps)
+                 7              2741 type terminal (14.6 cps)
+                 8              300 baud (10 CPS)
+                 9              1200 baud (10 CPS)
+                10              2400 baud (240 CPS)
+                11              4800 baud (480 CPS)
+                12              9600 baud (960 CPS)
+                13              50 baud (Baudot)
+                14              75 baud (Baudot)
+                15              75 baud (ASCII)
+
+
+        **      C-MAP
+
+             These signals use "C-MAP";  the 4-bit value passed is  mapped into
+        the associated quantity:
+
+
+         VALUE  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+          MAP   0   1   2   3   4   5   7  10  14  19  26  36  50  69  95 131
+
+
+
+
+        52                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Summary of TYMNET Virtual Terminal Signals             February 4, 1986
+
+
+        ***     Field-parameter codes
+
+             The specific use of "M" is:
+
+
+                  M     Parameter
+
+                  3     Input baud-rate
+                  4     Parameter D
+                  5     Parameter C
+                  6     Parameter B
+                  7     Parameter A
+                  8     Output baud-rate
+
+
+        ****    Bit parameters
+
+             Bit parameters have the following mapping:
+
+
+                 N      Use
+
+                 0      Echo Control
+                 1      Echo Control-I
+                 2      Echo LF on CR
+                 3      Echo CR/Rubout on LF
+                 4      Half-Duplex
+                 5      Parity
+                 6      Xon/Xoff Enable
+                 7      CR Delay
+                 8      Echo Control-H
+                 9      Reverse X-enable
+                10      Katakana
+                11      Terminate-Output-On-Break-Detected
+                12      Echo-ESC
+                13      "Q"-mode
+                14      Space-Parity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        53                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        MPVC control-signal conventions                        February 4, 1986
+
+
+
+
+
+
+                    APPENDIX II.   MPVC control-signal conventions
+
+
+
+             These signals and  their format is shown  here for the  benefit of
+        MPVC applications.
+
+             The form of MPVC signals is:
+
+               SIGID:  A Signal-identification data character.   Used to
+                       identify   the  following   data-character(s)  as
+                       representing a signal.  The actual character used
+                       is application-assignable and -dependent.
+
+               FUNCT:  A Signal-function code (tabulated below).
+
+               V:      An  optional  value-byte.   Used  ONLY  for those
+                       tabulated function codes which specify "+V".
+
+               C:      An  optional  value-byte.   Used  ONLY  for those
+                       tabulated function codes which specify "+C".
+
+                               Internal Control Signals
+
+        Function        Usage
+          Code
+
+                        Control Functions
+         0+[V]  Enter TID mode [V]
+         1+V+C  Baud rate V detected with character C
+         2      Break Begin
+         3      Break End
+         4      Enter Data Mode
+         5      Disconnect
+         6+V    Set Delay V
+         7+V+C  Repeat data character C V-times
+         8      Enter DEM
+         9      Leave DEM
+        0A      Hang-up
+        0B      Super Hang-up
+        0C      Zapper
+        0D      Gobbler
+        0E      Red Ball
+        0F      Green Ball
+        10      Orange Ball
+        11      Yellow Ball
+        12      Gray Ball
+        13      Black Ball
+        14      Enter Transparency
+
+        54                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        MPVC control-signal conventions                        February 4, 1986
+
+
+        15      Leave Transparency
+        16      Enter Alternate Output Device Mode
+        17      Leave Alternate Output Device Mode
+        18-1F           Reserved
+
+                        Field parameters
+        20+V    Set Input Baud Rate
+        21      Query Input Baud Rate
+        22+V    Set Output Baud Rate
+        23      Query Output Baud Rate
+        24+V    Set Parameter A
+        25      Query Parameter A
+        26+V    Set Parameter B
+        27      Query Parameter B
+        28+V    Set Parameter C
+        29      Query Parameter C
+        2A+V    Set Parameter D
+        2B      Query Parameter D
+        2C-2F           Reserved
+
+                        Bit parameters
+        30+V    Set Echo Control
+        31      Query Echo Control
+        32+V    Set Echo Control-I
+        33      Query Echo Control-I
+        34+V    Set Echo Control-H
+        35      Query Echo Control-H
+        36+V    Set Echo CR with CR/LF
+        37      Query Echo CR with CR/LF
+        38+V    Set Echo LF with LF/CR/RUB
+        39      Query Echo LF with LF/CR/RUB
+        3A+V    Set CR delay
+        3B      Query CR delay
+        3C+V    Set Parity
+        3D      Query Parity
+        3E+V    Set Half-Duplex
+        3F      Query Half-Duplex
+        40+V    Set X-Enable
+        41      Query X-Enable
+        42+V    Set Reverse X-Enable
+        43      Query Reverse X-Enable
+        44+V    Set KATAKANA
+        45      Query KATAKANA
+        46+V    Set Terminate-output on Break
+        47      Query Terminate-output on Break
+        48+V    Set Echo-ESC
+        49      Query Echo-ESC
+        4A+V    Set Space-Parity
+        4B      Query Space-Parity
+        4C-4F           Reserved
+
+
+
+
+        55                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Buffers and Bufferlets                                 February 4, 1986
+
+
+
+
+
+
+                        APPENDIX III.   Buffers and Bufferlets
+
+
+
+             A special kind of buffer  which exists in all TYMNET nodes  is the
+        GCI/WCI buffer.  Each circuit terminating in or passing through  a node
+        has a pair  of these buffers associated  with it.  In addition,  a node
+        may have additional buffers assigned to special functions.
+
+             These buffers  are better named  "buffer descriptors",  since they
+        hold no data, but instead indicate where the transient data  is stored.
+        The "buffer" associated with buffer descriptors is dynamically assigned
+        from a "buffer pool", or "pool of bufferlets".
+
+             In a given type of node,  the number of buffers is not  fixed, but
+        can vary  from node  to node according  to the  traffic that  node will
+        bear.  In general, there will be a buffer pair for each low-speed port,
+        and  one or  two  buffer pairs  (for supervisory  traffic  [and traffic
+        control])  for  each  line.  In  addition,  if  passthrough  traffic is
+        possible (i.e., if there is more than 1 line on the node), there  is an
+        additional buffer for each channel (a passthrough circuit  requires two
+        buffers, and  must of necessity  use two channels,  one on each  of the
+        incoming and outgoing lines).  Part of the information available to the
+        supervisor  is a  set  of descriptors  which specify  the  buffer range
+        assigned  to each  of  these function,  so  the supervisor  can  link a
+        circuit correctly.
+
+             The  buffer  pool   is  divided  into  bufferlets.    Each  buffer
+        descriptor has associated with it  a pair of pointers:  the  "fill" and
+        "empty" pointers.  A chain of bufferlets may be in use for a  buffer if
+        it contains more characters  than a single bufferlet can  hold.  Unused
+        bufferlets  are also  chained together  in a  list of  free bufferlets.
+        When placing  a character  in a  buffer, and  the current  bufferlet is
+        full, a  new bufferlet is  allocated, removed from  the free  list, and
+        linked to  the current  bufferlet.  The normal  process of  placing the
+        character in the bufferlet proceeds with the new bufferlet.  Similarly,
+        when a bufferlet is exhausted, it is freed (chained to the  free list),
+        and  the  empty  pointer  is switched  to  the  beginning  of  the next
+        bufferlet.
+
+             Each buffer has associated with it (at least) four  table entries:
+        BP, BF, BC, and BE.  BF is the flag pointer and it's usage is described
+        below.  BC is the buffer  count, and specifies how many  characters are
+        associated  with the  buffer.  BP  and BE  are the  "empty"  and "fill"
+        pointers, respectively.  Initially, BC is zero and BP is null.   As the
+        first character is to be placed in the buffer, the fact that BC is zero
+        is noted and a  bufferlet is allocated, and BP  and BE are set  to that
+        pointer.  Thereafter, successive characters are placed in the bufferlet
+
+
+        56                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Buffers and Bufferlets                                 February 4, 1986
+
+
+        specified  by BE,  with additional  bufferlets allocated  as necessary,
+        linked to the previous bufferlet, and BE is updated at such  times.  In
+        addition, BC is  incremented each time  another character is  placed in
+        the buffer.
+
+             BP is  used when  a character is  to be  removed (remember  that a
+        buffer is a queue  of characters, and the  first in is the  first out).
+        Each  time  a   character  is  removed,   BC  is  decremented,   and  a
+        determination is made if this was the end of the bufferlet.  If so, the
+        bufferlet is  freed and the  appropriate chaining is  made to  the next
+        bufferlet for BP.
+
+             There are a couple  of additional features of bufferlets  which it
+        is as well to describe here.
+
+           1.  Occasionally it is necessary for the code to remove one  or more
+               characters from a buffer and then restore them.  This  is easily
+               effected with this bufferlet scheme, even if the  bufferlet with
+               the character has been freed, provided that no other  buffer has
+               been  addressed between  fetching and  restoring  the character.
+               This  is  because  the  character  pointer  associated  with the
+               bufferlet is not modified  when the bufferlet is freed,  and the
+               freed bufferlet is always at the top of the free stack.
+           2.  A second feature is that a character can readily be added to the
+               beginning of the buffer.
+
+
+
+
+
+
+                                  III-1  Buffer Flags
+
+
+             Independent processes share buffer (descriptors).   In particular,
+        a collection of  buffers which interface to  a single process  may also
+        interface to a "set" of other processes.  It is necessary to "decouple"
+        independent processes which address the same buffer, if only  to insure
+        that the processes need not "know" details of each other.
+
+             Independence  is  achieved  through the  mechanism  of  the "FLAGS
+        array".   Each  node  has  a  bit array,  and  the  BF  of  each buffer
+        (descriptor) points  at one  of these bits.   The array  is partitioned
+        into  functional  areas,  corresponding  to  different  processes which
+        remove characters from a set of buffers.  (Note...if the BF of a buffer
+        is zero, this is treated  in a special fashion...that buffer  becomes a
+        "bit bucket", or character sink.)
+
+             Each  process  knows  which  area of  the  FLAGS  array  it  is to
+        reference, and, by simply loading a word of bits, detect if any  of the
+        buffers  in  that  group   have  data  to  be   processed.   Additional
+        constraints can be applied, onto the examination of a group,  by simple
+        boolean AND's and OR's.
+
+        57                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        Buffers and Bufferlets                                 February 4, 1986
+
+
+             The set of standard  routines used to place and  remove characters
+        perform these operations on the FLAGS array automatically.
+
+
+
+
+
+
+                                  III-2  Buffer Zaps
+
+
+             Any process which references a buffer may, on occasion,  have need
+        to EMPTY  that buffer.   This is not  considered a  critical condition.
+        However,  the  buffer  management logic  itself  may,  on  occasion and
+        independently of the process addressing the buffer, have need  to empty
+        the buffer.   This is  known as  a buffer  zap!  When  a buffer  zap is
+        necessary, the set of all buffers is searched for the buffer  which has
+        the greatest number of characters, and this buffer is emptied.
+
+             Buffer zaps may be effected by either of two mechanisms:
+
+             In one implementation, the routines perform the operation in real-
+        time, initiated by an attempt to allocate a bufferlet and the discovery
+        that the  pool of free  bufferlets is empty.   This method  has several
+        faults:
+
+           The asynchronous nature of the  operation can cause a fragment  of a
+               character string  to be  destroyed, when  that string  should be
+               kept or destroyed as a unit.
+           The  asynchronous nature  of the  operation can  also cause  a time-
+               critical   sequence   to   be   interrupted,    with   attendant
+               difficulties.
+           These  two  faults impose  a  constraint on  the  maximum  number of
+               buffers which are to be  searched for a buffer zap, and  also on
+               the maximum number of  bufferlets which may be  allocated.  Both
+               of these constraints are a direct result of the time consumed in
+               the zap process in this implementation.
+
+             In the second implementation, a part of the bufferlet pool  is set
+        aside as a "reserve tank".   Instead of zapping a buffer when  the pool
+        is  exhausted, the  reserve tank  is transfered  to the  free  pool and
+        subsequent storage  is used from  it.  At a  later and  more convenient
+        time, a routine is called to restore the reserve tank, at a known point
+        in the  processes execution.   This prevents the  loss of  fragments of
+        character  strings.  It  also permits  the execution  of time-dependent
+        processes beforehand, so that more time is available if  necessary, but
+        at the cost of having a significant quantity of the free pool set aside
+        for the reserve tank, and unavailable except for momentary usage.
+
+
+
+
+
+
+        58                     TYMNET Circuit Protocols             CIRCUIT.DOC
+                                       GLOSSARY                February 4, 1986
+
+
+        BAUD                 -- A unit of signaling speed, meaningful in analog
+                                transmission.  The speed in baud is  the number
+                                of code elements per second (as opposed  to the
+                                number  of  bits per  second).   E.g.  110 baud
+                                transmits 80 bits/second;   typical synchronous
+                                modems transmit  at 1200  baud, no  matter what
+                                the bit  rate--in this case, one  baud contains
+                                several bits.
+
+        CALLEE               -- The point to which a circuit is built.
+
+        CALLER               -- The place where a circuit is initiated.
+
+        DESTINATION          -- The  circuit-termination to  which a  signal or
+                                message is  destined;  this  may be  either the
+                                caller or callee.
+
+        FIELD                -- A  subdivision  of an  information  unit, which
+                                carries  a  certain type  or  classification of
+                                information -- e.g. label field, etc.
+
+        HOST                 -- A unique  and specific collection  of processes
+                                which can be accessed via the network.
+
+        HOST NUMBER          -- The NAME of a particular HOST.  [Note  that the
+                                host  number  is  not  necessarily  fixed  to a
+                                specific node, or  even to a single  node;  the
+                                set  of  capabilities  comprising  a particular
+                                host may  migrate from one  node to  another in
+                                order  to  maintain  accessability,  and/or may
+                                appear  at  multiple nodes  to  permit extended
+                                accessibility.]
+
+        HOT-LINE             -- A variation of dedicated-line service,  where a
+                                circuit  is  automatically  constructed   to  a
+                                particular destination on a demand basis.
+
+        IIX                  -- Interface    Information    eXchange.    Allows
+                                interfaces  in   the  network   to  communicate
+                                information, such as dialects, at a level below
+                                that of the end-user.  Each end of  the circuit
+                                must know that the other end is capable  of IIX
+                                (pronounced eeks) before communication begins.
+
+        INTERNAL CIRCUIT     -- An  internal  circuit  termination  starts  and
+                                stops on the same node.
+
+        MODEM                -- A  combination  of  the  words   MOdulator  and
+                                DEModulator.   The  MOdulator  converts signals
+                                (usually  d.c.  pulses) from  a  source  into a
+                                signal suitable  to the characteristics  of the
+                                (analog) transmission medium.   The DEModulator
+                                performs the reverse function.
+
+        59                     TYMNET Circuit Protocols             CIRCUIT.DOC
+                                       GLOSSARY                February 4, 1986
+
+
+        MPVC                 -- Multiplexed-Permanent-Virtual-Circuit --  A PVC
+                                with   additional   intelligence,   capable  of
+                                supporting   multiple  virtual   circuits  with
+                                transparant signal usage.
+
+        NAME                 -- That  attribute of  an  entity by  which  it is
+                                referenced  or  described;   an  example  is an
+                                address.
+
+        NODE                 -- The  collection  of  network-related  processes
+                                which is a unique entity within the network.
+
+        NODE NUMBER          -- The NAME of a particular NODE.  [Note that this
+                                is  an attribute  of the  code loaded  into the
+                                node's  hardware, rather  than of  the hardware
+                                itself;   only convention  determines  the node
+                                number  assigned  to  a  particular   piece  of
+                                hardware.]
+
+        ORIGINATION          -- The  circuit-termination  where  a   signal  or
+                                message  originates;   this may  be  either the
+                                caller or callee.
+
+        PORT                 -- The name of  the smallest discrete  entity used
+                                for communications  which is  common to  two or
+                                more  independent domains  and by  which  it is
+                                known  to  the  administration   managing  each
+                                domain--the name  by which the  two administra-
+                                tions  refer to  the entity  when communicating
+                                with one another.
+
+        PVC                  -- Permanent-Virtual-Circuit  --  A  hot-line with
+                                added  intelligence  --  capable  of  alternate
+                                routing, multiple alternate destinations, etc.
+
+        TERMINATION          -- The end-point of a circuit;  this may be either
+                                the caller or callee.
+
+        TIMEOUT              -- A timeout occurs whenever the allotted  time to
+                                execute   a   command   has   expired   without
+                                successful execution.
+
+        ZAPPER               -- A circuit  zapper is  a signal  that completely
+                                erases a circuit  from the network.   A circuit
+                                may be zapped by a host, by a link  going down,
+                                or when a user logs off and disconnects  from a
+                                terminal.
+
+
+
+
+
+
+
+        60                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        INDEX                                                  February 4, 1986
+
+
+                                         INDEX
+
+        AID port  22                             MODE  4@, 30
+        ALTERNATE_OUTPUT_DEVICE_              ENTER_NETWORK_COMPRESSION  5@
+           MODE  4@, 30                       Enter_Defered_Echo_Mode  see EDEM
+        Audio Response  46                    ENTER_TRANSPARENCY_MODE  4@, 29
+        Auxiliary Circuit  13
+
+                                              FIELD  59
+        BAUD  59                              Field-parameters  6@
+        baud rate  6                          FLAGS  57
+        Baud Rate Codes  52@                  flags, buffer  57
+        Bit-Parameters  7@
+        BLACK_BALL  5@, 29
+        BREAK_BEGIN  5@                       GCI/WCI buffer  56
+        BREAK_END  5@                         GLASS_BALL  4@
+        buffer descriptors  56                GOBBLER  3@, 29
+        buffer flags  57                      Gouging Level (Obsolete)  see
+        buffer pool  56                          Throughput Class
+        BUFFER ZAP  5, 58                     GRAY_BALL  5@
+        buffer, GCI/WCI  56                   GREEN_BALL  3@, 28, 29, 35
+        bufferlet  56                         group  57
+
+
+        C-MAP  2, 30@, 52@                    HALF_DUPLEX  7@, 9, 43
+        Callee  2@, 59                        HANG_CHARACTER  4@, 30
+        Caller  2@, 59                        HDX  12
+        CCT  10@, 13                          High-Speed Access  see HSA
+        CIDCBE  44                            Host  2, 59
+        cipher  13                            HOST NUMBER  59
+        Circuit Characteristic Type  see      HOT-LINE  59
+           CCT                                HSA  5, 37@
+        Circuit originator  see Caller
+        Circuit terminator  see Callee
+        CR_DELAY  7@, 9, 43                   IAP - Initial Audio Process  46
+                                              IIX  5, 14@, 59
+                                              Interface Information
+        Defered-Echo Mode  23                    eXchange  see IIX
+        delay  31                             INTERNAL CIRCUIT  59
+        DESTINATION  59
+
+                                              KATAKANA  8@, 9, 34, 43, 44
+        ECHO-ESC  8@, 9
+        Echo-Off  7
+        Echo-off Mode  23                     LDEM  3@
+        ECHO_CONTROL  7@, 8                   LEAVE_ALTERNATE_OUTPUT_DEVICE_
+        ECHO_CONTROL-H  8@, 9                    MODE  5@, 30
+        ECHO_CONTROL-I  7@, 8                 LEAVE_NETWORK_COMPRESSION  5@
+        ECHO_CR:Rubout_on_LF  7@, 8           Leave_Defered_Echo_Mode  see LDEM
+        ECHO_LF_on_CR  7@, 8                  LEAVE_TRANSPARENCY_MODE  4@, 29
+        EDEM  3@                              LISA  46
+        EMPTY  58                             Local-Echo Mode  23
+        ENTER_ALTERNATE_OUTPUT_DEVICE_        login state  12
+
+        61                     TYMNET Circuit Protocols             CIRCUIT.DOC
+        INDEX                                                  February 4, 1986
+
+
+
+
+        Master User Directory  see MUD        SET_OUTPUT_BAUD_RATE  6@
+        MODEM  59                             SIIX  5@
+        MPVC  47, 60                          SPACE-PARITY  8@
+        MPVC Block character  49              SPACE-PARITY|  10
+        MPVC control-signals  54              sub-channel  47
+        MPVC Escape character  49
+        MPVC Signal Character  49
+        MUD  13@                              TC  see Throughput Class
+                                              terminal characteristics  23
+                                              Terminal IDentification
+        NAME  60                                 character  21
+        Network ID (Obsolete)  see CCT        Terminal Speeds  52@
+        NETWORK PRINTERS  32                  Terminal type  10
+        NID (Obsolete)  see CCT               TERMINATE-OUTPUT-on-BREAK-
+        NODE  60                                 DETECTED  8@, 9
+        NODE NUMBER  60                       TERMINATION  60
+        normal circuits  13                   terminator  see Callee
+                                              Throughput Class  10, 12@
+                                              TID  10, 21
+        ORANGE_BALL  5@, 29                   TIIX  5@
+        ORIGINATION  60                       TIMEOUT  60
+        originator  see Caller                TRANSPARENCY_MODE  4@, 29, 44
+                                              TURNAROUND_HANG_CHARACTER  4@
+                                              TYMSAT  10
+        Parameter-C Mapping  see C-MAP
+        PARAMETER_A  6@, 31
+        PARAMETER_B  6@, 31                   username  12
+        PARAMETER_C  6@, 31
+        PARAMETER_D  6@, 32
+        PARITY  7@, 9                         VIDEOTEXT  36
+        password  12
+        PID  18@
+        pool of bufferlets  56                XON/XOFF_ENABLE  7@, 9
+        PORT  60
+        PRINTER Blank Compression  34
+        PRINTERS  32                          YELLOW_BALL  5@, 29
+        Product Identifier  see PID
+        PVC  22, 49, 60
+                                              ZAPPER  3@, 29, 60
+
+        Q-mode  8@, 9
+        QUERY_FIELD_PARAMETER  6@
+
+
+        RED_BALL  4@, 28, 29
+        reserve tank  58
+        REVERSE_X-ENABLE  8@, 9
+
+
+        Service Type  10@
+        SET_INPUT_BAUD_RATE  6@
+
+        62                     TYMNET Circuit Protocols             CIRCUIT.DOC
+    QC
