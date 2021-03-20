@@ -1,0 +1,34 @@
+:********************************************************************
+: Patch name: DDTPV1.603             Product and Version: ISCS 6.03
+:     Author: JCR                           Organization: STS
+:   Customer: TRW                           Date Written: 6/30/88
+: Description of Problem:  
+:
+:	This patch fixes the X-DDT 'PVC' command to correctly
+:	display the TID value for AID ports.
+:	Updated 7/12/88 to fix incorrect TID value for SIO
+:	ports by removing 2F displacement into PVCTID.
+
+	IF	PVC
+	LO	DATA
+	LO	STATUS
+
+PATCH(880630,2230,JREILLY,X.DPVC+20,,6)
+	J	PA1PTR,,
+
+CONPATCH(PA1PTR,,22)
+	NI	R0,7FFFFFFF		: get rid of high-order bit
+	SRL	R0,$A 24		: from source
+	CLHI	RP,.SPORT		: SIO port?
+	JLFS	X.DP01			: no, output TID value as is
+	SI	R0,2F			: yes, get rid of SIO offset
+X.DP01	SVC	K.OUT,X.PVM1,,		: from source
+	J	X.DPVC+28,,		: ...and return
+
+ENDPATCH(Patch to correct X-DDT 'PVC' display for AID ports)
+
+	FO	STATUS
+	FO	DATA
+	EI	:PVC
+
+:********************************************************************
