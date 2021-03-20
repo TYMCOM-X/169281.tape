@@ -1,0 +1,82 @@
+DESLIC==        6
+CRLF:   BYTE(7)15,12,0
+        
+STPT:   HRROI   1,-24           ; LDBLOG INFO
+        GETTAB  1,
+        SETZ    1,
+        TLNN    1,(37B11)       ; TEST FOR AUX. CIRCUIT
+        JRST    TINIT           ; INIT TER ONLY IF AUX. CIRCUIT
+        MOVEI   6,575612        ; SET LICENSE
+        HRRO    1,6
+        SETLIC  1,
+        HRROI   1,-20
+        GETTAB  1,
+        SETZ    1,
+        HRRZ    2,1
+        CAIN    6,(2)
+        JRST    TINIT
+        OUTSTR  [ASCIZ  /Did not set/]
+        MOVSI   2,-TBLEN
+        MOVEI   3,1
+CHKLP:  LDB     5,LICBP(2)
+        CAME    5,LICVAL(2)
+        JRST    NOCHK
+        HLL     3,LICBP(2)
+        LDB     5,3
+        CAMN    5,LICVAL(2)
+        JRST    NOCHK
+        OUTSTR  LICFUL(2)
+NOCHK:  AOBJN   2,CHKLP
+        OUTCHR  [7]
+
+TINIT:  MOVSI   1,1
+        HRRI    1,[
+                SIXBIT"DSK"
+                SIXBIT"INIT"
+                SIXBIT"SAV"
+                0
+                0
+                0]
+        RUN     1,
+        JRST    TINIT
+
+DEFINE  LICENS  <
+	X (1,1,18,WC,0)
+        X (1,1,19,RC,0)
+        X (1,1,20,OP,0)
+        X (1,1,21,SY,0)
+        X (1,1,22,GD,0)
+        X (1,1,23,TD,0)
+        X (1,1,24,ST,0)
+        X (1,1,26,JL,0)
+	X (1,1,27,AC,0)
+	X (1,1,28,XC,0)
+        X (1,2,33,RP,0)
+        X (2,2,33,RF,0)
+        X (3,2,33,RA,0)
+        X (1,2,35,WP,0)
+        X (2,2,35,WF,0)
+        X (3,2,35,WA,0)
+>
+DEFINE  X(A,B,C,D,E)
+	<SIXBIT /D/>
+LICABR: LICENS
+TBLEN==.-LICABR
+
+DEFINE  X(A,B,C,D,E)
+	<POINT B,DESLIC,C>
+LICBP:  LICENS
+
+DEFINE  X(A,B,C,D,E)
+	<A>
+LICVAL: LICENS
+
+DEFINE  X(A,B,C,D,E)
+	<ASCII / 'D/>
+LICFUL:	LICENS
+
+DEFINE  X(A,B,C,D,E)
+	<E>
+LICTWK:	LICENS
+
+        END     STPT
