@@ -1,0 +1,421 @@
+
+:	I2IS07.I03	ISIS-II - INITIALIZATION PARAMETERS - R07.03
+
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source code listing constitutes the proprietary pro-  **
+: **  perty of TYMNET, Incorporated. The recipient, by receiving  **
+: **  this program listing, agrees that neither this listing nor  **
+: **  the   information  disclosed herein nor any  part  thereof  **
+: **  shall be  reproduced or transferred to other documents  or  **
+: **  used  or  disclosed to others for manufacturing or for any  **
+: **  other   purpose except as specifically authorized in  wri-  **
+: **  ting by  TYMNET, Incorporated.                              **
+: ******************************************************************
+
+: PARAMETERS FOR FILE SYSTEM
+
+SYS     EQ      1
+FSYS    EQ      2
+KSYS    EQ      3
+
+:	DEFINE SOME DEFAULTS
+NDISC	EQ	0			:NO DISCS
+NTAPE	EQ	0			:NO TAPES
+MSCDSK	EQ	0			:NO MSC-1400 CONTROLLERS
+
+:		SLOT PARAMETERS
+SYN	EQ	00000000		:FLAG FOR SYNCHRONOUS LOGICAL UNIT
+ASN	EQ	01000000		:FLAG FOR ASYNCHRONOUS LOGICAL UNIT
+PRN	EQ	02000000		:FLAG FOR PRINTER LOGICAL UNIT
+UDEV	EQ	03000000		:FLAG FOR UNSUPPORTED DEVICE
+M.CARD	EQ	04000000		:FLAG FOR MOTHER-BOARD L.U.
+IPIDEV  EQ      05000000		:FLAG FOR INTELL. PERIPH. INT'FCE
+
+:
+:       SOME PRELIMINARY GLOBALS
+
+        GL      FSYS,KSYS
+
+:	SLOT LICENSE DEFINITIONS
+	GL	TL.SUS
+TL.AUX	EQ	80000000		:AUX-CIRCUIT LICENSE
+TL.SUS	EQ	00000001		:SUSPEND/RESUME LICENSE
+
+
+:		SLOT MACRO DEFINITIONS
+S.REF	MACRO(LINE)[EQ	$A SYN+LINE]	:SYNC LINE
+
+A.REF	MACRO(GROUP)[EQ	$A ASN+GROUP]	:ASYNC GROUP
+
+P.REF	MACRO(PRINT)[EQ	$A PRN+PRINT]	:PRINTER
+
+X.REF	MACRO(LINE)[EQ	-1		:EXPERIMENTAL SIO-CARD LINE
+	REMARK	%%ISIS-II no longer supports XSIO...CANCELED%
+]
+
+M.REF	MACRO(CARD,LINE)[EQ	$0 M.CARD+LINE+(10*CARD)]  :MOTHER-BOARD
+
+IP.REF  MACRO(N)[EQ     $A IPIDEV+N]    :IPI DEVICE (EBUS BRD, UNIX BRD)
+
+:	Configure TYMNET link N with NEIghbor, NGRoups (T-I), WSIZe (TII)
+	KILL	TYMNET
+TYMNET	MACRO(N,NEI,VAL)[
+	RA	0
+NEIG|N|	EQ	$8 NEI
+	IF	TII
+	 IF	VAL
+	  IF	$A VAL-124
+	   REMARK %LINK 
+	   NUMBER $A N
+	   REMARK d, WINDOW SIZE EXCEEDS 124d, REDUCING TO 124d
+WSIZ|N|	   EQ	$A 124
+	  ELSE	VAL&3
+	   REMARK %LINK 
+	   NUMBER $A N
+	   REMARK d, FORCING WINDOW SIZE TO MULTIPLE OF 4
+WSIZ|N|	   EQ	(@3)&(VAL+3)
+	  ELSE
+WSIZ|N|	   EQ	$A VAL
+	  EI
+	 EI	(VAL)
+	ELSE				:NOT TII
+	 IF	VAL
+	  IF	$A VAL-16
+	   REMARK %LINE 
+	   NUMBER $A N
+	   REMARK d HAS EXCESSIVE GROUPS, REDUCING TO 16d
+NGRP|N|	   EQ	$A 16
+	  ELSE
+NGRP|N|	   EQ	$A VAL
+	  EI
+	 ELSE
+	  REMARK %LINE 
+	  NUMBER $A N
+	  REMARK d MUST HAVE GROUPS, ASSIGNING 1
+NGRP|N|	  EQ	1
+	 EI	(VAL)
+	EI	(TII)
+]
+:
+:internel macro the do checking of sys specification with
+:the sgu.def macro
+:
+SYSCHK  MACRO(SYS,GU,C) [
+        IF      SYS-2
+:
+:call type ksys
+:
+        IF      \KSYS1
+         REMARK	%multiple declaration of KSYS device for globol unit 
+         NUMBER	GU
+         REMARK	d, declaration ignored!
+        ELSE    (C%DK)*(C%MS)
+         REMARK	%FSYS device not physical type DK or MS
+        ELSE
+KSYS1   EQ      GU
+        EI
+        ELSE    SYS-1
+        IF      \FSYS1
+         REMARK %multiple declaration of FSYS device on globol unit
+         NUMBER GU
+         REMARK d, declaration ignored!
+        ELSE    (C%DK)*(C%MS)
+         REMARK %FSYS device type not MS or DK
+        ELSE
+FSYS1   EQ      GU
+        EI
+:
+        ELSE
+        IF      \SYSDEV
+         REMARK %multiple declaration of SYS device on globol unit
+         NUMBER GU
+         REMARK d, declaration ignored!
+        ELSE    C%DK
+         REMARK %system device not physical type DK
+        ELSE
+SYSDEV  EQ      RD!GU
+        EI
+        EI
+]
+:
+
+:	Declare a (shared) Global Unit
+:	parameter    use	Disc		Mag Tape
+:	GU	global unit #	1,2,3...	1,2,3...
+:	C	controller	DK, MS		MT
+:	U	unit		0,1,2...	0,1,2...
+:	S	start cylinder	HEX		--
+:	L	# of cylinder	HEX		--
+:	SYS	System device	SY, FSYS, KSYS, 0, OR NULL
+
+:	GENERATES:
+:		GU1n = TYPE
+:		GU2n = UNIT NUMBER OF THIS TYPE
+:		GU3n = STARTING CYLINDER (IF APPLICABLE)
+:		GU4n = SIZE IN CYLINDERS (IF APPLICABLE)
+:	may also define SYSDEV if SYS>0, and C=DK
+SGU.DEF	MACRO(GU,C,U,S,L,SYS)[
+Q	EQ	0
+	IF	GU-MXGLU
+	 REMARK	%(Shared) Global Unit 
+	 NUMBER	GU
+	 REMARK	 exceeds MXGLU, definition ignored!
+	ELSE	\GU1|GU|
+	 REMARK %multiple definition of (shared) Global Unit 
+	 NUMBER GU
+	 REMARK , second definition ignored!
+	ELSE	1-(C%MT)
+	 IF	NTAPE
+Q	  EQ	1
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared MT, definition ignored!
+	 EI	(NTAPE)
+	ELSE	1-(C%DK)
+	 IF	NDISC
+Q	  EQ	1
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared DK, definition ignored!
+	 EI	(NDISC)
+	ELSE	1-(C%MS)
+	 IF	MSCDSK
+Q	  EQ	1
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared MS, definition ignored!
+	 EI	(MSCDSK)
+	EI
+	IF	Q
+	 RA	0			:ENFORCE HEX RADIX
+GU1|GU|	 EQ	C/100
+GU2|GU|	 EQ	U
+GU3|GU|	 EQ	S
+GU4|GU|	 EQ	L
+	ELSE
+	 IF	(C%MS)*(C%MT)*(C%DK)
+	REMARK	%Declaration of unknown device on Global Unit  
+	NUMBER	$A GU
+	REMARK	d, declaration ignored!
+	 EI 
+	EI
+	IF	SYS
+        SYSCHK(SYS,GU,C)
+	EI
+]
+
+:	Reference a (shared) Global Unit
+:		SL	slot number (decimal)
+:		LUN	logical unit number (decimal)
+:		GU	Global Unit number (hex)
+:		PE	permits
+:		defines symbol xSLuLUN, where SL and LUN are hex strings
+SGU.REF	MACRO(SL,LUN,GU,PE)[
+	RA	0			:FORCE TO HEX RADIX
+Q	EQ	$A SL
+V	EQ	$A LUN
+	IF	\GU1|GU|
+X|Q|U|V| EQ	PE!GU
+	ELSE				:UNDEFINED...
+	 REMARK	%Reference to undefined Global Unit 
+	 NUMBER	GU
+	 REMARK	 (Slot 
+	 NUMBER	$A SL
+	 REMARK	D, unit 
+	 NUMBER	$A LUN
+	 REMARK	D), not assigned!
+	EI	(\GU1|GU|)
+]
+
+GU10	EQ	0			:DEFINE GU10 FOR UNASSIGNED UNITS
+
+:	FLAGS
+DK	EQ	8000			:FLAG FOR DISC UNIT
+MT	EQ	0100			:FLAG FOR TAPE UNIT
+MS	EQ	0200			:FLAG FOR MSC-1400 CONTROLLER
+
+RD	EQ	8000			:READ ACCESS TO UNIT
+WR	EQ	4000			:WRITE ACCESS TO UNIT
+AT	EQ	2000			:ATTACH LICENSE FOR UNIT
+SS	EQ	1000			:SAVE LICENSE
+
+:BAUD MACRO - SETS BAUDR PARAMETER AND RANGE CHECKS VALUE
+:	BAUDR MAY EQUAL 0 (1200 BAUD) OR 2 (4800 BAUD)
+:
+BR1200	EQ	0			:MACRO ARG FOR 1200 BAUD
+BR4800	EQ	2			:MACRO ARG FOR 4800 BAUD
+:
+BAUD	MACRO	(R) [
+	IF	\BAUDR			:HAS BAUDR ALREADY BEEN DEFINED
+					:IF SO JUST RANGE CHECK VALUE
+	ELSE
+BAUDR	EQ	R			:ELSE DEFINE
+BAUDRS	EQ	1			:FLAG USED TO DETERMINE IF BAUDR
+					:WAS SET BY MACRO
+	EI
+:PROCEED TO RANGE CHECK VALUES
+	IF	-BAUDR			:IF BAUDR LESS THAN 0
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%BAUDR OUT OF RANGE - BAUDR SET TO 1200 BAUD!
+	ELSE	BAUDR-2			:IS BAUDR GREATER THAN 2
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%BAUDR OUT OF RANGE - BAUDR SET TO 1200 BAUD!
+	EI
+: CHECK IF SET TO 1 (FOR 2400 BAUD)
+	IF	BAUDR
+		IF	BAUDR-1
+		ELSE			:IF BAUDR EQUALS 1
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%HARDWARE DOES NOT SUPPORT 2400 BAUD - BAUDR SET TO 1200 BAUD!
+		EI
+	EI ]
+:
+NBLKS	EQ	3			:0 IF NOT USING MEMORY BLOCKS (NBLKS
+					:IS THE HIGHEST MEMORY BLOCK NUMBER)	
+:
+:DEFEXT MACRO DEFINES LIMITS OF EXTENDED MAC AREAS
+:	SLOT	SLOT NUMBER
+:	BLOCK	BLOCK NUMBER
+:	STPG	STARTING PAGE NUMBER
+:	NUM	NUMBER OF PAGES
+:	PROT	PROTECTION MASK	
+:		1	EXECUTION ACCESS PERMITTED
+:		2	WRITE ACCESS PERMITTED
+:
+: IF NBLKS IS LESS THAN THE BLOCK NUMBER, NBLKS IS SET EQUAL TO THE
+: BLOCK NUMBER
+:
+DEFEXT	MACRO(SLOT,BLOCK,STPG,NUM,PROT) [
+	RA	$A 10
+CANCEL	EQ	0
+	IF	-SLOT
+	REMARK	%SLOTNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 0 - NSLOT!
+CANCEL	EQ	1	
+	ELSE	SLOT-NSLOT
+	REMARK	%SLOTNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 0 - NSLOT!
+CANCEL	EQ	1
+	EI
+	IF	-(BLOCK-3)
+	REMARK	%BLOCKNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 3 - 15!
+CANCEL 	EQ	1
+	ELSE	BLOCK-15
+	REMARK	%BLOCKNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 3 - 15!
+CANCEL	EQ	1
+	EI
+	RA	$0 0
+	IF	STPG+NUM-4000
+	REMARK	%DEFEXT MACRO ATTEMPTING TO DEFINE AREA ABOVE 4 MEG!
+CANCEL	EQ	1
+	EI	
+: CALCULATE PROTECTION MASK
+Q	EQ	0B			:START WITH ALL PROTECTION
+	IF	PROT&1			:EXECUTION ACCESS PERMITTED
+Q	EQ	Q&3
+	EI
+	IF	PROT&2			:WRITE ACCESS PERMITTED
+Q	EQ	Q&9
+	EI
+
+	IF	CANCEL
+	REMARK	%SPECIFICATION CANCELLED FOR M
+	REMARK	SLOT
+	REMARK	L
+	REMARK	BLOCK !!%
+CANCEL	EQ	0
+	ELSE	
+	RA	$A 10
+P|SLOT|M|BLOCK|	EQ	Q		:DEFINE PROTECION
+M|SLOT|L|BLOCK|	EQ	$0 10000*STPG+(STPG+(NUM-1)) 	:DEFINE EXT MAC
+	
+	IF	(BLOCK+1)-NBLKS
+NBLKS	EQ	BLOCK+1
+	EI	(NBLKS-BLOCK)
+	RA	$0 0
+	EI	]
+
+:	This macro expects the parameter (TIME) to be the number of
+:	seconds since 01/01/74 00:00:00 GMT. A date and time will be
+:	computed based on the parameter. The date and time can be
+:	obtained as a composite of the following symbols created by the
+:	macro:
+:
+:	MONTH, DAY, YEAR, HOURS, MINS, SECS
+:
+
+GENTIM	MACRO(TIME) [
+
+	RA	$0 0A
+
+QUADSZ	EQ	365*4+1
+DAYZ	EQ	(TIME)/(24*60*60)+365
+QUAD	EQ	DAYZ/QUADSZ
+QUADD	EQ	DAYZ-QUAD*QUADSZ
+LEAP	EQ	QUADD/365
+
+	IF	LEAP-3
+LEAP	EQ	3
+	EI
+
+YEAR	EQ	QUAD*4+LEAP+73
+DAY	EQ	QUADD-LEAP*365+1
+
+MON1	EQ	31
+	IF	LEAP-2
+MON2	EQ	29
+	ELSE
+MON2	EQ	28
+	EI
+MON3	EQ	31
+MON4	EQ	30
+MON5	EQ	31
+MON6	EQ	30
+MON7	EQ	31
+MON8	EQ	31
+MON9	EQ	30
+MON10	EQ	31
+MON11	EQ	30
+MON12	EQ	31
+
+MONTH	EQ	1
+NOTIT	EQ	1
+
+	RE	
+	IF	DAY-MON|MONTH|
+DAY	EQ	DAY-MON|MONTH|
+MONTH	EQ	MONTH+1
+	ELSE
+NOTIT	EQ	0
+	EI
+	ER	NOTIT
+
+RSECS1	EQ	(TIME)-((DAYZ-365)*(24*60*60))
+HOURS	EQ	RSECS1/(60*60)
+RSECS2	EQ	RSECS1-HOURS*(60*60)
+MINS	EQ	RSECS2/60
+SECS	EQ	RSECS2-MINS*60
+]
+
+:	DUMMY MACROS USED IN ISIS TYM FILE TO PREVENT ASSEMBLY ERRORS.
+
+TIILNK	MACRO(P) [ ]
+
+OPTION	MACRO(P) [ ]
+
+GGHOST	MACRO(P) [ ]
+
+HLIMIT	MACRO(P) [ ]
+
+SLIMIT	MACRO(P) [ ]
+
+HSTSLT	MACRO(P) [ ]
+
+XRYMSG	MACRO(P) [ ]
+
+STRLIN	MACRO(P) [ ]
+
+ 
