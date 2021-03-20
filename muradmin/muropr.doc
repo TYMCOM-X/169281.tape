@@ -1,0 +1,2101 @@
+
+
+
+                 MUR - MACHINE USAGE REPORT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                       TYMSHARE INC.
+                       DATA SERVICES
+                      OCTOBER 24, 1977
+
+                  PROGRAM BY: ROY ROSKILLY
+                    TYMSHARE MAINTENANCE
+                 DOCUMENT BY: BOB MARTINEZ
+                        NCO TRAINING
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            (O)
+
+TABLE OF CONTENTS
+
+
+                                      (O)
+                               MUR TABLE OF CONTENTS
+
+       INTRODUCTION                                            1
+       MAJOR MUR PROGRAMS                                      1
+       CAPABILITIES                                            2
+       SCHEMA DIAGRAM                                          2
+       VALID MUR SITES                                         3
+       THE SITE RELATION                                       3
+       THE SYSTEM RELATION                                     3
+       VALID MUR SYSTEMS                                       4
+       THE CLASS RELATION                                      5
+       THE SCHEDULE RELATION                                   5
+       THE TIME RELATION                                       5
+       THE CODE RELATION                                       5
+               940 CODES                                       5
+               PDP CODES                                       6
+               370 CODES                                       6
+       THE GROUP RELATION                                      7
+       THE TYPE RELATION                                       7
+       THE HOLIDAY RELATION                                    7
+       UPDATE COMMAND SUMMARY                                  8
+       REPORT COMMAND SUMMARY                                  9
+       ENTERING MUR                                            11
+       RUNNING THE UPDATE PROCEDURE                            11
+       CRASHES DISCUSSED                                       11
+               ADD                                             12
+               ENTERING A DAY'S RECORDS                        15
+               CHANGE                                          15
+               DELETE                                          17
+               DELETE RECORD                                   17
+               LIST HW                                         17
+               LIST SW                                         17
+               CHECK SW                                        18
+               CHECK HW                                        18
+       RUNNING REPORT PROCEDURES                               20
+       OUTPUT CAPABILITIES                                     20
+               CRASH.SUMMARY                                   21
+               WEEKLY                                          21
+               HW.WEEKLY                                       21
+               SITE.WEEKLY                                     22
+               CLASS.WEEKLY                                    22
+               MONTHLY                                         22
+               HW.MONTHLY                                      23
+               SITE.MONTHLY                                    23
+               CLASS.MONTHLY                                   23
+       SAMPLE UPDATE RUNS                                      24
+       SAMPLE REPORT RUNS                                      28
+       ERRORS AND RECOVERIES                                   40
+       ALPHABETICAL INDEX                                       42
+                                                                          Page 1
+introduction
+
+
+                    THE MACHINE USAGE REPORT SYSTEM
+
+
+       ((INTRODUCTION))
+
+            MUR is a Machine Usage Report system written  in  MAGNUM  on
+       the  TYMCOM-X  (PDP-10)  to  provide  management with timely data
+       analysis on the following general concerns:
+
+               -AVAILABILITY - the percentage of scheduled
+                time during a certain period that host computers
+                were operating in a timesharing mode for users.
+
+               -LOST TIME FACTORS - the amount of time due to
+                crashes and specific computer failure categories
+                which interfere with and reduce availability.
+
+               -SCHEDULED DOWNTIME FACTORS - the amount of
+                time spent performing various categories of
+                in-house activities where there was no significant
+                timesharing usage on the system.
+
+            This information is of vital importance to a wide  range  of
+       interrelated  Data  Service  functions.   Maintenance  derives an
+       overall analysis of how well the computers are  operating  and  a
+       breakdown  of  hardware  problem  areas;   Operations  derives an
+       overall analysis of host reliability and a breakdown  of  general
+       system   activities  within  a  specific  time  frame;   Resource
+       Planning derives an overall analysis of  time  scheduling  and  a
+       breakdown  of various levels of availability.  In all cases, this
+       information is  used  both  to  measure  how  well  the  computer
+       performed  in  the  past and to identify areas where attention is
+       needed in the future.  In addition, the data from this program is
+       one   of   the  important  inputs  in  determining  whether  past
+       performance warrants  incentive  rewards  and  if  so,  how  much
+       incentive.
+
+            The program consists of two main operational sections.
+
+            The UPDATER section is used for daily entry of raw data  and
+       allows   correction  of  entries  and  certain  software/hardware
+       changes.
+
+            The  REPORT  section  allows  a   wide   range   of   report
+       specification  including  weekly and monthly analysis of the data
+       that has been previously entered.
+                                                                  Page 2
+introduction
+
+
+            MUR differs from the earlier programs in  that  it  combines
+       both  the  data  entry section and the report generation into one
+       system.
+
+            It uses the relational technology  of  MAGNUM.   This  means
+       that  all  data  elements  are  separately  available  and can be
+       accessed in a variety of sequences and interrelationships.
+
+            The schema is the overall structure which organizes the data
+       base.    This  organization  involves  the  association  of  data
+       elements into data files called relations.  The  schema  for  the
+       MUR  program  involves  nine relational data files which point to
+       each other as described in the diagram
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                  Page 3
+MUR RELATIONS
+
+
+                          RELATION DESCRIPTION
+
+
+            The first relation  is  SITE.   This  relation  involves  an
+       internal  id.,  an  abbreviation  of up to three characters and a
+       title of up to 15  characters.   In  general,  this  relation  is
+       accessed  whenever  the TIME or SYSTEM relations are called.  The
+       current sites are as follows:
+
+
+               CUP     -       CUPERTINO       (CUPA,CUPC AND PA370)
+               HOU     -       HOUSTON         (INCLUDES SCO)
+               VF      -       VALLEY FORGE    (INCLUDES ECO)
+
+            The SYSTEM relation involves data concerning a hardware id.,
+       a  software  system number, an internal id., a start and end date
+       for the system, a prime start and stop time, and  an  'applicable
+       flag'  which  determines if the system is factored into incentive
+       uptime calculations.  Also, in REPORT procedures, a given  system
+       will be reported twice if it's applicable flag has changed during
+       the report period -- one report  for  when  the  system  was  not
+       applicable  and  once  when it was.  This relation also points to
+       the site and class relations and is generally  involved  whenever
+       the  time  or schedule relations are accessed.  The data elements
+       of this relation (as of the date indicated) are given on the next
+       page.
+                                                                  Page 4
+MUR RELATIONS
+
+
+                     SYSTEMS AS OF WED Jun  8,1977
+
+          HW  SN  SIT APP CLS START    END DATE PRIME     SCHED
+          B     1 CUP   Y 940 01-01-77 12-31-99 0500-1800 0300-2300
+          Z     2 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-2000
+                                                          2300-2400
+          L     3 CUP   Y 940 01-01-77 12-31-99 0500-1800 0400-2300
+          A     4 CUP   Y 940 01-01-77 12-31-99 0500-1800 0400-2300
+          J     5 CUP   Y 940 01-01-77 12-31-99 0500-1800 0400-2400
+          I     7 CUP   Y 940 01-01-77 12-31-99 0500-1800 0400-2400
+          F     9 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-0200
+                                                          0600-2400
+          D    10 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-1700
+                                                          2000-2400
+          E    11 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-0100
+                                                          0400-2400
+          H    13 CUP   Y 940 01-01-77 12-31-99 0500-1800 0500-2300
+          K    16 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-1900
+                                                          2200-2400
+          Q    18 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-1900
+                                                          2200-2400
+          G    19 CUP   Y 940 01-01-77 12-31-99 0500-1800 0000-0100
+                                                          0500-2400
+          C    20 CUP   Y 940 01-01-77 12-31-99 0500-1800 0300-2400
+          VV   33 CUP   Y PDP 01-01-77 12-31-99 0500-1800 0000-0300
+                                                          0600-2400
+          QQ   34 CUP   Y PDP 01-01-77 12-31-99 0500-1800 0400-2400
+          TT   35 CUP   Y PDP 01-01-77 12-31-99 0500-1800 0000-1900
+                                                          2200-2400
+          ZZ   36 CUP   Y PDP 01-01-77 12-31-99 0500-1800 0300-2300
+          RR   37 CUP   N PDP 01-01-77 12-31-99 0500-1800 0000-2100
+                                                          2300-2400
+          XX   38 CUP   Y PDP 01-01-77 12-31-99 0500-1800 0000-0100
+                                                          0500-2400
+          YY   39 CUP   N PDP 01-01-77 12-31-99 0500-1800 0000-2400
+          B    40 CUP   Y 370 01-01-77 12-31-99 0500-1800 0000-2400
+          R    41 CUP   Y 370 01-01-77 12-31-99 0500-1800 0000-2400
+          UU  101 CUP   Y SRI 01-01-77 12-31-99 0500-1800 0330-2330
+          X    24 VF    Y 940 01-01-77 12-31-99 0500-1800 0300-2300
+          Y    26 VF    Y 940 01-01-77 12-31-99 0500-1800 0100-2200
+          N    27 VF    Y 940 01-01-77 12-31-99 0500-1800 0000-0230
+                                                          0530-2400
+          Y    42 VF    Y 370 01-01-77 12-31-99 0500-1800 0000-2400
+          Z    43 VF    Y 370 01-01-77 12-31-99 0500-1800 0000-2400
+          R     6 HOU   Y 940 01-01-77 12-31-99 0500-1800 0600-2400
+          W     8 HOU   Y 940 01-01-77 12-31-99 0500-1800 0000-1900
+                                                          2200-2400
+          V    12 HOU   Y 940 01-01-77 12-31-99 0500-1800 0000-0100
+                                                          0600-2400
+          M    17 HOU   Y 940 01-01-77 12-31-99 0500-1800 0000-0200
+                                                          0600-2400
+          S    23 HOU   Y 940 01-01-77 12-31-99 0500-1800 0000-0200
+                                                          0500-2400
+          WW   31 HOU   Y PDP 01-01-77 12-31-99 0500-1800 0000-0200
+                                                          0600-2400
+          SS   32 HOU   Y PDP 01-01-77 12-31-99 0500-1800 0300-2400
+                                                                  Page 5
+MUR RELATIONS
+
+
+            The relation CLASS is accessed when  code,  time  or  system
+       relations  are  accessed.   CLASS  involves  the hardware type as
+       follows:
+
+               370     -       TYMCOM-370
+               940     -       TYMCOM-IX
+               PDP     -       TYMCOM-X
+               SRI     -       SRI OFFICE-1
+
+            The  relation  SCHEDULE  involves   scheduled   uptime   and
+       scheduled downtime.  It points to the system relation, and may be
+       of any complexity.
+
+            The next relation is TIME.  It points  to  the  code,  site,
+       system  and  class  relations.   Involved  in  this  relation are
+       hardware, date, start time, stop time, scheduled  time,  a  prime
+       time flag and a field test flag.
+
+            The fifth relation is CODE.  It points to  class  and  group
+       and  is  accessed  whenever  the  TIME  relation  is  used.  Data
+       elements in this class are an internal id., a numeric  code,  and
+       an  adjustment  flag  which  determines  which codes shall not be
+       factored into reliability calculations for adjusted  availability
+       and  crash  totals.  This relation also involves an abbreviation,
+       title, a start date and an end date.
+
+                           CURRENT MUR CODES
+
+          940 CODES AS OF WED Jun  8,1977
+
+          TYP GRP COD AF ABV TITLE           START    END
+          UP  TS  10  N  TS  TIMESHARING     01-01-77 12-31-99
+          SDN OSD 20  N  DEV DEVELOPMENT     01-01-77 12-31-99
+          SDN OPS 21  N  UTL UTILITY         01-01-77 12-31-99
+          SDN OPS 22  N  BAT 930 BATCH (R/P) 01-01-77 12-31-99
+          LST HW  31  N  RAD RADS            01-01-77 12-31-99
+          LST HW  32  N  MF  MAINFRAME       01-01-77 12-31-99
+          LST HW  33  N  I/O CR/CP/LP/MT     01-01-77 12-31-99
+          LST HW  34  N  DSK CALCOMP DISK    01-01-77 12-31-99
+          LST HW  35  N  S/C SELECTOR CHAN   01-01-77 12-31-99
+          LST HW  36  N  THW TYMNET HARDWARE 01-01-77 12-31-99
+          LST SW  41  N  SSW SYSTEM SOFTWARE 01-01-77 12-31-99
+          LST SW  42  N  TSW TYMNET SOFTWARE 01-01-77 12-31-99
+          LST PER 43  N  PER PERSONNEL ERROR 01-01-77 12-31-99
+          LST PUB 50  Y  PWR POWER FAILURE   01-01-77 12-31-99
+          LST ENV 51  N  ENV ENVIRONMENT     01-01-77 12-31-99
+          LST UNK 59  N  UNK UNDETERMINED    01-01-77 12-31-99
+          SDN MNT 70  N  PM  PREV'TIVE MAINT 01-01-77 12-31-99
+          SDN MNT 71  N  INS INSTALLATION    01-01-77 12-31-99
+          SDN MNT 72  N  CM  COR MAINT TEST  01-01-77 12-31-99                                       _
+                                                                  Page 6
+MUR RELATIONS
+
+
+          PDP CODES AS OF WED Jun  8,1977
+
+          TYP GRP COD AF ABV TITLE           START    END
+          UP  TS  10  N  TS  TIMESHARING     01-01-77 12-31-99
+          SDN OSD 20  N  DEV DEVELOPMENT     01-01-77 12-31-99
+          SDN OPS 21  N  UTL UTILITY         01-01-77 12-31-99
+          LST HW  30  N  MAG MAG TAPE DRIVE  01-01-77 12-31-99
+          LST HW  32  N  MF  MAINFRAME       01-01-77 12-31-99
+          LST HW  33  N  I/O CR/CP/LP        01-01-77 12-31-99
+          LST HW  34  N  AMP AMPEX DISK      01-01-77 12-31-99
+          LST HW  35  N  MEM MEMORY          01-01-77 12-31-99
+          LST HW  36  N  THW TYMNET HARDWARE 01-01-77 12-31-99
+          LST SW  41  N  SSW SYSTEM SOFTWARE 01-01-77 12-31-99
+          LST SW  42  N  TSW TYMNET SOFTWARE 01-01-77 12-31-99
+          LST PER 43  N  PER PERSONNEL ERROR 01-01-77 12-31-99
+          LST PUB 50  Y  PWR POWER FAILURE   01-01-77 12-31-99
+          LST ENV 51  N  ENV ENVIRONMENT     01-01-77 12-31-99
+          LST UNK 59  N  UNK UNDETERMINED    01-01-77 12-31-99
+          SDN MNT 70  N  PM  PREV'TIVE MAINT 01-01-77 12-31-99
+          SDN MNT 71  N  INS INSTALLATION    01-01-77 12-31-99
+          SDN MNT 72  N  CM  COR MAINT TEST 01-01-77 12-31-99                                       _
+
+
+          370 CODES AS OF WED Jun  8,1977
+
+          TYP GRP COD AF ABV TITLE           START    END
+          UP  TS  10  N  TS  TIMESHARING     01-01-77 12-31-99
+          SDN OSD 20  N  DEV DEVELOPMENT     01-01-77 12-31-99
+          SDN OPS 21  N  UTL UTILITY         01-01-77 12-31-99
+          LST HW  29  N  CON CONSOLE         01-01-77 12-31-99
+          LST HW  30  N  IBM IBM MEMORY      01-01-77 12-31-99
+          LST HW  31  N  DRM DRUM (2305)     01-01-77 12-31-99
+          LST HW  32  N  MF  MAINFRAME       01-01-77 12-31-99
+          LST HW  33  N  AMP AMPEX DISK      01-01-77 12-31-99
+          LST HW  34  N  ITL ITEL DISK       01-01-77 12-31-99
+          LST HW  35  N  INT INTEL MEMORY    01-01-77 12-31-99
+          LST HW  36  N  THW TYMNET HARDWARE 01-01-77 12-31-99
+          LST HW  37  N  PAR PARADYNE        01-01-77 12-31-99
+          LST SW  41  N  SSW SYSTEM SOFTWARE 01-01-77 12-31-99
+          LST SW  42  N  TSW TYMNET SOFTWARE 01-01-77 12-31-99
+          LST PER 43  N  PER PERSONNEL ERROR 01-01-77 12-31-99
+          LST PUB 50  Y  PWR POWER FAILURE   01-01-77 12-31-99
+          LST ENV 51  N  ENV ENVIRONMENT     01-01-77 12-31-99
+          LST UNK 59  N  UNK UNDETERMINED    01-01-77 12-31-99
+          SDN MNT 60  N  IMT IBM MAINT       01-01-77 12-31-99
+          SDN MNT 70  N  TM  TYMSHARE MAINT  01-01-77 12-31-99
+          SDN MNT 80  N  PMT PARADYNE MAINT  01-01-77 12-31-99
+          SDN MNT 90  N  SMT STC MAINT       01-01-77 12-31-99
+                                                                  Page 7
+MUR RELATIONS
+
+
+            The code points to the relation GROUP.  Groups are meant  to
+       be general areas which could be applied to any hardware now or in
+       the forseeable future.  For reports,  only  those  groups  having
+       machine  codes  pointing  to  them  will  be used to organize the
+       report outputOUP  involves  an  internal  id.,  a  position,
+       abbreviation and title.  Listed below are the current groups:  
+
+               POS     TYPE    GROUP   GROUP TITLE
+               ---     ----    -----   -----------
+               1:      UP      TS      TIMESHARING
+               2:      SDN     OSD     OTHER (SDN)
+               3:      SDN     OPS     OPERATIONS
+               4:      LST     HW      HARDWARE
+               5:      LST     SW      SOFTWARE
+               6:      LST     PER     PERSONNEL ERROR
+               7:      LST     PUB     PUBLIC UTILITY
+               8:      LST     ENV     ENVIRONMENT
+               9:      LST     UNK     UNDETERMINED
+               10:     LST     OLT     OTHER (LST TIM)
+               11:     SDN     MNT     MAINTENANCE
+
+            The group points to  the  relation  TYPE  which  involves  a
+       position, abbreviation and title.  Below are the current types:  
+
+               UP      -       UPTIME
+               SDN     -       SCHEDULED DOWN
+               LST     -       LOST TIME
+
+            The  last  relation,  HOLIDAY,  consists  of   dates   which
+       represent  holidays.   This  relation  is necessary to remove the
+       prime time consideration for holidays.  No time  can  be  updated
+       into the data base for a date which is later than the latest date
+       in the HOLIDAY relation.  Holidays in the MUR data base for  year
+       1977 are:  
+
+       Jan  1
+       Feb 21
+       May 30
+       Jul  4
+       Sep  5
+       Nov 24
+       Nov 25
+       Dec 23
+       Dec 26
+                                                                  Page 8
+COMMAND SUMMARY
+
+
+       ((COMMAND SUMMARY))
+
+       VALID COMMANDS FOR THE UPDATER PROGRAM ARE:
+
+       ADD            ENTER MACHINE USAGE INTO DATA BASE
+       CHG COD        CHANGE CODE FOR A RECORD OR RECORDS
+       CHG SIT        CHANGE SITE FOR A RECORD OR RECORDS
+       CHG FT         CHANGE FIELD TEST FLAG
+       CHG HW         CHANGE HARDWARE ID
+       CHG PF         CHANGE PRIME TIME FLAG
+       CHG SF         CHANGE SCHEDULED TIME FLAG
+       CHG ST         CHANGE STOP TIME FOR A GIVEN RECORD
+       DEL REC        DELETE SINGLE RECORD ON GIVEN SYSTEM FOR GIVEN DAY
+       DELETE OR DEL  DELETE RECORDS FOR A GIVEN SYSTEM FOR A GIVEN DAY
+       CHECK SW       CHECKS SOFTWARE SYSTEMS RECORDS FOR TIME GAPS,
+                      OVERLAPS AND DUPLICATES.
+       CHECK HW       CHECKS HARDWARE SYSTEMS RECORDS FOR GAPS, ETC.
+       LIST SW        TYPES RECORDS FOR A GIVEN DAY FOR A GIVEN SYSTEM
+       NUMBER.
+       LIST HW        TYPES RECORDS FOR A GIVEN DAY AND HARDWARE ID
+       QUIT,EXIT,OR Q RETURNS TO MAGNUM COMMAND LEVEL
+       HELP OR ?      RETYPES THIS LIST
+                                                                  Page 9
+COMMAND SUMMARY
+
+
+       VALID REPORT COMMANDS IN MUR ARE:
+
+       CRASH.SUMMARY           THIS GENERATES A SUMMARY OF CRASHES FOR
+                               SPECIFIC OR ALL CLASSES AND SITES.
+                               SUMMARY WILL COVER THE PREVIOUS (LAST)
+                               OR CURRENT (THIS) MONTH TO DATE, OR A
+                               DATE RANGE. CRASHES ARE FACTORED BY
+                               LOST TIME CODES WHICH ARE TOTALED INTO
+                               AN AVAILABILITY PERCENTAGE. ALSO
+                               PROVIDED IS THE DATE OF THE LAST DATA 
+                               WHICH HAS BEEN INPUT. IF A CLASS OF
+                               COMPUTERS HAS TOO MANY LOST TIME CODES
+                               TO FIT THE PAGE FORMAT, THE CODES WITH
+                               THE LEAST CRASHES WILL BE COMBINED
+                               UNDER THE TITLE 'OTHER' ON THE REPORT.
+
+       WEEKLY                  THIS PROCEDURE GENERATES A REPORT OF CODE
+                               FACTORS FOR GIVEN WEEKS BROKEN INTO
+                               DAILY SUBTOTALS. IT ALSO PROVIDES GROUP
+                               TOTALS AND CRASH SUMMARY OCCURING IN
+                               SCHEDULED UPTIME HOURS. THE REPORT CAN
+                               FOCUS ON A SINGLE SYSTEM (BY SOFTWARE
+                               SYSTEM NUMBER), GROUPS OF SYSTEMS,
+                               OR ALL SYSTEMS. TO OBTAIN A GROUP OF
+                               SYSTEMS, YOU MUST INPUT '0' WHEN THE
+                               PROCEDURE ASKS FOR SYSTEM; THIS CAUSES
+                               THE PROGRAM TO PROMPT FOR SITE AND CLASS
+                               TO BE ANALYZED IN THIS REPORT.
+
+       HW.WEEKLY               THIS REPORT IS THE SAME AS WEEKLY 
+                               SUMMARIZED ABOVE) EXCEPT IT USES THE
+                               HARDWARE ID INSTEAD OF THE SOFTWARE
+                               SYSTEM NUMBER.
+
+       SITE.WEEKLY             A WEEKLY REPORT FOR A SPECIFIED SITE IS
+                               GENERATED BY THIS PROCEDURE. THE REPORT
+                               IS THE SAME AS THE WEEKLY EXCEPT
+                               IT SORTS COMPUTER CLASS BY SITE (EG.
+                               ALL 940'S IN CUP). THIS REPORT AND THE
+                               CLASS.WEEKLY REPORT EXCLUDE ANY SYSTEM
+                               WHICH HAS THE 'NON-APPLICABLE' FLAG SET.
+
+       CLASS.WEEKLY            THIS WEEKLY REPORT DISPLAYS DATA FOR AN
+                               ENTIRE CLASS OF COMPUTER IRRESPECTIVE
+                               OF SITE (EG. ALL 940'S).
+
+       MONTHLY                 PERIODS OF 6 MONTHS FOR A GIVEN SYSTEM
+                               (BY SOFTWARE SYSTEM NUMBER), A GROUP OF
+                               SYSTEMS OR ALL SYSTEMS ARE REPORTED.
+                               WITHIN EACH MONTHLY SUBTOTAL, MACHINE
+                               CODES, SCHEDULED TIME GROUPS AND CRASHES
+                               ARE ITEMIZED. THESE ARE CALCULATED
+                               INTO TOTAL FIGURES AND PERCENTAGES
+                               FOR THE ENTIRE 6 MONTH PERIOD.
+                                                                 Page 10
+COMMAND SUMMARY
+
+
+       HW.MONTHLY              THIS REPORT IS THE SAME AS THE MONTHLY
+                               SEE ABOVE) EXCEPT IT USES HARDWARE
+                               ID INSTEAD OF THE SOFTWARE SYSTEM NUMBER.
+
+       SITE.MONTHLY            A 6 MONTH REPORT FOR A SPECIFIED SITE IS 
+                               GENERATED BY THIS PROCEDURE. THE FORMAT
+                               OF THIS REPORT IS LIKE THE MONTHLY
+                               EXCEPT IT SORTS COMPUTER CLASS BY
+                               SITE (EG. PDP'S IN HOU). THIS REPORT
+                               AND THE CLASS.MONTHLY REPORT EXCLUDE
+                               ANY SYSTEM WHICH HAS THE 'APPLICABLE'
+                               FLAG SET SET TO 'N'.
+
+       CLASS.MONTHLY           THIS REPORT DISPLAYS MONTHLY DATA IN A 6
+                               MONTH PERIODS FOR AN ENTIRE CLASS OF
+                               COMPUTER IRRESPECTIVE OF SITE (EG.
+                               ALL PDP'S).
+
+
+                                     NOTE
+
+           THE OUTPUT FOR ALL OF THE ABOVE REPORTS MAY  BE  DIRECTED
+           TO  A  FILE  IN  DIRECTORY  (MURRPT)  OR BE LISTED TO THE
+           TERMINAL (SPECIFY 'TER' AS OUTPUT  FILE).   MOST  REPORTS
+           ARE FORMATTED FOR TTY PAPER WITH WIDTH 80.  TO LIST A MUR
+           FILE TO A LINE PRINTER USE 'PRINT' (FROM EXEC)  WITH  THE
+           '/SIZE 66' SWITCH.
+
+
+                                                                 Page 11
+COMMAND DESCRIPTION
+
+
+       ((COMMAND DESCRIPTION))
+
+
+                        ENTERING THE MUR PROGRAM
+                        -------- --- --- -------
+
+            The MUR system is accessed on  C33  in  directory  MUR.   To
+       start  the program type 'MAGNUM MUR (CR)'.  MAGNUM will be output
+       the current  date  and  time  then  prompt  with  ':'.   All  MUR
+       procedures  are  started  with  a command string in the form 'RUN
+       PROCEDURE (CR)'  where  valid  procedures  are  those  summarized
+       above;   for  example, to input daily system data you'd enter the
+       procedure by typing  ':'RUN  UPDATER  (CR).   MAGNUM  outputs  an
+       indication  that  it  is loading the procedure, types 'EXECUTION'
+       and then prompts with '>'.  This prompt always indicates that you
+       are within a MUR procedure.
+
+
+                     RUNNING THE UPDATER PROCEDURE
+                      ------- --- ------ ---------
+
+            This set of procedures should be used  by  the  operator  to
+       enter machine code and stop time data from the computer log books
+       into the data base.  Certain commands will display data that  has
+       been  entered  previously.   Other  commands  perform  diagnostic
+       functions on the data base and records entered can be changed  if
+       need be.
+
+            To clarify potential  confusion  about  what  constitutes  a
+       crash,  the  following definitions and policies are offered:  the
+       MUR program  sorts  scheduled  downtime  and  lost  time  entries
+       according  to  a  full  24  hour  period,  again  for prime time,
+       scheduled time and a final sort  for  adjusted  up  time.   If  a
+       system  is  voluntarily  taken  down  by  Operations, a scheduled
+       downtime code which best reflects the responsible group should be
+       entered instead of entering a lost time code.
+
+            If, however, the system goes down involuntarily (by itself),
+       a  lost  time  code  should  be  entered  to  reflect  the  crash
+       regardless of whether its during scheduled downtime or uptime.
+
+            A 24 HOUR CRASH reflects any lost time code entered which is
+       preceeded  by  an uptime code.  Crashes occurring when the system
+       is timesharing during scheduled downtime hours will be  reflected
+       in  the 24 HOUR CRASH totals but not in the SCHEDULED or ADJUSTED
+       crash totals.
+
+            A PRIME TIME CRASH reflects a lost time code  entered  which
+       occurs  during  prime  time  and  is  preceeded by an uptime code
+       occurring during prime time.
+
+            A SCHEDULED TIME CRASH is a lost  time  code  entered  which
+       occurs during scheduled uptime and is preceeded by an uptime code
+       occurring during scheduled uptime.
+                                                                 Page 12
+UPDATER DESCRIPTION
+
+
+            ADJUSTED CRASHES is equal to SCHEDULED  TIME  CRASHES  minus
+       any  lost  time  code entries where the adjustment flag is set to
+       'Y';  for example, power failures.  It is the adjusted uptime and
+       adjusted crash totals that are used for incentive calculations.
+
+
+                                  ADD
+
+            The ADD command allows the normal  daily  entry  of  machine
+       code data and stop times.
+
+            The first prompt is for 'DATE OF INPUT'.  This date must  be
+       in  the  format  MM-DD-YY  and  any  other  date  format  will be
+       rejected.  If more than one day's data needs to be entered,  they
+       must be updated one at a time but in any chronological order.
+
+            Next, the program asks for system  number  (eg.   38).   For
+       situations where a system number exists in the data base for more
+       than one system, MUR will  prepare  to  receive  entries  on  the
+       appropriate system having the specified system number on the date
+       entered above.
+
+            If all data for the system has  already  been  entered,  the
+       program  will  output  the  message '24 HOURS ALREADY ENTERED FOR
+       THIS DATE FOR THIS SYSTEM'.  If there are excessive time  records
+       in  the  data  base,  the message 'MORE THAN 24 HOURS ENTERED FOR
+       THIS SYSTEM FOR THIS DAY;  USE THE CHANGE  COMMAND  TO  ELIMINATE
+       OVERLAPPING RECORDS' will be output.  Situations where the system
+       does not  have  records  covering  a  full  24  hour  period  are
+       described later.
+
+                    ENTERING AN ENTIRE DAY'S RECORDS
+
+            If neither of the above messages is output, the program will
+       verify  that  the  hardware id and schedule are appropriate.  The
+       question 'IS HW.ID L?' (where L is a letter) is  asked.   If  you
+       answer  ''Yes'',  then  MUR checks to see if any other systems is
+       assigned that hardware.  If so, the program will ask if you  wish
+       to continue with the command.  A situation where a ''Yes'' answer
+       is appropriate is where a system  had  its  hardware  id  changed
+       mid-day  when,  for  example, a system was relocated to different
+       hardware to insulate the customer from a hardware problem on  the
+       origiial system's hardware.
+
+            If a 'No' answer is typed in because the  id  is  incorrect,
+       you  are  asked to enter the correct id.  Here again, the program
+       checks if  any  other  systems  were  assigned  that  id  on  the
+       specified  date and gives you the option of continuing if so.  If
+       you have to type in a hardware id, the  program  asks  'MAKE  NEW
+       HARDWARE PERMANENT?'.  A 'No' answer will instruct the program to
+       use the id you entered only for the date specified above.
+
+            The schedule for the system is now checked.   Normally,  the
+       standard  schedule of uptime will apply for the system and should
+       already be in the data base.  However, if there is no schedule in
+       the  data  base, the program will output a message to this effect
+                                                                 Page 13
+UPDATER DESCRIPTION
+
+
+       and ask if you wish to continue.  A ''Yes'' should  be  typed  if
+       you  are  prepared  to  input  the  schedule that applies on that
+       system for that date.
+
+            'SPECIAL SCHEDULE?' is the next  question.   If  you  answer
+       ''Yes''  the  program  will  prompt  'INPUT SCHED.UP, SCHED.DOWN'
+       allowing you to enter it.  Time entries should  be  in  the  form
+       'HHMM,HHMM'.   The  prompt will repeat if there are more schedule
+       entries for that 24 hour period.
+
+            MUR checks for various time range  errors  and  ignores  any
+       entry  that  would  conflict  with  a  previous  time entry;  for
+       example, if a split schedule were entered as follows:
+               'INPUT SCHED.UP,SCHED.DOWN' 0000,0300
+               'INPUT SCHED.UP,SCHED.DOWN' 0200,2400
+       Since the  last  sched.up  entry  (0200)  was  before  the  prior
+       sched.down  entry  (0300),  a  conflict  would  exist.   In  this
+       example, MUR would ignore the last pair of times.
+
+            Once the entire 24  hour  schedule  has  been  entered,  the
+       program  will ask 'IS THE SPECIAL SCHEDULE CORRECT?' An answer of
+       'No' will purge all special schedule entries  and  allow  you  to
+       start  over.   Double  check  all  entries,  since  an inaccurate
+       schedule will distort all subsequent data input.  If the schedule
+       is  correct,  you  will be asked if you want to make the schedule
+       permanent.  If so, the  special  schedule  you  just  input  will
+       become  the  standard  schedule for the system once you've closed
+       the relation by quitting the program.
+
+
+
+                                     NOTE
+
+           If there was no previous schedule in  the  data  base,  a
+           schedule  can  be input using this procedure;  Answer 'Y'
+           to  the  the  question  'SPECIAL  SCHEDULE',  enter   the
+           schedule  and  then , if appropriate, make it a permanent
+           schedule.
+
+
+            At this point the MUR ADD command will  prompt  for  machine
+       code,  stop  time  data by outputting an asterisk ('*').  A start
+       time of 0000 is assumed.  The  program  will  accept  valid  code
+       entries (described in the the INTRO section of this document) and
+       reject any invalid codes  or  time  conflicts.   The  prompt  for
+       code,stop  time  pair  will  repeat  until a stop time of 2400 is
+       encountered.
+
+            A new capability is available with regard  to  machine  code
+       entries:   if  a 100 is added to the code, MUR will interpret the
+       code to apply on a system under field test.  A 200 added  to  the
+       code  indicates the system was moved to a different hardware.  If
+       a 300 is added to the code, then  both  above  conditions  apply;
+       for  example, if you enter code 310, the data is accepted to mean
+       the specified system was timesharing (code 10), is on a different
+       hardware  from  the  id  indicated earlier and is running a field
+                                                                 Page 14
+UPDATER DESCRIPTION
+
+
+       test (add 300 to code).  When either 200 or 300 is added  to  the
+       machine  code,  the program will ask for the new hardware id , if
+       any, and issue a warning if the id entered is assigned to another
+       system.   Next,  the program will ask if you wish to continue and
+       if you wish to make the new hardware id permanent for the current
+       system.
+
+            When all codes for the specified day have been entered,  the
+       program returns to the '>' prompt, and awaits any further updater
+       commands.
+                                                                 Page 15
+UPDATER DESCRIPTION
+
+
+           ADDING RECORDS FOR A DATE WITH INCOMPLETE RECORDS
+
+            The ADD command will allow completing code,stop  time  input
+       for  days  with  incomplete  entries  for  the  24  hour  period.
+       Whenever you specify a date of input and incomplete records exist
+       already  for  that  date,  MUR  will be output any code,stop time
+       records it already has up to the first time gap  for  that  date.
+       These  records  already  in  the  data base will be surrounded by
+       square brackets (eg.  '[10,1500]').  At that  point  the  program
+       will  prompt  with  '*',  so  you  can  fill  the time gap with a
+       code,stop time pair.
+
+
+                                     NOTE
+
+           The exception to this is a situation where the  time  gap
+           exists for the beginning of the day (0000).  In this case
+           you will see  only  the  '*'  prompt.   Already  existing
+           records will be output after you have filled the gap with
+           a code,stop time for the beginning of the day.
+
+
+            As records are input to complete the  24  hour  period,  the
+       next  record  already  in  the data base will be output up to the
+       next gap , if any,, and the program will prompt with '*' for  the
+       next  entry  to be input.  Entering a later stop time at any pont
+       in this command will change the data base entry  to  fill  in  as
+       much  of  the  gap  as  possible.  This cycle of listing existing
+       entries up to a gap and letting you enter new data to fill in the
+       gap will continue until the day's entries are complete.
+
+            When MUR accepts the data, it may automatically  consolidate
+       entries  that  use the same code and are chronologically adjacent
+       to each other;  for example, the message 'STOP  TIME  CHANGED  TO
+       1500'  would  indicate  that  your  entry  of  (code) 10,1300 was
+       consolidated with the entry it already had of 10,1500.
+
+            If a stop time of 2400 is entered, the program will fill all
+       existing  time gaps for the date specified with the code entered.
+       In this case, no further existing entries will  type  out.   When
+       all  records  for  the  day  are complete, the program returns to
+       command mode and the prompter '>'.
+
+
+                              CHG (OBJECT)
+
+            The CHG command allows the user to change specific  relation
+       records  for  a specified system, date and time range.  An object
+       must follow the change command.  This object indicates what it is
+       you  wish  to  change  (that  is,  COD  - code record, SIT - site
+       record, SF - field test flag, HW - hardware id, PF -  prime  time
+       flag, ST - schedule flag or ST - a stop time flag).
+
+            After you type the desired command, the program prompts  for
+       the 'DATE YOU WISH TO CHANGE' and 'SYSTEM NUMBER'.  It checks the
+       input you supply to verify that the system number is valid and at
+                                                                 Page 16
+UPDATER DESCRIPTION
+
+
+       least  one time record already exists for the specified date.  If
+       any gaps or overlaps exist, they will be reported at this time.
+
+            When MUR has determined that these inputs are  relevant  for
+       the  change  command, it asks for 'START,STOP TIME'.  This should
+       be entered in the form 'HHMM,HHMM, and should  reflect  the  time
+       frame  for  which you want a record changed.  This entry will not
+       invalidate any previous entry, and it does not have to correspond
+       to  previous  records  since  the program will automatically make
+       whatever adjustments are necessary.  For  the  'CHG  ST'  command
+       only,  the start time specified must exist in a record.  The only
+       general requirements are that the stop time must be greater  than
+       the  stop time, and neither the start time nor the stop time must
+       be greater than 2400.
+
+            What the next prompt will  be  depends  on  the  object  you
+       entered when you issued the CHG (OBJECT) command.  If you entered
+       the CHG ST command, then the stop time  you  entered  above  will
+       replace the previous stop time entry, but the previous start time
+       entry will remain the same.
+
+
+                                     NOTE
+
+           CHG ST can only be used to make the stop time  less  than
+           what  was  previously  entered.  Otherwise, time overlaps
+           would be created.  To replace the previous stop time with
+           a  later  one,  the  ADD  command  must  be used (see the
+           description above on 'Adding Records  For  An  Incomplete
+           Date).   For all other forms of the CHG command, both the
+           start and stop times can be altered.
+
+
+            If the command entered was to change the code  or  site  for
+       the  time  entered,  the  program will ask for 'NEW CODE' or 'NEW
+       SITE'.  These entries must be valid within the MUR  schema.   For
+       changing the hardware id, the id you enter will be switched as of
+       the time frame involved in the start,stop time range.
+
+            For commands to change a flag (field test, sched.  or  prime
+       time), the only two valid answers are ''Yes'' or 'No'.  A ''Yes''
+       answer is interpreted to mean that the specified flag  should  be
+       turned  on.   If that flag is already on, the 'Yes' answer has no
+       effect on the data.  The 'No' answer turns off  the  flag  if  it
+       isn't already off.
+
+            At this point, the program will ask  if  you  have  'ANOTHER
+       CHANGE  FOR  THIS  START,STOP  TIME'.  If you do type ''Yes'' and
+       then enter the CHG (OBJECT) command that is needed for  the  next
+       change.
+
+            Once there are no further changes for the time frame of  the
+       start,stop  time you entered above, the program will ask if there
+       are any other changes for the date specified.  A  ''Yes''  answer
+       will  cause  the  program  to  branch  back  to  the  prompt  for
+       'START,STOP TIME'.  You can continue in this fashion until  there
+                                                                 Page 17
+UPDATER DESCRIPTION
+
+
+       are  no further changes necessary for the system and date you are
+       changing.
+
+            When the CHG procedure has been completed, the program  will
+       indicate  if  any  gaps  or  overlaps  still  exist.   If  so, no
+       consolidation or combination of entries will take place  for  the
+       records involved in the change.
+
+
+                                 DELETE
+
+            This command is used to delete all records for  a  specified
+       system  and  date.   The  program will ask first for the 'DATE TO
+       DELETE' and then for 'SYSTEM NUMBER'.  This command does not take
+       effect  on  the  data  base  unless  the  program is able to quit
+       properly (as indicated by a return to the MUR prompt '>') thereby
+       closing the relations involved.
+
+
+                             DELETE RECORD
+
+            This MUR  UPDATER  command  is  primarily  used  to  correct
+       overlapping  time  records, and it assumes you have used the LIST
+       SW command (described  below)  to  determine  what  time  records
+       already  exist in the data base.  DELETE RECORD asks for 'DATE TO
+       DELETE' and 'SYSTEM NUMBER', but once valid entries are typed in,
+       the  program  will  prompt 'START TIME:'.  Entering a time in the
+       form 'HHMM' will instruct MUR to delete the time record beginning
+       at  that  start  time  up to the next start time for the date you
+       specified.
+
+            The message 'ALL RECORDS FOR THAT SYSTEM FOR THAT  DATE  ARE
+       DELETED'  is  an  indication  that MUR was unable to execute this
+       command because all records had already been deleted.   'NO  SUCH
+       RECORD'  means  that  there was no time record for the start date
+       you entered.  If the data was never entered in the  first  place,
+       the  message  'NO  RECORDS FOR THAT SYSTEM FOR THAT DATE' will be
+       output.
+
+
+                                LIST HW
+
+            An entire day's records for a specified hardware id will  be
+       output by using this command.  You must supply the 'DATE TO LIST'
+       and the 'HARDWARE ID'.  The program will ask that you specify the
+       class  you  wish  the  id to refer to.  If more than one software
+       system used the specified hardware on the date you entered,  data
+       from  both systems will be output together.  If there are no time
+       records in the data base, only the list headings will be output.
+
+
+                                LIST SW
+
+            This is much like LIST HW except that it focuses on software
+       system  number.   You  must  supply  a valid system number or the
+       program will merely return back to MUR command level.
+                                                                 Page 18
+UPDATER DESCRIPTION
+
+
+                                CHECK SW
+
+            Before  any  CHECK  command  will  execute  in  the  UPDATER
+       program,  you  must first quit and then reissue the 'RUN UPDATER'
+       command.  This enables MAGNUM to move any records that have  just
+       been entered into a permanent storage file.  The CHECK SW command
+       first asks for 'START,end  DATES'  to  be  entered  in  the  form
+       MM-DD-YY,mm-dd-yy.  This entry provides the range of time records
+       that will be checked for gaps and/or overlapping records.
+
+            Next,, you will be  asked  to  enter  the  'SYSTEM  NUMBER'.
+       Normally, the correct response is a valid software system number,
+       but it is also possible to enter a zero (0) here.  If a  zero  is
+       input  in reponse to the prompt, the program assumes that a check
+       of the data for multiple systems is desired.  To enable this, you
+       would  then  answer  the prompts 'SITE' and 'CLASS'.  The answers
+       may either be a valid site and class  abbreviation  or  the  word
+       'ALL'.
+
+            Depending on your input, the program  will  check  for  time
+       record  problems  for  a  specified  system,  an  entire class of
+       systems for a site, all systems for a site, or all systems in all
+       sites.
+
+            The amount of time this takes to execute will vary depending
+       on  the amount of data you wish checked.  If any time record gaps
+       are encountered in the data they will be  reported.   A  gap  can
+       usually  be corrected using the ADD command.  A time record which
+       overlaps (ie.  first time record is greater than the second time)
+       can  usually  be corrected using the CHG command (although it may
+       also be necessary to use DELETE RECORD).  If  there  is  no  time
+       entered  for  a certain date, the whole day will be reported as a
+       gap.  If  several  days'  data  is  missing,  this  command  will
+       indicate the date range where gaps exist in the data base.
+
+
+                                CHECK HW
+
+            This command performs much the same checking of time records
+       as  CHECK  SW  described  above,  but  it  runs slower due to the
+       software system number oriented  organization  of  the  time-data
+       relations.   The first paragraph of the CHECK SW description also
+       applies to this command.
+
+            CHECK HW prompts for  'HARDWARE.ID',  then  'CLASS'.   If  a
+       carriage  return only is entered for the hardware id, the program
+       will also prompt for 'SITE'.  Responses must be  valid  site  and
+       class  abbreviations.   If  you enter the word 'ALL' there may be
+       conflicts resulting, but any output should be listed  separately.
+       Once  SITE  and CLASS have been input, the program will check all
+       hardware id's in the system relation pertaining to the  specified
+       site  and  class.   Output  of  any  gaps or overlaps in the time
+       records checked will begin with the heading '(HW.ID), (CLASS)  AS
+       OF (DATE)'.  
+                                     NOTE
+
+           You can use the date from this heading as  input  to  the
+           LIST  HW  command  (described  above) to get the software
+           system number having the time record error.
+
+
+            Overlaps reported by this  command  may  be  the  result  of
+       multiple  software  systems  having  been  entered  on  the  same
+       hardware for the same date and time.
+
+            Upon completion, the CHECK HW command returns to MUR command
+       level.
+                                                                 Page 20
+REPORT DESCRIPTION
+
+
+                       RUNNING REPORT PROCEDURES
+                       ------- ------ ----------
+
+            MUR data can be selected and sorted in a variety of ways for
+       reports.   Each way involves a separate procedure which is called
+       from MAGNUM command level in the form 'RUN (REPORT.NAME)'.  For a
+       description  of what each report entails, you are referred to the
+       COMMAND SUMMARY section of this document.
+
+            In general, all reports are designed to require only one TTY
+       page  for  output.   The output file specified in any report must
+       conform to standard TYMCOM-X naming conventions.   This  involves
+       up  to six characters of filename followed by an optional maximum
+       of three characters of extension.  In addition,  MAGNUM  requires
+       that  the first character of the filename must be an alphabetical
+       character.   The  desired  output  file  will  be  written   into
+       directory  (MURRPT).   The  program  will  output  an appropriate
+       message to verify the name  of  the  file  containing  the  given
+       report.   You  cannot specify another directory for report output
+       in MUR, but later, the files in (MURRPT) may be renamed or copied
+       using XEXEC commands if that is desired.
+
+
+                                     NOTE
+
+           MAGNUM has an  additional  noteworthy  feature  regarding
+           filename input.  If you type '-ANY' or '-A' following the
+           last character of the filename input, MAGNUM  will  write
+           the  report  to  the  filenamed  regardless of whether it
+           would overwrite an existing file  or  write  onto  a  new
+           file.  Use the addition of the string '-NEW' or '-N', and
+           the program will be output only if the resulting filename
+           would  be  a  new  file.   '-EXIST' or '-E' following the
+           filename or extension will be output  only  if  the  name
+           used already exists.  If none of these additional options
+           are input, the program will report whether  the  filename
+           is   new   or   already   existing,  and  wait  for  your
+           confirmation before writing the file.
+
+
+            It is also possible to output the report to the terminal  by
+       answering the prompt for 'OUTPUT FILE' with 'TER'.  In this case,
+       the program will instruct you to position the paper at the top of
+       the page and then type return (car ret).  If this is desired, you
+       should set the terminal characteristic 'TTY WIDTH 80' in EXEC  to
+       avoid right margin wrap-around problems.
+
+            For all report procedures,  only  entries  within  scheduled
+       uptime(and  excluding  any  adjusted  codes)  are  considered for
+       calculations pertaining to incentive related figures.  Therefore,
+       any crashes during scheduled downtime will not be counted against
+       uptime results.  No report will be  output  for  any  time  frame
+       unless MUR records are available for that time frame.
+                                                                 Page 21
+REPORT DESCRIPTION
+
+
+                             CRASH.SUMMARY
+
+            This report command allows the user to generate  an  updated
+       tally  for  all  systems  valid for the time frame of the desired
+       report in the data base.  If desired, it can be run  on  a  daily
+       basis.   The program prompts 'THIS MONTH (T), LAST MONTH (L) OR A
+       DATE RANGE (R)'.  Entering a T will cause the program to generate
+       a  report  of  crashes  entered from the beginning of the current
+       month up to today's date.  The L response will organize  a  crash
+       report  covering  the entire previous month.  If you input R, the
+       prompt 'START, END DATES' will be output to allow you to type  in
+       the date range for which a crash summary is desired.  You will be
+       asked to type in a site and class specification and an  input  of
+       'ALL' may be used for either or both.
+
+            At this point, the program will prompt  for  'OUTPUT  FILE',
+       and  once  it  is  entered, will begin to generate the report.  A
+       heading at the top of the report will  indicate  the  time  frame
+       covered.
+
+
+                                 WEEKLY
+
+            The weekly procedure first prompts  for  'DATE  OF  REPORT'.
+       This  should  reflect  the  first date for which data is desired.
+       The first date need not be a Monday.   Next,  the  query  'WEEKS'
+       asks  that you input the number of weeks you wish included in the
+       report.
+
+            Once this has been input, the  prompt  for  'SYSTEM  NUMBER'
+       will  type  out.   Valid  replies  are either a specific software
+       system number, or zero (0) if you wish the report  to  deal  with
+       multiple systems.  If zero is input, you will be asked to type in
+       a valid site and class abbreviation.  The word 'ALL' may also  be
+       used if you wish a report for all sites and/or all classes.
+
+            The final input to this procedure is for 'OUTPUT  FILE'.   A
+       discussion of valid responses to this prompt can be found in this
+       document in the paragraphs above CRASH SUMMARY.
+
+
+                               HW.WEEKLY
+
+            This procedure prompts for 'DATE  OF  REPORT',  'WEEKS'  and
+       'HARDWARE  ID',  as  well as 'SITE' and 'CLASS'.  The hardware id
+       must be valid within the MUR data base.  The input for  site  and
+       class  are  also  crucial;  for example, a specified hardware has
+       moved from one site to another---if a specific site  abbreviation
+       is  entered,  the  hardware in question will be reported only for
+       the period before or after it's site location was changed in  the
+       data  base.   On  the other hand, if the answer 'ALL' is used for
+       SITE, the hardware in this  example  will  be  reported  for  the
+       entire  time  frame  specified despite the fact that it had moved
+       from one site to another.
+                                                                 Page 22
+REPORT DESCRIPTION
+
+
+            If 'ALL' is used for class, output for more than  one  class
+       of  computer may be output on the same report.  In this case, the
+       output would be separated by  class  for  each  system,  if  any,
+       having the same specified hardware id.
+
+
+
+                              SITE.WEEKLY
+
+            This report organizes the data by site, and  within-site  by
+       class.   Prompts  from the program are 'DATE OF REPORT', 'WEEKS',
+       'SITE', 'CLASS' and 'OUTPUT FILE'.  Either valid abbreviations or
+       the word 'ALL' can be used for the site and class prompts.
+
+
+                              CLASS.WEEKLY
+
+            Most of the prompts for this procedure are identical to  the
+       SITE  WEEKLY  description.  There is, however, no prompt for SITE
+       since the report generated will display an entire class  (or  all
+       classes) regardless of site.
+                                                                 Page 23
+REPORT DESCRIPTION
+
+
+                                MONTHLY
+
+            This  report  focuses  on  a  specified  six  month   period
+       consisting  of  monthly totals.  The first prompt will be 'ENDING
+       DATE OF REPORT AS MMM YY'.  An example of a valid MMM YY  is  JUL
+       77 --- that is, how many six month time frames should be included
+       in the report.
+
+            The  next  query,  'SYSTEM  NUMBER',  will  accept  a  valid
+       software  system  number or zero (0).  Entering zero here assumes
+       you wish a monthly report dealing with multiple systems.  So that
+       you  can indicate which systems you are referring to, the program
+       prompts for 'SITE' and 'CLASS'.  Correct responses for these  two
+       queries  can  be  either  existing  abbreviations (eg.  'CUP' and
+       '370'), or the word 'ALL'.  The ALL response indicates  that  you
+       want  all  sites and/or classes reported together.  'OUTPUT FILE'
+       is the last prompt to be answered before processing begins.
+
+            MUR now searches the data base  for  relevant  entries  with
+       which  to  generate  the report.  If any systems lack records for
+       the time frame you indicated, the program skips the systems.
+
+            Machine  code  totals  are  organized  into  group   totals.
+       Following  individual  code  totals  and  group totals, scheduled
+       timesharing and availability figures are output.  After this, the
+       output reports a summary of scheduled-time crashes for the period
+       and monthly crash totals.
+
+
+                               HW.MONTHLY
+
+            Reports created  by  this  procedure  resemble  the  MONTHLY
+       output  except  that  there  is only a single hardware system per
+       report.  Prompts are also similar,  but  you  will  be  asked  to
+       supply site and class for the hardware id you enter.
+
+            Answer the prompt 'SITE' with 'ALL' if the computer hardware
+       specified was moved from one site to another during the six month
+       periods you wish covered by this report.
+
+            If you answer 'ALL' to  the  'CLASS'  prompt,  records  from
+       different  computers  with  the same hardware id, if any, will be
+       reported separately.
+
+
+                              SITE.MONTHLY
+
+            All applicable systems' data for a particular or  all  sites
+       are  merged  and  reported  by  this procedure.  Queries include:
+       'ENDING DATE OF REPORT AS MMM YY', 'PERIODS', 'SITE' and 'CLASS'.
+       The  answer  'ALL'  can  be used for site and/or class.  You will
+       also be  prompted  for  'OUTPUT  FILE',  and  should  input  file
+       specifications as described above.
+
+
+                             CLASS.MONTHLY
+                                                                 Page 24
+REPORT DESCRIPTION
+
+
+            CLASS.MONTHLY resembles the  SITE.MONTHLY  reports  in  most
+       respects.   A  notable  difference is the absence of a prompt for
+       SITE, since data within the specified six month periods  will  be
+       reported by class without regard to site.
+                                                                 Page 25
+SAMPLE RUNS
+
+
+       ((SAMPLE RUNS))
+
+
+       '-'MAGNUM MUR                           ;ENTER MAGNUM W/ MUR.
+       '12-JUL-1977  15:25:2:7                 ;SESSION START TIME
+
+                              SAMPLE UPDATER RUNS
+                               ------ ------ ----
+
+
+       ':' RUN UPDATER                          ;THIS PROGRAM FOR DAILY
+       'LOADING UPDATER'                        ;DATA ENTRY
+       'EXECUTION'
+
+               (FIRST, WE COULD CHECK TO SEE WHICH DATES OR DATE
+                RANGES HAVE NOT YET BEEN ENTERED INTO MUR.)
+
+       '>'CHECK SW
+
+       'START,END DATES:' 7-01-77,07-06-77
+       'SYSTEM NUMBER:' 39
+
+        39  1 Jul 77 0000 TO  6 Jul 77 2400
+
+               (NOW WE KNOW THE DATE RANGE CONTAINING NO DATA OR TIME
+                GAPS, AND CAN PROCEED TO ENTER LOGBOOK INFORMATION)
+
+       '>'ADD
+
+       'DATE OF INPUT:' 07-05-77
+       'SYSTEM NUMBER:' 39
+       'IS HW.ID YY>?' Y
+       'NORMAL SCHEDULE:'                      ;NO NEW HARDWARE ID
+       0000-2400                               ;OR SCHEDULE NORMALLY.
+       'SPECIAL SCHEDULE?' N
+       'ENTER CODE,STOP TIME:'                 ;PROGRAM WILL ACCEPT
+       * 10,0007                               ;ONLY ENTRIES TO COMPLETE
+       * 72,0633                               ;A 24 HOUR PERIOD.
+       * 10,2400
+
+               (NEXT USE THE LIST COMMAND TO OUTPUT THE MUR
+                RECORDS RESULTING FROM THE ADD. VERIFY THAT YOUR
+                ENTRIES WERE CORRECT.)
+
+       '>' LIST SW
+
+       'DATE TO LIST:' 07-05-77
+       ISYSTEM NUMBER:' 39
+
+       SIT CLS HW COD  STR STOP S P F
+       CUP PDP YY  10 0000 0007 Y N N          ;NOTE HOW YOUR INPUTS
+       CUP PDP YY  72 0007 0500 Y N N          ;ARE MANIPULATED SO THEY
+       CUP PDP YY  72 0500 0633 Y Y N          ;TAKE SCHED. AND PRIME
+       CUP PDP YY  10 0633 1800 Y Y N          ;TIME SCHEDULE INTO
+       CUP PDP YY  10 1800 2400 Y N N          ;ACCOUNT.
+                                                                         Page 26
+SAMPLE RUNS
+
+
+       '>' ADD
+
+       'DATE OF INPUT:' 07-06-77
+       'SYSTEM NUMBER:' 39
+       'IS HW.ID YY>?' Y
+       'NORMAL SCHEDULE:'
+       0000-2400
+       'SPECIAL SCHEDULE?' Y
+       'INPUT SCHED.UP,SCHED.DN:' 0000,2300
+       'MORE SCHEDULE INPUT?' N
+       'IS SPECIAL SCHEDULE CORRECT?' Y
+       'MAKE SPECIAL SCHEDULE PERMANENT?' N
+       'ENTER CODE,STOP TIME:'
+       * 72,0604
+       * 21                    ;WHEN RETURN WAS HIT BY MISTAKE MUR
+       'STOP.TIME:' 0609       ;PROMPTS FOR REST OF DATA ENTRY.
+       * 10,1330
+       * 32,1423               ;ADD 100 FOR FIELD TEST, 200 FOR A 
+       *10,1518                ;HW.ID CHANGE, 300 FOR FIELD TEST 
+       * 10,1518               ;AND HW.ID CHANGE DURING SPECIFIED CODE.
+       * 10,2400
+
+               (NOW CHECK THE RESULTS)
+
+       '>' LIST SW
+
+       'DATE TO LIST:' 07-06-77
+       'SYSTEM NUMBER:' 39
+
+       SIT CLS HW COD  STR STOP S P F
+       CUP PDP YY  72 0000 0500 Y N N
+       CUP PDP YY  72 0500 0604 Y Y N
+       CUP PDP YY  21 0604 0609 Y Y N
+       CUP PDP YY  10 0609 1330 Y Y N
+       CUP PDP YY  32 1330 1423 Y Y N
+       CUP PDP YY  10 1423 1800 Y Y N
+       CUP PDP YY  10 1800 2300 Y N N
+       CUP PDP YY  10 2300 2400 N N N
+
+               (IN THE NEXT SAMPLE WE ASSUME THAT CODE ENTRY 32,1935 NEEDS
+                TO BE ADDED INTO THE RECORDS FOR C39 ON 7-6.)
+
+       '>' CHG COD
+
+       'DATE TO CHANGE:' 07-06-77
+       'SYSTEM NUMBER:' 39
+
+       'START, STOP TIME:' 1518,1935   ;THE LAST STOP TIME FOR THAT DAY
+       'NEW CODE:' 32                  ;IS USED HERE TO INDICATE WHERE
+       'ANOTHER CHANGE FOR THIS START,STOP TIME?' N    ;NEW CODE BEGINS.
+
+       'ANY MORE CHANGES FOR THIS DATE FOR THIS SYSTEM?' N
+                                                                         Page 27
+SAMPLE RUNS
+
+
+       '>' LIST SW                     ;CHECK RESULTS OF CHG COD.
+
+       'DATE TO LIST:' 07-06-77
+       'SYSTEM NUMBER:' 39
+
+       SIT CLS HW COD  STR STOP S P F
+       CUP PDP YY  72 0000 0500 Y N N
+       CUP PDP YY  72 0500 0604 Y Y N
+       CUP PDP YY  21 0604 0609 Y Y N
+       CUP PDP YY  10 0609 1330 Y Y N
+       CUP PDP YY  32 1330 1423 Y Y N
+       CUP PDP YY  10 1423 1518 Y Y N
+       CUP PDP YY  32 1518 1800 Y Y N  ;CHG COD MERGED INTO DATA AND
+       CUP PDP YY  32 1800 1935 Y N N  ;ANY ADJUSTMENTS NECESSARY
+       CUP PDP YY  10 1935 2300 Y N N  ;ARE MADE BY MUR.
+       CUP PDP YY  10 2300 2400 N N N
+
+               (THE FOLLOWING COMMAND DELETES AN ENTIRE DAY'S
+                ENTRIES.)
+
+       '>' DELETE
+
+       'DATE TO DELETE:' 07-05-77
+       'SYSTEM NUMBER:' 33
+       '>'                             ;RETURN TO PROG. WHEN DELETE 
+                                       ;HAS COMPLETED.
+
+               (THIS SAMPLE DELETES ONLY A SINGLE RECORD; BEWARE
+                OF DOING THIS BECAUSE IT CREATES GAPS IN THE DATA
+                WHICH MUST BE FILLED.)
+
+       '>' DELETE RECORD
+
+       'DATE TO DELETE:' 07-05-77
+       'SYSTEM NUMBER:' 39
+       'START TIME:' 0007
+
+       '>' LIST SW
+
+       'DATE TO LIST:' 07-05-77
+       'SYSTEM NUMBER:' 39
+
+       SIT CLS HW COD  STR STOP S P F
+       CUP PDP YY  10 0000 0007 Y N N  ;A TIME GAP NOW EXISTS
+       CUP PDP YY  72 0500 0633 Y Y N  ;FROM 0007 TO 0500.
+       CUP PDP YY  10 0633 1800 Y Y N
+       CUP PDP YY  10 1800 2400 Y N N
+
+       '>' ADD                 ;USE THIS COMMAND TO FILL THE GAP.
+
+       'DATE OF INPUT:' 07-05-77
+       'SYSTEM NUMBER:' 39
+       'IS HW.ID YY>?' Y
+       'NORMAL SCHEDULE:'
+       '0000-2400'
+       'SPECIAL SCHEDULE?' N
+                                                                         Page 28
+SAMPLE RUNS
+
+
+       'ENTER CODE,STOP TIME:          ;THE PROGRAM WILL BE OUTPUT
+       * [10,0007]'                    ;ENTRIES UP TO THE GAP.
+       '*' 72,0500                     ;YOUR ENTRY FILLS THE GAP.
+       '* [72,0633]                    ;THE OTHER ENTRIES OUTPUT FOR
+       * [10,1800]                     ;THE REMAINDER OF THE 24 HRS.
+       * [10,2400]'
+
+       '>' LIST SW                     ;NOW CHECK DAY'S ENTRIES AGAIN.
+
+       'DATE TO LIST:' 07-05-77
+       'SYSTEM NUMBER:' 39
+
+       SIT CLS HW COD  STR STOP S P F
+       CUP PDP YY  10 0000 0007 Y N N
+       CUP PDP YY  72 0007 0500 Y N N  ;NOTE THE GAP NO LONGER EXISTS NOW.
+       CUP PDP YY  72 0500 0633 Y Y N  ;AT THIS POINT PRIME TIME STARTS.
+       CUP PDP YY  10 0633 1800 Y Y N
+       CUP PDP YY  10 1800 2400 Y N N
+
+       '>' QUIT                        ;TO EXIT THE PROGRAM
+                                                                         Page 29
+SAMPLE RUNS
+
+
+                               SAMPLE REPORT RUNS
+                               ------ ------ ----
+
+-TTY WIDTH 80           ;THIS EXEC COMMAND HELPS PREVENT TEXT
+                        ;'WRAPAROUND' FOR OUTPUT TO TERMINAL.
+
+-MAGNUM MUR
+12-JUL-1977  15:48:24
+
+':'RUN CRASH SUMMARY    ;EACH REPORT IS A SEPARATE MUR PROGRAM.
+'?' 214                 ;OOPS, LEFT OUT THE '.' IN CRASH.SUMMARY.
+
+':'RUN CRASH.SUMMARY
+LOADING CRASH.SUMMARY
+EXECUTION
+
+'THIS MONTH (T),LAST MONTH (L),OR A DATE RANGE (R):' R
+'START,END DATES:' 06-01-77,06-10-77
+'SITE:' ALL
+'CLASS:' ALL
+'OUTPUT FILE:' TER
+'Position paper at top of page and type RETURN ...' (CR)
+                                                                         Page 30
+SAMPLE RUNS
+
+
+                   CRASH SUMMARY FOR Jun  1,1977 TO Jun 10,1977
+
+940 RAD MF  I/O DSK S/C THW SSW TSW PER PWR ENV UNK              TOT AVAIL DATE
+  1   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+  2   0   1   0   1   0   0   0   0   0   0   0   0                2  99.1 0610
+  3   0   0   0   0   1   0   0   0   0   0   0   0                1  98.5 0610
+  4   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+  5   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+  7   1   0   0   0   2   0   0   0   0   0   0   0                3  99.6 0610
+  9   4   0   0   0   0   0   0   0   0   0   0   0                4  99.5 0610
+ 10   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 11   0   1   0   0   0   0   0   0   0   0   0   0                1  99.9 0610
+ 13   2   0   0   1   0   0   0   0   0   0   0   0                3  98.5 0610
+ 16   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 18   1   0   0   0   2   0   0   0   0   0   0   0                3  98.8 0610
+ 19   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 20   0   0   0   0   0   0   1   0   0   0   0   0                1  99.7 0610
+CUP   8   2   0   2   5   0   1   0   0   0   0   0               18  99.6  1.3
+
+ 24   0   1   0   0   0   0   0   0   0   0   0   0                1  99.9 0610
+ 26   0   0   0   0   1   0   0   0   0   0   0   0                1  99.9 0610
+ 27   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+VF    0   1   0   0   1   0   0   0   0   0   0   0                2 100.0   .7
+
+  6   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+  8   0   1   0   0   0   0   0   0   0   0   0   0                1  99.9 0610
+ 12   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 17   0   1   0   0   0   0   0   0   0   0   0   0                1 100.0 0610
+ 23   0   0   0   0   0   0   1   0   0   0   0   0                1  99.5 0610
+HOU   0   2   0   0   0   0   1   0   0   0   0   0                3  99.9   .6
+
+TOT   8   5   0   2   6   0   2   0   0   0   0   0               23  99.7  1.0
+
+PDP MAG MF  I/O AMP MEM THW SSW TSW PER PWR ENV UNK              TOT AVAIL DATE
+ 33   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 34   0   2   0   0   0   0   0   0   0   0   0   0                2  99.2 0610
+ 35   0   0   0   0   0   0   0   0   0   0   0   0                0  99.7 0610
+ 36   0   0   0   0   0   0   0   0   0   0   0   0                0 100.0 0610
+ 38   0   0   0   0   0   2   0   0   0   0   0   0                2  97.2 0610
+CUP   0   2   0   0   0   2   0   0   0   0   0   0                4  99.2   .8
+
+ 31   0   1   0   0   0   0   0   0   0   0   0   0                1  99.8 0610
+ 32   0   0   0   0   0   0   0   0   0   1   0   0                1  99.7 0610
+HOU   0   1   0   0   0   0   0   0   0   1   0   0                2  99.7  1.0
+
+TOT   0   3   0   0   0   2   0   0   0   1   0   0                6  99.4   .9
+
+370 CON IBM DRM MF  AMP ITL INT THW PAR SSW TSW PER PWR ENV UNK  TOT AVAIL DATE
+ 40   0   0   0   0   1   0   0   0   1   0   0   0   2   0   0    4  96.6 0610
+ 41   0   0   0   3   0   0   0   0   0   6   0   0   3   0   0   12  96.2 0610
+CUP   0   0   0   3   1   0   0   0   1   6   0   0   5   0   0   16  96.4  8.0
+
+ 42   0   0   0   0   1   0   0   0   0   6   0   0   0   0   0    7  99.9 0610
+ 43   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0    0 100.0 0610
+VF    0   0   0   0   1   0   0   0   0   6   0   0   0   0   0    7 100.0  3.5
+                                                                         Page 31
+SAMPLE RUNS
+
+
+TOT   0   0   0   3   2   0   0   0   1  12   0   0   5   0   0   23  98.2  5.8
+
+
+EXECUTION COMPLETED
+
+
+
+
+':'RUN SITE.WEEKLY
+LOADING SITE.WEEKLY
+EXECUTION
+
+'DATE OF REPORT:' 05-24-77
+'WEEKS:' 1
+'SITE:' CUP
+'CLASS:' 370
+'OUTPUT FILE:' TER
+'Position paper at top of page and type RETURN ...' (CR)
+                                                                         Page 32
+SAMPLE RUNS
+
+
+                     CUPERTINO TYMCOM-370 FOR WEEK OF May 24, 1977
+                      TUE    WED    THU    FRI    SAT    SUN    MON  WEEKLY
+10 TIMESHARING      43:48  48:00  44:03  46:32  42:40  47:48  48:00  320:51
+20 DEVELOPMENT                                                     
+21 UTILITY                                                         
+29 CONSOLE                                                         
+30 IBM MEMORY                                                      
+31 DRUM (2305)                                                     
+32 MAINFRAME                                                       
+33 AMPEX DISK                                            :10            :10
+34 ITEL DISK                                                       
+35 INTEL MEMORY                                                    
+36 TYMNET HARDWARE                                                 
+37 PARADYNE                                                        
+41 SYSTEM SOFTWARE    :11                                :02            :13
+42 TYMNET SOFTWARE                                                 
+43 PERSONNEL ERROR                                                 
+50*POWER FAILURE                                                   
+51 ENVIRONMENT                                                     
+59 UNDETERMINED       :06                                               :06
+60 IBM MAINT                                                       
+70 TYMSHARE MAINT    3:55          3:57   1:28   5:20                 14:40
+80 PARADYNE MAINT                                                  
+90 STC MAINT                                                       
+   DAILY TOTALS     48:00  48:00  48:00  48:00  48:00  48:00  48:00  336:00
+
+                           SCHEDULED TIME GROUP TOTALS
+   TIMESHARING      43:48  48:00  44:03  46:32  42:40  47:48  48:00  320:51
+   OTHER (SDN)                                                     
+   OPERATIONS                                                      
+   HARDWARE                                              :10            :10
+   SOFTWARE           :11                                :02            :13
+   PERSONNEL ERROR                                                 
+   PUBLIC UTILITY                                                  
+   ENVIRONMENT                                                     
+   UNDETERMINED       :06                                               :06
+   MAINTENANCE                                                     
+   SCHEDULED TS     44:05  48:00  44:03  46:32  42:40  48:00  48:00  321:20
+   AVAILABILITY     24 HR  95.49% PRIME  99.29% SCHED  99.85% *ADJ'D  99.85%
+
+                           SCHEDULED TIME CRASH SUMMARY
+   CONSOLE                                                         
+   IBM MEMORY                                                      
+   DRUM (2305)                                                     
+   MAINFRAME                                                       
+   AMPEX DISK                                              1              1
+   ITEL DISK                                                       
+   INTEL MEMORY                                                    
+   TYMNET HARDWARE                                                 
+   PARADYNE                                                        
+   SYSTEM SOFTWARE      2                                  2              4
+   TYMNET SOFTWARE                                                 
+   PERSONNEL ERROR                                                 
+  *POWER FAILURE                                                   
+   ENVIRONMENT                                                     
+   UNDETERMINED         1                                                 1
+                                                                         Page 33
+SAMPLE RUNS
+
+
+   DAILY TOTALS         3                                  3              6
+
+   CPS  TOTALS    24H  3.00   6 PRI  4.00   6 SCH  3.00   6 *ADJ  3.00   6       _
+   AVG. NO.SYS/DAY 24 HR:   2.00 PRIME:   1.50 SCHED:   2.00 *ADJ'D:   2.00
+
+EXECUTION COMPLETED
+
+
+
+
+:RUN WEEKLY             ;THIS REPORT FOR A SPECIFIED SOFTWARE
+LOADING WEEKLY          ;SYSTEM.
+EXECUTION
+
+
+DATE OF REPORT: 05-24-77        ;THIS SHOULD BE THE START DATE
+WEEKS: 1                        ;OF THE REPORT. EACH WEEK IS 
+SYSTEM NUMBER: 33               ;REPORTED ON A SEPARATE PAGE.
+OUTPUT FILE: TER
+'Position paper at top of page and type RETURN ...' (CR)
+                                                                         Page 34
+SAMPLE RUNS
+
+
+          CUPERTINO TYMCOM-X SYSTEM  33 FOR WEEK OF May 24, 1977
+                      TUE    WED    THU    FRI    SAT    SUN    MON  WEEKLY
+                     5/24   5/25   5/26   5/27   5/28   5/29   5/30  TOTALS
+10 TIMESHARING      24:00  24:00  23:12  23:09  24:00  24:00  23:30  165:51
+20 DEVELOPMENT                                                     
+21 UTILITY                          :48    :51                         1:39
+30 MAG TAPE DRIVE                                                  
+32 MAINFRAME                                                       
+33 CR/CP/LP                                                        
+34 AMPEX DISK                                                      
+35 MEMORY                                                       :30     :30
+36 TYMNET HARDWARE                                                 
+41 SYSTEM SOFTWARE                                                 
+42 TYMNET SOFTWARE                                                 
+43 PERSONNEL ERROR                                                 
+50*POWER FAILURE                                                   
+51 ENVIRONMENT                                                     
+59 UNDETERMINED                                                    
+70 PREV'TIVE MAINT                                                 
+71 INSTALLATION                                                    
+72 COR MAINT TEST                                                              _
+   DAILY TOTALS     24:00  24:00  24:00  24:00  24:00  24:00  24:00  168:00
+
+                           SCHEDULED TIME GROUP TOTALS
+   TIMESHARING      21:00  21:00  21:00  21:00  21:00  21:00  20:30  146:30
+   OTHER (SDN)                                                     
+   OPERATIONS                                                      
+   HARDWARE                                                     :30     :30
+   SOFTWARE                                                        
+   PERSONNEL ERROR                                                 
+   PUBLIC UTILITY                                                  
+   ENVIRONMENT                                                     
+   UNDETERMINED                                                    
+   MAINTENANCE                                                     
+   SCHEDULED TS     21:00  21:00  21:00  21:00  21:00  21:00  21:00  147:00
+   AVAILABILITY     24 HR  98.72% PRIME 100.00% SCHED  99.66% *ADJ'D  99.66%
+
+                           SCHEDULED TIME CRASH SUMMARY
+   MAG TAPE DRIVE                                                  
+   MAINFRAME                                                       
+   CR/CP/LP                                                        
+   AMPEX DISK                                                      
+   MEMORY                                                         1       1
+   TYMNET HARDWARE                                                 
+   SYSTEM SOFTWARE                                                 
+   TYMNET SOFTWARE                                                 
+   PERSONNEL ERROR                                                 
+  *POWER FAILURE                                                   
+   ENVIRONMENT                                                     
+   UNDETERMINED                                                    
+   DAILY TOTALS                                                   1       1
+   TOTAL CRASHES   24 HOUR:    1 PRIME:        SCHED:      1 *ADJ'D:      1
+
+EXECUTION COMPLETED
+                                                                         Page 35
+SAMPLE RUNS
+
+
+: RUN MONTHLY                   ;THIS CREATES A 6 MONTH REPORT
+LOADING MONTHLY                 ;FOR A SINGLE SYSTEM.
+EXECUTION
+
+ENDING DATE OF REPORT AS MMM YY: MAY 77
+PERIODS: 1
+SYSTEM NUMBER: 17
+OUTPUT FILE: TER
+'Position paper at top of page and type RETURN ...' (CR)
+                                                                         Page 36
+SAMPLE RUNS
+
+
+                        HOUSTON TYMCOM-IX SYSTEM  17
+                    Dec 76  Jan 77  Feb 77  Mar 77  Apr 77  May 77   TOTALS
+10 TIMESHARING              659:26  606:52  667:55  629:20  657:44  3221:17
+20 DEVELOPMENT                                                    
+21 UTILITY                   60:19   55:58   61:55   73:18   82:46   334:16
+22 930 BATCH (R/P)                                                
+30 DATA PROD DISK                                                 
+31 RADS                                                        :15      :15
+32 MAINFRAME                   :48                     :07              :55
+33 CR/CP/LP/MT                                                    
+34 CALCOMP DISK               3:07     :29                             3:36
+35 SELECTOR CHAN                      1:38            7:39             9:17
+36 TYMNET HARDWARE                                                
+41 SYSTEM SOFTWARE                                                
+42 TYMNET SOFTWARE                     :02                              :02
+43 PERSONNEL ERROR             :10     :01                              :11
+50*POWER FAILURE                      2:52             :11     :15     3:18
+51 ENVIRONMENT                                                    
+59 UNDETERMINED                        :08                              :08
+70 PREV'TIVE MAINT           20:10    4:00   14:10    9:25    3:00    50:45
+71 INSTALLATION                                                   
+72 COR MAINT TEST                                                             _
+   MONTHLY TOTALS           744:00  672:00  744:00  720:00  744:00  3624:00
+
+                           SCHEDULED TIME GROUP TOTALS
+   TIMESHARING              615:53  554:50  618:00  592:03  619:30  3000:16
+   OTHER (SDN)                                                    
+   OPERATIONS                  :02                                      :02
+   HARDWARE                   3:55    2:07            7:46     :15    14:03
+   SOFTWARE                            :02                              :02
+   PERSONNEL ERROR             :10     :01                              :11
+   PUBLIC UTILITY                     2:52             :11     :15     3:18
+   ENVIRONMENT                                                    
+   UNDETERMINED                        :08                              :08
+   MAINTENANCE                                                    
+   SCHEDULED TS             620:00  560:00  618:00  600:00  620:00  3018:00
+   AVAIL: 24 HOUR            88.63%  90.31%  89.77%  87.41%  88.41%   88.89%
+   AVAIL: PRIME              99.73%  98.86%  99.93%  98.62%  98.95%   99.22%
+   AVAIL: SCHED              99.34%  99.08% 100.00%  98.68%  99.92%   99.41%
+  *AVAIL: ADJ'D              99.34%  99.59% 100.00%  98.71%  99.96%   99.52%
+
+                           SCHEDULED TIME CRASH SUMMARY
+   DATA PROD DISK                                                 
+   RADS                                                          1        1
+   MAINFRAME                     1                       1                2
+   CR/CP/LP/MT                                                    
+   CALCOMP DISK                  1       1                                2
+   SELECTOR CHAN                         1               1                2
+   TYMNET HARDWARE                                                
+   SYSTEM SOFTWARE                                                
+   TYMNET SOFTWARE                       1                                1
+   PERSONNEL ERROR               1       1                                2
+  *POWER FAILURE                         3               1       1        5
+   ENVIRONMENT                                                    
+   UNDETERMINED                          1                                1
+   TOTALS: 24 HOUR               3       8               3       2       16
+                                                                         Page 37
+SAMPLE RUNS
+
+
+   TOTALS: PRIME                 3       6               3       1       13
+   TOTALS: SCHED                 3       8               3       2       16
+  *TOTALS: ADJ'D                 3       5               2       1       11
+
+EXECUTION COMPLETED
+
+
+
+
+: RUN SITE.MONTHLY              ;IN THIS EXAMPLE ALL VALLEY
+LOADING SITE.MONTHLY            ;FORGE SYSTEMS REPORTED BY CLASS.
+EXECUTION
+
+ENDING DATE OF REPORT AS MMM YY: AR 77
+PERIODS: 1
+SITE: VF
+CLASS: ALL
+OUTPUT FILE: TER
+'Position paper at top of page and type RETURN ...' (CR)
+                                                                         Page 38
+SAMPLE RUNS
+
+
+                                  VALLEY FORGE TYMCOM-IX
+                   Oct 76   Nov 76   Dec 76   Jan 77   Feb 77   Mar 77    TOTALS
+ TIMESHARING                                 2007:03  1810:41  2007:46   5825:30
+ DEVELOPMENT                                                          
+ UTILITY                                      213:27   189:31   198:49    601:47
+ 930 BATCH (R/P)                                2:10     3:45     2:31      8:26
+ DATA PROD DISK                                                       
+ RADS                                            :21               :04       :25
+ MAINFRAME                                       :35      :41      :04      1:20
+ CR/CP/LP/MT                                                          
+ CALCOMP DISK                                             :50                :50
+ SELECTOR CHAN                                            :26                :26
+ TYMNET HARDWARE                                 :04      :06                :10
+ SYSTEM SOFTWARE                                                      
+ TYMNET SOFTWARE                                          :01                :01
+ PERSONNEL ERROR                                 :02      :07      :02       :11
+*POWER FAILURE                                                        
+ ENVIRONMENT                                                          
+ UNDETERMINED                                    :02               :03       :05
+ PREV'TIVE MAINT                                6:58     5:57    13:46     26:41
+ INSTALLATION                                             :11                :11
+ COR MAINT TEST                                1:18     3:44     8:55     13:57           _
+ MONTHLY TOTALS                              2232:00  2016:00  2232:00   6480:00
+
+                           SCHEDULED TIME GROUP TOTALS
+ TIMESHARING                                 1919:11  1727:52  1920:30   5567:33
+ OTHER (SDN)                                                          
+ OPERATIONS                                      :10      :57      :17      1:24
+ HARDWARE                                       1:00     2:03      :08      3:11
+ SOFTWARE                                                 :01                :01
+ PERSONNEL ERROR                                 :02      :07      :02       :11
+ PUBLIC UTILITY                                                       
+ ENVIRONMENT                                                          
+ UNDETERMINED                                    :02               :03      :05
+ MAINTENANCE                                     :05                         :05
+ SCHEDULED TS                                1920:30  1731:00  1921:00   5572:30
+ AVAIL: 24 HOUR                                89.92%   89.82%   89.95%    89.90
+ AVAIL: PRIME                                  99.90%   99.82%   99.80%    99.86
+ AVAIL: SCHED                                  99.93%   99.82%   99.97%    99.91
+*AVAIL: ADJ'D                                  99.93%   99.82%   99.97%    99.91
+
+                           SCHEDULED TIME CRASH SUMMARY
+ DATA PROD DISK                                                       
+ RADS                                              2                 1         3
+ MAINFRAME                                         2        3                 6
+ CR/CP/LP/MT                                                          
+ CALCOMP DISK                                               2                  2
+ SELECTOR CHAN                                              1                  1
+ TYMNET HARDWARE                                   1                           1
+ SYSTEM SOFTWARE                                                      
+ TYMNET SOFTWARE                                            1                  1
+ PERSONNEL ERROR                                   1        2        1         4
+*POWER FAILURE                                                        
+ ENVIRONMENT                                                          
+ UNDETERMINED                                      1                 1         2
+ CPS TOT: 24 HR                             2.3   7  3.0   9  1.3   4  2.2   20     _
+                                                                         Page 39
+SAMPLE RUNS
+
+
+ CPS TOT: PRIME                             2.0   6  2.7   8  2.0   2  1.9   16     _
+ CPS TOT: SCHED                             2.3   7  3.0   9  1.3   4  2.2   20     _
+*CPS TOT: ADJ'D                             2.3   7  3.0   9  1.3   4  2.2   20     _
+ AVG. NO.SYS/DAY                                3.00     3.00     3.00      3.00
+                                  VALLEY FORGE TYMCOM-370
+                   Oct 76   Nov 76   Dec 76   Jan 77   Feb 77   Mar 77    TOTALS
+ TIMESHARING                                 1429:19  1308:51  1466:02   4204:12
+ DEVELOPMENT                                    1:43      :04               1:47
+ UTILITY                                         :40      :10      :07       :57
+ CONSOLE                                                              
+ DISK (IBM 3330)                                                      
+ IBM MEMORY                                                           
+ DRUM (2305)                                             1:56     4:43      6:39
+ MAINFRAME                                      6:58      :07      :18      7:23
+ AMPEX DISK                                     1:53     6:48     2:29     11:10
+ ITEL DISK                                                            
+ INTEL MEMORY                                                      :12       :12
+ TYMNET HARDWARE                                                  1:02      1:02
+ PARADYNE                                                1:54      :21      2:15
+ SYSTEM SOFTWARE                                 :11     1:04      :31      1:46
+ TYMNET SOFTWARE                                                   :03       :03
+ PERSONNEL ERROR                                          :12                :12
+*POWER FAILURE                                                        
+ TELEPHONE LINES                                                      
+ ENVIRONMENT                                                          
+ UNDETERMINED                                                         
+ IBM MAINT                                              10:19              10:19
+ TYMSHARE MAINT                                47:16    12:35     4:25     64:16
+ PARADYNE MAINT                                                       
+ STC MAINT                                                        7:47      7:47
+ MONTHLY TOTALS                              1488:00  1344:00  1488:00   4320:00
+
+                           SCHEDULED TIME GROUP TOTALS
+ TIMESHARING                                 1429:19  1308:51  1466:02   4204:12
+ OTHER (SDN)                                                          
+ OPERATIONS                                                           
+ HARDWARE                                       8:51    10:45     9:05     28:41
+ SOFTWARE                                        :11     1:04      :34      1:49
+ PERSONNEL ERROR                                          :12                :12
+ PUBLIC UTILITY                                                       
+ ENVIRONMENT                                                          
+ UNDETERMINED                                                         
+ MAINTENANCE                                                          
+ SCHEDULED TS                                1438:21  1320:52  1475:41   4234:54
+ AVAIL: 24 HOUR                                96.06%   97.38%   98.52%    97.32
+ AVAIL: PRIME                                  99.31%   99.15%   97.39%    98.81
+ AVAIL: SCHED                                  99.37%   99.09%   99.35%    99.28
+*AVAIL: ADJ'D                                  99.37%   99.09%   99.35%    99.28
+
+                           SCHEDULED TIME CRASH SUMMARY
+ CONSOLE                                                              
+ DISK (IBM 3330)                                                      
+ IBM MEMORY                                                           
+ DRUM (2305)                                                6        1         7
+ MAINFRAME                                         3        1        4         8
+ AMPEX DISK                                       16       28       12        56
+                                                                         Page 40
+SAMPLE RUNS
+
+
+ ITEL DISK                                                            
+ INTEL MEMORY                                                        1         1
+ TYMNET HARDWARE                                                     2         2
+ PARADYNE                                                   6        1         7
+ SYSTEM SOFTWARE                                   3       17       12        32
+ TYMNET SOFTWARE                                                     1         1
+ PERSONNEL ERROR                                            1                  1
+*POWER FAILURE                                                        
+ TELEPHONE LINES                                                      
+ ENVIRONMENT                                                          
+ UNDETERMINED                                                         
+ CPS TOT: 24 HR                            11.0  22 29.5  59 17.0  34 19.2  115     _
+ CPS TOT: PRIME                             8.0  16 24.5  49 17.6  21 16.6   86     _
+ CPS TOT: SCHED                            11.0  22 29.5  59 17.0  34 19.2  115     _
+*CPS TOT: ADJ'D                            11.0  22 29.5  59 17.0  34 19.2  115     _
+ AVG. NO.SYS/DAY                                2.00     2.00     2.00      2.00
+EXECUTION COMPLETED
+
+
+
+
+: QUIT                          ;EXIT. PROGRAM GIVES DATE AND
+12-JUL-1977  16:37:01           ;TIME WHEN MUR SESSION ENDS.
+
+EXIT
+
+-                               ;AND YOU ARE RETURNED TO EXEC.
+                                                                         Page 41
+ERRORS AND RECOVERIES
+
+
+       ((ERRORS AND RECOVERIES))
+
+
+            The default TYMCOM-X EXEC  is  XEXEC.   This  allows  the  following
+       special  characters  to  correct  mistyped  entries  providing  the final
+       carriage return has not yet been entered
+
+               CHARACTER               FUNCTION
+               ---------               --------
+               CONTROL A               DELETE LAST CHAR. TYPED. XEXEC 
+                                       SURROUNDS THE CHARACTER(S) DELETED
+                                       WITH BACK SLASHES ().
+
+               CONTROL Q               DELETE THE LAST ENTIRE LINE TYPED.
+                                       XEXEC PRINTS AN UP ARROW ().
+
+            Within MUR, prompters seeking a 'Y' or 'N' ('Yes' or No) answer will
+       reject any other entry.  The program will, however, give the user another
+       chance to enter either 'Y' or 'N'.
+
+            The error message in the form 'ILLEGAL OBJECT' usually indicates the
+       program  was  given a null entry (eg.  merely a carriage return) and that
+       more data is required.  In this case, start the command in question  over
+       again.
+
+            MAGNUM itself will be output error messages  in  the  form  '?   NN'
+       where  NN is an error number.  Whenever errors occur during command input
+       following a prompt, MAGNUM will issue the prompt  again.   If  the  error
+       message  occurs  during  command  execution, the user will be returned to
+       command level and must reenter the entire command.
+
+            If an ALTMODE or ESCAPE is used during a procedure or  command,  the
+       message '*ESCAPE* - DO YOU WISH TO CONTINUE?' will type out.  If you wish
+       to continue, type 'Y' and the procedure or  command  will  continue  from
+       exactly  where  it  was halted by the escape character.  Typing 'N' halts
+       the program, and all entries prior to the escape are  lost.   It  is  not
+       possible  to  escape to EXEC and later reenter or continue the processing
+       that was interrupted.  In this case, all data must be entered over again.
+
+            A message in the form 'NO SUCH (OBJECT)'  indicates  that  a  string
+       entered was valid but was not found after a search of the data base.
+
+            If you ever see a message in the form '*PROGRAM  ERROR*',  save  the
+       terminal hardcopy and communicate all relevant details to Roy Roskilly.
+
+            The 'INVALID FILLER' message refers to the  character  between  data
+       elements  (eg.  the dash used in the string 08-02).  usually, you will be
+       allowed to reenter the data with a valid filler.
+
+            Should you ever see the MAGNUM message 'NEW SCHEMA - OK?',  you  are
+       not connected to the proper directory and files.  Type NO, then QUIT, and
+       log into or GFD to dir MUR on C33.
+
+            If you are in doubt about the input  expected  from  a  MUR  prompt,
+       typing  the word 'HELP' may obtain certain primitive hints about the kind
+       of valid input being sought.
+                                                                         Page 42
+ERRORS AND RECOVERIES
+
+
+            Most of the data problems in MUR will be detected and reported using
+       CHECK  HW and CHECK SW in the UPDATER procedure.  You are referred to the
+       description of these commands in this document.
+
+            Occasionally, time schedule overlaps are  the  result  of  duplicate
+       hardware  id's  in the data base;  that is, two systems in the same class
+       using the same hardware id--- the schedule of one system may  merge  with
+       and  overlap  the schedule of the other system.  An example of this is if
+       system 33 has an id of UU and a schedule of 0000 (start time), 0300 (stop
+       time), and system 38, id UU, has a schedule of 0200 (start), 2300 (stop).
+       Since 33's stop time (0300) is later than 38's  start  time  (0200),  and
+       both  systems  use  the  same  hardware  id,  an  overlap  exists.   This
+       possibility is identified by using the 'CHECK HW' command in UPDATER.
+
+            Files  used  for  REPORT  output  must  conform  to   XEXEC   naming
+       conventions.   This  means  that  there  can  be  up to six characters of
+       alphanumeric filename followed by an optional period (.) and up to  three
+       characters  of extension.  For additional information on naming files and
+       other related XEXEC conventions you are referred to the  Tymshare  manual
+       'XEXEC' dated Dec.  1974 (pubs   321).
+
+            Certain report discrepancies between mur and any  previous  programs
+       may  occur due to the fact that the older programs automatically reported
+       certain codes as scheduled downtime entries.   MUR  on  the  other  hand,
+       considers  what  schedule condition existed during the time period of the
+       code.  To avoid this discrepancy, you should  make  use  of  the  special
+       schedule  option  in  updater  to reflect that a particular entry did not
+       occur during what would otherwise be scheduled uptime.
+
+            Reports do no checking of data  validity.   Thus,  for  example,  if
+       erroneous  data  was  entered  in UPDATER, it is possible for a report to
+       contain a 25 hour day.  Use the CHECK commands in UPDATER to isolate data
+       causing problems of this nature.  Use the ADD and CHG commands to correct
+       the problems indicated.  If a change is attempted for a time period which
+       would  wholly  or partially coincide with a time gap, the change will not
+       be allowed.  For this case, the ADD command should be used instead.
+                                                                         Page 43
+MUR INDEX
+
+
+                             MUR ALPHABETICAL INDEX
+                             --- ------------ -----
+
+
+
+       370 CODES . . . . . . . . . . . . .  5
+
+       940 CODES . . . . . . . . . . . . .  5
+
+       ADD SAMPLES IN UPDATER  . . . . . .  25
+       ADDING A FULL DAY'S ENTRIES . . . .  12
+
+       CAPABILITIES  . . . . . . . . . . .  1
+       CHECK HW DESCR. . . . . . . . . . .  18
+       CHECK SW DESCR. . . . . . . . . . .  18
+       CHECK SW SAMPLE . . . . . . . . . .  25
+       CHG COD SAMPLE  . . . . . . . . . .  25
+       CLASS RELATION  . . . . . . . . . .  5
+       CLASS.MONTHLY DESCR.  . . . . . . .  23
+       CLASS.WEEKLY DESCR. . . . . . . . .  22
+       CODE RELATION . . . . . . . . . . .  5
+       COMPLETING PARTIAL DAY'S ENTRIES  .  15
+       CRASH.SUMMARY DESCR.  . . . . . . .  21
+       CRASH.SUMMARY SAMPLE  . . . . . . .  28
+       CRASHES DEFINED AND EXPLAINED . . .  11
+
+       DELETE DESCR. . . . . . . . . . . .  17
+       DELETE RECORD DESCR.  . . . . . . .  17
+       DELETE RECORD SAMPLE  . . . . . . .  27
+       DELETE SAMPLE . . . . . . . . . . .  27
+
+       ENTERING THE PROGRAM  . . . . . . .  11
+       ERRORS AND RECOVERIES . . . . . . .  40
+
+       GROUP RELATION  . . . . . . . . . .  6
+
+       HOLIDAY RELATION  . . . . . . . . .  6
+       HW.MONTHLY DESCR. . . . . . . . . .  23
+       HW.WEEKLY REPORT DESCR. . . . . . .  21
+
+       INTRODUCTION  . . . . . . . . . . .  1
+
+       LIST HW DESCR.  . . . . . . . . . .  17
+       LIST SW DESCR.  . . . . . . . . . .  17
+       LIST SW SAMPLE  . . . . . . . . . .  25
+
+       MAJOR MUR PROGRAMS  . . . . . . . .  1
+       MONTHLY REPORT DESCR. . . . . . . .  23
+       MONTHLY REPORT SAMPLE . . . . . . .  34
+
+       PDP CODES . . . . . . . . . . . . .  5
+
+       REPORT COMMAND SUMMARY  . . . . . .  8
+
+       SAMPLE REPORTS  . . . . . . . . . .  28
+       SITE.MONTHLY DESCR. . . . . . . . .  23
+       SITE.MONTHLY SAMPLE . . . . . . . .  37
+       SITE.WEEKLY DESCR.  . . . . . . . .  22
+       SITE.WEEKLY SAMPLE  . . . . . . . .  31
+
+       THE SITE RELATION . . . . . . . . .  2
+       THE SYSTEM RELATION . . . . . . . .  2
+       TIME RELATION . . . . . . . . . . .  5
+       TYPE RELATION . . . . . . . . . . .  6
+
+       UPDATER ADD DESCR.  . . . . . . . .  12
+       UPDATER CHANGE DESCR. . . . . . . .  15
+
+       VALID MUR SYSTEMS . . . . . . . . .  3
+
+       WEEKLY REPORT DESCR.  . . . . . . .  21
+       WEEKLY REPORT SAMPLE  . . . . . . .  33
+
+       XEXEC EDITING CHARACTERS  . . . . .  40
+
+  p )b
