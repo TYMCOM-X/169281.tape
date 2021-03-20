@@ -1,0 +1,202 @@
+node.info.1    procedures for managing node and slot files      25-Oct-89
+
+
+About the node procedures:
+
+    The node file mangement functions: get, unget, put and update have been
+    created in order to provide a consistant set of procedures for everyone
+    that needs to manipulate node and slot files.  Using these procedures
+    correctly will increase productivity by insuring that the user receives
+    the latest copy of all files and that anyone working on a slot can easily
+    determine if someone else is still working on the same slot.
+
+    Attempts to circumvent the staging procedures setup by these functions
+    will only cause confusion... both to the user and to the node scripts.
+    These scripts have been written to perform a set of file management
+    functions and to attempt to protect us from making mistakes, but they
+    cannot possibly catch every possible situation.  Please bear with us for
+    a while as we make these scripts more robust.
+
+                                                                -Carl
+
+
+The procedures:
+
+    get:	to obtain the appropriate slot files for a particular node.
+
+	node get {node} {slot}
+	node get 2000 1
+
+    The normal usage is to get a single slot at a time, however to obtain
+    multiple slots, simply specify each slot separated with spaces on the
+    same command line.
+
+	node get {node} {slot} {slot} {slot}
+	node get 2000 1 2 4
+
+    "get" actually creates a soft lock file for each slot file obtained by an
+    individual user.  These lock files contain information about the current
+    location of the checked-out slot files.  This information is useful and is
+    utilized prevent users from working on the same slot at the same time.  If
+    a slot is checked out and someone else needs to work on the slot, there are
+    two options available:
+
+	1.  have the other user check the slot back in so you can check it out.
+	2.  specify the -f option to forcibly override the previous check-out.
+
+    It is best to utilize step 1 whenever possible, but step 2 is available for
+    those situations when it is NOT practical or timely to have the other user
+    check the slot back in.
+
+    There has been concern that the files obtained using node get may not be
+    the most recent.  Under normal circumstances this is NOT possible, however
+    files ARE being loaded daily from the backup requests on the PDP-10s and
+    these files are being placed directly into production, skipping the staging
+    area.  Thus, any of these files still in the staging area will be out of
+    date.  The node get function will compare the dates of the staging and the
+    production files and automatically return the most recent files.
+
+    In order to specify that the production or staging directories should take
+    precidence, the user has the ability to specify -p for production or -s for
+    staging.  If -p is specified and the staging area has more recent files, a
+    message will be printed and the user will have an opportunity to receive
+    the most recent files.  If -s is specified and the production area has more
+    recent files, a message will be printed and the user will be able to obtain
+    the most recent files.  If it is known that the most recent files are NOT
+    desired the -f option instructs the script to honor the -p or -s option and
+    merely print a message to inform the user that the file obtained were not
+    the most recent copies of the slot files.
+
+    If the -r "replace" option is also specified with the -p option, then any
+    of the specified files in the staging area will be replaced with files
+    from the production area.    
+
+    option summary:
+
+	-f	force the honoring of -s or -p
+	-p	get files from production (maybe, see -f)
+	-r	replace staging files with the most recent files
+	-s	get files from staging (maybe, see -f)
+
+
+
+
+
+    unget:	check a slot back in, without modifying the files in staging
+		or production.  If the staging files are identical to the
+		production files, the files in the staging area are deleted.
+
+
+	node unget {node} {slot}
+	node unget {node} {slot} ... {slot}
+
+
+
+
+    put:
+
+    update:
+
+-------------------------
+
+    transfer:
+
+    store:
+
+-------------------------
+
+
+The current procedure to use for genning node code is as follows:
+
+0)  Determine whether the node is to be done under unix or the pdp-10 by
+    using the cknode program:
+
+    cknode 4313
+    cknode 4313 2232 2346
+
+    Note: one or more nodes may be checked at a time.  See cknod(1) in the
+    man pages for more details about cknode.
+
+1)  Copy code to work on to your directory  (using node get command)
+
+    node get 4313 ff 0                  # for pi group to get i2is & node code
+    node get 4313 1 3 4                 # for cs to get slots 1, 3 and 4
+
+    This procedure also checks the slot files out so that no one else will
+    be able to work on those slot files while you have them checked out.  If
+    you accidently get the wrong slot or the wrong node, use the node unget
+    command to release the files from checkout.
+
+    node unget 4313 3                   # return slot 3 for node 4313
+    node unget 4313                     # return the entire node 4313
+
+    For new slots, or slots that you are moving to another node, use the
+    node get command to get a copy of an existing slot.  Then node unget to
+    release the checkout, then rename the files into the proper directory
+    before modifying them.
+
+2)  Modify the files (if required), also see conversion.tip.1
+
+    If the cmd files have been copied from the production directories, then
+    the modifications shown in conversion.tip.1 have already been performed
+    when they were copied from the PDP-10s onto the Suns.  If the cmd files
+    are from a personal directory or were moved across by hand with netcopy
+    then the following command will make the desired changes:
+
+    sed -f /usr/tym/tym.sed nd3412.cmd > cmd
+
+    This command reads the file "nd3412" and processes the sed functions in
+    the file "/usr/tym/tym.sed" and stores the output in the file "cmd".
+
+    For projects, remember to make any changes to the slot tym files before
+    you gen the code.
+
+3)  Gen the code
+
+    Use the gen command.  With no arguments, gen looks for c01 thru c09
+    in the current directory and gens those slots.  The output from gen
+    gets stored in gen.log, the output from nad in c0?.log.  Be sure to
+    type "less *.log" and check for errors.
+
+4)  Store the code back in the group staging area so PI can update the
+    the production directories.  If you load your own slots for testing,
+    then, please do that first before storing the code in the staging area.
+
+    node put 4312                       # store all slots to staging
+    node put 4312 ff 0                  # store i2is and node code
+    node put 4312 1                     # store slot 1 only
+
+5)  Notify PI that the slot is ready for production loading by issuing an
+    update request.  The "node update" command will prompt you for the
+    required information which includes:
+
+    node,  kernel host
+
+    For each slot:
+      slot, slot host(s), interface code and version, customer name,
+      memory for slot, (does it exceed the allocation?),
+      additional files (other than t0?, c0?, n0?),
+      order number (for projects), reason for change
+
+    Please have this information handy before you issue the node update
+    command.  The reason for change may be multi-line, simply enter an
+    extra return after the text.  For the migration, simply enter the
+    word "migration" as the order number.  The format of the command is
+    identical to other node commands:
+
+    node update 4312 2 4                # request update on slots 2 & 4
+    node update 4312 ff                 # request update for isis slot FF
+
+    Note:  This procedure replaces running  :EXEC *** BACKUP  on ontyme.
+    Mail is sent to the appropriate PI coordinator on the unix system and
+    will be pulled at least once a day each morning.  This procedure is
+    only for nodes genned on the sun systems.  Continue to use the ***
+    file on ontyme for all nodes genned on the PDP-10s.
+
+
+6)  If there is any reason why PI or NETCON cannot load your code, you will
+    be notified and you should fix the problem, regen and test the code and
+    resubmit the new code using node put and node update.
+
+[end of codegen.info.2]
+ 
