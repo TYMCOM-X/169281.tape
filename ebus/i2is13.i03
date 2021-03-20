@@ -1,0 +1,2275 @@
+:	I2IS13.I03	ISIS-II - INITIALIZATION PARAMETERS
+
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source code listing constitutes the proprietary pro-  **
+: **  perty of TYMNET, Incorporated. The recipient, by receiving  **
+: **  this program listing, agrees that neither this listing nor  **
+: **  the   information  disclosed herein nor any  part  thereof  **
+: **  shall be  reproduced or transferred to other documents  or  **
+: **  used  or  disclosed to others for manufacturing or for any  **
+: **  other   purpose except as specifically authorized in  wri-  **
+: **  ting by  TYMNET, Incorporated.                              **
+: ******************************************************************
+
+:	.......................................................................
+:	PARAMETERS FOR FILE SYSTEM
+:	.......................................................................
+					:
+SYS     EQ      1			:
+FSYS    EQ      2			:
+KSYS    EQ      3			:
+					:
+:	.......................................................................
+:	DEFINE SOME DEFAULTS
+:	.......................................................................
+					:
+NDISC	EQ	0			:NO DISCS
+NTAPE	EQ	0			:NO TAPES
+MSCDSK	EQ	0			:NO MSC-1400 CONTROLLERS
+TSIDT	EQ	0			:NO DISC AND TAPE SERVER
+MACV	EQ	0			:
+
+	GL	NEWSIZ,KOFSIZ,KIOSIZ,MLUNUM,SLUNUM,KPORTS
+
+MLUNUM	EQ	0			:DEFAULT HIGHEST M-BOARD LU
+SLUNUM	EQ	0			:DEFAULT HIGHEST USER RING LU
+KPORTS	EQ	2A			:# OF KIO PORTS
+MBADRL	EQ	$0 90			:LOWEST SIO RING M-BOARD ADDR	
+MBADRH	EQ	$0 97			:HIGHEST SIO RING M-BOARD ADDR	
+SRMIN	EQ	2			:MINIMUM SIO RING SIZE
+SRMAX	EQ	$A 8190			:MAXIMUM SIO RING SIZE
+SLUMAX	EQ	$0 0FF			:HIGHEST SLU #
+MLUMAX	EQ	7			:HIGHEST MBLU #
+MBPORT	EQ	$A 48			:MAX # OF M-BOARD PORTS
+NEWSIZ	EQ	4			:NEW LOGON RING SIZE
+KOFSIZ	EQ	8			:KOF RING SIZE
+KIOSIZ	EQ	$A 256			:DEFAULT KIO RING SIZE
+MBMACH	EQ	2			:HIGHEST # FOR NEIGHBOR MACHINE
+KSRC	EQ	1			:KIO SOURCE MACHINE
+KDEST	EQ	2			:KIO DESTINATION MACHINE
+					:
+:	.......................................................................
+:	SLOT PARAMETERS
+:	.......................................................................
+					:
+SYN	EQ	00000000		:FLAG FOR SYNCHRONOUS LOGICAL UNIT
+ASN	EQ	01000000		:FLAG FOR ASYNCHRONOUS LOGICAL UNIT
+PRN	EQ	02000000		:FLAG FOR PRINTER LOGICAL UNIT
+UDEV	EQ	03000000		:FLAG FOR UNSUPPORTED DEVICE
+M.CARD	EQ	04000000		:FLAG FOR MOTHER-BOARD L.U.
+IPIDEV  EQ      05000000		:FLAG FOR INTELL. PERIPH. INT'FCE
+TDEV	EQ	06000000		:FLAG FOR SPIRIT BUS LOGICAL UNIT
+					:
+:	.......................................................................
+:       SOME PRELIMINARY GLOBALS
+:	.......................................................................
+
+        GL      FSYS,KSYS
+
+:	.......................................................................
+:	SLOT LICENSE DEFINITIONS
+:	.......................................................................
+					:
+	GL	TL.SUS			:
+TL.AUX	EQ	80000000		:AUX-CIRCUIT LICENSE
+TL.SUS	EQ	00000001		:SUSPEND/RESUME LICENSE
+					:
+:	.......................................................................
+:	SLOT MACRO DEFINITIONS
+:	.......................................................................
+					:
+S.REF	MACRO(LINE)[EQ	$A SYN+LINE]	:SYNC LINE
+
+A.REF	MACRO(GROUP)[EQ	$A ASN+GROUP]	:ASYNC GROUP
+
+P.REF	MACRO(PRINT)[EQ	$A PRN+PRINT]	:PRINTER
+
+X.REF	MACRO(LINE)[EQ	-1		:EXPERIMENTAL SIO-CARD LINE
+	REMARK	%%ISIS-II no longer supports XSIO...CANCELED%
+]
+
+M.REF	MACRO(CARD,LINE)[EQ	$0 M.CARD+LINE+(10*CARD)]  :MOTHER-BOARD
+
+IP.REF  MACRO(N)[EQ     $A IPIDEV+N]    :IPI DEVICE (EBUS BRD, UNIX BRD)
+
+T.REF	MACRO(P)[EQ	TDEV]		:SPIRIT BUS L.U.
+
+: .XX. MACROS
+:       THE FOLLOWING MACROS EVALUATE THE RELATIONSHIP BETWEEN TWO
+:       EXPRESSIONS.  THEY EVALUATE TO 0 FOR FALSE AND 1 FOR TRUE.
+:       THEY MAY BE USED IN ANY EXPRESSION AND ARE PARTICULARLY USEFUL
+:       FOR IF STATMENTS.
+:
+:       E.G.    IF      .LE.(.-LABEL,30)
+:               REMARK %>>>> ERROR **** LABEL AREA NOT > 30 BYTES ****%
+:               EI
+
+.NE.    MACRO(P1,P2)[(((P1)-(P2))!((P2)-(P1)))^-(7*5)]
+.EQ.    MACRO(P1,P2)[(((((P1)-(P2))!((P2)-(P1)))^-(7*5))%1)]
+.GT.    MACRO(P1,P2)[((P2)-(P1))^-(7*5)]
+.LT.    MACRO(P1,P2)[((P1)-(P2))^-(7*5)]
+.GE.    MACRO(P1,P2)[((P2)-(P1)-1)^-(7*5)]
+.LE.    MACRO(P1,P2)[((P1)-(P2)-1)^-(7*5)]
+
+
+:	Configure TYMNET link N with NEIghbor, NGRoups (T-I), WSIZe (TII)
+	KILL	TYMNET
+TYMNET	MACRO(N,NEI,VAL)[
+	RA	0
+NEIG|N|	EQ	$8 NEI
+	IF	TII
+	 IF	VAL
+	  IF	$A VAL-124
+	   REMARK %LINK 
+	   NUMBER $A N
+	   REMARK d, WINDOW SIZE EXCEEDS 124d, REDUCING TO 124d
+WSIZ|N|	   EQ	$A 124
+	  ELSE	VAL&3
+	   REMARK %LINK 
+	   NUMBER $A N
+	   REMARK d, FORCING WINDOW SIZE TO MULTIPLE OF 4
+WSIZ|N|	   EQ	(@3)&(VAL+3)
+	  ELSE
+WSIZ|N|	   EQ	$A VAL
+	  EI
+	 EI	(VAL)
+	ELSE				:NOT TII
+	 IF	VAL
+	  IF	$A VAL-16
+	   REMARK %LINE 
+	   NUMBER $A N
+	   REMARK d HAS EXCESSIVE GROUPS, REDUCING TO 16d
+NGRP|N|	   EQ	$A 16
+	  ELSE
+NGRP|N|	   EQ	$A VAL
+	  EI
+	 ELSE
+	  REMARK %LINE 
+	  NUMBER $A N
+	  REMARK d MUST HAVE GROUPS, ASSIGNING 1
+NGRP|N|	  EQ	1
+	 EI	(VAL)
+	EI	(TII)
+]
+
+:	.......................................................................
+:	internal macro the do checking of sys specification with the sgu.def
+:	macro
+:	.......................................................................
+					:
+SYSCHK  MACRO(SYS,GU,C) [
+        IF      SYS-2
+:	.......................................................................
+:	call type ksys
+:	.......................................................................
+					:
+        IF      \KSYS1
+         REMARK	%multiple declaration of KSYS device for globol unit 
+         NUMBER	GU
+         REMARK	d, declaration ignored!
+        ELSE    (C%DK)*(C%MS)
+         REMARK	%FSYS device not physical type DK or MS
+        ELSE
+KSYS1   EQ      GU
+        EI
+        ELSE    SYS-1
+        IF      \FSYS1
+         REMARK %multiple declaration of FSYS device on globol unit
+         NUMBER GU
+         REMARK d, declaration ignored!
+        ELSE    (C%DK)*(C%MS)
+         REMARK %FSYS device type not MS or DK
+        ELSE
+FSYS1   EQ      GU
+        EI
+:
+        ELSE
+        IF      \SYSDEV
+         REMARK %multiple declaration of SYS device on globol unit
+         NUMBER GU
+         REMARK d, declaration ignored!
+        ELSE    C%DK
+         REMARK %system device not physical type DK
+        ELSE
+SYSDEV  EQ      RD!GU
+        EI
+        EI
+]
+					:
+:	.......................................................................
+:	Declare a (shared) Global Unit
+:	parameter    use	Disc		Mag Tape
+:	GU	global unit #	1,2,3...	1,2,3...
+:	C	controller	DK, MS		MT
+:	U	unit		0,1,2...	0,1,2...
+:	S	start cylinder	HEX		--
+:	L	# of cylinder	HEX		--
+:	SYS	System device	SY, FSYS, KSYS, 0, OR NULL
+:
+:	GENERATES:
+:		GU1n = TYPE
+:		GU2n = UNIT NUMBER OF THIS TYPE
+:		GU3n = STARTING CYLINDER (IF APPLICABLE)
+:		GU4n = SIZE IN CYLINDERS (IF APPLICABLE)
+:	may also define SYSDEV if SYS>0, and C=DK
+:	.......................................................................
+					:
+SGU.DEF	MACRO(GU,C,U,S,L,SYS)[
+Q	EQ	0
+	IF	GU-MXGLU
+	 REMARK	%(Shared) Global Unit 
+	 NUMBER	GU
+	 REMARK	 exceeds MXGLU, definition ignored!
+	ELSE	\GU1|GU|
+	 REMARK %multiple definition of (shared) Global Unit 
+	 NUMBER GU
+	 REMARK , second definition ignored!
+	ELSE	1-(C%MT)
+	 IF	NTAPE
+Q	  EQ	1
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared MT, definition ignored!
+	 EI	(NTAPE)
+	ELSE	1-(C%DK)
+	 IF	NDISC
+	  IF	TSIDT
+	   REMARK %MDCSC Disc Server does not support DK,
+	   REMARK  definition ignored!
+	  ELSE
+Q	  EQ	1
+	  EI	(TSIDT)
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared DK, definition ignored!
+	 EI	(NDISC)
+	ELSE	1-(C%MS)
+	 IF	MSCDSK
+Q	  EQ	1
+	 ELSE
+	  REMARK %Global Unit 
+	  NUMBER GU
+	  REMARK  calls out undeclared MS, definition ignored!
+	 EI	(MSCDSK)
+	EI
+	IF	Q
+	 RA	0			:ENFORCE HEX RADIX
+GU1|GU|	 EQ	C/100
+GU2|GU|	 EQ	U
+GU3|GU|	 EQ	S
+GU4|GU|	 EQ	L
+	ELSE
+	 IF	(C%MS)*(C%MT)*(C%DK)
+	REMARK	%Declaration of unknown device on Global Unit  
+	NUMBER	$A GU
+	REMARK	d, declaration ignored!
+	 EI 
+	EI
+	IF	SYS
+        SYSCHK(SYS,GU,C)
+	EI
+]
+
+:	Reference a (shared) Global Unit
+:		SL	slot number (decimal)
+:		LUN	logical unit number (decimal)
+:		GU	Global Unit number (hex)
+:		PE	permits
+:		defines symbol xSLuLUN, where SL and LUN are hex strings
+SGU.REF	MACRO(SL,LUN,GU,PE)[
+	RA	0			:FORCE TO HEX RADIX
+Q	EQ	$A SL
+V	EQ	$A LUN
+	IF	\GU1|GU|
+X|Q|U|V| EQ	PE!GU
+	ELSE				:UNDEFINED...
+	 REMARK	%Reference to undefined Global Unit 
+	 NUMBER	GU
+	 REMARK	 (Slot 
+	 NUMBER	$A SL
+	 REMARK	D, unit 
+	 NUMBER	$A LUN
+	 REMARK	D), not assigned!
+	EI	(\GU1|GU|)
+]
+
+Q	EQ	0
+R	EQ	0
+	RE	8
+	RE	4
+	GL	ZZZ|Q||R|,RRR|Q||R|,TTT|Q||R|
+	GL	AAA|Q||R|,BBB|Q||R|,STV|Q||R|
+R	EQ	R+1
+	ER
+R	EQ	0
+Q	EQ	Q+1
+	ER
+					:
+:	.......................................................................
+:	channel descriptor param 1
+:	.......................................................................
+					:
+Q	EQ	0
+	RE	8
+CH|Q|	EQ	Q
+Q	EQ	Q+1
+	ER
+					:
+:	.......................................................................
+:	type descriptor param 2
+:	.......................................................................
+					:
+tpasy	eq	0			:
+tpesy	eq	1			:
+tphdl	eq	2			:
+tpdma	eq	3			:
+					:
+:	.......................................................................
+:	baud rate descriptor param 3
+:	.......................................................................
+					:
+b50	eq	0
+b75	eq	1
+b110	eq	2
+b150	eq	3
+b300	eq	4
+b600	eq	5
+b1200	eq	6
+b2400	eq	7
+b4800	eq	8
+b9600	eq	9
+b14k	eq	$a 10
+b19k	eq	$a 11
+b38k	eq	$a 12
+b48k	eq	$a 13
+b56k	eq	$a 14
+b64k	eq	$a 15
+b72k	eq	$a 16
+b128k	eq	$a 17
+b256k	eq	$a 18
+					:
+:	.......................................................................
+:	receive source descriptor param 4
+:	.......................................................................
+					:
+rsrtc	eq	1			:
+rstrc	eq	2			:
+rsbrg	eq	3			:
+rsdpl	eq	4			:
+					:
+:	.......................................................................
+:	transmit source descriptor param 5
+:	.......................................................................
+					:
+tsrtc	eq	1			:
+tstrc	eq	2			:
+tsbrg	eq	3			:
+tsdpl	eq	4			:
+					:
+:	.......................................................................
+:	transmit clock line descriptor param 6
+:	.......................................................................
+					:
+tin	eq	1			:
+tout	eq	2			:
+					:
+:	.......................................................................
+:	transmit clock line source descriptor param 7
+:	.......................................................................
+					:
+tcxtl	eq	1			:
+tctrc	eq	2			:
+tcbrg	eq	3			:
+tcdpl	eq	4			:
+					:
+xxx	EQ	0			:chan#
+yyy	EQ	0			:type
+					:
+Q	EQ	0			:
+R	EQ	0			:
+	RE	8			:
+	RE	4			:
+zzz|Q||R|	EQ	0		:baud rate
+rrr|Q||R|	EQ	0		:receive source
+ttt|Q||R|	EQ	0		:transmit source
+aaa|Q||R|	EQ	0		:transmit clock line
+bbb|Q||R|	EQ	0		:transmit clock line source
+stv|Q||R|	EQ	0		:channel status
+R	EQ	R+1
+	ER	
+R	EQ	0
+Q	EQ	Q+1
+	ER
+					:
+:	.......................................................................
+:	p1 - channel number
+:	p2 - type
+:	p3 - baud rate
+:	p4 - receive source
+:	p5 - transmit  source
+:	p6 - transmit clock line
+:	p7 - transmit clock line source
+:	.......................................................................
+					:
+NAN.M	MACRO(p1,p2,p3,p4,p5,p6,p7)[
+q	hc	0,0
+	org	q
+	ac	/p1/
+qq1	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+	ac	/p2/
+qq2	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+:	
+	if	qq1			:channel #
+	if	\ch`p1`
+xxx	eq	ch`p1`
+	if	qq2			:type
+	if	\tp`p2`
+yyy	eq	tp`p2`
+q1	eq	tp`p2`
+					:
+:	remark 	% develop macro! %
+stv|p1||q1|	eq	1		: parameter status
+	else
+	remark  % NAN.M ERROR CHANNEL 
+	number	xxx
+	remark  % BAD TYPE VALUE%
+stv|p1||q1|	eq	0		: parameter status
+	ei	:\tp`p2`
+	else	
+	remark  % NAN.M ERROR CHANNEL 
+	number	xxx
+	remark  % NO TYPE %
+stv|p1||q1|	eq	0		: parameter status
+	ei	:qq2
+	else
+	remark 	% NAN.M ERROR %
+	remark 	% BAD CHANNEL VALUE %
+stv|p1||q1|	eq	0		: parameter status
+	ei	:\ch`p1`
+	else
+	remark 	% NAN.M ERROR %
+	remark	% NO CHANNEL NUMBER %
+stv|p1||q1|	eq	0		: parameter status
+	ei	:qq1
+:
+	if	stv|p1||q1|		:surrounds rest of macro
+q	hc	0,0
+	org	q
+	ac	/p3/
+qq3	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+	ac	/p4/
+qq4	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+	ac	/p5/
+qq5	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+	ac	/p6/
+qq6	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+	ac	/p7/
+qq7	eq	.-q
+	org	q
+	hc	0,0
+	org	q
+:
+	if	qq3	: baud rate
+	if	\b`p3`
+zzz|p1||q1|	eq	b`p3`
+	else
+	remark  % NAN.M ERROR CHANNEL 
+	number	xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark  % BAD BAUD RATE VALUE%
+stv|p1||q1|	eq	0	: bad macro
+	ei		:\b`p3`
+	else		: default
+zzz|p1||q1|	eq	9
+	ei	:qq3
+:
+	if	stv|p1||q1|	:macro status
+	if	qq4	: receive source
+	if	\rs`p4`
+rrr|p1||q1|	eq	rs`p4`
+	else
+	remark	% NAN.M ERROR CHANNEL
+	number 	xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark	% BAD RECEIVE SOURCE VALUE %
+stv|p1||q1|	eq	0
+	ei	:\rs`p4`
+	else	: default rrr|p1||q1|
+rrr|p1||q1|	eq	0
+	ei	:qq4
+	ei	:stv|p1||q1|
+:	
+	if	stv|p1||q1|	:macro status
+	if	qq5	:transmit source
+	if	\ts`p5`
+ttt|p1||q1|	eq	ts`p5`
+	else
+	remark	% NAN.M ERROR CHANNEL
+	number 	xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark	% BAD TRANSMIT SOURCE VALUE %
+stv|p1||q1|	eq	0
+	ei	:\ts`p5`
+	else	: default ttt|p1||q1|
+ttt|p1||q1|	eq	0
+	ei	:qq5	
+	ei	:stv|p1||q1|
+:
+	if	stv|p1||q1|	:macro status
+	if	qq6	:transmit clock i/o dir
+	if	\t`p6`
+aaa|p1||q1|	eq	t`p6`
+	else
+	remark	% NAN.M ERROR CHANNEL
+	number	xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark	% BAD TRANSMIT I/O DIRECTION %
+stv|p1||q1|	eq	0
+	ei	:t`p6`
+	else	:default aaa|p1||q1|
+aaa|p1||q1|	eq	0
+	ei	:qq6
+	ei	:stv|p1||q1|
+:
+	if	stv|p1||q1|	:macro status
+	if	qq7		:transmit clock i/o source
+	if	\tc`p7`
+bbb|p1||q1|	eq	tc`p7`
+	else
+	remark	% NAN.M ERROR CHANNEL
+	number	xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark	% BAD TRANSMIT I/O SOURCE %
+stv|p1||q1|	eq	0
+	ei	:tc`p7`
+	else	:default bbb|p1||q1|
+bbb|p1||q1|	eq	0
+	ei	:qq7
+	ei	:stv|p1||q1|
+					:
+:	.......................................................................
+:	defaults for clocking byte
+:	receive source 
+:	for asy:rrr <-- 2
+:	for esy/hdl/dma:rrr <-- 0
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	rrr|p1||q1|%0
+rrr|p1||q1|	eq	rrr|p1||q1|-1
+	else
+	if	yyy%0
+rrr|p1||q1|	eq	0
+	else
+rrr|p1||q1|	eq	2
+	ei	:yyy
+	ei	:rrr|p1||q1|
+	ei	:stv|p1||q1|
+					:
+:	.......................................................................
+:	transmit source 
+:	for asy/esy/hdl:ttt <-- 2
+:	for dma:ttt <-- 1
+:	.......................................................................
+	if	stv|p1||q1|
+	if	ttt|p1||q1|%0
+ttt|p1||q1|	eq	ttt|p1||q1|-1
+	else
+	if	yyy%3
+ttt|p1||q1|	eq	2
+	else
+ttt|p1||q1|	eq	1
+	ei	:yyy
+	ei	:ttt|p1||q1|%0
+	ei	:stv|p1||q1|
+					:
+:	.......................................................................
+:	transmit clock line
+:	for asy/dma:aaa <-- 0
+:	for esy/hdl:aaa <-- 1
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	aaa|p1||q1|%0
+aaa|p1||q1|	eq	aaa|p1||q1|-1
+	else
+	if	yyy%3
+	if	yyy%0
+aaa|p1||q1|	eq	1
+	else
+aaa|p1||q1|	eq	0
+	ei	:yyy%0
+	else
+aaa|p1||q1|	eq	0
+	ei	:yyy%3
+	ei	:aaa|p1||q1|%0
+	ei	:stv|p1||q1|
+					:
+:	.......................................................................
+:	transmit clock line source
+:	for asy/esy/hdl/dma:bbb <-- 1
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	bbb|p1||q1|%0
+bbb|p1||q1|	eq	bbb|p1||q1|-1
+	else
+bbb|p1||q1|	eq	1
+	ei	:bbb|p1||q1|%0
+	ei	:stv|p1||q1| 
+					:
+:	.......................................................................
+:	integrity check
+:	check for dma must be channel 0 or 1
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	yyy%3
+	else
+	if	xxx%0	:type=dma
+	if	xxx%1
+	remark % NAN.M ERROR CHANNEL
+	number xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark % DMA MUST BE ON CHANNEL 0 OR 1 %
+stv|p1||q1|	eq	0
+	ei	:xxx%1
+	ei	:xxx%0
+	ei	:yyy%4
+	ei	:stv|p1||q1|
+					:
+:	.......................................................................
+:	check that for transmit source of 'trc' that
+:	transmit clock line must be 'in'
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	ttt|p1||q1|%1
+	else				:ttt=1(trc)
+	if	aaa|p1||q1|%0		:aaa=1(out)
+	remark 	% NAN.M ERROR CHANNEL 
+	number	 xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark	% TRANSMIT CLOCK LINE MUST BE VALUE 'IN' 
+	remark  % 	WHEN TRANSMIT SOURCE IS 'TRC' %
+stv|p1||q1|	eq	0
+	ei	:aaa|p1||q1|%0
+	ei	:ttt|p1||q1|%1
+	ei	:stv|p1||q1|
+					:
+:	..................................................................
+:	check that for receive source of 'trc' 
+:	and transmit source of 'brg' or 'dpl'
+:	transmit clock line must be 'out'
+:	.......................................................................
+					:
+	if	stv|p1||q1|
+	if	rrr|p1||q1|%1
+	else			:rrr=1(trc)
+	if	ttt|p1||q1|%0
+	if	ttt|p1||q1|%1
+	if	aaa|p1||q1|%1	:ttt=2v3(brg or dpl)/aaa=0(in)
+	remark 	% NAN.M ERROR CHANNEL 
+	number	 xxx
+	if	yyy%0
+	if	yyy%1
+	if	yyy%2
+	remark	% TYPE = DMA 
+	else
+	remark	% TYPE = HDL 
+	ei	:yyy%2
+	else
+	remark	% TYPE = ESY 
+	ei	:yyy%1
+	else
+	remark	% TYPE = ASY 
+	ei	:yyy%0
+	remark  % TRANSMIT CLOCK LINE MUST BE VALUE 'OUT'
+	remark  % 	WHEN RECEIVE SOURCE IS 'TRC' AND
+	remark  % 	TRANSMIT SOURCE IS 'BRG' OR 'DPL'
+stv|p1||q1|	eq	0
+	ei	:aaa|p1||q1|%1
+	ei	:ttt|p1||q1|%1
+	ei	:ttt|p1||q1|%0
+	ei	:rrr|p1||q1|%1
+	ei	:stv|p1||q1|
+:
+	ei	:stv|p1||q1|		:surrounds rest of code
+]
+					:
+GU10	EQ	0			:DEFINE GU10 FOR UNASSIGNED UNITS
+					:
+:	.......................................................................
+:	FLAGS
+:	.......................................................................
+					:
+DK	EQ	8000			:FLAG FOR DISC UNIT
+MT	EQ	0100			:FLAG FOR TAPE UNIT
+MS	EQ	0200			:FLAG FOR MSC-1400 CONTROLLER
+RD	EQ	8000			:READ ACCESS TO UNIT
+WR	EQ	4000			:WRITE ACCESS TO UNIT
+AT	EQ	2000			:ATTACH LICENSE FOR UNIT
+SS	EQ	1000			:SAVE LICENSE
+					:
+:	.......................................................................
+:	BAUD MACRO - SETS BAUDR PARAMETER AND RANGE CHECKS VALUE
+:	BAUDR MAY EQUAL 0 (1200 BAUD) OR 2 (4800 BAUD)
+:	.......................................................................
+					:
+BR1200	EQ	0			:MACRO ARG FOR 1200 BAUD
+BR4800	EQ	2			:MACRO ARG FOR 4800 BAUD
+					:
+BAUD	MACRO	(R) [
+	IF	\BAUDR			:HAS BAUDR ALREADY BEEN DEFINED
+					:IF SO JUST RANGE CHECK VALUE
+	ELSE
+BAUDR	EQ	R			:ELSE DEFINE
+BAUDRS	EQ	1			:FLAG USED TO DETERMINE IF BAUDR
+					:WAS SET BY MACRO
+	EI
+:PROCEED TO RANGE CHECK VALUES
+	IF	-BAUDR			:IF BAUDR LESS THAN 0
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%BAUDR OUT OF RANGE - BAUDR SET TO 1200 BAUD!
+	ELSE	BAUDR-2			:IS BAUDR GREATER THAN 2
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%BAUDR OUT OF RANGE - BAUDR SET TO 1200 BAUD!
+	EI
+:	.......................................................................
+:	CHECK IF SET TO 1 (FOR 2400 BAUD)
+:	.......................................................................
+					:
+   IF	BAUDR				:
+    IF	BAUDR-1				:
+    ELSE				:IF BAUDR EQUALS 1
+BAUDR	EQ	BR1200			:SET TO 1200 BAUD
+	REMARK	%HARDWARE DOES NOT SUPPORT 2400 BAUD - BAUDR SET TO 1200 BAUD!
+    EI					:
+   EI					:
+ ]					:
+					:
+NBLKS	EQ	3			:0 IF NOT USING MEMORY BLOCKS (NBLKS
+					:IS THE HIGHEST MEMORY BLOCK NUMBER)	
+					:
+:	.......................................................................
+:	DEFEXT MACRO DEFINES LIMITS OF EXTENDED MAC AREAS
+:	SLOT	SLOT NUMBER
+:	BLOCK	BLOCK NUMBER
+:	STPG	STARTING PAGE NUMBER
+:	NUM	NUMBER OF PAGES
+:	PROT	PROTECTION MASK	
+:		1	EXECUTION ACCESS PERMITTED
+:		2	WRITE ACCESS PERMITTED
+:
+:	IF NBLKS IS LESS THAN THE BLOCK NUMBER, NBLKS IS SET EQUAL TO THE
+:	BLOCK NUMBER
+:	.......................................................................
+					:
+DEFEXT	MACRO(SLOT,BLOCK,STPG,NUM,PROT) [
+	RA	$A 10
+CANCEL	EQ	0
+	IF	-SLOT
+	REMARK	%SLOTNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 0 - NSLOT!
+CANCEL	EQ	1	
+	ELSE	SLOT-NSLOT
+	REMARK	%SLOTNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 0 - NSLOT!
+CANCEL	EQ	1
+	EI
+	IF	-(BLOCK-3)
+	REMARK	%BLOCKNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 3 - 15!
+CANCEL 	EQ	1
+	ELSE	BLOCK-15
+	REMARK	%BLOCKNUMBER ARG OF DEFEXT MACRO OUT OF RANGE 3 - 15!
+CANCEL	EQ	1
+	EI
+	RA	$0 0
+	IF	STPG+NUM-4000
+	REMARK	%DEFEXT MACRO ATTEMPTING TO DEFINE AREA ABOVE 4 MEG!
+CANCEL	EQ	1
+	EI	
+
+	IF	CANCEL
+	REMARK	%SPECIFICATION CANCELLED FOR M
+	REMARK	SLOT
+	REMARK	L
+	REMARK	BLOCK !!%
+CANCEL	EQ	0
+	ELSE	
+	RA	$A 10
+P|SLOT|M|BLOCK|	EQ	PROT		:DEFINE PROTECION
+M|SLOT|L|BLOCK|	EQ	$0 10000*STPG+(STPG+(NUM-1)) 	:DEFINE EXT MAC
+	
+	IF	(BLOCK+1)-NBLKS
+NBLKS	EQ	BLOCK+1
+	EI	(NBLKS-BLOCK)
+	RA	$0 0
+	EI	]
+
+:	This macro expects the parameter (TIME) to be the number of
+:	seconds since 01/01/74 00:00:00 GMT. A date and time will be
+:	computed based on the parameter. The date and time can be
+:	obtained as a composite of the following symbols created by the
+:	macro:
+:
+:	MONTH, DAY, YEAR, HOURS, MINS, SECS
+:
+
+GENTIM	MACRO(TIME) [
+
+	RA	$0 0A
+
+QUADSZ	EQ	365*4+1
+DAYZ	EQ	(TIME)/(24*60*60)+365
+QUAD	EQ	DAYZ/QUADSZ
+QUADD	EQ	DAYZ-QUAD*QUADSZ
+LEAP	EQ	QUADD/365
+
+	IF	LEAP-3
+LEAP	EQ	3
+	EI
+
+YEAR	EQ	QUAD*4+LEAP+73
+DAY	EQ	QUADD-LEAP*365+1
+
+MON1	EQ	31
+	IF	LEAP-2
+MON2	EQ	29
+	ELSE
+MON2	EQ	28
+	EI
+MON3	EQ	31
+MON4	EQ	30
+MON5	EQ	31
+MON6	EQ	30
+MON7	EQ	31
+MON8	EQ	31
+MON9	EQ	30
+MON10	EQ	31
+MON11	EQ	30
+MON12	EQ	31
+
+MONTH	EQ	1
+NOTIT	EQ	1
+
+	RE	
+	IF	DAY-MON|MONTH|
+DAY	EQ	DAY-MON|MONTH|
+MONTH	EQ	MONTH+1
+	ELSE
+NOTIT	EQ	0
+	EI
+	ER	NOTIT
+
+RSECS1	EQ	(TIME)-((DAYZ-365)*(24*60*60))
+HOURS	EQ	RSECS1/(60*60)
+RSECS2	EQ	RSECS1-HOURS*(60*60)
+MINS	EQ	RSECS2/60
+SECS	EQ	RSECS2-MINS*60
+]
+
+
+:	DECLARE SIO RING COPY M-BOARD
+
+MBSRNG	MACRO(MBLU,ADDR,MACH) [
+
+	RA	$0 0A			:Force to Decimal Radix
+:	Parameter checking
+
+QQ1	EQ	0			:ERROR FLAG
+	IF	(MBLU-0)!(MLUMAX-MBLU)
+	ELSE
+	 REMARK	%M-BOARD LU 
+	 NUMBER MBLU
+	 REMARK  is out of range in MBSRNG macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	\MBL|MBLU|A
+	 REMARK	%Multiple declaration of M-BOARD LU 
+	 NUMBER	MBLU 
+	 REMARK  in MBSRNG macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	($0 ADDR-MBADRL)!(MBADRH-ADDR)
+	ELSE
+	 REMARK	%M-BOARD address 
+	 NUMBER $0 ADDR
+	 REMARK  is out of range in MBSRNG macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+QQ2	EQ	0
+	IF	\MBD|ADDR|
+	 REMARK %Multiple declaration of M-BOARD address 
+	 NUMBER ADDR
+	 REMARK  in MBSRG macro, declaration ignored.
+QQ1	 EQ	1
+	ELSE
+QQ0	EQ	$0 ADDR
+MBD|QQ0| EQ	1			:SIGNAL DEVICE DEFINED
+	EI
+	IF	($0 MACH-0)!(MBMACH-MACH)
+	ELSE
+	 REMARK	%M-BOARD machine value 
+	 NUMBER $0 MACH
+	 REMARK  is out of range in MBSRNG macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	(KPORTS-1+2)-(MBPORT-1)
+	 REMARK %Not enough ports to support KIO on M-BOARD LU 
+	 NUMBER MBLU 
+	 REMARK  in MBSRNG macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+
+:	Macro expansion
+
+	IF	QQ1
+	ELSE
+	 GL	MBL|MBLU|A, MBL|MBLU|M, MBL|MBLU|N
+	 GL	MBL|MBLU|K
+MBL|MBLU|A EQ	$0 ADDR			:M-BOARD DEVICE ADDRESS
+MBL|MBLU|M EQ	$0 MACH			:NEIGHBOR MACHINE #
+MBL|MBLU|N EQ	   0			:NEXT PORT TO ASSIGN
+MBL|MBLU|K EQ	$0 MACH			:INDICATE IF KIO PORTS
+	 IF	MACH-1
+KIODES	  EQ	MBL|MBLU|A		:IS DESTINATION
+	 ELSE	MACH
+KIOSRC	  EQ	MBL|MBLU|A		:IS SOURCE
+	 EI
+	 IF	MBLU-MLUNUM
+MLUNUM	  EQ	MBLU
+	 EI
+MLUSW	 EQ	1			:INDICATE MBLU DEFINED
+MULTI	 EQ	1			:TURN ON MULTI-KERNEL
+	 IF	MBL|MBLU|K		:IF BOARD HAS KIO PORTS
+QQ1	  EQ	MBL|MBLU|N
+QQ2	  EQ	KPORTS
+	  GL	Z|MBLU|I|QQ1|, Z|MBLU|O|QQ1|
+CTLSIZ		EQ	QQ2*4+2
+Z|MBLU|I|QQ1|	EQ	CTLSIZ		:CNTL MSG RING SIZE
+Z|MBLU|O|QQ1|	EQ	CTLSIZ		:CNTL MSG RING SIZE
+QQ1	  EQ	QQ1+1
+	  GL	Z|MBLU|I|QQ1|, Z|MBLU|O|QQ1|, CTLSIZ
+	  IF	MACH-1
+Z|MBLU|I|QQ1|	EQ	KOFSIZ		:KOF RING SIZE
+Z|MBLU|O|QQ1|	EQ	NEWSIZ		:NEW LOGON RING SIZE
+	  ELSE	MACH
+Z|MBLU|I|QQ1|	EQ	NEWSIZ		:NEW LOGON RING SIZE
+Z|MBLU|O|QQ1|	EQ	KOFSIZ		:KOF RING SIZE
+	  EI
+QQ1	  EQ	QQ1+1
+	  RE	QQ2
+	   GL	Z|MBLU|I|QQ1|, Z|MBLU|O|QQ1|
+Z|MBLU|I|QQ1|	EQ	KIOSIZ		:INPUT RING SIZE
+Z|MBLU|O|QQ1|	EQ	KIOSIZ		:OUTPUT RING SIZE
+QQ1	   EQ	QQ1+1
+	  ER
+MBL|MBLU|N EQ	QQ1			:UPDATE NEXT PORT AVAILABLE
+	 EI	:MBL|MBLU|K
+	EI
+	RA	$0 0			:Force back to Hex. Radix
+]
+
+
+:	DECLARE SIO USER RING
+
+URING	MACRO(SRLU,MBLU,ISIZE,OSIZE) [
+
+	RA	$0 0A			:Force to Decimal Radix
+:	Parameter checking
+
+QQ1	EQ	0			:ERROR FLAG
+	IF	(SRLU-0)!(SLUMAX-SRLU)
+	ELSE
+	 REMARK	%SIO user ring LU 
+	 NUMBER SRLU
+	 REMARK  is out of range in URING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	\U|slot.n|M|SRLU|
+	 REMARK	%Multiple declaration SIO user ring LU 
+	 NUMBER	SRLU 
+	 REMARK  in URING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	\MBL|MBLU|A
+	ELSE
+	 REMARK	%Undeclared M-BOARD LU 
+	 NUMBER	MBLU 
+	 REMARK  in URING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	(ISIZE-SRMIN)!(SRMAX-ISIZE)
+	ELSE
+	 REMARK	%SIO user input ring size 
+	 NUMBER ISIZE
+	 REMARK  is out of range in URING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	(OSIZE-SRMIN)!(SRMAX-OSIZE)
+	ELSE
+	 REMARK	%SIO user output ring size 
+	 NUMBER OSIZE
+	 REMARK  is out of range in URING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	\MBL|MBLU|A
+	 IF	MBL|MBLU|N-(MBPORT-1)
+	  REMARK %Exceeded rings available on M-BOARD LU%%%
+	  NUMBER MBLU 
+	  REMARK %%%in URING macro, declaration ignored.%%%
+QQ1	  EQ	1
+	 EI
+	EI
+
+:	Macro expansion
+
+	IF	QQ1
+	ELSE
+QQ2	 EQ	MBL|MBLU|N		:M-BOARD PORT #
+	 GL	U|slot.n|M|SRLU|, U|slot.n|P|SRLU|
+	 GL	Z|MBLU|I|QQ2|, Z|MBLU|O|QQ2|
+U|slot.n|M|SRLU| EQ	MBLU		:M-BOARD LU #
+U|slot.n|P|SRLU| EQ	QQ2		:M-BOARD PORT #
+Z|MBLU|I|QQ2|	EQ	ISIZE		:INPUT RING SIZE
+Z|MBLU|O|QQ2|	EQ	OSIZE		:OUTPUT RING SIZE
+	 IF	SRLU-SLUNUM
+SLUNUM	  EQ	SRLU
+	 EI
+MBL|MBLU|N EQ	MBL|MBLU|N+1
+SLUSW	 EQ	1			:INDICATE SLU DEFINED
+	EI
+	RA	$0 0			:Force back to Hex. Radix
+]
+
+
+:	DECLARE KIO RINGS
+
+KRING	MACRO(NUM,RSIZE) [
+
+	RA	$0 0A
+:	Parameter checking
+
+QQ1	EQ	0			:ERROR FLAG
+	IF	(NUM-0)
+	ELSE
+	 REMARK	%Number of KIO rings 
+	 NUMBER NUM
+	 REMARK  is out of range in KRING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	(RSIZE-SRMIN)!(SRMAX-RSIZE)
+	ELSE
+	 REMARK	%KIO ring size 
+	 NUMBER RSIZE
+	 REMARK  is out of range in KRING macro, declaration ignored.
+QQ1	 EQ	1
+	EI
+	IF	\KIOMAC
+	 REMARK	%Multiple declaration KRING macro,
+	 REMARK  declaration ignored.
+QQ1	 EQ	1
+	EI
+QQ2	EQ	0
+	RE	MLUMAX+1
+	 IF	\MBL|QQ2|A
+	  REMARK %KRING macro must be declared before all
+	  REMARK  MBSRG macros, declaration ignored.
+QQ1	  EQ	1
+	 EI
+QQ2	 EQ	QQ2+1
+	ER
+
+:	Macro expansion
+
+	IF	QQ1
+	ELSE
+KIOMAC	 EQ	1			:SIGNAL MACRO HAS BEEN CALLED
+KIOSIZ	 EQ	RSIZE
+KPORTS	 EQ	NUM
+	EI
+	RA	$0 0			:Force back to Hex. Radix
+]
+
+:	DUMMY MACROS USED IN ISIS TYM FILE TO PREVENT ASSEMBLY ERRORS.
+
+TIILNK	MACRO(P) [ ]
+
+OPTION	MACRO(P) [ ]
+
+GGHOST	MACRO(P) [ ]
+
+HLIMIT	MACRO(P) [ ]
+
+SLIMIT	MACRO(P) [ ]
+
+HSTSLT	MACRO(P) [ ]
+
+XRYMSG	MACRO(P) [ ]
+
+STRLIN	MACRO(P) [ ]
+
+:			New ISIS-2 Tymfile Macros
+:			... ...... ....... ......
+
+:	.....................................................................
+:
+:	Note: (1) The following MACROS are used for the Engine ISIS-2 Version
+:	          12 or later only!
+:	      (2) The MACRO definitions fall into two types:
+:		  o Machine Level MACROS, and
+:		  o SLOT    Level MACROS.
+:
+:	.....................................................................
+
+
+	:................................................................
+	:		    Constant Definitions			:
+	:................................................................
+
+	KILL	YES,NO,OLD,NEW,BOTH,DISABL,ENABLE,NORMAL,EXTEND,ENGINE,MINI
+	KILL	MICRO,TSI,PICO,HDLC,MAC1,MAC2,MAC3,MAC5,AUXCIR,SUSPEN,NULL
+					:
+ON	EQ	1			:
+OFF	EQ	0			:
+YES	EQ	1			:
+NO	EQ	0			:
+OLD	EQ	0			:
+NEW	EQ	1			:
+BOTH	EQ	2			:
+DISABL	EQ	0			:
+ENABLE	EQ	1			:
+DEBUG	EQ	1
+NORMAL	EQ	0			:
+EXTEND	EQ	1			:
+TSI	EQ	0			:
+ENGINE	EQ	1			:
+MINI	EQ	2			:
+MICRO	EQ	3			:
+PICO	EQ	4			:
+HDLC	EQ	5			:
+PXL	EQ	6			:
+ENGVER	EQ	1			:Machine I.D.? default to ENGINE
+CPU1	EQ	1			:
+CPU2	EQ	2			:
+CPU3	EQ	3			:
+CPU4	EQ	4			:
+CPU5	EQ	5			:
+CPU6	EQ	6			:
+CPUVER	EQ	CPU3			:Default Engine uses CPU-3
+MAC1	EQ	1			:
+MAC2	EQ	2			:
+MAC3	EQ	3			:
+MAC5	EQ	5			:
+MACVER	EQ	2			:MAC I.D.? default to MAC 2
+EPROT	EQ	9			:Execution protection mask
+WPROT	EQ	3			:Write protection mask 
+AUXCIR	EQ	TL.AUX			:
+SUSPEN	EQ	TL.SUS			:
+NULL	EQ	0			:
+SYNC	EQ	1			:
+ASYNC	EQ	2			:
+PRINTER	EQ	3			:
+SIO	EQ	4			:
+IPI	EQ	5			:
+TBUS	EQ	6			:
+LOAD	EQ	1			:
+NOLOAD	EQ     -1			:
+RESET	EQ	1			:
+NORESE	EQ     -1			:
+slot.n	EQ	0			:current slot number default to ZERO
+slot.s	EQ	0			:Supervisor slot
+lu.num	EQ	0			:current logical unit number
+mxslot	EQ	0			:no of max slot default to 0 (ZER0)
+maxdma	EQ	0			:no of max. dma slots
+NSLOT	EQ	0			:no of slot default to 0 (ZERO)
+NLU	EQ	0			:no of logical unit default to 0
+SUP	EQ	0			:default no SUP. in ISIS machine
+M.NCARD	EQ	0			:default no SIO motherboard
+NASYNG	EQ	0			:default no ASYNC group
+DMAREL	EQ	0			:
+					:
+:	.....................................................................
+:	Defines default parameters for Supervisor and its slave slots
+:	.....................................................................
+					:
+S.P1	EQ	43			:Supervisor product I.D.
+S.P2	EQ	41			:Probe	    product I.D.
+S.P3	EQ	68			:Error Log  product I.D.
+S.P4	EQ	66			:Account    product I.D.
+S.P5	EQ	6B			:Sys Msg    product I.D.
+S.P6	EQ	6C			:UN2        product I.D.
+S.P7	EQ	59			:Utility    product I.D.
+PRB	EQ	2			:Flags used by SUPSLV macro and
+ERLG	EQ	3			:these
+ACCT	EQ	4			:     flags
+SYSM	EQ	5			:	   will
+UN2	EQ	6			:	       be
+UTL	EQ	7			:		 killed
+					:		       later
+
+	:...............................................................:
+	:								:
+	:	       **************************			:
+	:	       * Machine Level Macro(s) *			:
+	:	       **************************			:
+	:								:
+	:...............................................................:
+
+
+
+:	.......................................................................
+:
+:	NODE  -	To specify the node configuration.
+:
+:	NODE	MACRO(noden,khost,netid,subnet) where
+:	noden -	Node number
+:	khost - Kernel host number
+:	net   - Network I.D.
+:	subnet- Sub-network I.D.
+:
+:	.......................................................................
+					:
+NODE	MACRO(noden,khost,net,subnet,nmode) [
+   IF	noden				:
+MACHNM	EQ   $8 noden			:Network node number for ISIS machine
+   EI  -noden-				:
+   IF	khost				:
+HST0	EQ   $A khost			:ISIS kernel host number
+   EI  -khost-				:
+   IF	net				:Network ID
+NETID	EQ	net			:
+   EI  -net-				:
+
+ ]					:
+					:
+:	.....................................................................
+:
+:	ASYNCBOARD - To specifies the baud rate and driver definitions for
+:		     an ASYNC board.
+:
+:	ASYNCBOARD MACRO(hirate, lorate, addr, driver, ring) where
+:
+:	hirate - Highest baud rate supported (1200 or 4800, default 1200)
+:		 hirate = 0:1200 bps
+:		 hirate = 1:2400 bps
+:		 hirate = 2:4800 bps
+:	lorate - Lowest baud rate supported (50, 110 or 300, default 300)
+:	addr   - ASYNC board starting device address (NORMAL or EXTENDED)
+:		 default is EXTENDED. 
+:		 NORMAL refers to async board address 91 and is used
+:		 with disk/tape -- EXTENDED refers to address 0C1.
+:	driver - ASYNC driver to use (OLD,NEW, or BOTH, default NEW)
+:	ring   - Defines Async ring structure (OLD style or NEW style Async
+:		 ring structure, the default is cased:
+:			if the driver is NEW or BOTH then default is NEW
+:			if the driver is OLD then default is OLD
+:		  	if the driver is OLD then ring structure is
+:				forced to old)
+:		 the OLD is based on positive byte cursor logic
+:		 the NEW is based on negative half word cursor logic
+:	
+:	Note(s): New Async ring structure can be used only if NEW Async
+:		 driver is enabled.
+:
+:	.....................................................................
+
+ASYNCBOARD MACRO(hirate,lorate,addr,driver,ring) [
+	RA	$A 10
+BAUDR	EQ  	hirate  1200		:
+   IF   .EQ.(BAUDR,4800)		:
+BAUDR	EQ	2			:High speed ASYNC baud rate 4800 bps
+   ELSE	.EQ.(BAUDR,2400)		:
+BAUDR	EQ	1			:High speed ASYNC baud rate 2400 bps
+   ELSE	.EQ.(BAUDR,1200)		:
+BAUDR	EQ	0			:High speed ASYNC baud rate 1200 bps
+   EI  -BAUDR-				:
+					:
+LOWSPD	EQ  	lorate  0		:
+   IF	.EQ.(LOWSPD,300)		:
+LOWSPD	EQ	0			:
+   ELSE .EQ.(LOWSPD,110)		:
+LOWSPD	EQ	1			:Low speed ASYNC
+   ELSE	.EQ.(LOWSPD,50)			:
+LOWSPD	EQ	1			:
+   ELSE					:
+LOWSPD	EQ	0			:Default to 300 bps
+   EI  -LOWSPD-				:
+					:
+:	.....................................................................
+:	cross-check Async interrupt speed
+:	.....................................................................
+					:
+   IF	BAUDR				:If high speed Async interrupt set
+    IF	LOWSPD				:
+	REMARK	%%%
+	REMARK	%Incompatible ASYNC High .vs. Low speed interrupt range setting...
+	REMARK	%Assembly killed...%%%
+	QUIT	1
+    EI (LOWSPD)				:
+   EI  (BAUDR)				:
+					:
+	RA	0			:
+N.ADA	EQ	addr	EXTENDED	:ASYNC board address
+ASYNEW	EQ	driver  NEW		:Define type of ASYNC driver
+   IF	ASYNEW				:
+NEWARN	EQ	ring	NEW		:
+   ELSE					:
+NEWARN	EQ	ring	OLD		:
+    IF	.EQ.(NEWARN,NEW)		:
+     REMARK %%WARNING: Incompatible Old Async Drvr with New Async Rng%
+     REMARK          Default to Old Async Rng%
+NEWARN	EQ	OLD			:
+    EI					:
+   EI  (ASYNEW)				:
+					:
+]					:
+					:
+:	.......................................................................
+:
+:	DMAMAP - To map the slot DMA (Direct Memory Access) area into the first
+:		 megabyte of ISIS low core memory area.
+:	
+:	DMAMAP	 MACRO(dmasiz) where
+:	dmasiz - Size of DMA segment which need to be mapped (Default size 64K)
+:
+:	.......................................................................
+					:
+DMAMAP	MACRO(dmasiz)	[
+  IF	MACV				:MACV must be defined first
+	RA	$A 10			:
+X	EQ	$A slot.n		:X = the current slot number
+   IF   dmasiz				:
+DMSZ|X| EQ	dmasiz			:
+   ELSE					:
+DMSZ|X| EQ	64			:Default DMA seg. size is 64dK bytes
+   EI  (dmasiz)				:
+   IF	.GT.(X,MAXDMA)			:
+MAXDMA	EQ	X			:
+   EI  (MAXDMA)				:
+DMAREL	EQ	DMAREL+1		:Count number of DMA segment relocation
+	RA	0			:
+	KILL	X			:
+  ELSE					:
+	REMARK	%%
+	REMARK	No DMA memory allocation for non-MACV machine...Cancelled out!
+	REMARK	%
+  EI  (MACV)				:
+]
+					:
+:	.......................................................................
+:
+:	DSPCHN - To specifies the number of ISIS dispatcher channels.
+:
+:	DSPCHN	MACRO(nchnls) where
+:	nchnls - Number of dispatcher channels (1-8191, default 256)
+:	
+:	.......................................................................
+					:
+DSPCHN	MACRO(nchnls)[
+
+DI.CHN	EQ   $A	nchnls 256		:Define no of ISIS dispatcher channel
+
+]					:
+					:
+:	.....................................................................
+:	
+:	FGEXEC - To enable or disable the foreground process execution, and
+:		 to specify the foreground execution frequency if foregound
+:		 is enabled.
+:
+:	FGEXEC	 MACRO(switch,msecs) where
+:	  switch - Enable/Disable (Default Enable)
+:	   msecs - Milliseconds for guaranteed foreground exection time
+:		   (1-1000, default 25ms.)
+:
+:	.....................................................................
+					:
+FGEXEC	MACRO(switch,msecs) [
+
+FORGND	EQ	switch	enable		:Default fg process enabled
+  IF	FORGND				:
+	RA	$A 10			:
+FGFREQ	EQ   	msecs  25		:Foreground process EXEC frequency
+   IF  .LE.(FGFREQ,1000)		:
+   ELSE .GE.(FGFREQ,1)			:
+   ELSE 					:
+FGFREQ	EQ	25			:
+	REMARK%%% FG_EXEC_FREQ is out of range.....forced to default 25ms
+	REMARK%%%
+   EI   ()				:
+  EI   (FORGND)				:
+	RA	0			:
+]					:
+					:
+:	.....................................................................
+:
+:	FROGTM - To turn Watchfrog timer On/OF, and to set the Watchfrog
+:		 Timer Timeout if it's ON.
+:
+:	FROGTM	MACRO(switch, secs) where
+:	switch  - ON/OFF
+:	secs    - Seconds to timeout (1-255, default 5 seconds)
+:
+:	.....................................................................
+					:
+FROGTM	MACRO(switch,secs) [
+
+	RA	$A 10			:
+  IF   \switch				:
+WFROG	EQ	switch	ON		:
+  EI   (switch)				:
+  IF	WFROG				:
+WFTIME	EQ	secs  5			:Set Watchfrog timeout timer
+  IF   .LE.(WFTIME,255)			:
+  ELSE .GE.(WFTIME,1)			:
+  ELSE					:
+WFTIME	EQ	5			:Default watchfrog timeout 5 secs
+	REMARK%%% WFTIME - is out of range...forced to default 5 seconds!
+	REMARK%%%
+  EI					:
+  EI   (WFROG)				:
+	RA	0			:
+]					:
+					:
+:	.....................................................................
+:
+:	HISTBL - To define the minimum number of entries possible in the
+:		 History Table.
+:	HISTBL	MACRO(nmbr) where
+:	nmbr -  Minimum number of entries in the History Table and
+:		(1-256d entries, default to 32d entries.)
+:
+:	.....................................................................
+					:
+HISTBL	MACRO(nmbr) [
+
+	RA	$A 10			:
+TDIAGN	EQ	nmbr 32			:Defines minimum no of entries
+  IF   .LE.(TDIAGN,256)			:
+  ELSE .GE.(TDIAGN,1)			:
+  ELSE					:
+TDIAGN	EQ	32			:Set to default 32d entries
+	REMARK%%% HISTSZ is out of range....forced to default 32d entries
+	REMARK%%%
+  EI					:
+	RA	0			:
+]					:
+					:
+:	.....................................................................
+:
+:	IPIBOARD - To set the parameters for an IPI board.
+:
+:	IPIBOARD MACRO(bdnmbr, ldslot, reset, dbgopt) where
+:	bdnmbr - Board number, used in the LUDEF macro
+:	ldslot - Slot containing the load data
+:	rstopt - Automatic reset option (either RESET or NORESET)
+:	dbgopt - Debug option (either DEBUG or RUN)
+:
+:	.....................................................................
+					:
+IPIBOARD   MACRO(bdnmbr,ldslot,rstopt,dbgopt) [
+  IF	\bdnmbr				:
+IPINUM	EQ	bdnmbr			:define IPI board number
+Q	EQ	bdnmbr			:
+   IF	\ldslot				:
+IPDLC|Q| EQ	ldslot			:define ISIS IPI download option
+   EI  -ldslot-				:
+   IF	\rstopt				:
+IPRES|Q| EQ	rstopt			:define ISIS IPI reset option
+   EI  -rstopt-				:
+   IF	\dbgopt				:
+IPBMG|Q| EQ	dbgopt			:define ISIS IPI debugging option
+   EI  -dbgopt-				:
+  EI    -bdnmbr-			:
+]					:
+					:
+:	.....................................................................
+:
+:	BOOTSTRAP - to reserve memory for BOOTSTRAP loading when set.
+:	
+:	BOOTSTRAP MACRO(switch) where
+:	switch - used to disable the option (YES or NO, default YES)
+:
+:	.....................................................................
+					:
+BOOTSTRAP MACRO(switch) [
+
+LBOOT	EQ   $A	switch YES		:Default bootstrap loading enabled
+
+]					:
+					:
+:	.....................................................................
+:
+:	MACHNS - To define type of machine to use.
+:
+:	MACHNS	MACRO(type,cpu, mac) where
+:	type -	ENGINE,MINI,MICRO,TSI,PICO,HDLC,PXL default ENGINE
+:	cpu  -  CPU2, CPU3, CPU4, CPU5
+:	mac  -	MAC1,MAC2,MAC3,MAC5, and default MAC2
+:
+:	.....................................................................
+					:
+MACHNS	MACRO(type,cpu,mac) [	
+	GL	ENGVER			:
+ENGVER	EQ	type ENGINE		:
+  IF   .EQ.(ENGVER,ENGINE)		:
+MACHIN	EQ	1			:Machine type is Tymnet Engine series
+  ELSE .EQ.(ENGVER,MINI)		:
+MACHIN	EQ	1			:Set to Tymnet ENGINE
+  ELSE .EQ.(ENGVER,MICRO)		:
+MACHIN	EQ	1			:Set to Tymnet ENGINE
+  ELSE .EQ.(ENGVER,HDLC)		:
+MACHIN	EQ	2			:Machine type = HDLC
+  ELSE .EQ.(ENGVER,TSI)			:
+MACHIN	EQ	3			:Machine type = TSI
+  ELSE .EQ.(ENGVER,PICO)		:
+MACHIN	EQ	4			:Machine type = PICO
+  ELSE .EQ.(ENGVER,PXL)
+MACHIN	EQ	5			:Machine type = PXL
+  ELSE					:
+MACHIN	EQ	ENGINE			:Default to Tymnet Engine
+  EI   -MACHIN-				:
+	GL	CPUVER			:
+CPUVER	EQ	cpu CPU3		:Default to CPU 3
+	GL	MACVER			:
+MACVER	EQ	mac MAC2		:
+ZITEL	EQ	0			:Default ZITEL is off
+MACV	EQ	0			:Default NO MACv
+ IF    .EQ.(ENGVER,MICRO)		:
+ ELSE  .EQ.(ENGVER,HDLC)		:
+ ELSE  .EQ.(ENGVER,TSI)			:
+ ELSE  .EQ.(ENGVER,PICO)		:
+ ELSE					:Engine type must be ENGINE or MINI
+  IF   .EQ.(MACVER,MAC1)		:
+  ELSE .EQ.(MACVER,MAC5)		:
+MACV	EQ	1			:
+  ELSE					:
+ZITEL	EQ	1			:
+  EI   (  )				:
+ EI    (  )				:
+					:
+]					:Machine Hardware Type
+					:
+:	.....................................................................
+:
+:	MACTRACE - To enable MAC trace facility when MAC2 or higher set.
+:
+:	MACTRACE MACRO(switch) where
+:	switch - YES, or NO and default NO.
+:
+:	.....................................................................
+					:
+MACTRACE MACRO(switch) [
+
+   IF  .EQ.(MACVER,MAC2)		:MAC trace used for MAC-2 only
+MACTRC	EQ   $A	switch  NO		:Default MAC trace facility disabled
+   ELSE					:
+MACTRC	EQ	NO			:
+	REMARK	%%MAC trace facility can be used for MAC-2 only, MACE TRACE disabled
+	REMARK	%
+   EI  (MACVER)				:
+
+]					:Set MAC trace facility 
+					:
+:	.....................................................................
+:
+:	MBOARD - To set explicit parameters for SIO motherboards
+:
+:	MBOARD	MACRO(bdnmbr, addr, nport) [
+:	bdnmbr	- board number used in LUDEF macro
+:	addr	- device address (default is bdnmbr - 0x80)
+:	nport	- maximum number of SIO ports (default is 16d)
+:
+:	.....................................................................
+					:
+MBOARD	MACRO(bdnmbr,addr,nport) [
+ IF	\bdnmbr				:
+Q	EQ   $A	bdnmbr			:
+MBRD|Q|	EQ   $A 1			:Set flag on
+M.NCARD EQ   $A M.NCARD+1		:Accumulate number of SIO motherboard
+   IF	\addr				:
+M.DA|Q|	EQ   $0	addr			:SIO motherboard device address
+   EI  -addr-				:
+M.NP|Q|	EQ   $A	nport 16		:No. of SIO port for this motherboard
+ ELSE					:
+	REMARK%%%Bad SIO motherboard number specification...cancelled out!%%%
+ EI    -bdnmbr-				:
+]					:Set parameter for SIO Mboard
+					:
+:	.....................................................................
+:
+:	MEMIO - To define the memory error logger address
+:
+:	MEMIO	MACRO(laddr, haddr) where
+:	laddr	- low  device address of logger (default 0xFF78)
+:	haddr	- high device address of logger (default 0xFF7F)
+:
+:	.....................................................................
+					:
+MEMIO	MACRO(laddr,haddr) [
+
+MEMIO1	EQ    $0 laddr 0FF78		:Set low  device address of logger
+MEMIO2	EQ    $0 haddr 0FF7F		:Set high device address of logger
+]					:
+					:
+:	.....................................................................
+:
+:	MONNET - To define number of bytes that can be sent to the Sup in a
+:		 2 minutes interval (default 0 which indicates no limits.)
+:
+:	.....................................................................
+					:
+MONNET	MACRO(bytes) [
+
+NETMON	EQ  $A bytes  0			:
+
+]					:
+					:
+:	.....................................................................
+:
+:	MXPMACHINE - To set parameter explicitly for MXP machine
+:		     configuration.
+:	MXPMACHINE MACRO(machine, nmachs, shaman) where
+:	machine	 - the number of this machine
+:	nmachs	 - maximum number of machines in the cluster
+:	shaman	 - the number of the SHAMAN host
+:
+:	.....................................................................
+					:
+MXPMACHINE MACRO(machine,nmachs,shaman) [
+   IF	\machine			:
+MXPNM	EQ	machine			:MXP machine indicator
+   EI  -machine-			:
+   IF	\nmachs				:
+NMACH	EQ	nmachs			:Maximum no. machines in the cluster
+   EI  -nmachs-				:
+   IF	\shaman				:
+HOST0	EQ	shaman			:Host number of SHAMAN
+   EI  -shaman-				:
+]					:Set parameter for MXP machine config
+					:
+:	.......................................................................
+:
+:	PASIZE - To set size of patch area for ISIS system.
+:
+:	PASIZE MACRO(spsize,kpsize) where
+:	spsize - Number of halfword for the size of system patch area
+:		 (Default size 100 hex HW)
+:	kpsize - Number of fullword for the size of kernel patch area
+:		 (Default size  63 hex FW)
+:
+:	.......................................................................
+					:
+PASIZE	MACRO(spsize,kpsize)		[
+	GL	KPASIZ,SPASIZ		:
+SPASIZ	EQ	spsize	100		:Default size of system patch area 100
+KPASIZ	EQ	kpsize	 63		:Default size of kernel patch area 63
+]					:
+					:
+:	.......................................................................
+:
+:	SHARED - To define sharable device(s).
+:	SHARED	 MACRO(device,ndev) where
+:	dev    - device type as of below:
+:		 (a) DK - Disc Unit
+:	   	 (b) MT - Tape Unit
+:	 	 (c) MS - MSC-1400 Disk
+:	ndev   - Number of device desired 
+:
+:	.....................................................................
+					:
+SHARED	MACRO(dev,ndev) [
+ IF    \dev				:
+  IF   .EQ.(dev,DK)			:
+NDISC	EQ $A ndev 0			:# of Disc
+  ELSE .EQ.(dev,MT)			:
+NTAPE	EQ $A ndev 0			:# of Tape
+  ELSE .EQ.(dev,MS)			:
+MSCDSK	EQ $A ndev 0			:# of MSC-1400 Disk
+  ELSE					:
+	REMARK %%% Invalid Shared Device Type...Cancelled out!!!%%%
+  EI   (dev)				:
+ ELSE					:
+	REMARK %%% No device type specified ... Cancelled out!!!%%%
+ EI    (dev)				:
+]					:
+					:
+:	.....................................................................
+:
+:	SYNCLINE - To define the number of SYNC lines.
+:
+:	SYNCLINE MACRO(nmbr) where
+:	nmbr   - the number of SYNC lines desired (default to 16d)
+:
+:	.....................................................................
+					:
+SYNCLINE MACRO(nmbr) [
+
+NSYNC	EQ  $A	nmbr 16			:No. of SYNC lines to support
+
+]					:
+					:
+:	.....................................................................
+:
+:	OVERLD	- To define the system overload conditions
+:
+:	OVERLD	MACRO(bgn, fgn, msecs) where
+:	bgn	- acceptable background overload count (default 10)
+:	fgn	- acceptable froeground overload count (default  1)
+:	msecs	- background cycle time considered overload (default 40)
+:
+:	.....................................................................
+					:
+OVERLD	MACRO(bgn,fgn,msecs) [
+
+BGACPT	EQ   $A	bgn   10		:Acceptable background overload count
+FGACPT	EQ   $A	fgn    1		:Acceptable Froeground overload count
+BGMIN	EQ   $A	msecs 40		:
+					:
+]					:Set system overload conditions
+					:
+:	.....................................................................
+:
+:	SPAMOPT	- To enable or disable the system performance analysis
+:		  monitor option.
+:	SPAMOPT   MACRO(opt,hst,trc) where
+:	opt	- YES or NO (default NO)
+:	hst	- Defines SPAM refernece host for SPAM display if SPAM is
+:		  enabled
+:	trc     - Enable or Disable SPAM Trace facility (default disabled)
+:
+:	.....................................................................
+					:
+SPAMOPT	MACRO(opt,hst,trc) [
+
+SPAM	EQ	opt  NO			:Set SPAM option
+  IF	SPAM				:
+SPMHST	EQ	hst  0			:
+SPMTRC	EQ	trc  OFF		:Enable/Disable SPAM trace facility
+  EI   (SPAM)				:
+
+]					:
+					:
+:	.....................................................................
+:
+:	DDTSYS	- To enable or disable the DDT "?SYS" option.
+:
+:	DDTSYS	MACRO(switch) where
+:	switch	- YES or NO (default NO)
+:
+:	.....................................................................
+					:
+DDTSYS	MACRO(switch) [
+
+SYSMON	EQ  $A switch  NO		:Set system monitor option DDT "SYS?"
+
+]					:
+					:
+:	.....................................................................
+:
+:	XPIBOARD - To set parameter in an XPI board configuration
+:
+:	XPIBOARD MACRO(addr, ldopt, rstopt, timeout) where
+:	addr   - device address of XPI board (default 0x88)
+:	ldopt  - automatic load option (LOAD, NOLOAD, default LOAD)
+:	rstopt  - automatic reset option (RESET, or NORESET, default RESET)
+:	timout - XPI watchdog timeout in seconds (default 10)
+:
+:	.....................................................................
+					:
+XPIBOARD MACRO(addr,ldopt,rstopt,timout) [
+
+XPIAD	EQ   $0	addr    88		:XPI device address
+XPIBUG	EQ	ldopt   LOAD		:XPI load  option
+XPISAV	EQ	rstopt  RESET		:XPI reset option
+XPITMO	EQ   $A timout  10		:XPI watchdog timeout interval
+					:
+]					:Set XPI board configuration
+					:
+
+	:.......................................................:
+	:							:
+	:		***********************			:
+	:		* Slot Level Macro(s) *			:
+	:		***********************			:
+	:							:
+	:.......................................................:
+
+
+:	.....................................................................
+:
+:	FROGD - To enable or disable the dismiss driven watchfrog timer.
+:
+:	FROGD	MACRO(switch) where
+:	switch- YES or NO (default NO)
+:
+:	.....................................................................
+					:
+FROGD	MACRO(switch) [
+
+S|slot.n|FRG	EQ   $A	switch  NO	:Set slot watchfrog timer option
+
+]					:
+					:
+:	.....................................................................
+:
+:	LICENS	- To specify the slot licensing information.
+:
+:	LICENS	MACRO(lic1, lic2) where
+:	lic1 -	license specifier (AUXCIR or SUSPEND)
+:	lic2 -	license specifier (AUXCIR or SUSPEND)
+:
+:	.....................................................................
+					:
+LICENS	MACRO(lic1,lic2) [
+
+Q	EQ	slot.n			:the current slot number
+Q1	EQ	lic1 0			:1st license option
+Q2	EQ	lic2 0			:2nd license option
+S|Q|LIC	EQ	Q1!Q2			:Set slot license information
+]					:
+					:
+:	.....................................................................
+:
+:	MACRO NAMING CONVENTIONS.
+
+:		All macros intended for internal use start with ".".
+
+
+:	RANGING MACROS.
+
+:	There are a number of macros which accept a set of RANGE parameters.
+:		The generic form for these macros is:
+
+:			MACRO(A,B,C-D,E,F-G)
+
+:	where A,B and E are single ports selected, and the ranges C through
+:		D and F through G are selected.
+
+: **	ERRLU(text,cont)	Output configuration error to local TTY
+: **	ENDERR(text)		End an error message
+
+:	Format will be:
+:	ERROR:	[CR:LF]!!!! **** text ****[CR:LF]
+:	ENDERR(text) will add ****[CR:LF] on the current line
+
+	GL	ERRCNT
+ERRCNT	EQ	0			:Number of errors so far
+
+ERRLU	MACRO(txt,cont) [
+ERRCNT	EQ	ERRCNT+1
+	REMARK	%!!!! ERROR **** txt
+	IF	cont 0
+	ELSE
+	 ENDERR
+	EI
+]
+
+ENDERR	MACRO(txt) [
+	REMARK	txt ****%
+]
+
+: **	.RANGE(LABEL,RX,MX,P)	Called to check a range of values
+
+:	P	may be a single # N, a range of #s Ni-Nj with 0=<Ni<Nj,
+:		or null
+:	RX	is radix of #s N
+:	MX	is max value of N (given in radix RX),
+:		range is 0 to $0 0FFFFFFFF
+:	LABEL	is a label for diagnostics
+
+:	returns QR = 0 if nothing to do,
+:	else returns QR = number of iterations..
+:			QI = first port to do.
+
+.RANGE	MACRO(LABEL,RX,MX,P) [
+Q	EQ	$`RX -(0/P+0)		:FOR .P. = "Ni-Nj", Q = -(0/Ni-Nj) = Nj
+					: else 0
+QI	EQ	$`RX Q+(P+0)		:FOR .P. = "Ni-Nj", Q=Nj, QI = Nj+(Ni-Nj) = Ni
+					:FOR .P. = "Ni", Q=0, QI = Ni
+					:FOR .P. = null,  QI = 0
+QQ	EQ	$`RX P $0 100000000	:FOR .P. = null, QQ = $0100000000
+QR	EQ	1
+	IF	-QI
+QI	 EQ	-QI
+QQ	 EQ	$0100000000
+	 ERRLU(LABEL`: Parameter -,1)
+	 NUMBER $`RX QI
+	 ENDERR( not positive)
+	EI
+	IF	$0 QQ&1FFFFFFFF%100000000	:IF .P. NOT NULL
+	 IF	QI-($`RX`MX-1)
+	  ERRLU(LABEL`: Parameter ,1)
+	  NUMBER $`RX QI
+	  REMARK	 greater than 
+	  NUMBER $`RX`MX-1; ENDERR
+QR	  EQ	0
+	 EI
+	 IF	Q			:IF M NOT NULL
+QR	  EQ	Q-QI+1
+	  IF	Q-($`RX`MX-1)
+	   ERRLU(LABEL`: Parameter ,1); NUMBER $`RX Q
+	   REMARK	 greater than ; NUMBER $`RX`MX-1; ENDERR
+QR	   EQ	0
+	  EI
+	  IF	QI-Q
+	   ERRLU(LABEL`: Range ,1); NUMBER $`RX QI
+	   REMARK	-; NUMBER $`RX Q; ENDERR( Backward)
+QR	   EQ	0
+	  EI
+	 EI
+	ELSE
+QR	 EQ	0
+	EI
+
+	KILL	Q,QQ
+]
+:
+:	.....................................................................
+:
+:	LUDEF - To specify the device physical entities associated with
+:		logical units.
+:	LUDEF	MACRO(putype, arg1, arg2) where
+:	putype	- port type (SYNC,ASYNC,SIO,PRINTER,IPI,TBUS,NULL)
+:	arg1	- argument one (used in SYNC,ASYNC,SIO,PRINTER, and IPI) for
+:		  		SYNC is the port number or port number range
+:		  		ASYNC is the group number or group number range
+:		  		SIO is the board number
+:		  		PRINTER is the printer number
+:		  		IPI is the board number
+:	arg2	- argument two (used in SIO only) for the SIO port number 
+:						or port number range
+:
+:       A range is expressed as a beginning number followed by a dash
+:       followed by the ending number with no embedded spaces in the 
+:       expression.  
+:		e.g.	LUDEF(SYNC,0-5), LUDEF(SIO,1,2-3)
+:		and 	LUDEF(ASYNC,0)  for single port number assignment
+:						
+:	.....................................................................
+					:
+LUDEF	MACRO(putype,arg1,arg2) [
+					:
+	RA	$A 10			:
+					:
+Q0	EQ	slot.n			:the current slot number to be used
+Q1	EQ	lu.num			:the current logical unit # is used
+					:
+
+  IF   .EQ.(putype,SYNC)		:
+	.RANGE(LUDEF,A,32,arg1)		:allow for range argument
+NLUS|Q0|	EQ	NLUS|Q0|+QR
+lu.num	EQ	lu.num+QR
+	RE QR
+S|Q0|L|Q1| EQ	$A SYN+QI		:
+
+:
+Q1	EQ	Q1+1			:increment lu #
+QI	EQ	QI+1			:increment port #
+	ER
+  ELSE .EQ.(putype,ASYNC)		:
+	.RANGE(LUDEF,A,16,arg1)		:allow for range argument
+NLUS|Q0|	EQ	NLUS|Q0|+QR
+lu.num	EQ	lu.num+QR
+NASYNG	EQ	NASYNG+QR		:set number of async groups
+					:
+	RE QR
+S|Q0|L|Q1| EQ	$0 ASN+QI		:
+
+:
+Q1	EQ	Q1+1			:increment lu #
+QI	EQ	QI+1			:increment port #
+	ER
+A.GROUP	EQ	$A 1			:Set ASYNC group flag
+  ELSE .EQ.(putype,SIO)			:
+	.RANGE(LUDEF,A,16,arg2)		:allow for range argument
+Q2	EQ	$A arg1			:
+    IF \MBRD|Q2|			:
+    ELSE				:
+	REMARK %%Fatal error...SIO motherboard undefined ... assembly killed!%
+	QUIT	1			:
+    EI (MBRD|Q2|)			:
+NLUS|Q0|	EQ	NLUS|Q0|+QR
+lu.num	EQ	lu.num+QR
+	RE QR
+S|Q0|L|Q1| EQ	$0 M.CARD+QI+(10*arg1)  :
+
+:
+Q1	EQ	Q1+1			:increment lu #
+QI	EQ	QI+1			:increment port #
+	ER
+  ELSE .EQ.(putype,PRINTER)		:
+lu.num	   EQ	lu.num+1		:Increament the current lu number
+S|Q0|L|Q1| EQ	$A PRN+arg1		:
+  ELSE .EQ.(putype,IPI)			:
+lu.num	   EQ	lu.num+1		:Increament the current lu number
+S|Q0|L|Q1| EQ   $A IPIDEV+arg1		:
+  ELSE .EQ.(putype,TBUS)		:
+lu.num	   EQ	lu.num+1		:Increament the current lu number
+S|Q0|L|Q1| EQ   TDEV 			:
+  ELSE					:
+lu.num	   EQ	lu.num+1		:Increament the current lu number
+S|Q0|L|Q1| EQ	NULL			:
+	REMARK %% Missing PU type definition...PU type is set to NULL!!!
+	REMARK %%
+  EI					:
+
+  IF      .LT.(NLU,NLUS|Q0|)		:Accumulate maximum number of lu
+NLU	   EQ	NLUS|Q0|		:that ISIS slot can be assigned?
+  EI      (NLU)				:
+					:
+	RA	$0 0			:
+					:
+]					:Slot mapping between PU's and LU's
+					:
+					:
+:	.....................................................................
+:
+:	MEMORY	- To define a slot maximum physical memory size
+:
+:	MEMORY	MACRO(kbytes) where
+:	kbytes	- a slot's physical core memory size (range 1 - 4096dKB
+:		  default to 1K bytes)
+:
+:	.....................................................................
+					:
+MEMORY	MACRO(kbytes) [
+
+	RA	$A 10			:
+SIZE	EQ	kbytes 	1		:
+S|slot.n|CORE	EQ	SIZE		:
+  IF   .LE.(SIZE,4096)			:
+  ELSE .GE.(SIZE,1)			:
+  ELSE					:
+S|slot.n|CORE	EQ	1		:
+	REMARK	%%%Slot memory size is out of range...forced to 1K bytes core memory!
+	REMARK	%%%
+  EI   -SIZE-				:
+	RA	0			:
+					:
+]					:Allocate slot core memory
+					:
+:	.....................................................................
+:
+:	SLOT  - To define the slot number
+:	Note  - Ths is the current slot number that is applicable to other
+:		slot level definitions following it.
+:	SLOT	MACRO(nmbr) where
+:	nmbr  - defines the current slot number
+:
+:	.....................................................................
+					:
+SLOT	MACRO(nmbr) [
+	RA	$A 10
+   IF   SUP&(nmbr+1)-slot.s		:
+    REMARK% Invalid slot number ... cancelled out %%%
+   ELSE
+	KILL	slot.n			:Kill the previous slot number
+slot.n	EQ	$A nmbr			:defines the current slot number
+Q	EQ	$A nmbr			:
+NLUS|Q|	EQ	0			:
+    IF  .GT.(nmbr,mxslot)		:
+mxslot	EQ	nmbr			:Re-calculate total slot number
+    EI (Total number of slot)		:
+lu.num	EQ	0			:Reset lu number for this slot
+   EI  (SUP and mxslot)			:
+	RA	0
+					:
+]					:
+					:
+:	.....................................................................
+:	
+:	SUPERVISOR - To indicate Supervisor and/or Supervisor slave slots in
+:		     the ISIS tymfile.
+:	SUPERVISOR   MACRO(switch,netid) where
+:	    switch - YES or NO (default NO)
+:	     netid - network identification number (deffault Tymnet)
+:
+:	.....................................................................
+					:
+SUPERVISOR MACRO(switch) [
+
+SUP	EQ	$A switch NO		:Supervisor is default to NO
+  IF	SUP				:
+slot.s	EQ	slot.n			:
+   IF  .EQ.(slot.s,mxslot)		:NSLOT -> number of slot is equal to
+mxslot	EQ	mxslot-1		:SUP slot = NSLOT-1
+   ELSE .LT.(slot.s,mxslot)		:
+	REMARK	%%% Invalid Supervisor and Slave slot number ... cancelled!!
+	REMARK  %%% 				
+					:
+SUP	EQ	NO			:Turn off Supervisor option
+   EI  (  )				:
+  EI   (SUP)				:
+  IF	SUP				:
+   IF	.EQ.(NETID,1)			:
+PUBNET	EQ	1			:
+   ELSE					:
+PUBNET	EQ	0			:
+   EI 
+  EI   (SUP)				:
+					:
+]					:
+					:
+:	.....................................................................
+:
+:	SUPSLV - To define options for  Supervisor and its slaves processes.
+:	SUPSLV	 MACRO(suputl, prodid, bgfreq) where
+:	N       - Supervisor and it's slave slot number
+:	prodid - Product ID for Supervisor and its slave slots
+:	bgfreq - background execution quantum in ticks for Supervisor and its
+:		 slave processes (default 3 ticks or 5 msec.)
+:
+:	.....................................................................
+					:
+SUPSLV	MACRO(N,prodid,bgfreq) [
+  if	SUP				:
+   if  \S.Q|N|				:
+    if	bgfreq				:
+S.Q|N|	EQ	$A bgfreq		:
+    ei (bgfreq)				:
+    if	prodid				:
+S.P|N|	EQ	$0 prodid		:
+    ei (prodid)				:
+   else					:
+	REMARK %%%Invalid Supervisor or Slave slots...cancelled!!!
+	REMARK %%%
+   ei  (S.Q|N|)				:
+  else					:
+	REMARK %%%Supervisor Option should be enabled first...cancelled!!!
+	REMARK %%%
+  ei   (SUP)				:
+					:
+]					:
+					:
+:	.....................................................................
+:
+:	TIMSLC	- To define a slot's foreground and background time slices.
+:
+:	TIMSLC	MACRO(bgmsec, fgmsec) where
+:	bgmsec	- background timeslice in milliseconds (default 50 msecs)
+:	fgmsec  - foreground timeslice in milliseconds (default nlus/3+5)
+:
+:	.....................................................................
+					:
+TIMSLC	MACRO(bgmsec,fgmsec) [
+
+Q	EQ   $A	slot.n			:the current slot number
+Q.BG|Q|	EQ   $A	bgmsec 50		:Background time slice in ms
+   IF	fgmsec				:
+Q.FG|Q| EQ   $A	fgmsec			:Foreground time slice in ms
+   EI  -fgmsec-				:
+					:
+]					:Set slot BG/FG time slice
+					:
+:	.....................................................................
+					:
+
+
+   t;]
