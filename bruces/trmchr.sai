@@ -1,0 +1,251 @@
+
+EXTERNAL BOOLEAN !SKIP!;
+
+REQUIRE "{}()" DELIMITERS;
+DEFINE ! = {COMMENT},
+       LH(I) = {((I) LSH -18)},
+       RH(I) = {((I) LAND '777777)},
+       XWD(I,J) = {(((I) LSH 18) LOR ((J) LAND '777777))},
+       UPTO = {STEP 1 UNTIL},
+       PAUSE(N) = {CALLI(N,'31)};
+
+
+SIMPLE INTEGER PROCEDURE GETTAB(INTEGER INDEX, TABLE);
+START!CODE
+        SETOM !SKIP!;
+        HRL 1,INDEX;
+        HRR 1,TABLE;
+        CALLI 1,'41;
+        SETZM !SKIP!;
+END;
+
+! Changes the specified bit in the SETLCH word.  Other
+        bits remain unchanged.
+;
+
+simple procedure SetLch (integer Port,Value,BitNo);
+begin "SetLch"
+    own integer T,PTR;
+    PTR _ point(1,T,BitNo);
+    start!code
+            define GETLCH = '051300000000;
+        define SETLCH = '051340000000;
+            MOVE 1,port;
+            MOVEM 1,T;
+            GETLCH T;
+            MOVE 1,value;
+            DPB 1,PTR;
+            SETLCH T;
+    end;
+end "SetLch";
+
+
+! Scans the filespec and breaks it into Name, Ext and PPN.
+        If a username is given, it is converted to a PPN.
+;
+
+procedure Parse (
+        string         File;
+        reference integer 
+                Name,
+                Ext,
+                PPN );
+begin "Parse"
+    Name _ cvfil (File, Ext, PPN);
+    if PPN = 0 then PPN _ calli(0,'24);        ! GETPPN;
+    if lh(PPN) = 0 then begin "UserName"
+        integer array LKB[0:3];                ! block for extended lookup;
+        integer Chan,Eof;
+        LKB[0] _ arrinfo(LKB,2);        ! size of LKB;
+        LKB[1] _ calli('16,'41);        ! MFD PPN;
+        LKB[2] _ PPN;                        ! addr of SIXBIT user name;
+        LKB[3] _ cvsix("UFD");                ! extension;
+        open (Chan_getchan, "DSK", '17,0,0, 0,0,Eof);
+        if Eof then return;                ! very, very ill;
+        chnior (Chan, LKB[0], 4);        ! lookup UFD to get PPN;
+        release (Chan);                        ! don't need the channel;
+        PPN _ LKB[2];                        ! save real PPN for user;
+    end "UserName";
+end "Parse";
+
+
+! Run another program (overlay).  Program name may contain
+        user name and program name, no device.
+;
+
+procedure Run (
+        string         File; 
+        integer Start(0) );
+begin "run"
+    integer array RNB[0:5];
+    Parse (File, RNB[1], RNB[2], RNB[4]);
+    RNB[0] _ cvsix("DSK");
+    RNB[3] _ RNB[5] _ 0;
+    calli ((Start lsh 18) + location(RNB[0]), '35);
+end "run";
+
+
+simple string procedure HardWare;
+  !  NOTE that this procedure must be used with a PRINT or OUTSTR statement ;
+  !  because it only returns a string, it does not print it out.            ;
+begin "HardWare"
+    integer FOO;
+    start!code 
+        setz; 
+        blt; 
+        hrrzm FOO; 
+    end;
+    return(case FOO of (                ! if KI resolve by BLT;
+        "KI-10",                        ! BLT is old style BLT;
+        (if gettab('20,'11) land '70000 ! if KL/KS resolve by APR #;
+            then "KS-10"                 ! KS is ['10000:'70000];
+            else "KL-10")                ! KL is [?:''07777];
+        )); 
+end "HardWare";
+
+
+DEFINE  TIC             = {((GETTAB(-1,-'24) LSH -24) LAND '17)},
+        OUT!BAUD        = {AUXCLV(-1,-1,'16)},
+        IN!BAUD         = {AUXCLV(-1,-1,'15)},
+        BAUD!300        = {2},
+        BAUD!1200       = {5},
+        EXIT            = {CALL(0,"EXIT")},
+        EVEN!PARITY     = {AUXCLV(-1,1,'17)},
+        EVEN            = {AUXCLV(-1,1,'17)},
+        PARITY          = {AUXCLV(-1,1,'17)},
+        NO!PARITY       = {AUXCLV(-1,0,'17)},
+        HALF            = {AUXCLV(-1,1,'20)},
+        FULL            = {AUXCLV(-1,0,'20)},
+        DEM             = {AUXCLV(-1,1,'63)},
+        NO!DEM          = {AUXCLV(-1,0,'63)},
+        WIDTH(X)        = {AUXCLV(-1,X,'27)},
+        LINE!WIDTH(X)   = {AUXCLV(-1,X,'27)},
+        REV!XON         = {AUXCLV(-1,1,'55)},
+        NO!REV!XON      = {AUXCLV(-1,0,'55)},
+        STALL           = {REV!XON},
+        NO!STALL        = {NO!REV!XON},
+        REM!XON         = {AUXCLV(-1,1,'53)},
+        NO!REM!XON      = {AUXCLV(-1,0,'53)},
+        BACKSPACE       = {AUXCLV(-1,1,'57)},
+        NO!BACKSPACE    = {AUXCLV(-1,0,'57)},
+        ERASE           = {AUXCLV(-1,1,'62)},
+        NO!ERASE        = {AUXCLV(-1,0,'62)},
+        FF!FILL(X)      = {AUXCLV(-1,X,'30)},
+        HT!FILL(X)      = {AUXCLV(-1,X,'31)},
+        SETA(X)         = {AUXCLV(-1,X,'21)},
+        SETB(X)         = {AUXCLV(-1,X,'22)},
+        SETC(X)         = {AUXCLV(-1,X,'23)},
+        CR!DELAY        = {AUXCLV(-1,1,'14)},
+        LF!DELAY        = {AUXCLV(-1,0,'14)};
+
+
+DEFINE  AUTO!LF         = {SETLCH(-1,0,16)},
+        NO!AUTO!LF      = {SETLCH(-1,1,16)},
+        CRLF            = {SETLCH(-1,0,10)},
+        NO!CRLF         = {SETLCH(-1,1,10)},
+        TAB             = {SETLCH(-1,1,14)},
+        NO!TAB          = {SETLCH(-1,0,14)},
+        FORM            = {SETLCH(-1,1,17)},
+        NO!FORM         = {SETLCH(-1,0,17)},
+        LC              = {SETLCH(-1,1,13)},
+        NO!LC           = {SETLCH(-1,0,13)};
+
+
+record!class RPGrec (
+        record!pointer(any!class) Link;
+        integer w1,w2,w3,w4,w5,w6,w7,w8,w9 );
+
+integer array                     RPGhdrs[1:8];
+record!pointer(RPGrec) array RPGrecs[1:8];
+record!pointer(RPGrec) RT!;
+
+!        SetMail        ("filespec")
+
+        Set the mailbox to the specified file.  The default is
+        to setup mailbox (log-dir)MAIL.BOX
+;
+
+procedure SetMail (string Spec("MAIL.BOX"));
+begin "SETMAIL"
+    RT! _ new!record(RPGrec);
+    RPGrec:link[rt!] _ RPGrecs[7];
+    RPGrecs[7] _ RT!;
+    RPGhdrs[7] _ xwd(7,6+rh(RPGhdrs[7]));
+    RPGrec:w1[rt!] _ 5;
+    Parse (Spec, RPGrec:w3[rt!],RPGrec:w4[rt!],RPGrec:w2[rt!]);
+end "SETMAIL";
+
+
+!        CTest
+
+        Create the RPG temp file
+;
+
+procedure RPGini (string file(null));
+begin "CTEST"
+   integer array desc[0:1];
+   integer array TmpBuf[0:511];
+   integer I,BufPtr,WC;
+   if length(file)=0 then begin "fromCore"
+    BufPtr _ 0;
+    for I _ arrinfo(RPGrecs,1) upto arrinfo(RPGrecs,2) do 
+      if RPGhdrs[i] then begin
+        RT! _ RPGrecs[i];
+        WC _ case i of (0,4,7,4,0,1,8,6,3);
+        TmpBuf[BufPtr]_RPGhdrs[i]; BufPtr_BufPtr+1;
+        while RT! do begin
+            arrblt ( TmpBuf[BufPtr], RPGrec:w1[rt!], WC );
+            BufPtr _ BufPtr + WC;
+            RT! _ RPGrec:link[rt!];
+        end;
+      end;
+   end "fromCore"
+   else begin "fromDisk"
+        integer Ch,Eof;
+        open (Ch_getchan,"DSK",'14,2,0, 0,0,Eof);
+        lookup (ch,file,eof);
+             if eof then usererr(eof,2,"?file "&file&" not found","C");
+        arryin (Ch,TmpBuf[0],arrinfo(TmpBuf,0));
+        if not eof then usererr(0,0,"?file "&file&" too big","C");
+        BufPtr _ rh(EOF);
+        release (Ch);
+   end "fromDisk";
+   desc[0]_cvsix("RPG");
+   desc[1]_(-bufptr lsh 18)+location(tmpbuf[0])-1;
+   call((3 lsh 18)+location(desc[0]),"tmpcor");
+   if not !SKIP! then begin "dsk"
+      integer Ch,Eof;
+      string  F;
+      ch _ getchan;
+      open(ch,"DSK",'14,0,1, 0,0,EoF);
+      F _ ("000"&cvs(call(0,"PJOB")))[inf-2 to inf]&"RPG.TMP";
+      enter(ch,F,EoF);
+      if EoF then usererr(Eof,2,"can't enter "&F,"C");
+      arryout(Ch,tmpbuf[0],bufptr);
+      release(Ch);
+   end "dsk";
+end "CTEST";
+
+
+!        SetAlp sets alternate logout program name in monitor
+
+        SetAlp (File)
+                or
+        SetAlp
+;
+
+simple boolean procedure SetALP (string File(null));
+begin "SetALP"
+    own integer array Foo[0:2];
+    if length(File)
+        then Parse (File, Foo[2], Foo[0], Foo[1])
+        else begin
+            Foo[2] _ calli('777777000003,'41);        ! JBTNAM;
+            Foo[1] _ calli(-'25,'41);                ! JBTFPN;
+        end;
+    Foo[0] _ cvsix("DSK");
+    calli (location(Foo[0]),-'127);        ! tell monitor what to run;
+    return (!SKIP!);                        ! fails if one already set;
+end "SetALP";
+
+    
