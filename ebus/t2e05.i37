@@ -1,0 +1,3257 @@
+
+
+	SUBTTL	TIIINT
+
+:		***** ***** ***** ***** *   * *****
+:		  *     *     *     *   **  *   *
+:		  *     *     *     *   * * *   *
+:		  *     *     *     *   *  **   *
+:		  *   ***** ***** ***** *   *   *
+
+
+: ******************************************************************
+: **                  PROPRIETARY INFORMATION                     **
+: **                                                              **
+: **  This  source  code  listing  constitutes  the proprietary   **
+: **  property of MDC-TYMNET.  The recipient, by receiving this   **
+: **  program listing, agrees that neither this listing nor the   **
+: **  information disclosed herein nor any part thereof shall be  **
+: **  reproduced or transferred to other documents or used or dis-**
+: **  closed to others for manufacturing or for any other purpose **
+: **  except as specifically authorized in writing by MDC-TYMNET. **
+: ******************************************************************
+
+::#####################################################################
+::
+::	MODULE:		T I I I N T
+::
+::	FUNCTION:	TYMNET-II NODE CODE INITIALIZATION FILE
+::
+::	SUBTTLS:
+::		OPTION MACRO
+::		Link MACROs
+::		Xray related MACROs
+::		ISIS/NC MACROs
+::		Gateway MACROs
+::		Internal MACROs
+::
+::#####################################################################
+
+	RA	0
+
+:	INITIALIZATION FILE VERSION NUMBER
+INITVR  EQ	$8 37			:tested in SHARE for compatibility
+
+:	CONFIGURATION CONSTRAINTS
+MAXLNK	EQ	$A 128			: Maximum number of links supported
+MAXLIN	EQ	$A 128			: Maximum number of lines supported
+	
+:	REQUIRED SYMBOLS FOR TYMFILE DECLARATIONS
+SAT	EQ	$0 0A0		:INDICATE 'REAL' SATELLITE LINK
+TER	EQ	$0 80		:DEFAULT LINK TYPE IS TERRESTRIAL
+MS	EQ	$0 1F		:REPORTING VALUE FOR MEMORY SHUFFLER SPEED
+TIWS8	EQ	$0 40		:T-I WSIZ 8 LINK
+A.BP	eq	$0 100		:indicate link is to request active bp
+SWCKSM	eq	$0 200		:indicate link is to send 
+
+::*********************************************************************
+::
+::	DUMMY DEFINITIONS FOR SYMBOLS AND MACROS LIKELY TO APPEAR IN AN
+::	ISIS TYMFILE. PREVENTS ASSEMBLY ERRORS...
+::
+::*********************************************************************
+
+SYN	EQ	0
+ASN	EQ	0
+PRN	EQ	0
+XSIO	EQ	0
+M.CARD	EQ	0
+TL.AUX	EQ	80000000
+TL.SUS	EQ	1
+DK	EQ	0
+MT	EQ	0
+:MS	EQ	0
+RD	EQ	0
+WR	EQ	0
+AT	EQ	0
+SS	EQ	0
+S.REF	MACRO(P)[EQ  $A P
+]
+NAN.M   MACRO(P) [ ]            :nano engine ###sdw
+A.REF	MACRO(P) [ ]
+P.REF	MACRO(P) [ ]
+T.REF	MACRO(P) [ ]            :###sdw
+IP.REF	MACRO(P) [ ]            :###sdw
+X.REF	MACRO(P) [ ]
+M.REF	MACRO(P,Q)[EQ  $0 10000+10*P+Q
+]
+SGU.DEF	MACRO(P) [ ]
+SGU.REF	MACRO(P) [ ]
+BITCH	MACRO(P) [ ]		:###OAS
+BAUD    MACRO(P)        []
+SYSCHK	MACRO(P) [ ]		:###OAS
+DEFEXT	MACRO(P) [ ]		:###OAS
+PCCMOP		MACRO(P) [ ]		: for ISIS 14
+SHARED		MACRO(P) [ ]		: for ISIS 14
+SYNCLINE	MACRO(P) [ ]		: for ISIS 14
+SYSOPT		MACRO(P) [ ]		: for ISIS 14
+SYSMIS		MACRO(P) [ ]		: for ISIS 14
+XPIBOARD	MACRO(P) [ ]		: for ISIS 14
+mboard	MACRO(P) [ ]		: for ISIS 14
+asyncboard	MACRO(P) [ ]		: for ISIS 14
+bootstrap	MACRO(P) [ ]		: for ISIS 14
+syscon	MACRO(P) [ ]		: for ISIS 14
+sysjob	MACRO(P) [ ]		: for ISIS 14
+ddtsys	MACRO(P) [ ]		: for ISIS 14
+dspchn	macro(P)[
+ndp	eq	$a P 256
+]
+fgexec	MACRO(P) [ ]		: for ISIS 14
+frogtm	MACRO(P) [ ]		: for ISIS 14
+histbl	MACRO(P) [ ]		: for ISIS 14
+mactra	MACRO(P) [ ]		: for ISIS 14
+memo	MACRO(P) [ ]		: for ISIS 14
+msring	MACRO(P) [ ]		: for ISIS 14
+monnet	MACRO(P) [ ]		: for ISIS 14
+mxpmac	MACRO(P) [ ]		: for ISIS 14
+overld	MACRO(P) [ ]		: for ISIS 14
+pasize	MACRO(P) [ ]		: for ISIS 14
+mscm	MACRO(P) [ ]		: for ISIS 14
+scsi	MACRO(P) [ ]		: for ISIS 14
+blksiz	MACRO(P) [ ]		: for ISIS 14
+nxludf	MACRO(P) [ ]		: for ISIS 14
+histsz	MACRO(P) [ ]		: for ISIS 14
+tymlink	macro(n,w,st,sp)[	tiilnk(n,,w,st,sp)]
+frogd	MACRO(P) [ ]		: for ISIS 14
+timslc	MACRO(P) [ ]		: for ISIS 14
+supslv	MACRO(P) [ ]		: for ISIS 14
+DSCSWT	MACRO(P) [ ]		: for ISIS 16
+:	highest slot number possible
+DSCSLT	MACRO(P) [
+dcslot	eq	$a P 0 ]	: for ISIS 16
+
+	SUBTTL	TIIINT (OPTION MACRO)
+
+::*********************************************************************
+::
+::	CREATE SYMBOLS FOR DEFINING DEBUG OPTIONS
+::
+::*********************************************************************
+
+ALL	EQ	$00FFFF	:ENABLE ALL DEBUGGING AND TEST OPTIONS
+TRC	EQ	1	:JUMP TRACE WITH UPSW
+CIR	EQ	TRC^1	:XRAY DISPLAYS ALL CIRCUITS BUILT AND ZAPPED
+TSN	EQ	CIR^1	:TRACE SYNC LINE OPERATIONS
+STP	EQ	TSN^1	:STOP ON CRASH (CRSTOP EQ 1 OPTION)
+DBG	EQ	STP^1	:ISIS GENERAL DEBUG OPTION
+AHS	EQ	DBG^1	:ISIS OPTION
+MHS	EQ	AHS^1	:ISIS OPTION
+:	SPARE BIT POSITION RESERVED FOR ISIS FUTURE OPTION
+BOT	EQ	MHS^2	:STOP ON CRASH AND DON'T UPDATE WATCHDOG TIMER
+:                         (CRSTOP EQ 2 OPTION)
+
+BTR	EQ	BOT^1	:PATACHABLE OPTION FOR BUFFER TRACE
+DEB	EQ	BTR^1	:GENERAL NODE CODE DEBUG OPTION
+BUB	EQ	DEB^1	:BUBB-NET BUBBLE, SHRINK OPTION
+
+:	THE ABOVE OPTIONS REMAIN DEFINED TO PREVENT ASSEMBLY ERRORS SO
+:	THAT OBSOLETE DEFINITIONS WILL BE OVERRIDDEN BY DEFAULTS.
+
+:	NODE OPTIONS ARE SPECIFIED WITH THE OPTION MACRO USING SYMBOLS
+:	DEFINED HERE...
+:	ALL OPTIONS ARE OR'D INTO SYMBOL 'O.FLAG'
+
+	IF	1-\O.FLAG
+O.FLAG	EQ	4	:MAKE TLEV OPTION DEFAULT###OAS ???TZ SEE BELOW
+	EI	:1-\O.FLAG
+
+UTRC	EQ	1	:UPSW JUMP TRACE OPTION
+CIRD	EQ	TRC^1	:CIRCUIT DISPLAY FOR XRAY
+TSN	EQ	CIRD^1	:TRACE SYNC/SIO EVENTS
+TLEV	EQ	TSN	:NEW SYMBOL FOR TSN
+BFTR	EQ	TLEV^1	:BUFFER TRACE
+DBUG	EQ	BFTR^1	:GENERAL DEBUG CONSISTENCY TESTS
+BUBB	EQ	DBUG^1	:BUB-NET BUBBLE OPTION
+NTLV	EQ	BUBB^1	:DISABLE TLEV TRACE OPTION
+SUPW	EQ	NTLV^1	:Enable SUPWAT for monitoring sup stuff
+LOPT	EQ	SUPW	:LAST DEFINED OPTION
+OALL	EQ	$0 0FFFF	:SET ALL DEBUGGING-TYPE OPTIONS
+
+:	CRASH STOP/RESTART OPTIONS, USES UPPER 16 BITS OF O.FLAG
+
+NRSH	EQ	10000	:NODE RESTART ON HARDWARE CRASH
+NRSS	EQ	NRSH^1	:NODE RESTART ON SOFTWARE CRASH
+IRSH	EQ	NRSS^1	:ISIS RESTART ON HARDWARE CRASH
+IRSS	EQ	IRSH^1	:ISIS RESTART ON SOFTWARE CRASH
+NHTH	EQ	IRSS^1	:NODE HALT ON HARDWARE CRASH
+NHTS	EQ	NHTH^1	:NODE HALT ON SOFTWARE CRASH
+IHTH	EQ	NHTS^1	:ISIS HALT ON HARDWARE CRASH
+IHTS	EQ	IHTH^1	:ISIS HALT ON SOFTWARE CRASH
+NBTH	EQ	IHTS^1	:NODE GO TO BOOT ON HARDWARE CRASH
+NBTS	EQ	NBTH^1	:NODE GO TO BOOT ON SOFTWARE CRASH
+IBTH	EQ	NBTS^1	:ISIS GO TO BOOT ON HARDWARE CRASH
+IBTS	EQ	IBTH^1	:ISIS GO TO BOOT ON SOFTWARE CRASH
+NSTH	EQ	IBTS^1	:NODE STOP ON HARDWARE CRASH
+NSTS	EQ	NSTH^1	:NODE STOP ON SOFTWARE CRASH
+REBLD	EQ	NSTS^1
+
+::*********************************************************************
+::
+::	MACRO:		OPTION
+::	FUNCTION:	FOR EASY DEFINITION OF DESIRED DEBUG OPTIONS.
+::	OPTION MACRO WILL USE VALUES FROM ABOVE SYMBOLS TO BE OR'D INTO
+::	O.FLAG, WHICH DEFINES ALL DEBUGGING AND CRASH ACTION OPTIONS.
+::
+::*********************************************************************
+
+OPTION	MACRO(P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16) [
+Q1	EQ	P1
+Q2	EQ	P2
+Q3	EQ	P3
+Q4	EQ	P4
+Q5	EQ	P5
+Q6	EQ	P6
+Q7	EQ	P7
+Q8	EQ	P8
+Q9	EQ	P9
+Q10	EQ	P10
+Q11	EQ	P11
+Q12	EQ	P12
+Q13	EQ	P13
+Q14	EQ	P14
+Q15	EQ	P15
+Q16	EQ	P16
+Q	EQ	1
+	RE	$A 16
+O.FLAG	EQ	O.FLAG!Q|$AQ|
+Q	EQ	Q+1
+	ER
+	]
+
+	SUBTTL	TIIINT (Link MACROs)
+
+
+::*********************************************************************
+::
+::		TYMNET - II LINK MACROS
+::
+::*********************************************************************
+::
+::	Link Macro component PRIMATIVE Macro definitions
+::
+::	MACRO	FUNCTION			PARAMETERS
+::	=====	=============================	========================
+::	.SPED.	Defines and matches link speed	MATCH = dec# to match against
+::
+::	.DEFNQ.	Defines var N and Q
+::
+::	.DUPCK.	Checks for previosly defined Neighbor number 
+::		which would make this a duplicate.
+::
+::	.NEBOR.	Sets up Neighbor parameters 	NBR   = neighbor # (octal)
+::		such as: NEI, NGRP, WSIZ, 	WSZ   = window size
+::		KSAT, and KNSP.
+::
+::*********************************************************************
+
+::*********************************************************************
+::
+::	MACRO:		.SPED.(MATCH,VAL)
+::	FUNCTION:	Internal use macro for defining link speeds
+::			(invoked from TIILNK)
+::	WHERE:
+::	match -	the (DECIMAL) number to match against.
+::	val -	The value to set KNSPn to.
+::	ksp -	The link speed entered (to be matched against).
+::
+::*********************************************************************
+
+.SPED.	MACRO(MATCH,VAL)	[
+	IF $A 1-(KSP%MATCH)
+KNSP|$A N| EQ  $0 VAL			:If a valid speed is configured 
+Q	   EQ 0				:store it, else notify user that
+	EI				:speed value is ignored pending
+	]				:measurement.
+
+.DEFNQ.	MACRO	[
+	KILL N			:Find next undefined link fields
+Q	EQ	MAXLNK-1
+	RE	MAXLNK
+	IF	1-\NEI|$AQ|	:This neighbor defined?
+N	EQ	Q
+	EI	:1-\NEI|$AQ|
+Q	EQ	Q-1		:Look at next link fields. N will be
+	ER			:assigned all values from MAXLNK-1
+				:down to the lowest undefined link
+				:fields.
+
+	IF	1-\N		:No room for this one!
+	REMARK %TOO MANY LINK DESCRIPTORS!%
+	EI	:1-\N
+	]
+
+
+.NEBOR.	MACRO(NBR,WSZ,SATL,SPD,NGR,RTRSPD)	[
+	IF	QQ
+NEI|$AN| EQ	$8 NBR		:Neighbor number for TIILINK 
+
+	IF	$A WSZ
+WSIZ|$AN| EQ    $A WSZ          :our window size unless error
+	IF	$A WSZ-128	:WSIZ .GT. 128
+	REMARK %WSIZ MUST BE 128 OR LESS - SETTING TO 128 FOR LINK 
+	NUMBER $A N
+	REMARK   NEIGHBOR 
+	NUMBER $8 NBR
+	REMARK	%
+WSIZ|$AN| EQ	$A 128		:reduce WSIZ to 128			
+	EI	:$A 128-(WSZ-1)						
+	ELSE	:NOT $A WSZ
+WSIZ|$AN| EQ	$A 8		:Default window size to 8
+	EI	:$A WSZ
+
+XSAT    EQ      SATL		:for TII links
+
+
+        if      xsat&$00c50     :Is it a valid SAT parameter
+                                :xsat&$0c50    No complain and kill assembly
+
+        REMARK % ***SATELITE FIELD PARAMETER IS INVALID IN TIILNK MACRO FOR NODE
+        NUMBER $8 NBR
+        REMARK ***%
+        REMARK         ***ASSEMBLY KILLED***%
+        KILLER(1)
+
+        ELSE                     :xsat&$0c50  OK
+
+XABP|$aN| eq	XSAT&A.BP	:get active bp indicator
+       if	xabp|$aN|
+aplybp	eq	1		:set enable BP on if a link requests it	
+       ei	:
+
+XSWC|$aN| eq	XSAT&SWCKSM	:get request to do software checksums
+       if	XSWC|$aN|
+S.CKSM	eq	1		:enable software checksum transmit logic
+       ei	:
+
+xsat	eq	xsat&$00e0	:mask out extraneous bits
+	IF	XSAT
+KSAT|$AN| EQ	$0 XSAT
+	ELSE	:NOT XSAT (Default value)
+KSAT|$AN| EQ	$0 80
+	EI	:XSAT
+
+	EI	:xsat&$0c50
+
+KSP	EQ	$A SPD 		:Value of SPD argument
+
+	IF	KSP
+Q	EQ	1		:Reset to 0 if valid speed encountered
+
+:	ISIS uses 'MS' value in its init file, so 'MS' may be defined
+:	to something besides the 1F which we declare. If a user defines a
+:	TIILNK with MS defined by ISIS, the value will be 200 (512d)...
+	.SPED.(31,1F)		: Memory Shuffler Speed
+	.SPED.(512,1F)		: Memory Shuffler Speed Kludge
+	.SPED.(256,6A)		:256Kb Speed
+	.SPED.(192,50)		:192Kb Speed
+	.SPED.(128,35)		:128Kb Speed
+	.SPED.(72,1E)		: 72Kb Speed
+	.SPED.(64,1B)		: 64Kb Speed
+	.SPED.(56,17)		: 56Kb Speed
+	.SPED.(48,14)		: 48Kb speed
+	.SPED.(38,10)		: 38.4Kb speed
+	.SPED.(28,0C)		: 28.8Kb speed
+	.SPED.(19,08)		: 19.2KB
+	.SPED.(14,06)		: 14.4Kb Speed
+	.SPED.(9,04)		:  9.6Kb Speed
+	.SPED.(7,03)		:  7.2Kb speed
+	.SPED.(4,02)		:  4.8Kb speed
+	.SPED.(2,1)		:  2.4Kb speed
+
+	IF	Q		:Speed parameter not heeded...report.
+	REMARK % ***LINK SPEED PARAMETER 
+	NUMBER $A KSP
+	REMARK ---IGNORED FOR LINK 
+	NUMBER $A N
+	REMARK   NEIGHBOR 
+	NUMBER $8 NBR ;		:Only high speed specifications are 
+	REMARK ***%;		:defined since low speed line speeds
+	EI	:Q		:are calculated correctly.  Tymfile
+				:spec affects Probe link and line.
+	EI	:KSP
+
+qqqngr  eq      ngr
+        if      1-qqqngr
+kngr|$AN|       eq      $A 8	:default of 8 if not there
+        else    :valid value
+       if       $a ngr&7
+    remark%%Tymnet II requires groups to be a multiple of 8.  Rounding down to 
+        number $a ((ngr!7)+1)-8
+        remark%%
+kngr|$AN| eq    ((ngr!7)+1)-8
+       else     :ngr okay
+
+kngr|$AN| eq    $a ngr
+        ei      :ngr&7
+        ei
+	EI	:QQ
+qqq	eq	rtrspd 0	:if not present then 0
+qqq	eq	$0 qqq&7fff	:handle if negative
+	if	$0 qqq-$01f
+qqq	eq	$0 1f
+	ei
+rdel|$aN| eq	qqq
+	]
+
+tiicnt  eq      0               :no tiilinks yet
+atc	eq	1		:atcs get default link retrans pacing as if
+				:line speed 2.4
+
+::*********************************************************************
+::
+::	MACRO:		TIILNK(NEI,[NGR],[WSZ],[SATL],[SPD],[RTRSPD])
+::	FUNCTION:	For definition of TYMNET-II Links
+::
+::	NBR is the neighbor number (in octal). no default.
+::	NGR is the number of groups on the link. Default is 8.
+::	WSZ is the link's window size. Default is 8.
+::	SATL is the link type, SAT or TER. Default is TER.
+::	KSP is the link speed to be reported.
+::	RTRSPD is the desired line speed to be used for the retrans pacing
+::*********************************************************************
+
+
+TIILNK	MACRO(NBR,NGR,WSZ,SATL,SPD,RTRSPD)	[
+	IF	$8 NBR-2000		:not allow neighbor# < 2000	###cwc
+
+.TII|TIICNT|	MACRO[
+	.DEFNQ.				:Find undefined descriptor
+	.DUPCK.(NBR)			:and make sure not duplicate.
+	.NEBOR.(NBR,WSZ,SATL,SPD,NGR,RTRSPD)	:Now make link definitions
+]
+TIICNT	EQ	TIICNT+1		:Increment count of TII links
+
+	ELSE	:NBR<2000
+	REMARK	% ***Illegal neighbor number found: 
+	NUMBER	$8 NBR
+	REMARK	 --this link is ignored!%
+	EI	:NBR-2000		:				###cwc
+
+	]
+
+
+.DUPCK.	MACRO(NEBR)	[
+QQ	EQ	$8 NEBR			:Is this neighbor previously
+					:defined?  If not, allow normal
+	IF	N			:link definitions to proceed.
+Q	EQ	0
+	RE	N
+	IF	\NEI|$AQ|
+	IF	1-(QQ%NEI|$AQ|)
+QQ	EQ	0			:Duplicate neighbor 
+	EI	:1-(QQ%NEI|$AQ|)	:or NAD pass-2 problem.
+	EI	:\NEI|$AQ|
+Q	EQ	Q+1
+	ER
+
+
+	EI	:N
+	]
+
+
+::*********************************************************************
+::
+::		*   * ****  ***** *   *  ***
+::		*  *  *   *   *   **  * *   *
+::		***   ****    *   * * * *
+::		*  *  *  *    *   *  ** *  **
+::	MACRO:	*   * *   * ***** *   *  ****
+::
+::	Used to specify the number of KIO ports and KIO ring size in the
+::	Split-Sup configuration.
+::
+::  KRING(numku,krsiz)
+::	where:
+::	  numku	- number of Kernel users (split-sup default = 24)
+::	  krsiz	- size of KIO ring (default 64d)
+::
+::*********************************************************************
+KRING	MACRO(numku,krsiz)	[
+SUPNKU	EQ	$A numku 24 		: default to 24
+KBSZ	EQ	$A krsiz 64		: default to 40x
+				]
+
+::*********************************************************************
+::
+::		*   * ****   **** ****  *   *  ***
+::		** ** *   * *     *   * **  * *   *
+::		* * * ****   ***  ****  * * * *
+::		*   * *   *     * *  *  *  ** *  **
+::	MACRO:	*   * ****  ****  *   * *   *  ****
+::
+::	Used to specify the address and logical units for the SIO Ring copy
+::	motherboard.  
+::
+::  MBSRNG(mblu,addr,mach)
+::	where:
+::	  mblu	- logical unit of Motherboard (0-7)
+::	  addr	- Motherboard physical address (90-97)
+::	  mach	- not used by NodeCode
+::		  used by ISIS for the Neighbor machine on this device (1-8)
+::
+::*********************************************************************
+
+MBSRNG	MACRO(mblu,addr,mach)	[
+SRMBLU	EQ	mblu 0			: default to 0
+	WAR.RG(SRMBLU,0,7,MBSRNG)	: must be in range 0-7)
+SRMADR	EQ	addr 90 		: default to 90
+	WAR.RG(SRMADR,90,97,MBSRNG)	: must be in range 90-97)
+				]
+
+::*********************************************************************
+::
+::		 ****  *   *  ****  **** ***  *       * *  ****   ***  ***
+::		*      *   *  *   * *    *  *  *     *  * *      *   * *  *
+::		 ****  *   *  ****  **** ***    *   *   *  ****  *   * ***
+::		     * *   *  *     *    *  *    * *    *      * *   * *  *
+::	MACRO: 	 ****   ***   *     **** *   *    *     *  ****   ***  *   *
+::
+::	Used to specify the SUPERVISOR configuratoion.
+::
+::  SUPERVISOR(norsup,splsup,nsup)
+::	where:
+::	  norsup - select if NORMAL SUP is configured (OFF/ON, default OFF)
+::	  splsup - select if SPLIT SUP is configured (OFF/ON, default OFF)
+::	  nsup	- number of SUP ports (optional, decimal, default = 384)
+::
+::*********************************************************************
+SUPERVISOR	MACRO(norsup,splsup,nsup)	[
+SUP	EQ	1		: so sup's Ifile knows this is a NC gen
+SPLIT	EQ	$A splsup 0	: ...then enable split supervisor,
+NSP	EQ	$A nsup 384	: number of Sup ports
+]
+
+::*********************************************************************
+::
+::		*   * ****  ***** *   *  ***
+::		*   * *   *   *   **  * *   *
+::		*   * ****    *   * * * *
+::		*   * *  *    *   *  ** *  **
+::	MACRO:	 ***  *   * ***** *   *  ****
+::
+::	URING  - Used to specify the Split-Sup ring configuration.
+::
+::  URING(slu,mblu,sirsiz,sorsiz)
+::	where:
+::	  slu	 - Slot SIO Ring pair logical unit (0-2)
+::	  mblu	 - SIO ring motheroard logical unit address
+::	  sirsiz - SIO RING input ring size (16-8190d bytes)
+::	  sorsiz - SIO RING output ring size (16-8190d bytes)
+::
+::*********************************************************************
+URING	MACRO(slu,mblu,sirsiz,sorsiz)	[
+ IF		.EQ.(S.NUM,0)		: Slot 0 ONLY
+IRNGSZ	EQ	$A sirsiz 0
+ORNGSZ	EQ	$A sorsiz 0
+    IF		IRNGSZ
+	war.rg(IRNGSZ,10,1ffe,URING)
+    EI
+    IF		ORNGSZ
+	war.rg(ORNGSZ,10,1ffe,URING)
+    EI
+
+     IF		.EQ.(slu,0)		: correct RLU for DATA Ring (0 ONLY)
+       IF	orngsz
+	 IF .NEQ.(irngsz,orngsz)
+	merhed
+	REMARK	%Illegal mismatch in size of input and output rings for
+	REMARK	%DATA ring (RLU 0) in URING-macro. Sizes for DATA-rings must be same.
+	METAIL
+	 EI
+       EI
+SUPBSZ	EQ	irngsz			: Rings are the same size
+     ELSE	.EQ.(slu,1)		: correct RLU for BP Ring (1 ONLY)
+SIBPSZ	EQ	irngsz			: maximum input ring size, and
+SOBPSZ	EQ	orngsz			:  maximum output ring size.
+     ELSE	.EQ.(slu,2)		: correct RLU for CONTROL Ring (2 ONLY)
+SICSZ	EQ	irngsz			: maximum input ring size, and
+SOCSZ	EQ	orngsz			:  maximum output ring size.
+     ELSE
+	merhed
+	REMARK	%% Split-SUP ring L.U. assignment must assign RLUs 0-2 for slot 0...
+	REMARK	%    the line ``URING(slu,mblu,sirsiz,sorsiz)'' is IGNORED!%%
+	METAIL
+     EI
+ EI		:.EQ.(S.NUM,0)
+	kill	orngsz,irngsz
+]
+
+
+        SUBTTL  TIIINT (Xray related MACROs)
+ 
+::*********************************************************************
+::
+::	MACRO:		XRYMSG(MESSAGE)
+::	FUNCTION:	FOR PROVIDING AN XRAY WARNING MESSAGE
+::	WHERE:
+::	MESSAGE IS THE DD XRAY WARNING MESSAGE
+::	TO BE DISPLAYED TO NEW XRAY USERS WHEN THEY LOG ON.
+::	MESSAGE CANNOT CONTAIN COMMAS, DOUBLE QUOTES OR BACKSLASH
+::	( ,  "  / )
+::
+::*********************************************************************
+
+XRYMSG	MACRO(MESSAGE) [
+XRYMES	EQ	1		:INDICATE MESSAGE PROVIDED
+XRYMS0	MACRO[
+	SC	/"0D"0A MESSAGE/
+]
+]
+
+::*********************************************************************
+::
+::	MACRO:		GG(PRIVILEGE,XRY-ISIS FLAG,USERNAME,OVERRIDE,TARGET)
+::	FUNCTION:	FOR DEFINITION OF XRAY GOODGUY LIST
+::	WHERE :
+::	PRIVILEGE IS THE USERS PRIVILEGE CAPABILITY: 0 = NO PRIVILEGE,
+::		1 = PRIVILEGED, 2 = SUPER PRIVILEGED
+::
+::	XRY-ISIS FLAG, MUST BE ZERO FOR XRAY GOODGUY LIST ENTRIES,
+::		USED FOR ISIS GG MACRO COMPATABILITY
+:: 
+::	USERNAME IS THE VALIDATED USERNAME (FIRST 12(D) CHARACTERS)
+::
+::	OVERRIDE IS THE OVERRIDE CAPABILITY LEVEL, THE HIGHER NUMBERS CAN
+::		 OVERRIDE THE LOWER NUMBERS
+::
+::	TARGET IS THE USERNAME TARGET FUNCTION:  0 = XRAY, 1 = IIXRAY,
+::		2 = DLOAD, 3 = SKYLOAD.  TARGET IS DEFAULTED TO ZERO.
+::
+::	THIS MACRO IS INVOKED IN THE TYMFILE WITH THE XGG
+::	MACRO DEFINITION NESTING THE GG CALLS OR IN THE
+::	GOODGUY FILE WITH THE XGG MACRO DEFINITION. IN EITHER CASE A
+::	GOODGUY LIST MUST BE DEFINED WITHIN THE XGG FORMAT.
+::	ADDITIONAL CALLS TO GG CAN BE MADE OUTSIDE OF THE XGG FORMAT.
+::
+::	UP TO 255(D) USERNAMES CAN BE DEFINED.  BY SPECIFYING
+::	NO USERNAME (I.E. GG(0,0,,0)) FURTHER INVOCATIONS OF GG
+::	WILL HAVE NO EFFECT.  USERNAMES CANNOT CONTAIN ' OR ".
+::
+::*********************************************************************
+
+::*********************************************************************
+::
+::      Define symbols for defining Xray priviledge, override and target
+::      and if for LOG I-> LOG II conversion for skywalker kernel access
+::      then symbols for kernel license.                                ###sdw
+::
+::*********************************************************************
+
+:       priviledges for the username (only matter for Xray targeted unames)
+P.NOPR	eq	0               :no priviledge (no power) (default)
+P.NONE  EQ      0               :no priviledge (no power) (default)
+P.PRIV  EQ      1               :some priviledge
+P.SPRI  EQ      2               :super priviledged cmds
+P.GG	EQ	4		:modify goodguy list
+
+:       some names for override values
+O.NONE  EQ      0               :no override capability
+O.LOW   EQ      20              :some override
+O.MELO  EQ      40              :medium low override
+O.MED   EQ      60              :medium override
+O.MEHI  EQ      80              :medium high override
+O.HIGH  EQ      0A0             :high override
+O.MAX   EQ      0FF             :highest override possible
+
+:       the target for the username
+T.XRAY  EQ      0               :username for Xray (default)
+T.IIXR  EQ      1               :username for IIXRAY
+T.DLOA  EQ      2               :username for downline load
+T.SCLP  EQ      3               :username for downline load of skywalker
+T.DBUG  EQ      4               :TURBO KIO
+                                :skywalker debugger
+
+	GL	INTDWL,INTXRY	:target addresses		###wjl
+
+XGGCNT	EQ	0		:TO COUNT XRAY ENTRIES
+XGGPGG	eq	0		:whether P.GG was selected or not
+
+GG	MACRO(PRIV,XISCHK,NAME,OVER,TARG) [
+	RA	0
+	IF	\XISCHK			:IF XISCHK DEFINED
+	IF	XISCHK&7FFFFFFF		:AND
+
+:	DO NOTHING FOR ISIS GOODGUY CALLS
+
+	ELSE	:XISCHK&7FFFFFFF	:ZERO, THEN IT'S AN XRAY ENTRY
+	IF	1-\GGXKIL		:CHECK FOR PREVIOUS KILL
+Q	EQ	.
+	AC	/NAME/			:CHECK TO SEE IF NAME IS PRESENT
+	IF	.-Q			:ANY STRING? TRUE IF NON-ZERO
+	ORG	Q			:RESET PROGRAM COUNTER
+
+:	MAKE AN ENTRY
+
+XGX|$0XGGCNT|	MACRO[
+XGGXGO  EQ      1                       :flag that desired target exists
+XTARG   EQ      TARG
+
+      if	.EQ.(XTARG,T.XRAY)
+xpriv	eq	PRIV
+xover	eq	OVER
+xggpgg	eq	(xpriv&P.GG)!xggpgg	:whether any have the P.GG priv
+      EI        :.EQ.(XTARG,T.DBUG)
+
+      if	.EQ.(XTARG,T.DBUG)
+XGGXGO  EQ      0
+      EI        :.EQ.(XTARG,T.DBUG)
+
+      IF	.EQ.(XTARG,T.SCLP)	:no sclp access unless SCLP present#sdw
+XGGXSC  EQ      1                       :have a SCLP entry
+XGGXGO  EQ      0
+      EI	:.EQ.(XTARG,T.SCLP)
+
+      IF        .EQ.(XTARG,T.DLOA)      :dwnline load entry?
+XGGDLA	EQ	.			:address of dload entry
+XGGXDW  EQ      1                       :have entry (target always exists)
+xpriv	eq	0			:dload must have PRIV of 0
+xover	eq	0
+      EI        :.EQ.(XTARG,T.DLOA)
+
+      IF	.EQ.(XTARG,T.IIXR)	:IIXray target and no IIXray
+XGGXIX  EQ      1                       :have an IIXray entry
+XGGXGO  EQ      0
+      EI	:.EQ.(XTARG,T.IIXR)
+
+      IF        XGGXGO                  :entry's target exists          ###sdw
+
+:	SET UP PRIV PARAMETER TABLE ENTRY
+	IF	XPRIV			:LIMIT PRIV PARAMETER TO 0-2
+	IF	(XPRIV&3)-1
+	BC	2+(xpriv&p.gg)		:HIGH LIMIT TO 2 and p.GG priv
+	ELSE	:XPRIV-1
+	BC	1
+	EI	:XPRIV-1
+	ELSE	:XPRIV
+	BC	0			:LOW LIMIT TO 0
+	EI	:XPRIV
+
+:	SET UP OVERRIDE PARAMETER TABLE ENTRY
+	BC	xover			:SET UP OVERRIDE PARAMETER TABLE ENTRY
+
+
+:	SET UP TARGET DISPATCH ADDRESS PARAMETER TABLE ENTRY
+      IF	XTARG			:if TARGET defined as non-zero
+      IF        TARG-3                  :4=turbor debugger cnvt LOG I->LOGII
+        HC      -1,-1                   :flag as not an internal host   ###sdw
+      ELSE	TARG-2
+	HC	-1,-1
+      ELSE	TARG-1
+	HC	INTDWL/10000,INTDWL&0FFFF :2=DLOAD for Engine		###wjl
+      ELSE	:TARG
+	HC	-1,-1
+      EI	:TARG
+      ELSE	:XTARG			:TARGET not defined or zero
+	HC	INTXRY/10000,INTXRY&0FFFF :force to 0=XRAY		###wjl
+      EI	:XTARG
+
+:	SET UP USERNAME PARAMETER TABLE ENTRY
+Q	AC	'NAME'
+	ORG	Q+0C			:LIMIT USERNAME TO 12(D) CHARS
+      EI        :XGGXGO
+]
+
+XGGCNT	EQ	XGGCNT+1		:COUNT UP NUMBER OF ENTRIES
+	ELSE	:.-Q			:NO NAME DEFINED, SET KILL FLAG
+GGXKIL	EQ	1
+	EI	:.-Q
+	ELSE	:1-\GGXKIL		:KILL FLAG PREVIOUSLY SET
+	REMARK	%%**************************************************
+	REMARK	%Username --
+	REMARK	NAME
+	REMARK	--not entered into xray goodguy list
+	REMARK	%**************************************************%%
+	EI	:1-\GGXKIL
+ 	EI	:XISCHK&7FFFFFFF
+
+	ELSE	:\XISCHK	
+
+:	DO NOTHING FOR ISIS GOODGUY CALLS
+
+	EI	:\XISCHK
+]
+
+	SUBTTL	TIIINT (ISIS/NC MACROs)
+
+::*********************************************************************
+::
+::	MACRO:		GGHOST
+::	FUNCTION:	DEFINES A LIST OF RESTRICTED HOSTS WHICH MAY
+::	RUN ON THIS ISIS NODE. IF GGHOST IS NOT DECLARED, ANY HOST MAY COME
+::	UP ON THIS NODE.
+::		THE SYMBOL 'RESHST' IS DEFINED BY GGHOST, AND INDICATES THE
+::	NUMBER OF RESTRICTED HOSTS DECLARED. GGHOST ACCEPTS A MAXIMUM OF 8
+::	HOST NUMBERS (IN DECIMAL), AND MAY BE CALLED MULTIPLE TIMES.
+::		EACH RESTRICTED HOST NUMBER IS DEFINED BY A SYMBOL GHSTnn,
+::	WHERE nn IS A HEX VALUE FROM 0 TO RESHST.
+::
+::*********************************************************************
+
+GGHOST	MACRO(P1,P2,P3,P4,P5,P6,P7,P8)	[
+	IF	1-\RESHST
+RESHST	EQ	0		:IF NOT YET DEFINED, INITIALIZE TO ZERO
+	EI	:1-\RESHST
+Q1	EQ	$A P1
+Q2	EQ	$A P2
+Q3	EQ	$A P3
+Q4	EQ	$A P4
+Q5	EQ	$A P5
+Q6	EQ	$A P6
+Q7	EQ	$A P7
+Q8	EQ	$A P8
+Q	EQ	1		:PARAMETER COUNT
+	RE	$0 8
+	IF	Q|$0Q|
+GHST|$0RESHST| EQ Q|$0Q|
+GCHS|$0RESHST| EQ -1		:NO RESTRICTION ON CIRCUITS/MINUTE
+GMHS|$0RESHST| EQ -1		:NO RESTRICTION ON REPORTS/MINUTE
+GSHS|$0RESHST| EQ -1		:HOST MAY COME UP ON ANY SLOT
+RESHST	EQ	RESHST+1	:AN ADDITIONAL RESTRICTED HOST DEFINED
+	EI	:Q|$0Q|
+Q	EQ	Q+1
+	ER
+	]
+
+::*********************************************************************
+::
+::	MACRO:		HLIMIT(P1,P2,P3)
+::	FUNCTION:	DEFINES CIRCUIT AND SLOT REPORT LIMITS BY HOST NUMBER.
+::	WHERE:
+::
+::	P1 IS THE HOST NUMBER, AND IT MUST HAVE BEEN SPECIFIED IN A
+::	GGHOST DECLARATION
+::
+::	P2 IS THE MAXIMUM NUMBER OF CIRCUITS THIS HOST MAY ORIGINATE IN
+::	A ONE-MINUTE PERIOD
+::
+::	P3 IS THE MAXIMUM NUMBER OF SLOT REPORTS THIS HOST MAY GENERATE IN
+::	A ONE-MINUTE PERIOD (DEFINED FOR FUTURE DEVELOPMENT. THE NODE CODE
+::	CURRENTLY KNOWS ONLY THE ORIGINATING SLOT FOR A SLOT REPORT, NOT THE
+::	HOST NUMBER).
+::
+:: 	THE SYMBOLS DEFINED ARE GCHSnn FOR MAX NUMBER OF CIRCUITS, AND GMHSnn
+::	FOR MAX NUMBER OF SLOT REPORTS WHERE nn CORRESPONDS TO SOME GHSTnn FROM
+::	A GGHOST MACRO DECLARATION.
+::
+::*********************************************************************
+
+HLIMIT	MACRO(P1,P2,P3)	[
+	IF	1-\RESHST
+	MERR(       HLIMIT ERROR:%GGHOST MACRO NOT SPECIFIED FOR HOST P1)
+	ELSE	:NOT 1-\RESHST
+	IF	1-RESHST
+	MERR(       HLIMIT ERROR:%GGHOST MACRO SPECIFIED WITH NO ARGUMENTS FOR HOST P1)
+	ELSE	:NOT 1-RESHST
+Q	EQ	0		:FOR REPEAT LOOP COUNT
+Q1	EQ	$A P1
+Q2	EQ	1		:FLAG TO INDICATE HOST NUMBER FOUND
+	RE	$0 RESHST
+	IF	1-((GHST|$0Q|)%(Q1))
+:	(MATCH ON HOST NUMBER)
+GCHS|$0Q| EQ	$A P2		:MAX NUMBER CIRCUITS
+GMHS|$0Q| EQ	$A P3		:MAX NUMBER REPORTS
+Q2	EQ	0		:HOST NUMBER FOUND
+	EI	:1-((GHST|$0Q|)%($A P1))
+Q	EQ	Q+1
+	ER
+	IF	Q2
+	MERR(       HLIMIT ERROR:%HOST P1 NOT SPECIFIED IN GGHOST)
+	EI	:Q2
+	EI	:1-RESHST
+	EI	:1-\RESHST
+	]
+
+::*********************************************************************
+::
+::	MACRO:		SLIMIT(P1,P2,P3)
+::	FUNCTION:	DEFINES THE MAX NUMBER OF CIRCUITS/MINUTE AND
+::			SLOT REPORTS/MINUTE BY SLOT.
+::	WHERE:
+::
+::	P1 IS THE SLOT NUMBER (IN DECIMAL)
+::
+::	P2 IS THE DECIMAL NUMBER OF CIRCUITS/MINUTE
+::
+::	P3 IS THE NUMBER OF REPORTS/MINUTE.
+::
+::	THESE GENERATE SYMBOLS SCLTnn FOR MAX CIRCUITS, AND SMLTnn FOR REPORTS,
+::	WHERE nn IS THE HEX SLOT NUMBER.
+::
+::*********************************************************************
+
+SLIMIT	MACRO(P1,P2,P3)	[
+Q1	EQ	$A P1
+X2	EQ	1`P2
+X3	EQ	1`P3
+	IF	2-X2
+:	SECOND ARGUMENT NULL
+	ELSE	:NOT 2-X2
+SCLT|$0Q1| EQ	$A P2		:MAX NUMBER OF CIRCUITS/MINUTE FOR THIS SLOT
+	EI	:2-X2
+	IF	2-X3
+:	THIRD ARGUMENT NULL
+	ELSE	:NOT 2-X3
+SMLT|$0Q1| EQ	$A P3		:MAX # OF SLOT REPORTS/MINUTE FOR THIS SLOT
+	EI	:2-X3
+	]
+
+::*********************************************************************
+::
+::	MACRO:		HSTSLT(P1,P2,P3,P4,P5,P6,P7,P8,P9)
+::	FUNCTION:	DEFINES RESTRICTIONS ON WHICH SLOT(S) A
+::			RESTRICTED HOST MAY COME UP ON.
+::	WHERE:
+::
+::	P1 IDENTIFIES THE DECIMAL HOST NUMBER
+::
+::	P2-P9 UP TO EIGHT DECIMAL SLOT NUMBERS MAY BE SPECIFIED.
+::
+::	THE GGHOST MACRO INITIALIZES THE FIELD 'GSHSnn' TO FFFFFFFF.
+::	THE HSTSLT MACRO TURNS OFF ALL BITS IN GSHSnn, THEN TURNS ON THE BITS
+::	WHICH CORRESPOND TO THE SLOT NUMBERS SPECIFIED BY P2-P9.
+::
+::*********************************************************************
+
+HSTSLT	MACRO(P1,P2,P3,P4,P5,P6,P7,P8,P9)	[
+	IF	1-\RESHST
+	MERR(       HSTSLT ERROR:%GGHOST MACRO NOT SPECIFIED FOR HOST P1)
+	ELSE	:NOT 1-\RESHST
+	IF	1-RESHST
+	MERR(       HSTSLT ERROR:%GGHOST MACRO SPECIFIED WITH NO ARGUMENTS FOR HOST P1)
+	ELSE	:NOT 1-RESHST
+Q	EQ	0		:FOR REPEAT LOOP COUNT
+Q1	EQ	$A P1
+Q2	EQ	1		:FLAG TO INDICATE HOST NUMBER FOUND
+	RE	$0 RESHST
+	IF	1-((GHST|$0Q|)%(Q1))
+:	(MATCH ON HOST NUMBER)
+Q2	EQ	0		:INDICATE HOST NUMBER FOUND
+X2	EQ	$A P2
+X3	EQ	$A P3
+X4	EQ	$A P4
+X5	EQ	$A P5
+X6	EQ	$A P6
+X7	EQ	$A P7
+X8	EQ	$A P8
+X9	EQ	$A P9
+GSHS|$0Q| EQ	0		:INITIALIZE TO HOST VALID ON NO SLOTS
+Q0	EQ	2		:COUNTER FOR SCANNING PARAMETERS
+	RE	$0 8
+X	EQ	$0 80000000	:BIT POSITION WILL EQUAL SPECIFIED SLOT NUMBER
+	IF	X|$0Q0|
+	RE	X|$0Q0|
+X	EQ	X^-1		:SLIDE BIT OVER TO SLOT NUMBER POSITION
+	ER
+GSHS|$0Q| EQ	GSHS|$0Q|!X	:TURN ON BIT IN GSHSnn
+	EI	:X|$0Q0|
+Q0	EQ	Q0+1
+	ER
+	IF	1-(GSHS|$0Q|)
+	MERR(        HSTSLT ERROR:%NO SLOTS SPECIFIED FOR HOST P1)
+	EI	:1-(GSHS|$0Q|)
+	EI	:1-((GHST|$0Q|)%(Q1))
+Q	EQ	Q+1
+	ER
+	IF	Q2
+	MERR(        HSTSLT ERROR:%HOST P1 NOT SPECIFIED IN GGHOST)
+	EI	:Q2
+	EI	:1-RESHST
+	EI	:1-\RESHST
+	]
+
+	SUBTTL	TIIINT (Gateway MACROs)
+
+::*********************************************************************
+::
+::	Define Macros for Gateway
+::
+::*********************************************************************
+
+::	@.NAME converts .TYM file AC to SC
+I.NAME	MACRO(S)[
+INX	HC	INL
+S	EQ	INX+1
+	INAME()
+INL	EQ	.-S-1
+	]
+
+H.NAME	MACRO(S)[
+HNX	HC	HNL
+S	EQ	HNX+1
+	HNAME()
+HNL	EQ	.-S-1
+	]
+
+:	DEFINE MACRO FOR TEXT NAME FROM SOURCE(S.S) TO DESTINATN(D.D)
+ROUTE	MACRO(S.S,D.D)[
+	LA	R4,FROM,,		:FROM S.S TO D.D
+	JAL	R9,BUFCAN,,
+	LA	R4,S.S,,
+	JAL	R9,BUFCAN,,
+	LA	R4,TO,,
+	JAL	R9,BUFCAN,,
+	LA	R4,D.D,,
+	JAL	R9,BUFCAN,,
+	]
+
+DROUTE	MACRO(S.S,D.D)[
+	LA	R1,FROM,,		:FROM S.S TO D.D
+	JAL	R8,DIMMES,,
+	LA	R1,S.S,,
+	JAL	R8,DIMMES,,
+	LA	R1,TO,,
+	JAL	R8,DIMMES,,
+	LA	R1,D.D,,
+	JAL	R8,DIMMES,,
+	]
+
+
+	SUBTTL	TIIINT (Internal MACROs)
+
+::*********************************************************************
+::
+::	MACRO:		MERR
+::	FUNCTION:	TO DISPLAY MACRO CALL ERROR
+::
+::*********************************************************************
+
+MERR	MACRO(P1)	[
+	!MACRO ERROR!
+	REMARK %% P1 %%
+	]
+
+::*********************************************************************
+::
+::	MACRO:		SKIPAD:/SKIP:
+::	FUNCTION:	ALLOWS CONDITIONAL ASSEMBLY FOR SKIP RETURNS
+::
+::*********************************************************************
+
+SKIPAD	MACRO(LABEL)	[
+	J	LABEL
+	]
+
+SKIP	MACRO(OFFSET,RX)	[
+       IF       OFFSET
+	J	OFFSET,RX
+       ELSE     :IF OFFSET=0 THEN USE JR
+        JR      RX
+       EI       :OFFSET
+	]
+
+::*****************************************************************
+::
+::	.XXX.:	TRUTH MACROs
+::
+::*****************************************************************
+
+	KILL	TRUTH0
+TRUTH1 EQ 0
+
+.LT0.	MACRO(ARG)[\(TRUTH|((ARG)^(-1F))|)]
+.GE0.	MACRO(ARG)[(1-(.LT0.(ARG)))]
+.LE0.	MACRO(ARG)[((1-(.GE0.(ARG)))!(1-((ARG)/(ARG))))]
+.EQ0.	MACRO(ARG)[(1-((ARG)/(ARG)))]
+.GT0.	MACRO(ARG)[(1-(.LE0.(ARG)))]
+.NE0.	MACRO(ARG)[((ARG)/(ARG))]
+.NOT.	MACRO(ARG)[(.LE0.(ARG))]
+.TRU.	MACRO(ARG)[(.GT0.(ARG))]
+.OR.	MACRO(ARG1,ARG2)[((.TRU.(ARG1))!(.TRU.(ARG2)))]
+.AND.	MACRO(ARG)[!(ARG)]
+.XOR.	MACRO(ARG1,ARG2)[((.TRU.(ARG1))%(.TRU.(ARG2)))]
+.ABS.	MACRO(ARG)[(((ARG)%((-1)*(.LT0.(ARG))))+(1*(.LT0.(ARG))))]
+.EQ.	MACRO(ARG1,ARG2)[((((ARG1)/(ARG2))*((ARG2)/(ARG1)))!(.EQ0.((ARG1)!(ARG2))))]
+.NEQ.	MACRO(ARG1,ARG2)[(1-(.EQ.(ARG1,ARG2)))]
+.FLS.	MACRO(ARG)[(.LE0.(ARG))]
+
+::*********************************************************************
+::
+::	MACRO:		KILLER:
+::	FUNCTION:	Causes assembly to abort if argument is false
+::
+::*********************************************************************
+
+KILLER	MACRO(COND)	[
+QKILL	EQ	KILLIT		:preserve previous value of KILLIT
+	IF	COND		:if CONDition is true, kill assembly
+KILLIT	EQ	1
+	ELSE	:
+KILLIT	EQ	0		:else allow assembly to continue
+	EI	:COND
+KILLIT	EQ	KILLIT!QKILL	:add previous state of KILLIT
+	]
+
+::*********************************************************************
+::
+::	MACRO:		KILMSG:
+::	FUNCTION:	Kill Message
+::
+::*********************************************************************
+
+KILMSG	MACRO(NAME)	[
+ IF	1-(KILLIT%1)		:only if KILLIT=1
+	REMARK	
+	REMARK	%Assembly killed due to fatal error in 
+	REMARK	NAME
+	REMARK	%
+KILLIT	EQ	KILLIT+1
+ EI	:1-(KILLIT%1)
+	]
+
+
+::*********************************************************************
+::
+::	MACROS:		LO.LIM / HI.LIM:
+::	FUNCTION:	Macro verifies that a symbol falls within the
+::			appropriate limits.  Bitches if not, then resets
+::			it to the specified limit.
+::									###jok
+::
+::*********************************************************************
+
+LO.LIM	MACRO(ID,LIM)	[
+       IF	(LIM)-ID		: TRUE if LIM > ID
+	REMARK	%** Variable ID is 0x
+	NUMBER	ID
+	REMARK	, which is less than legal lower limit!%
+	REMARK	** resetting it to 0x
+	NUMBER	LIM
+	REMARK	(which is legal lower limit!)%
+ID	EQ	LIM			: new value, lower limit
+       EI	:LIM-ID
+]
+
+HI.LIM	MACRO(ID,LIM)	[
+       IF	ID-(LIM)		: TRUE if LIM < ID
+	REMARK	%** Variable ID is 0x
+	NUMBER	ID
+	REMARK	, which is greater than legal upper limit!%
+	REMARK	** resetting it to 0x
+	NUMBER	LIM
+	REMARK	(which is legal upper limit!)%
+ID	EQ	LIM			: new value, upper limit
+       EI	:ID-LIM
+]
+
+::**************************************************************************
+::
+::	MACRO:		METAIL
+::	Function:	Print a standard line of "***"s withOUT a BELL,
+::			and leave output on a new line
+::
+::**************************************************************************
+METAIL MACRO	[
+	REMARK	%***************************************************************%
+		]
+
+::**************************************************************************
+::
+::	MACRO:		MERHED
+::	Function:	Report Macro Error warning message Header in
+::			standard format
+::
+::**************************************************************************
+MERHED MACRO	[
+	REMARK	%       >>>>>>>>>>>  WARNING TYMFILE ERROR  <<<<<<<<<<<
+ ]
+
+::*********************************************************************
+::
+::	MACROS:		WAR.LO / WAR.HI / WAR.RG:
+::	FUNCTION:	Tymfile Macro verifies that a symbol falls within
+::			the appropriate limits.  Bitches if not, then resets
+::			it to the specified limit.
+::									###jok
+::
+::*********************************************************************
+
+WAR.LO	MACRO(ID,LIM,MAC)	[
+ IF		LIM-ID			: TRUE if LIM > ID
+	MERHED
+	REMARK	%	Parameter error in Macro MAC
+	REMARK	%  Variable ID is 0x
+	NUMBER	ID
+	REMARK	, which is less than legal lower limit!
+	REMARK	%	resetting it to 0x
+	NUMBER	LIM
+	REMARK	 (legal lower limit!)
+	METAIL
+ID	EQ	LIM			: new value, lower limit
+ EI
+		 		]
+
+WAR.HI	MACRO(ID,LIM,MAC)	[
+ IF		ID-LIM			: TRUE if LIM < ID
+	MERHED
+	REMARK	%	Parameter error in Macro MAC
+	REMARK	%  Variable ID is 0x
+	NUMBER	ID
+	REMARK	, which is greater than legal upper limit!
+	REMARK	%	resetting it to 0x
+	NUMBER	LIM
+	REMARK	 (legal upper limit!)
+	METAIL
+ID	EQ	LIM			: new value, upper limit
+ EI
+		 		]
+			
+WAR.RG	MACRO(ID,LO,HI,MAC)	[
+	WAR.LO(ID,LO,MAC)
+	WAR.HI(ID,HI,MAC)
+				]
+
+::*********************************************************************
+::
+::	MACRO:		SETMAC:
+::	FUNCTION:	Macro defines MAC registers
+::	WHERE:
+::		Arg1 ('SEG') = segment number 
+::		Arg2 ('PROT') = protection byte
+::
+::*********************************************************************
+
+SETMAC	MACRO(SEG,PROT)	[
+	IF	S|SEG|SZ
+AXMAC|SEG| EQ (S|SEG|SZ-100)^0C+S|SEG|PH+PROT
+	ELSE	:NOT S|SEG|SZ (NO SEGMENT PRESENT)
+AXMAC|SEG| EQ 0
+	EI	:S|SEG|SZ
+	]
+
+::*********************************************************************
+::
+::	MACRO:		SYAD:
+::	FUNCTION:	Macro creates a macro to be used in setting up the
+::			XRAY symbol table.
+::
+::*********************************************************************
+
+SYAD	MACRO(P1,TT)	[
+	IF	1-\P1		:if symbol not defined, issue warning
+	REMARK	%!!! SYAD macro error - undefined symbol = P1 !!!%
+	ELSE	:P1 defined, continue
+SYAD|$0NSYMBL| MACRO[
+QQ	EQ	.
+	AC	/P1/
+QQQ	eq	(.-QQ-6)
+
+	IF	QQQ		:make sure symbol name is legal length
+	REMARK	%Illegal symbol name length to SYMADR macro!!!%
+	REMARK	Symbol name = P1%
+	KILLER(1)
+	ELSE	-QQQ		:IF NAME TOO SHORT
+	re	-qqq
+	ac	/ /
+	er
+	EI	:(.-QQ)%6
+qqq	eq	p1
+	HC	qqq/10000,qqq&0ffff
+	]
+NSYMBL	EQ	NSYMBL+1
+	EI	:1-\P1
+	]
+
+::*********************************************************************
+::
+::	MACRO:		SETRAD:
+::	FUNCTION:	Macro sets radix to specified value, and sets 'CURRAD'
+::			to that value.
+::
+::*********************************************************************
+
+SETRAD	MACRO(RDX)[
+CURRAD	EQ	RDX
+	RA	$0 RDX
+	]
+
+::*********************************************************************
+::
+::	MACRO:		DEFASC:
+::	FUNCTION:	Macro defines an ascii CRYPTO message string. Accepts
+::		up to 4 pairs of arguments.
+::		Sx = ascii string 
+::		Vx = format code (BH=byte hex, BD=byte decimal,	BO=byte octal,
+::		     HH=hw hex,	HD=hw decimal, HO=hw octal, O5=five dig octal)
+::		Each Sx argument must be followed immediately by a valid
+::		Vx argument.  An Sx argument may be omitted (null) to
+::		produced concatenated Vx arguments.)
+::
+::*********************************************************************
+
+DEFASC	MACRO(S1,V1,S2,V2,S3,V3,S4,V4) [
+	SC	/S1/
+	HC	V1
+	SC	/S2/
+	HC	V2
+	SC	/S3/
+	HC	V3
+	SC	/S4/
+	HC	V4
+	]
+
+::*********************************************************************
+::
+::	MACRO:		CPUTNM:
+::	FUNCTION:	MACRO DEFINES A ROUTINE NAME ENTRY IN CPUTLB. DEFINES
+::		A HW CONSTANT WHEN CALLED = ROUTINE'S INDEX INTO CPUTTB.
+::
+::*********************************************************************
+
+CPUTNM	MACRO(NAME)	[
+	IF	CPUTMX-CPUTNE	:IF THERE IS ROOM
+QPLACE	EQ	.		:NOTE WHERE WE ARE
+	ORG	CPUTLB+(7*CPUTNE):GO TO FIRST AVAILABLE TABLE ENTRY - ENTRY
+				:LENGTH IS 6 CHARACTERS + 1 BYTE OF LENGTH
+	SC	/NAME/
+	ORG	QPLACE
+	HC	CPUTNE*CPUTSZ	:THIS ROUTINE'S INDEX INTO CPUTTB
+CPUTNE	EQ	CPUTNE+1	:WE'VE MADE ANOTHER ENTRYA
+	ELSE	:CPUTNE>=CPUTMX
+	REMARK	%!!! CPUTNM MACRO ERROR !!!
+	REMARK	%NOT ENOUGH ROOM FOR NEXT CPUTLB ENTRY -
+	REMARK	%MUST INCREASE CPUTMX%
+KILLIT	EQ	1		:KILL ASSEMBLY
+	EI	:CPUTMX-CPUTNE
+	]
+
+::*********************************************************************
+::
+::	MACRO:		CODFLT:
+::	FUNCTION:	Crash Option DeFauLT macro sets the symbol C.<P1> to 1
+::		if the option is true, else sets it to 0.  The mnemonic
+::		value 'abbc' of P1 is based on the common crash action
+::		definitions, where 'a'  is 'N' for 'Node code'
+::				   'bb' is 'RS' for 'ReStart', or
+::					   'HT' for 'HalT', or
+::					   'BT' for 'BooT', or
+::					   'ST' for 'STop'
+::				   'c'  is 'S' for 'Software' crash, or
+::					   'H' for 'Hardware' crash.
+::
+::*********************************************************************
+
+CODFLT	MACRO(P1) [
+	IF	O.FLAG&P1
+C.`P1	EQ	1
+	ELSE
+C.`P1	EQ	0
+	EI	:O.FLAG&P1
+	]
+
+::*********************************************************************
+::
+::	MACRO:		DBOOPS:
+::	FUNCTION:	Macro, under the DB.DEB switch, stores all reggies at
+::		ERRREG, and sets up an RX3 JAL to OOPSDB, followed by
+::		an HC crash code of FE63.  Takes up 12d bytes, so
+::		jumping around it means JaaFS .+0E.
+::
+::*********************************************************************
+
+DBOOPS	MACRO	[
+	IF	DB.DEB
+	STM	R0,ERRREG
+	JAL	R0,OOPS,,
+	HC	0		:Debug crash code is first in the list.
+	EI
+	]
+
+::*********************************************************************
+::
+::	MACRO:		DEFAULT:
+::	FUNCTION:	Macro sets a symbol to a specified value if it has
+::		 not already been defined.
+::
+::*********************************************************************
+
+	KILL DEFAULT	:BECAUSE CONSAT INIT FILE DEFINES IDENTICAL MACRO
+DEFAULT	MACRO(ID,V)[
+	IF	1-\ID
+ID	EQ	V
+	EI
+]
+
+::*********************************************************************
+::
+::      MACRO:          CFIG(symbol)
+::      FUNCTION:       Includes symbol for XRAY CF command
+::                      Duplicate DEFAULT to allow replacement of DEFAULT
+::                      for assembly switches.
+::
+::*********************************************************************
+
+CFMCNT  EQ      0
+
+CFIG    MACRO(SYMBOL,X)[
+        IF      1-\SYMBOL
+SYMBOL  EQ      X  0            :if no X then it finds the 0
+        EI
+CFM|CFMCNT|  MACRO[
+        IF      SYMBOL
+        AC   /SYMBOL/
+QQQ     EQ      1
+        ELSE    :SYMBOL NOT TRUE
+QQQ     EQ      0
+        EI
+]
+CFMCNT  EQ      CFMCNT+1
+]
+
+::*****************************************************************
+::
+::       .LGTXT macro defines the default text string unless the LOGTXT macro
+::       was used to enter a different text string.
+::
+::*****************************************************************
+
+.LGTXT  MACRO(NAME,TXT)[
+Q       EQ      .
+        IF      \NAME
+        ELSE
+        SC      /TXT/
+        EI
+        KILL    NAME
+NAME    EQ      Q
+]
+
+::*****************************************************************
+::
+::       LOGTXT macro defines another macro of name and that macro starts off
+::       with a defined label.  thus the macro is to be invoked by IF \NAME
+::       which if the macro is defined invokes the text, followed by ELSE;
+::       and whatever default text.
+::
+::*****************************************************************
+
+TRUE    EQ      1
+
+LOGTXT  MACRO(NAME,TXT)[
+NAME    MACRO[TRUE
+        SC      /TXT/
+]
+]
+
+::*********************************************************************
+::
+::	MACRO:		NET
+::	FUNCTION:	Macro for declaring Netid and displayingit
+::
+::*********************************************************************
+:
+        kill    net
+netdok  eq      0               :find a known NETID?
+net     macro(na,nb)[
+ne      eq      nb
+        if      (netid/ne)*(ne/netid)   :if they are equal
+netdok  eq      1               :we found a netid
+        remark%%%       NETID is ;
+ number $a ne ; remark d.  This is a NA network node.%%%
+mnetid  macro[  ac /NA/  ]
+        ei
+]
+
+
+::*********************************************************************
+::
+::	MACRO:		GENTIM
+::	FUNCTION:	Macro for declaring GENTIM into SEG E format
+::
+::*********************************************************************
+
+GENTIM	MACRO(TIME) [
+
+	RA	$0 0A
+
+QQQQYS	EQ	365*4+1			:quad year size in days
+QQQDAZ	EQ	(TIME)/(24*60*60)+365	:days since 1/1/74 + 365
+QQQNQY	EQ	QQQDAZ/QQQQYS		:# of quad yrs since 1/1/74
+QQQROD	EQ	QQQDAZ-QQQNQY*QQQQYS	:remainder of days 
+QQQLEA	EQ	QQQROD/365		:year in current quad yr
+
+	IF	QQQLEA-3
+QQQLEA	EQ	3
+	EI
+
+QQQYR	EQ	QQQNQY*4+QQQLEA+73
+QQQDAY	EQ	QQQROD-QQQLEA*365+1
+
+QQQM1	EQ	31
+	IF	QQQLEA-2
+QQQM2	EQ	29
+	ELSE
+QQQM2	EQ	28
+	EI
+QQQM3	EQ	31
+QQQM4	EQ	30
+QQQM5	EQ	31
+QQQM6	EQ	30
+QQQM7	EQ	31
+QQQM8	EQ	31
+QQQM9	EQ	30
+QQQM10	EQ	31
+QQQM11	EQ	30
+QQQM12	EQ	31
+
+QQQMON	EQ	1
+QQQNOT	EQ	1
+
+	RE	
+	IF	QQQDAY-QQQM|QQQMON|
+QQQDAY	EQ	QQQDAY-QQQM|QQQMON|
+QQQMON	EQ	QQQMON+1
+	ELSE
+QQQNOT	EQ	0
+	EI
+	ER	QQQNOT
+
+QQQRS1	EQ	(TIME)-((QQQDAZ-365)*(24*60*60))
+QQQHRS	EQ	QQQRS1/(60*60)
+QQQRS2	EQ	QQQRS1-QQQHRS*(60*60)
+QQQMIN	EQ	QQQRS2/60
+QQQSEC	EQ	QQQRS2-QQQMIN*60
+        RA      0
+]
+
+
+::*********************************************************************
+::
+::	MACRO:		USRLOC:
+::	FUNCTION:	Macro is handy for pin-pointing macro errors.
+::
+::*********************************************************************
+
+USRLOC	MACRO	[
+	REMARK	user location  
+	NUMBER	.
+	REMARK	
+	]
+
+::*********************************************************************
+::
+::	MACRO:		CRASH:
+::	FUNCTION:	CRASH MACRO
+::	CRASH MACRO REQUIRES 2 ARG'S (CRASH CODE AND CRASH CODE SUBTYE) AND
+::	WILL ACCEPT UP TO 2 MORE (NUMBERS OF REGISTERS WHOSE CONTENTS ARE
+::	TO BE REPORTED IN ADDENDA TO THE CRASH REPORT -- THESE MAY BE LINK
+::	REGISTERS OR DATA REGISTERS AS APPROPRIATE).
+::	CCODE - MUST BE A VALID COMMON CRASH CODE (SEE BELOW)
+::	STYPE - IF CCODE = 42, STYPE MUST BE ONE OF THE FOLLOWING
+::		INSTRUCTION MNEMONICS: JFFO, JFFOH, ARAND ...
+::		IF CCODE = 67, STYPE MUST BE 2*(SVC NUMBER),
+::		WHERE SVC NUMBER IS 1 BYTE (FOR ISIS, TYPE/OP;
+::		FOR SOLO, 0n).
+::		IF CCODE = 63, STYPE IS AN ARBITRARY EVEN NUMBER
+::		WITHIN A RANGE SPECIFIED FOR EACH MODULE AS FOLLOW:
+::			EXEC: 02-0E
+::			LINKER: 
+::
+::	CRASH.:	Macro stores all reggies at ERRREG and does a JAL R0,OOPS.
+::		Argument CRLBL is required - it is an arbitrary symbol name
+::		which must be used in a corresponding DFCRH. macro.  The
+::		DFCRH. macro should be invoked at the beginning of the
+::		module in which the corresponding CRASH. macro is invoked.
+::		The DFCRH. macro must be invoked unconditionally -- i.e.,
+::		not under any IF switches (except 1-KILLIT).  The DFCRH.
+::		macro equates CRLBL to the index into CRCDTB (CRash CoDe
+::		TaBle) for the appropriate crash code.  The CRASH. macro
+::		assembles this value as a HC immediately following the
+::		JAL R0,OOPS.
+::		CRASH.(CRLBL) assembles as:
+::			STM	R0,ERRREG
+::			JAL	R0,OOPS,,
+::			HC	CRLBL
+::
+::*********************************************************************
+
+CRASH.	MACRO(CRLBL)[
+	IF	1-\CRLBL
+	REMARK	%!!! CRASH. macro error !!!
+	REMARK	%Crash reference lable CRLBL undefined.
+	REMARK	%Killing assembly at 
+	USRLOC
+	KILLER(1)
+	ELSE
+	STM	R0,ERRREG
+	JAL	R0,OOPS,,
+	HC	CRLBL
+	EI	:1-\CRLBL
+	]
+
+::*********************************************************************
+::
+::	MACRO:		DFCCD.(NAME,CODE)
+::	FUNCTION:	DeFine Crash CoDe sets up the crash code parameters
+::		used by the DFCRH. macro.
+::	WHERE:
+::		NAME is a mnemonic for a valid crash type.  Only crash types
+::		which involve a call to OOPS are defined.
+::
+::		CODE is the numeric crash code.
+::
+::*********************************************************************
+
+DFCCD.	MACRO(NAME,CODE)[
+	IF	\NAME
+	CCDER.(Mnemonic NAME already defined.)
+	ELSE
+.NCC|CODE| EQ	0	:Initialize count of subtypes
+NAME	EQ	CODE	:Define a mnemonic
+	EI
+	]
+
+	DFCCD.(C.INML,42)
+	DFCCD.(C.HWCE,62)
+	DFCCD.(C.SWCE,63)
+	DFCCD.(C.GCEB,64)
+	DFCCD.(C.IFLP,66)
+	DFCCD.(C.SVER,67)
+
+ARAND	EQ	2
+JFFO	EQ	4
+JFFOH	EQ	6
+
+LINE.	MACRO(N)[
+	REMARK	%LINE NUMBER 
+	NUMBER	N
+	REMARK	%
+	]
+
+
+.NCCD	EQ	0
+
+::*********************************************************************
+::
+::	MACRO:		DFCRH.(CRLBL,CTYPE,STYPE,CRHCOM)
+::	FUNCTION:	DeFine Crash Code ?H? verifys the crash code parameters
+::	WHERE:
+::		CRLBL is a mnemonic for this crash type/subtype.
+::
+::		CTYPE is the numeric crash code.
+
+::		STYPE is the numeric crash code Subtype.
+::
+::		CRHCOM is the associated text-string.
+::
+::*********************************************************************
+
+:	Define a macro CRHER. to display error messages.
+::		This MACRO is used exclusively for DFCRH.  It is defined
+::	seperately to avoid recurring overhead in NAD which would occur
+::	if it were KILL'ed and redeclared at each invocation.
+	KILL	CRHER.
+.GO	EQ	0
+.KILL	EQ	1
+CRHER.	MACRO(TYPE,STAT,TEXT)[
+	REMARK	%!!! DFCRH. macro error !!!
+	REMARK	%At 
+	USRLOC
+	REMARK	%Crash code TYPE 
+	REMARK	%TEXT
+	IF	STAT
+	REMARK	%Killing assembly....%
+	KILLER(1)
+	ELSE	
+	REMARK	%Assembly continues....%
+	EI
+	]
+
+DFCRH.	MACRO(CRLBL,CTYPE,STYPE,CRHCOM)[HS	0
+
+ IF	1-CTYPE		:No CTYPE provided
+	CRHER.(CTYPE,.KILL,must be provided.)
+ ELSE	:not 1-CTDEF
+QCT.	EQ	CTYPE
+ EI	:(not)1-CTDEF
+
+  IF            STYPE                   : stype provided...use it
+.NCC|QCT.| EQ   STYPE
+   IF	STYPE&1
+	CRHER.(CTYPE,.KILL,requires even subtype code.)
+   EI	:not STYPE&1
+  ELSE          :stype is 0...use default
+.NCC|QCT.| EQ   .NCC|QCT.|+2
+  EI
+
+QST.	eq	.NCC|QCT.|		:a working copy
+
+CRLBL	EQ	(QST.^8)+QCT.
+
+   IF	CRHRMK
+       if	1-.nccd
+        REMARK  %Crash codes defined in this version:%%
+.nccd	eq	1
+       EI	:.nccd
+
+	REMARK	%Crash code 
+	NUMBER	CRLBL
+	REMARK	%CRHCOM
+	REMARK	%
+   EI	:CRHRMK
+
+	]
+
+::*********************************************************************
+::
+::	MACRO:		SYMREF:
+::	FUNCTION:	Macro makes a REFerence entry in the SYMbol
+::		definition table (for ISIS parameter verification).
+::		It increments NREF with each call.
+::
+::*********************************************************************
+
+SYMREF  MACRO(SYM,BITS,MIN,MAX) [
+	IF	1-\NREF
+NREF	EQ	0		:INITIAL VALUE
+	EI	:1-\NREF
+Q       HS      0
+        AC      /SYM/
+        IF      Q+6-.
+        RE      Q+6-.
+        BC      20
+        ER
+        ELSE
+        ORG     Q+6
+        EI
+        HC      BITS
+        HC      MIN
+        HC      MAX
+NREF    EQ      NREF+1
+]
+
+::*********************************************************************
+::
+::	MACRO:		SYMDEF:
+::	FUNCTION:	Macro DEFines and entry in the SYMbol definition
+::		table, and increments NDEF with each call. (For
+::		ISIS parameter verification.)
+::
+::*********************************************************************
+
+SYMDEF  MACRO(SYM) [
+	IF	1-\NDEF
+NDEF	EQ	0		:INITIAL VALUE
+	EI	:1-\NDEF
+Q       HS      0
+        AC      /SYM/
+        IF      Q+6-.
+        RE      Q+6-.
+        BC      20
+        ER
+        ELSE
+        ORG     Q+6
+        EI
+        HC      SYM
+NDEF    EQ      NDEF+1
+]
+
+VS	MACRO(SYMBL)[
+	IF	(\SYMBL)
+	REMARK	%!!!Duplicate definition for SYMBL at 
+	USRLOC
+	REMARK	 with value of 
+	NUMBER	$0 SYMBL
+	REMARK	 hex.%
+	ELSE
+SYMBL	MACRO[77777]
+	KILL SYMBL
+	EI	:(\SYMBL)
+	]
+
+::*********************************************************************
+::
+::	MACRO:		GLOBAL:
+::	FUNCTION:	Macro globalizes a symbol and sets it to a specified
+::			value if it has not already been defined.
+::
+::*********************************************************************
+
+	KILL GLOBAL	:CONSAT INIT FILE DEFINES IDENTICAL MACRO
+GLOBAL	MACRO(ID,V)[
+	GL	ID
+	DEFAULT(ID,V)
+	]
+
+::*********************************************************************
+::
+::	MACRO:		QUADWD(A1,A2,A3,A4,A5):
+::	FUNCTION:	Create a Quad-word ring descriptor
+::	Where:
+::		A1 -	Command
+::		A2 -	Quad-word address
+::		A3 -	??? (rel to segment)
+::		A4 -	??? (rel to segment)
+::		A5 -	Segment #
+::
+::*********************************************************************
+
+QUADWD	MACRO(A1,A2,A3,A4,A5) [	:CREATE A QUADWORD RING DESCRIPTOR
+	HC	A1,A2
+	IF	A5-4
+:	SEG 5 FIELD
+	WC	A3-SEG5+S5PH,A4-SEG5+S5PH,SIRDEN
+	ELSE	:NOT A5-4 (SEG 4 FIELD)
+	WC	A3-SEG4+S4PH,A4-SEG4+S4PH,SIRDEN
+	EI	:A5-4
+SIRDEN	EQ	SIRDEN+1
+	]
+
+::*********************************************************************
+::
+::	MACRO:		NEGTST:
+::	FUNCTION:	DB.DEB DEBUGGING MACRO TO INSURE NEGATIVE RING POINTER
+::	WHERE:		INSTR = INSTRUCTION MNEMONIC
+::			MR1 = REGISTER TO BE LOADED
+::			LBL = LABEL
+::			OFF = CONSTANT OFFSET FROM LABEL
+::			MR2 = INDEX REGISTER
+::			MR3 = INDEX REGISTER
+::
+::*********************************************************************
+
+NEGTST	MACRO(INSTR,MR1,LBL,OFF,MR2,MR3)	[
+	IF	DB.DEB
+	IF	\LBL
+	INSTR	MR1,LBL+OFF,MR2,MR3
+	JLFS	.+0A
+	JAL	R0,OOPS,,
+	HC	0FE63
+	EI	:\LBL
+	EI	:DB.DEB
+	]
+
+::*********************************************************************
+::
+::	MACRO:		CFGRMK:
+::	FUNCTION:	Macro invoked by CONFIG module, describes state of
+::			specified assembly switch.
+::
+::*********************************************************************
+
+CFGRMK	MACRO(SYMBOL)	[
+ IF	\SYMBOL
+  IF	SYMBOL	:true
+	REMARK	 true      
+  ELSE	:false
+	REMARK	 false     
+  EI	:SYMBOL
+ ELSE	:symbol not defined
+	REMARK	 undefined 
+ EI	:\SYMBOL
+ IF	(NCFRMK&3)-2		:put a cr/lf after every 4
+	REMARK	%
+ EI	:
+NCFRMK	EQ	NCFRMK+1
+	]
+
+::*********************************************************************
+::
+::	MACRO:		NMBR.:
+::	FUNCTION:
+::		Macro NMBR.(<symbol>,<radix code>,<field width>) displays
+::		a number (the value of <symbol>), in the specified radix
+::		(valid codes are, a la NAD, 2, 8, A, and 0), right-justified
+::		in a field of the specified width (in number of digits),
+::		followed by a radix indicator ('b', 'o', 'd', or 'x') and
+::		a blank (unless <field width>=0, in which case, this macro
+::		does exactly the same thing as NUMBER $<radix code> <symbol>).
+::		If the value of <symbol> cannot be displayed in the speci-
+::		fied field width, the number is displayed without attempting
+::		to right-justify it within a field.
+::
+::*********************************************************************
+
+NMBR.	MACRO(VAL,RADX,WDTH)[
+	KILL	Q.
+Q.`WDTH`Q	EQ	0
+	IF	\Q.Q
+QW	EQ	0
+	ELSE	:
+QW	EQ	WDTH
+	EI	:
+BASE0	EQ	10
+BASE8	EQ	8
+BASEA	EQ	0A
+BASE2	EQ	2
+
+QND	EQ	1
+QMXN	EQ	BASE`RADX
+	RE	QW
+	IF	1-(QMXN-VAL)
+QND	EQ	QND+1
+QMXN	EQ	QMXN*(BASE`RADX)
+	EI
+	ER
+QNB	EQ	QW-QND
+QRADX	EQ	0`RADX
+	IF	1-QRADX
+	IF	((0A^((QND-1)*4))-(VAL))
+	ELSE
+QNB	EQ	QNB-1
+	EI
+	EI	:1-QRADX
+	IF	QNB
+	RE	QNB
+	BLANK.
+	ER
+	EI	:QNB
+	NUMBER	$RADX(VAL)
+	TAIL`RADX`.
+	]
+BLANK.	MACRO[REMARK	 ]
+
+TAIL0.	MACRO[REMARK x ]
+TAILA.	MACRO[REMARK d ]
+TAIL8.	MACRO[REMARK o ]
+TAIL2.	MACRO[REMARK b ]
+
+CRLF.	MACRO(COUNT)[
+QCT	EQ	0`COUNT
+	RE	QCT
+	REMARK	%
+	ER
+	]
+
+TAB.	MACRO(COUNT)[
+QCT	EQ	0`COUNT
+	RE	QCT
+	REMARK		
+	ER
+	]
+
+::*********************************************************************
+::
+::	MACRO:		DFST.:	
+::	FUNCTION:
+::
+::*********************************************************************
+
+.BS.	EQ	0
+.HS.	EQ	1
+.WS.	EQ	3
+
+DFST.	MACRO(OP,VAL,BAS)[EQ (.-BAS+(1*(.`OP`.)))&(0FFFFFFFF-(.`OP`.))
+QBASE	EQ	BAS
+	IF	(-(.-QBASE))!((.^(-10))%(QBASE^(-10)))
+	REMARK	%!!! DFST. macro error at 
+	USRLOC 
+	REMARK	!!!
+	REMARK	%Cannot define SYMBL at 
+	USRLOC
+	REMARK	%in this segment.  Must be in segment 
+	NUMBER	(QBASE^(-10))
+	REMARK	.%
+	KILLER(1)
+	ELSE
+	OP	VAL
+	EI
+	]
+	
+::*********************************************************************
+::
+::	MACRO:		BEGMO.:/ENDMO.:
+::	FUNCTION:
+::
+::*********************************************************************
+
+Q	EQ	0
+	RE	10
+	seg q
+.SEG|Q|P eq	.
+Q	EQ	Q+1
+	ER
+	seg 0
+
+BEGMO.	MACRO[
+.Q	EQ	0
+	RE	10
+	IF	\SEG|.Q|
+	SEG	.Q
+.SEG|.Q|P EQ	.
+	EI	:\SEG|.Q|
+.Q	EQ	.Q+1
+	ER
+	]
+
+ENDMO.	MACRO(NAME)[
+	IF	MEMRMK-2
+	REMARK	%Segment utilization for NAME:
+.Q	EQ	0
+	RE	10
+	IF	\SEG|.Q|
+	SEG	.Q
+	IF	.-.SEG|.Q|P
+	REMARK	%Segment 
+	NMBR.(.Q,A,2)
+	REMARK	from 
+	NMBR.(.SEG|.Q|P,0,6)
+	REMARK	to 
+	NMBR.(.,0,6)
+	REMARK	= 
+	NMBR.((.-.SEG|.Q|P),0,6)
+	REMARK	bytes.
+	EI	:.-.SEG|.Q|P
+	EI	:\SEG|.Q|
+.Q	EQ	.Q+1
+	ER
+	CRLF.
+	EI	:MEMRMK-2
+	]
+
+SEG.	MACRO(ARG)[
+	SEG	ARG
+	]
+
+CSB.	MACRO(SYMBL)[(SYMBL+CSBASE)]
+
+GL.	MACRO[ GL]
+KILL.	MACRO[ KILL]
+LO.	MACRO[ LO]
+
+::*	Define and globalize some symbols
+
+	GLOBAL(A.DATA,0A)	:consat wants seg 0 identified this way
+	GLOBAL(A.CODE,1)	:consat wants seg 1 identified this way
+
+::*********************************************************************
+::
+::	MACRO:		HSIZE(REG)
+::	FUNCTION:	Calculates history buffer size (7FFF max)
+::		based on number of links, CQNLK, and backpressure limit
+::		from CIRSPK table.  Limit is thought to be B*(2*N-1)
+::	WHERE:		REG is a working register which is set up initially
+::		containing needle flags and is destroyed.  R0 is returned
+::		with the history buffer size.
+::
+::*********************************************************************
+
+HSIZE	MACRO(REG)[
+	SRHLS	REG,3
+	NHI	REG,6
+	LHL	R0,CIRSPK,REG
+	AR	R0,R0
+	MH	R0,CQNLK
+	SH	R0,CIRSPK,REG
+	LHR	R0,R0
+	JGEFS	.+6
+	LHI	R0,7FFF]
+
+
+::*********************************************************************
+::
+::	MACRO:		DBCRY.(COND,REG1,REG2)
+::	FUNCTION:	Debugging CRYPTO option.  If COND true, then
+::			genrate call to CRYPTO.
+::	WHERE:
+::		COND -	If exists, and is TRUE, causes code to be generated
+::		REG1 -	specifies register (HW) to pass.
+::		REG2 -	specifies second register (HW) to pass.
+::
+::*********************************************************************
+
+DBCRY.	MACRO(COND,REG1,REG2)	[
+	IF	1-\COND
+	ELSE
+	IF	1-COND
+	ELSE
+	JFS	.+4
+	REMARK	%Crypto wildcard at 
+	NUMBER	.
+	REMARK	%
+	HC	1
+	ST	R8,DBCRSV,,
+	LHL	R8,.-8
+	JE	.+30
+	L	R8,DBCRSV,,
+	STH	REG1,CRYSBF,,
+	STH	REG2,CRYSBF+2,,
+	ST	R0,DBCRSV+4,,
+	LI	R0,.
+	JAL	R8,CRYPTO,,
+	HC	CRYE71
+	L	R0,DBCRSV+4,,
+	L	R8,DBCRSV,,
+	EI
+	EI
+	]
+
+::*********************************************************************
+::
+::	MACRO:		BFDLY.(RTN,REG)
+::	FUNCTION:	Buffer in use by link couting macro.	###JHL
+::	Used in WCFRST, WCNXT,	RTDNXT, GCRET, GCLAST, WDNXT, and CBCLR.
+::	Adds contents of REG to the counter for the link in the
+::	halfword array LKBFLT.  RTN is a three letter label prefix
+::	passed to insure unique labels.  It is, for example, the first
+::	three letters of the routine in which the macro .BFDLY is invoked.
+::	The algorithm for finding the link based on channel number is
+::	to step up until a link's CHN0 is less than the channel, and
+::	then step up until an active link is found.  If we step to the
+::	end of the LKZFKN array without meeting our condition then we
+::	step back to the highest active link.  This is based on
+::	the assumption that LKZFKN has CHN0's in increasing order, but
+::	non-active links have CHN0's entered which are simply the same
+::	as the last (or the next) active link's.
+::
+::*********************************************************************
+
+BFDLY.	MACRO(RTN,REG)	[
+	ST	R7,BDLSV2,,
+	LHL	R7,BDLYST,,	:are we enabled? (non-zero is enabled)
+	JE	RTN`70		:skip if not
+	CLHI	R2,HBUFN	:compare against low bnd for history buffers
+	JGE	RTN`70		:don't count history buffers
+	ST	R6,BDLSV1,,	:save R6 from being clobbered
+	LHL	R7,BF,R2,	:destination channel number
+	LHI	R6,0
+<RTN`CC	CLH	R7,LKZFKN,R6,R6
+	JLFS	RTN`AA
+	CLHI	R6,NLINKS-1
+	JEFS	RTN`BB
+	AIS	R6,1
+	JBS	RTN`CC
+RTN`AA	SIS	R6,1		:step down to plateau below
+:	step back to highest active link from here
+RTN`BB	TBT	R6,ALINKS
+	JNFS	RTN`60
+	SIS	R6,1
+	JBS	RTN`BB
+RTN`60	AHM	REG,LKBFLT,R6,R6	:fix up the counter as relevant
+	L	R6,BDLSV1,,	:restore R6
+RTN`70	HS	0
+	L	R7,BDLSV2,,	:restore R7
+	]
+
+
+:       nice macros to make tymfiles easy
+	RA	0
+
+	KILL	NODE,HARDWARE,SLOT,CIRCUITS,LIMITS,LU,TYMNET
+	KILL	ERROR,ERREND,.RANGE,.LURNG,.MLURG,.BIT.,.SET.
+	KILL	..35..,..EQ..,..GT..,..LT..,ENABLE,DISABLE,SET
+
+on	eq	1
+off	eq	0
+yes	eq	1
+no	eq	0
+ENGINE	EQ	1
+MACHIN	EQ	1
+MICRO	EQ	2
+macv	eq	0
+ZITEL	EQ	1
+NASYNG	EQ	0
+ASYNEW	EQ	2
+N.ADA	EQ	1
+LBOOT	EQ	1
+MEMRMK	EQ	0
+R1DOWN	EQ	1
+NSLOT	EQ	0
+NLU	EQ	0
+NTAPE	EQ	0
+XSYNC	EQ	0
+NSYNC	EQ	0
+NLINES	EQ	0
+SILINS	EQ	0
+XLINKS	EQ	0
+NPRINT	EQ	0
+IKNRNG	EQ	1
+M.NCARD	EQ	0
+M.DA0	EQ	$0 80
+M.DA1	EQ	$0 81
+M.DA2	EQ	$0 82
+M.DA3	EQ	$0 83
+M.DA4	EQ	$0 84
+M.DA5	EQ	$0 85
+M.DA6	EQ	$0 86
+M.DA7	EQ	$0 87
+M.NP0	EQ	0
+M.NP1	EQ	0
+M.NP2	EQ	0
+M.NP3	EQ	0
+M.NP4	EQ	0
+M.NP5	EQ	0
+M.NP6	EQ	0
+M.NP7	EQ	0
+
+:	OTHER SETUP
+
+S.NUM	EQ	-1
+SI.AV0	EQ	$00FFFF0000
+SI.AV1	EQ	$00FFFF0000
+SI.AV2	EQ	$00FFFF0000
+SI.AV3	EQ	$00FFFF0000
+SI.AV4	EQ	$00FFFF0000
+SI.AV5	EQ	$00FFFF0000
+SI.AV6	EQ	$00FFFF0000
+SI.AV7	EQ	$00FFFF0000
+S.AV	EQ	$00FFFFFFFF
+A.AV	EQ	$00FFFF0000
+P.AV	EQ	$00FF000000
+XPI.AV	EQ	$001
+EBS.AV	EQ	$001
+DT.AV	EQ	$001
+
+:	NETWORKS AS OF 7/20/88
+
+TYMNET		EQ	$A 1
+BUBBNET		EQ	$A 2
+TRWNET		EQ	$A 3
+DECNET		EQ	$A 4
+ITALNET		EQ	$A 5
+SWEDNET		EQ	$A 6
+NETHERNET	EQ	$A 7
+SUNNET		EQ	$A 8
+SWISSNET	EQ	$A 9
+UCCPAC		EQ	$A 10
+XEROXNET	EQ	$A 11
+BOFANET		EQ	$A 12
+VANET		EQ	$A 13
+CHASENET	EQ	$A 14
+CODAN		EQ	$A 15
+BPNET		EQ	$A 16
+DUNET		EQ	$A 17
+LENET		EQ	$A 18
+AVISO		EQ	$A 19
+DIALOG		EQ	$A 20
+MGT		EQ	$A 21
+STAGENET	EQ	$A 22
+GEONET		EQ	$A 23
+ALASCOM		EQ	$A 24
+CASNET		EQ	$A 25
+EXXON		EQ	$A 26
+INSNET		EQ	$A 27
+HSBCNET		EQ	$A 28
+DOLNET		EQ	$A 30
+CTS		EQ	$A 31
+SWBNET		EQ	$A 32
+ITALCABLE	EQ	$A 34
+TELEVERKET	EQ	$A 36
+PHILIPS		EQ	$A 37
+UKLAB		EQ	$A 38
+EASTNETLAB	EQ	$A 39
+DATAPAC		EQ	$A 40
+TRAINING	EQ	$A 41
+LENG		EQ	$A 42
+SLIGOUS		EQ	$A 43
+WESTREGLAB	EQ	$A 44
+REPAIRDEPOT	EQ	$A 45
+WESTPUB		EQ	$A 46
+WYNET		EQ	$A 47
+HGNET		EQ	$A 48
+MDISINET	EQ	$A 49
+NISNET		EQ	$A 50
+BABYLON		EQ	$A 52
+ANZNET		EQ	$A 53
+FTS2000		EQ	$A 54
+CONNNET		EQ	$A 55
+NTSNET		EQ	$A 56
+MERCURYNET	EQ	$A 57
+DEVNET		EQ	$A 58
+WTSLAB		EQ	$A 63
+TESTNET		EQ	$A 99
+
+:	PRODUCT ID'S
+
+ASAT	EQ	31
+ACOM	EQ	32
+XCOM	EQ	33
+PBH	EQ	34
+PBT	EQ	35
+TII	EQ	38
+BBXS	EQ	3A
+ELF	EQ	3B
+RAM	EQ	42
+VAL	EQ	44
+NVAL	EQ	44
+ISCS	EQ	45
+SDLC	EQ	49
+TNTT	EQ	4A
+UTSH	EQ	4B
+NTRH	EQ	4C
+VMB	EQ	4D
+NEM	EQ	4F
+TMCS	EQ	50
+CMTI	EQ	52
+TRSW	EQ	53
+ITI	EQ	54
+UTST	EQ	55
+TOM	EQ	56
+LEM	EQ	57
+MUX	EQ	58
+PBOM	EQ	5A
+SOM	EQ	5B
+PAOM	EQ	5C
+TLXG	EQ	5E
+XOM	EQ	5F
+NTRT	EQ	60
+XPC	EQ	61
+SNA	EQ	62
+SNAT	EQ	62
+SNAH	EQ	63
+TNTH	EQ	64
+CMTU	EQ	65
+NTCN	EQ	6A
+ISRM	EQ	6D
+MSRV	EQ	79
+MSV	EQ	79
+SHMN	EQ	7A
+XPIMI	EQ	1000
+IHSA	EQ	83
+I2G2	EQ	8B
+LHOS	EQ	8D
+MDT	EQ	8E
+MDH	EQ	8F
+EBUS	EQ	91
+EBUSMI	EQ	2000
+PTI	EQ	92
+CMH	EQ	93
+MBAS	EQ	94
+PHI	EQ	95
+EXPE	EQ	99
+MCP	EQ	9A
+TUNL	EQ	9C		:also used to know whether TYMEND was called
+
+:	MACRO NAMING CONVENTIONS.
+
+:		All macros intended for internal use start with ".".
+
+
+:	RANGING MACROS.
+
+:	There are a number of macros which accept a set of RANGE parameters.
+:		The generic form for these macros is:
+
+:			MACRO(A,B,C-D,E,F-G)
+
+:	where A,B and E are single ports selected, and the ranges C through
+:		D and F through G are selected.
+
+: **	ERROR(text,cont)	Output configuration error to local TTY
+: **	ERREND(text)		End an error message
+
+:	Format will be:
+:	ERROR:	[CR:LF]!!!! **** text ****[CR:LF]
+:	ERREND(text) will add ****[CR:LF] on the current line
+
+	GL	ERRCNT
+ERRCNT	EQ	0			:Number of errors so far
+
+ERROR	MACRO(txt,cont) [
+ERRCNT	EQ	ERRCNT+1
+	REMARK	%!!!! ERROR **** txt
+	IF	cont 0
+	ELSE
+	 ERREND
+	EI
+]
+
+ERREND	MACRO(txt) [
+	REMARK	txt ****%
+]
+
+: **	.RANGE(LABEL,RX,MX,P)	Called to check a range of values
+
+:	P	may be a single # N, a range of #s Ni-Nj with 0=<Ni<Nj,
+:		or null
+:	RX	is radix of #s N
+:	MX	is max value of N (given in radix RX),
+:		range is 0 to $0 0FFFFFFFF
+:	LABEL	is a label for diagnostics
+
+:	returns QR = 0 if nothing to do,
+:	else returns QR = number of iterations..
+:			QI = first port to do.
+
+.RANGE	MACRO(LABEL,RX,MX,P) [
+Q	EQ	$`RX -(0/P+0)		:FOR .P. = "Ni-Nj", Q = -(0/Ni-Nj) = Nj
+					: else 0
+QI	EQ	$`RX Q+(P+0)		:FOR .P. = "Ni-Nj", Q=Nj, QI = Nj+(Ni-Nj) = Ni
+					:FOR .P. = "Ni", Q=0, QI = Ni
+					:FOR .P. = null,  QI = 0
+QQ	EQ	$`RX P $0 100000000	:FOR .P. = null, QQ = $0100000000
+QR	EQ	1
+	IF	-QI
+QI	 EQ	-QI
+QQ	 EQ	$0100000000
+	 ERROR(LABEL`: Parameter -,1)
+	 NUMBER $`RX QI
+	 ERREND( not positive)
+	EI
+	IF	$0 QQ&1FFFFFFFF%100000000	:IF .P. NOT NULL
+	 IF	QI-($`RX`MX-1)
+	  ERROR(LABEL`: Parameter ,1)
+	  NUMBER $`RX QI
+	  REMARK	 greater than 
+	  NUMBER $`RX`MX-1; ERREND
+QR	  EQ	0
+	 EI
+	 IF	Q			:IF M NOT NULL
+QR	  EQ	Q-QI+1
+	  IF	Q-($`RX`MX-1)
+	   ERROR(LABEL`: Parameter ,1); NUMBER $`RX Q
+	   REMARK	 greater than ; NUMBER $`RX`MX-1; ERREND
+QR	   EQ	0
+	  EI
+	  IF	QI-Q
+	   ERROR(LABEL`: Range ,1); NUMBER $`RX QI
+	   REMARK	-; NUMBER $`RX Q; ERREND( Backward)
+QR	   EQ	0
+	  EI
+	 EI
+	ELSE
+QR	 EQ	0
+	EI
+	KILL	Q,QQ
+]
+
+.CXPI.	MACRO [
+	IF	XPI.AV
+MXPNM	EQ	O.|H.+1|
+NMACH	EQ	O.|H.+2|
+H.	EQ	H.+2
+	IF	1-\MACHNM
+MACHNM	EQ	0
+HST0	EQ	0
+	EI
+XPITMO	EQ	0A
+XPISAV	EQ	1
+	ELSE
+	REMARK	%XPI IS NOT SUPPORTED IN THIS CONFIGURATION.%
+	EI
+	]
+
+.CEBS.	MACRO [
+	IF	EBS.AV
+IPINUM	EQ	1
+IPRES0	EQ	1
+IPGMB0	EQ	-1
+	ELSE
+	REMARK	%E-BUS IS NOT SUPPORTED IN THIS CONFIGURATION.%
+	EI
+	]
+
+: **	Macro .BIT.(NAME,POS)	Called to locate bit at POS in NAME
+
+.BIT.	MACRO(NAME,POS) [(NAME^((POS&1F)-1F)&1)]
+
+:	HANDY MACROS
+
+::	.XX. MACROS
+:	THE FOLLOWING MACROS EVALUATE THE RELATIONSHIP BETWEEN TWO
+:	EXPRESSIONS.  THEY EVALUATE TO 0 FOR FALSE AND 1 FOR TRUE.
+:	THEY MAY BE USED IN ANY EXPRESSION AND ARE PARTICULARLY USEFUL
+:	FOR IF STATMENTS.
+:
+:	E.G.	IF	..EQ..(.-LABEL,30)
+:		REMARK %>>>> ERROR **** LABEL AREA NOT = 30 BYTES ****%
+:		EI
+
+	GL	..35..
+..35..	EQ	$a 35
+..EQ..	MACRO(P1,P2)[((((P1)-(P2))!((P2)-(P1)))%(1^..35..))^-..35..]
+..GT..	MACRO(P1,P2)[((P2)-(P1))^-..35..]
+..LT..	MACRO(P1,P2)[((P1)-(P2))^-..35..]
+
+:
+:	MACRO:  NODE
+:
+:	This macro is used to define the node number, kernel host number,
+:	network id number, and any needed sub id's.
+:
+:	FORMAT:  NODE(2020,536,1)	:DEFINE AS NODE 2020, KH536, TYMNET
+:
+NODE	MACRO(NNUM,KHST,NID,SID) [ 
+MACHNM	EQ	$8 NNUM+0
+HST0	EQ	$A KHST+0
+NETID	EQ	$A NID+0
+SUBNET	EQ	$A SID+0
+	IF	..LT..(MACHNM,$82001)
+	REMARK	%NODE# MUST BE GREATER THAN 2000!%%
+	EI
+	IF	..GT..(MACHNM,$817777)
+	REMARK	%N0DE# MUST BE LESS THAN 20000!%%
+	EI
+	IF	1-HST0
+	REMARK	%KERNEL HOST# IS REQUIRED!%%
+	EI
+	IF	1-NETID
+	REMARK	%NETWORK ID# IS REQUIRED!%%
+	EI
+	]
+
+:
+:	MACRO:	HARDWARE
+:
+:	This macro is used to define hardware type and configuration
+:	to be used.  The first parameter defines the type of engine
+:	(ei. ENGINE,MINI,TSI,NANO,MICRO,HDLCMICRO).  All other parameters
+:	can be used for optional hardware (ie. MAC1,XPI,TAPE,DISK,1200,
+:	2400,4800,9600).
+:
+:	FORMAT:	HARDWARE(ENGINE,4800)	:DEFINE STANDARD ENGINE WITH
+:					: HIGH SPEED INTERRUPTS
+:
+MINI	EQ	1
+DMINI	EQ	1
+CXL	EQ	1
+DCXL	EQ	1
+MICRO	EQ	2
+TSI	EQ	3
+PICO	EQ	4
+NANO	EQ	4
+HDLC	EQ	5
+HDLCMI	EQ	5
+PXL	EQ	6
+PXLII	EQ	7
+PXL2	EQ	7
+MAC1	EQ	  10
+MACI	EQ	  10
+MAC2	EQ	  20
+MACII	EQ	  20
+MAC3	EQ	  30
+MACIII	EQ	  30
+MAC5	EQ	  40
+CPU5	eq	  50
+CPU4	eq	  50
+CPU3	eq	  60
+CPU2	eq	  70
+XPI	EQ	 100
+DISK	EQ	 400
+TAPE	EQ	 800
+DISK10	EQ	1000
+
+:	support machns macro by just calling hardware macro
+machns	macro(.HTYP,.O0,.O1,.O2,.O3,.O4,.O5,.O6,.O7,.O8,.O9,.OA,.OB,.OC,.OD,.OE) [
+
+ HARDWARE(.HTYP,.O0,.O1,.O2,.O3,.O4,.O5,.O6,.O7,.O8,.O9,.OA,.OB,.OC,.OD,.OE) ]
+
+HARDWARE MACRO(.HTYP,.O0,.O1,.O2,.O3,.O4,.O5,.O6,.O7,.O8,.O9,.OA,.OB,.OC,.OD,.OE) [
+O.0	EQ	.O0 0
+O.1	EQ	.O1 0
+O.2	EQ	.O2 0
+O.3	EQ	.O3 0
+O.4	EQ	.O4 0
+O.5	EQ	.O5 0
+O.6	EQ	.O6 0
+O.7	EQ	.O7 0
+O.8	EQ	.O8 0
+O.9	EQ	.O9 0
+O.A	EQ	.OA 0
+O.B	EQ	.OB 0
+O.C	EQ	.OC 0
+O.D	EQ	.OD 0
+O.E	EQ	.OE 0
+	IF	.HTYP
+	IF	.HTYP-7
+	REMARK	%%ILLEGAL HARDWARE TYPE!%
+	ELSE	.HTYP-6  PXLIIs and other CPU IV boxes
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+NSYNC	EQ	0
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+P.AV	EQ	0
+MACV	EQ	1
+	ELSE	.HTYP-5
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+NSYNC	EQ	0
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+P.AV	EQ	0
+MACV	EQ	1
+	ELSE	.HTYP-4
+MACHIN	EQ	2
+ZITEL	EQ	0
+NSYNC	EQ	0
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+P.AV	EQ	0
+S.AV	EQ	0FFFC0000
+SI.AV0	EQ	0FFFC0000
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+A.AV	EQ	0
+	ELSE	.HTYP-3
+MACHIN	EQ	4
+ZITEL	EQ	1
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+P.AV	EQ	0
+S.AV	EQ	0FF000000
+SI.AV0	EQ	0FF000000
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+A.AV	EQ	0
+	ELSE	.HTYP-2
+MACHIN	EQ	3
+ZITEL	EQ	1
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+P.AV	EQ	0
+S.AV	EQ	0F0000000
+SI.AV0	EQ	0F0000000
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+A.AV	EQ	0
+	ELSE	.HTYP-1
+ZITEL	EQ	0
+SI.AV0	EQ	0
+SI.AV1	EQ	0
+SI.AV2	EQ	0
+SI.AV3	EQ	0
+P.AV	EQ	0
+S.AV	EQ	$0033330000
+A.AV	EQ	$0080000000
+XPI.AV	EQ	0
+EBS.AV	EQ	0
+DT.AV	EQ	0
+	EI	:.HTYP-x
+	ELSE	:.HTYP (not zero)
+	REMARK	%%ILLEGAL HARDWARE TYPE!%%
+	EI	:.HTYP
+
+H.	EQ	0
+	RE
+	IF	..EQ..(O.|H.|,CPU4)
+macv	eq	1
+	EI
+	IF	..EQ..(O.|H.|,1200)
+BAUDR	EQ	0
+	EI
+	IF	..EQ..(O.|H.|,2400)
+	REMARK	%BAUDR = 1 IS NOT SUPPORTED AT THIS TIME!!%%
+BAUDR	EQ	1
+BAUDRS	EQ	1
+A.AV	EQ	$00F0000000&A.AV
+	EI
+	IF	..EQ..(O.|H.|,4800)
+A.AV	EQ	$00F0000000&A.AV
+BAUDR	EQ	2
+	EI
+	IF	..EQ..(O.|H.|,9600)
+	REMARK	%BAUDR = 3 IS NOT SUPPORTED AT THIS TIME!!%%
+BAUDR	EQ	3
+BAUDRS	EQ	1
+A.AV	EQ	$0080000000&A.AV
+	EI
+	IF	..EQ..(O.|H.|,MAC1)
+ZITEL	EQ	0
+	EI
+	IF	..EQ..(O.|H.|,MAC2)
+ZITEL	EQ	1
+	EI
+	IF	..EQ..(O.|H.|,MAC3)
+ZITEL	EQ	1
+	EI
+	IF	..EQ..(O.|H.|,MAC5)
+ZITEL	EQ	1
+macv	eq	1
+	EI
+	IF	..EQ..(O.|H.|,XPI)
+	.CXPI.
+	EI
+	IF	..EQ..(O.|H.|,EBUS)
+	.CEBS.
+	EI
+	IF	..EQ..(O.|H.|,DISK)
+	IF	DT.AV
+MSCDSK	EQ	1
+	ELSE
+	REMARK	%DISK NOT ALLOWED IN THIS CONGIFURATION.%
+	EI
+	EI
+	IF	..EQ..(O.|H.|,TAPE)
+	IF	DT.AV
+NTAPE	EQ	NTAPE+1
+N.ADA	EQ	0
+A.AV	EQ	$00FF000000&A.AV
+	ELSE
+	REMARK	%TAPE NOT ALLOWED IN THIS CONFIGURATION.%
+	EI
+	EI
+	IF	..EQ..(O.|H.|,DISK10)
+	IF	DT.AV
+NDISK	EQ	NDISK+1
+N.ADA	EQ	0
+A.AV	EQ	$00FF000000&A.AV
+	ELSE
+	REMARK	%DISK NOT ALLOWED IN THIS CONFIGURATION.%
+	EI
+	EI
+H.	EQ	H.+1
+	ER	0F-H.
+	]
+
+:
+:	MACRO:  CIRCUITS
+:
+:	This macro is used to define the number of circuits needed in the
+:	following catagories: passthroughs, dispatcher, xray users.
+:
+:	FORMAT:  CIRCUITS(PASSTH,128,DISPAT,64,XRAY,4) :DEFINE 128 PASSTHROUGHS
+:								64 DISPATCHER
+:								 4 XRAY USERS
+:
+PASSTH	EQ	1
+PASSTHRU EQ	1
+PASSTHRUS EQ	1
+DISPAT	EQ	2
+DISPATCH EQ	2
+DISPATCHER EQ	2
+XRAY	EQ	3
+
+CIRCUITS MACRO(.T0,.C0,.T1,.C1,.T2,.C2,.T3,.C3,.T4,.C4,.T5,.C5,.T6,.C6,.T7,.C7) [
+.TT0	EQ	.T0+0	;.CC0	EQ	$A .C0+0
+.TT1	EQ	.T1+0	;.CC1	EQ	$A .C1+0
+.TT2	EQ	.T2+0	;.CC2	EQ	$A .C2+0
+.TT3	EQ	.T3+0	;.CC3	EQ	$A .C3+0
+.TT4	EQ	.T4+0	;.CC4	EQ	$A .C4+0
+.TT5	EQ	.T5+0	;.CC5	EQ	$A .C5+0
+.TT6	EQ	.T6+0	;.CC6	EQ	$A .C6+0
+.TT7	EQ	.T7+0	;.CC7	EQ	$A .C7+0
+.Q	EQ	0
+	RE	8
+	IF	.TT|.Q|
+	IF	.TT|.Q|-3
+	REMARK	%BAD CIRCUITS DEFINITION!%
+	ELSE
+	IF	.TT|.Q|-2
+NXUBLK	EQ	.CC|.Q|
+	ELSE
+	IF	.TT|.Q|-1
+NDP	EQ	.CC|.Q|
+	ELSE
+NPTHR	EQ	.CC|.Q|
+	IF	NPTHR
+PTHRU	EQ	0
+	ELSE
+PTHRU	EQ	1
+	EI
+	EI
+	EI
+	EI
+	ELSE
+	IF	.TT|.Q|+1
+	ELSE
+	REMARK	%BAD CIRCUITS DEFINITION!%
+	EI
+	EI
+.Q	EQ	.Q+1
+	ER
+	]
+
+:
+:	MACRO:  SLOT
+:
+:	This macro is used to define the start of a slot's definitions.
+:	While it defines the slot#, memory size, license, and product id,
+:	subsequint calls to macros LIMITS and LU are used to define the
+:	other needed information.
+:
+AUX	EQ	80000000
+AUXCIR	EQ	80000000
+SUS	EQ	1
+SUSPEND	EQ	1
+
+SLOT	MACRO(S.N,K.SZ,SZ.D) [
+S.NUM	EQ	$A S.N S.NUM+1
+SZ.K	EQ	$A K.SZ 1
+D.SZ	eq	$A SZ.D 0
+	if 	..EQ..(s.num,0)*macv
+dmaavl	eq	$a d.sz*1024
+	ei
+	if	d.sz
+	if	1-macv
+	REMARK	%% Configuration Error:  DMA region specified for non MACV machine.
+	REMARK   % Ignoring DMA specification.%
+dmaavl	eq	0
+	ei	
+	ei
+
+S|$A S.NUM|CORE EQ SZ.K
+NLUS|$A S.NUM| EQ 0
+..LU..	EQ	0
+	IF	S.NUM-NSLOT
+NSLOT	EQ	S.NUM
+	EI
+	]
+
+:
+:	MACRO:  LIMITS
+:
+:	This optional macro is used to define some limits on the slots
+:	operational parameters.  The slot number is assigned by the
+:	last call to the SLOT macro.
+:
+:	FORMAT:  LIMITS(FG,BG,SD)
+:
+:		FG = QUANTUM FOREGROUND TIME
+:		BG = QUANTUM BACKGROUND TIME
+:		SD = COUNT OF OUTSTANDING SHARED REQUESTS BEFORE DISMISS
+:
+:	EXAMPLE:  LIMITS(4,15,20) :SET FOREGROUND TICKS TO 4,
+:				       BACKGROUND TICKS TO 15,
+:				       SHARED REQUESTS TO 20.
+:
+LIMITS	MACRO(F.T,B.T,S.D) [
+Q.FG|$A S.NUM| EQ $A F.T 0
+Q.BG|$A S.NUM| EQ $A B.T 0
+SH.Q|$A S.NUM| EQ $A S.D 0
+	IF	Q.FG|$A S.NUM|
+	ELSE
+	KILL	Q.FG|$A S.NUM|
+	EI
+	IF	Q.BG|$A S.NUM|
+	ELSE
+	KILL	Q.BG|$A S.NUM|
+	EI
+	IF	SH.Q|$A S.NUM|
+	ELSE
+	KILL	SH.Q|$A S.NUM|
+	EI
+
+	]
+
+:
+:	MACRO:	LU
+:
+:	This macro is used to define the logical units for slots.
+:	The slot number is assigned by the last call to the SLOT
+:	macro.
+:
+:	FORMAT:  LU(TYPE,DEVICENUM)
+:
+:		TYPE      = SYNC|SIO|ASYNC|PRINTER
+:		DEVICENUM = PHYSICAL DEVICE NUMBER
+:
+:	EXAMPLES:  LU(SYNC,2-3)    :DEFINE SYNC LINES 2 AND 3
+:		   LU(ASYNC,0-3)   :DEFINE ASYNC GROUPS 0 THROUGH 3
+:		   LU(SIO,0,2-5)   :DEFINE SIO LINES 2-5 ON MOTHER BOARD 0
+:		   LU(PRINTER,0)   :DEFINE LINE PRINTER 0
+:		   LU(NULL)	   :DEFINE NULL DEVICE (SKIP A LOGICAL UNIT)
+
+NULL	EQ	0
+SYNC	EQ	1
+SIO	EQ	2
+ASYNC	EQ	3
+PRINT	EQ	4
+PRINTER	EQ	4
+
+.LURNG	MACRO(NAM,RNG,P) [
+	.RANGE(LU,A,RNG,P)
+	IF	QR
+	RE	QR
+	IF	.BIT.(NAM`.AV,QI)
+S|$A S.NUM|L|..LU..| NAM`.REF(QI)
+	ELSE
+	REMARK	%UNIT SKIPPED.%
+	EI
+QI	EQ	QI+1
+..LU..	EQ	..LU..+1
+C.LU..	EQ	C.LU..+1
+	ER
+	IF	QI-.HIGH.
+.HIGH.	EQ	QI
+	EI
+	EI
+	]
+
+.MLURG	MACRO(MB,RNG,P,SPED) [
+	.RANGE(LU,A,RNG,P)
+	IF	QR
+	RE	QR
+	if	MB-8
+	REMARK	%SIO UNIT OUT OF RANGE AND THUS SKIPPED. MBOARD 
+	NUMBER	MB
+	REMARK	 LINE 
+	NUMBER	QI
+	REMARK	%
+	ELSE
+	if	.BIT.(SI.AV`MB,QI)
+S|$A S.NUM|L|..LU..| M.REF(MB,QI)
+	 if	1-S.NUM		:if slot 0 then is NC
+.lks|$A ..LU..|	eq	$A SPED 0
+	 ei	:slot num equal 0
+	ELSE
+	REMARK	%SIO UNIT SKIPPED. MBOARD 
+	NUMBER	MB
+	REMARK	 LINE 
+	NUMBER	QI
+	REMARK	%
+	ei	:bit()
+	EI	:mb-8
+QI	EQ	QI+1
+..LU..	EQ	..LU..+1
+C.LU..	EQ	C.LU..+1
+	ER
+	IF	QI-.HIGH.
+.HIGH.	EQ	QI
+	EI
+	EI
+	]
+:	support LUDEF by just calling LU
+LUDEF	macro(.TYP,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	lu(.TYP,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)
+	]
+LU     MACRO(.TYP,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+C.LU..	EQ	0
+.HIGH.	EQ	0
+	IF	.TYP
+	IF	.TYP-4
+	REMARK	%ILLEGAL LU SPEC IN SLOT 
+	NUMBER	$A S.NUM
+	REMARK	 UNIT 
+	NUMBER	$A ..LU..
+	REMARK	.%%
+	ELSE	:.TYP-4
+	IF	.TYP-3
+	.LURNG(P,8,.L1)
+	.LURNG(P,8,.L2)
+	.LURNG(P,8,.L3)
+	.LURNG(P,8,.L4)
+	.LURNG(P,8,.L5)
+	.LURNG(P,8,.L6)
+	.LURNG(P,8,.L7)
+	.LURNG(P,8,.L8)
+	IF	$A .HIGH.-NPRINT
+NPRINT	EQ	$A .HIGH.
+	EI	:$A .HIGH.-NPRINT
+	ELSE	:.TYP-3
+	IF	.TYP-2
+	.LURNG(A,16,.L1)
+	.LURNG(A,16,.L2)
+	.LURNG(A,16,.L3)
+	.LURNG(A,16,.L4)
+	.LURNG(A,16,.L5)
+	.LURNG(A,16,.L6)
+	.LURNG(A,16,.L7)
+	.LURNG(A,16,.L8)
+	.LURNG(A,16,.L9)
+	.LURNG(A,16,.LA)
+	.LURNG(A,16,.LB)
+	.LURNG(A,16,.LC)
+	.LURNG(A,16,.LD)
+	.LURNG(A,16,.LE)
+	.LURNG(A,16,.LF)
+	IF	$A .HIGH.-NASYNG
+NASYNG	EQ	$A .HIGH.
+	EI	:$A .HIGH.-NASYNG
+	ELSE	:.TYP-2
+	IF	.TYP-1
+L2.	EQ	$A .L2
+	.MLURG(.L1,16,.L2,.L3)
+.MN.	EQ	$A .L1
+	if	9-.MN.
+	IF	(.MN.+1)-M.NCARD
+M.NCARD	EQ	$A .MN.+1
+	EI	:(.MN.+1)-M.NCARD
+	IF	.HIGH.-M.NP|.MN.|
+M.NP|.MN.| EQ   .HIGH.
+	EI	:.HIGH.-M.NP|.MN.|
+	ei
+	IF	1-S.NUM
+SILINS	EQ	SILINS+C.LU..
+	EI	:1-S.NUM
+	ELSE	:.TYP-1
+	.LURNG(S,32,.L1)
+	.LURNG(S,32,.L2)
+	.LURNG(S,32,.L3)
+	.LURNG(S,32,.L4)
+	.LURNG(S,32,.L5)
+	.LURNG(S,32,.L6)
+	.LURNG(S,32,.L7)
+	.LURNG(S,32,.L8)
+	.LURNG(S,32,.L9)
+	.LURNG(S,32,.LA)
+	.LURNG(S,32,.LB)
+	.LURNG(S,32,.LC)
+	.LURNG(S,32,.LD)
+	.LURNG(S,32,.LE)
+	.LURNG(S,32,.LF)
+	IF	.HIGH.-NSYNC
+	IF	MACHIN-2
+NSYNC	EQ	.HIGH.
+	ELSE
+NSYNC	EQ	$A16
+	EI
+	EI
+	IF	.HIGH.-$A16
+XSYNC	EQ	1
+NSYNC	EQ	$A32
+	EI	:.HIGH.-$A16
+	IF	1-S.NUM
+NLINES	EQ	NLINES+C.LU..
+	EI	:1-S.NUM
+	EI	:.TYP-1
+	EI	:.TYP-2
+	EI	:.TYP-3
+	EI	:.TYP-4
+	ELSE	:.TYP
+	IF	.TYP+1
+	ELSE	:.TYP+1
+	REMARK	%ILLEGAL LU SPEC IN SLOT 
+	NUMBER	$A S.NUM
+	REMARK	 UNIT 
+	NUMBER	$A ..LU..
+	REMARK	.%%
+	EI	:.TYP+1
+	EI	:.TYP
+NLUS|$A S.NUM| EQ ..LU..
+	IF	..LU..-NLU
+NLU	EQ	..LU..
+	EI	:..LU..-NLU
+	]
+
+:	.......................................................................
+:	SLOT LICENSE DEFINITIONS
+:	.......................................................................
+
+TL.AUX	EQ	80000000		:AUX-CIRCUIT LICENSE
+TL.SUS	EQ	00000001		:SUSPEND/RESUME LICENSE
+AUXCIR	EQ	TL.AUX			:nicer names
+SUSPEN	EQ	TL.SUS			:
+
+:	.....................................................................
+:
+:	LICENS	- To specify the slot licensing information.
+:
+:	LICENS	MACRO(lic1, lic2) where
+:	lic1 -	license specifier (AUXCIR or SUSPEND)
+:	lic2 -	license specifier (AUXCIR or SUSPEND)
+:
+:	.....................................................................
+
+LICENS	MACRO(lic1,lic2) [
+
+Q	EQ	s.num			:the current slot number
+Q1	EQ	lic1 0			:1st license option
+Q2	EQ	lic2 0			:2nd license option
+S|Q|LIC	EQ	Q1!Q2			:Set slot license information
+]
+
+
+:
+:	ENABLE
+:
+:	This macro is used to set labels to a value of 1.
+:
+:	FORMAT:  ENABLE(SPAM)	:SET SPAM TO 1
+:
+.SET.	MACRO(NAME,VAL)[
+	KILL	Q
+Q`NAME	EQ	1
+	IF	1-\Q
+	KILL	Q`NAME
+`NAME	EQ	`VAL 1
+	EI
+	]
+.SETD.	MACRO(NAME,VAL)[
+	KILL	Q
+Q`NAME	EQ	1
+	IF	1-\Q
+	KILL	Q`NAME
+`NAME	EQ	$a `VAL
+	EI
+	]
+
+
+ENABLE	MACRO(.L0,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	.SET.(.L0,1)
+	.SET.(.L1,1)
+	.SET.(.L2,1)
+	.SET.(.L3,1)
+	.SET.(.L4,1)
+	.SET.(.L5,1)
+	.SET.(.L6,1)
+	.SET.(.L7,1)
+	.SET.(.L8,1)
+	.SET.(.L9,1)
+	.SET.(.LA,1)
+	.SET.(.LB,1)
+	.SET.(.LC,1)
+	.SET.(.LD,1)
+	.SET.(.LE,1)
+	.SET.(.LF,1)
+	]
+:
+:	DISABLE
+:
+:	This macro is used to set labels to a value of 0.
+:
+:	FORMAT:  DISABLE(SPAM)	:SET SPAM TO 0
+:
+DISABLE	MACRO(.L0,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	.SET.(.L0,0)
+	.SET.(.L1,0)
+	.SET.(.L2,0)
+	.SET.(.L3,0)
+	.SET.(.L4,0)
+	.SET.(.L5,0)
+	.SET.(.L6,0)
+	.SET.(.L7,0)
+	.SET.(.L8,0)
+	.SET.(.L9,0)
+	.SET.(.LA,0)
+	.SET.(.LB,0)
+	.SET.(.LC,0)
+	.SET.(.LD,0)
+	.SET.(.LE,0)
+	.SET.(.LF,0)
+	]
+:
+:	SET
+:
+:	This macro is used to set labels to a decimal value.
+:
+:	FORMAT:  SET(COUNT,7)	:SET COUNT TO 7
+:
+SET	MACRO(.L0,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	.SETD.(.L0,.L1)
+	.SETD.(.L2,.L3)
+	.SETD.(.L4,.L5)
+	.SETD.(.L6,.L7)
+	.SETD.(.L8,.L9)
+	.SETD.(.LA,.LB)
+	.SETD.(.LC,.LD)
+	.SETD.(.LE,.LF)
+	]
+:
+:	SETHEX
+:
+:	This macro is used to set labels to a hexadecimal value.
+:
+:	FORMAT:  SETHEX(COUNT,7)	:SET COUNT TO 7
+:
+SETHEX	MACRO(.L0,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	.SET.(.L0,.L1)
+	.SET.(.L2,.L3)
+	.SET.(.L4,.L5)
+	.SET.(.L6,.L7)
+	.SET.(.L8,.L9)
+	.SET.(.LA,.LB)
+	.SET.(.LC,.LD)
+	.SET.(.LE,.LF)
+	]
+:
+:	SETGL
+:
+:	This macro is used to set labels to a value and make global.
+:
+:	FORMAT:  SETGL(COUNT,7)	:SET COUNT TO 7
+:
+.SETG.	MACRO(NAME,VAL)[
+	KILL	Q
+Q`NAME	EQ	1
+	IF	1-\Q
+	KILL	Q`NAME
+	GL	`NAME
+`NAME	EQ	`VAL 1
+	EI
+	]
+
+SPAMOP	macro(.l0)[
+	.setg.(spam,.l0)
+	]
+
+SETGL	MACRO(.L0,.L1,.L2,.L3,.L4,.L5,.L6,.L7,.L8,.L9,.LA,.LB,.LC,.LD,.LE,.LF)[
+	.SETG.(.L0,.L1)
+	.SETG.(.L2,.L3)
+	.SETG.(.L4,.L5)
+	.SETG.(.L6,.L7)
+	.SETG.(.L8,.L9)
+	.SETG.(.LA,.LB)
+	.SETG.(.LC,.LD)
+	.SETG.(.LE,.LF)
+	]
+
+:	define destination nodes that get high speed circuits (originate
+:	on this node and terminate on specified node)
+fstnode	MACRO(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9,PA,PB,PC,PD,PE,PF)	[
+	REMARK %%The FSTNOD macro is obsolete.  Either enable NCPRIO to
+	REMARK  %have NC set all circuits to the 8,000 CPS throughput class,
+	REMARK  %or use the version of sup which supports CCT 29 to request
+	REMARK  %8,000 CPS circuits.
+	]
+
+:	define destination hosts that get high speed circuits (originate
+:	on this node and terminate on specified host in different node)
+fsthost	MACRO(P0,P1,P2,P3,P4,P5,P6,P7,P8,P9,PA,PB,PC,PD,PE,PF)	[
+	REMARK %%The FSTHOS macro is obsolete.  Either enable NCPRIO to
+	REMARK  %have NC set all circuits to the 8,000 CPS throughput class,
+	REMARK  %or use the version of sup which supports CCT 29 to request
+	REMARK  %8,000 CPS circuits.
+	]
+
+dmamap	macro(d.sz)[
+	if	d.sz
+	if 	..EQ..(s.num,0)*macv
+dmaavl	eq	$a d.sz*1024
+	ei
+	ei
+
+	if	\t2gate
+	if	t2gate
+dmaavl	eq	$a d.sz*1024
+	ei
+	ei
+
+	if	1-macv
+	REMARK	%% Configuration Error:  DMA region specified for non MACV machine.
+	REMARK   % Ignoring DMA specification.%
+dmaavl	eq	0
+	ei	
+
+]
+
+TYMEND	MACRO[
+	KILL    TIILNK,TYMNET,GGHOST,HLIMIT,SLIMIT,BAUD
+	KILL	TYMNODE,ASSMBL,SLOT,LINES,TYMLINK
+
+	KILL	NODE,HARDWARE,SLOT,CIRCUITS,LIMITS,LU,TYMNET,.SET.,SET
+	KILL	ERROR,ERREND,.RANGE,.LURNG,.MLURG,.BIT.,ENABLE,DISABLE
+	KILL	Q,QQ,SI.AV0,SI.AV1,SI.AV2,SI.AV3,S.AV,A.AV,P.AV
+	KILL	XPI.AV,EBS.AV,DT.AV,..EQ..,..GT..,..LT..,..35..
+	KILL	MINI,TSI,PICO,NANO,HDLC,HDLCMI,MAC1,MACI,MAC2,MACII
+	KILL	MAC3,MACIII,XPI,XPIMI,EBUS,EBUSMI,DISK,TAPE,DISK10
+	KILL	XRAY,DISPAT,PASSTH,AUX.AUXCIR,SUS,SUSPEND,PRINT
+	KILL	ASAT,ACOM,XCOM,PBH,PBT,TII,BBXS,ELF,RAM,VAL,NVAL
+	KILL	ISCS,SDLC,TNTT,UTSH,NTRH,VMB,NEM,TMCS,CMTI,TRSW
+	KILL	ITI,UTST,TOM,LEM,MUX,PBOM,SOM,PAOM,TLXG,XOM,NTRT
+	KILL	XPC,SNA,SNAT,SNAH,TNTH,CMTU,NTCN,ISRM,MSRV,MSV
+	KILL	SHMN,IHSA,I2G2,LHOS,MDT,MDH,PTI,CMH,MBAS,PHI
+	KILL	EXPE,MCP,TUNL
+	KILL	.SETG.,SETGL
+
+	KILL	SYN,ASN,PRN,XSIO,M.CARD,TL.AUX,TL.SUS,DK,MT,RD,WR
+	kill	AT,SS,S.REF,A.REF,P.REF,T.REF,IP.REF,X.REF,M.REF,SGU.DEF
+	kill	SGU.REF,BITCH,BAUD,SYSCHK,DEFEXT,LICENS,PCCMOP,SHARED,SYNCLINE
+	kill	SYSOPT,SYSMIS,XPIBOARD,mboard,asyncboard,bootstrap
+	kill	syscon,sysjob,ddtsys,dspchn,fgexec,frogtm,histbl,mactra
+	kill	memo,msring,monnet,mxpmac,overld,pasize,mscm,scsi,nxludf
+	kill	histsz,frogd,timslc,superv,supslv,switch
+]
+
+
+	:	***NOTHING  PAST THIS  POINT***
+
+    G@h\
