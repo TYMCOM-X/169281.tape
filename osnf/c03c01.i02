@@ -1,0 +1,1364 @@
+
+        SUBTTL INIT ... CMT initialisation parameters
+
+:
+:|--------------------------------------------------------------------|
+:|                           H I S T O R Y                            | 
+:|--------------------------------------------------------------------|
+:| NSR NUMBER | INIT | VERSION |   DATE   |         REASON            |
+:|------------|------|---------|----------|---------------------------|
+:|            | PHH  | V01     |  9 MAR 87|  Origin                   |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|            |      |         |          |                           |
+:|--------------------------------------------------------------------|
+:
+        GL      HMASK,ASMTIM
+:       MO      .,INIT                  :Delimit module
+:
+: This is the initialisation module which is assembled before the user
+: TYM file. It initialises certain variables and sets up symbols required
+: by the TYM file and by the library routines.
+:
+: The following general macro is defined:
+:
+:       DEFGEQ - Define an equated symbol and make global
+:
+: The following macros which are used in the TYM file are defined:
+:
+:       DEFHST - Define host number, number of channels and printers
+:       DEFHDR - Define a header for menu screen
+:       DEFUSR - Define valid user of CMT
+:       DEFTTY - Define user terminal type
+:       DEFELE - Define login string element
+:       DEFSTR - Define login string
+:       DEFMEN - Define a user menu
+:       DEFMAN - Define manual login entry for menu
+:       MANPTR - Define manual login with printer entry for menu
+:       MENUSR - Define menu associated with username
+:
+: The following macros which are used to describe a terminal are defined:
+:
+:       BGNTRM - Begin a terminal definition
+:       CTLDEF - Define set terminal parameters
+:       STRDEF - Define terminal initialisation bytes
+:       SPCDEF - Define macro to create an array of special positions
+:       CLRDEF - Define clear screen string
+:       SPFDEF - Define start protected field string
+:       SUFDEF - Define start unprotected field string
+:       RKUDEF - Define rack up string
+:       RKDDEF - Define rack down string
+:       MCDEF - Define move cursor routine
+:       PRTDEF - Specify if printer supported
+:       SIZDEF - Define screen size
+:       STPDEF - Define position of status indicator
+:       SDPDEF - Define routine to set graphic rendition
+:       CTRDEF - Define macro to set up keyboard tables
+:       BPRDEF - Define start printing string
+:       FPRDEF - Define finish printing string
+:       DSRDEF - Define printer status enquiry string
+:       KDEF - Define average size of move cursor
+:       ENDTRM - End a terminal definition
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFGEQ
+:
+: Description   Define equate and make global
+:
+: Parameters    SYMB Symbol of equate
+:               Value to be applied
+:
+: ----------------------------------------------------------------------
+:
+DEFGEQ  MACRO(SYMB,VX) [
+        GL      SYMB
+SYMB    EQ      VX
+]
+:
+: ----------------------------------------------------------------------
+:
+: Product identification
+:
+        DEFGEQ(PRODID,88)               :Product identification code
+        DEFGEQ(VERSION,01)              :Version number
+        DEFGEQ(REVLEV,01)               :Revision level
+ASMTIM	CURGMT				:Assembly time
+:
+: ----------------------------------------------------------------------
+:
+: Standard Tymnet parameter definitions
+:
+:       
+: Required by START.LIB
+:
+        DEFGEQ(MAXHST,1)                :Only one host in CMT
+        DEFGEQ(ENGINE,1)                :Only use Engine
+        DEFGEQ(IRSIZE,1000)             :Use a large IRING
+        DEFGEQ(ORSIZE,1000)             :Use a large ORING
+:
+: Required by TIMOUT.LIB
+:
+        DEFGEQ(NTOUT,5)                 :No. of timeouts that can be
+                                        :active concurrently
+:
+: Required by CRASH.LIB 
+:
+        DEFGEQ(CRSTOP,0)                :Default do not stop on crash
+:
+: Required by FRNTND.LIB
+:
+        DEFGEQ(ECHO,1)                  :Echoing done by Consat
+        DEFGEQ(AUTOBP,0)                :Auto backpressure not required
+        DEFGEQ(PTIMEO,0)                :Port timeouts not required
+        DEFGEQ(OUTPROC,0)               :FRNTND output not required
+        DEFGEQ(WAITZA,1)                :Zapper acknowledgement required
+        DEFGEQ(FWPTAB,1)                :Using FW port table
+        DEFGEQ(ACTIVT,0)                :Not used but needed by FRNTND
+:
+: Required by PATCH.LIB
+:
+        DEFGEQ(P0SIZE,40)               :No. of halfwords for PATCH0
+        DEFGEQ(P1SIZE,120)              :No. of halfwords for PATCH1
+:
+: Internal memory layout
+:
+        DEFGEQ(A.DATA,0)                :Default data segment
+        DEFGEQ(A.CODE,1)                :Default code segment
+        DEFGEQ(A.RING,2)                :Ring segment
+        DEFGEQ(A.TRAC,2)                :Trace segment
+        DEFGEQ(A.CBLK,3)                :Control block segment
+        DEFGEQ(A.ELE,0D)                :User login string elements
+:
+: Test switches
+:
+                :Check for overflow and underflow of stack
+        DEFGEQ(TSSTCK,0)                :Stack checks on
+                :Track path of code in circular buffer
+        DEFGEQ(TSTRAK,0)                :TRACK macro on
+                :Enter TSTMEN in TEST when host DCB created in TERM
+        DEFGEQ(TSHDCB,0)
+:
+: Screen description
+:
+        DEFGEQ(SCRWTH,$A 80)            :Standard screen is 80 chars wide
+        DEFGEQ(SCRLTH,$A 25)            :Standard screen is 25 lines
+        DEFGEQ(SCRSIZ,$A 2000)          :Standard screen is 2000 chars
+:
+: Back pressure limits
+:
+        DEFGEQ(BPONL,0FF)               :Backpressure on at 256 characters
+        DEFGEQ(BPOFFL,09D)              :Backpressure off at X'9D characters
+:
+: ----------------------------------------------------------------------
+:
+: Macro         LETDEF
+:
+: Description   Define symbols for all the letters in ASCII and ICL
+:               codes and make global
+:
+: Parameters    SYM - Symbollic name of character
+:
+: ----------------------------------------------------------------------
+:
+LETDEF  MACRO(SYM) [
+        GL      SYM
+SYM     EQ      VAL
+VAL     EQ      VAL+1
+]
+:
+:
+: ASCII symbol table
+:
+
+VAL     EQ      0
+        LETDEF(A.NUL);  LETDEF(A.SOH);  LETDEF(A.STX);  LETDEF(A.ETX);
+        LETDEF(A.EOT);  LETDEF(A.ENQ);  LETDEF(A.ACK);  LETDEF(A.BEL);
+        LETDEF(A.BS);   LETDEF(A.HT);   LETDEF(A.LFED); LETDEF(A.VT);
+        LETDEF(A.FF);   LETDEF(A.CR);   LETDEF(A.SO);   LETDEF(A.SI);
+        LETDEF(A.DLE);  LETDEF(A.DC1);  LETDEF(A.DC2);  LETDEF(A.DC3);
+        LETDEF(A.DC4);  LETDEF(A.NAK);  LETDEF(A.SYN);  LETDEF(A.ETB);
+        LETDEF(A.CAN);  LETDEF(A.EM);   LETDEF(A.SUB);  LETDEF(A.ESC);
+        LETDEF(A.FS);   LETDEF(A.GS);   LETDEF(A.RS);   LETDEF(A.US);
+        LETDEF(A.SP);   LETDEF(A.EXCL); LETDEF(A.DQT);  LETDEF(A.PND);
+        LETDEF(A.DOL);  LETDEF(A.PCT);  LETDEF(A.AND);  LETDEF(A.SQT);
+        LETDEF(A.LPAR); LETDEF(A.RPAR); LETDEF(A.STAR); LETDEF(A.PLUS);
+        LETDEF(A.COM);  LETDEF(A.DASH); LETDEF(A.PER);  LETDEF(A.SLSH);
+        LETDEF(A.0);    LETDEF(A.1);    LETDEF(A.2);    LETDEF(A.3);
+        LETDEF(A.4);    LETDEF(A.5);    LETDEF(A.6);    LETDEF(A.7);
+        LETDEF(A.8);    LETDEF(A.9);    LETDEF(A.COLN); LETDEF(A.SEMI);
+        LETDEF(A.LTH);  LETDEF(A.EQ);   LETDEF(A.GT);   LETDEF(A.QUE);
+        LETDEF(A.AT);   LETDEF(A.A);    LETDEF(A.B);    LETDEF(A.C);
+        LETDEF(A.D);    LETDEF(A.E);    LETDEF(A.F);    LETDEF(A.G);
+        LETDEF(A.H);    LETDEF(A.I);    LETDEF(A.J);    LETDEF(A.K);
+        LETDEF(A.L);    LETDEF(A.M);    LETDEF(A.N);    LETDEF(A.O);
+        LETDEF(A.P);    LETDEF(A.Q);    LETDEF(A.R);    LETDEF(A.S);
+        LETDEF(A.T);    LETDEF(A.U);    LETDEF(A.V);    LETDEF(A.W);
+        LETDEF(A.X);    LETDEF(A.Y);    LETDEF(A.Z);    LETDEF(A.LBKT);
+        LETDEF(A.BSLH); LETDEF(A.RBKT); LETDEF(A.CART); LETDEF(A.UNDR);
+        LETDEF(A.GRAV); LETDEF(A.LA);   LETDEF(A.LB);   LETDEF(A.LC);
+        LETDEF(A.LD);   LETDEF(A.LE);   LETDEF(A.LF);   LETDEF(A.LG);
+        LETDEF(A.LH);   LETDEF(A.LI);   LETDEF(A.LJ);   LETDEF(A.LK);
+        LETDEF(A.LL);   LETDEF(A.LM);   LETDEF(A.LN);   LETDEF(A.LO);
+        LETDEF(A.LP);   LETDEF(A.LQ);   LETDEF(A.LR);   LETDEF(A.LS);
+        LETDEF(A.LT);   LETDEF(A.LU);   LETDEF(A.LV);   LETDEF(A.LW);
+        LETDEF(A.LX);   LETDEF(A.LY);   LETDEF(A.LZ);   LETDEF(A.LBRC);
+        LETDEF(A.VIRT); LETDEF(A.RBRC); LETDEF(A.TLDE); LETDEF(A.DEL);
+:
+: ICL symbol table
+:
+
+VAL     EQ      0
+        LETDEF(I.NUL);  LETDEF(I.SOH);  LETDEF(I.STX);  LETDEF(I.ETX);
+        LETDEF(I.EOT);  LETDEF(I.ENQ);  LETDEF(I.ACK);  LETDEF(I.BEL);
+        LETDEF(I.BS);   LETDEF(I.HT);   LETDEF(I.NL);   LETDEF(I.VT);
+        LETDEF(I.FF);   LETDEF(I.CR);   LETDEF(I.SO);   LETDEF(I.SI);
+        LETDEF(I.DLE);  LETDEF(I.DC1);  LETDEF(I.DC2);  LETDEF(I.DC3);
+        LETDEF(I.DC4);  LETDEF(I.NAK);  LETDEF(I.SYN);  LETDEF(I.ETB);
+        LETDEF(I.CAN);  LETDEF(I.EM);   LETDEF(I.SUB);  LETDEF(I.ESC);
+        LETDEF(I.IS4);  LETDEF(I.GS);   LETDEF(I.MSP);  LETDEF(I.MNL);
+:
+: ICL presets and masks
+:
+        DEFGEQ(ITQMSK,0C0)      :ALP prefix text qualifier mask
+        DEFGEQ(IALPDA,40)       :Data ALP prefix
+        DEFGEQ(ISUPPF,0AB)      :Program function supervisory ALP prefix
+				:Top bit set to indicate categary 1
+        DEFGEQ(ISUPDS,13)
+        DEFGEQ(ISUPST,21)       :Status report supervisory ALP prefix
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFHST
+:
+: Description   Define host number, number of channels and number of
+:               printers supported. This controls the number of CCBs
+:               screen buffers and I/O buffers
+:
+: Parameters    HST - Host number
+:               NCHN - Number of channels
+:               NPRT - Number of printers
+:
+: ----------------------------------------------------------------------
+:
+DEFHST  MACRO(HST,NCHN,NPRT) [
+        DEFGEQ(HOSTNO,$A HST)           :Host number
+        DEFGEQ(HOST0,HOSTNO)
+        DEFGEQ(NCCB,$A NCHN)            :Number of channel control blocks
+        DEFGEQ(HPRT0,NCCB)
+        DEFGEQ(NPRINT,$A NPRT)          :Number of printers
+:
+        DEFGEQ(NSCB,NCHN+(NCHN/4)+NPRINT)  :Number of screen buffers =
+                                        :       one for every channel
+                                        :    +  one extra between 4
+                                        :    + one for every printer
+        DEFGEQ(MAXPRT,NCCB*2+NPRT)      :Highest numbered port
+                                        :Two dispatcher ports for each
+                                        :channel and one for each printer
+        DEFGEQ(NPORT,MAXPRT+1)          :Number of ports
+        DEFGEQ(NIOB,NPORT*2+5)          :Number of I/O buffers =
+                                        :       two for each port
+                                        : + 5 for small configurations
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFHDR
+:
+: Description   Define a header for the menu screen
+:
+: Parameters    STRING - Characters to replace default heading on menu
+:
+: ----------------------------------------------------------------------
+:
+        DEFGEQ(USRHDR,0)                :Flag default header
+DEFHDR  MACRO(STRING) [
+USRHDR  EQ      1                       :Flag user header
+DUHDR   MACRO [                         :Don't know why we do this!
+MENUHD  SC      \'STRING'\
+]
+]
+:
+: Macros for the construction of a user profile
+:
+:
+:
+: Generated symbol conventions
+:
+: Let (M) be the relative username entry
+:
+:TM(M)          is the menu for this user
+:TP(M)          is the terminal type
+:USNM(M)        is the username string macro
+:EN             count of elements defined
+:DLE(ELENO)     macro for element # eleno
+:E(ELENO)       address of string for eleno
+:SN             count of logon strings
+:LBL(LSTRNO)    macro for label for logon string LSTRNO
+:SL(LSTRNO)N(Q) elements Q=1-5 for logon string LSTRNO
+:CE(LSTRNO)     count of elements in logon string LSTRNO
+:MN             count of menues
+:PM(MENUQ)      count of logon strings in menu # MENUQ
+:PU(MENUQ)N(MS) string number for relative element MS menu MENUQ
+:L(LSTRNO)      address of label string
+:
+EN      EQ      0
+SN      EQ      0
+MX      EQ      0
+MN      EQ      0
+UN      EQ      0
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFUSR
+:
+: Description   Define a username that is valid on the CMT. 
+:
+: Parameters    STRING - Up to 8 character (mark parity) username.
+:               Space parity (eg "00) implies wild card. 
+:
+: ----------------------------------------------------------------------
+:
+DEFUSR  MACRO(STRING) [
+UN      EQ      UN+1
+        GL      TP|UN|,AL|UN|,ALI|UN|,TM|UN|
+TM|UN|  EQ      -1              :Default no menu
+TP|UN|  EQ      0               :Default type zero
+AL|UN|  EQ      0               :No login strings available
+USNM|UN| MACRO [
+        AC      \`STRING`\
+]
+ALI|UN| EQ      0
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFTTY
+:
+: Description   Define terminal type to be assigned to previously
+:               specified user.
+:
+: Parameters    TYPE - The relative number of the appropriate type as
+:               defined by the DEFTRM macro. Minus 1 (-1) causes menu
+:               to be output so user can specify (default).
+:
+: ----------------------------------------------------------------------
+:
+DEFTTY  MACRO(TYPE) [
+TP|UN|  EQ      TYPE
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFELE
+:
+: Description   Define an element of a logon string and a label to
+:               reference it by.
+:
+: Parameters    LABEL - Label by which this element will be referred.
+:                       (Max 6 chars)
+:               STRING - Characters of element (max 255)
+:
+: ----------------------------------------------------------------------
+:
+DEFELE  MACRO(LABEL,STRING) [
+        DEFLBL(LABEL,EN)
+DLE|EN| MACRO [
+E|ELENO|        SC      /`STRING`/
+]
+EN      EQ      EN+1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFSTR
+:
+: Description   Define a logon string and a label to reference it by.
+:
+: Parameters    NAME - label by which this login string will be 
+:                       referenced. (Max 6 chars)
+:               LABEL - Text describing this logon string to be used as
+:                       an entry  on menu screen. (Max 76 chars)
+:               E1-E5 - Element labels as defined in DEFELE which make
+:                       up login string. At least one must be specified.
+:
+: ----------------------------------------------------------------------
+:
+DEFSTR  MACRO(NAME,LABEL,E1,E2,E3,E4,E5) [
+        DEFLBL(NAME,SN)
+LBL|SN| MACRO [
+L|LSTRNO| SC /`LABEL`/
+]
+SL|SN|N1        EQ      E1 -1
+SL|SN|N2        EQ      E2 -1
+SL|SN|N3        EQ      E3 -1
+SL|SN|N4        EQ      E4 -1
+SL|SN|N5        EQ      E5 -1
+SN      EQ      SN+1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MANUAL
+:
+: Description   Specify a manual login option for use in menues.
+:
+: Parameters    LABEL - Label by which the manual login option will be
+:                       referenced. (Max 6 chars)
+:
+: ----------------------------------------------------------------------
+:
+MANUAL  MACRO(LABEL)[
+        DEFSTR(LABEL,MANUAL LOGON)
+        ]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MANPTR
+:
+: Description   Specify a manual login option with printer for use in
+:               menues.
+:
+: Parameters    LABEL - Label by which the manual login option will be
+:                       referenced. (Max 6 chars)
+:
+: ----------------------------------------------------------------------
+:
+MANPTR  MACRO(LABEL)[
+        DEFSTR(LABEL,MANUAL LOGON WITH PRINTER,0)
+        ]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFMEN
+:
+: Description   Define a set of login strings to create a menu.
+:
+: Parameters    LABEL - Label used to refence this menu. (Max 6 chars)
+:               S0-S14 - Labels of login strings which constitute this
+:                       menu. At least one must be specified.
+:
+: ----------------------------------------------------------------------
+:
+DEFMEN  MACRO(LABEL,S0,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12,S13,S14) [
+        DEFLBL(LABEL,MN)
+P0      EQ      S0
+P1      EQ      S1 -1
+P2      EQ      S2 -1
+P3      EQ      S3 -1
+P4      EQ      S4 -1
+P5      EQ      S5 -1
+P6      EQ      S6 -1
+P7      EQ      S7 -1
+P8      EQ      S8 -1
+P9      EQ      S9 -1
+P10     EQ      S10 -1
+P11     EQ      S11 -1
+P12     EQ      S12 -1
+P13     EQ      S13 -1
+P14     EQ      S14 -1
+Q       EQ      0
+        RE      $A15
+        IF      P|$AQ|+1
+PU|MN|N|MX| EQ  P|$AQ|
+MX      EQ      MX+1
+Q       EQ      Q+1
+        EI
+        ER
+PM|MN|  EQ      MX
+MN      EQ      MN+1
+MX      EQ      0
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MENUSR
+:
+: Description   Assign a menu to a previously specified  username.
+:
+: Parameters    MNU - Label of a menu defined by DEFMEN
+:
+: ----------------------------------------------------------------------
+:
+MENUSR  MACRO(MNU) [
+TM|UN|  EQ      MNU
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DEFLBL
+:
+: Description   Define heck symbols used as labels in the above
+:               macros. This also creates a macro for deleting these
+:               labels.
+:
+: Parameters    LABEL - Label to be checked
+:               VALUE - value to be assigned to this label
+:
+: ----------------------------------------------------------------------
+:
+DEFLBL  MACRO(LABEL,VALUE) [
+        IF \LABEL
+        REMARK  %SYMBOL `LABEL` MULTIPLY DEFINED%
+        ELSE
+DM|QDN| MACRO [
+        KILL    LABEL
+]
+QDN     EQ      QDN+1
+LABEL   EQ      VALUE 
+        EI
+]
+QDN     EQ      0
+
+
+        SUBTTL MACROS FOR TPF GENERATION
+
+        DEFGEQ(ABSENT,0)
+        DEFGEQ(PRESENT,1)
+
+:
+: ----------------------------------------------------------------------
+:
+: Macro         BGNTRM
+:
+: Description   Begin definition of a terminal profile
+:
+: Parameters    IDTEXT - text used to identify terminal in terminal
+:               selection menu
+:               
+: ----------------------------------------------------------------------
+:
+: IM|YM| is a macro to create a SC entry containing this string
+:
+BGNTRM  MACRO(IDTEXT) [
+        SEG     A.DATA
+IM|YM|  MACRO   [SC \`IDTEXT`\]
+CTLFIR  EQ      1
+STRFIR  EQ      1
+CLSFIR  EQ      1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         CTLDEF
+:
+: Description   Defines terminal parameter messages to be sent to Consat
+:
+: Parameters    P1-P8 - Parameter number
+:               V1-V8 - Parameter value
+:               
+: ----------------------------------------------------------------------
+:
+: CR|YM| address of table of messages
+:
+CTLDEF  MACRO(P1,V1,P2,V2,P3,V3,P4,V4,P5,V5,P6,V6,P7,V7,P8,V8)
+[
+        IF      CTLFIR
+        SEG     A.DATA
+CR|YM|  HC      0
+CTLFIR  EQ      0
+        EI
+:
+PX1     EQ      P1 -1
+PX2     EQ      P2 -1
+PX3     EQ      P3 -1
+PX4     EQ      P4 -1
+PX5     EQ      P5 -1
+PX6     EQ      P6 -1
+PX7     EQ      P7 -1
+PX8     EQ      P8 -1
+VX1     EQ      V1 -1
+VX2     EQ      V2 -1
+VX3     EQ      V3 -1
+VX4     EQ      V4 -1
+VX5     EQ      V5 -1
+VX6     EQ      V6 -1
+VX7     EQ      V7 -1
+VX8     EQ      V8 -1
+:
+Q       EQ      1
+        RE      8
+        IF      PX|Q|+1
+        BC      PX|Q|,VX|Q|
+        EI
+Q       EQ      Q+1
+        ER
+OLDORG  EQ      .
+        ORG     CR|YM|
+        HC      OLDORG-.-2
+        ORG     OLDORG
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         STRDEF
+:
+: Description   Defines an initialising string for the terminal
+:
+: Parameters    STR - Initialisation text string
+:               
+: ----------------------------------------------------------------------
+:
+: ST|YM| = Label of text string
+:
+STRDEF  MACRO(STR) [
+        IF      STRFIR
+        SEG     A.DATA
+ST|YM|  BC      0
+STRFIR  EQ      0
+        EI
+:
+        AC      \`STR`\
+OLDORG  EQ      .
+        ORG     ST|YM|
+        BC      OLDORG-.-1
+        ORG     OLDORG
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         CLSDEF
+:
+: Description   Defines a clode down string for the terminal
+:
+: Parameters    STR - Close down text string
+:               
+: ----------------------------------------------------------------------
+:
+: CD|YM| = Label of text string
+:
+CLSDEF  MACRO(STR) [
+        IF      CLSFIR
+        SEG     A.DATA
+CD|YM|  BC      0
+CLSFIR  EQ      0
+        EI
+:
+        AC      \`STR`\
+OLDORG  EQ      .
+        ORG     CD|YM|
+        BC      OLDORG-.-1
+        ORG     OLDORG
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         CLRDEF
+:
+: Description   Defines a string to clear the screen of the terminal
+:
+: Parameters    STR - Text string to clear screen
+:               
+: ----------------------------------------------------------------------
+:
+: CL|YM| symbol for string
+:
+CLRDEF  MACRO(STR) [
+        SEG     A.DATA
+CL|YM|  SC      \`STR`\
+]
+
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SPFDEF
+:
+: Description   Defines a string to put start protected field character
+:               on the terminal
+:
+: Parameters    STR - Text string to place character on screen
+:               
+: ----------------------------------------------------------------------
+:
+: SP|YM| symbol for string
+:
+SPFDEF  MACRO(STR) [
+        SEG     A.DATA
+SP|YM|  SC      \`STR`\
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SUPDEF
+:
+: Description   Defines a string to put start unprotected field character
+:               on the terminal
+:
+: Parameters    STR - Text string to place character on screen
+:               
+: ----------------------------------------------------------------------
+:
+: SU|YM| symbol for string
+:
+SUFDEF  MACRO(STR) [
+        SEG     A.DATA
+SU|YM|  SC      \`STR`\
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         NLDEF
+:
+: Description   Defines a string to put ICL newline character
+:               on the terminal
+:
+: Parameters    STR - Text string to place character on screen
+:               
+: ----------------------------------------------------------------------
+:
+: NL|YM| symbol for string
+:
+NLDEF  MACRO(STR) [
+        SEG     A.DATA
+NL|YM|  SC      \`STR`\
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         RKDDEF
+:
+: Description   Defines a string to cause the screen to be racked down
+:               one line
+:
+: Parameters    P - Indicates presence
+:               STR - Text string to cause rack down
+:               
+: ----------------------------------------------------------------------
+:
+: RD|YM| symbol for string
+:
+RKDDEF  MACRO(P,STR) [
+        SEG     A.DATA
+        IF      P
+RD|YM|  SC      \`STR`\
+        ELSE
+RD|YM|  EQ      0
+        EI
+]
+
+:
+: ----------------------------------------------------------------------
+:
+: Macro         RKUDEF
+:
+: Description   Defines a string to cause the screen to rack up one line
+:
+: Parameters    P - Indicates presence
+:               STR - Text string to cause rack up
+:               
+: ----------------------------------------------------------------------
+:
+: RU|YM| symbol for string
+:
+RKUDEF  MACRO(P,STR) [
+        SEG     A.DATA
+        IF      P
+RU|YM|  SC      \`STR`\
+        ELSE
+RU|YM|  EQ      0
+        EI
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SPCDEF
+:
+: Description   Defines special positions on a line as regards cursor
+:               positioning.
+:
+: Parameters    MNAME - Macro to set up array.
+:               
+: ----------------------------------------------------------------------
+:
+: SX|YM| name of the macro that creates the array of special positions
+:
+SPCDEF  MACRO(MNAME) [
+SX|YM|  MACRO [MNAME]
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         MCDEF
+:
+: Description   Address of code to position cursor
+:
+: Parameters    MNAME - Label of code
+:               
+: ----------------------------------------------------------------------
+:
+: MC|YM| Name of entry point for this subroutine
+:
+MCDEF   MACRO(MNAME) [
+        SEG     A.CODE
+MC|YM|  MNAME
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SIZDEF
+:
+: Description   Defines the screen size of termianl
+:
+: Parameters    SIZE - Number of character positions on screen
+:               
+: ----------------------------------------------------------------------
+:
+: SZ|YM| Symbol for screen size
+:
+SIZDEF  MACRO(SIZE) [
+SZ|YM|  EQ      SIZE
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         STPDEF
+:
+: Description   Defines the position of the status indicator relative to
+:               the start of the real screen
+:
+: Parameters    POS - Relative position on screen
+:               
+: ----------------------------------------------------------------------
+:
+: SI|YM| Symbol for screen position of status indicator
+:
+STPDEF  MACRO(POS) [
+SI|YM|  EQ      POS
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SPDDEF
+:
+: Description   Define address of routine to set graphic rendition
+:
+: Parameters    MNAME - Macro to create code 
+:               
+: ----------------------------------------------------------------------
+:
+: SG|YM| Name of the subroutine to do this function
+:
+SDPDEF  MACRO(MNAME) [
+        SEG     1
+SG|YM|  MNAME
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         CTRDEF
+:
+: Description   Define macro to set up keyboard table
+:
+: Parameters    MNAME - Macro to create keyboard table
+:               
+: ----------------------------------------------------------------------
+:
+: CT|YM| name of the start of the table
+:
+CTRDEF  MACRO(MNAME) [
+        SEG     A.DATA
+        PASONE
+        MNAME
+        PASTWO
+OLDORG  EQ      .
+        MNAME
+        ORG     OLDORG
+CT|YM|  EQ      TA1
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         PRTDEF
+:
+: Description   Defines the printing capability of termianl
+:
+: Parameters    CAP - 0 if printing not supported
+:                   - 1 if printing supported
+:               
+: ----------------------------------------------------------------------
+:
+: PR|YM|  printer capability
+:
+PRTDEF  MACRO(CAP) [
+PR|YM|  EQ      CAP
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         BPRDEF
+:
+: Description   Define string to begin printing
+:
+: Parameters    STR - Text string
+:               
+: ----------------------------------------------------------------------
+:
+: BP|YM| label for string
+:
+BPRDEF  MACRO(STR) [
+BP|YM|  SC      /`STR`/
+] 
+:
+: ----------------------------------------------------------------------
+:
+: Macro         FPRDEF
+:
+: Description   Define string to end printing
+:
+: Parameters    STR - Text string
+:               
+: ----------------------------------------------------------------------
+:
+: FP|YM| label for string
+:
+FPRDEF  MACRO(STR) [
+FP|YM|  SC      /`STR`/
+] 
+:
+: ----------------------------------------------------------------------
+:
+: Macro         DSRDEF
+:
+: Description   Define printer status enquiry string
+:
+: Parameters    STR - Text string
+:               
+: ----------------------------------------------------------------------
+:
+: PS|YM| label for string
+:
+DSRDEF  MACRO(STR) [
+PS|YM|  SC      /`STR`/
+] 
+:
+: ----------------------------------------------------------------------
+:
+: Macro         SCDEF
+:
+: Description   Define string to save cursor position
+:
+: Parameters    STR - Text string
+:               
+: ----------------------------------------------------------------------
+:
+: SC|YM| label for string
+:
+SCDEF   MACRO(STR) [
+SC|YM|  SC      /`STR`/
+] 
+:
+: ----------------------------------------------------------------------
+:
+: Macro         RCDEF
+:
+: Description   Define string to end printing
+:
+: Parameters    STR - Text string
+:               
+: ----------------------------------------------------------------------
+:
+: RC|YM| label for string
+:
+RCDEF  MACRO(STR) [
+RC|YM|  SC      /`STR`/
+] :
+: ----------------------------------------------------------------------
+:
+: Macro         KDEF
+:
+: Description   Define character count for move cursor
+:
+: Parameters    K - Count of characters
+:               
+: ----------------------------------------------------------------------
+:
+: IK|YM| Count of characters
+: KM|YM| MASK OF K BITS
+:
+KDEF    MACRO(K) [
+IK|YM|  EQ      K
+KM|YM|  EQ      -1^($A32-K)
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         HLPDEF
+:
+: Description   Define help text for this terminal
+:
+: Parameters    MNAME - macro to create help text
+:               
+: ----------------------------------------------------------------------
+:
+HLPDEF  MACRO(MNAME) [
+        SEG     A.DATA
+HE|YM|  MNAME
+]
+:
+: ----------------------------------------------------------------------
+:
+: Macro         ENDTRM
+:
+: Description   End of terminal definition
+:
+: Parameters    
+:               
+: ----------------------------------------------------------------------
+:
+: YM     count of terminals defined incremented by one
+:
+ENDTRM  MACRO [
+YM      EQ      YM+1
+]
+        SUBTTL Keyboard macros for the PRISM 9
+CTRPR9  MACRO [
+        LEVEL1(A.SUB,1,KILL)            :Ctl & Z - Zap circuit
+	LEVEL1(A.CAN,1,RESTRT)		:Ctl & X - Restart session
+        LEVEL1(A.DC2,1,REDSPY)          :Ctl & R - Redisplay screen
+        LEVEL1(A.HT,1,FLDTAB)           :Tab key - Tab forward
+        LEVEL1(A.CR,1,SEND)             :Return/Enter - Send
+	LEVEL1(A.FF,1,CLEAR)		:Clear - Clear screen
+	LEVEL1(A.SOH,1,HOME)		:Home - Set SOM to cursor
+	LEVEL1(A.LFED,1,NEWLIN)		:Line feed - Newline
+	LEVEL1(A.BS,1,CURLEF)		:Backspace - Cursor left
+	LEVEL1(A.DEL,1,ERSMES)		:Delete - Erase message
+        LEVEL1(A.ESC,0)                 : < Escape >
+	  LEVEL2(A.R,0)			:ESC R D is compose shift 4 ...
+	    LEVEL3(A.D,1,DOLLAR)	:... which represents the dollar sign
+          LEVEL2(A.LBKT,0)              : < Left square bracket >
+            LEVEL3(A.D,1,CURLEF)        :Cursor left
+            LEVEL3(A.B,1,CURDON)        :Cursor down
+            LEVEL3(A.C,1,CURRT)         :Cursor right
+            LEVEL3(A.A,1,CURUP)         :Cursor up
+	    LEVEL3(A.Z,1,BCKTAB)	:Back Tab
+            LEVEL3(A.1,0)               : < 1 >
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.TLDE,1,PRINT)  :F1 - Print screen
+              LEVEL4(A.2,0)             : < 2 >
+                LEVEL5(A.TLDE,1,ERSLIN) :F2 - Erase line
+              LEVEL4(A.3,0)             : < 3 >
+                LEVEL5(A.TLDE,1,ERSMES) :F3 - Erase message
+              LEVEL4(A.4,0)             : < 4 >
+                LEVEL5(A.TLDE,1,CLEAR)	:F4 - Clear Screen
+              LEVEL4(A.5,0)             : < 5 >
+                LEVEL5(A.TLDE,1,DELLIN) :F5 - Delete line
+              LEVEL4(A.7,0)             : < 7 >
+                LEVEL5(A.TLDE,1,INSLIN) :F6 - Insert line
+              LEVEL4(A.8,0)             : < 8 >
+                LEVEL5(A.TLDE,1,INSCHR) :F7 - Insert character
+              LEVEL4(A.9,0)             : < 9 >
+                LEVEL5(A.TLDE,1,NXTLIN) :F8 - Down left arrow
+            LEVEL3(A.2,0)               : < 2 >
+              LEVEL4(A.0,0)             : < 0 >
+                LEVEL5(A.TLDE,1,STATSW) :F9 - Status off/on
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.TLDE,1,SETSOM) :F10 - Som to cursor
+              LEVEL4(A.3,0)             : < 3 >
+                LEVEL5(A.TLDE,1,HOME)   :F11 - Cursor to Som
+              LEVEL4(A.4,0)             : < 4 >
+                LEVEL5(A.TLDE,1,ALLPRT)   :F12 - Allocate printer
+              LEVEL4(A.5,0)             : < 5 >
+                LEVEL5(A.TLDE,1,DELCHR) :F13 - Delete character
+              LEVEL4(A.6,0)             : < 6 >
+                LEVEL5(A.TLDE,1,INSCHR) :F14 - Insert character
+              LEVEL4(A.8,0)             : < 8 >
+                LEVEL5(A.TLDE,1,ACTION) :F15 - Action key
+              LEVEL4(A.9,0)             : < 9 >
+                LEVEL5(A.TLDE,1,RESET)  :F16 - Reset
+	    LEVEL3(A.3,0)		: < 3 >
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.TLDE,1,HELP)   :F17 - Help
+              LEVEL4(A.2,0)             : < 2 >
+                LEVEL5(A.TLDE,1,SEND)   :F18 - Send
+            LEVEL3(A.4,0)               : < 4 >
+              LEVEL4(A.TLDE,1,ACTION)   :Select - Action key
+            LEVEL3(A.QUE,0)             : < ? >
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.0,0)             : < 0 >
+                  LEVEL6(A.LN,1,PRTOP)  :DSR - Printer operable
+                LEVEL5(A.1,0)             : < 1 >
+                  LEVEL6(A.LN,1,PRTNOP) :DSR - Printer inoperable
+                LEVEL5(A.3,0)             : < 3 >
+                  LEVEL6(A.LN,1,PRTNOP) :DSR - Printer inoperable
+]
+        SUBTTL TPF MACROS FOR THE MD PRISM 9  
+
+PRISM9  MACRO [
+        BGNTRM(PRISM 9)
+        CTLDEF(0,1,1,0,2,0,3,0,4,0,7,0,8,0,0C,1)
+        CTLDEF(0D,00,0E,01)
+	STRDEF("1B"5B<12l"1B F)	:Set ANSI 7-bit
+	STRDEF("1B"5B1"BB25"BB80"BB1"BB25%w) :Set 25 line and scroll!
+	STRDEF("1B"5B8"BB80"BB1%x)
+        SPCDEF(SPCVT2)          :Macro to create an array of special positions
+        CLSDEF("1B"5B<12h)	:Reset terminal string Prism mode
+        CLRDEF("1B"DB2J"1B"DBH) :Erase screen, home cursor
+        SPFDEF("1B"4E"6A)     	:Start protected field 
+        SUFDEF("1B"4E"6D)       :Start unprotected field
+        RKUDEF(PRESENT,"1B"5B25H"1BD) :Rack up (Line 25, index)
+        RKDDEF(PRESENT,"1B"5BH"1BM) :Rack down (home, reverse index)
+        NLDEF("1B"4E"60)        :ICL newline character symbol
+        MCDEF(VT2MC)            :Move cursor routine
+        PRTDEF(1)               :Printer supported
+        SIZDEF($A 2000)         :Screen size
+        STPDEF($A 77)           :Position of status indicator
+        SDPDEF(VT2SA)           :Set graphic rendition routine
+        CTRDEF(CTRPR9)          :Keyboard tables
+        BPRDEF("1B"DB5i)        :Start printing string
+        FPRDEF("1B"DB4i)        :Finish printing string
+        DSRDEF("1B"DB?15n)      :Printer status enquiry
+        SCDEF("1B"37)           :Save cursor string
+        RCDEF("1B"38)           :Restore cursor string
+        KDEF(7)                 :Average size of move cursor
+        HLPDEF(PR9HLP)          :Help text
+        ENDTRM
+]
+        SUBTTL Keyboard macros for the VT220
+CTRVT2  MACRO [
+        LEVEL1(A.SUB,1,KILL)            :Ctl & Z - Zap circuit
+	LEVEL1(A.CAN,1,RESTRT)		:Ctl & X - Restart session
+        LEVEL1(A.DC2,1,REDSPY)          :Ctl & R - Redisplay screen
+        LEVEL1(A.HT,1,FLDTAB)           :Tab key - Tab forward
+        LEVEL1(A.CR,1,SEND)             :Return/Enter - Send
+        LEVEL1(A.ESC,0)                 : < Escape >
+          LEVEL2(A.O,0)                 : < O >
+            LEVEL3(A.P,1,RESET)         :PF1 - Interlock
+            LEVEL3(A.Q,1,HOME)          :PF2 - Home
+            LEVEL3(A.R,1,SETSOM)        :PF3 - Set SOM
+            LEVEL3(A.S,1,SEND)          :PF4 - Send
+          LEVEL2(A.LBKT,0)              : < Left square bracket >
+            LEVEL3(A.D,1,CURLEF)        :Cursor left
+            LEVEL3(A.B,1,CURDON)        :Cursor down
+            LEVEL3(A.C,1,CURRT)         :Cursor right
+            LEVEL3(A.A,1,CURUP)         :Cursor up
+            LEVEL3(A.1,0)               : < 1 >
+              LEVEL4(A.7,0)             : < 7 >
+                LEVEL5(A.TLDE,1,CLEAR)  :F6 - Clear screen
+              LEVEL4(A.8,0)             : < 8 >
+                LEVEL5(A.TLDE,1,ERSMES) :F7 - Erase message
+              LEVEL4(A.9,0)             : < 9 >
+                LEVEL5(A.TLDE,1,ERSLIN) :F8 - Erase line
+            LEVEL3(A.2,0)               : < 2 >
+              LEVEL4(A.TLDE,1,INSCHR)   :Insert Here - Insert character
+              LEVEL4(A.0,0)             : < 0 >
+                LEVEL5(A.TLDE,1,INSLIN) :F9 - Insert line
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.TLDE,1,DELLIN) :F10 - Delete line
+              LEVEL4(A.3,0)             : < 3 >
+                LEVEL5(A.TLDE,1,HLDPRT) :F11 - Printer hold
+              LEVEL4(A.4,0)             : < 4 >
+                LEVEL5(A.TLDE,1,ALLPRT)   :F12 - Allocate printer
+              LEVEL4(A.5,0)             : < 5 >
+                LEVEL5(A.TLDE,1,NEWLIN) :F13 - Newline
+              LEVEL4(A.6,0)             : < 6 >
+                LEVEL5(A.TLDE,1,BCKTAB) :F14 - Back Tab
+              LEVEL4(A.8,0)             : < 8 >
+                LEVEL5(A.TLDE,1,HELP)   :F15 - Help
+            LEVEL3(A.3,0)               : < 3 >
+              LEVEL4(A.TLDE,1,DELCHR)   :Remove - Delete character
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.TLDE,1,PRINT)  :F17 - Print screen
+              LEVEL4(A.2,0)             : < 2 >
+                LEVEL5(A.TLDE,1,RACK)   :F18 - Rack up/down
+              LEVEL4(A.3,0)             : < 3 >
+                LEVEL5(A.TLDE,1,STATSW) :F19 - Status indicator on/off
+              LEVEL4(A.4,0)             : < 2 >
+                LEVEL5(A.TLDE,1,SEND)   :F20 - Send
+            LEVEL3(A.4,0)               : < 4 >
+              LEVEL4(A.TLDE,1,ACTION)   :Select - Action key
+            LEVEL3(A.QUE,0)             : < ? >
+              LEVEL4(A.1,0)             : < 1 >
+                LEVEL5(A.0,0)             : < 0 >
+                  LEVEL6(A.LN,1,PRTOP)  :DSR - Printer operable
+                LEVEL5(A.1,0)             : < 1 >
+                  LEVEL6(A.LN,1,PRTNOP) :DSR - Printer inoperable
+                LEVEL5(A.3,0)             : < 3 >
+                  LEVEL6(A.LN,1,PRTNOP) :DSR - Printer inoperable
+]
+
+        SUBTTL TPF Macros for the VT220
+
+VT220M  MACRO [
+        BGNTRM(DEC VT220)
+        CTLDEF(0,1,1,0,2,0,3,0,4,0,7,0,8,0,0C,1)
+        CTLDEF(0D,00,0E,01)
+        STRDEF("1B"DB?2h)       :Set ANSI mode
+        STRDEF("1B"5B"36"32"3B"31"22"70) :Set VT200 mode, 7 bit controls
+        STRDEF("1B"28"41"1B"2A"30) :Set G0 to UK, G2 to DEC graphics
+        STRDEF("1B>)            :Keypad numeric
+        STRDEF("1B"DB?5"6C)     :Normal video
+        CLSDEF("1B"5B"36"31"22"70) :Reset terminal string VT100 mode
+        SPCDEF(SPCVT2)          :Macro to create an array of special positions
+        CLRDEF("1B"DB2J"1B"DBH) :Erase screen, home cursor
+        SPFDEF("1B"4E"6A)       :Start protected field 
+        SUFDEF("1B"4E"6D)       :Start unprotected field
+        NLDEF("1B"4E"60)        :ICL newline character symbol
+        RKUDEF(PRESENT,"1B"5B"32"34"48"1B"44) :Rack up (Line 24, index)
+        RKDDEF(PRESENT,"1B"5B"48"1B"4D) :Rack down (home, reverse index)
+        MCDEF(VT2MC)            :Move cursor routine
+        PRTDEF(1)               :Printer supported
+        SIZDEF($A 1920)         :Screen size
+        STPDEF($A 77)           :Position of status indicator
+        SDPDEF(VT2SA)           :Set graphic rendition routine
+        CTRDEF(CTRVT2)          :Keyboard tables
+        BPRDEF("1B"DB5i)        :Start printing string
+        FPRDEF("1B"DB4i)        :Finish printing string
+        DSRDEF("1B"DB?15n)      :Printer status enquiry
+        SCDEF("1B"37)           :Save cursor string
+        RCDEF("1B"38)           :Restore cursor string
+        KDEF(7)                 :Average size of move cursor
+        HLPDEF(VT2HLP)          :Help text
+        ENDTRM
+]
+:
+:       Special line positions for the VT220
+:
+SPCVT2  MACRO [
+        RE      SCRLTH
+        HC      0,0,0,0,0001
+        ER
+]
+:
+:       Help text for Prism 9
+:
+PR9HLP  MACRO [
+        SC      /          Special key positions"8D"8A"8D"8A/
+        SC      /       F1 - Print screen               F2 - Erase line"8D"8A/
+        SC      /       F3 - Erase message              F4 - Clear screen"8D"8A/
+        SC      /       F5 - Delete line                F6 - Insert line"8D"8A/
+        SC      /       F7 - Insert character           F8 - Down left arrow"8D"8A/
+        SC      /       F9 - Status switch              F10 - Som to cursor"8D"8A/
+        SC      /       F11 - Cursor to SOM             F12 - Allocate printer"8D"8A/
+        SC      /       F15 - Action                    F16 - Reset(Interlock)"8D"8A/
+	SC	/       F17 - Help                      F18 - Send"8D"8A/
+	SC	/       ^X  - Return to CMT menu        ^Z  - Disconnect screen from cluster/
+        BC      0
+]
+:
+:       Help text for VT220
+:
+VT2HLP  MACRO [
+        SC      /          Special key positions"8D"8A"8D"8A/
+        SC      /       F6 - Clear screen               F7 - Erase message"8D"8A/
+        SC      /       F8 - Erase line                 F9 - Insert line"8D"8A/
+        SC      /       F10 - Delete line               F13 - Newline"8D"8A/
+        SC      /       F14 - Backtab                   F17 - Print screen"8D"8A/
+        SC      /       F20 - Send"8D"8A/
+        SC      /       PF1 - Interlock(Reset)          PF2 - Home"8D"8A/
+        SC      /       PF3 - Set SOM                   PF4 - Send/
+        BC      0
+]
+:
+:       Move cursor for VT220
+:
+: Format is ESC leftbracket Pl semicolon Pc H where Pl is line number and Pc
+: is column. If line number is zero then it can be defaulted. Similiarily for
+: column. If Pc is not output then the semicolon can be ommitted.
+:
+VT2MC   MACRO [EQ .
+        RSTART(MCVT2)
+        GL      WRITBN,WRITED
+        PUSH(R4,R5)
+        LHI     R4,A.ESC
+        WRITEB(NET)                     :Send escape
+        LHI     R4,A.LBKT
+        WRITEB(NET)                     :Send leftbracket
+        LR      R4,R7                   :Cursor position
+        SH      R4,CVSTRT,R11           :Take into account screen offset
+        JE      MCVT80                  :J if home
+:
+        LHI     R1,SCRWTH
+        DHR     R4,R1                   :R4 = col, R5 = line
+        PUSH(R4)                        :Save col number
+        LR      R5,R5
+        JE      MCVT20                  :J if line is default (0)
+:
+        AIS     R5,1                    :Line numbers start from 1
+        CALL(WRITED)                    :Output in decimal
+:
+MCVT20  LHI     R4,A.SEMI               :Send ;
+        WRITEB(NET)
+        POP(R5)                         :Get back column
+        LR      R5,R5
+        JE      MCVT80                  :J if col is default (0)
+        AIS     R5,1                    :Column numbers start from 1
+        CALL(WRITED)                    :Output in decimal
+:
+MCVT80  LHI     R4,A.H
+        WRITEB(NET)                     :Send H
+        POP(R5,R4)                      :Restore registers
+        RETURN
+KILLIT  MACRO [
+        KILL    VT2MC
+VT2MC   MACRO [ EQ MCVT2 ]
+        KILL    KILLIT]
+        KILLIT]
+:
+:       Set attribute for VT220
+:
+: Attributes set by the following sequence :
+:         ESC leftbracket Ps semicolon .... Ps m
+: where Ps is    
+:       0 Attributes off
+:       1 Increased intensity
+:       5 Flashing
+:       7 Reverse
+: Semicolon can be ommitted if only one parameter is present. Note that
+: we use increased intensity for unprotected fields to simulate ICL videos.
+:
+VT2SA   MACRO [EQ .
+        RSTART(SAVT2)
+        PUSH(R4)
+        LHI     R4,A.ESC                :Send ESC
+        WRITEB(NET)
+        LHI     R4,A.LBKT               :Send left bracket
+        WRITEB(NET)
+        LHI     R4,A.0                  :Send 0 - attribs off
+        WRITEB(NET)
+        LHI     R1,ATMPRF               :Protected field
+        NR      R1,R6
+        JN      SAVT20                  :J if it is
+        LHI     R4,A.SEMI               :Otherwise set high intensity
+        WRITEB(NET)                     :Send semicolon
+        LHI     R4,A.1                  :Send 1 - high intensity
+        WRITEB(NET)
+SAVT20  LHI     R1,ATMFLH               :Flashing field
+        NR      R1,R6
+        JE      SAVT40                  :J if it is not
+        LHI     R4,A.SEMI               :Otherwise set flashing
+        WRITEB(NET)                     :Send semicolon
+        LHI     R4,A.5                  :Send 5 - flashing
+        WRITEB(NET)
+SAVT40  LHI     R1,ATMREV               :Reverse field
+        NR      R1,R6
+        JE      SAVT60                  :J if it is not
+        LHI     R4,A.SEMI               :Otherwise set reverse
+        WRITEB(NET)                     :Send semicolon
+        LHI     R4,A.7                  :Send 7 - reverse
+        WRITEB(NET)
+SAVT60  LHI     R4,A.LM                 :Send lower case m
+        WRITEB(NET)
+        POP(R4)
+        RETURN
+KILLIT  MACRO [
+        KILL    VT2SA
+VT2SA   MACRO [ EQ SAVT2 ]
+        KILL    KILLIT]
+        KILLIT]
+:
+
+        SUBTTL ALLTRM - INNER MACRO FOR DEFTRM - GENERATE ALL TERMINAL TYPES
+:
+: INNER MACRO - MASTER LIST OF ALL TERMINAL TYPES - USER MAY THEN SIMPLY
+: REASSEMBLE THE TYM FILE EACH VERSION TO PICK UP THE NEW TERMINALS
+: *WARNING* EACH TERMINAL TYPE GENERATES ABOUT 2K OF CODE 
+:
+ALLTRM  MACRO [
+        PRISM9          :DEFINE MD PRISM 9
+        VT220M          :DEFINE DEC VT220
+]
+:
+        EM
+  J@5'
