@@ -1,0 +1,1039 @@
+BEGIN "TAPTAP"
+
+DEFINE DEBUG=0;
+DEFINE test=0;
+DEFINE \ = "COMMENT";
+
+COMMENT This program is part of the tape library package and is used
+	as a maintenance tool to find and correct problems with the
+	transfer of transactions to the 370 FOCUS data bases.
+
+*** Version Information ***
+
+4	Changed system done bits format so that each bit now is an index
+	into a host table created from CENTER.MAP.
+3	The DMPFMT function to reformat the files produced for refreshing
+	the 370 data bases was added.  In addition, compilation options
+	were added in order to allow a test version to run from (TLDEVE)
+	or a debug version or a combination.
+2	A change had to be made to UPD370 since the RECORD.370 file
+	was changed to carry the center name in the first word of each
+	record instead of the system number.  The center name is stored
+	as ASCII with blank fill.
+1	Initial release.
+;
+
+
+REQUIRE 4 VERSION;
+REQUIRE "{}<>" DELIMITERS;
+IFC DEBUG = 1 THENC
+  REQUIRE "(SYS)BAIPD9.REL" LOAD!MODULE;
+  EXTERNAL PROCEDURE BAIL;
+ENDC;
+\  External references;
+
+EXTERNAL STRING ACCUM;
+EXTERNAL INTEGER SCNVAL;
+EXTERNAL STRING PROCEDURE RVSCAN (REFERENCE STRING S; INTEGER TABLE;
+	REFERENCE INTEGER BRCHR);
+EXTERNAL SIMPLE INTEGER PROCEDURE SCANU(REFERENCE STRING ARG);
+EXTERNAL SIMPLE BOOLEAN PROCEDURE SCANSN(BOOLEAN B);
+EXTERNAL SIMPLE BOOLEAN PROCEDURE RDTIME(REFERENCE INTEGER TIME,
+	OVSCAN; VALUE INTEGER FSTSCN; REFERENCE STRING STR);
+EXTERNAL SIMPLE BOOLEAN PROCEDURE RDDATE(REFERENCE INTEGER DATE,
+	OVSCAN; VALUE INTEGER FSTSCN; REFERENCE STRING STR);
+EXTERNAL SIMPLE STRING PROCEDURE STDATE(INTEGER DATE,FLAG);
+EXTERNAL SIMPLE INTEGER PROCEDURE STRSRC(STRING ARRAY NAMES;
+	STRING LOOK; REFERENCE BOOLEAN EXACT);
+\  Global storage;
+
+LET N!R = NULL!RECORD, R!P = RECORD!POINTER;
+DEFINE DATE='14,TIMER='22,
+	SETTIM = -'37,
+	DUMP='770017,
+	BUFMOD = '770014,
+	CRLF = {'15&'12},
+	NULL=0,IDENTIFIER=1,NUMBER=2,SPECIAL=3;
+
+PRELOAD!WITH "ERRORS","UPD370","FIX370",
+	"DMPFMT","HELP","?","QUIT";
+STRING ARRAY COMNDS[1:7];
+PRELOAD!WITH "reports from the error log",
+	"report the progress of the UPDATE program",
+	"allows sending of transactions to the 370(s)",
+	"reformats 370 dump files from master data bases",
+	"type these brief instructions","list the legal commands",
+	"terminate the program";
+STRING ARRAY EXPLAN[1:7];
+
+INTEGER ARRAY FILBUF[1:128];
+
+INTEGER ARRAY HOSTS[0:35];
+INTEGER HOST!IND, HOST!MAX;
+
+RECORD!CLASS SYSTMS						\ SYSTEMS TO SEND TRANSACTIONS TO;
+	(INTEGER SYSNO,						\ SYSTEM NUMBER;
+	CNAME;							\ CENTER LOCATION OF SYSTEM;
+	R!P (SYSTMS) NEXT,					\ NEXT SYSTEM IN LIST;
+	UP);							\ NEXT SYSTEM IN SAME CENTER;
+
+RECORD!CLASS CENTER						\ CENTERS AND DONE MASKS;
+	(INTEGER CNAME,						\ 1 WORD OF ASCII DENOTING CENTER;
+	DNMASK;							\ TO CHECK IF DONE WITH TRANSACTION;
+	R!P (SYSTMS) SYSPTR;					\ POINTER TO SYSTEM IN THIS CENTER;
+	R!P (CENTER) NEXT);					\ POINTER TO NEXT CENTER;
+
+R!P (CENTER) CENHED,						\ BEGINNING OF CENTER LIST;
+	SYSHED;							\ BEGINNING OF SYSTEM LIST;
+
+STRING COMSTR;
+BOOLEAN QUITSW,
+	TIMSW,							\ (FIX370) TRUE IF TIME-OUT;
+	ZAPSW;							\ (FIX370) TRUE IF REMOTE ZAP;
+INTEGER BLTAB,TABLE,TYPE,COMNUM,FLAG;
+INTEGER DAYS,JIFS;
+INTEGER SYS,							\ (FIX370) CURRENT SYSTEM.;
+	CIROPN,							\ (FIX370) SYS # IF CIRCUIT OPEN.;
+	SNDING;							\ FALSE IF FIX370 IS CAUSING A ZAP;
+ITEM TRSEND,INTPRO;
+\  Global procedures;
+
+COMMENT The procedure STTIME takes a time value (in minutes since
+	midnight) and converts it to an ASCII string of the form
+	HH:MM.;
+
+SIMPLE STRING PROCEDURE STTIME (INTEGER TIMVAL);
+BEGIN
+	INTEGER HR,MIN;  STRING TIMSTR;
+	HR_TIMVAL/60;
+	MIN_TIMVAL-(HR*60);  SETFORMAT(-2,0);
+	TIMSTR_CVS(HR)&":"&CVS(MIN);
+	SETFORMAT(0,0);  RETURN (TIMSTR);
+END;
+
+
+COMMENT The procedure CURDT gets the current date and time;
+
+SIMPLE PROCEDURE CURDT (REFERENCE INTEGER DAY,TIME);
+BEGIN
+	INTEGER TIME1;
+	TIME1_CALLI(0,TIMER);  DAY_CALLI(0,DATE);
+	TIME_CALLI(0,TIMER);
+	IF TIME < TIME1 THEN DAY_CALLI(0,DATE);
+	RETURN;
+END;
+
+
+COMMENT The procedure GETSYS takes a system or failure bit mask and
+	returns the corresponding system number.;
+
+SIMPLE INTEGER PROCEDURE GETSYS (INTEGER SYSMSK);
+BEGIN
+	INTEGER I;
+
+	FOR I_0 STEP 1 UNTIL HOST!MAX DO BEGIN
+	  IF SYSMSK < 0 THEN RETURN(HOSTS[I]);
+	  SYSMSK _ SYSMSK LSH 1;
+	END;
+	RETURN (0);
+END;
+
+COMMENT The procedure GETMSK takes a system number and returns
+	a system bit mask.;
+
+SIMPLE INTEGER PROCEDURE GETMSK (INTEGER ISYS);
+BEGIN
+	INTEGER I;
+
+	FOR I_0 STEP 1 UNTIL HOST!MAX DO
+	  IF HOSTS[I]=ISYS THEN RETURN(1 LSH (35-I));
+	RETURN (0);
+END;
+
+SIMPLE STRING PROCEDURE DASHES (INTEGER HOWMNY);
+BEGIN
+	STRING STR;
+	STR_NULL;
+	FOR HOWMNY_HOWMNY STEP -1 UNTIL 1 DO
+	  IF STR=NULL THEN STR_"-" ELSE STR_STR&"-";
+	RETURN (STR);
+END;
+
+
+SIMPLE STRING PROCEDURE SPACES (INTEGER HOWMNY);
+BEGIN
+	STRING STR;
+	STR_NULL;
+	FOR HOWMNY_HOWMNY STEP -1 UNTIL 1 DO
+	  IF STR=NULL THEN STR_" " ELSE STR_STR&" ";
+	RETURN (STR);
+END;
+
+
+SIMPLE PROCEDURE ASSIST (REFERENCE STRING ARRAY COMNDS;
+	REFERENCE STRING ARRAY EXPLAN);
+BEGIN
+	INTEGER I,J;
+	PRINT(CRLF,"The legal commands are:",CRLF,CRLF);
+	J_ARRINFO(COMNDS,2);
+	FOR I_1 STEP 1 UNTIL J DO
+	  PRINT (COMNDS[I],SPACES(17-LENGTH(COMNDS[I])),EXPLAN[I],CRLF);
+	RETURN;
+END;
+
+
+SIMPLE PROCEDURE CRIB (REFERENCE STRING ARRAY COMNDS);
+BEGIN
+	INTEGER I,J;
+	PRINT(CRLF,"The legal commands are:",CRLF,CRLF);
+	J_ARRINFO(COMNDS,2);
+	FOR I_1 STEP 1 UNTIL J DO PRINT (COMNDS[I],CRLF);
+	RETURN;
+END;
+
+
+SIMPLE BOOLEAN PROCEDURE AFFIRM (STRING PROMPT);
+BEGIN
+	STRING STR;  LABEL GETIT;
+	PRINT(PROMPT);
+GETIT:	STR_TTYINL(TABLE,FLAG);
+	IF EQU(STR,"Y") THEN RETURN(TRUE)
+	ELSE IF EQU(STR,"N") THEN RETURN(FALSE)
+	ELSE BEGIN
+	  PRINT("Please answer 'Y' or 'N':  ");
+	  GO GETIT;
+	END;
+END;
+
+
+SIMPLE PROCEDURE GETCOM (STRING PROMPT; REFERENCE STRING ARRAY COMLST);
+BEGIN
+	COMNUM_0;
+	WHILE COMNUM = 0 DO BEGIN "GET COMMAND"
+	  PRINT(CRLF,PROMPT);  COMSTR_TTYINL(TABLE,FLAG);
+	  IF (TYPE_SCANU(COMSTR)) = IDENTIFIER THEN
+	    COMNUM_STRSRC(COMLST,ACCUM,FLAG)
+	  ELSE IF TYPE=SPECIAL THEN
+	    COMNUM_STRSRC(COMLST,CVASTR(SCNVAL LSH 29),FLAG)
+	  ELSE IF TYPE=NULL THEN CONTINUE "GET COMMAND"
+	  ELSE COMNUM_0;
+	  IF COMNUM=0 THEN BEGIN
+	    PRINT(CRLF,"Illegal command word.",CRLF);
+	    RETURN;
+	  END;
+	END "GET COMMAND";
+	RETURN;
+END;
+
+
+STRING PROCEDURE ATS(REFERENCE INTEGER BUFFR);
+BEGIN
+	INTEGER ARRPT,I;  STRING STR;
+	STR_NULL;  ARRPT_LOCATION(BUFFR);
+	WHILE (I_MEMORY[ARRPT]) NEQ 0 DO BEGIN
+	  STR_STR&CVASTR(I);  ARRPT_ARRPT+1;
+	END;
+	RETURN (STR);
+END;
+
+
+COMMENT The procedure CENMAP build a map in the form of record classes
+	of the currently defined 370 systems and centers using the
+	binary file CENTER.MAP.
+;
+
+PROCEDURE CENMAP;
+BEGIN
+
+	R!P (ANY!CLASS) RP,RP1,RP2,RP3;
+	INTEGER SYS,CENT,TMPMSK,FCHAN,FEOF;
+
+	FOR HOST!IND_0 STEP 1 UNTIL 35 DO HOSTS[HOST!IND]_0;
+	HOST!IND_0;
+	OPEN((FCHAN_GETCHAN),"DSK",BUFMOD,1,0,FEOF,FEOF,FEOF);
+	IF FEOF NEQ 0 THEN RETURN;
+	LOOKUP(FCHAN,"CENTER.MAP" & (if test then "[1,326721]"
+	   else "[1,30773]"),FEOF);				\ OPEN SYMBOLIC CENTER/SYSTEM MAP.;
+	IF FEOF NEQ 0 THEN RETURN;
+	SYS_WORDIN(FCHAN);  CENT_WORDIN(FCHAN);
+	HOSTS[HOST!IND]_SYS; HOST!IND_HOST!IND+1;
+	SYSHED_(CENHED_N!R);
+	WHILE SYS > 0 AND FEOF=0 DO BEGIN "ADD SYSTEMS"
+	  SYSTMS:SYSNO[RP_NEW!RECORD(SYSTMS)]_SYS;		\ BUILD AN INTERNAL MAP OF;
+	  SYSTMS:CNAME[RP]_CENT;				\ THE SYSTEMS TO WHICH WE WILL;
+	  IF SYSHED=N!R THEN SYSHED_RP				\ BE SENDING TRANSACTIONS;
+	  ELSE SYSTMS:NEXT[RP1]_RP;
+	  RP1_RP;  RP2_CENHED;
+	  WHILE RP2 NEQ N!R DO BEGIN				\ SEE IF CENTER CORRESPONDING TO;
+	    IF CENTER:CNAME[RP2]=CENT THEN DONE;
+	    RP3_RP2;  RP2_CENTER:NEXT[RP2];			\ THE SYSTEM JUST ADDED IS IN OUR;
+	  END;							\ LIST OF CENTERS.;
+	  IF RP2=N!R THEN BEGIN					\ IF THE CENTER IS NOT IN OUR;
+	    CENTER:CNAME[RP2_NEW!RECORD(CENTER)]_CENT;		\ LIST, THEN WE MUST ADD IT.;
+	    IF CENHED=N!R THEN CENHED_RP2
+	    ELSE CENTER:NEXT[RP3]_RP2;
+	    CENTER:SYSPTR[RP2]_RP;				\ LINK TO SYSTEM LIST.;
+	  END
+	  ELSE BEGIN						\ IF THE CENTER IS ON THE LIST,;
+	    RP3_(RP2_CENTER:SYSPTR[RP2]);			\ THEN JUST LINK UP THE NEW SYSTEM;
+	    WHILE (RP2_SYSTMS:UP[RP2]) NEQ N!R DO RP3_RP2;	\ WITH THE LAST SYSTEM ENTERED;
+	    SYSTMS:UP[RP3]_RP;					\ FOR THIS CENTER.;
+	  END;
+	  SYS_WORDIN(FCHAN);  CENT_WORDIN(FCHAN);
+	  HOSTS[HOST!IND]_SYS; HOST!IND_HOST!IND+1;
+	END "ADD SYSTEMS";
+	CLOSE(FCHAN);
+	HOST!MAX_HOST!IND-2;
+	IF SYSHED=N!R THEN RETURN;				\ IF NOTHING TO DO, LEAVE.;
+	RP_CENHED;
+	WHILE RP NEQ N!R DO BEGIN				\ NOW COMPUTE THE DONE MASKS.;
+	  RP1_CENTER:SYSPTR[RP];  TMPMSK_0;			\ THE DONE MASKS ARE USED TO;
+	  WHILE RP1 NEQ N!R DO BEGIN				\ CHECK THE DONE BITS IN RECORD.370;
+	    TMPMSK_TMPMSK LOR GETMSK(SYSTMS:SYSNO[RP1]);	\ TO DETERMINE WHETHER THE CURRENT;
+	    RP1_SYSTMS:UP[RP1];					\ TRANSACTION HAS BEEN SENT TO ALL;
+	  END;							\ THE SYSTEMS IN DESIGNATED CENTER.;
+	  CENTER:DNMASK[RP]_TMPMSK;  RP_CENTER:NEXT[RP];
+	END;
+	RETURN;
+END;
+
+
+SIMPLE PROCEDURE TIMOUT;
+BEGIN
+	CALLI(0,SETTIM);  TIMSW_TRUE;
+	PRINT(CRLF,"Timed out to system ",SYS,CRLF);
+	TERMINATE(TRSEND);  RETURN;
+END;
+
+SIMPLE PROCEDURE CIRZAP;
+BEGIN
+	ZAPSW_TRUE;  CIROPN_0;
+	IF SNDING THEN BEGIN
+	  PRINT(CRLF,"Received circuit zap from system ",SYS,CRLF);
+	  TERMINATE(TRSEND);
+	END;
+	SNDING_TRUE;
+END;
+
+
+\  The ERRORS procedure
+
+	The procedure ERRORS is used to read and interpret the error log
+	written by the program, UPDATE.
+
+The error log is contained in a file called UPDATE.ERR which is
+treated in a circular fashion.  Each record in the file is a block
+(128 words) long.  The first record, the header, has the following
+format:
+
+word 1     file size in blocks (records)
+word 2     number of most recently written record
+word 3     date,,time of most recently written record
+
+The remaining records have the following format:
+
+             |-----------------|
+word 1       |   date,,time    |   dates are DEC format, time = minutes since midnight
+             |-----------------|
+word 2       |   system bits   |   if a transaction error
+             |-----------------|
+word 3       |  failure bits   |   if a transaction error
+             |-----------------|
+word 4       |   FOCUS error   |   if a transaction error
+             |      code       |
+word 5       |  ASCIZ format   |
+             |-----------------|
+word 6       | the transaction |
+             |   or an error   |
+             |     message     |
+             |  ASCIZ format   |
+             |        .        |
+             |        .        |
+             |        .        |
+word 128     |                 |
+             |-----------------|
+
+The system bits are used if this error is transaction related.  Bit 0
+corresponds to the 1st system in CENTER.MAP, bit 1 to the 2nd, etc.
+The failure bits indicate a fatal failure.  They denote a system in
+the same way as the system bits.
+;
+
+PROCEDURE ERRORS;
+BEGIN "ERRORS"
+
+DEFINE FATAL=1,CRCTED=2,NT=4;					\ MASKS FOR ERROR LOG ENTRIES;
+
+PRELOAD!WITH "ALL","TRANSACTION","FATAL","CORRECTED","NT",
+	"HELP","?","QUIT";
+OWN STRING ARRAY ERCOMS[1:8];
+PRELOAD!WITH "type all kinds of errors","type transaction errors only",
+	"type fatal transaction errors only",
+	"type corrected transaction errors only",
+	"type non-transaction errors only",
+	"type these brief instructions","list the legal commands",
+	"terminate the ERRORS command mode";
+OWN STRING ARRAY ERHELP[1:8];
+
+INTEGER REQMSK,							COMMENT:  REQUESTED REPORT SWITCHES;
+	FILSIZ,							COMMENT:  MAX. SIZE OF ERROR LOG (BLOCKS);
+	FCHAN,FEOF,						COMMENT:  FOR LOG FILE ACCESS;
+	DAYS,JIFS,MINS,						COMMENT:  TO HOLD DATE AND TIME VALUES;
+	STRTDT;							COMMENT:  START DATE AND TIME FOR REPORTS;
+
+LABEL LEAVE,TIMERR,CLOOP;
+
+COMMENT The procedure REPORT does the job of finding the beginning of
+	the error log and doing a report according to the user request.
+	The parameter REQUST is a word containing the switches
+	corresponding to the type of records which will be reported
+	(for example, FATAL+CRCTED) and the parameter START is the
+	starting date/time word.
+;
+
+PROCEDURE REPORT (INTEGER REQUST,START);
+BEGIN "REPORT"
+	INTEGER MASK,CURREC,CURDAT,L;
+	STRING ERRSTR,TMPSTR;
+	LABEL REPRET;
+	INTEGER TOP,BASE;
+
+	USETI(FCHAN,(CURREC_1));  ARRYIN(FCHAN,FILBUF[1],128);
+	IF FEOF THEN GO REPRET;
+	CURDAT_FILBUF[3];  FILSIZ_FILBUF[1];
+	TOP_FILBUF[2];
+	CURREC_BASE_IF TOP GEQ FILSIZ THEN 2 ELSE TOP + 1;
+	USETI(FCHAN,BASE);
+	ARRYIN(FCHAN,FILBUF[1],128);
+	IF FEOF THEN BEGIN
+	  USETI(FCHAN,(CURREC_(BASE_2)));
+	  ARRYIN(FCHAN,FILBUF[1],128);
+	  IF FEOF THEN GO REPRET;
+	END;
+
+	DO BEGIN "TYPE REPORT"
+	  CURDAT_FILBUF[1];
+	  IF FILBUF[2] = 0 THEN MASK_NT				\ FIGURE OUT WHAT KIND OF RECORD THIS IS;
+	  ELSE IF FILBUF[3] = 0 THEN MASK_CRCTED
+	  ELSE MASK_FATAL;
+	  IF (REQUST LAND MASK) AND (CURDAT GEQ START) THEN BEGIN
+	    TMPSTR_STDATE(((FILBUF[1] LSH -18) LAND '777777),
+	      '31)&" "&STTIME(FILBUF[1] LAND '777777);
+	    PRINT(CRLF,TMPSTR);  L_LENGTH(TMPSTR);		\ TYPE DATE AND TIME.;
+	    TMPSTR_ATS(FILBUF[6]);
+	    IF NOT FILBUF[4] THEN BEGIN
+	      PRINT(CRLF,DASHES(L),CRLF);  PRINT(TMPSTR,CRLF);
+	    END
+	    ELSE BEGIN
+	      ERRSTR_"  "&CVASTR(FILBUF[4])&CVASTR(FILBUF[5])&
+	        " on system "&CVS(GETSYS(FILBUF[2]))&
+	        (IF FILBUF[3]=0 THEN "" ELSE "  fatal");
+	      PRINT(ERRSTR,CRLF);  PRINT(DASHES(L+LENGTH(ERRSTR)));
+	      PRINT(CRLF,TMPSTR[1 FOR 69]);
+	      IF LENGTH(TMPSTR) > 69 THEN
+	        PRINT(CRLF,TMPSTR[70 FOR 73],CRLF)
+		ELSE PRINT(CRLF);
+	    END;
+	  END;
+	  CURREC_CURREC+1;
+	  IF CURREC>FILSIZ THEN USETI(FCHAN,(CURREC_2));
+	  ARRYIN(FCHAN,FILBUF[1],128);
+	  IF FEOF THEN DONE "TYPE REPORT";
+	END "TYPE REPORT" UNTIL CURREC = BASE;
+REPRET:	PRINT(CRLF);
+	RETURN;
+END "REPORT";
+
+SIMPLE PROCEDURE ERRAID;
+BEGIN
+	PRINT(CRLF,"Commands consist of a command word optionally followed by a starting",CRLF);
+	PRINT("date and time (of the form DD-MMM-YR HH:MM or DD-MMM-YR) or a time",CRLF);
+	PRINT("increment (of the form *-MIN where MIN is any number of minutes) which",CRLF);
+	PRINT("is subtracted from the current time to get a starting time.",CRLF);
+	ASSIST(ERCOMS,ERHELP);  RETURN;
+END;
+
+\ OPEN THE ERROR FILE - REPORT ANY PROBLEMS;
+
+	OPEN((FCHAN_GETCHAN),"DSK",DUMP,0,0,FEOF,FEOF,FEOF);
+	IF FEOF NEQ 0 THEN BEGIN
+	  PRINT(CRLF,"Cannot get a disk channel.",CRLF);
+	  GO LEAVE;
+	END;
+	LOOKUP(FCHAN,"UPDATE.ERR" & (if test then "[1,326721]"
+	   else "[1,30773]"),FEOF);
+	IF FEOF THEN BEGIN
+	  PRINT(CRLF,"Error log does not exist or cannot be opened",
+	    CRLF);
+	  GO LEAVE;
+	END;
+
+\ COMMAND LOOP;
+
+CLOOP:	GETCOM(">",ERCOMS);
+	IF TYPE = NULL THEN GO CLOOP;
+
+	STRTDT_0;
+	IF (TYPE_SCANU(COMSTR)) NEQ NULL THEN BEGIN
+	  IF TYPE=NUMBER THEN BEGIN
+	    IF NOT RDDATE(DAYS,TYPE,TYPE,COMSTR) THEN BEGIN
+	      PRINT(CRLF,"Bad date expression.",CRLF);
+	      GO CLOOP;
+	    END;
+	    IF TYPE=NULL THEN MINS_0
+	    ELSE IF NOT RDTIME(MINS,TYPE,TYPE,COMSTR) THEN BEGIN
+TIMERR:	      PRINT(CRLF,"Bad time expression.",CRLF);
+	      GO CLOOP;
+	    END;
+	  END
+	  ELSE IF TYPE=SPECIAL THEN BEGIN
+	    IF SCNVAL NEQ "*" THEN GO TIMERR
+	    ELSE IF (TYPE_SCANU(COMSTR)) NEQ SPECIAL THEN GO TIMERR
+	    ELSE IF SCNVAL NEQ "-" THEN GO TIMERR
+	    ELSE IF (TYPE_SCANU(COMSTR)) NEQ NUMBER THEN GO TIMERR;
+	    CURDT(DAYS,JIFS);  MINS_JIFS/3600;
+	    WHILE MINS < SCNVAL DO BEGIN
+	      DAYS_DAYS-1;  MINS_MINS+1440;
+	      IF DAYS < 0 THEN GO TIMERR;
+	    END;
+	    MINS_MINS-SCNVAL;
+	  END
+	  ELSE GO TIMERR;
+	  STRTDT_(DAYS LSH 18) + MINS;
+	END;
+
+\ COMMAND EXECUTION;
+
+	CASE COMNUM OF BEGIN
+[1]	  REPORT((FATAL+CRCTED+NT),STRTDT);
+[2]	  REPORT((FATAL+CRCTED),STRTDT);
+[3]	  REPORT(FATAL,STRTDT);
+[4]	  REPORT(CRCTED,STRTDT);
+[5]	  REPORT(NT,STRTDT);
+[6]	  ERRAID;
+[7]	  CRIB(ERCOMS);
+[8]	  GO LEAVE
+	END;
+	GO CLOOP;
+
+LEAVE:	RELEASE(FCHAN);  RETURN;
+END "ERRORS";
+
+
+\  UPD370 procedure
+
+	The procedure UPD370 is used to print a summary of
+	the progress of the 370 updating function.;
+
+PROCEDURE UPD370;
+BEGIN
+
+	INTEGER BRCHR,FCHAN,FEOF,CENT,RCDPNT,I,J;
+	R!P (ANY!CLASS) RP;
+	STRING CENTMP,STROUT;
+
+	IF CENHED = N!R THEN CENMAP;
+	OPEN((FCHAN_GETCHAN),"DSK",DUMP,0,0,FEOF,FEOF,FEOF);
+	IF FEOF = 0 THEN					COMMENT:  OPEN UP RECORD.370 FOR READ;
+	  LOOKUP(FCHAN,"RECORD.370" & (if test then "[1,326721]"
+	     else "[1,30773]"),FEOF);
+	RCDPNT_0;
+	WHILE FEOF = 0 DO BEGIN "PRINT LOOP"
+	  RCDPNT_RCDPNT+1;  ARRYIN(FCHAN,FILBUF[1],128);	COMMENT:  READ EACH RECORD.;
+	  IF FEOF NEQ 0 THEN DONE "PRINT LOOP";			COMMENT:  QUIT ON EOF;
+	  CENTMP_CVASTR(FILBUF[1]);  BRCHR_'12;			COMMENT:  DESIGNATED CENTER NAME.;
+	  CENTMP_RVSCAN(CENTMP,BLTAB,BRCHR);			COMMENT:  STRIP TRAILING BLANKS,;
+	  CENT_CVASC(CENTMP);					COMMENT:  AND MAKE INTEGER EQUIVALENT.;
+	  RP_CENHED;
+	  WHILE RP NEQ N!R DO BEGIN				COMMENT:  FIND CENTER IN MAP AND;
+	    IF CENTER:CNAME[RP]=CENT THEN DONE;			COMMENT:  GET THE DONE MASK.;
+	    RP_CENTER:NEXT[RP];
+	  END;
+	  IF RP=N!R THEN CONTINUE "PRINT LOOP";
+	  IF ((I_FILBUF[2]) XOR CENTER:DNMASK[RP]) = 0 THEN
+	  CONTINUE "PRINT LOOP";				COMMENT:  DON'T PRINT IF TRANSACTION DONE.;
+	  SETFORMAT(3,0);
+	  STROUT_CVS(RCDPNT)&". "&CVASTR(CENT)&"-";
+	  SETFORMAT(0,0);
+	  J _ 0;
+	  WHILE I NEQ 0 DO BEGIN
+	      IF I < 0 THEN BEGIN
+		STROUT_STROUT&CVS(HOSTS[J]);
+		IF (I LSH 1) NEQ 0 THEN STROUT_STROUT&",";
+	      END;
+	      J_J+1; I_I LSH 1;
+	  END;
+	  PRINT(STROUT&CRLF);
+	END "PRINT LOOP";
+	RELEASE(FCHAN);  RETURN;
+END;
+
+
+\  FIX370 procedure
+
+	The procedure FIX370 is used to send transactions to the 370
+	immediately for the purpose of fixing an out-of-synch condition.
+	The user must look up the necessary information, and the program
+	does the job of putting it into the proper format for the ACCEPT
+	program.  This portion will be changed when the SAIL-X22 link
+	is a reality.
+;
+
+
+PROCEDURE FIX370;
+BEGIN
+
+REQUIRE 10 POLLING!INTERVAL;
+REQUIRE "(SAILIB)TYMINT.DEF" SOURCE!FILE;
+
+
+DEFINE TRP!=1, OWNER!=2, TID!=3, USER!=4, CODE!=5, DOE!=6,	COMMENT:  FIELD NAMES FOR TRANSACT
+	UUN!=7, DESC!=8, CR!=9, ACUSR!=10,			COMMENT:  ITEMS;
+	ZAPCIR = -'45, CREAUX = -'44, TSEND = 5, TRCV = 2,
+	LF = '12, CR = '15;
+
+PRELOAD!WITH "ADD TAPE","ADD ACCS","REM ACCS","REL TAPE",
+	"CHA USER","CHA CODE","CHA REQR","CHA DESC",
+	"HELP","?","QUIT";
+OWN STRING ARRAY FXCOMS[1:11];
+PRELOAD!WITH "add a new tape record","add users to the access list",
+	"remove users from the access list",
+	"release a tape",
+	"change the primary user","change the ownership code",
+	"change the tape requestor (owner)",
+	"change the tape description",
+	"type these brief instructions","list the legal commands",
+	"leave this mode";
+OWN STRING ARRAY FXHELP[1:11];
+
+PRELOAD!WITH (OWNER! LSH 32)+(TRP! LSH 28)+(TID! LSH 24)+(USER! LSH 20)+
+	(CODE! LSH 16)+(DOE! LSH 12)+(UUN! LSH 8)+(DESC! LSH 4)+CR!,
+	(TRP! LSH 32)+(ACUSR! LSH 28)+(CR! LSH 24),
+	(TRP! LSH 32)+(ACUSR! LSH 28)+(CR! LSH 24),
+	(TRP! LSH 32)+(CR! LSH 28),
+	(TRP! LSH 32)+(USER! LSH 28)+(UUN! LSH 24)+(CR! LSH 20),
+	(TRP! LSH 32)+(CODE! LSH 28)+(CR! LSH 24),
+	(TRP! LSH 32)+(OWNER! LSH 28)+(CR! LSH 24),
+	(TRP! LSH 32)+(DESC! LSH 28)+(CR! LSH 24);
+OWN INTEGER ARRAY FIELDS[1:8];
+OWN INTEGER ARRAY TRPVCT[0:3];
+
+STRING TRP,TID,OWNER,USER,CODE,DOE,UUN,DESC,SNDSTR;
+STRING ARRAY ACUSER[1:10];
+INTEGER PORT,DEST,I,J,K;
+LABEL FXLOOP,GETDST;
+R!P (ANY!CLASS) RP;
+BOOLEAN CNTRSW;							COMMENT:  TRUE IF SENDING TO WHOLE CENTER;
+
+EXTERNAL INTEGER !SKIP!;
+
+
+SIMPLE PROCEDURE FIXAID;
+BEGIN
+	PRINT(CRLF,"Commands denote the transactions types which are handled by ACCEPT, and");
+	PRINT(CRLF,"which this program will generate and send.  More information is found in");
+	PRINT(CRLF,"the internal documentation on the tape library.  Use these commands");
+	PRINT(CRLF,"only if you know what you are doing.",CRLF);
+	ASSIST(FXCOMS,FXHELP);  RETURN;
+END;
+
+SIMPLE PROCEDURE CVTSTR(STRING STR; INTEGER ARRAY STRARR;
+	INTEGER LB(-1), UB(-1));
+BEGIN
+	INTEGER I,J;
+	IF LB < 0 THEN LB_ARRINFO(STRARR,1);			\ LOWER BOUND DEFAULT;
+	IF UB < 0 THEN UB_ARRINFO(STRARR,2);			\ UPPER BOUND DEFAULT;
+	J_1;  FOR I_LB STEP 1 UNTIL UB DO STRARR[I]_0;		\ CLEAR ARRAY STRING AREA;
+	FOR I_LB STEP 1 UNTIL UB DO BEGIN			\ GET ONLY AS MUCH OF THE STRING;
+	  IF J>LENGTH(STR) THEN DONE;				\ AS WILL FIT IN THE ARRAY.;
+	  STRARR[I]_CVASC(STR[J FOR 5]);  J_J+5;
+	END;
+	RETURN;
+END;
+
+PROCEDURE PRTTRN (INTEGER FLDVAL);
+BEGIN
+	INTEGER I,J;
+
+SIMPLE BOOLEAN PROCEDURE SW (INTEGER SWVAL);
+BEGIN
+	I_FLDVAL;
+	WHILE TRUE DO BEGIN
+	  J_(I_I ROT 4) LAND '17;
+	  IF J=SWVAL THEN RETURN(TRUE);
+	  IF I=FLDVAL THEN RETURN(FALSE);
+	END;
+END;
+
+	PRINT(CRLF);
+	IF SW(TRP!) THEN PRINT("TRP:    ",TRP,CRLF);
+	IF SW(TID!) THEN PRINT("TID:    ",TID,CRLF);
+	IF SW(OWNER!) THEN PRINT("OWNER:  ",OWNER,CRLF);
+	IF SW(USER!) THEN PRINT("USER:   ",USER,CRLF);
+	IF SW(CODE!) THEN PRINT("CODE:   ",CODE,CRLF);
+	IF SW(DOE!) THEN PRINT("DOE:    ",DOE,CRLF);
+	IF SW(UUN!) THEN PRINT("UUN:    ",UUN,CRLF);
+	IF SW(DESC!) THEN PRINT("DESC:   ",DESC,CRLF);
+	IF SW(ACUSR!) THEN BEGIN
+	  PRINT("ACCESS:  ");
+	  FOR I_1 STEP 1 UNTIL 10 DO BEGIN
+	    IF ACUSER[I]=NULL THEN DONE;
+	    OUTSTR(ACUSER[I]&(IF I=10 THEN NULL
+	      ELSE IF ACUSER[I+1]=NULL THEN NULL
+	      ELSE IF I=5 THEN ","&CRLF&SPACES(9)
+	      ELSE ", "));
+	  END;
+	END;
+	PRINT(CRLF);  RETURN;
+END;
+
+STRING PROCEDURE RECEV;
+BEGIN
+	STRING STR;  INTEGER CH;
+	STR_NULL;  CALLI('2000005,SETTIM);			\ SET A TIME LIMIT FOR RESPONSE;
+	WHILE (CH_(AUXCLV(PORT,0,TRCV) LAND '177)) NEQ LF DO BEGIN	\ GET CHARACTERS FROM THE AUX;
+	  IF CH = ">" THEN STR_NULL				\ ">" IS PROMPT CHARACTER.;
+	  ELSE IF (CH NEQ CR) AND (CH NEQ 0) THEN		\ STOP ON LINE FEED.;
+	    IF STR=NULL THEN STR_CH ELSE STR_STR&CH;
+	END;
+	CALLI(0,SETTIM);  RETURN(STR);
+END;
+
+STRING PROCEDURE GETRSP (STRING PROMPT; INTEGER SIZE);
+BEGIN
+	STRING STR;  INTEGER L;
+	PRINT (PROMPT);
+	STR_TTYINL(TABLE,FLAG);
+	IF (L_LENGTH(STR)) > SIZE THEN STR_STR[1 FOR SIZE]
+	ELSE IF L < SIZE THEN STR_STR&SPACES(SIZE-L);
+	RETURN (STR);
+END;
+
+
+PROCEDURE SENDTR;
+BEGIN
+
+STRING RESP;
+
+SIMPLE PROCEDURE MOP!UP;
+RESP_NULL;
+
+CLEANUP MOP!UP;
+
+	CVTSTR(CR&CR&"ACCEPT"&CR,FILBUF,1,3);
+	AUXCLV(PORT,POINT(7,FILBUF[1],-1),TSEND);  RESP_NULL;	\ CALL UP THE ACCEPT PROGRAM.;
+	WHILE NOT EQU(RESP,"READY") DO RESP_RECEV;		\ WAIT FOR REPLY.;
+	CVTSTR(SNDSTR,FILBUF);
+	AUXCLV(PORT,POINT(7,FILBUF[1],-1),TSEND);
+	RESP_RECEV;
+	IF EQU(RESP,"READY") THEN
+	  PRINT(CRLF,"Transaction completed to system ",SYS,CRLF)
+	ELSE IF ("FOC001" LEQ RESP) AND (RESP LEQ "FOC999")
+	  THEN PRINT(CRLF,RESP," on system ",SYS,CRLF)
+	ELSE PRINT(CRLF,"Garbage response received from system ",
+	  SYS,CRLF);
+	RETURN;
+END;
+
+PROCEDURE OPNCIR;
+BEGIN
+	IF CIROPN THEN BEGIN
+	  SNDING_FALSE;  CALLI(PORT,ZAPCIR);
+	  DISABLE(TINASS(PORT,CAUSE!TTY!ZAP,6));
+	END;
+	CVTSTR((if test then "TLDEVE:" else "TAPELIBE:") & 
+	   CVS(SYS)&";",FILBUF,1,4);				\ LOG INTO THE SELECTED SYSTEM.;
+	PORT_CALLI('1000000+LOCATION(FILBUF[1]),CREAUX);	\ CHECK FOR SUCCESS;
+	IF NOT !SKIP! THEN
+	  PRINT(CRLF,"Can't access system ",SYS,CRLF)
+	ELSE BEGIN
+	  INTMAP(TINASS(PORT,CAUSE!TTY!ZAP,6),DFRINT,
+	    (-2 LSH 18)+LOCATION(TRPVCT[2]));
+	  ENABLE(TINASS(PORT,CAUSE!TTY!ZAP,6));
+	  CIROPN_SYS;
+	END;
+	RETURN;
+END;
+
+
+\ *** BODY OF PROCEDURE FIX370 ***;
+
+	INTSET(INTPRO,0);					\ SET UP FOR DEFERRED INTERRUPTS;
+	TRPVCT[0]_(TRPVCT[2]_2);
+	TRPVCT[1]_(-1 LSH 18)+LOCATION(TIMOUT);
+	TRPVCT[3]_(-1 LSH 18)+LOCATION(CIRZAP);
+	INTMAP(INTASS(CAUSE!TIMER,5),DFRINT,(-2 LSH 18)+
+	  LOCATION(TRPVCT[0]));
+	ENABLE(INTASS(CAUSE!TIMER,5));
+	SNDING_TRUE;
+	IF CENHED = N!R THEN CENMAP;
+FXLOOP:	PRINT(CRLF,">");  COMSTR_TTYINL(TABLE,FLAG);
+	COMNUM_STRSRC(FXCOMS,COMSTR,FLAG);
+	CASE COMNUM OF BEGIN
+[0]	  BEGIN
+	    PRINT(CRLF,"Illegal command word.",CRLF);
+	    GO FXLOOP;
+	  END;
+[9]	  BEGIN  FIXAID;  GO FXLOOP;  END;
+[10]	  BEGIN  CRIB(FXCOMS);  GO FXLOOP;  END;
+[11]	  BEGIN
+	    DISABLE(TINASS(PORT,CAUSE!TTY!ZAP,6));
+	    CALLI(PORT,ZAPCIR);
+	    DISABLE(INTASS(CAUSE!TIMER,5));
+	    RETURN;
+	  END
+	END;
+	I_FIELDS[COMNUM];
+	WHILE TRUE DO BEGIN "GET FIELDS"
+	  J_(I_I ROT 4) LAND '17;
+	  CASE J OF BEGIN
+[0]	    DONE "GET FIELDS";
+[TRP!]	    TRP_GETRSP("TRP:  ",7);
+[OWNER!]    OWNER_GETRSP("OWNER:  ",50);
+[TID!]      TID_GETRSP("TID:  ",7);
+[USER!]     USER_GETRSP("USER:  ",12);
+[CODE!]     CODE_GETRSP("CODE:  ",2);
+[DOE!]      DOE_GETRSP("DOE:  ",8);
+[UUN!]      UUN_GETRSP("UUN:  ",6);
+[DESC!]     DESC_GETRSP("DESC:  ",40);
+[ACUSR!]    FOR K_1 STEP 1 UNTIL 10 DO BEGIN "GET ACCESS USERS"
+	      ACUSER[K]_GETRSP("USERNAME:  ",12);
+	      IF EQU(ACUSER[K],SPACES(12)) THEN BEGIN
+		ACUSER[K]_NULL;  DONE "GET ACCESS USERS";
+	      END;
+	    END "GET ACCESS USERS"
+	  END;
+	  IF FIELDS[COMNUM]=I THEN DONE "GET FIELDS";
+	END "GET FIELDS";
+	PRTTRN(FIELDS[COMNUM]);;
+	IF NOT AFFIRM(CRLF&"OK to proceed? ") THEN GO FXLOOP;
+	I_FIELDS[COMNUM];  SNDSTR_FXCOMS[COMNUM]&" ";
+	WHILE TRUE DO BEGIN "MAKE COMMAND"
+	  J_(I_I ROT 4) LAND '17;
+	  CASE J OF BEGIN
+[0]	    DONE "MAKE COMMAND";
+[TRP!]	    SNDSTR_SNDSTR&TRP;
+[OWNER!]    SNDSTR_SNDSTR&OWNER;
+[TID!]	    SNDSTR_SNDSTR&TID;
+[USER!]	    SNDSTR_SNDSTR&USER;
+[CODE!]	    SNDSTR_SNDSTR&CODE;
+[DOE!]	    SNDSTR_SNDSTR&DOE;
+[UUN!]	    SNDSTR_SNDSTR&UUN;
+[DESC!]	    SNDSTR_SNDSTR&DESC;
+[CR!]	    SNDSTR_SNDSTR&CR;
+[ACUSR!]    FOR K_1 STEP 1 UNTIL 10 DO BEGIN "PUT ACCESS USERS"
+	      IF ACUSER[K]=NULL THEN DONE "PUT ACCESS USERS";
+	      SNDSTR_SNDSTR&ACUSER[K];
+	    END "PUT ACCESS USERS"
+	  END;
+	  IF FIELDS[COMNUM]=I THEN DONE "MAKE COMMAND";
+	END "MAKE COMMAND";
+	IFC DEBUG=1 THENC PRINT(CRLF,"<",LENGTH(SNDSTR),">",SNDSTR);  ENDC;
+
+GETDST:	PRINT(CRLF,"system # or center name:  ");
+	COMSTR_TTYINL(TABLE,FLAG);  RP_N!R;
+	IF (TYPE_SCANU(COMSTR)) = IDENTIFIER THEN BEGIN
+	  DEST_CVASC(ACCUM[1 FOR 2]);  RP_CENHED;
+	  WHILE RP NEQ N!R DO BEGIN
+	    IF CENTER:CNAME[RP] = DEST THEN DONE;
+	    RP_CENTER:NEXT[RP];
+	  END;
+	  IF RP NEQ N!R THEN BEGIN
+	    CNTRSW_TRUE;  RP_CENTER:SYSPTR[RP];
+	  END;
+	END
+	ELSE IF TYPE = NUMBER THEN BEGIN
+	  DEST_SYS_SCNVAL;  RP_SYSHED;
+	  WHILE RP NEQ N!R DO BEGIN
+	    IF SYSTMS:SYSNO[RP] = SYS THEN DONE;
+	    RP_SYSTMS:NEXT[RP];
+	  END;
+	  IF RP NEQ N!R THEN CNTRSW_FALSE;
+	END;
+	IF RP = N!R THEN BEGIN
+	  PRINT("Illegal system or center",CRLF);
+	  GO GETDST;
+	END;
+	IF CNTRSW THEN
+	  WHILE RP NEQ N!R DO BEGIN
+	    SYS_SYSTMS:SYSNO[RP];
+	    IF SYS NEQ CIROPN THEN OPNCIR;
+	    IF SYS=CIROPN THEN BEGIN
+	      SPROUT(TRSEND,SENDTR,1);  JOIN({TRSEND});
+	    END;
+	    RP_SYSTMS:UP[RP];
+	  END
+	ELSE
+	  WHILE SYS DO BEGIN
+	    IF SYS NEQ CIROPN THEN OPNCIR;
+	    IF SYS=CIROPN THEN BEGIN
+	      SPROUT(TRSEND,SENDTR,1);  JOIN({TRSEND});
+	    END;
+	    IF AFFIRM(CRLF&"any more systems?  ") THEN BEGIN
+	      PRINT(CRLF,"system #:  ");  COMSTR_TTYINL(TABLE,FLAG);
+	      IF (TYPE_SCANU(COMSTR)) = NUMBER THEN BEGIN
+		SYS_SCNVAL;  RP_SYSHED;
+		WHILE RP NEQ N!R DO BEGIN
+		  IF SYSTMS:SYSNO[RP] = SYS THEN DONE;
+		  RP_SYSTMS:NEXT[RP];
+		END;
+		IF RP = N!R THEN SYS_0;
+	      END
+	      ELSE SYS_0;
+	      IF SYS=0 THEN BEGIN
+		PRINT("Illegal system #",CRLF);
+		GO GETDST;
+	      END;
+	    END
+	    ELSE DONE;
+	  END;
+
+	GO FXLOOP;
+END;
+
+
+\  DMPFMT procedure
+
+	This procedure reads the dump files (VFMAST.370, FRMAST.370, and
+DAMAST.370) created by the programs DUMPVF.CMD, DUMPFR.CMD, and
+DUMPDA.CMD respectively.  It reformats the TID portion of the records
+enlarging the numeric portion of the TID to 6 digits where necessary
+to get consistency in the results passed to the 370's.  If there is no
+TID prefix, an additional leading zero is appended to the TID.  The
+final files are written as VFMAST, FRMAST, and DAMAST.  This routine is
+set up to work from the directory the user is GFD'd to.
+;
+
+PROCEDURE dmpfmt;
+BEGIN
+
+   INTEGER ichan, ibrk, ieof,		\ input file channel stuff;
+      ochan, oeof,			\ output file channel stuff;
+      rectab;				\ break table for reading records;
+
+PROCEDURE format (STRING master, mounts);
+BEGIN
+   STRING infile,			\ input file name;
+      taprec,				\ file records;
+      tid,				\ TID save;
+      prefix;				\ first character of TID;
+   INTEGER bid,				\ numeric portion of TID;
+      reclen,				\ length of file records;
+      i;				\ record counter;
+   BOOLEAN prefixletter;
+
+   infile_ master & ".370";
+   lookup(ichan,infile,ieof);
+   if ieof then
+   BEGIN
+      print("Cannot open file """ & infile & """." & crlf);
+      return;
+   END;
+   lookup(ochan,master,oeof);
+   enter(ochan,master,oeof);
+   if oeof then
+   BEGIN
+      print("Cannot open file """ & master & """." & crlf);
+      return;
+   END;
+   i_ 0;
+   while not ieof do
+   BEGIN
+      taprec_ input(ichan,rectab);
+      if ieof then done;
+      tid_ taprec[26 for 7];  prefix_ tid[1 for 1];
+      if ("A" leq prefix) and (prefix leq "Z") then
+      BEGIN
+	 tid_ tid[2 for 6];  prefixletter_ true;
+      END
+      else prefixletter_ false;
+      bid_ cvd(tid);  setformat((if prefixletter then -6 else -7),0);
+      tid_ cvs(bid);  setformat(0,0);
+      if prefixletter then tid_ prefix & tid;
+      reclen_ length(taprec);
+      taprec_ taprec[1 to 25] & tid & taprec[33 to reclen];
+      out(ochan,taprec);  i_ i+1;
+   END;
+   print("File """&master&""" complete. ",i," records processed."&crlf);
+   rename(ichan,null,0,ieof);
+   close(ichan);  close(ochan);
+   infile_ mounts & ".370";
+   lookup(ichan,infile,ieof);
+   if ieof then
+   BEGIN
+      print("Cannot open file """ & infile & """." & crlf);
+      return;
+   END;
+   rename(ichan,mounts,0,ieof);
+   close(ichan);
+   return;
+END;
+
+\  body of DMPFMT;
+
+   rectab_ getbreak;  setbreak(rectab,'12,null,"ina");
+   open((ichan_ getchan),"dsk",0,1,0,200,ibrk,ieof);
+   open((ochan_ getchan),"dsk",0,0,1,200,oeof,oeof);
+   if ieof then
+      print("Cannot init input channel." & crlf)
+   else if oeof then
+      print("Cannot init output channel." & crlf)
+   else BEGIN
+      format("frmast","frmnts");
+      format("damast","damnts");
+      format("vfmast","vfmnts");
+      format("scmast","scmnts");
+   END;
+   release(ichan);  release(ochan);  relbreak(rectab);
+   return;
+END;
+\  The Main program
+
+;
+SIMPLE PROCEDURE AID;
+BEGIN
+	PRINT(CRLF,"This program consists of several modes or functions, some of which",CRLF);
+	PRINT("have their own sets of legal commands.  The prompt character used at",CRLF);
+	PRINT("the function level is '>', while the one issued at the outer level is ':'.",CRLF);
+	PRINT("To enter a mode, type one of the mode commands.  To get help with one of",CRLF);
+	PRINT("the functions, enter that mode and issue the HELP or ? command.",CRLF);
+	ASSIST(COMNDS,EXPLAN);  RETURN;
+END;
+
+
+COMMENT *** MAIN PROGRAM STARTS HERE ***;
+
+	IFC DEBUG=1 THENC BAIL ENDC;
+
+\ TYPE THE PROGRAM NAME, VERSION, DATE AND TIME;
+
+	CURDT(DAYS,JIFS);
+	PRINT(CRLF,"TAPTAP version ",MEMORY['137],"  ",
+	  STDATE(DAYS,'31)," ",STTIME(JIFS/3600),CRLF);
+
+	QUITSW_FALSE;
+	TABLE_GETBREAK;
+	SETBREAK(TABLE,'12,'15,"KIS");
+	BLTAB_GETBREAK;  SETBREAK(BLTAB,CRLF," ","I");		\ TABLE FOR REMOVING BLANKS.;
+	SCANSN(FALSE);
+	CENMAP;
+\  OUTER COMMAND LOOP;
+
+	WHILE NOT QUITSW DO BEGIN "OUTER LOOP"
+	  GETCOM(":",COMNDS);
+
+\  OUTER COMMAND EXECUTION;
+
+	  CASE COMNUM OF BEGIN
+[1]	    ERRORS;
+[2]	    UPD370;
+[3]	    FIX370;
+[4]	    DMPFMT;
+[5]	    AID;
+[6]	    CRIB(COMNDS);
+[7]	    QUITSW_TRUE
+	  END;
+	END "OUTER LOOP";
+
+END "TAPTAP";
+ v"2Q
