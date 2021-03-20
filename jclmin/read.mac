@@ -1,0 +1,39 @@
+; this macro read a binary file
+        CHAN==1
+
+ 
+START:  TITLE   READT
+        RESET
+        OPEN    CHAN,OPNBLK
+        JRST    ERROR
+        INBUF   CHAN,1
+        LOOKUP  CHAN,FILNAM
+        JRST    ERROR
+L1:     IN      CHAN,
+        JRST    L2
+        CLOSE   CHAN,
+        EXIT
+L2:     SOSGE   IBCT
+        JRST    L1
+        ILDB    IBPTR
+        OUTCHR
+        JRST    L2
+ 
+ERROR:  OUTSTR   [ASCIZ/I-O ERROR/]
+        EXIT
+ 
+OPNBLK: 14
+        SIXBIT/DSK/
+        XWD     0,IBUF
+ 
+IBUF:   0
+IBPTR:  0
+IBCT:   0
+ 
+FILNAM: 5
+        XWD     1,320663    
+        SIXBIT/ABC/
+        SIXBIT/NUM/
+        0
+ 
+        END     START
