@@ -1,0 +1,323 @@
+
+TITLE OFFLOG - OFFICE REQUEST LOG BOOK BUILDER
+
+CH=15
+PTR=16
+P=17
+
+DCH==1
+
+COMMAS==100
+
+START:  RESET
+        MOVE    P,[IOWD 100,STACK]
+        OUTSTR  [ASCIZ/
+Office request logbook builder
+/]
+CENTR:  OUTSTR  [ASCIZ/
+Center id? /]
+        SETZM   BUILD
+        MOVE    PTR,[POINT 7,BUILD]
+        PUSHJ   P,GETSTR
+        MOVE    PTR,[POINT 7,BUILD]
+        PUSHJ   P,LENGTH
+        CAIE    1,1
+        JRST    CENTR
+MON:    OUTSTR  [ASCIZ/
+Enter the month, year (spell it out please): /]
+        MOVE    PTR,[POINT 7,MO]
+        MOVEI   CH,"F"
+        IDPB    CH,PTR
+        MOVEI   CH,"O"
+        IDPB    CH,PTR
+        MOVEI   CH,"R"
+        IDPB    CH,PTR
+        MOVEI   CH," "
+        IDPB    CH,PTR
+        PUSHJ   P,GETSTR
+SLOG:   OUTSTR  [ASCIZ/
+Starting log number? /]
+        PUSHJ   P,INNUM
+        JRST    SLOG
+        MOVEM   1,J
+ELOG:   OUTSTR  [ASCIZ/
+Ending log number? /]
+        PUSHJ   P,INNUM
+        JRST    ELOG
+        MOVEM   1,E
+        MOVE    1,J
+        CAIN    1,1
+        JRST    BLD
+PAGNUM: OUTSTR  [ASCIZ/
+Starting page number? /]
+        PUSHJ   P,INNUM
+        JRST    PAGNUM
+        MOVEM   1,PAG
+        SKIPA
+BLD:    PUSHJ   P,[MOVEI 1,1
+                MOVEM 1,PAG
+                POPJ P,]
+        MOVE    PTR,[POINT 7,C]
+        MOVEI   CH," "
+        IDPB    CH,PTR
+        MOVE    CH,BUILD
+        LSH     CH,^D-29
+        MOVEM   CH,BUILD
+        IDPB    CH,PTR
+        MOVEI   CH," "
+        IDPB    CH,PTR
+        IDPB    CH,PTR
+        MOVEI   CH,0
+        IDPB    CH,PTR
+        MOVE    PTR,[POINT 7,MO]
+        PUSHJ   P,LENGTH
+        IDIVI   1,2
+        CAIN    2,0
+        JRST    FILL
+        MOVE    PTR,[POINT 7,MO]
+        ILDB    CH,PTR
+        CAIE    CH,0
+        JRST    .-2
+        MOVEI   CH," "
+        DPB     CH,PTR
+        MOVEI   CH,0
+        IDPB    CH,PTR
+FILL:   MOVE    PTR,[POINT 7,MO]
+        PUSHJ   P,LENGTH
+        CAILE   1,^D18
+        JRST    OPENIT
+        MOVE    14,[XWD MO,M]
+        BLT     14,M+^D9
+        SETZM   MO
+        MOVE    14,[POINT 7,MO]
+        MOVEI   CH," "
+        IDPB    CH,14
+        MOVE    PTR,[POINT 7,M]
+NEX:    ILDB    CH,PTR
+        CAIE    CH,0
+        JRST    [IDPB   CH,14
+                JRST    NEX]
+        MOVEI   CH," "
+        IDPB    CH,14
+        MOVEI   CH,0
+        IDPB    CH,14
+        JRST FILL
+OPENIT: INIT    DCH,0
+        SIXBIT  /DSK/
+        XWD     OBUF,0
+        JRST    [OUTSTR [ASCIZ/
+Error in opening output file -
+/]
+                exit]
+        ENTER   DCH,OFFLOG
+        JRST    [OUTSTR [ASCIZ/
+Unable to enter output file -
+/]
+                HALT]
+        OUTBUF  DCH,5
+        MOVEI   CH,15
+        PUSHJ   P,PUTCHR
+        MOVEI   CH,12
+        PUSHJ   P,PUTCHR
+        MOVE    7,PAG
+        MOVE    6,J
+        MOVE    5,E
+LOOP:   MOVE    PTR,[POINT 7,LINE1]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,MO]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LINE1A]
+        PUSHJ   P,WRITE
+        MOVE    1,7
+        PUSHJ   P,BLNKNO
+        MOVEI   CH,15
+        PUSHJ   P,PUTCHR
+        MOVEI   CH,12
+        PUSHJ   P,PUTCHR
+        PUSHJ   P,PUTCHR
+        MOVE    PTR,[POINT 7,LEQU]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LINE2]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LINE3]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LEQU]
+        PUSHJ   P,WRITE
+        MOVEI   4,^D15
+KAY:    CAMLE   6,5
+        JRST    NXT
+        MOVE    PTR,[POINT 7,LSTRT]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,C]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LCOL]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LSTRT]
+        PUSHJ   P,WRITE
+        MOVE    1,6
+        PUSHJ   P,BLNKNO
+        MOVE    PTR,[POINT 7,LCOL]
+        PUSHJ   P,WRITE
+        MOVE    PTR,[POINT 7,LEQU]
+        PUSHJ   P,WRITE
+        AOS     6
+        SOJG    4,KAY
+NXT:    MOVE    PTR,[POINT 7,LINE4]
+        PUSHJ   P,WRITE
+        MOVEI   CH,14
+        PUSHJ   P,PUTCHR
+        AOS     7
+        CAMG    6,5
+        JRST    LOOP
+        OUTSTR  [ASCIZ/
+Use the command:
+.PRINT OFFLOG
+to obtain the office log listing
+/]
+        OUTPUT  DCH,
+        CLOSE   DCH,
+        RELEASE DCH,
+        EXIT    1,
+        JRST    .-1
+WRITE:  ILDB    CH,PTR
+        CAIN    CH,0
+        POPJ    P,
+        PUSHJ   P,PUTCHR
+        JRST    WRITE
+
+PUTCHR: SOSG    OBUF+2
+        OUTPUT  DCH,
+        IDPB    CH,OBUF+1
+        POPJ    P,
+
+GETSTR: INCHWL  CH
+        CAIN    CH,15
+        JRST    [INCHWL CH
+                MOVEI   CH,0
+                IDPB    CH,PTR
+                POPJ    P,]
+        CAIN    CH,12
+        JRST    [OUTCHR [15]
+                MOVEI   CH,0
+                IDPB    CH,PTR
+                POPJ    P,]
+        IDPB    CH,PTR
+        JRST    GETSTR
+
+PUTNUM: PUSH    P,2
+        PUSHJ   P,DIGGIT
+        POP     P,2
+        POPJ    P,
+
+DIGGIT: IDIVI   1,^D10
+        HRLM    2,(P)
+        CAIE    1,0
+        PUSHJ   P,DIGGIT
+        HLRZ    CH,(P)
+        ADDI    CH,"0"
+        PUSHJ   P,PUTCHR
+        POPJ    P,
+
+INNUM:  HRROI  1,1               ;SET -1 FLAG
+INNUM2: INCHRW CH                  ;INPUT A CHARACTER
+        CAIN   CH,12               ;TEST FOR L/F
+        OUTCHR [15]                ;IF SO ECHO C/R
+        CAIE   CH,12               ;TEST FOR L/F
+        CAIN   CH," "              ;OR NOT BLANK
+        JRST   [CAIL 1,0         ;TOSS LEADING BLANK OR L/F
+                POPJ    P,
+                JRST INNUM2]
+        CAIL   CH,"0"              ;TEST FOR DIGIT 0-9
+        CAILE  CH,"9"              ;
+        JRST   INNUM3              ;JUMP IF NOT A DIGIT
+        CAIGE  1,0                ;GOT DIGIT. CLEAR FLAG IF
+        SETZM  1                  ;NOTHING INPUT BEFORE
+        SUBI   CH,"0"              ;MAKE DIGIT BINARY
+        IMULI  1,^D10             ;MULTIPLY ACCUM BY 10
+        ADD    1,CH               ;THEN ADD THE NUMBER TO AC
+        JRST   INNUM2              ;GET ANOTHER CHAR.
+INNUM3: CAIN   CH,15               ;WAS CHAR C/R
+        JRST    [INCHRW 2                  ;GET THE L/F
+        CAIL   1,0                ;CHECK IF NUMBER WAS INPUT
+        AOS    0(P)                ;IF SO RETURN WITH A SKIP
+        JRST    INNUM3+2]
+        POPJ   P,                   ;RETURN
+
+;OUTPUT A NUMBER
+
+OUTNUM: MOVEI   5,COMMAS  ;SUBROUTINE OUTNUM
+        MOVEI   4,","
+
+DECMAL: IDIVI  1,^D10             ;MAKE BINARY DECIMAL
+        PUSH   P,2                ;PUSH REMAINDER ONTO STACK
+        CAIE   1,0                ;IS QUOTIENT = 0
+        JRST    [SOSG   5         ;IF NOT CALL DECMAL
+                PUSH    P,4
+                CAIG    5,0
+                MOVEI   5,COMMAS
+                PUSHJ   P,DECMAL
+                JRST    PUTCH]
+PUTCH:  POP    P,CH                ;GET LEFTMOST DIGIT
+        CAIN    CH,","          ;DO WE HAVE A COMMA?
+        JRST    [OUTCHR CH      ;PRINT COMMA
+                POP P,CH        ;GET NUMBER
+                JRST PUTCH+3]  ;RETURN
+        ADDI   CH,"0"              ;MAKE CHAR ASCII
+        OUTCHR CH                  ;OUTPUT TO TTY
+        POPJ   P,                   ;RETURN
+BLNKNO: CAIL    1,^D1000
+        JRST    PUTNUM
+        MOVEI   CH," "
+        PUSHJ   P,PUTCHR
+        CAIL    1,^D100
+        JRST    PUTNUM
+        PUSHJ   P,PUTCHR
+        CAIL    1,^D10
+        JRST    PUTNUM
+        PUSHJ   P,PUTCHR
+        JRST    PUTNUM
+
+LENGTH: SETZM   1
+        ILDB    CH,PTR
+        CAIN    CH,0
+        POPJ    P,
+        AOS     1
+        JRST    LENGTH+1
+
+LINE1:  ASCIZ/R (FREMONTDOC:74)OFFLOG
+                                                        OFFICE REQUEST LOG
+                                                       /
+LINE1A: ASCIZ/                                            PAGE NO: /
+LINE2:  ASCIZ/:  SEQ : SYS :  REQ.  :   TIME   :   TIME   : JOB : BAT * RES :MAIL : COMPLETION : Q.A.:CNTRL:               COMMENT               :
+/
+LINE3:  ASCIZ":  NO. : NO. :  NO.   : ENTERED  : RECEIVED :TYPE : IN  *OPER :SENT : DATE-TIME  : BY  : OUT :(VOID, CENTER, W/MAIL, PUNCH ECT.)   :
+"
+
+LSTRT:  ASCIZ/: /
+
+LINE4:  ASCIZ/
+
+     * = Out of sequence
+/
+STACK:  BLOCK 100
+OFFLOG: SIXBIT  /OFFLOG/
+        0
+        0
+        0
+
+BUILD:  0
+C:      0
+E:      0
+J:      0
+M:      BLOCK   12
+MO:     BLOCK   12
+PAG:    0
+LCOL:   ASCIZ/ :     :        :          :          :     :     *     :     :            :     :     :                                     :
+/
+LEQU:   ASCIZ/:==================================================================================================================================:
+/
+
+OBUF:   BLOCK   3
+        END    START
+
+   
