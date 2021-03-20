@@ -1,0 +1,33 @@
+         %  SAME.AS.CHK  %
+
+         LET ERROR. = 'N'
+         INPUT BATCH SAME.AS.FLD.NO OF SCREEN.UPD,SAME.AS.SCREEN.NAME OF
+         SCREEN.UPD SENDING @27+'#'+@27+'='+@34+@106+@27+'4'+@27+'"'
+         IF VALUE.CONSTRAINTS.FAILURE FLAG.OF SAME.AS.FLD.NO OF SCREEN.UPD THEN
+         BEGIN
+           TYPE TO TERMINAL ERROR.LINE,'FIELD NUMBER MUST BE NUMERIC',@CR,HOME
+           LET ERROR. = 'Y'
+         END
+         ELSE
+         IF SAME.AS.FLD.NO GT 0 AND SAME.AS.SCREEN.NAME NE DEFAULT THEN
+         BEGIN
+           SELECT SCREENS VIA SCREEN.NAME = SAME.AS.SCREEN.NAME THEN
+           SELECT SCREEN.FLDS VIA (SCREEN.NAME,FLD.NO=SAME.AS.FLD.NO) THEN
+           BEGIN
+             INCLUDE TEXT "DISP.ATTR"
+             LET ERROR. = 'Z'
+           END
+           ELSE
+           BEGIN
+             LET ERROR. = 'Y'
+             TYPE TO TERMINAL ERROR.LINE,
+             'FIELD ',SAME.AS.FLD.NO,' DOES NOT EXIST',@CR,HOME
+           END
+           ELSE
+           BEGIN
+             LET ERROR. = 'Y'
+             TYPE TO TERMINAL ERROR.LINE,
+             'SCREEN ',TRIM(SAME.AS.SCREEN.NAME),' DOES NOT EXIST',@CR
+             SET.CURSOR SAME.AS.SCREEN.NAME OF SCREEN.UPD
+           END
+         END
