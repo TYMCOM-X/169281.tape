@@ -1,0 +1,418 @@
+begin	"ONTVAL"
+
+require "(SAILIB)SAIL.DEF" source!file;
+require "(WRS)MAILIB.REQ" source!file;
+require "(WRS)AUXLIB.REQ" source!file;
+require "(WRS)ONTLIB.REQ" source!file;
+require '6 version;
+
+string	Sup.ID, Sup.KEY;	! signon account;
+integer SysNo;			! system number;
+label 	ABEND;			! where to go to die;
+integer B;			! break character variable;
+boolean	Trace;			! command trace flag;
+define	TimeOut = 600;		! 10 minutes of silence is fatal;
+internal integer logChan;
+
+comment
+	Utility routines
+;
+integer
+    TokenBreak,
+    LineBreak,
+    WhiteSpan,
+    DotBreak;
+simple procedure BreakIni;
+begin
+    setbreak( TokenBreak:=getbreak, " "&#ht, " "&#ht, "TIS" );
+    setbreak( LineBreak:=getbreak, #lf&#ff, #cr, "ISN" );
+    setbreak( WhiteSpan:=getbreak, " "&#ht, null, "XR" );
+    setbreak( DotBreak:=getbreak, ".", " "&#ht, "IS" );
+end;
+require BreakIni initialization;
+
+simple boolean procedure Match( string S1,S2 );
+return( length(S1) > 0 and kequ( S1, S2[1 to length(S1)] ) );
+
+simple string procedure tlop( reference string S );
+return( scan( S, TokenBreak, B ));
+
+procedure svcNULL( reference string S; reference integer I );
+begin end;
+
+simple string procedure cvAC( string ID );
+begin
+    return( scan( ID, DotBreak, B ));
+end;
+
+simple string procedure cvID( string ID );
+begin
+    scan( ID, DotBreak, B );
+    return( ID );
+end;
+
+comment
+	Get command from terminal or command file
+;
+
+string	CmdFile;
+boolean	CmdEOF;
+
+string procedure GetCommand;
+begin
+    string S;
+    do begin
+	CmdEOF := 0;
+	if length(CmdFile)
+	    then S := input( CmdFile, LineBreak )
+	    else begin
+		outstr( "= " );
+		S := inchwl;
+	    end;
+	scan( S, WhiteSpan, B );
+	if CmdEOF then release( lop( CmdFILE ));
+    end until length(S);
+    if not length(CmdFile) then setprint( null, "F" );
+    print( "= ", S, crlf );
+    setprint( null, "B" );
+    return( S );
+end;
+
+procedure cmdExec( string ARGS );
+begin
+    open( CmdFile := CmdFile& getchan, "DSK", 1,1,0,256,B,CmdEOF_-1 );
+    lookup( CmdFile, ARGS, CmdEOF );
+    if CmdEOF then begin
+	print( "?EXEC: lookup failure: ", ARGS, crlf );
+	release( lop( CmdFile ));
+    end;
+end;
+
+comment
+	line input routine
+;
+
+string procedure LineIn;
+begin
+    string TXT;
+    while true do case AuxRead( TXT, TimeOut ) of begin
+	[aux!Zap] begin
+	    print( "?LineIn: lost circuit"& crlf );
+	    goto ABEND;
+	end;
+	[aux!Prompt] begin
+	    print( "?LineIn: unexpected prompt: ", TXT, crlf );
+	    goto ABEND;
+	end;
+	[aux!Timeout] begin
+	    print( "?LineIn: timeout"& crlf );
+	    goto ABEND;
+	end;
+	[aux!Line] if length(TXT) > 2 then done
+    end;
+    while TXT[inf to inf]<" " do TXT_TXT[1 to inf-1];
+    return( TXT );
+end;
+
+comment
+	Recover from a error
+;
+
+procedure ReSync;
+begin
+    AuxOut( "ERASE"& #cr );
+    while not equ( LineIn, "ACCEPTED" ) do ;
+end;
+
+comment
+	generic command processor
+;
+
+boolean procedure ACmd(
+    string Command;
+    boolean ISOKAY(0) );
+begin	"ACmd"
+    if Trace then print( ":", Command, crlf );
+    return( otACmd( Command, ISOKAY ));
+end	"ACmd";
+
+procedure LCmd(
+    string Command;
+    string Heading;
+    string Footing;
+    procedure Proc );
+begin	"LCmd"
+    string TXT;
+    integer N,STATE;
+    if Trace then print( ":", Command, crlf );
+    N := 0; STATE := if length(Heading) then 0 else 1;
+    AuxOut( Command );
+    AuxOut( #cr );
+    while true do case AuxRead( TXT, TimeOut ) of begin
+	[aux!Zap] begin
+	    print( "?lost circuit processing command: ", Command, crlf );
+	    goto ABEND;
+	end;
+	[aux!Timeout] begin
+	    print( "?timeout processing command: ", Command, crlf );
+	    goto ABEND;
+	end;
+	[aux!Prompt] done;
+	[aux!Line] begin
+	    if Match(FOOTING,TXT) then STATE := 2;
+	    case STATE of begin
+		[0] if Match(HEADING,TXT) then STATE := 1;
+		[1] if length(TXT) > 2 then PROC( TXT, N_N+1 );
+		[2]
+	    end;
+	end
+    end;
+end	"LCmd";
+
+define
+    OFF = {null};
+
+boolean procedure Imi( string ID; boolean ISOKAY(0) );
+begin
+    own string IID;
+    boolean FLAG;
+    if equ( ID, IID ) then return(true);
+    if length(IID) then ACmd( "imi off", OKAY );
+    FLAG := if length(ID) then ACmd( "imi "& ID, ISOKAY ) else true;
+    IID := if FLAG then ID else null;
+    return( FLAG );
+end;
+
+procedure cmdDisplayAccount( string ARGS );
+begin
+    string ACCT;
+
+    procedure prdat( reference string TXT; reference integer LINE );
+    begin
+	if not auxTrace then print( TXT );
+    end;
+
+    if length(ARGS)=0 then ARGS := "#";
+    while length(ARGS) do begin
+	if length(ACCT := tlop( ARGS )) = 0 then continue;
+	LCmd( "di all account "& ACCT, "ACCOUNT", "DISPLAY A", prdat );
+    end;
+end;
+
+procedure cmdDisplay( string ARGS );
+begin
+    string TOK2;
+    TOK2 := tlop( ARGS );
+    if Match( TOK2, "ACCOUNTS" ) then cmdDisplayAccount( ARGS )
+    else print( "?DISPLAY: unexpected argument: ", TOK2, crlf );
+end;
+
+boolean Remove!Update;
+
+procedure cmdRemoveName( string ARGS );
+begin
+    string  ID, TOKS;
+
+    procedure Tok1M( reference string TXT; reference integer LINE );
+    begin
+	string S;
+	S := tlop(TXT);
+	while S="*" do lop(S);
+	if not equ(S,TOKS[2 for length(S)])
+	    then TOKS := " "& S& TOKS;
+    end;
+    procedure Tok1( reference string TXT; reference integer LINE );
+    begin
+	string S;
+	S := tlop(TXT);
+	if not equ(S,TOKS[2 for length(S)])
+	    then TOKS := " "& S& TOKS;
+    end;
+    procedure Cancel( string MSG#, OLDNESS(null) );
+	LCmd( "cancel "& OLDNESS& MSG#, null, null, svcNULL );
+    procedure Clear( string FILE );
+	LCmd( "clear * "& FILE, null, null, svcNULL );
+
+    if length(ARGS) = 0 then begin
+	print( "?REMOVE NAME: name expected"& crlf );
+	return;
+    end;
+    while length(ARGS) do begin
+	if length(ID := tlop( ARGS )) = 0 then continue;
+	TOKS := null;
+	if Remove!Update then begin
+	    imi( cvAC(ID)& ".SUP" );
+	    if not kequ(ID[inf-3 to inf],".SUP") then begin
+		if ACmd( "update user r "& cvID( ID ), OKAY )
+		    then print( ID, " removed"& crlf )
+		    else print( ID, " not removed due to error(s)"& crlf );
+	    end;
+	end else begin
+	    if  imi( ID, OKAY ) then begin
+		LCmd( "read all", null, null, svcNULL );
+		LCmd( "out", " MSG#", null, Tok1M );
+		while length(TOKS) do Cancel( tlop(TOKS) );
+		LCmd( "out old", " MSG#", null, Tok1M );
+		while length(TOKS) do Cancel( tlop(TOKS), "old " );
+		LCmd( "clear * all", null, null, svcNULL );
+		LCmd( "list *", "NAME", null, Tok1 );
+		while length(TOKS) do Clear( tlop( TOKS ));
+		print( ID, " files/msgs removed"& crlf );
+	    end;
+	end;
+    end;
+end;
+
+procedure cmdRemoveAccount( string ARGS );
+begin
+    string ACCT, TOKS;
+    procedure Tok1( reference string TXT; reference integer LINE );
+	TOKS := TOKS& " "& tlop(TXT);
+    procedure Clear( string FILE );
+    if not kequ( FILE, "ACCTUSERS" ) then
+	ACmd( "clear ** "& FILE, OKAY );
+    procedure Tok1A( reference string TXT; reference integer LINE );
+	TOKS := TOKS& " "& ACCT& "."& tlop(TXT);
+    if length(ARGS) = 0 then begin
+	print( "?REMOVE ACCOUNT: account name expected"& crlf );
+	return;
+    end;
+    while length(ARGS) do begin
+	if length(ACCT := tlop( ARGS )) = 0 then continue;
+	if kequ( ACCT, "SUP" ) then begin
+	    print( "?cannot delete account SUP this way!!!"& crlf );
+	    continue;
+	end;
+	TOKS := null;
+	if  imi( ACCT& ".SUP" ) then begin
+	    LCmd( "read ** ACCTUSERS", null, "FILE(S) MISSING", Tok1A );
+	    if length(TOKS)=0		
+		then print( "? **ACCTUSERS missing or empty for account ",
+		    ACCT, crlf )
+		else while length(TOKS)
+		    do cmdRemoveName( tlop( TOKS ));
+	    if Remove!Update then begin
+		imi( OFF );
+		if ACmd( "update account r "& ACCT, OKAY )
+		    then print( ACCT, " removed"& crlf )
+		    else print( ACCT, " not removed due to error(s)"& crlf );
+	    end else begin
+		if  imi( ACCT& ".SUP" ) then begin
+		    LCmd( "clear ** all", null, null, svcNULL );
+		    LCmd( "list **", "NAME", null, Tok1 );
+		    while length(TOKS) do Clear( tlop( TOKS ));
+		    print( ACCT, " files/msgs removed"& crlf );
+		end;
+	    end;
+	end;
+    end;
+end;
+
+procedure cmdRemove( string ARGS );
+begin
+    string TOK2;
+    TOK2 := tlop( ARGS );
+    if Remove!Update := Match( TOK2, "UPDATE" )
+	then TOK2 := tlop( ARGS );
+    if Match( TOK2, "NAMES" )
+    or Match( TOK2, "USERS" ) then cmdRemoveName( ARGS )
+    else if Match( TOK2, "ACCOUNTS" ) then cmdRemoveAccount( ARGS )
+    else print( "?REMOVE: unexpected argument: ", TOK2, crlf );
+    imi( OFF );
+end;
+
+procedure cmdTrace( string ARGS );
+begin
+    if Match( ARGS, "OUTPUT" ) or Match( ARGS, "ALL" ) then begin
+	AuxTrace := AuxEcho := true;
+	Trace := false;
+    end
+    else if Match( ARGS, "COMMANDS" ) or Match( ARGS, "CMDS" ) then begin
+	AuxTrace := AuxEcho := false;
+	Trace := true;
+    end
+    else if Match( ARGS, "OFF" ) then
+	AuxTrace := AuxEcho := Trace := false
+    else print( "?TRACE: ALL|CMD|OFF expected: ", ARGS, crlf );
+end;
+
+procedure cmdHelp( string ARGS );
+print( "Commands are:
+ DISPLAY ACCOUNT names		display account info (default is all accounts)
+ REMOVE USER names		remove files and messages for user(s)
+ REMOVE ACCOUNT	names		remove files and messages for account(s)
+ REMOVE UPDATE USER names	do update remove for user(s)
+ REMOVE UPDATE ACCOUNT names	do update remove for account(s)
+ EXEC filename			take ONTVAL commands from file
+ TRACE ALL|CMD|OFF		trace commands, output or off
+ HELP				print this message
+ QUIT				finish program
+A log of the session is placed in ONTVAL.LOG.
+");
+
+procedure cmdQuit( string ARGS );
+goto ABEND;
+
+begin	"MAIN"
+    procedure svcTYPE( reference string TXT; reference integer LINE );
+	print( TXT );
+    logChan := -1;
+    ttyup(true);
+    print( "OntVal version ",cvos(memory['137]),crlf );
+    print( "HOST? " );
+    begin	comment This check allows AC license to be set on program. ;
+    	string host;
+	host := inchwl;
+	if cvd(host)
+		then host := cv6str(calli(-'22,'41))& cv6str(calli(-'21,'41))&
+			":"& cvs(cvd(host))
+	else if not kequ(host[1 to 3], "EMS")
+		then begin
+			print("Respond with host number (e.g. 7153)"&
+				" or name (e.g. emsnsc)"& crlf);
+			goto ABEND;
+		end;
+	print("Building circuit to ", host," ..."& crlf);
+	if not otConnect(host) then goto ABEND;
+    end;
+    print( "ID? " );
+    Sup.ID := inchwl;
+    auxcli(-1,'300,'64);
+    print( "KEY? " );
+    Sup.KEY := inchwl;
+    print( crlf );
+    auxcli(-1,0,'64);
+    if not otSignon( Sup.ID, Sup.KEY ) then goto ABEND;
+    setprint( "ONTVAL.LOG", "B" );
+    LCmd( "di host", null, null, svcTYPE );
+    ACmd( "erase" );
+    ACmd( "set break "&#eot );
+    auxOut( "trans"&#cr&"set cd "&0&crlf&"set wd "&0&crlf&"set ld "&0&crlf );
+    auxWait( 3 );
+    ACmd( #eot, OKAY );
+    ACmd( "file * ontval.setup", OKAY );
+    ACmd( "exec * ontval.setup", OKAY );
+    ACmd( "clear * ontval.setup", OKAY );
+    while true do begin "CMDLOOP"
+	string CMDLINE,TOK1,ARGS;
+	define !!c(x) = {
+	    if Match(TOK1,"x") then begin
+		cmd}&{x(ARGS);
+		continue;
+	    end };
+	TOK1 := tlop( ARGS := CMDLINE := GetCommand );
+	if CMDLINE = "?" then TOK1 := "HELP";
+	!!c(DISPLAY);
+	!!c(REMOVE);
+	!!c(EXEC);
+	!!c(TRACE);
+	!!c(HELP);
+	!!c(QUIT);
+	print( "?unrecognized command: ", TOK1, crlf );	
+    end "CMDLOOP";
+    otLogout;
+end	"MAIN";
+ABEND:	AuxZap;
+end	"ONTVAL"
+$
+ 
