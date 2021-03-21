@@ -1,0 +1,41 @@
+begin	"ccmi"
+require "(SAILIB)SAIL.DEF" source!file;
+
+integer	cnt;
+string	buf;
+string	name;
+integer	chan;
+integer	brk;
+integer	eof;
+integer	brktab;
+
+open(chan := getchan, "DSK", 0, 4, 0, 1000, brk, eof := -1);
+lookup(chan, name := "(NETDATA)MRCF.JUN", eof);
+if eof then begin
+	print(name, ": file not found"& crlf);
+	call(0,"EXIT");
+end;
+setbreak(brktab := getbreak, #lf, #cr, "SINK");
+cnt := 0;
+setformat(-6, 0);
+while not eof do begin
+	buf := input(chan, brktab);
+	if length(buf) = 0 then
+		continue;
+	if buf[1 for 1] = "1"
+	and buf[21 for 1] = "1" then begin	! rate area 1;
+		cnt := cnt + 1;
+		print(
+			cnt,
+			buf[2 for 3],		! NPA;
+			buf[5 for 3],		! NXX;
+			buf[22 for 10],		! CITY;
+			buf[32 for 2],		! STATE;
+			buf[34 for 4],		! LATA;
+			buf[208 for 5],		! WIRE.CENTER.V;
+			buf[216 for 5],		! WIRE.CENTER.H;
+			crlf);
+	end;
+end;
+close(chan);
+end $
