@@ -1,0 +1,151 @@
+begin "DED - Top Level Logic"
+  require "DED.DEF" source!file;
+!! title PEAK Main Module ;
+
+! *************************************************************************
+*                                                                         *
+*                         DED - A Display EDitor.                         *
+*                 Dave W. Smith,  September-October, '81                  *
+*                 Ken Dawson:  Version 1.0  (6..82 - ??)                  *
+*                                                                         *
+**************************************************************************;
+
+
+! Herein contained is the top level logic of PEAK.  We analyse the
+! command line, call the initialization routines for each module and
+! invoke the command loop.
+;
+
+!                  The necessary external declarations.
+;
+
+  external integer
+    B!DedVer;                           ! Editor version word.
+                                        ;
+  external simple procedure
+    A!Fini;                             ! Close up shop in the aux circuit
+                                        ! module.
+                                        ;
+  external procedure
+    C!Loop;                             ! Execute the main command loop.
+                                        ;
+  external procedure
+    F!RPG;                              ! Interface to RPG.
+                                        ;
+  external procedure
+    T!Fini;                             ! Reset the terminal.
+                                        ;
+  external procedure
+    F!Init;                             ! Initialize the file I/O module.
+                                        ;
+  external procedure
+    C!Init;                             ! Initialize the Command module.
+                                        ;
+  external boolean
+    T!IntP;                             ! Indicate that the Terminal has
+                                        ! been initialized.
+                                        ;
+  external procedure
+    T!Init;                             ! Initialize the Terminal
+                                        ! abstraction.
+                                        ;
+  external boolean
+    W!IntP;                             ! Indicate that the Window Module
+                                        ! has been initialized.
+                                        ;
+  external procedure
+    W!Init;                             ! Initialize the Window
+                                        ! abstraction.
+                                        ;
+  external procedure
+    R!Init;                             ! Initialize the Redisplay
+                                        ! module.
+                                        ;
+  external procedure
+    C!Ini;                              ! Execute the Peak.Ini file, if
+                                        ! there is one.
+                                        ;
+
+
+! ************************************************************************;
+!! title Rtn InitializeEverything ;
+! Perform all module initializations for the manifold components of Peak.
+! Also initialize global variables which don't necessarily belong to any
+! particular module.
+;
+
+simple procedure InitializeEverything;
+begin "InitializeEverything"
+  B!DedVer _ DED!Version!Word;
+
+    ! Identify this version of Peak.
+    ;
+
+  C!Init;
+  T!Init;
+  W!Init;
+  R!Init;
+  F!Init;
+  C!Ini;
+
+    ! Initialize the world.
+    ;
+end "InitializeEverything";
+!! title Rtn Mainline Code ;
+! Note that by the time we get here, the following routines have been
+! initialized via the Sail "require ... initialization" mechanism:
+!
+!     InitSymCmdAddr                    in the Command Module
+!     InitVarLocs                       in the Command Module
+!     B!Init                            in the Buffer  Module
+;
+
+  clear(W!IntP);
+  clear(T!IntP);
+
+    ! Indicate that the Window and Redisplay Modules have not been
+    ! initialized.
+    ;
+
+  F!Rpg;
+
+    ! Pickup up and parse the command line or text from RPG.
+    ;
+
+
+  print
+  (
+    DED!Alias, " Version ",
+    DED!Major!Version, ".",
+    DED!Minor!Version,
+    " (", DED!Edit!Version, ") ",
+    DED!Version!String, "..."
+  );
+
+    ! Tell the world who we are.
+    ;
+
+
+  InitializeEverything;
+
+    ! Initialize the World.
+    ;
+
+
+  C!Loop;
+
+    ! Edit away happily...
+    ;
+
+  A!Fini;
+  T!Fini;
+
+  while (true) do
+    exit;
+
+    ! End of execution.  Reset the terminal and exit.
+    ;
+end "DED - Top Level Logic";
+
+
+! ****************************  End Ded.Sai  *****************************;
