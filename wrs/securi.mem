@@ -1,0 +1,134 @@
+< WRS, SECURITY.NLS;1, >, 23-Jun-80 20:56 WRS ;;;;
+Introduction
+   This memo describes and offers some solutions to the problem of network 
+   security within Tymnet as it specifically applies to the building of 
+   auxiliary circuits from one host to another.  [note: this is the first 
+   document I have prepared in Augment, if it seems flashy, I'm only trying out
+   all the wonderful features]
+The Problem
+   Unattended Processes
+      Licensed Utility Programs
+         The licensed utility program is one which must communicate with a 
+         slave somewhere on another system in order to perform some service for
+         the user.  The user himself is not licensed to perform this task 
+         except in his ability to run this program.  It is assumed that the 
+         program checks the validity of the request being made by the user in 
+         whatever context is appropriate.
+         An example of this is the PASSWORD program which is used to build a 
+         circuit to the CUD system and put in a request for the password 
+         change.  This program checks to make sure that the person requesting 
+         the change has the proper authority.  In this case, one wants to allow
+         a circuit to be built from the PASSWORD program to NCUD1:1 regardless 
+         of who is running the program.  It would clearly not suffice to allow 
+         any user to build this circuit in that this would circumvent the 
+         validation performed by the PASSWORD program.
+      Unlicensed Application Programs
+         The unlicensed application program is one which performs a service for
+         the user within the limits of the users ability.  Such a service may 
+         involve building circuits to a username other than the one the user is
+         logged in to.  No validation is performed by the program, rather it is
+         assumed that the user running the program has the necessary access.
+         An example of this is the TELECOPY program.  The program is intended 
+         to allow the user to transfer files between any two places to which he
+         has access.  Currently, unless the circuit is built through a gateway,
+         the user is restricted to transfering the files between only points 
+         which he can access with the same user name.  Indeed this poses a 
+         difficult problem if he wishes to transfer a file between two systems 
+         for which he does not have a common user name.
+   Untrusted Hosts
+      The problem with untrusted hosts arises from the current solution to 
+      these other problems: auxiliary circuits license.  If the host building 
+      the circuit is owned by a customer rather than by Tymshare, or is 
+      maintained on a customer site, then we may no longer trust its operating 
+      system to verify that only legitimate circuits are being requested.  
+      There are currently two solutions to this in effect:
+         Passwords are required from the host.  This is usually chosen for 
+         private networks accessing Tymnet through a gateway.
+         The base prefixes all usernames with a particular string in order to 
+         limit the user names to which the circuit may be built.  This is 
+         rather popular among those hosts which have the ability to build 
+         circuits and are on the public net.  It is quite unacceptable because 
+         it makes way for user names to be validated which coincidentally begin
+         with the prefix string for some host.  It is also unacceptable because
+         it ignores the fact that the base is typically also on the customer 
+         site and should be no more trusted than the host itself.
+   Untrusted Nodes
+      Base Nodes
+         A more difficult problem than that of untrusted hosts is that of 
+         untrusted base nodes.  Having a base on a customer site allows them to
+         alter it to circumvent any traps which have been coded in.  We may 
+         therefore not trust any security sensitive information which 
+         supposedly originates from or is verified by these bases.
+      Passthrough Nodes
+         If the node on the customer site is allowed to have passthroughs, the 
+         area that can not be trusted now includes all circuits which originate
+         in or pass through this node.  One can see that this will rapidly 
+         approach the point where no information from the plant can be trusted 
+         at all.
+Proposed Solutions
+   License on Trusted Hosts
+      Home Circuit license (proposed) could be given to a program to give it 
+      the ability to build circuits to any user name which the file's owner 
+      would be able to do so.  A user could write a program which anyone could 
+      run that would be able to build circuits to anywhere the author could 
+      without giving the program or the author aux circuit license.  For 
+      example, the PASSWORD program could be given home circuit license which 
+      would allow it to build circuits to anywhere that user SYS is allowed.  
+      User SYS could then be put on user NCUD1's MUD access list (see below).  
+      [note: this would allow anyone able to "own" programs stored in SYS the 
+      ability to impersonate the PASSWORD program and is probably not the 
+      prefered method in this case; it is used here only as example]
+      Aux Circuit license should remain implemented as it is now in order to 
+      allow programs to build circuits in those cases which other methods of 
+      access control are too restrictive.  [note: this will probably continue 
+      to be the prefered method to implement programs such as PASSWORD]
+   MUD Access List
+      The purpose of this list would be to determine which names are allowed to
+      originate circuits to which names on which hosts.  The list would be 
+      under the control of the intended recipient of the circuit.  In other 
+      words, user SMITH would be able to specify (by running some program) 
+      which users and which hosts are allowed to originate circuits to his user
+      name.
+      The structure of this list would be such as to allow inclusion of entire 
+      GANs or the entire MUD (example OSIRIS).  The host would be responsible 
+      for informing the supervisor of the user name which is requesting the 
+      circuit.  This could be done by including both the from user name and the
+      to user name in the request separated by some special character (example 
+      SMITH>JOHNSON:33; for user SMITH building circuit to user JOHNSON on host
+      33).  In the case of home circuit license, the host would give the file 
+      owner's user name as the requester.  In the case of aux circuit license, 
+      the host would give the actual user's name followed by another special 
+      character to indicate that the circuit is being build with license 
+      (example SMITH!>JOHNSON:33; for user SMITH building circuit to user 
+      JOHNSON with aux circuit license enabled).
+   Passworded Circuits
+      Interactive processes running on both trusted and untrusted hosts are 
+      given the ability by this method to create a circuit to a user name while
+      specifying the password from the terminal.  This will solve the general 
+      case of wanting to transfer a file between two cooperating users.  More 
+      specifically, this will allow a one time transfer to take place without 
+      the overhead and delay involved with updating the MUD access list.  This 
+      is especially valuable to allow a transfer to take place in which case 
+      the receiver of the file is willing to type in his password to a mutually
+      trusted program in order to perform the transfer, but is not willing to 
+      give the sender blanket access to his user name by changing his MUD 
+      access list.
+      Untrusted hosts should not be allowed to build any type of circuit other 
+      than a passworded circuit.  This restriction should be imposed by the 
+      supervisor.  As possible exceptions to this, an untrusted host would be 
+      able to build a circuit to any user name which allowed circuits from all 
+      users (typically these hosts require secondary logins).  Also an 
+      exception might be users which list "any circuit from host xxx" in their 
+      MUD access list.
+   Verification of Circuits from Untrusted Nodes
+      The supervisor must verify that all circuits coming from an untrusted 
+      host are not attempting to impersonate another host.
+      Passthroughs should not be allowed through untrusted nodes to prevent the
+      task of verifying the origin of a circuit from becoming prohibitively 
+      complex.
+Summary
+   In my opinion, implementing the four measures suggested above, will nearly 
+   eliminate the need for users with aux circuit license, and greatly reduce 
+   our vulnerability to circuits from untrusted hosts; as well as greatly 
+   expanding the services available to both customers and internal users.
+    
