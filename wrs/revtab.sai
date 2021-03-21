@@ -1,0 +1,18 @@
+begin "REVTAB" require "(SAILIB)SAIL.DEF" source!file;
+! generate 256 byte table to reverse bit order in byte;
+integer I;
+setprint("REVTAB.MIC","F");
+print("REVTAB:	; REVTAB[i] = bit!reverse(i) for i in [0:255]",crlf);
+for I _ 0 upto 255 do begin
+    integer J,BF,BR;
+    BF _ I; BR _ 0;
+    print(if I mod 16 then "," else crlf&"DB ");
+    for J _ 0 upto 7 do begin
+	BR _ (BR lsh 1) lor (BF land 1);
+	BF _ BF lsh -1;
+    end;
+    print(BR);
+end;
+print(crlf);
+
+end $
