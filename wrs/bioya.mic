@@ -1,0 +1,5866 @@
+listing on nomacro title (C) Copyright 1983 by New System Software
+opcodeload Z80
+
+
+;	(C) Copyright 1984,1983,1982 by New System Software
+;	(C) Copyright 1981 by William R. Soley
+;	241 Arriba Drive #1; Sunnyvale, CA 94086
+;
+;	This software is solely the property of its author,
+;	William R. Soley.  It may not be reproduced or transmitted
+;	in any form (source, object, binary, listing, ROM, etc.) by
+;	any method without permission in writting from the author.
+
+
+;	The following names are registered trade marks:
+;		Touch-Tone	(Bell Telephone)
+
+LISTING SUBTTL 	personality and configuration
+
+VERSION	equ 205
+DEBUG	equ 0			; true to include code for BirdBrain
+define	SIGN <'N6IGF/R'>
+define	SITE <'Montebello Ridge CA'>
+ifn DEBUG <
+printx % DEBUG enabled
+>
+CMDSIZ	equ 12			; longest command (not incl prefix)
+TELSIZ	equ 17			; longest phone number
+BUFSIZ	equ CMDSIZ*5		; leave space for a little type ahead
+ifl (BUFSIZ-TELSIZ) <printx ? BUFSIZ lt TELSIZ>
+LOCTRT	equ ife DEBUG<TRT1> ifn DEBUG<TRT2>
+DTSHUT	equ 0			; give broken dialtone on prefix if shut
+timPPD	equ 2*6 		; allow 2 min w/out PTT on phone patch
+timPDB	equ 2			; allow about 200 mS for phone debounce
+timEST	equ 2			; wait 20 mS for EST after audio applied
+timSTD	equ 2			; wait 20 mS for STD after EST falls
+timDUP	equ 1000		; duplex protect time in mS
+timDTH	equ timDUP+1000		; short dialtone hold time in ms
+timPFH	equ 7500		; prefix hold time in ms
+timTXS	equ 1000		; transmitter setup time
+timFTP	equ 5000		; forward telemetry protect in mS
+timRTP	equ 5000		; reverse telemetry protect in mS
+timAGI	equ 23			; audio generator idle polling period 
+timOID	equ 30			; 5 min limit on OID's
+iniIDI	equ 600 		; ID interval in seconds
+timALR	equ 30			; alarm sounding interval in seconds
+iniWPM	equ 25			; morse code rate (default)
+iniTTP	equ 60			; default 60 mS burst for touch tone
+telTTP	equ 75			; DTMF burst/space mS for phone patch
+iniMCT	equ dtC4m		; morse code tone
+iniMCX	equ dtRMEm+dtOLSm+32	; something like 800 Hz at -6dB
+KagDTT	equ dtR4m+dtC1m 	; dialtone
+KagDTX	equ dtRMEm+dtOLSm+23	; -6dB scale by 23/64
+KagRIP	equ 2000		; ring tone duration
+KagRIT	equ dtR4m+dtC1m 	; ring tone
+KagRIM	equ 25			; ring tone modulation period
+KagALP	equ 2000		; alarm tone duration
+KagALT	equ dtR4m+dtC4m 	; alarm tone
+KagALM	equ 200			; alarm tone modulation period
+KagCPX	equ dtRMEm+27		; ring/alarm extended control bits
+KagFCP	equ 50			; default FN COMP tone period in mS
+KagFCT	equ dtC4m		; function complete
+KagFCX	equ dtOLSm		; 1600 Hz or so at -6dB
+KagDLY	equ 100			; time period for '~' delay
+CRMASK	equ aoSPTXm+aoNPTXm+aoLNTXm+aoLSTXm	; crash messages
+BCMASK	equ aoSPTXm+aoNPTXm	; broadcast announcements
+
+include BIOYA.DEF
+
+LISTING SUBTTL 	memory map
+
+include	BIOYA.COM
+
+LISTING SUBTTL 	constants, macros, etc.
+
+false	equ 0
+true	equ 1
+define	HB (a)	<a/256>
+define	LB (a)	<a&255>
+define	DBIT (s,v)<		;; define bits
+	s	equ v
+	s"m	equ 1 shl v >
+define	print (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) <
+printx a b c d e f g h i j k l m n o>
+
+define	DBOP (op,bx) <		;; word size bit operation on HL
+ifl  (bx-8), <op bx-0,L>
+ifge (bx-8), <op bx-8,H>  >
+
+define	MSG <			;; calls PMSGI to print a message
+    RST 4
+    db >
+define	MRS <			;; calls MORSEI to send morse code
+    RST 3
+    db >
+define	STOPCD < RST 0 >
+define	SCAN (a) <		;; calls SCNSVC
+    RST 5
+    db 'a',0 >
+
+define	SCOPE (x) <		; pulse Bird Brain's BNC
+	PUSH	AF
+	LD	A,x
+	OUT	($A0),A
+	POP	AF >
+
+define	ENDRAM <		;; checks fullness of RAM
+    print [,RAM,\((.-RAMORG)*100/(RAMSIZ*NRAM)),% full:,\(RAMORG+RAMSIZ*NRAM-.),bytes left of,\(RAMSIZ*NRAM),]
+    ifl RAMEND+1-. < print ?RAM exceded by,\(.-RAMEND-1),bytes >
+>
+
+define	ENDROM <		;; fills ROM with FF and checks fullness
+    print [,ROM,\((.-ROMORG)*100/(ROMSIZ*NROM)),% full:,\(ROMORG+ROMSIZ*NROM-.),bytes left of,\(ROMSIZ*NROM),]
+    ifl ROMEND+1-. < print ?ROM exceded by,\(.-ROMEND-1),bytes >
+    ife DEBUG <
+	listing off
+	repeat (ROMEND+1-.) < DB $FF >
+	listing on >
+>
+
+print	[,version,\VERSION,]
+
+LISTING SUBTTL 	RAM allocation
+
+org	RAMORG
+
+; allocate full pages first (things that must be page aligned)
+AGBUF:	ds 256			; audio generator ring buffer
+SOBUF:	ds 256			; serial output ring buffer
+
+; misc global locations
+ifn DEBUG <
+NMIMS:	ds 1			; fake NMI timer state variable
+>
+SOBUFW:	ds 2			; serial output buffer write pointer
+SOBUFR:	ds 2			; serial output buffer read pointer
+TRIY:	ds 2			; ^CCB currently being scanned by TRPOLL
+PPIY:	ds 2			; ^CCD for phone patch routines
+PPPC:	ds 2			; routine to return to after time
+PPWTIM: ds 1			; 10ths of S to wait from ppWAIT
+CMDSP:	ds 2			; saved SP from command (see SEARCH)
+PTTS:	ds 2			; PTT bits computed by POLPTT (S10MS)
+COSS:	ds 2			; COS bits observed by POLCOS (S10MS)
+TTCHNB: ds 2			; channel mask for tone output
+RINGIC: ds 1			; ring indicate counter for POLRNG
+RINGCM: ds 2			; ring channel mask
+RINGTO: ds 1			; phone is "ringing" (dec from X)
+ALRMIC: ds 1			; alarm bits
+ALRMPT:	ds 1			; alarm protect timer
+BBFLAG: ds 1			; a local variable for BACKB
+CMDBUF: ds BUFSIZ+1		; buffer for command being processed
+TELBUF: ds TELSIZ		; last number dialed
+AMZ	equ 6			; 3rd dimension of AM (see amUPD)
+ amXPNT equ 0			; crosspoint bits
+ amLOCK equ 1			; lock bits
+ amMUTE equ 2			; mute bits
+ amTELM equ 3			; telephone mute
+ amMIXM equ 4			; monitor mix/mute
+ amREAL equ 5			; real bits
+AM:	ds abNC*amz*2		; internal audio matrix
+BEGSAF: ; first safe location (not zeroed)
+CRAFLG:	ds 1			; 0 = manual restart by command, else crash
+CRACNT: ds 1			; crash count
+CRACOD: ds 1			; crash code
+CRADAT: ds 2			; crash data
+
+; locations usually referenced indexed by IX
+IXBEG:
+define	IXpg <IX-IXpage+>
+DAYTIM: ds 7			; tic sec min hr day mon yr
+ENDSAF: ; first unsafe location (zeroed)
+CMDPRV:	ds 1			; priv of user executing command
+WCTREG:	ds 1			; white courtesy tel sample shift register
+WCTPRV:	ds 1			; privs for WCT
+WCTOWN:	ds 1			; port who owns WCT
+WCTDPC:	ds 1			; WCT dial pulse counter
+ALRMEM: ds 1			; alarm enable mask
+kaMAIN: ds 1			; main process keep alive
+kaCTC2: ds 1			; ctc level 2 keep alive
+kaCTC3: ds 1			; ctc level 3 keep alive
+UPTIME: ds 4			; time since last reset in sec min hr day
+ppDTIM: ds 1			; phone patch time out
+ppDTDB:	ds 1			; dialtone detect debounce counter
+SYSCTL:	ds 1			; system control status bits
+ dbit	sc09A,0			; 1 if 09A
+ dbit	scC9D,1			; 1 if C9D
+ dbit	scOPEN,2		; 1 if OPEN
+STATE:	ds 1			; misc bits
+ dbit	stSKIP,0		; set on success by some kernel calls
+ dbit	stSUBS,1		; set by SEARCH if a subset was found
+ dbit	stRING,2		; MAIN needs to ring phone
+ dbit	stM10S,3		; MAIN needs to run 10 second code
+ dbit	stWAIT,4		; wait pending
+ dbit	stWCTC,5		; WCT call waiting (ring)
+MCCHNO: ds 1			; last MORSEC channel number
+MATCH:	ds 2			; pointer to string matched by SEARCH
+TRPT:	ds 1			; touchtone receive protect time
+T100MS: ds 1			; timer for 100 mS servie routine
+T10S:	ds 1			; timer for 10 S service routine
+IXpage:
+;;;; tone control block ;;;;
+; morse code stuff
+tcWPM:	ds 1			; morse code rate in words per minute
+tcMCP:	ds 1			; morse code time period for CTC
+tcMCT:	ds 1			; touch tone mask for sending morse code
+tcMCX:	ds 1			; morse code extended control bits
+; touch tone stuff
+tcTTP:	ds 1			; touch tone time period for CTC
+; test tone stuff
+tcTEST: ds 1			; which test is this?
+tcTSTP:	ds 1			; test period (usually 0=256)
+tcTSTT: ds 1			; test tone mask
+tcTSTX: ds 1			; extended bits
+; general stuff
+agCHAN: ds 1			; last SET CHAN, $FF if RESET
+agCHAR: ds 1			; ascii character being sent
+agRBUF: ds 2			; read buffer pointer
+agWBUF: ds 2			; write buffer pointer
+  ttCMDn vset 0			; number of tt commands
+  define TTC (cmd,siz) <	; define tt command
+    ttCMDn vset ttCMDn+1
+    cmd equ ttCMDn
+    ifnb siz < ttCMDn vset ttCMDn+siz-1 >
+  >
+  ttc(ttSETC,abNC)		; set channel command
+  ttc(ttSETM)			; set channel mask from next 2 bytes
+  ttc(ttTEST)			; test tone command
+  ttc(ttRESET)			; reset command
+  ttc(ttWORD)			; speak word # in next byte
+IXEND:
+
+ifg (IXpage-IXbeg-127) <printx IXBEG out of range of short addressing>
+ifg (IXend-IXpage-127) <printx IXEND out of range of short addressing>
+
+; debug variables
+MPSTAT:	ds 1			; debug status byte
+ dbit	mpsESC,0		; escape seen
+ dbit	mpsVAL,1		; value seen
+ dbit	mpsOPN,2		; a location is open
+MPTVAL:	ds 2			; argument
+MPTOPN:	ds 2			; write address
+MPTIY:	ds 2			; ^CCB
+MPTBP:	ds 2			; pointer to buffer
+MPTBUF:	ds BUFSIZ+1		; buffer for forced commands
+CTC2PC:	ds 2			; return PC of last channel 2 interrupt
+
+LISTING SUBTTL 	channel control blocks
+
+; CCBADR(expresion) evals to addr of CCB for chan given by expr, ie:
+;	LD (CCBadr(aoNPTX)+ccCHNO),A
+define	CCBADR (X) <CCBADX(\X)>
+define	CCBADX (X) <CCB"X>
+
+CCB0:
+phase	0
+ccCHNO: ds 1			; channel number
+ccSTS:	ds 1			; receive status bits
+ dbit	ccSVCF,0		; service request flag
+ dbit	ccSTD,1 		; STD present last poll
+ dbit	ccPFX,2 		; prefix seen flag
+ dbit	ccDTON,3		; dial tone has been turned on
+ dbit	ccCOS,4 		; COS present last poll
+ dbit	ccPTT,5 		; computed push to talk bit (excl DTMF)
+ dbit	ccIDF,6 		; need ID at end of this interval
+ dbit	ccTLF,7 		; need telemetry (COS changed)
+ccDEF:	ds 1			; some definition bits
+ dbit	cdCONT,0		; channel is a control channel
+ dbit	cdPRIM,1		; channel is a primary
+ dbit	cdLINK,2		; channel is a link
+ dbit	cdREMO,3		; channel is a remote
+ dbit	cdTMTR,4		; channel should get/send telemetry
+ccMASQ: ds 1			; channel to masquerade as
+ccIDI:	ds 1			; ID interval (10S)
+ccIDPT: ds 1			; time until next ID
+ccTXS:	ds 1			; transmitter setup time
+ccDPT:	ds 1			; duplex protect time
+ccPFHT: ds 1			; prefix hold time
+ccDTHT: ds 1			; dial tone hold time
+ccFTPT: ds 1			; forward telemetry protect time
+ccRTPT: ds 1			; reverse telemetry protect time
+ccFREQ: ds 1			; frequency if one is set else 0
+ccOID:	ds 1			; Operator ID
+ccPRV:	ds 1			; priveleges 0,A,B,C,D
+ccOTIM:	ds 1			; minutes until operator time out
+ccERR:	ds 1			; consecutive error counter
+ccBUFP: ds 2			; write pointer to buffer
+ccBUFC: ds 1			; space left in buffer
+ccBUF:	ds 2			; pointer to buffer
+ccLINK: ds 2			; link to next CCB to scan by TRPOLL
+ccCOSB: ds 2			; COS bits
+ccLCHN: ds 1			; last channel circuit built to
+ccBUFX: ds BUFSIZ+1		; command buffer
+dephase
+CCBSIZ	equ .-CCB0
+org	CCB0+abNC*CCBSIZ	; one CCB for each standard channel
+
+;	define CCBn as base address of CCB for channel "n"
+for chno _ 1,(abNC-1)
+<CCB"chno equ CCB0+CCBSIZ*chno>
+
+MEMTST: ds 1			; if non-zero, assume memory clobbered
+SOVTST: ds 1			; if non-zero, assume stack overflow
+agSP:	ds 2			; stack pointer for AG process
+PDLSIZ	equ 80			; very conservative stack size
+	ds PDLSIZ		; AG stack
+agPDL:	
+
+;	system stack gets what's left
+ifge .+PDLSIZ-RAMEND <print % less than,\PDLSIZ,bytes for system stack>
+ENDRAM
+
+LISTING SUBTTL 	crash codes
+
+craHWR	equ $00			; HardWare Reset switch
+craT00	equ $01			; Trap through 00
+craT08	equ $02			; Trap through 08
+craT10	equ $03			; Trap through 10
+craT18	equ $04			; Trap through 18
+craT20	equ $05			; Trap through 20
+craT28	equ $06			; Trap through 28
+craT30	equ $07			; Trap through 30
+craT38	equ $08			; Trap through 38
+craCTC	equ $09			; unexpected CTC interrupt
+craKAM	equ $0A			; Keep Alive failure for Main process
+craKA2	equ $0B			; Keep Alive failure for process 2
+craKA3	equ $0C			; Keep Alive failure for process 3
+craHKA	equ $0D			; hardware Keep Alive failure
+craPCB	equ $0E			; PC out of Bounds (not in ROM)
+craMEM	equ $0F			; MEMory clobbered
+craSOV	equ $10			; Stack OVerflow (probably)
+craSUN	equ $11			; Stack UNderflow (probably)
+craAGC	equ $12			; illegal command in agBUF
+craPWR	equ $13			; power failure
+craMAN	equ $14			; control restart
+
+LISTING SUBTTL 	trap vectors, etc.
+
+	org	ROMORG
+ifn	. <printx ?no ROM at $0000 for trap vectors>
+
+define	TRP (a,b) <
+	org	./100h+a
+	JP	b
+>
+define	VEC (a,b) <
+	org	./100h+a
+	dw	b
+>
+
+trp (00h,TRAP00)		; power up or STOPCD
+trp (08h,TRAP08)		; unexpected RST 1, crash
+trp (10h,TRAP10)		; unexpected RST 2, crash
+trp (18h,MORSEI)		; service routine for morse code
+trp (20h,PMSGI) 		; service routine for CTY output
+trp (28h,SCNSVC)		; service routine for SCAN uuo
+trp (30h,TRAP30)		; unexpected RST 6, crash
+trp (38h,TRAP38)		; probably PC out of bounds, crash
+trp (66h,NMISVC)		; service non-maskable interrupt
+
+VECPAG equ ./100h
+CTCVEC	equ $80 		; base vector for CTC
+vec (CTCVEC+0*2,CTCSV0) 	; should never happen
+vec (CTCVEC+1*2,RESCTC) 	; keep alive failure - causes NMI also
+vec (CTCVEC+2*2,CTCSV2) 	; 10 mS service routine
+vec (CTCVEC+3*2,CTCSV3) 	; tone transmitter service routine
+
+org	./100h*100h+100h
+LISTING SUBTTL 	page aligned ROM data/code
+
+;	WILDTB
+;
+; contains 3 fields: (note: bit fields are true 0)
+WCVm	equ $F			; mask for binary value
+dbit	WCQ,5			; 0 if character is in [2..9]
+dbit	WCD,6			; 0 if character is decimal
+dbit	WCH,7			; 0 if character is hex
+
+define	WC (A,B,C) <
+org WILDTB+A
+db (B+WCHm+WCDm+WCQm-(C)) >
+
+WILDTB:	; half page table
+listing off
+repeat	128 <db (WCHm+WCDm+WCQm)>
+listing on
+
+wc	'0', $0 ,WCHm+WCDm
+wc	'1', $1 ,WCHm+WCDm
+wc	'2', $2 ,WCHm+WCDm+WCQm
+wc	'3', $3 ,WCHm+WCDm+WCQm
+wc	'4', $4 ,WCHm+WCDm+WCQm
+wc	'5', $5 ,WCHm+WCDm+WCQm
+wc	'6', $6 ,WCHm+WCDm+WCQm
+wc	'7', $7 ,WCHm+WCDm+WCQm
+wc	'8', $8 ,WCHm+WCDm+WCQm
+wc	'9', $9 ,WCHm+WCDm+WCQm
+wc	'A', $A ,WCHm
+wc	'B', $B ,WCHm
+wc	'C', $C ,WCHm
+wc	'D', $D ,WCHm
+wc	'#', $E ,WCHm
+wc	'*', $F ,WCHm
+
+org WILDTB+128
+
+LISTING SUBTTL non page aligned constant tables
+
+CCBTAB: for chno _ 0,(abNC-1)<	; CCB address index by channel number
+	dw CCB"chno >
+
+HEX2TT: db dtR4m+dtC2m	; 0	; convert HEX to TT bit mask
+	db dtR1m+dtC1m	; 1
+	db dtR1m+dtC2m	; 2
+	db dtR1m+dtC3m	; 3
+	db dtR2m+dtC1m	; 4
+	db dtR2m+dtC2m	; 5
+	db dtR2m+dtC3m	; 6
+	db dtR3m+dtC1m	; 7
+	db dtR3m+dtC2m	; 8
+	db dtR3m+dtC3m	; 9
+	db dtR1m+dtC4m	; A
+	db dtR2m+dtC4m	; B
+	db dtR3m+dtC4m	; B
+	db dtR4m+dtC4m	; D
+	db dtR4m+dtC3m	; E (#)
+	db dtR4m+dtC1m	; F (*)
+
+BITTAB:	for x _ 0,7 <		; byte table of bytes with bit (i) on
+	db 1 shl x>
+
+LISTING SUBTTL 	standard control configuration macros etc
+
+; call as follows to generate a control string (must be on 1 short line)
+; label: DCTL <obit+val,obit+val,obit+val,...,obit+val>
+; where oBIT is the bit name for the attribute
+;
+define	DCTL (x) <
+	CALL	CTLSVC
+	for P _ OB,(OB+NOB-1) <
+	    cdpc vset 0
+	    for T in <x> < ife (T)/256-P < cdpc vset cdpc+1 > >
+	    ifn cdpc <
+		db P,cdpc
+		for T in <x> < ife (T)/256-P < db (T)&$FF > > > >
+	db $FF
+>
+cdpc	vset 0
+CTLSVC: POP	HL		; address of argument
+	PUSH	AF
+	LD	A,$FF
+CTLSV1: LD	C,(HL)		; get port number
+	INC	HL
+	CP	C		; check for $FF end marker
+	JR	Z,CTLSV2	; return to our caller's caller
+	LD	B,(HL)		; get count
+	INC	HL
+	OTIR			; output the works
+	JR	CTLSV1		; go do it again
+CTLSV2:	POP	AF
+	RET
+
+cqDEV:	; system control normal
+dctl	<oFANS+0,oBLOWER+0,oTOWER+0,oINLIT+0,oOUTLIT+0,oSOCKET+0>
+
+cqSP:	; special primary control normal
+dctl	<oSPANT+0,oSPLOOS+0,oSPCGD+0,oSPCGE+1,oSPHANG+1>
+
+cqNP:	; normal primary control normal
+dctl	<oNPPOW+0,oNPLOOS+0,oNPCGD+0,oNPCGE+1,oNPHANG+1>
+
+cqLN:	; link north control normal
+dctl	<oLNANT+0,oLNLOOS+0,oLNCGD+0,oLNCGE+1,oLNHANG+1>
+
+cqLS:	; link south control normal
+dctl	<oLSANT+0,oLSLOOS+0,oLSCGD+0,oLSCGE+1,oLSHANG+0>
+
+cq44:	; 440 control normal
+	PUSH	IY
+	LD	L,1
+	LD	IY,ccbadr(ai44RX)
+	CALL	SETFRQ
+	POP	IY
+dctl	<o44ANT+0,o44LOOS+0,o44CGD+1,o44CGE+0>
+
+cq2M:	; 2 meter control normal
+	PUSH	IY
+	LD	L,1
+	LD	IY,ccbadr(ai2MRX)
+	CALL	SETFRQ
+	POP	IY
+dctl	<o2MANT+1,o2MLOOS+0,o2MCGD+1,o2MCGE+0>
+
+cq6M:	; 6 meter control normal
+	PUSH	IY
+	LD	L,1
+	LD	IY,ccbadr(ai6MRX)
+	CALL	SETFRQ
+	POP	IY
+dctl	<o6MANT+0,o6MLOOS+0,o6MCGD+1,o6MCGE+0>
+
+cqINT:	; intercom control normal
+	PUSH	IY
+	LD	L,4
+	LD	IY,ccbadr(aiINTRX)
+	CALL	SETFRQ		; and return
+	POP	IY
+	RET
+
+cqTEL:	; phone patch control normal
+	JP	ppRLS		; and return
+
+cqOPEN:
+cqSHUT:
+cqSYS:	; set all channels to normal control
+	for CHN in <SP,NP,LN,LS,44,2M,6M,INT,TEL> <
+	CALL	cq"chn >
+	RET
+
+LISTING SUBTTL 	standard audio configuration tables and routines
+
+define	baq <
+	CALL SVCAQ
+BAQADR	vset .
+repeat	abNSC < dw 0 >
+>
+define	daq (d,ss) <
+ifge (d-abNSC) <
+printx % aq definition out of bounds: d, ss
+    >
+ifl (d-abNSC) <
+	org BAQADR+2*d
+	dw ss
+    >
+>
+define	eaq < org BAQADR+2*abNC >
+SVCAQ:	EX	(SP),HL 	; HL/ argument, (SP)/ HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	XOR	A		; start with port 0
+	LD	BC,amXPNT	; manipulate regular crosspoints
+SVCAQ1:	LD	E,(HL)		; get value from argument block
+	INC	HL
+	LD	D,(HL)
+	INC	HL
+	EX	DE,HL		; move value into HL, save HL in DE
+	CALL	amPUTC
+	EX	DE,HL		; restore HL from DE
+	INC	A		; next port
+	CP	abNSC		; are we done? (only standard channels)
+	JR	NZ,SVCAQ1
+	CALL	amUPD		; update the matrix
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET			; return to our caller's caller
+
+aqSHUT:	; SYSTEM SHUTDOWN CONFIGURATION
+baq
+daq	aiWCTRX,                        aoWCTTXm
+eaq	
+
+aqOPEN:
+aqSYS:	; SYSTEM NORMAL CONFIGURATION
+baq
+daq	aiSPRX, aoSPTXm
+daq	aiNPRX,	aoSPTXm+aoNPTXm
+daq	aiLNRX,	aoSPTXm+        aoLNTXm
+daq	aiLSRX, aoSPTXm
+daq	aiWCTRX,                        aoWCTTXm
+eaq
+
+aqLN:	; LINK NORMAL CONFIGURATION
+baq
+daq	aiSPRX, aoSPTXm
+daq	aiNPRX,	aoSPTXm+aoNPTXm+aoLNTXm+aoLSTXm
+daq	aiLNRX,	aoSPTXm+aoNPTXm+aoLNTXm+aoLSTXm
+daq	aiLSRX, aoSPTXm+aoNPTXm+aoLNTXm
+daq	aiWCTRX,                        aoWCTTXm
+eaq
+
+aqNSN:	; NORTH LINK SPLIT NORMAL CONFIGURATION
+baq
+daq	aiSPRX,	aoSPTXm
+daq	aiNPRX,	aoSPTXm+aoNPTXm+aoLNTXm
+daq	aiLNRX,	aoSPTXm+aoNPTXm+aoLNTXm
+daq	aiLSRX,	aoSPTXm
+daq	aiWCTRX,                        aoWCTTXm
+eaq
+
+aqSSN:	; SOUTH LINK SPLIT NORMAL CONFIGURATION
+baq
+daq	aiSPRX,	aoSPTXm
+daq	aiNPRX,	aoSPTXm+aoNPTXm+        aoLSTXm
+daq	aiLNRX,	aoSPTXm+        aoLNTXm
+daq	aiLSRX,	aoSPTXm+aoNPTXm
+daq	aiWCTRX,                        aoWCTTXm
+eaq
+
+LISTING SUBTTL 	normal configuration commands
+
+cmd700: ; system normal
+	CALL	aqSYS		; reset audio matrix
+cmd70X: CALL	cqSYS		; reset channel controls
+CPOPJ:	RET
+
+cmd701: ; lormal
+	CALL	aqLN		; link normal matrix
+	JR	cmd70X
+
+cmd702: ; north link split normal
+	CALL	aqNSN		; north link split normal
+	JR	cmd70X
+
+cmd703: ; south link split normal
+	CALL	aqSSN		; south link split normal
+	JR	cmd70X
+
+LISTING SUBTTL 	handle crashes
+
+PCCHEK: ; call on trap through 00 to see how to crash
+	POP	HL		; get our return address
+	POP	AF		; get high order PC in A
+	PUSH	AF		; preserve (SP)/ PC for crash code
+	CP	HB(ROMEND)+1	; is PC in ROM?
+	JP	NC,resPCB	; no, PC out of bounds
+	JP	(HL)		; return to our caller
+
+XRETI:	RETI			; used to fake out CTC
+
+trap00: ; make guesses as to why PC=0
+	DI
+; check to see if CTC is still running
+	LD	BC,$0400+CTC	; B/ # of channels   C/ CTC port address
+T00CT0: IN	A,(C)		; read CTC counter value
+	OR	A		; test for 0
+	JR	NZ,T00NHR	; if CTC#0 then its not H/W Reset
+	DJNZ	T00CT0		; check all CTC channels
+; now we know CTC died so it must be one of
+;  1. power failure		- super clear memory
+;  2. reset switch		- don't super clear memory
+;  3. super keep alive failure	- don't super clear memory
+	IN	A,(iHWRSp)	; check for manual reset or super keep alive
+	AND	iHWRSm
+	JP	NZ,T00HWR
+; this must be a power failure
+	LD	HL,RAMORG
+	LD	DE,RAMORG+1
+	LD	BC,RAMSIZ
+	LD	(HL),0
+	LDIR			; zero all memory
+	LD	A,craPWR	; power failure
+	JP	RESETC
+; Now we know crash is due to reset getting yanked low, reset keep alive
+; and see if the signal goes away - this would indicate keep alive failure.
+T00HWR:	LD	A,kaMAGIC
+	OUT	(KA),A		; clear hard keep alive
+	NOP			; let it settle
+	IN	A,(iHWRSp)	; check reset line again
+	AND	iHWRSm
+	LD	A,craHKA	; just in case
+	JP	Z,RESETC	; if its inactive now, must have been H KA
+	LD	A,craHWR	; else we know it was reset button
+	JP	RESETC	
+; here is CTC is still running, know we got here by glitch of some kind,
+; treat like any other unexpected trap
+T00NHR: CALL	PCCHEK		; not H/W reset, check PC bounds
+	LD	A,craT00	; not PC bounds, assume trap through 0
+	JP	RESETC
+
+for V in <08,10,18,20,28,30,38>
+<trap"V: DI
+	CALL	PCCHEK
+	LD	A,craT"V
+	JP	RESETC >
+
+for V in <CTC,KAM,KA2,KA3,MEM,SOV,SUN,PCB,AGC,MAN>
+<RES"V: LD	A,cra"V
+	JR	RESETC >
+
+LISTING SUBTTL 	system initialization
+
+RESETC: ; crash: save (SP),(SP+1), crash type in A
+	DI
+	POP	HL
+	LD	(CRADAT),HL
+	LD	(CRACOD),A
+	LD	HL,CRACNT	; count the crash
+	INC	(HL)
+	LD	A,1
+	LD	(CRAFLG),A
+
+RESET:	DI
+	IM2			; set interrupt mode 2 (Z80-vectored)
+	LD	A,VECPAG
+	LD	I,A		; set vector page
+	LD	SP,RAMEND	; setup PDL
+	LD	IX,IXpage	; a handy base register
+; zero memory
+	LD	HL,RAMORG
+	LD	DE,RAMORG+1
+	LD	BC,BEGSAF-RAMORG-1
+	LD	(HL),0
+	LDIR
+	LD	HL,ENDSAF
+	LD	DE,ENDSAF+1
+	LD	BC,RAMEND-ENDSAF
+	LD	(HL),0
+	LDIR
+; set trap for stack underflow (only catches ones due to RET)
+	LD	HL,resSUN
+	PUSH	HL
+; initialize SO BUFfer so can do PCHR
+	LD	HL,SOBUF
+	LD	(SOBUFW),HL	; both pointers to begining
+	LD	(SOBUFR),HL	; making buffer empty
+; initialize DTMF board
+	XOR	A
+	OUT	(DTMF+dtmfDR),A ; silence tone generator
+	OUT	(DTMF+dtmfCR),A ; disable rate multiplier and attenuator
+; initialize the audio board
+	CALL	amZERO		; clear matrix
+; initialize output boards
+	LD	C,OB		; C/ first output board port address
+	LD	B,NOB		; B/ number output boards
+	LD	A,$FF		; A/ master output board reset port
+RESE1B: OUT	(C),A		; reset all external devices
+	INC	C		; next port
+	DJNZ	RESE1B		; all out of ports yet?
+; initialize indicator LEDs
+	XOR	A		; clear first lamp group
+	LD	C,oLAMP0p
+	CALL	LAMPS
+	LD	A,(CRACOD)	; display crash code in
+	LD	C,oLAMP0p-1	; second lamp group
+	CALL	LAMPS
+ifn NSIO <
+; initialize SIO board
+	IN	A,(SIO+sioCR)	; get mode register in sync
+	LD	A,%01001110
+	OUT	(SIO+sioMR),A	; mr1
+	LD	A,%01111110	; 9600 baud
+	OUT	(SIO+sioMR),A	; mr2
+	LD	A,%00100111
+	OUT	(SIO+sioCR),A	; cr
+	CALL	PCRLF
+>
+; setup normal outputs
+	CALL	cqDEV		; normal system controls
+	CALL	cqSYS		; normal controls on all channels
+; initialize globals
+	CALL	RINGON		; turn on ringing
+	LD	HL,CCB0 	; initial value for phone patch IY
+	LD	(PPIY),HL
+	LD	(IXpg ALRMEM),$FF; enable all alarms
+; initialize CCB's
+	LD	B,abNC		; number of standard channels
+	LD	DE,CCB0 	; a place to start
+	LD	HL,1		; COS mask
+RESET2: PUSH	DE		; IY _ DE
+	POP	IY
+	LD	A,abNC
+	SUB	B		; A/ channel number
+	LD	(IY+ccCHNO),A	; channel number
+	LD	(IY+ccMASQ),A	; masquerade as
+	LD	(IY+ccCOSB),L	; COS mask
+	LD	(IY+ccCOSB+1),H
+	LD	(IY+ccTXS),timTXS/100; init transmitter setup timer
+	ADD	HL,HL		; HL _ HL lsh 1   (COS mask)
+	PUSH	HL		; save COS mask
+	LD	HL,ccBUFX	; offset of buffer
+	ADD	HL,DE		; HL/ address of buffer
+	LD	(HL),0		; buffer _ null
+	LD	(IY+ccBUF),L	; pointer to buffer
+	LD	(IY+ccBUF+1),H
+	LD	(IY+ccBUFP),L	; pointer to end of buffer
+	LD	(IY+ccBUFP+1),H
+	LD	(IY+ccBUFC),BUFSIZ; space left in buffer
+	LD	HL,CCBSIZ
+	ADD	HL,DE		; HL _ ^ next CCB
+	PUSH	HL		; push new ^CCB
+	LD	(IY+ccLINK),L	; link to next CCB
+	LD	(IY+ccLINK+1),H
+	LD	A,(IY+ccCHNO)
+	POP	DE		; DE/ new ^CCB
+	POP	HL		; HL/ COS mask from above
+	DJNZ	RESET2
+	LD	HL,CCB0 	; make last point to first
+	LD	(IY+ccLINK),L	; link to next CCB
+	LD	(IY+ccLINK+1),H
+	LD	A,iniIDI/10	; initial ID interval for primaries
+	LD	(CCBADR(aoSPTX)+ccIDI),A
+	LD	(CCBADR(aoSPTX)+ccIDPT),A
+	LD	(CCBADR(aoNPTX)+ccIDI),A
+	LD	(CCBADR(aoNPTX)+ccIDPT),A
+define dcx (XX1,XX2) <
+	LD	HL,CCBADR(XX1)+ccDEF
+	LD	(HL),XX2
+>
+	dcx (aiSPRX,cdPRIMm+cdCONTm)
+	dcx (aiNPRX,cdPRIMm+cdCONTm)
+	dcx (aiLNRX,cdPRIMm+cdCONTm)
+	dcx (aiLSRX,cdLINKm+cdCONTm)
+	dcx (ai44RX,cdREMOm+cdTMTRm)
+	dcx (ai2MRX,cdREMOm+cdTMTRm)
+	dcx (ai6MRX,cdREMOm+cdTMTRm)
+	LD	HL,CCB0 	; initial scan pointer
+	LD	(TRIY),HL
+	LD	(IXpg TRPT),1	; run receiver process immediately
+; tone control block initialization
+	LD	HL,iniWPM	; initial words per minute
+	CALL	SETWPM
+	LD	A,iniTTP	; initial touch tone burst time
+	LD	(tcTTP),A
+	LD	A,iniMCT	; initial touch tones for morse code
+	LD	(tcMCT),A
+	LD	A,iniMCX	; initial morse code extended bits
+	LD	(tcMCX),A
+	LD	A,-1		; no currently set channel
+	LD	(agCHAN),A
+	LD	HL,agBUF	; setup r/w buffer pointers
+	LD	(agRBUF),HL
+	LD	(agWBUF),HL
+	CALL	agINI		; initialize AG process and CTC3
+; initialize CTC
+;  CTC setup:
+;    chan 0 is 1 kHz time base
+;    chan 1 is keep alive - slave of 2 - timeout is 10 S
+;    chan 2 is DTMF receiver timing - slave of 0 - int every 40 mS
+;    chan 3 is tone xmitter timing - slave of 0 - int rate is variable
+	LD	B,4
+RESI0:	CALL	XRETI		; just RETI to fake out CTC
+	DJNZ	RESI0
+	LD	A,ctCTLm+ctRESETm; reset all channels
+	OUT	(CTC+0),A
+	OUT	(CTC+1),A
+	OUT	(CTC+2),A
+	ifn (CTCVEC&7) <printx ?CTC vector not on 8 byte boundary>
+	LD	A,CTCVEC	; setup interrupt vector
+	OUT	(CTC),A
+	LD	A,ctCTLm+ctLTCm ifn DEBUG <+ctINTEm>
+	OUT	(CTC+0),A	; channel 0 tic every 1 mS
+	LD	A,ctCTLm+ctLTCm+ctCNTm+ctINTEm
+	OUT	(CTC+2),A	; channel 2 int every 10 mS
+	LD	A,250
+	OUT	(CTC+0),A
+	LD	A,10
+	OUT	(CTC+2),A
+	LD	A,1		; schedule immediate 100 mS service
+	LD	(T100MS),A
+; initialization complete - start processes
+	EI			; here we go!
+	CALL	ppRLS		; final init PP
+	LD	(IXpg WCTPRV),'A'; A priv level for WCT
+	CALL	wctRLS		; final init WCT
+; initialization diagnostics
+	LD	A,(CRAFLG)
+	AND	A
+	JR	Z,RESNCM
+	LD	A,(CRACNT)	; get count of crashes
+	LD	C,A
+	LD	A,(CRACOD)	; get type of crash
+	LD	HL,(CRADAT)	; get (SP) from crash
+	msg 	7,13,'[CRACOD=\A (SP)=\H\L CRACNT=\C]',13,0
+	CP	craHWR		; check for crash by reset btton
+	JR	NZ,RESNCM
+	CALL	SOPEN		; control open
+	CALL	cmdC7D		; disable alarms
+; say hi to all them nice folks out in radio land!
+RESNCM:	LD	HL,CRMASK			; broadcast channel mask
+	CALL	MORMSK				; set output mask to HL
+	mrs	SIGN,' ',SITE,0
+	LD	A,(CRAFLG)
+	AND	A
+	JR	Z,RESMS3			; no crash, don't report type
+	CALL	VCRASH				; describe crash
+RESMS3:	mrs	ttRESET,0
+	XOR	A
+	LD	(CRAFLG),A			; clear crash flag
+
+LISTING SUBTTL 	MAIN process
+
+	LD	IY,CCB0 	; any old place to start
+MAIN:	LD	(IXpg kaMAIN),-1; pacify keep alive
+; poll system service requests
+	CALL	mpTTY		; check TTY for character waiting
+	BIT	stRING,(IXpg STATE); check RING request flag
+	CALL	NZ,RINGER
+	BIT	stM10S,(IXpg STATE); check for 10 seconds stuff
+	CALL	NZ,M10S
+	BIT	stWAIT,(IXpg STATE); test for a wait in progress
+	CALL	NZ,ppTWAI
+; poll channel service requests
+	CALL	SOBSVC		; Serial Output Buffer SerViCe
+	BIT	ccSVCF,(IY+ccSTS); check SerViCe request Flag
+	CALL	NZ,CCSVC
+	BIT	ccTLF,(IY+ccSTS); check TeLemetry request Flag
+	CALL	NZ,TLSVC
+	BIT	ccIDF,(IY+ccSTS); check ID request Flag
+	CALL	NZ,CCID
+; follow link to poll next channel
+	CALL	LINKIY		; follow link to next CCB
+	LD	A,(IY+ccCHNO)
+	AND	1
+	ADD	oLAMP6b*2
+	OUT	(oLAMP6p),A
+	JR	MAIN		; go poll again
+
+CCSVC:	;handle service request flag in CCB
+	RES	ccSVCF,(IY+ccSTS); clear flag
+	BIT	ccPFX,(IY+ccSTS); have we seen a prefix?
+	JR	Z,CCSPFX	; get prefix
+CCSCMD: ; scan a command
+	CALL	CMDSCN
+	BIT	stSKIP,(IXpg STATE); in case of successful command ...
+	JR	Z,CCSCM1
+	mrs	'~||',0
+	LD	(IY+ccERR),0	; clear consecutive error counter
+	BIT	ccPFX,(IY+ccSTS); in case of prefix seen ...
+	JR	Z,CCSCM1
+	SET	ccDTON,(IY+ccSTS); turn on dialtone
+CCSCM1: BIT	stSUBS,(IXpg STATE); in case not a subset ...
+	CALL	Z,CCSERR	; indicate error
+	RET
+CCSPFX: ; scan a prefix
+	CALL	PFXSCN
+	BIT	stSUBS,(IXpg STATE); was it a subset?
+	RET	NZ		; yep - a subset - be patient
+	CALL	LOPBUF		; eat 1st character
+	JR	CCSPFX		; we'll get a subset eventually
+
+CCSERR:	LD	A,(IY+ccPRV)	; logged in?
+	AND	A
+	JR	Z,CCSOFF	; if logged in, send ? and check oops count
+	CALL	CLRBUF
+	mrs	'~?',0
+	INC	(IY+ccERR)	; inc consecutive error counter
+	CALL	CCSERD		; degrade system as appropriate
+CCSOFF: RES	ccDTON,(IY+ccSTS); turn off dialtone
+	RES	ccPFX,(IY+ccSTS); turn off prefix seen
+	LD	(IY+ccPFHT),0	; clear prefix hold timer
+	LD	(IY+ccDTHT),0	; clear dialtone hold timer
+	CALL	MORSER		; reset tone process
+	LD	A,(IY+ccCHNO)
+	LD	BC,amMUTE
+	LD	HL,$0000
+	CALL	amPUTC		; un-mute our listeners
+	CALL	amUPD
+	RET
+
+CCSERD:	; degrade system due to excessive consecutive errors
+	LD	A,(IY+ccERR)		; get consecutive error count
+	CP	3
+	RET	NZ
+	CALL	LOGOUT			; log port out
+	mrs	'[',ttSETC+aoSPTX,0
+	CALL	FOID			; OID
+	mrs	ttWORD,143,ttWORD,213,0	; "CONTROL CHECK" ...
+	LD	A,(IY+ccCHNO)
+	CALL	V1HEX			; ... "channel" ...
+	JP	MORSER			; reset (and return)
+
+cmdERR: RES	stSUBS,(IXpg STATE); turn off the success flags
+	RES	stSKIP,(IXpg STATE)
+	LD	SP,(CMDSP)	; peel back stack
+	RET			; return from command
+
+CCID:	; enter here to possibly ID if time is right
+	LD	A,(IY+ccIDPT)	; get ID Protect Time
+	AND	A		; is it 0?
+	RET	NZ		; no - can't ID yet!
+	CALL	CCFID		; update data base
+	mrs	'~',SIGN,ttRESET,0
+	RET
+
+CCFID:	; enter here to update data base after an ID
+	LD	A,(IY+ccIDI)	; get ID interval
+	LD	(IY+ccIDPT),A	; set ID protect time
+	RES	ccIDF,(IY+ccSTS); no ID required any more
+SETIDX: ; set ID required flag if appropriate
+	BIT	ccIDF,(IY+ccSTS); see if its set already
+	RET	NZ		; if so, don't waste time checking
+	LD	A,(IY+ccCHNO)
+	LD	BC,amREAL
+	CALL	amGETR		; HL/ contributing inputs
+	dbop	RES,aoDTMF	; don't count tone generator
+	dbop	RES,aoVSP	; don't count voice synthesis processor
+	LD	DE,(COSS)	; DE/ COSs active
+	CALL	DAND		; HL/ non-DTMF RXs for our PTT (if any)
+	LD	A,H
+	OR	L
+	RET	Z		; do nothing if no PTT from non-DTMF RXs
+SETIDF:	; always set IDF if port is required to ID
+	LD	A,(IY+ccIDI)	; get ID interval
+	AND	A		; don't ID if interval is 0
+	RET	Z		; don't waste time if not worthy of ID
+	SET	ccIDF,(IY+ccSTS); set ID required
+	RET
+
+; CHANIY - return IY ^CCB for channel whose number is in A
+;
+CHANIY: PUSH	DE
+	PUSH	HL
+	AND	$0F		; force in bounds
+	LD	H,0
+	LD	L,A
+	ADD	HL,HL
+	LD	DE,CCBTAB
+	ADD	HL,DE
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)
+	PUSH	DE
+	POP	IY
+	POP	HL
+	POP	DE
+	RET
+
+; LINKIY - follow link to next CCB  IY _ ccLINK(IY)
+;
+LINKIY: PUSH	HL		; preserve HL (and everything else too)
+	LD	L,(IY+ccLINK)	; get new value for IY into HL
+	LD	H,(IY+ccLINK+1)
+	EX	(SP),HL 	; restore HL, put new IY on stack
+	POP	IY		; get new IY off stack
+	RET
+
+LISTING SUBTTL 	DDT
+
+mpTTY:	; get character and dispatch if RDA
+ifn SIO <
+	IN	A,(SIO+sioSR)	; get SIO status
+	AND	sioRDAm 	; check for received data
+	IN	A,(SIO+sioDR)	; get character just in case
+	CALL	NZ,mpTTY1	; handle character if one there
+>
+	RET
+ifn SIO <
+mpTTY1: ; call with character in A
+	CP	$FF		; like, hey man, no IO card!
+	RET	Z
+	AND	sioDATm 	; strip parity
+>
+ifn DEBUG <
+	CP	'C'-$40 	; ^C to reboot the bird
+	JR	NZ,NOBOOT
+	XOR	A
+	OUT	(DTMF+dtmfCR),A ; stop tones
+	OUT	(DTMF+dtmfDR),A
+	CALL	amZERO		; stop repeating
+	CALL	amUPD
+	CALL	ppRLS		; disconnect phone
+	JP	8000h
+>
+ifn (SIO+DEBUG) <
+NOBOOT: CP	'a'		; lower case?
+	JP	LT,MPTTUP
+	SUB	$20		; force upper case
+MPTTUP:	CP	$1B		; escape?
+	JP	Z,MPTESC
+	CP	'J'-$40
+	JP	Z,mptEXN	; deposit, examine next
+	CP	'I'-$40
+	JP	Z,mptINI	; initialize: cmd09A, cmdC7D
+	CP	'T'-$40
+	JP	Z,mpt2PC	; look at PC
+	CALL	PCHR		; echo it
+	CP	'/'
+	JP	Z,mptEXA	; examine
+	CP	'.'
+	JP	Z,mptDOT	; dot
+	CP	'='
+	JP	Z,mptEQU	; equals
+	CP	'M'-$40
+	JP	Z,mptDEP	; deposit
+	CP	'^'
+	JP	Z,mptSIY	; handle CCB pointer
+	CP	' '
+	JP	LT,mptFFF	; ignore other control characters 
+	BIT	mpsESC,(IXpg MPSTAT)
+	JP	NZ,mptCMD	; char following escape
+	LD	HL,(MPTBP)
+	LD	(HL),A		; store char in buf
+	INC	HL
+	LD	(HL),0		; and a null at end
+	LD	(MPTBP),HL
+	LD	D,0
+	SUB	'0'
+	LD	E,A
+	CP	10
+	JP	LT,mptHL1
+	SUB	'A'-'0'-10
+	LD	E,A
+mptHL1:	LD	HL,0		; just in case
+	BIT	mpsVAL,(IXpg MPSTAT)
+	JR	Z,mptHL2
+	LD	HL,(MPTVAL)	; get argument
+	ADD	HL,HL		; HL _ HL * 16
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+mptHL2:	ADD	HL,DE		; HL _ HL * 16 + DE
+	LD	(MPTVAL),HL	; store new value
+	SET	mpsVAL,(IXpg MPSTAT); a value has been specified
+	RET
+mptINI:	; initialize
+	PUSH	IY
+	LD	IY,CCB0
+	CALL	SOPEN
+	CALL	cmdC7D
+	POP	IY
+	CALL	PCRLF
+	RET
+mptFFF:	; ^F^F^F
+	msg	'XXX',13,0
+	LD	(IXpg MPSTAT),0	; clear the world
+mptARG:	; compute effective address into HL
+	LD	HL,(MPTVAL)
+	LD	DE,(MPTIY)
+	ADD	HL,DE
+	PUSH	HL
+	LD	HL,0
+	LD	(MPTVAL),HL	; clear value
+	LD	(MPTIY),HL	; clear CCB address
+	LD	HL,MPTBUF
+	LD	(MPTBP),HL	; buffer pointer
+	POP	HL
+	RES	mpsVAL,(IXpg MPSTAT); no value available
+	RET
+mptSIY:	; set IY to CHANIY(arg)
+	PUSH	IY
+	CALL	mptARG
+	LD	A,L
+	CALL	CHANIY
+	LD	(MPTIY),IY
+	POP	IY
+	RET
+mpt2PC:	; control-T
+	LD	HL,(CTC2PC)
+	msg	'CTC2PC/    \H\L',13,0
+	RET
+mptCMD:	; handle commands after escape
+	RES	mpsESC,(IXpg mpSTAT); escape seen
+	for XXX inchr <IOMFG>
+<	CP	'XXX'
+	JP	Z,mpTTY"XXX >
+	JP	mptFFF
+mpTTYF:	; force command into CCB
+	PUSH	IY
+	LD	IY,(MPTIY)
+	CALL	mptARG		; just to clear it
+	LD	HL,MPTBUF
+	DI
+	LD	A,(IY+ccCHNO)
+	msg	'    ccBUFX[\A]="',0
+mpTYF1:	LD	A,(HL)
+	CALL	PCHR
+	AND	A
+	CALL	NZ,CATBUF	; copy chars into CCB buffer
+	INC	HL
+	JR	NZ,mpTYF1
+	msg	'"',13,0
+	EI
+	POP	IY
+	RET
+mpTTYI:	; input from port
+	CALL	mptARG
+	LD	(MPTOPN),HL
+	LD	C,L
+	IN	A,(C)
+	msg	'    \A=in[\C]',13,0
+	RET
+mpTTYO:	; output to port
+	CALL	mptARG
+	LD	B,L
+	LD	A,(MPTOPN)
+	LD	C,A
+	OUT	(C),B
+	msg	'    out[\C]=\B',13,0
+	RET
+mptDEP:	; write into memory (CR or LF)
+	BIT	mpsOPN,(IXpg MPSTAT)
+	RET	Z		; no location open
+	RES	mpsOPN,(IXpg MPSTAT); close location
+	BIT	mpsVAL,(IXpg MPSTAT)
+	RET	Z		; no value to deposit
+	CALL	mptARG
+	LD	E,L		; E/ value to deposit
+	LD	HL,(MPTOPN)	; HL/ open address
+	LD	(HL),E		; do deposit
+	RET
+mptEXA:	; read from memory (/ or LF)
+	LD	HL,(MPTOPN)	; HL/ default address
+	BIT	mpsVAL,(IXpg MPSTAT); cehck for explicit value
+	CALL	NZ,mptARG	; HL/ location to examine
+mptEX1:	SET	mpsOPN,(IXpg MPSTAT); location is open
+	LD	(MPTOPN),HL	; MPTOPN/ open location
+	LD	B,(HL)		; C/ contents of location
+	RES	mpsVAL,(IXpg MPSTAT); no value specified
+	msg	'    \B    ',0	; print contents
+	RET
+mptEXN:	; deposit, examine next (LF)
+	CALL	mptDEP		; deposit (if location open)
+	LD	HL,(MPTOPN)
+	INC	HL		; next
+	msg	13,'\H\L/',0	; display address of next location
+	JR	mptEX1		; and display its contents
+mptDOT:	; dot
+	LD	HL,(MPTOPN)
+	LD	(MPTVAL),HL
+	SET	mpsVAL,(IXpg MPSTAT)
+	RET
+mptEQU:	; equals
+	CALL	mptARG
+	msg	'\H\L    ',0
+	RET
+mpTTYG:	; execute subroutine
+	LD	HL,RESMAN	; in case no value
+	BIT	mpsVAL,(IXpg MPSTAT)
+	CALL	NZ,mptARG	; get value if one was given
+	JP	(HL)		; go!
+mpTTYM: ; print contents of audio matrix (HL)
+	CALL	mptARG
+	msg	'    matrix[\L]',13,0
+	PUSH	IY
+	PUSH	HL
+	POP	BC
+	LD	IY,CCB0
+	LD	D,abNC
+mpTT1S: LD	A,abNC
+	SUB	D
+	CALL	amGETR
+	msg	'  [\A]=\H\L  ',0
+	INC	A
+	AND	3		; modulo 4 = 0?
+	CALL	Z,PCRLF
+	CALL	LINKIY
+	DEC	D
+	JR	NZ,mpTT1S
+	CALL	PCRLF
+	POP	IY
+	RET
+
+MPTESC:	LD	A,'$'
+	CALL	PCHR
+	SET	mpsESC,(IXpg mpSTAT); escape seen
+	RET
+>
+	
+LISTING SUBTTL 	buffer stuff called by command stuff in MAIN
+
+CLRBUF: ; clear command buffer
+	DI				;-
+	LD	L,(IY+ccBUF)		;- get address of buffer
+	LD	H,(IY+ccBUF+1)		;-
+	LD	(HL),0			;- always null at end of buffer
+	LD	(IY+ccBUFC),BUFSIZ-1	;- clear buffer
+	LD	(IY+ccBUFP),L		;- update pointer
+	LD	(IY+ccBUFP+1),H		;-
+	RES	ccSVCF,(IY+ccSTS)	;- reset service request flag
+	EI				;-
+	RET
+
+LOPBUF: ; remove first character from command buffer
+	DI				;-
+	LD	E,(IY+ccBUF)		;-get address of buffer
+	LD	D,(IY+ccBUF+1)		;-
+	LD	L,(IY+ccBUFP)		;-
+	LD	H,(IY+ccBUFP+1)		;-
+	LD	A,E			;-check for buffer empty
+	CP	L			;-
+	JR	Z,LOPBU1		;-don't lop an empty buffer!
+	DEC	HL			;-
+	LD	(IY+ccBUFP),L		;-update pointer
+	LD	(IY+ccBUFP+1),H		;-
+	XOR	A			;-CY/ 0
+	SBC	HL,DE			;-HL/ count - 1
+	INC	HL			;-HL/ count
+	INC	HL			;-HL/ count + 1
+	LD	C,L			;-
+	LD	B,H			;-
+	LD	L,E			;-
+	LD	H,D			;-
+	INC	HL			;-
+	LDIR				;-
+	INC	(IY+ccBUFC)		;-lop a character
+LOPBU1:	EI				;-
+	RET
+
+LISTING SUBTTL 	prefix command handler routines
+
+PPFX:	BIT	cdPRIM,(IY+ccDEF)
+	JP	Z,CCSOFF	; wrong prefix
+	JR	SETPFX
+
+LPFX:	BIT	cdPRIM,(IY+ccDEF)
+	JP	NZ,CCSOFF	; wrong prefix
+	JR	SETPFX
+
+SETPFX: ; set prefix bit, etc
+	BIT	scOPEN,(IXpg SYSCTL)
+ife DTSHUT <
+	JP	Z,CCSOFF	; no dialtone if shut
+>
+ifn DTSHUT <
+	JR	Z,SPFX0		; no commands if shut
+>
+	SET	ccPFX,(IY+ccSTS); say we saw a prefix
+	LD	A,(IY+ccCHNO)
+	LD	BC,amMUTE
+	LD	HL,$FFFF
+	CALL	amPUTC		; mute our listeners
+	CALL	amUPD
+	LD	A,(IY+ccOTIM)	; is there an operator?
+	AND	A
+	JR	NZ,SPFX1	; yes, normal dialtone
+SPFX0:	LD	(IY+ccDTHT),timDTH/100; set short dialtone time
+SPFX1:	SET	ccDTON,(IY+ccSTS); turn on dialtone
+	LD	(IY+ccPFHT),timPFH/100
+	RET
+
+LISTING SUBTTL 	special pseudo commands and stuff
+
+STAR:	; no-op function with no function complete
+	CALL	SETPFX
+	JR	NOFC
+BAR:	; call on #
+PFXTO:	; call on prefix time out
+	CALL	CCSOFF
+NOFC:	; call for no function complete
+	RES	stSKIP,(IXpg STATE)
+	RET
+
+LISTING SUBTTL 	telemetry stuff
+
+TLSVC:	; here when telemetry required flag is seen
+	RES	ccTLF,(IY+ccSTS); clear telemetry needed flag
+	BIT	ccCOS,(IY+ccSTS); check which edge
+	JR	Z,BACKB 	; falling edge, do back burst
+
+;	front burst - heard when a telemetry channel asserts COS
+;
+	BIT	cdTMTR,(IY+ccDEF); telemetry on this channel?
+	RET	Z
+	LD	A,(IY+ccFTPT)	; see if protected
+	AND	A
+	RET	NZ		; ignore if so
+	LD	A,(IY+ccCHNO)	; channel
+	LD	BC,amXPNT	; crosspoints
+	CALL	amGETC		; see who hears this channel
+	LD	E,(IY+ccCOSB+0)	; eliminate ourself!
+	LD	D,(IY+ccCOSB+1)
+	CALL	TDZ		; clear masked bit
+	LD	A,H		; anyone listening?
+	OR	L
+	RET	Z		; don't do this if no audience
+	CALL	MORMSK		; let them hear back burst
+	mrs	'~<',0		; wait and enter touch tone mode
+	LD	A,(IY+ccCHNO)
+	CALL	T1HEX		; channel number as first boop
+	LD	A,(IY+ccFREQ)
+	CALL	T1HEX		; second boop is frequency
+	CALL	MORSER		; enough of that
+	LD	(IY+ccFTPT),timFTP/100; set protect time
+	RET
+
+;	back burst - heard after channel asserts PTT on a telemetry channel
+;
+BACKB:	LD	A,(IY+ccRTPT)	; see if protected
+	AND	A
+	RET	NZ		; ignore if so
+	LD	(IY+ccRTPT),timRTP/100; set protect time
+	LD	A,(IY+ccCHNO)
+	LD	BC,amXPNT
+	CALL	amGETC
+	LD	E,(IY+ccCOSB+0)	; eliminate ourself!
+	LD	D,(IY+ccCOSB+1)
+	CALL	TDZ		; clear masked bit
+	LD	C,A		; save channel no for BACKB2
+	LD	B,15		; channel number-9
+BACKB1: ADD	HL,HL		; shift high bit into CY
+	CALL	C,BACKB2	; handle TX
+	DJNZ	BACKB1
+	JP	MORSER		; reset and return
+BACKB2: PUSH	AF
+	LD	A,B		; A/ channel no
+	CALL	CHANIY		; get ^CCB
+	LD	A,C		; get channel we are booping to
+	BIT	cdTMTR,(IY+ccDEF); only boop after xmit to telemetry
+	JR	Z,BACKB3
+	CALL	MORSCH		; set channel command
+	mrs	'~<',0		; wait and enter touch tone mode
+	LD	A,B
+	CALL	T1HEX		; channel number as only boop
+BACKB3: POP	AF
+	RET
+
+LISTING SUBTTL 	channel control commands
+
+define	chc (X,Y) <
+	CALL	CHCTLI
+	for W in <Y>
+	<	db ai"W"RX
+		dw o"W""X >
+	db $FF >
+CHCTL1: LD	A,(DE)
+	INC	DE
+	CP	L		; match?
+	JR	Z,CHCTL3	; normal return
+	CP	$FF		; end?
+	JP	Z,cmdERR	; set error and return
+	INC	DE
+	INC	DE
+	JR	CHCTL1
+CHCTL3: EX	DE,HL
+	LD	B,(HL)		; get data byte
+	INC	HL
+	LD	C,(HL)		; get port
+	OR	$FF		; clear Z - no error
+	RET
+CHCTLI: POP	DE		; get address of string
+	scan	bbHb		; get channel in L
+	CALL	CHCTL1		; B/ bits C/ port L/ on-off
+	RET	Z		; error return
+	scan	bbbH		; get on/off
+	LD	A,L
+	CP	2		; see if in range
+	JP	GE,cmdERR	; error return
+	LD	A,B
+	ADD	L		; add in on/off bit
+	OUT	(C),A		; do it
+	RET
+
+;	SETFRQ
+; call with L/ freq [0:4]  IY/ ^CCB
+SETFRQ: LD	A,L
+	CP	5		; see if freq in range
+	JP	GE,SETFR0	; error return
+	LD	A,(IY+ccCHNO)
+for W in <44,2M,6M,INT>
+<	CP	ai"W"RX
+	LD	BC,o"W"F1b*512+o"W"F1p	;; B/ bits C/ port
+	JR	Z,SETFR1 >
+SETFR0:	; error
+	SCF			; CY/ 1 - error
+	RET
+SETFR1: LD	A,B
+	OUT	(C),A		; turn off F1
+	ADD	2
+	OUT	(C),A		; turn off F2
+	ADD	2
+	OUT	(C),A		; turn off F3
+	ADD	2
+	OUT	(C),A		; turn off F4
+	LD	A,L		; get frequency [0:4]
+	LD	(IY+ccFREQ),A	; save frequency in CCB
+	ADD	L		; double it
+	RET	Z		; if frequency is 0 - leave them all off
+	ADD	B		; add in frequency offset [2:8]
+	DEC	A		; A/ C+2*L-1
+	OUT	(C),A		; turn on selected frequency
+	XOR	A		; CY/ 0 - no error
+	RET
+
+cmd75X:	; antenna switch
+	chc ANT,<SP,LN,LS,44,2M,6M>
+cmd76X:	; loose squelch
+	chc LOOS,<SP,NP,LN,LS,44,2M,6M>
+cmd77X:	; channel guard decoder
+	chc CGD,<SP,NP,LN,LS,44,2M,6M>
+cmd78X:	; channel guard encoder
+	chc CGE,<SP,NP,LN,LS,44,2M,6M>
+cmd79X:	; set hang time
+	chc HANG,<SP,NP,LN,LS>
+cmd7AX:	; set high/low power
+	chc POW,<NP>
+
+LISTING SUBTTL 	phone patch primatives
+
+ppRLS:	; release patch and clean up (may call from int level)
+	PUSH	IY
+	PUSH	BC
+	PUSH	AF
+	LD	IY,(PPIY)
+	XOR	A
+	LD	(PPDTIM),A	; disable time outs
+	LD	(PPWTIM),A
+	LD	(RINGTO),A
+	LD	A,oFEEPb*2+0	; stop WCT ringing (if any)
+	OUT	(oFEEPp),A
+	LD	A,aiTELRX
+	LD	HL,$0000
+	LD	BC,amXPNT	; clear crosspoints
+	CALL	amPUTC		; all listen paths
+	CALL	amPUTR		; all talk paths
+	LD	BC,amMIXM	; clear mix mode
+	CALL	amPUTC		; all listen paths
+	CALL	amPUTR		; all talk paths
+	LD	A,(IY+ccCHNO)
+	LD	BC,amTELM	; unmute
+	CALL	amPUTC		; all listen paths
+	CALL	amPUTR		; all talk paths
+	CALL	amUPD
+	LD	A,oTELRb*2+0	; release phone line
+	OUT	(oTELRp),A
+	POP	AF
+	POP	BC
+	POP	IY
+	RET
+
+ppDIAL: ; place call to number in NUMBUF
+msg '[ppDIAL: ',0
+LD HL,TELBUF
+CALL PMSG
+msg ']',13,0
+	CALL	CCSOFF		; turn off dialtone
+	CALL	TOLL		; CY _ 1 if toll call
+	CALL	C,BMCHEK	; pop return if no privs
+	LD	A,(ppWTIM)	; in use if waiting for dialing or...
+	OR	(IXpg ppDTIM)	; disconnect timer running
+	JR	Z,ppDIA1
+	CALL	ppRLS		; get rid of old call
+	LD	A,25
+	CALL	ppWAIT		; wait for CO to hang up
+ppDIA1:	LD	A,oTELRb*2+1	; sieze phone line
+	OUT	(oTELRp),A
+ppDIA2:	LD	A,1		; wait 100 mS
+	CALL	ppWAIT
+	IN	A,(iDTDp)
+	AND	iDTDm		; if no dialtone present ...
+	JR	Z,ppDIA2	; ... try again
+	LD	A,1
+	CALL	ppWAIT
+	IN	A,(iDTDp)
+	AND	iDTDm		; check again to be safe
+	JR	Z,ppDIA2
+	CALL	TPARSE		; parse phone number, result in CMDBUF
+	LD	A,aoTELTX
+	CALL	MORSCH		; output to phone patch
+	mrs	'<',0
+	LD	HL,CMDBUF	; send telephone number from buffer
+	CALL	MORSE
+	CALL	MORSER		; reset tone generator
+	LD	A,255
+	CALL	ppWAIT		; wait up to 25 secs for DTMF to complete
+
+ppANS:	; answer phone	( may be called at interrupt level )
+	XOR	A
+	LD	(RINGTO),A	; stop ring timer
+	CALL	ppWAIT		; allows call from interrupt level
+	LD	A,oFEEPb*2+0	; stop WCT ring
+	OUT	(oFEEPp),A
+	LD	A,oTELRb*2+1	; sieze phone line
+	OUT	(oTELRp),A
+	CALL	CCSOFF		; turn off dialtone
+	LD	A,timPDB	; debounce time
+	CALL	ppWAIT		; wait for line to stabalize
+	LD	(IXpg ppDTIM),timPPD; set disconnect timer
+	LD	L,(IY+ccCHNO)	; circuit from us to phone...
+	LD	E,aiTELRX
+	LD	BC,amXPNT	; build circuit...
+	CALL	amSET
+	LD	BC,amMIXM	; mix mode
+	CALL	amSET
+	LD	A,(IY+ccCHNO)
+	LD	BC,amTELM	; mute...
+	LD	HL,$FFFF-(1 shl aiTELRX)-(1 shl aiDTMF)
+	CALL	amPUTC		; listen circuits
+	CALL	amPUTR		; talk circuits
+	CALL	amUPD
+	RET
+
+ppPTTU: ; phone patch PTT up (may call at int level)
+	LD	A,(IY+ccCHNO)
+	LD	BC,amREAL
+	CALL	amGETR		; HL/ contributing inputs
+	dbop	RES,aoDTMF	; don't count tone generator
+	dbop	RES,aoVSP	; don't count voice synthesiser
+	LD	DE,(COSS)	; DE/ COSs active
+	CALL	DAND		; HL/ non-DTMF RXs for our PTT (if any)
+	LD	A,H
+	OR	L
+	RET	Z		; ignore if only the tone generator
+	LD	(IXpg ppDTIM),timPPD; reset disconnect timer
+	RET
+
+ppWAIT: ; queue timer request - return at MAIN level
+	POP	HL		; "return PC"
+	LD	(PPPC),HL
+	LD	(PPIY),IY
+	LD	(ppWTIM),A	; time in 10ths
+	SET	stWAIT,(IXpg STATE)
+	RET
+ppTWAI: ; test wait - called by MAIN
+	LD	A,(ppWTIM)	; this dec at clock level
+	AND	A
+	RET	NZ		; not yet
+	RES	stWAIT,(IXpg STATE)
+	LD	IY,(PPIY)
+	LD	HL,(PPPC)
+	JP	(HL)
+
+LISTING SUBTTL 	phone patch commands
+
+cmd730: ; release phone patch
+	CALL	PPCHEK
+	LD	(PPIY),IY
+	JP	ppRLS
+
+cmd734: ; enable normal ringing
+RINGON: LD	HL,aoSPTXm+aoNPTXm; phone rings on both primaries
+	LD	(RINGCM),HL	; set ring channel mask
+	RET
+
+cmd735: ; disable ringing
+	LD	HL,0
+	LD	(RINGCM),HL	; set mask so no ringing
+	RET
+
+cmd737: ; enable ringing signal for channel
+	LD	HL,(RINGCM)
+	LD	E,(IY+ccCOSB+0)
+	LD	D,(IY+ccCOSB+1)
+	CALL	TDO
+	LD	(RINGCM),HL
+	RET
+
+cmd738: ; disable ringing signal for channel
+	LD	HL,(RINGCM)
+	LD	E,(IY+ccCOSB+0)
+	LD	D,(IY+ccCOSB+1)
+	CALL	TDZ
+	LD	(RINGCM),HL
+	RET
+
+pfxA:	; shortcut to answer phone if its ringing
+	LD	A,(RINGTO)
+	AND	A
+	JR	NZ,cmd73A	; act like 73A if phone ringing
+	BIT	stWCTC,(IXpg STATE)
+	JP	NZ,cmd74A	; act like 74A if WCT ringing
+	RET			; otherwise ignore it
+
+cmd73A: ; answer phone on next ring
+	CALL	PPCHEK		; see if line in use
+	LD	A,(RINGTO)	; check to see if it rang lately
+	AND	A
+	JP	Z,CMDERR
+	JP	ppANS
+
+cmd73B: ; speed call number
+	scan	bbbHH		; get HL/ speed call index
+ppSPED:	CALL	PPCHEK		; check for phone in use
+	LD	DE,SCTSIZ	; size of entry
+	CALL	MULT
+	LD	DE,SCTORG	; speed call table origin
+	ADD	HL,DE		; HL/ address of entry
+	LD	A,(HL)		; get first byte
+	CP	$FF		; assigned?
+	JP	Z,CMDERR	; no - bad index
+	LD	B,10/2		; number of digits divided by 2
+	LD	DE,TELBUF	; destination
+cm73B1:	LD	A,(HL)		; left digit
+	RRA
+	RRA
+	RRA
+	RRA
+	AND	$0F
+	ADD	'0'
+	LD	(DE),A		; store
+	INC	DE
+	LD	A,(HL)		; right digit
+	AND	$0F
+	ADD	'0'
+	LD	(DE),A		; store
+	INC	DE
+	INC	HL
+	DJNZ	cm73B1
+	XOR	A
+	LD	(DE),A		; null at end
+	JP	ppDIAL
+
+cmd73C: ; redial last number dialed
+	CALL	PPCHEK
+	JP	ppDIAL
+
+cmd73D: ; dial specific number
+	CALL	PPCHEK
+	LD	HL,CMDBUF+3
+	LD	DE,TELBUF
+	LD	BC,TELSIZ
+	LDIR			; copy number into buffer
+	JP	ppDIAL
+
+cm73D7:	; dial 7 digit number
+	CALL	PPCHEK
+	scan	bbbDDDbbbb
+	LD	DE,TRT1+6
+	CALL	BITMAP
+	LD	BC,TRT1+2
+	JR	C,cm73D1
+	LD	DE,TRT2+6
+	CALL	BITMAP
+	LD	BC,TRT2+2
+	JP	NC,CMDERR
+cm73D1:	LD	H,B
+	LD	L,C
+	PUSH	HL
+	mrs	ttWORD,174,0	; "AREA" ...
+	LD	B,3
+cm73D2:	LD	A,(HL)
+	INC	HL
+	CALL	V1HEX
+	DJNZ	cm73D2
+	POP	HL
+	LD	DE,TELBUF
+	LD	BC,3
+	LDIR
+	LD	HL,CMDBUF+3
+	LD	DE,TELBUF+3
+	LD	BC,7
+	LDIR
+	JP	ppDIAL
+
+PPCHEK:	PUSH	HL
+	LD	A,(IY+ccCHNO)
+	LD	BC,amLOCK
+	CALL	amGETC		; get lock bits for this channel
+	dbop	BIT,aiTELRX	; check phone bit
+	POP	HL
+	JP	Z,PPCHE1
+	mrs	ttWORD,215,ttWORD,162,ttWORD,220,0	; "SERVICE SHUT OFF"
+	JP	cmdERR
+PPCHE1:	LD	A,(ppWTIM)	; in use if waiting for dialing or...
+	OR	(IXpg ppDTIM)	; disconnect timer running
+	RET	Z		; okay if not in use
+	LD	A,(IY+ccCHNO)	; A/ our channel number
+	PUSH	IY
+	LD	IY,(PPIY)
+	CP	(IY+ccCHNO)	; is it the one who placed the call?
+	POP	IY
+	RET	Z		; okay if the one who placed call
+	PUSH	HL
+	LD	BC,amREAL
+	CALL	amGETC
+	dbop	BIT,aiTELRX	; check for a connection
+	POP	HL
+	RET	NZ		; okay if in the conversation
+SVCBZ:	mrs	ttWORD,215,ttWORD,55,ttWORD,61,0	; "SERVICE BZ"
+	JP	cmdERR
+
+ppSAFE:	; called at interrupt level if (IY) has EST
+	IN	A,(iDTDp)	; check for dialtone
+	AND	iDTDm
+	RET	Z		; all clear
+	LD	A,(IY+ccCHNO)
+	LD	BC,amREAL
+	CALL	amGETC		; get list of circuits from this port
+	dbop	BIT,aiTELRX
+	CALL	NZ,ppRLS	; blow it away!!!
+	RET
+
+LISTING SUBTTL 	TOLL	do toll restriction
+
+TOLL:	; set CY if toll call
+;
+;      data	       result
+;	0+		toll
+;	1+		toll
+;	n11		local
+;	800xxxnnnn	local
+;	aaa5551212	local
+;	aaaxxxnnnn	local	(where aaaxxx is in local prefix table)
+;	else		toll
+;
+	LD	HL,TELBUF
+	LD	DE,CMDBUF
+	LD	BC,TELSIZ
+	LDIR			; copy in CMDBUF so we can SCAN it
+; check for 0+ and 1+
+	scan	D
+	LD	A,L
+	AND	$FE
+	JP	Z,TOLL1R
+; check for n11
+	scan	bDD
+	LD	A,L
+	CP	11
+	JR	Z,TOLL0R
+; check for aaa5551212
+	scan	bbbDDDD
+	XOR	A
+	LD	BC,5551
+	SBC	HL,BC
+	JR	NZ,TOLL0
+	scan	bbbbbbbDDD
+	XOR	A
+	LD	BC,212
+	SBC	HL,BC
+	JR	Z,TOLL0R
+; check for 800+
+TOLL0:	scan	DDD		; HL/ NPA
+	PUSH	HL
+	XOR	A		; CY _ 0
+	LD	BC,800
+	SBC	HL,BC
+	POP	HL
+	JR	Z,TOLL0R
+; check for primary NPA
+	PUSH	HL
+	XOR	A		; CY _ 0
+	LD	BC,(TRT1)
+	SBC	HL,BC
+	POP	HL
+	JR	NZ,TOLL1
+	LD	DE,TRT1+6	; primary area code map
+	JR	TOLL2
+; check for secondary NPA
+TOLL1:	LD	BC,(TRT2)
+	SBC	HL,BC		; is it adjacent area code?
+	JR	NZ,TOLL1R	; bad area code
+	LD	DE,TRT2+6	; secondary area code map
+; check for local NNX within local or alternate NPA
+TOLL2:	scan	bbbDDD		; HL/ NNA
+	CALL	BITMAP		; move bit (HL) from bitmap at (DE) into CY
+	JR	NC,TOLL1R	; local call only if bit set
+TOLL0R: ; call is local
+	XOR	A
+	RET
+TOLL1R: ; call is toll
+	mrs	ttWORD,220,ttWORD,234,ttWORD,174,ttWORD,109,0
+				; "OUT OF AREA CALL"
+	SCF
+	RET
+
+BITMAP:	; move bit (HL) from bitmap at (DE) into CY
+	PUSH	BC
+	PUSH	HL
+	PUSH	DE
+	LD	DE,8
+	CALL	DIVI
+	LD	B,E		; E/ remainder
+	POP	DE
+	ADD	HL,DE		; offset from address of map
+	LD	A,(HL)		; get byte from map
+	INC	B		; adjust off by one
+	RRA			; CY _ bit from NNA map
+	DJNZ	.-1
+	POP	HL
+	POP	BC
+	RET
+
+LISTING SUBTTL 	TPARSE	parse telephone number
+
+TPARSE: ; parse number in TELBUF, result in CMDBUF
+;   remove local area code
+;   translate local directory assistance number
+	LD	HL,TELBUF
+	LD	DE,CMDBUF
+	LD	BC,TELSIZ
+	LDIR			; CMDBUF/ number
+	LD	BC,(LOCTRT)	; BC/ local NPA
+; check for 0+NPA+
+	scan	DDDD		; HL/ NPA in case 0+NPA+
+	XOR	A
+	SBC	HL,BC
+	JR	NZ,TPARS1
+	LD	HL,CMDBUF+4
+	LD	DE,CMDBUF+1
+	LD	BC,8
+	LDIR
+	RET
+; check for NPA+
+TPARS1: scan	DDD		; HL/ NPA
+	XOR	A
+	SBC	HL,BC
+	RET	NZ
+	LD	HL,CMDBUF+3
+	LD	DE,CMDBUF
+	LD	BC,8
+	LDIR
+; check for NPA+555-1212
+	scan	DDDD
+	XOR	A
+	LD	BC,5551
+	SBC	HL,BC
+	RET	NZ
+	scan	bbbbDDD
+	XOR	A
+	LD	BC,212
+	SBC	HL,BC
+	RET	NZ
+	LD	HL,LOC411
+	LD	DE,CMDBUF
+	LD	BC,4
+	LDIR
+	RET
+LOC411: db '411',0
+
+BMCHEK: ; check criteria for B mode
+	LD	A,'B'
+PRVCHK:	; check for privs at least = (A)
+	LD	B,A
+	LD	A,(cmdPRV)	; get out prvs
+	CP	B		; check against desired
+	RET	P
+	JP	cmdERR
+
+LISTING SUBTTL 	handle NMI
+
+NMISVC: EX	AF,AF'
+	LD	A,oLAMP0b*2+0
+	OUT	(oLAMP0p),A
+	EXX
+; check return PC to see if we wondered off into space
+	POP	AF		; get high order PC in A
+	PUSH	AF
+	CP	HB(ROMEND)+1	; is PC in ROM?
+	JP	NC,resPCB	; crash!
+; check on 10mS process
+	DEC	(IXpg kaCTC2)	; CTC2 alive?
+	JP	Z,resKA2
+; update real time and up time
+	CALL	TIMUPD
+; restore and dismis
+	EXX
+	LD	A,oLAMP0b*2+1
+	OUT	(oLAMP0p),A
+	EX	AF,AF'
+ife DEBUG,<RETN>
+ifn DEBUG,<RET>
+
+TIMUPD: ; update real time clock
+; tic
+	LD	A,(DAYTIM+0)
+	INC	A
+	RET	Z		; $FF means time not set
+	LD	(DAYTIM+0),A	; inc tics
+	SUB	60
+	RET	NZ
+; second
+	LD	(DAYTIM+0),A	; zero tics
+	CALL	RUNLED		; flash run light
+	CALL	UPTUPD		; update uptime
+	LD	A,(DAYTIM+1)
+	INC	A
+	LD	(DAYTIM+1),A	; inc secs
+	SUB	60
+	RET	NZ
+; minute
+	LD	(DAYTIM+1),A	; zero secs
+	LD	A,(DAYTIM+2)
+	INC	A
+	LD	(DAYTIM+2),A	; inc mins
+	SUB	60
+	RET	NZ
+; hour
+	LD	(DAYTIM+2),A	; zero mins
+	LD	A,(DAYTIM+3)
+	INC	A
+	LD	(DAYTIM+3),A	; inc hrs
+	SUB	24
+	RET	NZ
+; day
+	LD	(DAYTIM+3),A	; zero hrs
+	LD	A,(DAYTIM+4)
+	INC	A
+	LD	(DAYTIM+4),A	; inc day
+	LD	HL,MONTAB-1
+	LD	D,0
+	LD	E,(IXpg DAYTIM+5)
+	ADD	HL,DE
+	SUB	(HL)
+	CP	1
+	RET	NZ
+; month
+	LD	(DAYTIM+4),A	; one day
+	LD	A,(DAYTIM+5)
+	INC	A
+	LD	(DAYTIM+5),A	; inc mon
+	SUB	12
+	CP	1
+	RET	NZ
+; year
+	LD	(DAYTIM+5),A	; one mon
+	LD	A,(DAYTIM+6)
+	INC	A
+	LD	(DAYTIM+6),A	; inc year
+	RET
+
+;		jan feb mar apr may jun jul aug sep oct nov dec
+MONTAB: db	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+
+UPTUPD: LD	A,(UPTIME+0)	; seconds
+	INC	A
+	LD	(UPTIME+0),A
+	SUB	60
+	RET	NZ
+	LD	(UPTIME+0),A
+	LD	A,(UPTIME+1)	; minutes
+	INC	A
+	LD	(UPTIME+1),A
+	SUB	60
+	RET	NZ
+	LD	(UPTIME+1),A
+	LD	A,(UPTIME+2)	; hours
+	INC	A
+	LD	(UPTIME+2),A
+	SUB	24
+	RET	NZ
+	LD	(UPTIME+2),A
+	LD	A,(UPTIME+3)	; days
+	INC	A
+	LD	(UPTIME+3),A
+	RET
+
+RUNLED: LD	A,(DAYTIM+1)
+	AND	1
+	ADD	oLAMP7b*2
+	OUT	(oLAMP7p),A
+	RET
+
+LISTING SUBTTL 	CTC interrupt handlers
+
+; CTCSV0 comes every 1 mS if DEBUG
+;
+CTCSV0:
+ife DEBUG <
+	JP	RESCTC
+>
+ifn DEBUG <
+	EI
+	PUSH	AF
+	LD	A,oLAMP0b*2+0
+	OUT	(oLAMP0p),A
+	LD	A,(NMIMS)
+	INC	A
+	CP	17
+	JR	Z,CTCS0A
+	CP	34
+	JR	Z,CTCS0A
+	CP	50
+	JR	NZ,CTCS0B
+	XOR	A
+CTCS0A: CALL	NMISVC
+CTCS0B: LD	(NMIMS),A
+	LD	A,oLAMP0b*2+1
+	OUT	(oLAMP0p),A
+	POP	AF
+	RETI
+>
+
+; CTCSV2 comes every 10 mS for things that need polling
+;
+CTCSV2: EI
+	PUSH	AF
+	LD	A,oLAMP2b*2+0
+	OUT	(oLAMP2p),A	; lamp on
+	LD	(IXpg kaCTC2),-1; pacify soft keep alive
+	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	PUSH	IY
+; handle soft keep alive functions
+	LD	HL,10		; stack offset of return PC
+	ADD	HL,SP		; off stack
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)		; DE/ return PC
+	LD	(CTC2PC),DE	; save PC for DDT
+	LD	A,D		; A/ return PC page
+	CP	hb(ROMEND)+1	; get page of highest program ROM
+	JP	C,CTCOK2	; yes, handle interrupt
+	DEC	HL		; point to low byte
+	LD	SP,HL		; adjust stack pointer for crash code
+	JP	resPCB		; crash, PC out of bounds, (SP)/ PC
+CTCOK2:	DEC	(IXpg kaMAIN)	; MAIN alive?
+	JP	Z,resKAM	; no, crash MAIN process failure
+	DEC	(IXpg kaCTC3)	; CTC3 alive?
+	JP	Z,resKA3	; no, crash CTC3 process failure
+	LD	A,(SOVTST)	; stack overflow?
+	AND	A		; check reserved location for zero
+	JP	NZ,resSOV	; no, stack overflow
+	LD	A,(MEMTST)	; memory clobbered?
+	AND	A		; check reserved location for zero
+	JP	NZ,resMEM	; no, memory clobber
+; pacify hard keep alive if all things seem okay
+	LD	A,kaMAGIC	; special magic byte
+	OUT	(KA),A		; to special magic port
+; poll touch tone receiver
+	DEC	(IXpg T100MS)	; 100 mS timer
+	CALL	Z,S100MS	; (on 0) time for 100 mS routine
+	CALL	S10MS		; (always) time for 10 mS routine
+; restore and dismis
+	POP	IY
+	POP	HL
+	POP	DE
+	POP	BC
+	LD	A,oLAMP2b*2+1
+	OUT	(oLAMP2p),A	; lamp off
+	POP	AF
+	RETI
+
+; CTCSV3 comes as needed for things that need output
+;
+CTCSV3:	EI
+	LD	(IXpg kaCTC3),-1; pacify soft keep alive
+	PUSH	AF
+	LD	A,oLAMP3b*2+0
+	OUT	(oLAMP3p),A	; lamp on
+	CALL	agSVC		; context switch to AG
+	LD	A,oLAMP3b*2+1
+	OUT	(oLAMP3p),A	; lamp off
+	POP	AF
+	RETI
+
+
+LISTING SUBTTL 	10 S routine: run every 10 seconds
+
+S10S:	; interrupt level code to queue M10S at main level
+	LD	A,100		; number of 100 mS tics in a 10 S tic
+	LD	(T10S),A
+	SET	stM10S,(IXpg STATE); queue 10 sec stuff in MAIN
+	RET
+
+M10S:	; main level every 10 seconds code
+	RES	stM10S,(IXpg STATE); clear request
+	CALL	UPDALM		; update alarms to see if any to ring
+	CALL	UPDRNG		; update phone ringing timer
+	CALL	UPDPPD		; update phone patch disconnect timer
+	CALL	WCT10S		; handle 10 seconds stuff for WCT
+	LD	IY,CCB0 	; address of first CCB
+	LD	B,abNC		; number of CCBs
+M10S1:	CALL	UPDIDP		; update id protect time
+	CALL	UPDOID		; update OID timer
+	CALL	LINKIY		; follow link to next CCB
+	DJNZ	M10S1
+	RET
+
+UPDRNG: LD	A,(RINGTO)	; check for non-zero value
+	AND	A
+	RET	Z		; timer not running
+	DEC	A
+	LD	(RINGTO),A
+	CALL	Z,ppRLS 	; if reached zero, time out
+	RET
+
+UPDPPD: LD	A,(ppDTIM)
+	AND	A
+	RET	Z		; phone not in use
+	LD	IY,CCBADR(aoTELTX)
+	BIT	ccPTT,(IY+ccSTS)
+	JR	NZ,UPDPP1	; PTT - don't time out
+	DEC	(IXpg ppDTIM)
+	CALL	Z,ppRLS
+	LD	A,(IXpg ppDTIM)
+	CP	3
+	JR	NZ,UPDPP1	; check for 30 second mark
+	; thirty seconds to call time out
+	mrs	ttWORD,44,ttWORD,72,ttWORD,177,ttWORD,46
+	 db	ttWORD,109,ttWORD,104,ttWORD,220,0
+UPDPP1: mrs	'|',ttRESET,0	; must be last
+	RET
+
+UPDIDP: LD	A,(IY+ccIDPT)	; get ID protect time
+	AND	A		; is it 0?
+	RET	Z
+	LD	C,(IY+ccCHNO)
+	DEC	(IY+ccIDPT)	; one less quantum
+	RET
+
+LISTING SUBTTL 100mS routine: handle time outs
+
+S100MS: LD	A,10		; number of 10 mS tics in a 100 mS tic
+	LD	(T100MS),A
+	DEC	(IXpg T10S)	; update 10 S clock
+	CALL	Z,S10S		; run 10 S routine if its that time
+	LD	IY,CCB0 	; start with channel 0
+	LD	B,abNC		; number of channels
+S100M1: CALL	TXS100		; check transmit setup time
+	CALL	DPT100		; check duplex protect time
+	CALL	FTP100		; forward telemetry protect time
+	CALL	RTP100		; reverse telemetry protect time
+	CALL	PFH100		; check prefix hold time
+	CALL	DTH100		; check dial tone hold time
+	CALL	LINKIY		; follow link to next CCB
+	DJNZ	S100M1		; see if any more to do
+	CALL	PPW100		; handle ppWAIT requests
+	RET
+
+PPW100: ; handle requests for ppWAIT
+	LD	A,(ppWTIM)
+	AND	A
+	RET	Z		; don't dec past 0
+	DEC	A
+	LD	(ppWTIM),A
+	RET
+
+TXS100: ; transmitter setup time 1/100mS routine
+	BIT	ccPTT,(IY+ccSTS); only if we have a PTT
+	RET	Z
+	LD	A,(IY+ccTXS)	; check for transmitter setup time
+	AND	A
+	RET	Z		; don't make it negative
+	DEC	(IY+ccTXS)	; update setup timer
+	RET
+
+DPT100: ; duplex protect time 1/100mS routine
+	LD	A,(IY+ccDPT)	; check for duplex protect time
+	AND	A
+	RET	Z		; don't make it negative
+	DEC	(IY+ccDPT)	; update duplex timer
+	RET
+
+FTP100: ; forward telemetry protect 1/100mS routine
+	LD	A,(IY+ccFTPT)	; check for telemetry protect time
+	AND	A
+	RET	Z		; don't make it negative
+	DEC	(IY+ccFTPT)	; update timer
+	RET
+
+RTP100: ; forward telemetry protect 1/100mS routine
+	LD	A,(IY+ccRTPT)	; check for telemetry protect time
+	AND	A
+	RET	Z		; don't make it negative
+	DEC	(IY+ccRTPT)	; update timer
+	RET
+
+DTH100: ; dial tone hold time 1/100mS routine
+	LD	A,(IY+ccDTHT)	; get hold time
+	AND	A
+	RET	Z		; no hold time
+	SET	ccDTON,(IY+ccSTS); say there is dialtone
+	DEC	A		; update it
+	LD	(IY+ccDTHT),A	; set value
+	AND	3		; ever every 400 mS, make go off
+	RET	NZ		; not 0
+	RES	ccDTON,(IY+ccSTS); turn off dialtone at X mod 4 = 0
+	RET
+
+PFH100: ; prefix hold time 1/100mS routine
+	LD	A,(IY+ccPFHT)	; get hold time
+	AND	A
+	RET	Z		; no hold time
+	DEC	(IY+ccPFHT)	; update it
+	RET	NZ		; not at 0 yet
+	LD	A,'.'		; this will turn off dial tone, PFX, etc
+	CALL	CATBUF
+	RET
+
+LISTING SUBTTL 	10mS routine: touch tone receiver poller (multiplexer)
+
+; Called at interrupt level every 10 mS.  In general this routine just
+; detects touch tones and places them in the proper CCB buffer to be
+; processed by MAIN.  It also has the task of checking for PTT changes.
+; Every TimEst*10 mS, if EST and STD are not present, we will rematrix
+; the audio input to the DTMF receiver to watch another channel.  Only
+; those channels with COS will be scanned.  If at any point, an EST is
+; seen, we set Touchtone Receiver Protect Time to TimStd*10 mS to
+; guarentee we will still be around to see STD if it ever comes up.
+; Once STD is seen, the data is converted to ASCII and placed in the
+; ccBUF buffer and ccSVCF is set to indicate the channel needs service.
+
+S10MS:	CALL	POLCOS		; check for a change in COSs
+	CALL	POLPTT		; check for a change in PTTs
+	CALL	WCTSVC		; white courtesy telephone service
+	CALL	POLRNG		; check for ring indicate
+	CALL	POLDTD		; check for dial tone detect
+	CALL	POLALM		; update alarm flags
+; fall in to touch tone receiver scanning
+	LD	IY,(TRIY)
+; check DTMF receiver for data
+	IN	A,(DTMF)	; get DTMF data byte
+	BIT	dtSTD,A 	; strobe?
+	JR	Z,TRNOST	; no strobe
+	AND	dtDATm+dtSTDm	; discard EST
+	BIT	ccSTD,(IY+ccSTS); any change from last poll?
+	RET	NZ		; no change - deffer to next int
+
+; here when STD rising edge is noticed
+	RES	ccDTON,(IY+ccSTS); turn off dialtone
+	LD	(IY+ccDTHT),0	; stop hold timer
+	SET	ccSTD,(IY+ccSTS); indicate that STD has been seen
+	LD	(IY+ccDPT),timDUP/100; set duplex protect timer
+	LD	(IY+ccPFHT),timPFH/100; set prefix hold timer
+	AND	dtDATm		; get just data
+	LD	HL,TT2ASC	; touch tone to ASCII conv table
+	LD	D,0
+	LD	E,A
+	ADD	HL,DE
+	LD	A,(HL)		; get ascii character for TT just recv'd
+	CALL	CATBUF
+	LD	(IXpg TRPT),1	; switch as soon as STD drops
+	RET
+; no STD
+TRNOST: RES	ccSTD,(IY+ccSTS); say there is no strobe
+	BIT	dtEST,A 	; check for early strobe
+	JR	Z,TRNOS1	; no strobe - do next channel
+	LD	(IXpg TRPT),TimStd; wait for STD after EST
+	JP	ppSAFE		; check phone patch safety (and return)
+TRNOS1: DEC	(IXpg TRPT)	; check TouchTone Receive Protect Time
+	RET	NZ		; its not time yet
+; go to next channel
+TRNEXT: LD	B,abNC		; try each channel only once
+TRNEX1: CALL	LINKIY		; get link to next chan to scan
+	BIT	ccCOS,(IY+ccSTS); ignore channels without COS
+	JR	Z,TRNEX3
+	BIT	cdCONT,(IY+ccDEF); scan control channels
+	JR	NZ,TRNEX2
+	BIT	ccPFX,(IY+ccSTS); scan channels with prefix
+	JR	NZ,TRNEX2
+TRNEX3: DJNZ	TRNEX1		; only go through list once
+TRNEX2: LD	A,(IY+ccCOSB)	; patch channel audio to DTMF receiver
+	OUT	(AB+aiDTMF*2),A
+	LD	A,(IY+ccCOSB+1)
+	OUT	(AB+aiDTMF*2+1),A
+	LD	(TRIY),IY	; update saved pointer (HL = IY)
+	LD	(IXpg TRPT),TimEst; wait for EST after audio applied
+	RET
+
+CATBUF: ; concatenate A to channel command buffer
+	PUSH	AF
+	PUSH	HL
+	LD	L,(IY+ccBUFP)	; get pointer to buffer
+	LD	H,(IY+ccBUFP+1)
+	DEC	(IY+ccBUFC)	; dec number of characters left
+	JP	P,TRPOL1	; jump if room left
+	LD	L,(IY+ccBUF)	; get address of buffer
+	LD	H,(IY+ccBUF+1)
+	LD	(IY+ccBUFC),BUFSIZ-1; clear buffer
+	LD	A,'?'		; put ? in buf to cause error
+TRPOL1: LD	(HL),A		; store character received
+	INC	HL
+	LD	(HL),0		; always follow with null
+	LD	(IY+ccBUFP),L	; update pointer
+	LD	(IY+ccBUFP+1),H
+	SET	ccSVCF,(IY+ccSTS); set service request flag
+	POP	HL
+	POP	AF
+	RET
+
+; table to convert DTMF hex output to ascii
+TT2ASC: DB 'D1234567890*#ABC'
+
+LISTING SUBTTL	White Courtesy Telephone - support routines
+
+WCTSVC:	; called at interrupt level every 10 mS
+	LD	IY,CCBADR(aiWCTRX)
+	BIT	ccCOS,(IY+ccSTS)	; check for off hook
+	RET	Z			; not interested if on hook
+	BIT	ccPFX,(IY+ccSTS)	; check for "prefix"
+	RET	Z			; not interested
+	IN	A,(iDIALp)		; get dial status
+	AND	iDIALm			; isolate dial bit
+	ADD	-1			; CY/ dial bit
+	LD	A,(WCTREG)		; get dial shift register
+	RLA				; shift it in
+	LD	(WCTREG),A		; save for next time
+	AND	A			; if all 0 ...
+	JR	Z,WCTDAN		; ... dial at normal
+	AND	3Fh			; only look at last 6 bits
+	CP	07h			; if rising edge ...
+	RET	NZ
+	INC	(IXpg WCTDPC)		; count the dial pulse
+	LD	(IY+ccPFHT),255		; big prefix time limit
+	RES	ccDTON,(IY+ccSTS)	; turn off dialtone
+	RET
+WCTDAN:	; dail at normal position
+	LD	A,(WCTDPC)		; if no dial pulses received ...
+	AND	A
+	RET	Z			; ... don't waste our time
+	LD	(IXpg WCTDPC),0		; clear counter
+	LD	(IY+ccDPT),timDUP/100	; set duplex protect timer
+	CP	10			; if "A" ...
+	JR	NZ,WCTDA0
+	XOR	A			; ... convert "A" to "0"
+WCTDA0:	ADD	'0'			; convert to ascii
+	JP	CATBUF			; append to buffer and request service
+
+WCTFHK:	; off hook
+	LD	(IXpg WCTDPC),0		; clear dial pulse count
+	LD	(IXpg WCTREG),0		; clear receiver shift register
+	LD	A,oFEEPb*2+0		; stop ringing
+	OUT	(oFEEPp),A
+	; check for incomming call
+	LD	A,(RINGTO)		; if phone patch ringing ...
+	AND	A
+	JP	NZ,ppANS		; ... answer phone (and return)
+	; check for call from another port
+	LD	A,aoWCTTX
+	LD	BC,amXPNT
+	CALL	AMGETR			; who has circuits to WCT?
+	dbop	RES,aiWCTRX		; ignore loopback
+	LD	A,H
+	OR	L
+	RET	NZ			; if circuit to WCT then "answer" it
+	; all else fails, give it a dialtone
+	LD	A,(WCTPRV)		; get allowed privs
+	LD	(IY+ccPRV),A
+	CALL	LOGIN			; log it in
+	SET	ccPFX,(IY+ccSTS)	; prefix seen
+	SET	ccDTON,(IY+ccSTS)	; dial tone
+	LD	(IY+ccPFHT),255		; big dial tone time limit
+	RET
+
+WCTNHK:	; on hook
+wctRL1:	RES	ccPFX,(IY+ccSTS)	; turn off prefix
+	RES	ccDTON,(IY+ccSTS)	; turn off dialtone
+	CALL	LOGOUT			; log out and maybe release pp
+	RES	stWCTC,(IXpg STATE)	; stop ringing on primary
+	LD	(IXpg wctOWN),-1	; nobody owns WCT
+	LD	A,oFEEPb*2+0		; shut up (in case)
+	OUT	(oFEEPp),A
+	LD	A,'.'			; fake a time-out
+	CALL	CATBUF
+	LD	A,aiWCTRX
+	LD	HL,0
+	LD	BC,amMIXM		; clear mix mode circuits
+	CALL	amPUTC
+	CALL	amPUTR
+	dbop	SET,aiWCTRX		; loopback WCT audio
+	LD	BC,amXPNT		; take down all WCT circuits
+	CALL	amPUTC
+	CALL	amPUTR
+	JP	amUPD			; update and return
+
+wctRLS:	; release white courtesy telephone
+	PUSH	IY
+	LD	IY,CCBADR(aiWCTRX)
+	CALL	wctRL1
+	POP	IY
+	RET
+
+WCTBLD:	; build circuits for WCT
+	RES	stWCTC,(IXpg STATE)	; stop ringing on primaries
+	LD	BC,amXPNT
+	LD	L,(IY+ccCHNO)
+	LD	(IXpg wctOWN),L		; mark owner
+	LD	E,aiWCTRX
+	CALL	amSET
+	JP	amUPD			; update and return
+	
+WCT10S:	; do 10 seconds interval stuff (called by main every 10 sec)
+	BIT	stWCTC,(IXpg STATE)	; need to announce?
+	RET	Z
+	LD	HL,aoSPTXm+aoNPTXm
+	CALL	MORMSK			; set mask
+	mrs	'~',ttWORD,215,ttWORD,109,ttSETC+aoWCTTX,'~&',ttRESET,0
+	RET
+
+LISTING SUBTTL	White Courtesy Telephone - system commands
+
+cmd74D:	; call WCT
+	BIT	stWCTC,(IXpg STATE)	; if call waiting from WCT ...
+	JR	NZ,cmd74A		; ... pretend we got a 74A command
+	PUSH	IY
+	LD	IY,CCBADR(aiWCTRX)
+	BIT	ccCOS,(IY+ccSTS)	; off hook?
+	POP	IY
+	JP	NZ,SVCBZ		; ... busy
+	LD	A,oFEEPb*2+1		; feep it
+	OUT	(oFEEPp),A
+	CALL	CCSOFF
+	JP	WCTBLD			; build circuits and return
+
+cmd740:	; release WCT
+	LD	A,(wctOWN)
+	CP	(IY+ccCHNO)
+	JP	NZ,CMDERR		; error if not owner
+	JP	wctRLS			; release and return
+
+cmd74A:	; answer WCT call
+	BIT	stWCTC,(IXpg STATE)	; call waiting?
+	JP	Z,CMDERR		; no - turkey!
+	CALL	CCSOFF
+	JP	WCTBLD
+
+cmd741:	; disable all calls
+	LD	(IXpg WCTPRV),'0'
+	RET
+
+cmd742:	; enable local calls
+	LD	(IXpg WCTPRV),'A'
+	RET
+
+cmd743:	; enable toll calls
+	LD	(IXpg WCTPRV),'B'
+	RET
+
+LISTING SUBTTL	White Courtesy Telephone - WCT commands
+
+wct8:	; speed call command
+	scan	bHH
+	JP	ppSPED
+	
+wct9:	; direct dial command - macro expands to "73D"
+	CALL	PPCHEK			; check for in use
+	LD	HL,wct9M
+	LD	B,wct9ML
+wct91:	LD	A,(HL)
+	INC	HL
+	CALL	CATBUF
+	DJNZ	wct91
+	RET
+wct9M:	db	'73D'
+wct9ML	equ	.-wct9M
+
+wct0:	; call from WCT to operator
+	SET	stWCTC,(IXpg STATE)	; announce service call ringing
+	mrs	'~&',0			; ringing signal to pasify user
+	JP	CCSOFF			; finish w/out dialtone
+	
+LISTING SUBTTL AG: Audio Generator process control routines
+
+agTRACE equ 0			; trace AG operations
+ifn agTRACE < printx % agTRACE enabled >
+
+agINI:	; initialize AG process - called by RESET
+	LD	HL,agPDL-12
+	LD	(agSP),HL	; allocate space for registers
+	LD	HL,agIDLE
+	LD	(agPDL-2),HL	; set initial PC
+	LD	A,timAGI	; idle time period
+	CALL	CTC3TC		; init CTC channel 3
+	RET
+
+agIDLE:	; idle loop for AG process
+	CALL	agGETC		; get character from buffer (wait)
+	CALL	agDISP		; dispatch on character
+	JR	agIDLE
+
+agSVC:	; context switch to/from AG process
+	; 1. called by CTCSV3 interrupt to run AG process
+	; 2. called by AG process to dismis until next interrupt
+	PUSH	AF		; save previous process' registers
+	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	PUSH	IY
+	DI
+	LD	HL,(agSP)	; EX SP,(agSP) - context switch
+	LD	(agSP),SP
+	LD	SP,HL
+	EI
+	POP	IY		; restore new process' registers
+	POP	HL
+	POP	DE
+	POP	BC
+	POP	AF
+	RET			; return to new process
+
+
+LISTING SUBTTL AG: get character from buffer
+
+agGETC:	; read one character from agBUF
+	PUSH	BC
+	PUSH	HL
+	LD	HL,(agRBUF)	; HL/ read pointer
+	LD	A,(agWBUF)	; A/ write pointer
+	CP	L		; Z/ buffer empty
+	JR	NZ,agGET2	; char ready - go get it
+ifn agTRACE <
+    msg '-agGETC empty',13,0
+>
+	LD	A,timAGI	; idle period
+	CALL	CTC3TC		; set timer
+agGET1:	CALL	agDTON		; turn on or change dialtone
+	CALL	agSVC		; dismis until next time
+	LD	HL,(agRBUF)	; HL/ read pointer
+	LD	A,(agWBUF)	; A/ write pointer
+	CP	L		; Z/ buffer empty
+	JR	Z,agGET1
+	; character has come in after waiting
+	CALL	NOTON1		; silence generator (might have been DT)
+	CALL	agMAKE		; make circuits
+	LD	HL,(agRBUF)	; get buffer pointer
+agGET2:	LD	A,(HL)		; get character
+	LD	(agCHAR),A	; save character
+ifn agTRACE <
+    msg '-agGETC agCHAR=\A="',0
+    CALL PCHR
+    msg '"',13,0
+>
+	INC	(IXpg agRBUF)	; update read pointer
+	POP	HL
+	POP	BC
+	RET
+
+LISTING SUBTTL AG: dispatch on command or data
+
+agDISP:	; dispatch on character
+	LD	A,(agCHAR)	; get character
+	CP	ttCMDn+1	; is it a command?
+	JP	GE,agDIS1	; not command
+	LD	HL,agDIS0	; command table address
+	LD	E,A
+	LD	D,0
+	ADD	HL,DE		; index
+	ADD	HL,DE
+	LD	E,(HL)		; get address from table
+	INC	HL
+	LD	D,(HL)
+	EX	DE,HL
+ifn agTRACE <
+    msg '-agDISP cmd=\H\L',13,0
+>
+	JP	(HL)		; dispatch to command routine
+agDIS0:	; table of command addresses
+LISTING OFF
+repeat (ttCMDn+1) < dw resAGC >
+LISTING ON
+define AGC (cmd,adr,siz) <
+    org agDIS0+cmd*2
+    dw adr
+    ifnb siz < repeat (siz-1) < dw adr > >
+>
+agc(0,CPOPJ)			; no-op
+agc(ttRESET,agRES)		; reset command
+agc(ttSETC,agSETC,abNC)		; set channel number
+agc(ttSETM,agSETM)		; set channel mask
+agc(ttTEST,agTEST)		; test command
+agc(ttWORD,agWORD)		; speak word command
+	org	agDIS0+ttCMDn*2+2
+agDIS1:
+ife agTRACE <
+    CALL PCHR
+>
+	CP	'['		; begin conference mode
+	JP	Z,agBCM
+	CP	']'		; end conference mode
+	JP	Z,agECM
+	CP	'<'		; begin touch tone mode
+	JP	Z,agBTM
+	CP	'>'		; end touch tone mode (no op if not in mode)
+	RET	Z
+	CP	'{'		; begin voice mode
+	JP	Z,agBVM
+	CP	'}'		; end voice node (no op if not in mode)
+	RET	Z
+	CP	'~'		; is it a special delay character?
+	JP	Z,agDLY
+	CP	'&'		; is it ringing?
+	JP	Z,agRING
+	CP	'%'		; is it alarming?
+	JP	Z,agALRM
+	CP	'|'		; is it a function complete?
+	JP	Z,agFC
+	JP	agCODE
+
+LISTING SUBTTL AG: touch-tone generator
+
+agBTM:	; read touch tone characters from buffer and generate tones
+	;    stop processing characters on '>' or illegal character
+ifn agTRACE <
+    msg '-agBTM',13,0
+>
+	CALL	agWAIT		; wait for interlocks
+agBTM0:	CALL	agGETC		; get next character
+	CALL	PCHR
+	CP	'>'		; end touchtone mode
+	RET	Z
+	LD	HL,ASC2TT	; table to search
+	LD	BC,ASC2TTL	; length of table
+	CPIR			; look for character
+	JP	NZ,agDISP	; leave t-t mode on illegal character
+	LD	A,(agCHAN)	; channel number
+	CP	aiTELRX		; special kludge for telephone
+	LD	A,(tcTTP)	; set touch tone rate
+	JR	NZ,agBTM1	; if telephone...
+	LD	A,telTTP/50+2	; leave time for next digit to start
+	LD	(ppWTIM),A	; set call complete timer
+	LD	A,telTTP	; set telephone touch tone rate
+agBTM1: CALL	CTC3TC
+	LD	C,(HL)		; C/ get tone mask byte from table
+	LD	B,0		; B/ extended bits
+	CALL	agTONE		; start tone
+	CALL	agSVC		; dismis appropriate time
+	CALL	NOTONE		; silence
+	CALL	agSVC		; dismis once again
+	JR	agBTM0
+
+ASC2TT: db	'0',dtC2m+dtR4m
+	db	'1',dtC1m+dtR1m
+	db	'2',dtC2m+dtR1m
+	db	'3',dtC3m+dtR1m
+	db	'4',dtC1m+dtR2m
+	db	'5',dtC2m+dtR2m
+	db	'6',dtC3m+dtR2m
+	db	'7',dtC1m+dtR3m
+	db	'8',dtC2m+dtR3m
+	db	'9',dtC3m+dtR3m
+	db	'A',dtC4m+dtR1m
+	db	'B',dtC4m+dtR2m
+	db	'C',dtC4m+dtR3m
+	db	'D',dtC4m+dtR4m
+	db	'E',dtC3m+dtR4m
+	db	'F',dtC1m+dtR4m
+	db	'#',dtC3m+dtR4m
+	db	'*',dtC1m+dtR4m
+ASC2TTL equ .-ASC2TT
+
+LISTING SUBTTL AG: morse code generator
+
+DITLEN	equ	1		; relative length of "dit"
+DAHLEN	equ	3		; relative length of "dah"
+ESPLEN	equ	1		; relative length of inter-element gap
+CSPLEN	equ	3		; relative length of inter-character gap
+WSPLEN	equ	7		; relative length of inter-word gap
+
+agCODE:	; send morse code character
+ifn agTRACE <
+    msg '-agCODE',13,0
+>
+	PUSH	AF
+	CALL	agWAIT		; get interlocks
+	LD	A,(tcMCP)
+	CALL	CTC3TC		; set morse code rate
+	POP	AF
+	CP	' '		; special case word-space
+	JP	Z,agCOD6
+	LD	HL,MCTAB	; morse code table
+	LD	D,0
+	LD	E,A
+	ADD	HL,DE		; index into table
+	LD	A,(HL)		; get morse code from table
+	LD	BC,(tcMCT)	; get tone parameters
+	LD	D,8		; number of bits in a byte
+agCOD1:	DEC	D		; count bits left
+	RET	Z		; no bits!
+	RLA			; CY/ next bit
+	JR	NC,agCOD1	; throw away through first 1
+agCOD2:	CALL	agTONE		; start tone
+	RLA			; CY/ next element 0=dit,1=dah
+	repeat (DITLEN) <
+	CALL	agSVC >
+	repeat (DAHLEN-DITLEN) <
+	CALL	C,agSVC	>
+	CALL	NOTONE
+	repeat (ESPLEN) <
+	CALL	agSVC >
+	DEC	D
+	JR	NZ,agCOD2	; next element (if any)
+	repeat (CSPLEN-ESPLEN) <
+	CALL	agSVC >
+	RET
+agCOD6:	; word space
+	repeat (WSPLEN-CSPLEN) <
+	CALL	agSVC >
+	RET
+
+LISTING SUBTTL AG: voice generator
+
+agBVM:	; read voice characters from buffer and speak words
+	;    stop processing characters on '}' or illegal character
+ifn agTRACE <
+    msg '-agBVM',13,0
+>
+	CALL	agWAIT		; wait for interlocks
+agBVM1:	CALL	agGETC		; get next character
+	CALL	PCHR
+	CP	'}'
+	RET	Z		; end voice mode '}'
+	CP	' '
+	JR	Z,agBVM1	; ignore blanks
+	CP	'0'
+	JP	LT,agDISP	; leave voice mode if non-alphanum
+	CP	'9'+1
+	JP	LT,agBVM2	; go handle digit
+	CP	'A'
+	JP	LT,agDISP	; leave voice mode if non-alphanum
+	CP	'Z'+1
+	JP	LT,agBVM4	; go handle upper case alpha
+	CP	'a'
+	JP	LT,agDISP	; leave voice mode if non-alphanum
+	CP	'z'+1
+	JP	LT,agBVM3	; go handle lower case alpha
+	JP	agDISP		; leave voice mode if non-alphanum
+agBVM3:	; lower case alpha
+agBVM2:	; digit
+agBVM4:	; upper case alpha
+	LD	E,A		; DE/ ascii character
+	LD	D,0
+	LD	HL,ASC2V	; table to convert to word index
+	ADD	HL,DE		; index into table
+	LD	A,(HL)		; get word index from table
+	CALL	VSPSI		; speak
+	JR	agBVM1
+
+ASC2V	equ .-'0'		; digits 0-9
+db	$24,$29,$2E,$33,$25,$2A,$2F,$34,$26,$2B
+org	ASC2V+'A'		; letters A-Z
+db	$4A,$37,$3E,$44,$4B,$38,$3F,$45,$4C,$39,$40,$46,$4D
+db	$3A,$41,$47,$4E,$3B,$42,$48,$4F,$3C,$43,$49,$50,$3D
+org	ASC2V+'a'		; phonetics ALPHA-ZULU
+db	$51,$54,$56,$53,$52,$55,$57,$58,$7F,$A6,$CC,$59,$80
+db	$A7,$CD,$5A,$81,$A8,$CE,$5B,$82,$A9,$CF,$5C,$83,$AA
+
+agWORD:	; speak a single word
+	CALL	agWAIT		; wait for interlocks
+	CALL	agGETC		; A/ universal word index
+	JP	VSPSI		; speak and return
+
+LISTING SUBTTL TMS5220 Voice Synthesis Processor drivers
+
+VSPSI:	; generate single word   A/ universal word index
+	LD	C,VSP+1		; default port number (FEMALE)
+	CP	35+1		; check sex of word index
+	JP	LT,VSPSI1	; range check says FEMALE
+	SUB	35		; adjust offset for male voice
+	DEC	C		; set port to MALE
+VSPSI1:	LD	H,0		; HL/ word index
+	LD	L,A
+	ADD	HL,HL		; compute word pointer address
+	IN	A,(VSP+vspC)	; read status
+	INC	A		; check for $FF (floating bus?)
+	RET	Z		; no-op if no VSP
+	CALL	NOTON1		; stop tones to prevent ticking
+	CALL	VSPRES		; reset VSP
+	CALL	VSPLDA		; load address for VSM
+	CALL	VSPRBR		; read and branch
+	CALL	VSPSPK		; synthesize
+	RET
+
+VSPRDY: ; wait for VSP ready
+	PUSH	AF
+VSPRD1: IN	A,(VSP+VSPC)	; get VSP hard status bits
+	AND	vssRDY		; check for READY
+	JR	NZ,VSPRD2	; wait for ready
+	LD	A,1		; every mS!!!
+	CALL	CTC3TC
+	CALL	agSVC		; dismis
+	JR	VSPRD1
+VSPRD2:	POP	AF
+	RET
+
+VSPIN:	; input byte from VSP into A
+	CALL	VSPRDY		; wait for ready
+	IN	A,(VSP+VSPD)	; start input from VSP
+	CALL	VSPRDY		; wait for ready
+	IN	A,(VSP+VSPD)	; get data from previous input
+	RET
+
+VSPOUT: ; output byte to VSP from A
+	CALL	VSPRDY		; wait for ready
+	PUSH	AF
+	CALL	FLIPIT		; (ugh)
+	OUT	(C),A		; output byte
+	POP	AF
+	RET
+
+VSPRES: ; reset VSP
+	PUSH	AF
+VSPRE1: LD	A,vpcRES
+	CALL	VSPOUT		; send reset command (or stop frame)
+	CALL	VSPIN		; get VSP status
+	AND	vpsMSK		; mask off defined bits
+	CP	vpsBE+vpsBL	; check for quiescient state
+	JR	NZ,VSPRE1	; wait
+	POP	AF
+	RET
+
+VSPRED: ; read byte from VSM via VSP
+	LD	A,vpcRED
+	CALL	VSPOUT		; send read byte command
+	CALL	VSPIN		; get byte
+	RET
+
+VSPRBR: ; read and branch: load address indirect in VSM
+	PUSH	AF
+	LD	A,vpcRBR
+	CALL	VSPOUT		; send read and branch command
+	POP	AF
+	RET
+
+VSPLDA: ; load address: load VSM address from HL
+	PUSH	AF
+	PUSH	HL
+	PUSH	HL		; allocate space on stack for nibbles
+	CALL	VSPRES		; reset
+	LD	HL,0
+	ADD	HL,SP		; get pointer to low byte of address
+	LD	A,vpcLDA	; load address command
+	RRD			; get low nibble of low byte in rh(A)
+	CALL	VSPOUT		; issue command
+	RRD			; get high nibble of low byte in rh(A)
+	CALL	VSPOUT		; issue command
+	INC	HL		; now point to high byte of address
+	RRD			; get low nibble of high byte in rh(A)
+	CALL	VSPOUT		; issue command
+	RRD			; get high nibble of high byte in rh(A)
+	CALL	VSPOUT		; issue command
+	LD	A,vpcLDA	; load address command
+	CALL	VSPOUT		; highest order nibble gets zero for now
+	POP	HL		; deallocate stack
+	POP	HL
+	POP	AF
+	RET
+
+VSPSPK: ; speak internal from VSM (wait for speech to end)
+	PUSH	AF
+	PUSH	BC
+	LD	A,vpcSPK
+	CALL	VSPOUT		; issue command
+	LD	B,0		; wait only 256 times for TS
+VSPSP1: LD	A,20		; 20 mS clock
+	CALL	CTC3TC		; set timer
+	CALL	agSVC		; dismis
+	CALL	VSPIN		; get VSP ststus
+	AND	vpsTS		; check for Talk Status
+	JR	NZ,VSPSP2	; got it
+	DJNZ	VSPSP1		; no TS yet, dec timer
+	CALL	VSPRES		; reset!
+VSPSP2:	LD	A,20		; 20 mS clock
+	CALL	CTC3TC		; set timer
+	CALL	agSVC		; dismis
+	CALL	VSPIN		; get VSP status
+	AND	vpsTS		; check for Talk Status
+	JR	Z,VSPSP3	; check for done
+	DJNZ	VSPSP2		; TS still, dec timer
+	CALL	VSPRES		; reset!
+VSPSP3:	POP	BC
+	POP	AF
+	RET
+
+FLIPIT: ; reverse order of bits in A (sick)
+	PUSH	BC
+	LD	B,8		; B/ number of bits to flip
+FLIPI1: RRA			; shift bits out right end of A
+	RL	C		; shift into right end of C
+	DJNZ	FLIPI1		; do it for all 8
+	LD	A,C		; A/ bits in reverse order
+	POP	BC
+	RET
+
+LISTING SUBTTL AG: control command routines
+
+agSETC:	; set channel command
+	SUB	ttSETC		; convert to channel number
+	LD	(agCHAN),A	; save it as current
+ifn agTRACE <
+    msg '-agSETC agCHAN=\A',13,0
+>
+	CALL	CHANIY		; IY/ ^CCB for channel
+	LD	A,(ttCHNB+0)	; get current channel bit mask
+	OR	(IY+ccCOSB+0)	; bit mask for channel we are adding
+	LD	(ttCHNB+0),A	; update our bit mask
+	LD	A,(ttCHNB+1)	; again for high order
+	OR	(IY+ccCOSB+1)
+	LD	(ttCHNB+1),A
+	JP	agMAKE		; make circuits and return
+
+agSETM:	; set channel mask command
+	CALL	agGETC		; get low order argument
+	LD	E,A
+	CALL	agGETC		; get high order argument
+	LD	D,A
+	LD	(ttCHNB),DE	; save channel bits
+ifn agTRACE <
+    msg '-agSETM DE=\D\E',13,0
+>
+	LD	IY,CCB0 	; start somewhere
+	LD	B,abNC
+agSEM1: LD	A,(IY+ccCOSB)	; get bit mask
+	AND	E
+	JR	NZ,agSEM2	; a hit!
+	LD	A,(IY+ccCOSB)	; try other half
+	AND	D
+	JR	NZ,agSEM2	; a hit!
+	CALL	LINKIY		; next block
+	DJNZ	agSEM1
+	JP	agCOFF		; turn off all channels and return
+agSEM2: LD	A,(IY+ccCHNO)	; lowest channel number active
+	LD	(agCHAN),A
+	JP	agMAKE		; make circuits and return
+
+agBCM:	; handle begin conference mode command '['
+	; begin sending tones to any channel hearing the current channel
+ifn agTRACE <
+    msg '-agBCM',13,0
+>
+	LD	A,(IY+ccCHNO)	; get current channel number
+	LD	BC,amXPNT
+	CALL	amGETC		; get current listeners
+	LD	A,(IY+ccCOSB+0)	; get low order mask for this channel
+	OR	L		; or with this channels listeners
+	LD	L,A
+	LD	A,(IY+ccCOSB+1) ; get high order mask for this channel
+	OR	H		; or with this channels listeners
+	LD	H,A
+	LD	(TTCHNB),HL	; store it for next time
+	JP	agMAKE		; make circuits and return
+
+agECM:	; handle end conference mode command ']'
+	; stop sending tones to our listeners and only send to us
+ifn agTRACE <
+    msg '-agBCM',13,0
+>
+	LD	L,(IY+ccCOSB+0)	; get low order mask for this channel
+	LD	H,(IY+ccCOSB+1) ; get high order mask for this channel
+	LD	(TTCHNB),HL	; store it for next time
+	JP	agMAKE		; make circuits and return
+
+agRES:	; reset command
+ifn agTRACE <
+    msg '-agRES',13,0
+>
+	LD	A,(agCHAN)	; is it already reset?
+	CP	-1
+	CALL	NZ,PCRLF
+
+agCOFF: ; turn off all channels
+	CALL	NOTONE		; silence generator
+	LD	A,-1		; A/ -1
+	LD	(agCHAN),A	; no current channel
+	LD	HL,0		; no channels on
+	LD	(ttCHNB),HL	; save for future reference
+
+agMAKE:	; make circuits
+	LD	HL,(ttCHNB)	; get channel bits
+	LD	BC,amXPNT
+	LD	A,aoDTMF
+	CALL	amPUTC		; setup DTMF
+	LD	A,aoVSP
+	CALL	amPUTC		; and VSP the same
+	CALL	amUPD		; update reality
+	JP	POLPTT		; update PTTs and return
+
+LISTING SUBTTL AG: special tone generators
+
+agALRM:	; generate alarm tone
+ifn agTRACE <
+    msg '-agALRM',13,0
+>
+	LD	C,KagALT	; alarm tone mask
+	LD	D,KagALP/KagALM	; alarm tone period
+	LD	A,KagALM	; modulation period
+	JR	agCPX
+
+agRING:	; generate ring tone
+ifn agTRACE <
+    msg '-agRING',13,0
+>
+	LD	C,KagRIT	; ring tone mask
+	LD	D,KagRIP/KagRIM	; ring tone period
+	LD	A,KagRIM	; modulation period
+agCPX:	; generate complex tone
+	CALL	CTC3TC		; set timer rate (A)
+	CALL	SETIDF		; SET ID required Flag if port needs ID
+	LD	A,KagCPX	; complex tone extended bits
+agCPX1:	XOR	1		; modulate
+	LD	B,A		; B/ modulated extended bits
+	CALL	agTONE		; generate tone
+	CALL	agSVC		; dismis for a tic
+	DEC	D		; count modulation periods
+	JR	NZ,agCPX1
+	CALL	NOTONE		; turn off tone
+	RET
+
+agTEST:	; handle test tone
+ifn agTRACE <
+    LD A,(tcTEST)
+    msg '-agRING tcTEST=\A',13,0
+>
+	XOR	A		; A/ 0 (256)
+	CALL	CTC3TC		; set period
+	LD	BC,(tcTSTT)	; get tone parameters
+agTES1:	LD	A,(tcTEST)	; get test type
+	CP	2		; single tone
+	CALL	Z,agTST2
+	CP	3		; siren
+	CALL	Z,agTST3
+	CP	9		; full vocabulary test
+	CALL	Z,agTST9
+	CALL	agSVC		; wait appropriate time
+	DEC	(IXpg tcTSTP)	; one less period
+	JR	NZ,agTES1
+	CALL	NOTONE		; end of test, be quiet
+	RET
+agTST2:	; constant tone test
+	LD	BC,(tcTSTT)	; get tone parameters
+	CALL	agTONE
+	RET
+agTST3:	; siren test
+	LD	H,0
+	LD	L,(IXpg tcTSTP)	; get count
+	LD	DE,dtRMm-10	; keep away from channel guards
+	CALL	DIVI		; DE/ timer modulo domain f
+	LD	A,(tcTSTX)	; extended bits
+	OR	dtRMm+dtRMEm	; force max value + enable rate mult
+	SUB	E		; decrease max value to desired tone
+	LD	C,dtC4m 	; mask for 1633 Hz
+	LD	B,A		; extended bits
+	CALL	agTONE		; generate tone
+	RET
+agTST9:	; full vocabulary test
+	LD	A,(tcTSTP)	; get count
+	CP	241+1		; range check
+	JR	C,agTST9a	; in range - go on
+	LD	A,241		; get an in range value 
+	LD	(tcTSTP),A	; make it real
+agTST9a:AND	A		; check other end of range
+	CALL	NZ,VSPSI	; speak if not 0
+	RET
+
+agFC:	; generate function complete
+ifn agTRACE <
+    msg '-agFC',13,0
+>
+	LD	A,KagFCP
+	CALL	CTC3TC		; set FC period
+	LD	BC,KagFCX*256+KagFCT
+	CALL	agTONE		; start FC tone
+	CALL	agSVC		; dismis
+	CALL	NOTONE		; silence
+	JP	agSVC		; dismis and return
+
+agDTON:	; generate dial tones
+	; destroys AF,BC,DE,HL 
+	PUSH	IY
+	LD	BC,KagDTX*256+KagDTT
+	CALL	agTONE		; start dial tone
+	LD	IY,CCB0		; head of list to scan
+	LD	HL,0
+	LD	B,abNC
+agDTO1: BIT	ccDTON,(IY+ccSTS); this channel want dialtone?
+	JR	Z,agDTO2
+	LD	E,(IY+ccCOSB)	; get mask for channel
+	LD	D,(IY+ccCOSB+1)
+	ADD	HL,DE		; "or" in with others
+agDTO2: CALL	LINKIY
+	DJNZ	agDTO1
+	LD	BC,amXPNT
+	LD	A,aoDTMF	; DTMF only
+	CALL	amPUTC
+	CALL	amUPD		; update matrix
+	POP	IY
+	RET
+
+agDLY:	; delay for a '~'
+ifn agTRACE <
+    msg '-agDLY',13,0
+>
+	CALL	agWAIT		; wait for interlocks
+	LD	A,KagDLY	; get delay period
+	CALL	CTC3TC		; set timer
+	JP	agSVC		; dismis and return
+
+LISTING SUBTTL AG: miscelaneous control routines
+
+agWAIT:	; wait for duplex and setup interlocks
+	PUSH	AF
+agWAI1:	LD	A,(IY+ccDPT)	; check duplex protect time
+	OR	(IY+ccTXS)	; check transmitter setup time
+	JR	Z,agWAI2	; all clear
+	LD	A,timAGI
+	CALL	CTC3TC		; set time interval
+	CALL	agSVC		; dismis
+	JR	agWAI1
+agWAI2:	POP	AF
+	RET
+
+LISTING SUBTTL DTMF generator device drivers
+
+agTONE:	; turn on generator  C/ tone mask  B/ extra bits
+	PUSH	AF
+	LD	A,C
+	OUT	(DTMF+dtmfDR),A	; set tone mask
+	LD	A,B
+	OUT	(DTMF+dtmfCR),A	; set extra bits
+	POP	AF
+	RET
+
+NOTONE:	; turn off tone generator by stoping clock (ticking, no pop)
+	PUSH	AF
+	LD	A,dtRMEm+0	; set rate multiplier to 0 to stop tone
+	OUT	(DTMF+dtmfCR),A ; wasn't that easy?
+	POP	AF
+	RET
+
+NOTON1:	; turn off tone generator by clearing mask (no ticking, pop)
+	PUSH	AF
+	LD	A,$FF		; no tones selected
+	OUT	(DTMF+dtmfDR),A	; that was pretty easy too!
+	POP	AF
+	RET
+
+LISTING SUBTTL 	test tone command routines
+
+cmd080:	LD	(IXpg tcTSTP),1	; put an end to the test
+	LD	(IXpg tcTEST),0
+	RET
+
+cmd081: ; generate DTMF 123A456B789C*0#D
+cmd084:	; -6dB not implimented yet
+	mrs	'<123A456B789C*0#D>',0
+	RET
+
+cmd082: ; generate XXXX hertz at 0dB
+	LD	C,dtRMEm	; 0dB
+	JR	cmx083
+cmd085: ; generate XXXX hertz at -6dB
+	LD	C,dtOLSm+dtRMEm	; -6dB
+cmx083:	SCAN	bbbDDDD		; range [281..1631] Hz
+	ADD	HL,HL		; HL _ 2 * f
+	LD	DE,51
+	CALL	DIVI		; HL _ f / 25.5
+	LD	A,L
+	CP	11		; keep freq above channel guards
+	JP	LT,cmdERR
+	AND	$C0		; check for overflow into bits 6-7
+	OR	H		; or bits 8-15
+	JP	NZ,cmdERR
+	LD	A,L		; get multiplier value
+	OR	C		; pickup dtOLD and dtRME
+	LD	(tcTSTX),A	; store value for AG routines
+	LD	(IXpg tcTSTT),dtC4m ; 1633 Hz
+	LD	(IXpg tcTEST),2	; test code
+	JR	cmd08X
+
+cmd083: ; generate 0dB siren
+	LD	(IXpg tcTSTX),0	; 0dB
+	LD	(IXpg tcTEST),3	; test code
+	JR	cmd08x
+cmd086: ; generate -6dB siren
+	LD	(IXpg tcTSTX),dtOLSm ; -6dB
+	LD	(IXpg tcTEST),3	; test code
+	JR	cmd08x
+cmd08X:	; common tail to all 08X commands
+	LD	A,ttTEST
+	JP	MORSEC		; start test and return
+
+cmd08A: ; generate touch tones
+	LD	(IXpg tcTSTX),0	; 0dB
+	JR	cmx08A
+cmd08B: ; generate touch tones -6dB
+	LD	(IXpg tcTSTX),dtOLSm ; -6dB
+cmx08A:	SCAN	bbbH		; HL/ hex value of touch tone
+	LD	DE,HEX2TT	; hex to touch tone table
+	ADD	HL,DE		; index into table
+	LD	A,(HL)		; get bit pattern for DTMF
+	SCAN	bbbbH		; HL/ hex value of other touch tone
+	LD	DE,HEX2TT	; hex to touch tone table
+	ADD	HL,DE		; index into table
+	AND	(HL)		; A/ mask of common tone(s)
+	JP	Z,cmdERR	; error if no common tone(s)
+	LD	(tcTSTT),A	; save as test tone mask
+	LD	(IXpg tcTEST),2	; constant tone test code
+	JR	cmd08X
+
+cmd087: ; generate voice 0123456789ABCDEF
+	mrs	'{0123456789ABCDEF}',0
+	RET
+
+cmd088:	; generate voice word
+	SCAN	bbbDDD		; parse command for word #
+	LD	A,ttWORD	; word follows
+	CALL	MORSEC
+	LD	A,L		; A/ word #
+	CALL	MORSEC
+	RET
+
+cmd089:	; generate whole voice vocabulary
+	LD	(IXpg tcTSTX),0	; no tones
+	LD	(IXpg tcTEST),9	; test code
+	JR	cmd08X
+
+LISTING SUBTTL 	command routines to operate on audio circuit paths
+
+cmd1:	; build monitor circuit
+	SCAN	bH
+	LD	(IY+ccLCHN),L	; save "last" channel number
+c1x:	LD	BC,amXPNT
+	LD	E,(IY+ccCHNO)
+	CALL	amSET1
+	EX	DE,HL
+	CALL	amRES1
+	JP	amUPD		; update (and return)
+
+cmd2:	; build talk circuit
+	SCAN	bH
+	LD	(IY+ccLCHN),L	; save "last" channel number
+c2x:	LD	BC,amXPNT
+	LD	E,(IY+ccCHNO)
+	CALL	amSET
+	JP	amUPD		; update (and return)
+
+cmd31:	; build monitor circuit conversation mode
+	SCAN	bbH
+	LD	(IY+ccLCHN),L	; save "last" channel number
+	LD	BC,amXPNT
+	LD	A,L
+	CALL	amGETR		; everyone they hear...
+	EX	DE,HL
+	LD	A,(IY+ccCHNO)
+	CALL	amGETR
+	CALL	TDO
+	CALL	amPUTR		; we hear.
+	LD	L,(IY+ccLCHN)
+	LD	E,(IY+ccCHNO)
+	CALL	amSET1		; make sure we hear them
+	CALL	amUPD
+	RET
+
+cmd32:	; build talk circuit conversation mode
+	SCAN	bbH
+	LD	(IY+ccLCHN),L	; save "last" channel number
+	LD	BC,amXPNT
+	LD	A,L
+	CALL	amGETR		; everyone they hear...
+	EX	DE,HL
+	LD	A,(IY+ccCHNO)
+	CALL	amGETR
+	CALL	TDO
+	CALL	amPUTR		; we hear.
+	LD	A,(IY+ccLCHN)
+	CALL	amGETC		; everyone who hears them...
+	EX	DE,HL
+	LD	A,(IY+ccCHNO)
+	CALL	amGETC
+	CALL	TDO
+	CALL	amPUTC		; hears us.
+	LD	L,(IY+ccCHNO)
+	LD	E,(IY+ccLCHN)
+	CALL	amSET		; make sure we hear each other
+	JP	amUPD		; update (and return)
+
+cmd4:	; build circuit monitor mix mode
+	SCAN	bH
+	LD	(IY+ccLCHN),L	; save "last" channel number
+	LD	BC,amXPNT
+	LD	E,(IY+ccCHNO)
+	CALL	amSET1
+	EX	DE,HL
+	CALL	amRES1
+	JP	amUPD		; update (and return)
+
+cmd5:	; set frequency for "last" channel
+	LD	A,(IY+ccLCHN)	; get last channel number
+	CALL	CHANIY		; setup ^CCB
+	SCAN	bH		; get frequency index
+	CALL	SETFRQ		; set frequency
+	JP	C,cmdERR	; out of range
+	RET
+
+cmd6:	; zap circuit
+	SCAN	bH
+C6X:	LD	BC,amXPNT
+	LD	E,(IY+ccCHNO)
+	CALL	amRES
+	JP	amUPD		; update (and return)
+
+cmdAX:	; masquerade as somebody
+	SCAN	bH		; get the channel number
+	LD	(IY+ccMASQ),L	; wasn't that easy?
+	RET
+
+LISTING SUBTTL other site commands (macros)
+
+cmd871:	; listen to 2 meters on Spanish Lakes
+	LD	L,aiLSRX
+	CALL	C1X		; monitor circuit to north link
+	LD	A,aoLSTX
+	CALL	MORSCH		; set for tone output to north link
+	mrs	'~~~~<0917~~~~#01',0
+cmd87X:	scan	bbbH
+	LD	A,L
+	CALL	T1HEX
+	JP	MORSER
+
+cmd872:	; talk on 2 meters on Spanish Lakes
+	LD	L,aiLSRX
+	CALL	C2X		; talk circuit to north link
+	LD	A,aoLSTX
+	CALL	MORSCH		; set for tone output to north link
+	mrs	'~~~~<0917~~~~#*9~~#01',0
+	JR	cmd87X
+
+cm8700:	; reset Spanish Lakes
+	LD	L,aiLSRX
+	CALL	C6X		; zap xcircuits
+	LD	A,aoLSTX
+	CALL	MORSCH		; tone out on north link
+	mrs	'~~~~<#090',ttRESET,0
+	RET
+
+cmd831:	; listen to San Benito
+	LD	L,aiLSRX
+	CALL	C1X		; listen
+cmd83X:	LD	A,aoLSTX
+	CALL	MORSCH
+	mrs	'~~~~<09123',ttRESET,0
+	RET
+
+cmd832:	; talk to San Benito
+	LD	L,aiLSRX
+	CALL	C2X		; talk
+	JR	cmd83X
+
+cm8300:	; reset San Benito
+	LD	L,aiLSRX
+	CALL	C6X		; zap
+	LD	A,aoLSTX
+	CALL	MORSCH
+	mrs	'~~~~<0980',ttRESET,0
+	RET
+
+cmd821:	; listen to St John
+	LD	L,aiLNRX
+	CALL	C1X		; listen
+cmd82X:	LD	A,aoLNTX
+	CALL	MORSCH
+	mrs	'~~~~<A290',ttRESET,0
+	RET
+
+cmd822:	; talk to St John
+	LD	L,aiLNRX
+	CALL	C2X		; talk
+	JR	cmd82X
+
+cm8200:	; reset St John
+	LD	L,aiLNRX
+	JP	C6X		; zap
+
+LISTING SUBTTL 	PIN code commands
+
+cmdB:	; activate PIN
+	scan	bHHbb		; HL/ OID (left half of PIN)
+	LD	DE,OIDSIZ
+	CALL	MULT		; HL/ address within OIDTAB
+	LD	DE,OIDORG
+	ADD	HL,DE		; HL/ address of OID entry
+	LD	A,(HL)
+	PUSH	HL
+	scan	bHHHH		; HL/ PIN
+	CP	L		; Z/ PIN okay
+	EX	DE,HL		; D/ OID
+	POP	HL		; HL/ pointer to OID table
+	JP	NZ,cmdERR	; bad PIN!
+	AND	A		; check for 0
+	JP	Z,cmdERR	; probably unused entry
+	INC	A		; check for $FF
+	JP	Z,cmdERR	; likewise, probably unused
+	INC	HL		; next field is PRV
+	LD	A,(HL)
+	BIT	scC9D,(IXpg SYSCTL)
+	JR	Z,cmdB1		; not C9D...
+	CP	'C'
+	JR	Z,cmdB1		; or "C" level user...
+	CP	'D'
+	JP	NZ,cmdERR	; or "D" level user is okay
+cmdB1:	LD	(IY+ccPRV),A	; save our PRV
+	LD	(IY+ccOID),D	; save our OID
+	CALL	LOGIN
+	mrs	'[',ttSETC+aoSPTX,0
+	CALL	FOID		; oid...
+	mrs	ttWORD,143,0	; ... "CONTROL" ...
+	LD	A,(IY+ccCHNO)
+	CALL	V1HEX		; ... channel#
+	JP	MORSER		; reset and return
+
+cmdBE:	; deactivate PIN
+	LD	A,(IY+ccOTIM)	; are privs valid?
+	OR	A
+	JP	Z,CCSOFF	; already logged out
+	CALL	LOGOUT
+	mrs	'[',ttSETC+aoSPTX,0
+	CALL	FOID		; oid ...
+	mrs	ttWORD,143,0	; ... "CONTROL" ...
+	LD	A,(IY+ccCHNO)
+	CALL	V1HEX		; .. channel# ...
+	mrs	ttWORD,220,0	; ... "OUT"
+	JP	CCSOFF		; turn off dialtone and return
+	
+cmd711:	; local voice ID operator normal
+	JP	FOID		; ID and return
+
+cmd714:	; remote ID operator normal
+	mrs	'[',0
+	CALL	cmd711
+	mrs	']',0
+	RET
+
+cmd712:	; local ID operator phonetic
+	JP	FOIDP		; ID and return
+
+cmd715:	; remote ID operator phonetic
+	mrs	'[',0
+	CALL	cmd712
+	mrs	']',0
+	RET
+
+LISTING	SUBTTL	circuit trace commands
+
+cmd717:	; port circuit status
+	LD	A,(IY+ccCHNO)
+	CALL	CIRSTS
+	RET
+
+cmd727:	; port status for another port
+	scan	bbbH
+	LD	A,L
+	JP	CIRSTS		; do status and return
+
+cmd728:	; frequency status for another port
+	scan	bbbH
+	LD	A,L
+	mrs	'~',ttWORD,178,0
+	CALL	V1HEX
+	PUSH	IY
+	CALL	CHANIY
+	LD	A,(IY+ccFREQ)
+	POP	IY
+	AND	A
+	mrs	ttWORD,0BFh,0	; "FREQUENCY" ...
+	JR	NZ,cm719f	; check for no frequency set
+	CALL	VOUTIR
+	 db	100,123,0	; not set
+cm719f:	CALL	V1DEC		; ... # ...
+	RLCA
+	RLCA
+	RLCA
+	RLCA
+	OR	L		; A/ <freq><chan> as hex digits
+	mrs	ttWORD,181,0	; ... "IS" ...
+define	dfreq	(chan,freq,str)
+<
+	CP	freq*$10+chan
+	JR	NZ,DFRQ"freq"chan
+	CALL	VOUTIR
+	 db	str,0
+DFRQ"freq"chan:
+>
+	dfreq(4,1,<37,37,72,47,221,36,133,171>)		; 446.0 MHz
+	dfreq(4,2,<55,64>)				; BK
+	dfreq(4,3,<146>)				; RED
+	dfreq(5,1,<41,37,72,47,221,37,47,133,171>)	; 146.46 MHz
+	dfreq(5,2,<41,37,72,47,221,42,46,133,171>)	; 146.52 MHz
+	dfreq(5,3,<41,37,72,47,221,51,37,72,35,221,43,37,59,133,171>)
+							; 146.34t .94r MHz
+	dfreq(5,4,<41,37,72,47,221,37,43,133,171>)	; 146.49 MHz
+	dfreq(6,1,<49,72,46,221,42,46,42,133,171>)	; 52.525 MHz
+	dfreq(6,2,<49,72,46,221,37,43,36,133,171>)	; 52.490 MHz
+	dfreq(8,2,<220,150>)				; out-door
+	dfreq(8,4,<141,174>)				; machine area
+	CALL	VOUTIR
+	 db	220,234,237,0				; out of range
+
+VOUTIR:	POP	HL
+VOUTI1:	LD	A,(HL)
+	AND	A
+	RET	Z
+	CALL	MORSEW
+	INC	HL
+	JR	VOUTI1
+	
+CIRSTS:	; speak circuit status for port (A)
+	mrs	'~',ttWORD,178,'{',0; "UNIT"
+	CALL	T1HEX
+	PUSH	AF		; save A/ channel number
+	LD	E,0
+	LD	BC,amXPNT
+	CALL	amGETR		; get bits
+	LD	A,H
+	OR	L
+	JR	Z,CIRST1	; no bits, don't say anything
+	mrs	'}',ttWORD,175,ttWORD,229,ttWORD,178,'{',0 ; circuit from unit
+	CALL	CIRSTo		; read bits
+CIRST1:	POP	AF		; restore A/ channel number
+	LD	BC,amXPNT
+	CALL	amGETC		; get bits
+	LD	A,H
+	OR	L
+	JR	Z,CIRSTh	; no bits, don't say anything
+	CALL	CIRSTb		; say AND if appropriate
+	mrs	'}',ttWORD,175,ttWORD,46,ttWORD,178,'{',0 ; circuit to unit
+	CALL	CIRSTo		; read bits
+CIRSTh:	mrs	'}',0
+	RET
+
+CIRSTo:	LD	A,15		; read bits 15 - 0
+	LD	E,0		; bit 0 is flag for a bit has been read
+CIRST3:	ADD	HL,HL		; CY _ bit 15
+	CALL	C,CIRSTa	; say circuit number
+	DEC	A		; dec bit number
+	JP	P,CIRST3	; more bits?
+	RET			; all bits read
+CIRSTa:	PUSH	AF
+	LD	A,H
+	OR	L
+	CALL	Z,CIRSTb	; say AND?
+	POP	AF
+	CALL	T1HEX		; say port number
+	SET	0,E
+	RET
+CIRSTb:	BIT	0,E		; have I given a unit number?
+	RET	Z
+	mrs	'}',ttWORD,208,'{',0
+	RET
+
+LISTING	SUBTTL	voice identification
+
+FOID:	; voice ID operator normal
+	CALL	GETOID		; get ^ OID, Z/ none set
+	RET	Z		; ignore invalid OID
+	mrs	'~{',0
+	LD	B,6		; B/ 6 characters
+FOID1:	LD	A,(HL)		; get character from OID table
+	CALL	MORSEC		; send character
+	INC	HL		; point to next char
+	DJNZ	FOID1
+	mrs	'}',0
+	RET
+
+FOIDP:	; voice ID operator phonetic
+	CALL	GETOID		; get ^ OID, Z/ none set
+	RET	Z		; ignore invalid OID
+	mrs	'~{',0
+	LD	B,6		; B/ 6 characters
+FOIDP1:	LD	A,(HL)		; get character from OID table
+	CP	'A'
+	JP	LT,FOIDP2	; don't translate numbers, etc
+	ADD	32		; translate to lower case (phonetic)
+FOIDP2:	CALL	MORSEC		; send character
+	INC	HL		; point to next char
+	DJNZ	FOIDP1
+	mrs	'}',0
+	RET
+
+GETOID: ; get HL/ ^OID, Z/ oid invalid
+	LD	L,(IY+ccOID)	; get OID
+	LD	H,0
+	LD	DE,8
+	CALL	MULT
+	LD	DE,OIDORG+1
+	ADD	HL,DE		; HL/ pointer to PRV
+	LD	A,(HL)		; A/ PRV
+	INC	HL		; HL/ pointer to OID
+	INC	A		; check for FF - illegal code
+	RET
+
+UPDOID:	; update operator ID timer - called by M10S
+	LD	A,(IY+ccOTIM)	; get OID timer
+	AND	A		; is it 0?
+	RET	Z
+	BIT	ccCOS,(IY+ccSTS); check for current COS
+	RET	NZ
+	DEC	(IY+ccOTIM)	; one less quantum
+	RET	NZ
+	CALL	LOGOUT		; logout port
+	mrs	'[',ttSETC+aoSPTX,0
+	CALL	FOID		; "[oid] CONTROL TIME OUT"
+	mrs	ttWORD,143,ttWORD,104,ttWORD,220,ttRESET,0
+	RET
+
+RSTOID:	; restart OID timer - called by COSUP
+	LD	A,(IY+ccOTIM)	; get current timer
+	AND	A		; is it 0?
+	RET	Z
+	LD	(IY+ccOTIM),timOID; restart timer on COS
+	RET
+	
+LISTING SUBTTL time/date commands
+
+cmd721: ; local time (voice)
+	mrs	'~',0
+	LD	A,(DAYTIM+6)	; if year = 0 then must not be set
+	AND	A
+	JR	NZ,VTIM0
+	mrs	ttWORD,104,ttWORD,100,ttWORD,123,0 ; time not set
+	RET
+VTIM0:	LD	A,31		; good
+	CALL	MORSEW
+	LD	A,(DAYTIM+3)
+	LD	B,32		; morning
+	CP	12
+	JP	LT,VTIM1
+	INC	B		; afternoon
+	CP	18
+	JP	LT,VTIM1
+	INC	B		; evening
+VTIM1:	LD	A,B
+	CALL	MORSEW
+	mrs	ttWORD,35,ttWORD,1,ttWORD,2,ttWORD,3,0; ... the time is
+	LD	A,(DAYTIM+3)
+	CP	1
+	JP	LT,VTIM24
+	CP	13
+	JP	LT,VTIM00
+	JR	VTIM12
+VTIM24: LD	A,24
+VTIM12: SUB	12
+VTIM00: CALL	VTIMN
+	LD	A,(DAYTIM+2)
+	CP	10
+	JP	GE,VTIM2
+	AND	A
+	JR	Z,VTIM2
+	LD	A,6
+	CALL	MORSEW
+	LD	A,(DAYTIM+2)
+VTIM2:	CALL	VTIMN
+	LD	H,0
+	LD	A,(DAYTIM+3)
+	LD	L,A
+	LD	DE,12
+	CALL	DIVI
+	LD	A,L
+	ADD	4
+	CALL	MORSEW
+	RET
+VTIMN:	; speak numbers for time
+	PUSH	AF
+	PUSH	HL
+	CP	20
+	JP	LT,VTIMNT
+	LD	H,0
+	LD	L,A
+	LD	DE,10
+	CALL	DIVI
+	LD	A,L		; tens digit (must be .GE. 2)
+	ADD	25
+	CALL	MORSEW
+	LD	A,E		; units digit
+	AND	A
+	JR	Z,VTIMNX
+VTIMNT: ADD	7
+	CALL	MORSEW
+VTIMNX: POP	HL
+	POP	AF
+	RET
+
+cmd724: ; remote time (voice)
+	LD	A,'['		; send to everyone who hears me
+	CALL	MORSEC
+	CALL	cmd721
+	LD	A,']'		; revert to just me
+	CALL	MORSEC
+	RET
+
+cmd72A: ; local date
+	mrs	'~',0
+	LD	A,(DAYTIM+5)	; month
+	CALL	V1DEC
+	mrs	'  ',0
+	LD	A,(DAYTIM+4)	; day
+	CALL	V1DEC
+	mrs	'  ',0
+	LD	A,(DAYTIM+6)	; year
+	JP	V1DEC		; and return
+
+cmd72B: ; remote date
+	LD	A,'['		; send to everyone who hears me
+	CALL	MORSEC
+	CALL	cmd72A
+	LD	A,']'		; revert to just me
+	JP	MORSEC		; and return
+
+cmd021: ; set date
+	scan	bbbDDbbbb	; get year
+	LD	(IXpg DAYTIM+6),L
+	scan	bbbbbDDbb	; get month
+	LD	(IXpg DAYTIM+5),L
+	scan	bbbbbbbDD	; get day
+	LD	(IXpg DAYTIM+4),L
+	RET
+
+cmd022: ; set time
+	scan	bbbDDbb 	; get hour
+	LD	(IXpg DAYTIM+3),L
+	scan	bbbbbDD 	; get minute
+	LD	(IXpg DAYTIM+2),L
+	LD	(IXpg DAYTIM+1),0
+	LD	(IXpg DAYTIM+0),0
+	RET
+
+cmd023: ; fast/slow set time
+	LD	A,(IXpg DAYTIM+1)
+	LD	(IXpg DAYTIM+1),0
+	LD	(IXpg DAYTIM+0),0
+	CP	30
+	RET	LT
+	LD	(IXpg DAYTIM+1),59
+	LD	(IXpg DAYTIM+0),59
+	RET
+
+LISTING SUBTTL 		ID commands
+
+cmRIDS: ; remote ID short
+	LD	A,'['		; send to everyone who hears me
+	CALL	MORSEC
+	CALL	cmLIDS
+	LD	A,']'		; revert to just me
+	CALL	MORSEC
+	RET
+
+cmLIDS: ; local ID short
+	CALL	CCFID
+	mrs	'~',SIGN,0
+	RET
+
+cmRIDL: ; remote ID long
+	LD	A,'['		; send to everyone who hears me
+	CALL	MORSEC
+	CALL	cmLIDL
+	LD	A,']'		; revert to just me
+	CALL	MORSEC
+	RET
+
+cmLIDL: ; local ID long
+	CALL	CCFID
+	mrs	'~',SIGN,' ',SITE,0
+	RET
+
+cmd014: ; set ID interval for channel
+	SCAN	bbbDD		; get ID interval
+	LD	DE,6
+	CALL	MULT
+	LD	(IY+ccIDI),L	; save ID interval for channel
+	LD	(IY+ccIDPT),0	; ID at once
+	SET	ccIDF,(IY+ccSTS)
+	RET
+
+LISTING SUBTTL 	device control commands
+
+cmdXON: ; turn on frob
+cmdXOF: ; turn off frob
+	SCAN	bbbD		; extract 0 off 1 on
+	SRL	L		; shift B0 into CY
+	SCAN	bDDb		; extract device code from command
+	LD	A,L		; A/ device code
+	RLA			; shift CY into B0
+	CP	2*maxXON+2	; highest legal direct XON port
+	JP	GE,cmdERR	; error if out of range
+	OUT	(OB),A		; do it
+	AND	1		; isolate on/off bit
+	JR	NZ,cmdXO1
+	msg	'[cmdXOFF: device \L]',13,0
+	RET
+cmdXO1: msg	'[cmdXON: device \L]',13,0
+	RET
+
+LISTING SUBTTL 	control commands
+
+cmd09A: ; system master "on"
+	BIT	sc09A,(IXpg SYSCTL)
+	RET	NZ		; already up!
+	CALL	SOPEN
+	LD	HL,aoSPTXm+aoNPTXm+aoLNTXm+aoLSTXm
+	CALL	MORMSK		; set output mask to HL
+	mrs	ttWORD,156,ttWORD,143,ttWORD,119,0; manual ctl open
+	CALL	FOID		; say who did it
+	CALL	MORSER		; reset
+	RET
+
+cmd09C:	; clear all ports and shut system
+	CALL	cmd09D
+	PUSH	IY
+	LD	IY,CCB0
+	LD	B,abNC
+cm109C:	CALL	LOGOUT		; logout everyone
+	CALL	LINKIY
+	DJNZ	cm109C
+	POP	IY
+	CALL	CCSOFF
+	RET
+
+cmd09D: ; system master "off"
+	BIT	sc09A,(IXpg SYSCTL)
+	RET	Z
+	RES	sc09A,(IXpg SYSCTL)
+	CALL	CLOGIN		; count logins
+	LD	HL,aoSPTXm+aoNPTXm+aoLNTXm+aoLSTXm
+	CALL	MORMSK		; set output mask to HL
+	mrs	ttWORD,156,ttWORD,143,ttWORD,162,0; ...manual ctl shut
+	CALL	FOID		; say who did it
+	CALL	MORSER		; reset
+	RET
+
+cmdC1D: ; deactivate channel - mute all circuits
+	LD	A,(IY+ccCHNO)
+	LD	BC,amLOCK
+	LD	HL,$FFFF
+	CALL	amPUTR
+	CALL	amPUTC
+	CALL	amUPD
+	RET
+
+cmdC1A: ; activate channel - unmute it and allow circuits to work
+	LD	A,(IY+ccCHNO)
+	LD	BC,amLOCK
+	LD	HL,$0000
+	CALL	amPUTR
+	CALL	amPUTC
+	CALL	amUPD
+	RET
+
+cmdC2D: ; turn off bit for channel definition
+	LD	A,(IY+ccCHNO)
+	CP	aiSPRX		; never do this to special primary
+	JP	Z,cmdERR
+cmsC2D:	; turn off - safe for SP
+	scan	bbbH
+	LD	DE,BITTAB
+	ADD	HL,DE
+	LD	A,(HL)
+	CPL
+	AND	(IY+ccDEF)	; turn off masked bit
+	LD	(IY+ccDEF),A
+	RET
+
+cmdC2A: ; turn on bit for channel definition
+	LD	A,(IY+ccCHNO)
+	CP	aiSPRX		; never do this to special primary
+	JP	Z,cmdERR
+cmsC2A:	; turn on - safe for SP
+	scan	bbbH
+	LD	DE,BITTAB
+	ADD	HL,DE
+	LD	A,(HL)
+	OR	(IY+ccDEF)	; turn on masked bit
+	LD	(IY+ccDEF),A
+	RET
+
+cmdC3D: ; deactivate crosspoint
+	scan	bbbHb
+	EX	DE,HL
+	scan	bbbbH
+	LD	BC,amLOCK
+	CALL	amSET
+	RET
+
+cmdC3A: ; activate crosspoint
+	scan	bbbHb
+	EX	DE,HL
+	scan	bbbbH
+	LD	BC,amLOCK
+	CALL	amRES
+	RET
+
+cmdC9A:	; allow logins
+	RES	scC9D,(IXpg SYSCTL)
+	CALL	cmd09A
+	RET
+
+cmdC9C:	; clear all ports and restrict logins
+	SET	scC9D,(IXpg SYSCTL)
+	CALL	cmd09C
+	RET
+	
+cmdC9D: ; restrict logins to C,D
+	SET	scC9D,(IXpg SYSCTL)
+	CALL	cmd09D
+	PUSH	IY
+	LD	IY,CCB0
+	LD	B,abNC
+cm1C9D:	LD	A,(IY+ccPRV)	; check for PRV
+	OR	A
+	JR	Z,cm2C9D	; logged out is ok
+	CP	'C'
+	JR	Z,cm2C9D	; 'C' level is ok
+	CP	'D'
+	CALL	NZ,LOGOUT	; if not C or D, logout
+cm2C9D:	CALL	LINKIY
+	DJNZ	cm2C9D
+	POP	IY
+	RET
+
+LISTING SUBTTL	system open/shut and login count
+
+SOPEN:	; open the system
+	SET	sc09A,(IXpg SYSCTL)
+	CALL	CLOGIN		; count logins
+	RET
+
+SSHUT:	; shut the system
+	RES	sc09A,(IXpg SYSCTL)
+	CALL	CLOGIN		; count logins
+	RET
+
+CLOGIN:	; if 09A or ports logged in, declare OPEN, else declare SHUT
+	PUSH	AF
+	PUSH	BC
+	PUSH	IY
+	BIT	sc09A,(IXpg SYSCTL)
+	JP	NZ,CLOPEN
+	LD	IY,CCB0
+	LD	B,abNC
+CLOGI1:	LD	A,(IY+ccOTIM)		; check a current user
+	OR	A
+	JP	NZ,CLOPEN
+	CALL	LINKIY
+	DJNZ	CLOGI1
+	POP	IY
+	POP	BC
+	POP	AF
+	BIT	scOPEN,(IXpg SYSCTL)
+	RET	Z			; ignore if already shut
+	RES	scOPEN,(IXpg SYSCTL)
+	CALL	aqSHUT			; reset audio
+	CALL	cqSHUT			; reset devices
+	JP	MORSER			; reset audio (and return)
+CLOPEN:	POP	IY
+	POP	BC
+	POP	AF
+	BIT	scOPEN,(IXpg SYSCTL)
+	RET	NZ			; ignore if already open
+	SET	scOPEN,(IXpg SYSCTL)
+	CALL	aqOPEN			; reset audio
+	CALL	cqOPEN			; reset devices
+	JP	MORSER			; reset audio (and return)
+
+LOGIN:	; call to log in current port
+	LD	(IY+ccOTIM),timOID; set timer
+	CALL	CLOGIN
+	RET
+
+LOGOUT:	; call to log out current port
+	XOR	A
+	LD	(IY+ccOTIM),A	; clear timer
+	LD	(IY+ccPRV),A	; and prv
+	LD	A,(IY+ccCHNO)
+	PUSH	IY
+	LD	IY,(PPIY)
+	CP	(IY+ccCHNO)	; this user own phone call?
+	POP	IY
+	CALL	Z,ppRLS		; drop phone call if owner logs out
+	CP	(IXpg WCTOWN)	; if user owns WCT ...
+	CALL	Z,WCTRLS	; ... release it
+	JP	CLOGIN		; count remaining logins (and return)
+
+LISTING SUBTTL 	debug commands
+
+cmdD2:	; checksum ROM
+	LD	HL,0
+	PUSH	HL
+	LD	BC,NROM*ROMSIZ/2; number of words
+	LD	HL,ROMORG	; first word
+cmdD2a:	LD	E,(HL)		; get next word
+	INC	HL
+	LD	D,(HL)
+	INC	HL
+	EX	(SP),HL
+	ADD	HL,DE		; compute checksum
+	EX	(SP),HL
+	DEC	BC		; one less word
+	LD	A,B
+	OR	C
+	JR	NZ,cmdD2a
+	POP	HL		; checksum - should be 0
+	CALL	V4HEX
+	RET
+
+cmdD3A: ; execute routine
+	SCAN	bbbHHHH 	; get address
+	JP	(HL)		; go do it - return to our caller
+
+cmdD4A: ; input from port
+	SCAN	bbbHH		; get port address
+	LD	C,L
+	IN	A,(C)		; get data
+	JP	V2HEX		; pause, output A in morse code, return
+
+cmdD6A: ; output to port
+	SCAN	bbbHHbbb	; get port address
+	LD	C,L
+	SCAN	bbbbbbHH	; get data
+	OUT	(C),L		; output to port
+	RET
+
+cmdD7A: ; read from memory
+	SCAN	bbbHHHH 	; get address
+	LD	A,(HL)		; get data
+	JP	V2HEX		; pause, output A in morse code, return
+
+cmdD7B: ; read bit in matrix
+	SCAN	bbbbbH		; get address 3 (index)
+	LD	B,H
+	LD	C,L
+	SCAN	bbbbHb		; get address 2 (dest)
+	LD	A,L
+	CALL	amGETR
+	SCAN	bbbHbb		; get address 1 (source)
+	LD	A,16
+	SUB	L		; L/ bit number desired
+	LD	B,A		; B/ number of left shifts
+	XOR	A		; A/ 0
+cD7B1:	ADD	HL,HL		; shift into carry
+	DJNZ	cD7B1
+	RLA			; A/ CY
+	JP	V2HEX		; output and return
+
+cmdD7C: ; read byte from CCB
+	SCAN	bbbHbb		; get channel #
+	LD	A,L
+	PUSH	IY
+	CALL	CHANIY
+	EX	(SP),IY
+	POP	DE		; DE/ base address of CCB for channel
+	SCAN	bbbbHH		; get relative address
+	ADD	HL,DE		; compute absolute address
+	LD	A,(HL)		; get data
+	JP	V2HEX		; output and return
+
+cmdD9A: ; write to memory
+	SCAN	bbbbbbbbHH	; get data
+	LD	A,L
+	SCAN	bbbHHHHbbb	; get address
+	LD	(HL),A		; deposit
+	RET
+
+cmdD9B: ; write to bit in matrix
+	SCAN	bbbbbbbH	; get data
+	LD	A,L
+	SCAN	bbbbbHbb	; get address 3 (index)
+	LD	B,H
+	LD	C,L
+	SCAN	bbbbHbbb	; get address 2 (dest)
+	EX	DE,HL
+	SCAN	bbbHbbbb	; get address 1 (source)
+	AND	A
+	JP	Z,amRES1	; reset bit and return
+	JP	NZ,amSET1	; set bit and return
+
+cmdD9C: ; write byte in CCB
+	SCAN	bbbHbb		; get channel #
+	LD	A,L
+	PUSH	IY
+	CALL	CHANIY
+	EX	(SP),IY
+	POP	DE		; DE/ base address of CCB for channel
+	SCAN	bbbbbbbHH	; get data
+	LD	A,L
+	SCAN	bbbbHH		; get relative address
+	ADD	HL,DE		; compute absolute address
+	LD	(HL),A		; store data
+	RET
+
+cmdD10: ; clear crash count
+	XOR	A
+	LD	(CRACNT),A	; no crashes
+	RET
+
+cmdD11: ; general system status and uptime
+	mrs	'~',0		; wait for duplex
+	CALL	VUPTIM		; "UP ..."
+	mrs	ttWORD,229,0	; "FROM"
+	CALL	VCRASH		; "crash code"
+	mrs	'  ',0		; ","
+	JP	VSTATE		; "MACHINE IS state" (and return)
+
+cmdD12: ; transmit crash count (and potentially the cause)
+	LD	A,(CRACNT)
+	CALL	V1DEC
+	AND	A
+	CALL	NZ,VCRASH
+	RET
+
+cmd718:	; speak software version number
+	LD	HL,VERSION
+	JP	V2DEC		; decimal version and return
+
+LISTING SUBTTL	debug telemetry subroutines
+
+VCRASH:	; describe crash in voice
+	LD	A,(CRACOD)
+	CP	craPWR
+	JR	NZ,VCRAS1
+	mrs	ttWORD,136,ttWORD,190,0		; "POWER FAIL"
+	RET
+VCRAS1:	CP	craHWR
+	JR	NZ,VCRAS2
+	mrs	ttWORD,156,ttWORD,101,0		; "MANUAL START"
+	RET
+VCRAS2:	CP	craMAN
+	JR	NZ,VCRAS3
+	mrs	ttWORD,143,ttWORD,101,0		; "CONTROL START"
+	RET
+VCRAS3:	mrs	ttWORD,141,ttWORD,213,0		; "MACHINE CHECK"
+	JP	V2HEX				; crash code in hex and return
+
+VSTATE:	mrs	ttWORD,141,ttWORD,181,0	; "MACHINE IS"
+	BIT	sc09A,(IXpg SYSCTL)
+	LD	A,119		; "OPEN"
+	JR	NZ,VSTAT1
+	LD	A,162		; "SHUT"
+VSTAT1:	JP	MORSEW		; say it and return
+
+VUPTIM:	; voice uptime
+	mrs	ttWORD,180,0	; "UP"
+	LD	A,(UPTIME+3)	; days
+	AND	A
+	JR	Z,VUPTI1
+	CALL	V1DEC
+	mrs	ttWORD,149,0	; "DAYS"
+VUPTI1:	LD	A,(UPTIME+2)	; hours
+	AND	A
+	JR	Z,VUPTI2
+	CALL	V1DEC
+	mrs	ttWORD,223,0	; "HOURS"
+VUPTI2:	LD	A,(UPTIME+1)	; minutes
+	CALL	V1DEC
+	mrs	ttWORD,185,0	; "MINUTES"
+	RET
+
+V4HEX:	; transmit 4 hex characters in voice
+	PUSH	AF
+	LD	A,H
+	CALL	V2HEX
+	LD	A,L
+	CALL	V2HEX
+	POP	AF
+	RET
+
+V2HEX:	; transmit 2 hex characters in voice
+	mrs	'{',0
+	CALL	T2HEX
+	mrs	'}',0
+	RET
+
+V1HEX:	; transmit 1 hex character in voice
+	mrs 	'{',0
+	CALL	T1HEX
+	mrs	'}',0
+	RET
+
+V1DEC:	; voice transmit 1 byte in decimal (A)
+	PUSH	HL
+	LD	H,0
+	LD	L,A
+	JR	V1DEC0
+V2DEC:	; voice transmit 1 word in decimal (HL)
+	PUSH	HL
+V1DEC0:	PUSH	DE
+	PUSH	AF
+	LD	DE,1000
+	CALL	DIVI
+	LD	A,H
+	OR	L
+	JR	Z,V2DEC1
+	CALL	V2DEC
+	mrs	ttWORD,050,0	; "THOUSAND"
+	LD	A,D
+	OR	E
+	JR	Z,V2DECX
+V2DEC1:	EX	DE,HL
+	LD	DE,100
+	CALL	DIVI
+	LD	A,H
+	OR	L
+	JR	Z,V2DEC2
+	CALL	V2DEC
+	mrs	ttWORD,045,0	; "HUNDRED"
+	LD	A,D
+	OR	E
+	JR	Z,V2DECX
+V2DEC2:	EX	DE,HL
+	LD	A,L
+	CP	20
+	JP	M,V2DEC3	; if N < 20 then do direct table lookup
+	; if N >= 20 then do N/10 "-ty" N%10
+	LD	DE,10
+	CALL	DIVI
+	PUSH	DE
+	LD	A,L
+	CP	2
+	LD	A,040		; "TWENTY" (special case)
+	JR	Z,V2DEC4
+	LD	DE,V2DTAB+10
+	ADD	HL,DE
+	LD	A,(HL)
+	CALL	MORSEW
+	LD	A,072		; "-TY" (T)
+V2DEC4:	CALL	MORSEW
+V2DEC5:	POP	HL		; restore N%10
+	LD	A,L
+	AND	A
+	JR	Z,V2DECX
+V2DEC3:	PUSH	AF
+	LD	DE,V2DTAB
+	ADD	HL,DE
+	LD	A,(HL)
+	CALL	MORSEW		; ttWORD,(A)
+	POP	AF
+	CP	13
+	JP	M,V2DECX	; if 13 <= N < 20 then need "-teen"
+	mrs	ttWORD,054,0	; "-TEEN"
+V2DECX:	POP	AF
+	POP	DE
+	POP	HL
+	RET
+	
+V2DTAB:	; table of male voice decimal numbers
+	db 36,41,46,51,37,42,47,52,38,43	; "ZERO" - "NINE"
+	db 48,53,39,44,37,49,47,52,38,43	; "TEN" - "NINE-[TEEN/TY]"
+	db 40
+
+LISTING SUBTTL 	tone generator configuration commands
+
+cmdMCX: ; set CW tone in hertz
+	SCAN	bbbDDDD 	; range [281..1631] Hz
+	ADD	HL,HL		; HL _ 2 * f
+	LD	DE,51
+	CALL	DIVI		; HL _ f / 25.5
+	LD	A,L
+	CP	11		; keep freq above channel guards
+	JP	LT,cmdERR
+	AND	$C0		; check for overflow into bits 6-7
+	OR	H		; or bits 8-15
+	JP	NZ,cmdERR
+	LD	A,(tcMCX)	; get old value (for level bit)
+	AND	dtOLSm		; isolate output old level select bit
+	OR	dtRMEm		; set rate multiplier enable
+	OR	L		; set rate multiplier value
+	LD	(tcMCX),A	; store value for morse routines
+	RET
+
+cmCWV0: ; set CW volume level to 0dB
+	RES	dtOLS,(IXpg tcMCX); clear level select bit
+	RET
+
+cmCWV1: ; set CW volume level to -6dB
+	SET	dtOLS,(IXpg tcMCX); set level select bit
+	RET
+
+cmdWPM: ; set CW rate in words per minute
+	SCAN	bbbDD		; extract WPM from command
+	LD	A,L
+	CP	5		; can't run under 5 WPM
+	JP	LT,cmdERR
+SETWPM: ; set WPM to HL
+	PUSH	DE
+	LD	(IXpg tcWPM),L	; save WPM rate
+	EX	DE,HL
+	LD	HL,1250 	; magic number based on "PARIS"
+	CALL	DIVI
+	LD	(IXpg tcMCP),L	; save mS rate
+	POP	DE
+	RET
+
+cmdTTP: ; set TT burst duration in mS
+	SCAN	bbbDDD		; extract burst time
+	LD	A,H
+	AND	A		; check for more than 256
+	JP	NZ,cmdERR
+	LD	(IXpg tcTTP),L	; set period
+	RET
+
+LISTING SUBTTL 	MORSE code table
+
+MCTAB:
+listing off
+repeat	128 <DB 0>
+
+;	MC
+; defines a morse code character
+; up to 7 elements are encoded in a byte as follows:
+; for a character of length N elements, bit N is set, and bit N-X is
+; set if the X'th element is a dash, and clear if the X'th element is
+; a dot.  Bits to the left of bit N must be clear.
+define	MC1(CHAR,CODE) <
+    MCA vset 1
+    for CH inchr <CODE> <
+	MCA vset MCA shl 1
+	ife 'CH'-'-' < MCA vset MCA +1 >
+    >
+    org MCTAB+CHAR
+    db MCA
+>
+define	MC (CHAR1,CODES) <
+    CHAR vset CHAR1
+    for CODE in <CODES>~r <
+	MC1 \CHAR,CODE
+	CHAR vset CHAR +1
+    >
+>
+mc 'A',<.-,-...,-.-.,-..,.,..-.,--.,....,..>
+mc 'J',<.---,-.-,.-..,--,-.,---,.--.,--.-,.-.>
+mc 'S',<...,-,..-,...-,.--,-..-,-.--,--..>
+mc 'a',<.-,-...,-.-.,-..,.,..-.,--.,....,..>
+mc 'j',<.---,-.-,.-..,--,-.,---,.--.,--.-,.-.>
+mc 's',<...,-,..-,...-,.--,-..-,-.--,--..>
+mc '0',<-----,.----,..---,...--,....-,.....,-....,--...,---..,----.>
+mc '.',<.-.-.->
+mc $3B,<-.-.-.>
+mc $2B,<--..-->
+mc ':',<---...>
+mc '?',<..--..>
+mc $27,<.----.>
+mc '-',<-....->
+mc '/',<-..-.>
+mc '(',<-.--.->
+mc ')',<-.--.->
+mc '"',<.-..-.>
+mc '_',<..--.->
+mc '=',<-...-->
+
+listing on
+org MCTAB+128
+
+LISTING SUBTTL 	audio matrix manipulation routines
+
+amTRACE equ 0			; trace amXXXX calls that write matrix
+ifn amTRACE <printx % amTRACE enabled>
+
+;	amZERO - clear audio matrix
+;
+amZERO: XOR	A
+	LD	B,32
+	LD	C,AB		; reset external matrix
+RESET1: OUT	(C),A
+	INC	C
+	DJNZ	RESET1
+	LD	HL,AM		; reset internal matrix
+	LD	DE,AM+1
+	LD	BC,abNC*amz*2-1 ; audio matrix size
+	LD	(HL),0
+	LDIR
+ifn amTRACE < msg '-amZERO',13,0 >
+	RET
+
+
+;	amGETC - get col mask for channel A in HL
+;	A/ channel
+;	BC/ Z dimension value
+;	HL_ bits from matrix
+;
+amGETC: PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	AND	$0F		; force into bounds
+	LD	D,B
+	LD	E,C
+	LD	B,A
+	INC	B		; shift count (shift 1 for bit 0)
+	LD	C,$80		; mask to shift
+amGC1:	RLC	C		; run it around
+	DJNZ	amGC1
+	LD	HL,AM+2*abNC*amz-amz; origin
+	ADD	HL,DE
+	EX	DE,HL		; DE/ address of last element
+	LD	HL,1 shl (16-abNC); result register and counter
+	CP	8		; which half is bit in?
+	JP	GE,amGC2
+	repeat amz < DEC DE >
+amGC2:	LD	A,(DE)		; get byte
+	repeat (amz*2) < DEC DE >
+	AND	C		; mask off interesting bit
+	ADD	$FF		; CY _ A<>0
+	ADC	HL,HL		; HL _ HL * 2 + CY, CY _ done
+	JR	NC,amGC2
+	POP	AF
+	POP	BC
+	POP	DE
+	RET
+
+
+;	am PUTC - put mask HL in matrix col A
+;	A/ channel
+;	BC/ Z offset
+;	HL/ bits to store
+;
+amPUTC: PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+ifn amTRACE <
+CP aiDTMF
+JR Z,NOAMT1
+msg '-amPUTC: A=\A BC=\B\C HL=\H\L',13,0
+NOAMT1:
+>
+	AND	$0F		; force into bounds
+	LD	D,B
+	LD	E,C
+	LD	B,A		; B/ channel (col)
+	INC	B		; shift count (shift 1 for bit 0)
+	LD	C,$80		; mask to shift
+amPU1:	RLC	C		; run it around
+	DJNZ	amPU1		; C/ mask
+	LD	B,abNC		; B/ counter
+	PUSH	HL
+	LD	HL,AM+2*abNC*amz-amz; origin address
+	ADD	HL,DE
+	EX	DE,HL
+	POP	HL
+	CP	8		; which half is bit in?
+	JP	GE,amPU2
+	repeat amz < DEC DE >
+amPU2:	LD	A,(DE)		; get existing byte
+	OR	C		; set it
+	ADD	HL,HL		; shift into CY
+	JR	C,amPU3 	; should we have set it?
+	XOR	C		; no, clear it
+amPU3:	LD	(DE),A		; put back in matrix
+	repeat (amz*2) < DEC DE >
+	DJNZ	amPU2
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+
+
+;	amGETR - get row mask for channel A in HL
+;	A/ channel
+;	BC/ Z offset
+;	HL_ bits
+;
+amGETR: PUSH	DE		; save DE
+	AND	$0F		; force into bounds
+	LD	D,0
+	LD	E,A		; DE/ chan no (row no)
+	LD	HL,amz*2
+	CALL	MULT
+	LD	DE,AM
+	ADD	HL,DE
+	ADD	HL,BC
+	LD	E,(HL)
+	repeat amz < INC HL >
+	LD	D,(HL)		; DE/ data from row A
+	EX	DE,HL		; HL/ data
+	POP	DE		; DE/ orig DE
+	RET
+
+
+;	amPUTR - put HL in row A of matrix
+;	A/ channel
+;	BC/ Z offset
+;	HL/ bits
+;
+amPUTR: PUSH	DE		; save DE
+	PUSH	HL		; save HL
+ifn amTRACE <
+CP aiDTMF
+JR Z,NOAMT2
+msg '-amPUTR: A=\A BC=\B\C HL=\H\L',13,0
+NOAMT2:
+>
+	AND	$0F		; force into bounds
+	LD	D,0
+	LD	E,A		; DE/ chan no (row no)
+	LD	HL,amz*2
+	CALL	MULT
+	LD	DE,AM
+	ADD	HL,DE
+	ADD	HL,BC
+	POP	DE		; DE/ orig HL
+	LD	(HL),E
+	repeat amz < INC HL >
+	LD	(HL),D		; AM[A]/ data
+	EX	DE,HL		; HL/ orig HL
+	POP	DE		; DE/ orig DE
+	RET
+
+
+;	amSET - close crosspoint pair
+;	amSET1 - close single crosspoint
+;	L/ source channel
+;	E/ output channel
+;	BC/ Z offset
+;
+amSET:	CALL	amSET1
+	EX	DE,HL
+	CALL	amSET1
+	EX	DE,HL
+	RET
+amSET1: PUSH	DE
+	PUSH	HL
+	PUSH	IY
+ifn amTRACE < msg '-amSET1: BC=\B\C L=\L E=\E',13,0 >
+	LD	A,L
+	CALL	CHANIY
+	LD	D,0
+	LD	A,E
+	AND	$0F
+	LD	E,A
+	LD	HL,amz*2
+	CALL	MULT
+	LD	DE,AM
+	ADD	HL,DE
+	ADD	HL,BC
+	LD	A,(HL)
+	OR	(IY+ccCOSB+0)
+	LD	(HL),A
+	repeat amz < INC HL >
+	LD	A,(HL)
+	OR	(IY+ccCOSB+1)
+	LD	(HL),A
+	POP	IY
+	POP	HL
+	POP	DE
+	RET
+
+;	amRES - open crosspoint pair
+;	amRES1 - open single crosspoint
+;	L/ source channel
+;	E/ output channel
+;	BC/ Z offset
+;
+amRES:	CALL	amRES1
+	EX	DE,HL
+	CALL	amRES1
+	EX	DE,HL
+	RET
+amRES1: PUSH	DE
+	PUSH	HL
+	PUSH	IY
+ifn amTRACE < msg '-amRES1: BC=\B\C L=\L E=\E',13,0 >
+	LD	A,L
+	CALL	CHANIY		; IY/ ^CCB for source channel
+	LD	D,0
+	LD	A,E
+	AND	$0F
+	LD	E,A
+	LD	HL,amz*2
+	CALL	MULT
+	LD	DE,AM
+	ADD	HL,DE		; HL/ addr of AM word for dest channel
+	ADD	HL,BC
+	LD	A,(IY+ccCOSB+0)
+	CPL
+	AND	(HL)		; turn off selected bit
+	LD	(HL),A
+	repeat amz < INC HL >
+	LD	A,(IY+ccCOSB+1)
+	CPL
+	AND	(HL)		; turn off selected bit
+	LD	(HL),A
+	POP	IY
+	POP	HL
+	POP	DE
+	RET
+
+;	amUPD - update audio matrix from memory
+;
+amUPD:	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	LD	HL,AM		; old matrix and mask
+	LD	B,abNC*2	; number of channels
+	LD	C,AB		; base port address
+	;	D		; amUMM requires D preserved
+ifn (amXPNT-0) <printx ?amUPD: unexpected value for amXPNT>
+amUPD1: LD	A,(HL)		; amXPNT
+	INC	HL
+	CPL
+ifn (amLOCK-1) <printx ?amUPD: unexpected value for amLOCK>
+	OR	(HL)		; amLOCK
+	INC	HL
+ifn (amMUTE-2) <printx ?amUPD: unexpected value for amMUTE>
+	OR	(HL)		; amMUTE
+	INC	HL
+ifn (amTELM-3) <printx ?amUPD: unexpected value for amTELM>
+	OR	(HL)		; amTELM
+	CPL
+	INC	HL
+ifn (amMIXM-4) <printx ?amUPD: unexpected value for amMIXM>
+;;;;;	CALL	amUMM		; amMIXM
+;;;;;	AND	E
+	INC	HL
+ifn (amREAL-5) <printx ?amUPD: unexpected value for amREAL>
+	CP	(HL)		; amREAL
+	JR	Z,amUPD2	; no change - don't update
+ifn amTRACE < msg '-amUPD1: OUT(\C),\A',13,0 >
+	OUT	(C),A		; output new value
+	LD	(HL),A		; save new value in matrix
+amUPD2: INC	C
+	INC	HL
+	DJNZ	amUPD1
+	POP	HL
+	POP	DE
+	POP	BC
+	POP	AF
+	RET
+
+amUMM:	; do monitor mute/mix computations
+	BIT	0,B		; even? (high/low)
+	LD	E,D		; get result of last pass in case
+	RET	NZ
+; handle low order byte
+	PUSH	AF
+	PUSH	BC
+	PUSH	HL
+	LD	E,(HL)		; get low order amMIXM
+	LD	BC,AMZ
+	ADD	HL,BC		; compute high monitormode address
+	LD	D,(HL)		; get high order amMIXM
+	LD	A,(COSS+0)	; do low order half of test
+	LD	BC,amXPNT-amMIXM-AMZ
+	ADD	HL,BC		; compute low crosspoint address
+	AND	(HL)		; only look at COS' being monitored
+	AND	E		; A _ amMIXM * COS * amXPNT
+	JR	NZ,amUMM1
+	LD	A,(COSS+1)	; do high order half of test
+	LD	BC,AMZ
+	ADD	HL,BC
+	AND	D		; A _ amMIXM * COS * amXPNT
+	JR	NZ,amUMM1
+; here if no mix-mode ports is up - do not mute mute-mode ports
+	LD	DE,$FFFF
+; here if >0 mix-mode ports are up - do mute mute-mode ports
+amUMM1: POP	HL
+	POP	BC
+	POP	AF
+	RET
+
+;	amPTT - return computed PTT bit mask in HL
+;
+amPTT:	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	IN	A,(ab+0)	; BC/ COS bit mask
+	LD	C,A
+	IN	A,(ab+1)
+	LD	B,A
+	LD	DE,AM+2*abNC*amz; DE/ end of audio matrix
+	LD	HL,1 shl(16-abNC); will shift into CY after all done
+amPTT1: repeat amz < DEC DE >
+	LD	A,(DE)		; A/ going backwards get high bits 1st
+	AND	B		; A/ bits of interest
+	repeat amz < DEC DE >
+	JR	NZ,amPTT2	; if non-zero thats all we need
+	LD	A,(DE)		; A/ low bits from matrix
+	AND	C		; A/ bits of interest
+amPTT2: ADD	$FF		; CY/ 1 if A non-zero
+	ADC	HL,HL		; HL/ HL*2+CY
+	JR	NC,amPTT1	; CY will go 1 after abNC shifts
+	POP	AF
+	POP	BC
+	POP	DE
+	RET
+
+LISTING SUBTTL 	CTC routines
+
+CTC3TC: ; set channel 3 time constant
+	PUSH	AF
+	LD	A,ctCTLm+ctRESETm
+	OUT	(CTC+3),A
+	LD	A,ctCTLm+ctCNTm+ctLTCm+ctINTEm
+	OUT	(CTC+3),A
+	POP	AF
+	OUT	(CTC+3),A
+	RET
+
+LISTING SUBTTL 	phone patch ringing routines
+
+POLRNG: ; poll for ringing
+	IN	A,(iRINGp)
+	AND	iRINGm		; look at ring indicate
+	JR	NZ,RINGI1
+RINGI0:	LD	A,(RINGIC)	; get ring indicate counter
+	OR	A		; see if its 0
+	RET	Z		; do nothing if already 0
+	DEC	A		; dec
+	LD	(RINGIC),A	; and save
+	CP	$C0		; test for threshold
+	RET	NZ
+	XOR	A		; set to min (hysterisis)
+	LD	(RINGIC),A
+	RET
+RINGI1: CALL	.+3		; inc it four times!
+	CALL	.+3
+	LD	A,(RINGIC)	; get ring indicate counter
+	INC	A
+	RET	Z		; don't wrap around!
+	LD	(RINGIC),A	; and save
+	CP	$40		; test for threshold
+	RET	NZ
+	LD	A,$FF		; set to max (hysterisis)
+	LD	(RINGIC),A
+	SET	stRING,(IXpg STATE); indicate need to ring phone
+	LD	A,2		; wait max 20 secs for next ring
+	LD	(RINGTO),A
+	LD	A,oFEEPb*2+1	; ring WCT
+	OUT	(oFEEPp),A
+	RET
+
+LISTING SUBTTL	phone patch dial tone detect routines
+
+POLDTD:	; called at 10mS interrupt to poll detector
+	IN	A,(iDTDp)
+	AND	iDTDm
+	JR	NZ,POLDT1
+POLDT0:	LD	(IXpg ppDTDB),0
+	RET
+POLDT1:	INC	(IXpg ppDTDB)
+	RET	P			; if count >= 128 ...
+	LD	(IXpg ppDTDB),0FFh	; make sure it doesn't run away
+	LD	A,(ppDTIM)		; if Disconnect TIMer running ...
+	AND	A
+	CALL	NZ,ppRLS		; ... then release call
+	RET
+
+LISTING SUBTTL 	alarm routines and commands
+
+POLALM: ; poll alarm counter (S10MS level)
+	IN	A,(iALARMp)	; get alarm bits
+ifn DEBUG <
+	XOR	A
+>
+	LD	HL,ALRMIC
+	OR	(HL)		; latch alarm bits into (ALRMIC)
+	LD	(HL),A
+	RET
+
+UPDALM: ; update alarm signaling (M10S level)
+	LD	HL,ALRMPT	; alarm protect time
+	DEC	(HL)
+	RET	P
+	LD	(HL),0
+	LD	A,(ALRMIC)	; get alarms
+	AND	(IXpg ALRMEM)	; enable mask
+	RET	Z
+	LD	(HL),timALR/10-1; reset timer
+	LD	HL,aoSPTXm+aoNPTXm
+	CALL	MORMSK		; set mask
+	mrs	'~%',0		; alarm tone
+	BIT	iSMOKEb,A
+	JR	Z,UPDAL1
+	mrs	ttWORD,107,ttWORD,36,'~',0; smoke 0
+UPDAL1:	BIT	iFIREb,A
+	JR	Z,UPDAL2
+	mrs	ttWORD,135,ttWORD,41,'~',0; fire 1
+UPDAL2:	BIT	iTEMP2b,A
+	JR	Z,UPDAL3
+	mrs	ttWORD,193,ttWORD,139,ttWORD,46,'~',0; high temperature 2
+UPDAL3:	BIT	iTEMP3b,A
+	JR	Z,UPDAL4
+	mrs	ttWORD,193,ttWORD,139,ttWORD,51,'~',0; high temperature 3
+UPDAL4:	BIT	iTEMP4b,A
+	JR	Z,UPDAL5
+	mrs	ttWORD,193,ttWORD,139,ttWORD,37,'~',0; high temperature 4
+UPDAL5:	BIT	iFEEDb,A
+	JR	Z,UPDAL6
+	mrs	ttWORD,102,ttWORD,119,ttWORD,42,'~',0; line open 5
+UPDAL6:	BIT	iDOOR6b,A
+	JR	Z,UPDAL7
+	mrs	ttWORD,151,ttWORD,150,ttWORD,119
+	 db	ttWORD,47,'~',0		; exit door open 6
+UPDAL7:	BIT	iDOOR7b,A
+	JR	Z,UPDAL8
+	mrs	ttWORD,141,ttWORD,150,ttWORD,119
+	 db	ttWORD,52,'~',0		; machine door open 7
+UPDAL8:	RET
+
+cmdC7A: ; activate all alarms
+	LD	(IXpg ALRMEM),$FF; set mask
+	XOR	A
+	LD	(ALRMIC),A	; clear alarms
+	RET
+
+cmC7XA: ; activate selected alarm
+	scan	bbDb
+	LD	B,L
+	INC	B
+	LD	C,$80
+cC7XA1: RLC	C
+	DJNZ	cC7XA1
+	LD	A,(ALRMEM)
+	OR	C		; activate selected alarms
+	LD	(ALRMEM),A
+	LD	A,(ALRMIC)
+	CPL
+	OR	C		; clear selected alarms
+	CPL
+	LD	(ALRMIC),A
+	RET
+
+NOALRM:	; routine to disable all active alarms
+cmdC7D: ; deactivate alarms
+	LD	A,(ALRMIC)	; get current alarms
+	CPL
+	LD	HL,ALRMEM	; alarm enable mask
+	AND	(HL)
+	LD	(HL),A		; mask of current alarms
+cmdC7C: ; clear all alarms
+	XOR	A
+	LD	(ALRMIC),A	; clear alarms
+	RET
+
+cmC7XD: ; deactivate selected alarm
+	scan	bbDb
+	LD	B,L
+	INC	B
+	LD	C,$80
+cC7XD1: RLC	C
+	DJNZ	cC7XD1
+	LD	A,(ALRMEM)
+	CPL
+	OR	C		; deactivate selected alarms
+	CPL
+	LD	(ALRMEM),A
+	RET
+
+LISTING SUBTTL 	PTT routines
+
+PTTtrace equ 0
+
+POLPTT: ; check for a change in PTTs
+	CALL	amPTT		; HL/ PTT bits (laboriously computed)
+	EX	DE,HL		; DE/ new PTTS
+	LD	HL,(PTTS)	; HL/ old PTTs
+	LD	(PTTS),DE	; save new PTTs
+	CALL	DXOR		; HL/ HL xor DE
+	LD	A,H
+	OR	L
+	RET	Z		; no change, no need to update
+; update PTT bits
+	PUSH	IY
+	LD	IY,CCB0
+	LD	A,L
+	LD	C,E
+	CALL	PTTUP0
+	LD	A,H
+	LD	C,D
+	CALL	PTTUP0
+	POP	IY
+	RET
+
+PTTUP0: LD	B,8
+PTTUP1: RRA			; shift changed bit into CY
+	CALL	C,PTTX		; handle change if any
+	CALL	LINKIY		; ^next CCB
+	RRC	C		; keep current bit in B0
+	DJNZ	PTTUP1
+	RET
+
+PTTX:	PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	BIT	0,C
+	PUSH	AF
+	CALL	NZ,PTTUP	; rising edge
+	POP	AF
+	CALL	Z,PTTDN 	; falling edge
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+
+;	PTT up/dn routines
+; May clobber AF,HL.  Called at S10MS level.  IY/ ^CCB.
+;
+PTTUP:
+ifn PTTtrace <
+	LD	A,(IY+ccCHNO)
+	msg	'[PTTUP: ccCHNO=\A]',13,0
+>
+	SET	ccPTT,(IY+ccSTS); set the PTT bit
+	CALL	SETIDX		; set ID required Flag if necessary
+	LD	A,(IY+ccCHNO)
+	CP	aiTELRX 	; phone patch PTT?
+	CALL	Z,ppPTTU	; check things for phone patch if such
+	RET
+
+PTTDN:
+ifn PTTtrace <
+	LD	A,(IY+ccCHNO)
+	msg	'[PTTDN: ccCHNO=\A]',13,0
+>
+	RES	ccPTT,(IY+ccSTS); clr the PTT bit
+	LD	(IY+ccTXS),timTXS/100; set transmitter setup timer
+	RET
+
+LISTING SUBTTL 	COS routines
+
+COStrace equ 0
+
+POLCOS: ; check for a change in COSs
+	IN	A,(ab)		; get low order COS
+	LD	E,A
+	IN	A,(ab+1)	; get high order COS
+	LD	D,A
+	LD	HL,(COSS)	; get old COSS
+	LD	(COSS),DE	; save new COSS
+	CALL	DXOR		; HL/ HL xor DE
+	LD	A,H
+	OR	L
+	RET	Z		; no change - no need to update
+; update the COS bits
+	PUSH	IY
+	LD	IY,CCB0
+	LD	A,L
+	LD	C,E
+	CALL	COSUP0
+	LD	A,H
+	LD	C,D
+	CALL	COSUP0
+	POP	IY
+	RET
+
+COSUP0: LD	B,8
+COSUP1: RRA
+	CALL	C,COSX		; handle changes
+	CALL	LINKIY		; ^ to next CCB
+	RRC	C		; keep current bit in B0
+	DJNZ	COSUP1
+	RET
+
+COSX:	PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	BIT	0,C
+	PUSH	AF
+	CALL	NZ,COSUP	; rising edge
+	POP	AF
+	CALL	Z,COSDN 	; falling edge
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+
+;	COS up/dn routines
+; May clobber AF,HL.  Called at S10MS level.  IY/ ^CCB.
+;
+COSUP:
+	LD	A,(IY+ccCHNO)
+ifn COStrace <
+	msg	'[COSUP: ccCHNO=\A]',13,0
+>
+	SET	ccCOS,(IY+ccSTS); set the COS bit
+	SET	ccTLF,(IY+ccSTS); set telemetry needed
+	CP	aiWCTRX
+	CALL	Z,WCTFHK	; WCT off hook
+	JP	RSTOID		; restart OID timer, and return
+
+COSDN:
+	LD	A,(IY+ccCHNO)
+ifn COStrace <
+	msg	'[COSDN: ccCHNO=\A]',13,0
+>
+	RES	ccCOS,(IY+ccSTS); clr the COS bit
+	SET	ccTLF,(IY+ccSTS); set telemetry needed
+	CP	aiWCTRX
+	CALL	Z,WCTNHK	; WCT on hook
+	RET
+
+LISTING SUBTTL 	SIO routines to talk to terminal/modem
+
+ifn (SIO+DEBUG) <
+
+;	PCRLF
+; print a CRLF - preserve all registers
+PCRLF:	PUSH	AF
+	LD	A,13		; PCHR will add line feed
+	CALL	PCHR
+	POP	AF
+	RET
+
+;	PCHR
+; print character in A - preserve all registers, may be backpresured
+PCHR:	PUSH	HL
+	PUSH	AF
+	CP	13		; is it a CR?
+	LD	A,10		; get a linefeed ready in case
+	CALL	Z,PCHR		; do a line feed before <CR>s (before?)
+	LD	HL,(soBUFW)	; get write pointer
+	LD	A,(soBUFR)	; and read
+	DEC	A		; full ::= (soBUFW)=(soBUFR)-1
+	CP	L		; check for room
+	CALL	Z,SOBSVC	; make room - may lose if int in prog
+	POP	AF
+	LD	(HL),A		; store character in buffer
+	INC	L		; inc and wrap around, clear on overflow
+	LD	(soBUFW),HL	; update pointer
+	POP	HL
+	RET
+
+;	SOBSVC
+; handle output to SIO - empty buffer as SIO ready 
+; clobbers AF,HL - warning - code is not reentrant!
+SOBSVC:	LD	HL,(soBUFR)	; get read pointer
+	LD	A,(soBUFW)	; and write pointer
+	CP	L		; if equal, buffer is empty
+	RET	Z
+>
+ifn SIO <
+	IN	A,(SIO+sioSR)	; get status
+	BIT	sioTBE,A	; test for room
+	JR	Z,SOBSVC	; wait for room
+>
+ifn (SIO+DEBUG) <
+	LD	A,(HL)		; get character
+	INC	L		; update pointer, wrap around
+	LD	(soBUFR),HL	; store new pointer
+>
+ifn SIO <
+	OUT	(SIO+sioDR),A	; send to SIO
+>
+ifn (SIO+DEBUG) <
+	JR	SOBSVC		; go until empty
+
+
+;	PMSG
+; print message pointed to by HL - end with null
+; preserves all registers except HL which points 1 past null
+PMSG:	PUSH	AF
+	DI			; keep stuff from intermixing
+PMSG1:	LD	A,(HL)		; get character
+	INC	HL
+	OR	A		; test for null
+	JR	Z,PMSG3
+	CP	'\'		; check for escape
+	JR	Z,PREG		; go do a print register
+PMSG2:	CALL	PCHR		; print it
+	JR	PMSG1
+PMSG3:	EI			; talk about invalid assumptions!
+	POP	AF
+	RET
+PREG:	LD	A,(HL)
+	INC	HL
+	CP	'\'
+	JR	Z,PMSG2 	; \\ prints a \
+;for R in <A,B,C,D,E,H,L>
+;<	CP	'R'
+;	JP	Z,PREG"R >
+	CP	'A'
+	JP	Z,PREGA
+	CP	'B'
+	JP	Z,PREGB
+	CP	'C'
+	JP	Z,PREGC
+	CP	'D'
+	JP	Z,PREGD
+	CP	'E'
+	JP	Z,PREGE
+	CP	'H'
+	JP	Z,PREGH
+	CP	'L'
+	JP	Z,PREGL
+	PUSH	AF
+	LD	A,'\'		; illegal, just print \ whatever
+	CALL	PCHR
+	POP	AF
+	JP	PMSG2
+PREGB:	LD	A,B
+	JR	PREG2
+PREGC:	LD	A,C
+	JR	PREG2
+PREGD:	LD	A,D
+	JR	PREG2
+PREGE:	LD	A,E
+	JR	PREG2
+PREG2:	CALL	P2HEX		; print register value
+	JP	PMSG1
+; following routines assume stack as follows:
+;	(SP)==	AF
+;		return address
+;		HL		; only here if called by PMSGI
+PREGA:	POP	AF
+	PUSH	AF
+	JR	PREG2
+PREGH:	PUSH	HL
+	LD	HL,7		; stack relative addr of H
+	ADD	HL,SP
+	LD	A,(HL)
+	POP	HL
+	JR	PREG2
+PREGL:	PUSH	HL
+	LD	HL,6		; stack relative addr of L
+	ADD	HL,SP
+	LD	A,(HL)
+	POP	HL
+	JR	PREG2
+
+
+;	PMSGI
+; print message immediate (called by MSG macro)
+PMSGI:	EX	(SP),HL 	; save HL, get return PC into HL
+	CALL	PMSG		; print string at return PC
+	EX	(SP),HL 	; put modified return address back
+	RET
+
+;	P4HEX	print HL in hex
+P4HEX:	PUSH	AF
+	CALL	P4HEX1
+	POP	AF
+	RET
+;	P2HEX	print A in hex
+P2HEX:	PUSH	AF
+	CALL	P2HEX1
+	POP	AF
+	RET
+;	P1HEX	print A modulo 16 in hex
+P1HEX:	PUSH	AF
+	CALL	P1HEX1
+	POP	AF
+	RET
+P4HEX1: LD	A,H
+	CALL	P2HEX1
+	LD	A,L
+P2HEX1: PUSH	AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	CALL	P1HEX1
+	POP	AF
+P1HEX1: AND	$0F
+	CP	10
+	JR	C,P1HEX2
+	ADD	7
+P1HEX2: ADD	'0'
+	JP	PCHR		; print char and return
+
+>
+ife (SIO+DEBUG) <
+PMSGI:	EX	HL,(SP)
+	PUSH	AF
+	XOR	A
+PMSGI1:	CP	(HL)
+	INC	HL
+	JR	NZ,PMSGI1
+	POP	AF
+	EX	HL,(SP)
+PCRLF:
+PCHR:
+SOBSVC:
+PMSG:
+P4HEX:
+P2HEX:
+P1HEX:	RET
+>
+
+LISTING SUBTTL 	SCAN: command scanner service routine
+
+;	SCNSVC
+; service routine for SCAN restart instructions
+;   SCN format
+; will return in HL the 16 bit result from the scan, or in
+; L the 8 bit result.  The format string consists of combinations
+; of the characters B,C,D and H as follows:
+;   B	ignore character in this position
+;   C	character in this position is returned in ASCII in L
+;   D	decimal digit in these positions are returned in HL in decimal
+;   H	bytes in these positions are returned in HL in hex
+; If the command string expires before all the format characters are
+; used, the extra format characters are ignored.  For example a
+; command defined as
+;   dcmd 01$$%%%
+; which may wish to be interpreted as 01<port><value>, may use
+; SCAN to extract the hex port number field with
+;   SCAN bbHHbbb
+; and to extract the decimal value field with
+;   SCAN bbbbDDD
+
+SCNSVC: EX	DE,HL		; HL/ original DE
+	EX	(SP),HL 	; save original DE, get return PC in HL
+	PUSH	AF		; save original AF
+	LD	DE,0		; save partial (now a 0) on stack
+	PUSH	DE
+	LD	DE,CMDBUF-1	; DE/ pointer to command (inc first)
+SCN0:	INC	DE		; update pointer first!!
+	LD	A,(DE)		; get next char from cmdbuf
+	AND	A		; end of string?
+	JR	Z,SCNY		; if so, finish scan
+	LD	A,(HL)		; get next format byte
+	INC	HL		; update pointer
+	AND	$7F		; strip parity and test for 0
+	JR	Z,SCNX		; if 0, then done
+;	for X in <C,D,H> <
+;	CP	'X'
+;	JP	Z,SCN0"X >
+	CP	'C'
+	JP	Z,SCN0C
+	CP	'D'
+	JP	Z,SCN0D
+	CP	'H'
+	JP	Z,SCN0H
+	JR	SCN0		; ignore others
+SCNY:	LD	A,(HL)		; get next format byte
+	INC	HL		; update pointer
+	AND	A		; check for null
+	JR	NZ,SCNY 	; loop until end of format string
+SCNX:	POP	DE		; DE/ result (formerly partial)
+	POP	AF		; AF/ original AF
+	EX	(SP),HL 	; HL/ original DE, (SP) return PC
+	EX	DE,HL		; DE/ original DE, HL/ result
+	RET
+
+SCN0C:	EX	(SP),HL 	; get partial
+	LD	A,(DE)		; A/ character
+	LD	H,L		; shift previous char to H
+	LD	L,A		; shift new char to L
+	EX	(SP),HL 	; replace partial
+	JP	SCN0
+
+SCN0D:	EX	(SP),HL 	; get partial
+	CALL	MUL10
+SCN0H1: LD	A,(DE)
+	PUSH	HL		; save the partial
+	LD	H,WILDTB/100h
+	LD	L,A
+	LD	A,(HL)		; lookup character value in WILDTB
+	AND	WCVm
+	POP	HL		; get partial back
+	ADD	L		; A/ L+digit
+	LD	L,A		; L/ L+digit
+	LD	A,0		; A/ 0	(XOR clears CY)
+	ADC	H		; A/ H+CY
+	LD	H,A		; H/ H+CY
+	EX	(SP),HL 	; replace partial
+	JP	SCN0
+
+SCN0H:	EX	(SP),HL 	; get partial
+	CALL	MUL16
+	JP	SCN0H1		; rest is same as end of decimal
+
+LISTING SUBTTL 	general math and logic routines
+
+DAND:	; logical 16 bit and
+	; HL/ HL and DE
+	PUSH	AF
+	LD	A,L
+	AND	E
+	LD	L,A
+	LD	A,H
+	AND	D
+	LD	H,A
+	POP	AF
+	RET
+
+TDC:	; logical 16 bit compliment masked bits
+DXOR:	; logical 16 bit xor
+	; HL/ HL xor DE
+	PUSH	AF
+	LD	A,L
+	XOR	E
+	LD	L,A
+	LD	A,H
+	XOR	D
+	LD	H,A
+	POP	AF
+	RET
+
+TDO:	; logical 16 bit set masked bits
+DOR:	; logical 16 bit or
+	; HL/ HL and DE
+	PUSH	AF
+	LD	A,L
+	OR	E
+	LD	L,A
+	LD	A,H
+	OR	D
+	LD	H,A
+	POP	AF
+	RET
+
+TDZ:	; logical 16 bit zero masked bits
+	; HL/ ~(~HL or DE)
+	PUSH	AF
+	LD	A,L
+	CPL
+	OR	E
+	CPL
+	LD	L,A
+	LD	A,H
+	CPL
+	OR	D
+	CPL
+	LD	H,A
+	POP	AF
+	RET
+
+MULT:	; unsigned 16 bit integer multiply
+	; LD DE,multiplier
+	; LD HL,multiplicand
+	; CALL MULT
+	; HL/ product; DE/ trash
+	PUSH	AF
+	PUSH	BC
+	LD	B,16		; init # of bits
+	LD	C,D		; move multiplier
+	LD	A,E
+	EX	DE,HL		; move multiplicand
+	LD	HL,0		; clear partial result
+MULT1:	SRL	C		; shift multiplier right
+	RR	A		; least sig bit in CY
+	JR	NC,MULT2	; if no cary, don't add
+	ADD	HL,DE		; else, add into partial result
+MULT2:	EX	DE,HL		; shift multiplicand left
+	ADD	HL,HL
+	EX	DE,HL
+	DJNZ	MULT1		; repeat for all bits
+	POP	BC
+	POP	AF
+	RET
+
+DIVI:	; unsigned 16 bit integer divide
+	; LD HL,dividend
+	; LD DE,divisor (restriction: DE < 2^17)
+	; CALL DIVI (HL_HL / DE; DE_HL % DE)
+	; HL/ aqtent; DE/ remainder(maybe)
+
+	PUSH	AF
+	PUSH	BC
+	LD	A,16		; A _ shift count
+	LD	B,D		; BC _ denominator
+	LD	C,E
+	LD	DE,0		; DE _ partial remainder
+DIVI1:	ADD	HL,HL		; 4byte left shift (DEHL)
+	EX	DE,HL
+	ADC	HL,HL
+	EX	DE,HL
+	JR	Z,DIVI3 	; if DE=0 - no subtract
+	PUSH	DE
+	AND	A		; clear CY
+	EX	DE,HL		; DE _ DE - BC
+	SBC	HL,BC
+	EX	DE,HL
+	JP	M,DIVI2 	; if result is negative - undo subtract
+	INC	SP		; discard saved DE
+	INC	SP
+	INC	L		; incriment lo bit of L
+	JR	DIVI3
+DIVI2:	POP	DE		; restore saved DE (undo subtract)
+DIVI3:	DEC	A		; decrement shift count
+	JR	NZ,DIVI1	; more to go
+	POP	BC		; restore registers
+	POP	AF
+	RET
+
+
+;	MUL10 multiply HL by 10
+MUL10:	PUSH	DE
+	LD	DE,10
+	CALL	MULT
+	POP	DE
+	RET
+
+;	MUL16 multiply HL by 16
+MUL16:	ADD	HL,HL		; HL _ 2x
+	ADD	HL,HL		; HL _ 4x
+	ADD	HL,HL		; HL _ 8x
+	ADD	HL,HL		; HL _ 16x
+	RET
+
+LISTING SUBTTL 	COMMAND / PREFIX definition and recognition routines
+
+;	CMDSCN
+; call with the following set up
+;	IY/ pointer to CCB for channel to be processed
+; if command is recognized, will call it (CALL)
+
+CMDSCN: PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	PUSH	IY
+	LD	HL,(CMDHL)	; pointer to command table
+	LD	BC,(CMDBC)	; size of command table
+	LD	A,(IY+ccCHNO)
+	CP	aiWCTRX
+	JR	NZ,CMDSC1
+	LD	HL,(WCTHL)	; pointer to table
+	LD	BC,(WCTBC)	; size of table
+CMDSC1:	CALL	SEARCH
+	POP	IY
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+
+;	PFXSCN
+; call with the following set up
+;	IY/ address of CCB for channel to process
+;	PFXHL/ address of prefix table
+;	PFXBC/ length of prefix table
+; if prefix is recognized, will call the associated procedure
+
+PFXSCN: PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	PUSH	AF
+	PUSH	IY
+	LD	HL,(PFXHL)	; pointer to command table
+	LD	BC,(PFXBC)	; size of command table
+	CALL	SEARCH
+	POP	IY
+	POP	AF
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+
+SEARCH: RES	stSUBS,(IXpg STATE); clear "command is subset"
+	RES	stSKIP,(IXpg STATE); clear "found"
+SYNC:	LD	A,'['		; sync byte
+	CPIR			; search for it
+	JP	PE,SYNC1	; jump if not the end
+	BIT	stSUBS,(IXpg STATE)
+	RET	NZ		; no message if just a subset
+	LD	A,(IY+ccCHNO)	; get channel number
+	msg	'[SEARCH: ch=\A "',0
+	LD	L,(IY+ccBUF)
+	LD	H,(IY+ccBUF+1)
+	CALL	PMSG
+	msg	'" failed]',13,0
+	RET			; end of table - no match found
+SYNC1:	LD	(MATCH),HL	; save pointer to string in case it matches
+	LD	E,(IY+ccBUF)	; get source pointer
+	LD	D,(IY+ccBUF+1)
+COMP:	LD	A,(HL)		; get character from cmdtab
+	CP	'h'		; test for hex wild card
+	CALL	Z,WILDH 	; Z _ 1 if (DE) is a hex character
+	JR	Z,COMP1 	; force match
+	CP	'd'		; test for decimal wild card
+	CALL	Z,WILDD 	; Z _ 1 if (DE) is a decimal character
+	JR	Z,COMP1 	; force match
+	CP	'q'		; test for 23..89 wild card
+	CALL	Z,WILDQ		; Z _ 1 if (DE) is in [2..9]
+	JR	Z,COMP1		; force match
+	LD	A,(DE)		; get source character
+COMP1:	CPI			; compare and incriment pointers
+	INC	DE		; incriment source pointer too
+	RET	PO		; fail if end of CMDTAB
+	JR	Z,COMP		; so far a match, keep going
+; compare failed
+	DEC	DE		; back up to compare that failed
+	DEC	HL
+	LD	A,']'
+	CP	(HL)		; test for end of target
+	INC	HL
+	JR	Z,COMP2 	; call this a match
+	LD	A,(DE)		; restore character that didn't match
+	AND	A		; is it end of string?
+	JR	NZ,SYNC 	; not a subset, go on to try next target
+	SET	stSUBS,(IXpg STATE); string is a subset of this target
+	JP	SYNC		; go on to try next target
+; this is a match!
+;  DE/ 1st char following command
+;  HL/ pointer to address to call
+COMP2:	SET	ccSVCF,(IY+ccSTS); channel needs service (maybe)
+	PUSH	DE		; save pointer to next char
+	LD	E,(HL)		; DE/ address of handler routine
+	INC	HL
+	LD	D,(HL)
+	INC	HL
+	LD	A,(IY+ccPRV)	; get user privs
+	LD	(CMDPRV),A	; save for commands
+	CP	(HL)		; compare with required privs
+	JP	M,COMP3		; not enough privs
+	SET	stSKIP,(IXpg STATE); indicate a match
+	SET	stSUBS,(IXpg STATE); indicate a subset
+COMP3:	EX	DE,HL		; HL/ handler address
+	EX	(SP),HL 	; (SP)/ handler addr, HL/ ^ next char
+	LD	E,(IY+ccBUF)	; DE/ buffer origin
+	LD	D,(IY+ccBUF+1)
+	DI			;-
+	PUSH	HL		;-save HL/ next char
+	XOR	A		;-CY/ 0
+	SBC	HL,DE		;-compute length of matched part
+	LD	B,H		;-BC/ length of matched string
+	LD	C,L		;-
+	LD	L,(IY+ccBUFP)	;-HL/ write pointer
+	LD	H,(IY+ccBUFP+1) ;-
+	XOR	A		;-CY/ 0
+	SBC	HL,BC		;-compute new write pointer
+	LD	(IY+ccBUFP),L	;-update write pointer
+	LD	(IY+ccBUFP+1),H ;-
+	POP	HL		;-restore HL/ next char
+	LD	A,(IY+ccBUFC)	;-get # chars left before
+	ADD	C		;-A/ # chars left after
+	LD	(IY+ccBUFC),A	;-update it
+	PUSH	DE		;-DE/ buffer origin
+	EX	DE,HL		;-HL/ buffer origin (source)
+	LD	DE,CMDBUF	;-DE/ command buffer (destination)
+	LD	A,B		;-
+	OR	C		;-
+	JR	Z,NOBLT1	;-
+	LDIR			;-copy matched string to CMDBUF
+NOBLT1: XOR	A		;-A/ 0
+	LD	(DE),A		;-null at end of string
+				;-HL/ next char (preserved by magic)
+	POP	DE		;-DE/ buffer origin (destination)
+	LD	BC,BUFSIZ	;-BC/ this ought to be enough
+	LD	A,B		;-
+	OR	C		;-
+	JR	Z,NOBLT2	;-
+	LDIR			;-delete matched string from ccBUF
+NOBLT2: EI			;-
+	POP	HL		; get service routine addr off stack
+	LD	A,(IY+ccCHNO)	; get channel number
+	msg	'[SEARCH: ch=\A ',0
+	CP	(IY+ccMASQ)	; are we masquerading?
+	JR	Z,NOMSQR
+	LD	C,(IY+ccMASQ)	; get masque channel
+	LD	(IY+ccMASQ),A	; replace with old channel
+	LD	A,C
+	CALL	CHANIY		; setup ^DDB
+	msg	'(as \A) ',0
+NOMSQR: msg	'"',0
+	PUSH	HL
+	LD	HL,CMDBUF
+	CALL	PMSG
+	POP	HL
+	BIT	stSKIP,(IXpg STATE); were privs okay?
+	JP	Z,NOPVOK
+	msg	'" call ',0
+	CALL	P4HEX		; print HL in hex
+	msg	']',13,0
+	LD	(CMDSP),SP	; save SP for cmdERR and such
+	JP	(HL)		; procedure will RET to our caller
+NOPVOK:	msg	'" noprv]',13,0
+	RET
+
+;	wild card routines
+; Call with (DE) character to check for match.	Preserves all registers
+; except Z.  Returns with Z set if match, else NZ.
+WILDH:	; check for 012345678ABCD#*
+	PUSH	HL
+	PUSH	AF
+	LD	A,(DE)
+	LD	H,WILDTB/100h
+	LD	L,A
+	POP	AF
+	BIT	WCH,(HL)
+	POP	HL
+	RET
+WILDD:	; check for 0123456789
+	PUSH	HL
+	PUSH	AF
+	LD	A,(DE)
+	LD	H,WILDTB/100h
+	LD	L,A
+	POP	AF
+	BIT	WCD,(HL)
+	POP	HL
+	RET
+WILDQ:	; check for 23456789
+	PUSH	HL
+	PUSH	AF
+	LD	A,(DE)
+	LD	H,WILDTB/100h
+	LD	L,A
+	POP	AF
+	BIT	WCQ,(HL)
+	POP	HL
+	RET
+
+LISTING SUBTTL 	tone generator queueing routines
+
+;	MORSEI
+; Call with ASCIZ string following call.
+; Preserves all registers!
+
+MORSEI: EX	(SP),HL 	; get the string pointer (ret adr)
+	CALL	MORSE		; send the code
+	EX	(SP),HL 	; restore HL and modified ret adr
+	RET
+
+;	MORSE
+; Call with HL/ address of ASCIZ string to copy to morse buffer.
+; Preserves all registers.
+; Returns HL/ byte following terminating null
+
+MORSE:	PUSH	AF
+MORSE1: LD	A,(HL)		; get character
+	INC	HL		; update source string pointer
+	AND	A		; test for null (end of string)
+	CALL	NZ,MORSEC	; write character
+	JR	NZ,MORSE1	; do more
+	POP	AF
+	RET
+
+;	MORSER
+; Resets tone generator (opens all tone generator output cross points).
+; Preserves all registers.
+MORSER: PUSH	AF
+	LD	A,ttRESET
+	CALL	MORSC1
+	POP	AF
+	RET
+
+;	MORSCH
+; Call with A/ channel to output to in lieu of current channel
+MORSCH: PUSH	AF
+	CALL	MORSER		; blow away old channel
+	ADD	ttSETC		; make it a command
+	CALL	MORSC1		; set up new channel
+	LD	A,(IY+ccCHNO)	; make it look like ours (kludge)
+	LD	(MCCHNO),A	; so MORSEC won't change it
+	POP	AF
+	RET
+
+;	MORMSK
+; Call with HL/ mask of channels in lieu of current channel
+MORMSK: PUSH	AF
+	CALL	MORSER		; blow away old channel
+	LD	A,(IY+ccCHNO)
+	LD	(IXpg MCCHNO),A ; fake channel number
+	DI			;- 3 byte command must not get split
+	LD	A,ttSETM	;-
+	CALL	MORSC1		;-
+	LD	A,L		;-
+	CALL	MORSC1		;-
+	LD	A,H		;-
+	CALL	MORSC1		;-
+	EI			;-
+	POP	AF
+	RET
+
+;	MORSEW
+; Call with A/ universal word index to write ttWORD,(A) into buffer.
+MORSEW:	PUSH	AF
+	LD	A,ttWORD
+	CALL	MORSEC		; send voice prefix
+	POP	AF
+
+;	MORSEC
+; Call with A/ character to write in morse buffer. Preserves all regs.
+MORSEC: PUSH	AF
+	LD	A,(IY+ccCHNO)	; get channel number
+	CP	(IXpg MCCHNO)	; is it the current one?
+	CALL	NZ,MORSCH	; no, change channels
+	POP	AF
+MORSC1: PUSH	HL
+	LD	HL,(agWBUF)	; get write buffer pointer
+	LD	(HL),A		; write character in buffer
+	INC	L		; update ring pointer
+	LD	(agWBUF),HL	; update real write pointer
+	POP	HL
+	CP	ttRESET 	; is it a reset command?
+	RET	NZ
+	LD	(IXpg MCCHNO),-1; no current channel
+	RET
+
+;	RINGER
+; make the sound associated with a ringing telephone
+;
+RINGER: RES	stRING,(IXpg STATE)
+	LD	HL,(RINGCM)
+	CALL	MORMSK			; set mask
+	mrs	'~&',ttRESET,0		; ringing tone
+	RET
+
+T2HEX:	PUSH	AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	CALL	T1HEX
+	POP	AF
+T1HEX:	PUSH	AF
+	AND	$0F
+	CP	10
+	JR	C,T1HEX2	; check for number/letter
+	ADD	'a'-10
+	JR	T1HEX3
+T1HEX2: ADD	'0'-00
+T1HEX3:	CALL	MORSEC		; send character and return
+	POP	AF
+	RET
+
+T1DEC:	; transmit one byte in decimal from A
+	PUSH	HL
+	LD	H,0
+	LD	L,A
+	CALL	T2DEC		; do radix print
+	POP	HL
+	RET
+T2DEC:	; transmit two bytes in decimal from HL
+	PUSH	AF
+	PUSH	DE
+	CALL	TDEC1
+	POP	DE
+	POP	AF
+	RET
+TDEC1:	LD	DE,10		; radix 10 print kernel
+	CALL	DIVI
+	PUSH	DE
+	LD	A,H
+	OR	L
+	CALL	NZ,TDEC1
+	POP	DE
+	LD	A,E
+	ADD	'0'
+	CALL	MORSEC
+	RET
+
+LAMPS:	; display A in lamps on port C
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	CPL			; lamps are inverted
+	LD	D,A		; data
+	LD	B,8		; # bits
+	LD	A,$60-2 	; lamp bit group origin
+LAMP1:	RR	D		; get bit
+	ADC	2		; add it in
+	OUT	(C),A		; output it
+	AND	$7E		; strip off bit
+	DJNZ	LAMP1		; for each bit
+	POP	DE
+	POP	BC
+	POP	AF
+	RET
+
+LISTING SUBTTL
+
+PFXHL:	dw BEGPFX		; address of prefix table
+PFXBC:	dw ENDPFX-BEGPFX	; length of prefix table
+CMDHL:	dw BEGCMD		; address of command table
+CMDBC:	dw ENDCMD-BEGCMD	; length of command table
+WCTHL:	dw BEGWCT		; address of WCT command table
+WCTBC:	dw ENDWCT-BEGWCT	; length of WCT command table
+
+LISTING SUBTTL 	commands
+
+;	dc( command , label , privchar , remarks )
+;
+; Commands may contain the characters 123456789*0#ABCD as well as
+; h and d to match any hex character or any decimal character.
+; Label is the address of the routine to call.	All registers are safe.
+; Privchr is one of null,0,A,B,C,D.
+; Remarks are optional, and are ignored.
+;
+define	DC (cmd,lbl,prv,rem) <
+	db	'['
+	db	'cmd'
+	db	']'
+	dw	lbl
+	db	dcprv"prv
+>
+dcprv	equ 0
+dcprv0	equ '0'
+dcprvA	equ 'A'
+dcprvB	equ 'B'
+dcprvC	equ 'C'
+dcprvD	equ 'D'
+
+BEGPFX:
+;;;;;;;;	define prefix strings here	  	   ;;;;;;;;
+dc(.,PFXTO,,prefix time out)
+dc(*,PPFX,,primary prefix)
+dc(A,pfxA,,answer PP or WCT shortcut)
+dc(Bhhhh,cmdB,,enter PIN)
+dc(C0D,LPFX,,link prefix)
+ENDPFX:
+
+BEGWCT:
+;;;;;;;;	define WCT commands here		   ;;;;;;;;
+dc(8hh,wct8,A,speed call)
+dc(9,wct9,A,direct dial call)
+dc(0,wct0,,call operator)
+;;; including all non 4th row normal commands as well...
+
+BEGCMD:
+;;;;;;;;	define command strings in BIOCMD.DAT	   ;;;;;;;;
+include	BIOCMD.DAT
+ENDWCT:
+ENDCMD:
+
+LISTING SUBTTL
+
+ENDROM
+
+	end	0000h
+   1wD‡
