@@ -1,0 +1,20 @@
+100 text word(183)
+110 integer addr(183)
+120 open "TM306.DIR",input,1
+130 open "TM306.REQ",output,2
+140 on endfile(1) goto 180
+150 input from 1 in form "HHHHBB R": addr(i),word(i) for i=1 to 183
+160 if addr(i-1) > addr(i) then print "?order: ":word(i-1);word(i) for i=2 to 183
+170 goto 190
+180 print "premature end of file at i=":i
+190 print on 2: "preload!with"
+200 print on 2 in image '"#",': word(i) for i=1 to 182
+210 print on 2 in image '"#";': word(183)
+220 print on 2: "string array word[1:183];"
+230 print on 2: "preload!with"
+240 print on 2 in image '%%%%%,': addr(i) for i=1 to 182
+250 print on 2 in image '%%%%%;': addr(183)
+260 print on 2: "integer array addr[1:183];"
+270 close(1)
+280 close(2)
+290 end
