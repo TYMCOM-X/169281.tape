@@ -1,0 +1,350 @@
+begin
+require "(SAILIB)SAIL.DEF" source!file;
+require "AUXLIB.REQ" source!file;
+
+require pnames, 5000 new!items;
+
+define	TRACE	= false;
+define	GATEWAY	= {ord};
+define	TIMEOUT	= 20;
+
+string array	resp[0:999];
+integer		nresp;
+string item	noFare;
+string item	ord;
+
+set		srcs,
+		dsts,
+		cities;
+
+string itemvar procedure
+lookupCode(string Code!);
+begin
+	string itemvar	i;
+	i := cvsi(Code!, !SKIP!);
+	if !SKIP! then
+		return(any);
+	return(i);
+end;
+
+string itemvar procedure
+newCity(string Code!, City!);
+begin
+	string itemvar	i;
+	string		s;
+	i := lookupCode(Code!);
+	if i neq any then begin
+		S := cvis(i, !SKIP!);
+		if not !SKIP! then begin
+			if not equ(S, code!) then
+				usererr(0,0,"?city redefinition: "& City!&
+				    " "& S&
+				    " "& Code!);
+			del!pname(i);
+		end;
+	end
+	else begin
+		i := new(City!);
+	end;
+	if length(Code!) then
+		new!pname(i, Code!);
+	put i in cities;
+	return(i);
+end;
+
+procedure
+newFare(string itemvar c1, c2; string Fare);
+begin
+	if not (c1 in srcs) then begin
+		if c1 = any then return;
+		print("?non-source city specified as source: ",
+			c1,
+			crlf);
+		return;
+	end;
+	if not (c2 in dsts) then begin
+		if c2 = any then return;
+		print("?non-destination city specified as destination: ",
+			c2,
+			crlf);
+		return;
+	end;
+	erase c1 xor c2 eqv any;
+	if cvd(Fare) = 0
+		then make c1 xor c2 eqv noFare
+		else make c1 xor c2 eqv new(Fare);
+end;
+
+procedure
+readDat;
+begin
+	integer		C,
+			B,
+			E,
+			LineBreak;
+	setbreak(LineBreak := getbreak, #lf, #cr, "SIN");
+	open(C := getchan, "DSK", 0,4,0, 80,B,E);
+	lookup(C, "REUNION.DAT", E);
+	if E then usererr(0,0,"?error reading REUNION.DAT");
+	while not E do begin
+		string		S;
+		S := input(C, LineBreak);
+		case S of begin
+		["s"] begin
+			string itemvar	i;
+			i := (if S[5 for 1] = "("
+			then newCity(S[6 for 3], S[11 to inf])
+			else newCity(null, S[6 to inf]));
+			put i in srcs;
+			props(i) := cvd(S[3 for 1]);
+		end;
+		["d"] put (if S[3 for 1] = "("
+			then newCity(S[4 for 3], S[9 to inf])
+			else newCity(null, S[3 to inf])) in dsts;
+		["f"] newFare(
+			lookupCode(S[3 for 3]),
+			lookupCode(S[7 for 3]),
+			S[11 to inf]);
+		[0] ;
+		[else] usererr(0,0,"?bad data in REUNION.DAT:"& crlf& S)
+		end;
+	end;
+	release(C);
+end;
+
+procedure
+writeDat;
+begin
+	string itemvar	c, s, d, f;
+	setprint("reunion.dat", if TRACE then "b" else "f");
+	foreach c | c in srcs do
+		print("s ", props(c), " (", c, ") ", datum(c), crlf);
+	foreach c | c in dsts do
+		print("d (", c, ") ", datum(c), crlf);
+	datum(noFare) := "?";
+	foreach s | s in srcs do
+		foreach d | d in dsts do
+			if s xor d eqv bind f then
+				print("f ", s, "-", d, " ", datum(f), crlf);
+	setprint(null,"t");
+end;
+
+real procedure
+cvFare(string f);
+begin
+	string		s;
+	return(realscan(s := f, !SKIP!)
+		* (if equ(f[1 to 5], "     ") then 1.0 else 2.0));
+end;
+
+integer procedure
+read(reference string resp);
+begin
+	string S;
+	integer i;
+	label Fake;
+	resp := null;
+Fake:	i := auxRead(S, TIMEOUT);
+	resp := resp& S;
+	case i of begin
+	[aux!prompt] if resp[inf for 1] = #dc1
+		then return(aux!prompt)
+		else goto Fake;
+	[aux!line] return(aux!line);
+	[aux!zap] print("? zapped"& crlf );
+	[else] print("? auxRead error"& crlf)
+	end;
+	usererr(0,0,0,"X");
+end;
+
+integer procedure
+cmd(string cmd);
+begin
+	auxOut(cmd);
+	auxOut(#cr);
+	for nresp := 0 upto 999 do
+		if aux!line = read(resp[nresp])
+			then print("> ", resp[nresp])
+			else done;
+	return(nresp);
+end;
+
+procedure
+doCity(string itemvar City);
+begin
+	string		Code;
+	Code := cvis(City, !SKIP!);
+	cmd(if !SKIP! then datum(City) else Code);
+end;
+
+procedure
+defCity(string itemvar City; string Code);
+begin
+	cvis(City, !SKIP!);
+	if !SKIP! then
+		new!pname(City, Code);
+end;
+
+string procedure
+getFare!(string itemvar src, dst);
+begin
+	label		exit;
+	procedure check(boolean n);
+	begin
+		if n then return;
+		print("***BAD RESPONSE***"& crlf);
+		outstr("?bad response to command """& resp[0]& """"& crlf);
+		for n := 1 upto nResp do
+			outstr(resp[n]);
+		goto exit;
+	end;
+	cmd("/f");
+	check(equ(resp[1], "ENTER DEPARTURE CITY NAME OR CODE"& crlf));
+	DoCity(src);
+	check(equ(resp[1], "ENTER DESTINATION CITY NAME OR CODE"& crlf));
+	DoCity(dst);
+	check(equ(resp[1], "ENTER DEPARTURE DATE"& crlf));
+	cmd("99");
+	check(equ(resp[1], "               FARE MENU"& crlf));
+	cmd("5");
+	if equ(resp[1],"THERE IS NO FARE INFORMATION FOR"& crlf) then
+		return(null);
+	check(nResp > 6 and resp[6] = "1");
+	defCity(src, resp[2][14 for 3]);
+	defCity(dst, resp[2][18 for 3]);
+	outstr(datum(src)& " -> "& datum(dst)& " ="& resp[6][4 to inf]);
+	return(resp[6][4 to inf-2]);
+exit:	return(null);
+end;
+
+procedure
+getFare( string itemvar src, dst);
+begin
+	string		f;
+	f := getFare!(src, dst);
+	if length(f) = 0 then begin
+		string		f1, f2;
+		outstr(datum(src)& " -> "& datum(dst)& " -- no flights"& crlf);
+		f1 := getFare!(src, gateway);
+		f2 := getFare!(gateway, dst);
+		setformat(0, 2);
+		if length(f1) and length(f2) then f :=
+			"         " &
+			cvf(cvFare(f1) + cvFare(f2)) &
+			" =" &
+			cvf(cvFare(f1)) &
+			" +" &
+			cvf(cvFare(f2)) &
+			" (via " &
+			cvms(gateway) &
+			")";
+	end;
+	if length(f) then
+		newFare(src, dst, f);
+end;
+
+integer procedure
+noFares;
+begin
+	string itemvar	s,
+			d;
+	integer		n;
+	n := 0;
+	foreach s, d | s xor d eqv noFare do
+		n := n + 1;
+	foreach s | s in srcs do
+		foreach d | d in dsts do
+			if s neq d and length(s xor d) = 0 then begin
+				make s xor d eqv noFare;
+				n := n + 1;
+			end;
+	return(n);
+end;
+
+procedure
+getFares;
+begin
+	string itemvar	s,
+			d;
+	auxXON := TRUE;
+	setprint("reunion.log", if TRACE then "b" else "f");
+	creaux(4&"oag");
+	outstr("[OAG connected]"& crlf);
+	auxSync("ID;PASSWORD"&crlf&"   "&#dc1);
+	cmd("yym10003;dpvwgk");
+	foreach s, d | s xor d eqv noFare do
+		getFare(s, d);
+	cmd("/q");
+	outstr("[OAG disconnected]"& crlf);
+	setprint(null, "t");
+end;
+
+procedure
+writeRpt;
+begin
+	string itemvar	s,
+			d;
+	real array	accu[0:length(dsts)];
+	integer		nPersons;
+	setprint("reunion.rpt", "b");
+	print(crlf&crlf);
+	foreach d | d in dsts do print(#ht& "   ", d);
+	print(crlf& #ht);
+	foreach d | d in dsts do print(" -------");
+	print(crlf);
+	foreach s | s in srcs do begin
+		string itemvar	f;
+		print(s, " ", props(s), #ht);
+		setformat(8, 2);
+		foreach d | d in dsts do
+			if s xor d eqv bind f then begin
+				real		fare;
+				fare := cvFare(datum(f));
+				print(cvf(fare));
+				accu[listx(dsts,d,1)] :=
+					accu[listx(dsts,d,1)] +
+					props(s) * fare;
+			end
+			else print("        ");
+		setformat(0, 0);
+		print(crlf);
+	end;
+	print(#ht);
+	foreach d | d in dsts do print(" -------");
+	print(crlf& "total"& #ht);
+	setformat(8, 0);
+	foreach d | d in dsts do print(cvf(accu[listx(dsts,d,1)]));
+	nPersons := 0;
+	foreach s | s in srcs do
+		nPersons := nPersons + props(s);
+	print(crlf& "mean"& #ht);
+	setformat(8, 2);
+	foreach d | d in dsts do print(cvf(accu[listx(dsts,d,1)] / nPersons));
+	setformat(0, 0);
+	print("
+
+
+Notes:
+1.  All fares are round trip.
+2.  Restrictions may apply.
+
+
+Key:
+");
+	foreach s | s in cities do print("  ", S, "  ", datum(S), crlf);
+	setprint(null,"t");
+end;
+
+string itemvar	s,
+		d;
+readDat;
+if noFares then begin
+	foreach s, d | s xor d eqv noFare do
+		print(s, "-", d, ": no fare"& crlf);
+	getFares;
+end;
+writeDat;
+writeRpt;
+
+end
+$
