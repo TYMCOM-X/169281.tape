@@ -1,0 +1,74 @@
+begin require "(SAILIB)SAIL.DEF" source!file;
+
+integer procedure SIGN(real X);
+return(if X<0 then -1 else (if X>0 then +1 else 0));
+
+real pi; 
+simple procedure PIINI; PI _ 3.1415926;
+require PIINI initialization;
+
+real procedure IFF(boolean BE; real X1,X2);
+return(if BE then X1 else X2);
+
+integer procedure INT(integer I); 
+return (I);
+
+integer procedure RND(real X);
+return( X+0.5 );
+
+real procedure FRACT(real X);
+begin real R; R _ X-int(X); return(if R<0 then 1+R else R); end;
+
+define LineLength = 72;
+
+external string !!QUERY;
+external procedure BAIL;
+integer H,I,W,M,C,E; real X,S; string FUN,XX,F;
+
+procedure ignore(real XYZZY); return;
+
+real FFX; 
+real procedure Fn(real T);
+begin
+!!query_ f; bail;
+return(FFX);
+end;
+
+ttyup(true);
+print("Function in terms of I or T: ");
+FUN _ inchwl;
+while !SKIP!=#lf do begin
+	print(#cr);
+	FUN _ FUN & inchwl;
+end;
+F _ "ignore(FFX _ " & FUN & ");!!go;";
+print("How many words? ");
+W _ cvd(inchwl);
+print("Multiplier: ");
+M _ cvd(inchwl);
+if M = 0 then M _ 1;
+print("Output file: ");
+
+open(C_getchan,"DSK",1,0,2, 0,0,E);
+enter(C,inchwl,E);
+cprint(C,"
+; F(I) = ",FUN,"
+; length of table: ",W,"
+; multiplier: ",M,"
+");
+
+XX _ null;
+for I _ 0 upto (W-1) do begin
+	string F;
+	F _ "," & cvs(rnd( FN(X_(2*(I+1)*PI/W)) *M));
+	if length(XX)+length(F)+3 > LineLength then begin
+		cprint(C,"DB ",XX[2 to inf],crlf);
+		XX _ null;
+	end;
+	XX _ XX & F;
+end;		
+if length(XX) then cprint(C,"DB ",XX[2 to inf],crlf);
+
+close(C);
+end $
+
