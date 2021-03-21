@@ -1,0 +1,148 @@
+begin	"IMPORT"	require "(SAILIB)SAIL.DEF" source!file;
+
+simple boolean procedure LC.NOP;
+begin!code	! return "output suppressed" bit from GETLCH;
+	SETZ 1,;		! do it for our port;
+	TTCALL 6,1;		! GETLCH;
+	AND 1,[ !bit(9) ];	! mask desired bit;
+end;				! return AC1 to user;
+
+procedure SEND;
+begin
+    own integer array X[0:5];
+    own integer C,B,E,FN,FE,FP,DC2,LF,T,OK;
+    string F;
+    label FilePrompt,DC2Prompt,LFPrompt,OKPrompt;
+    auxclv( -1,1,'55 );		! enable remote to accept ^S/^Q;
+Fileprompt:
+    print( "Enter file name to send: ");
+    F _ inchwl; if !SKIP! = 3 then return;
+    if F="?" then begin print(
+"Enter the name of the disk file to 
+be sent to you, followed by return,
+or enter Quit to abort.
+");	goto FilePrompt;
+    end;
+    if equ(F,"QUIT"[1 to length(F)]) then return;
+    FN_ cvfil (F, FE, FP);
+    if FP then begin print(
+"File """,F,""" is illegal.
+Please reenter file name.
+");	goto FilePrompt;
+    end;
+    F_ cv6str(FN)& (if FE then "."& cv6str(FE) else null);
+    release( C );
+    open( C_getchan, "DSK", 0,4,0, 2560,B,E_-1 );
+    if not E then lookup( C,F,E );
+    if E then begin
+	print(
+"File """,F,""" is not found.
+Please reenter file name.
+");	goto FilePrompt;
+    end;
+    fileinfo( X );
+    print( "File """,F,""" is ",X[5]*5," chars.",crlf );
+DC2Prompt:
+    print( "Send DC2/DC4? ");
+    DC2 _ inchwl; if !SKIP! = 3 then return;
+    case DC2 of begin
+	["Y"] ["N"] ;
+	[else] begin print (
+"Enter Yes to send DC2 (control-R) in
+front of data and DC4 (control-T)
+after data, or enter Quit to abort,
+else enter No.
+");	    goto DC2Prompt;
+	end
+    end;
+LFPrompt:
+    print( "Send LF after CR? ");
+    LF _ inchwl; if !SKIP! = 3 then return;
+    case LF of begin
+	["Y"] T_ 0;
+	["N"] setbreak(T_getbreak,null,#lf,"FINS");
+	["Q"] return;
+	[else] begin print (
+"Enter Yes to send Line-Feed after a
+Carriage-Return, or enter Quit to
+abort, else enter No.
+");	    goto LFPrompt;
+	end
+    end;
+OKPrompt:
+    print( "Enter return to start transfer: ");
+    OK _ inchwl; if !SKIP! = 3 then return;
+    if OK="Q" then return;
+    if OK then begin print (
+"Enter Carriage-Return to proceed,
+or enter Quit to abort transfer.
+" );	goto OKPrompt;
+    end;
+    if DC2="Y" then outchr( #dc2 );
+    do begin
+	outstr( input( C,T ) );
+	if LC.NOP then done;
+	if inchrs=3 then begin auxclv(-1,0,7); done end;
+    end until E;
+    inchrs;			! clear stop output flag;
+    if T then relbreak( T );
+    release( C );
+    if DC2="Y" then outchr( #dc4 );
+    print( crlf, "End of Transfer.", crlf );
+    return;
+end;
+
+procedure RECEIVE;
+print( "Not avaliable.",crlf );
+
+integer	FUNCT;
+label	PROMPT1;
+
+ttyup(true);
+begin!code
+	SETZ 1,;		! command port;
+	TTCALL 6,1;		! GETLCH;
+	TDO 1,[ !bit(10) ];	! no free crlf;
+	TTCALL 7,1;		! SETLCH;
+end;
+auxclv( -1,1,'57 );		! backspace on character delete;
+auxclv( -1,1,'62 );		! erase on character delete;
+auxclv( -1,1,'63 );		! force deffered echo;
+auxclv( -1,1,'71 );		! ^H as delete character;
+calli( calli( !xwd(-1,0),'41 ) lor !bit(20), -'21 );	! set JACCT2;
+print("
+File Import/Export System
+
+For help, type ""?"" at any prompt.
+End input with Carriage-Return.
+Control-H to erase character.
+Control-U to erase line.
+Control-O to stop output.
+Control-C to abort.
+
+");
+do begin
+    inchrs;
+    print("* ");
+    FUNCT _ inchwl;
+    case FUNCT of begin
+	["S"] SEND; 
+	["R"] RECEIVE;
+	["Q"] done;
+	[ 0 ] continue;
+	[else] print( "Enter one of:
+ Send    -send file to your system
+ Receive -receive file from your system
+ Quit    -terminate session
+")
+    end;
+end until FUNCT = "Q";
+print( "Thank-You." );
+if calli( !xwd(-1,-'22),'41 ) = cvsix( "IMPORT" ) then begin "LOGOUT"
+    print( crlf );
+    auxclv( -1,0,'60 );		! hangup;
+    calli( 10,'31 );		! wait for hangup;
+    calli( 1,-'130 );		! logoff;
+end;
+
+end $
