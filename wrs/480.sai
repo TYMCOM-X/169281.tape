@@ -1,0 +1,392 @@
+begin	"480"
+
+require "(SAILIB)SAIL.DEF" source!file;
+require "(MPL)UUOSYM.SAI" source!file;
+require "ARGS.REQ" source!file;
+require "AUXLIB.REQ" source!file;
+
+integer C,E;
+string SYSNO;
+
+string item OUTFILE;
+integer item BACKUP;
+item DETACH;
+string item GATEWAY;
+item STOP;
+integer item SUPHOST;
+item TIME;
+item TRACE;
+
+comment
+	Mapped I/O for log.
+;
+!get!definitions(GOGTAB);
+external safe integer array GOGTAB[0:ENDREN];
+boolean logDirty;
+integer logChan, logPG, logCNT, logPTR;
+
+integer procedure fAlloc( integer NPGS(1) );
+begin
+    integer PG,N;
+    N := 0;
+    for PG := '777 downto 1 do begin
+	integer STS;
+	STS := calli( PG, calli!PAGSTS );
+	if not !SKIP! then usererr(PG,2,"?PAGSTS: bad page ");
+	if STS land ps!CPR
+	    then N := 0
+	    else begin
+		N := N + 1;
+		if N geq NPGS then return( PG );
+	    end;
+    end;
+    return( 0 );
+end;
+
+procedure fFree( integer PG, NPGS(1) );
+begin
+    calli( !xwd( NPGS, PG ), calli!VCLEAR );
+end;
+
+procedure logOS( string S );
+begin
+    logDirty := true;
+    while length(S) do begin
+	integer CHR;
+	CHR := lop(S);
+	if CHR = 0 then continue;
+	if logCNT <= 0 then begin
+	    integer FP;
+	    integer array X[0:1];
+	    if logPG
+		then fFree( logPG )
+		else logPG := fAlloc;
+	    if not logPG then usererr( 0,0,"fAlloc: no more memory","X" );
+	    chnior( logChan, FP := -1, !chCFP );
+	    if not !SKIP! then usererr( 0,0,"LOGCFP: log failure !chCFP" );
+	    X[0] := '6001000000 + logPG; X[1] := FP;
+	    chnior( logChan, X[0], !chMFP );
+	    if not !SKIP! then usererr( 0,0,"LOGMFP: log failure !chMFP" );
+	    logPTR := point( 7, memory[logPG lsh 9], -1 );
+	    logCNT := 512 * 5;
+	end;
+	idpb( CHR, logPTR );
+	logCNT := logCNT - 1;
+    end;
+end;
+
+simple procedure logTrap( integer CHAN; string S );
+begin
+    if CHAN = logChan then begin
+	logOS( S );
+	if not props(DETACH) then outstr( S );
+    end
+    else begin
+	if CHAN = -1
+	    then outstr( S )
+	    else out( CHAN, S );
+    end;
+end;
+
+procedure logOpen( integer Chan; string LogFile; reference integer LogEOF );
+begin
+    integer array X[0:1];
+    logChan := Chan;
+    enter( logChan, logFile, logEOF_-1 );
+    if logEOF then return;
+    close( logChan );
+    lookup( logChan, logFile, logEOF_-1 );
+    if logEOF then return;
+    enter( logChan, logFile, logEOF_-1 );
+    if logEOF then return;
+    logPG := 0;
+    logCNT := 0;
+    logDirty := false;
+    GOGTAB[$$PROU] := location( logTrap );
+end;
+
+integer procedure cvHex(string S); 
+begin "cvHex"
+    integer H,C;
+    H := 0;
+    while length(S) do case C:=lop(S) of begin
+	["0"]["1"]["2"]["3"]["4"]["5"]["6"]["7"]["8"]["9"]
+	    H := H lsh 4 + C - "0";
+	["A"]["B"]["C"]["D"]["E"]["F"]
+	    H := H lsh 4 + C - ("A"-10);
+	["a"]["b"]["c"]["d"]["e"]["f"]
+	    H := H lsh 4 + C - ("a"-10);
+	[else]
+    end;
+    return (H);
+end "cvHex";
+
+simple boolean procedure lequ( string S1,S2 );
+begin
+    while length(S1) and S1 < " " do lop(S1);
+    return( kequ( S1[1 to length(S2)], S2 ) );
+end;
+
+integer isNumBrk,noBlanks,tokBrk;
+simple procedure BrkIni;
+begin
+    setbreak(isNumBrk_getbreak,"0123456789"," ","XT");
+    setbreak(noBlanks_getbreak,null," ","IS");
+    setbreak(tokBrk_getbreak," "&#ht&crlf," "&#ht&crlf,"TIS");
+end;
+require BrkIni initialization;
+
+simple string procedure tok( reference string S );
+begin
+    integer B;
+    return( scan( S, tokBrk, B ));
+end;
+
+simple boolean procedure isNumber( string S );
+begin
+    integer B;
+    return( length( scan( S, isNumBrk, B )));
+end;
+
+procedure ScanArgs;
+begin
+    integer I;
+    ArgParse( any, OUTFILE,
+	{BACKUP,DETACH,GATEWAY,STOP,SUPHOST,TIME,TRACE},
+	Args );
+    AuxTrace := props(TRACE);
+    if props(SUPHOST) then begin
+	if 1 leq datum(SUPHOST) leq 7
+	    then SYSNO := cvs(datum(SUPHOST)+120)
+	else if 121 leq datum(SUPHOST) leq 127
+	    then SYSNO := cvs(datum(SUPHOST))
+	else
+	    usererr(datum(SUPHOST),2,"?illegal SUP HOST specified: ","X");
+    end
+    else
+	SYSNO := "*";
+    if not props(OUTFILE) then datum(OUTFILE) := "480.DAT";
+    open( C_getchan,"DSK",0,0,4, 0,0,E);
+    if E then usererr(0,0,"?can't open DSK:","X");
+    logOpen( C, datum(OUTFILE), E );
+    if E then usererr(0,0,"?can't open DSK:"&datum(OUTFILE),"X");
+end;
+
+procedure Connect;
+begin
+    define timeout = 30;
+    own integer BUILDcnt;
+    own string PRBPAS,NAME,PASS,Text;
+    own integer STATE,RootNode;
+    boolean AUXOK;
+    label REBUILD;
+    if props(GATEWAY) and length(PRBPAS) = 0 then begin
+	auxcli(-1,'200,'64);
+	print( "LOGIN Password (PROBE): " );
+	PRBPAS := inchwl;
+	print( crlf );
+	auxcli(-1,0,'64);
+    end;
+    if length(NAME) = 0 then begin
+	print( "PROBE Name: " );
+	NAME := inchwl;
+    end;
+    if length(PASS) = 0 then begin
+	auxcli(-1,'200,'64);
+	print( "PROBE Password (",NAME,"): " );
+	PASS := inchwl;
+	print( crlf );
+	auxcli(-1,0,'64);
+    end;
+REBUILD:
+    setformat(0,0);
+    do begin
+	if ( BUILDcnt := BUILDcnt + 1 ) > 50 then
+	    usererr(0,0,"?connect: rebuild count expired - giving up","X");
+	print( "[building circuit]"& crlf );
+	AuxZap;
+	if props(GATEWAY)
+	    then if cvd(datum(GATEWAY))
+		then CREAUX( ":"&4&datum(GATEWAY) )
+		else CREAUX( 4&datum(GATEWAY) )
+	    else CREAUX( 4&"PROBE:"&SYSNO );
+	AUXOK := !SKIP!;
+	if not AUXOK then call(20,"SLEEP");
+    end until AUXOK;
+    STATE := 0;
+    while true do case AuxRead( Text, timeout ) of begin
+	[aux!zap] goto REBUILD;
+	[aux!prompt]
+	    if lequ(Text,"please log in:") then begin
+		if STATE > 1 then begin
+		    print( "%connect: zapped by PROBE"& crlf );
+		    goto REBUILD;
+		end;
+		print( "[gateway circuit built]"& crlf );
+		AuxEcho := AuxTrace;
+		auxout( 4&"PROBE:"& SYSNO& ";" );
+		AuxEcho := false;
+		auxout( PRBPAS& #cr );
+		auxsync( #lf );
+		STATE := 1;
+	    end else if lequ(Text,"NAME:") then begin
+		if STATE geq 2 then
+		    usererr(0,0,"?connect: bad PROBE Name","X");
+		print( "[probe circuit built]"& crlf );
+		AuxEcho := AuxTrace;
+		auxout( NAME&#cr );
+		STATE := 2;
+	    end else if lequ(Text,"PASSWORD:") then begin
+		if STATE geq 3 then
+		    usererr(0,0,"?connect: bad Password","X");
+		AuxEcho := false;
+		auxout( PASS&#cr );
+		STATE := 3;
+	    end else if lequ(Text,"error") then begin
+		usererr(0,0,"> "&Text&crlf&"?connect: login error","X");
+	    end else if lequ(Text,":") then begin
+		done;
+	    end else begin
+		print( "> ", Text, crlf& "%connect: unexpected prompt"& crlf );
+		goto REBUILD;
+	    end;
+	[aux!line] if length(Text)
+	    then if cvd(Text)
+		then cprint( C, "[sup ", Text, " connected]"& crlf )
+		else print( "> ", Text, crlf );
+	[aux!timeout] goto REBUILD
+    end;
+    AuxEcho := AuxTrace;
+    if props(DETACH) then begin
+	print("Detaching...");
+	calli(0,-6);
+    end;
+    auxOut( "rlog F8 198 480"& #cr );
+    auxSync( ":", timeout );
+    auxOut( "log chs" );
+    if props(BACKUP) then auxout( cvs(datum(BACKUP))& "b" );
+    auxout( #cr );
+    cprint( C,
+"day:hh:mm:ss  onode  dhost     UUN  password"& crlf&
+"------------  -----  -----  ------  --------"& crlf );
+end;
+
+procedure PassProc( reference string PW; reference integer CNT; integer W );
+begin
+    integer I;
+    for I := -24 step 8 until 0 do
+	if CNT > 0 then begin
+	    integer CHR;
+	    CHR := (W lsh I) land '177;
+	    PW := PW& (if (" " leq CHR < "\") or ("\" < CHR leq "~")
+		then char!w(CHR,7)
+		else "\"&(if CHR = "\" then "\" else cvos('1000+CHR)[2 to 4]));
+	    CNT := CNT - 1;
+	end;
+end;
+
+procedure Svc48( integer Chan; string Line );
+begin
+    own integer STATE;
+    own integer UUN, OrigNode, DestHost, UserCnt, PassCnt;
+    own string UN,PW;
+    string S;
+    integer W1,W2;
+    label CheckDone,Crazy;
+    tok( S := Line[13 to inf] );
+    W1 := cvHex( tok( S ));
+    W2 := cvHex( tok( S ));
+    case STATE of begin
+    [0] begin
+	UUN := W1;
+	DestHost := W2 lsh -16;
+	OrigNode := W2 land '177777;
+	UN := PW := null;
+	STATE := 1;
+	if !lh(UUN) then goto Crazy;
+    end;
+    [1] begin
+	UserCnt := W1;
+	PassCnt := W2;
+	STATE := 2;
+	if not (0 leq UserCnt leq 63) or not (0 leq PassCnt leq 63)
+	    then goto Crazy;
+	goto CheckDone;
+    end;
+    [2] begin
+	if UserCnt > 0 then begin
+	    PassProc( UN, UserCnt, W1 );
+	    PassProc( UN, UserCnt, W2 );
+	end else begin
+	    PassProc( PW, PassCnt, W1 );
+	    PassProc( PW, PassCnt, W2 );
+	end;
+CheckDone:
+	if UserCnt leq 0 and PassCnt leq 0 then begin
+	    setformat( -5, 0 );
+	    cprint( C,
+		Line[1 to 12], "  ",
+		cvos(OrigNode), "  ",
+		cvs(DestHost), "  "  );
+	    setformat( -6, 0 );
+	    cprint( C,
+		cvos(UUN), "  ",
+		PW, crlf  );
+	    setformat( 0, 0 );
+	    STATE := 0;
+	end;
+    end;
+    [else] begin
+Crazy:	cprint( C, "> ", Line, crlf );
+	STATE := 0;
+    end
+    end;
+end;
+
+procedure CopyLog( integer C );
+begin
+    own string S,S1;
+    while true do
+	case auxRead( S, 90 ) of begin
+	    [aux!line] begin
+		while lequ( S, "**FAST WRAP" ) do
+		    S := S[37 to inf];
+		if "0" leq S leq "3" then begin
+		    string S1;
+		    integer MSGTYPE;
+		    MSGTYPE := cvHex(tok(S1:=S[13 to inf])) land -8;
+		    case MSGTYPE of begin
+			[248]  begin "0F8 GOING TO SLEEP"
+			    cprint( C, crlf& "[going to sleep]"& crlf );
+			    SYSNO := "*";
+			    Connect;
+			end;
+			[408]  begin "198 LOGIN RATE"
+			    if props(TIME) and not props(TRACE) then
+				print( S[1 to 12], #cr );
+			end;
+			[1152] begin "480 (special message)"
+			    Svc48( C, S );
+			end;
+			[else] cprint( C, "> ", S, crlf )
+		    end;
+		end
+		else if lequ( S, "CAUGHT UP" ) then
+		else cprint( C, "> ", S, crlf );
+	    end;
+	    [aux!prompt] cprint( C, "?prompt: """, S, """"& crlf );
+	    [aux!zap] begin cprint( C, "?zap"& crlf ); Connect end;
+	    [aux!timeout] begin cprint( C, "?timeout"& crlf ); Connect end
+	end;
+end;
+
+begin	"M A I N"
+    auxRNC := true;
+    ScanArgs;
+    Connect;
+    CopyLog( C );
+end	"M A I N";
+
+end	"480"
+$
+ 
