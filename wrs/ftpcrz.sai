@@ -1,0 +1,68 @@
+begin	"FTPCROmix"
+
+require "(SAILIB)SAIL.DEF" source!file;
+
+integer	Mode;			! one of "Ascii","Binary","Hex","Image";
+
+procedure SendFile( string IFile, OFile );
+begin
+end;
+
+procedure GetFile( string IFile, OFile );
+begin
+end;
+
+begin	"MAIN"
+    integer B,CroBrk,TcxBrk;
+    string S,CMD,IFile,OFile,RFile;
+
+    ttyup(true);
+    setbreak( CroBrk:=getbreak,"/",null,"SINK" );
+    setbreak( TcxBrk:=getbreak,")",null,"SINK" );
+    Mode := "A";		! default mode is Ascii;
+    do begin
+	print( "*" );
+	CMD := inchwl;
+	case CMD of begin
+	    ["?"] print( "One of:
+  A	ascii mode (5 - 7 bit bytes per PDP-10 word parity bit is zero)
+  B	binary mode (4 - 8 bit bytes per PDP-10 word)
+  H	hex mode (PDP-10 file is Intel format, Cromix file is .BIN format)
+  I	image mode (1 - 8 bit byte per PDP-10 word)
+  G	get file from Cromix
+  S	send file to Cromix
+");
+	    ["A"]["B"]["I"] Mode := CMD;
+	    ["H"] print( "%hex mode not implimented"& crlf );
+	    ["G"] begin
+		print( "Input file (Cromix): " );
+		IFile := S:= inchwl;
+		do RFile := scan( S,CroBrk,B ) until B=0;
+		print( "Output file (Tymcom-X): ");
+		OFile := inchwl;
+		if !SKIP! = #esc then begin
+		    print( #bs, RFile, crlf );
+		    OFile := OFile & RFile;
+		end;
+		GetFile( IFile, OFile );
+	    end;
+	    ["S"] begin
+		print( "Input file (Tymcom-X): " );
+		IFile := S := inchwl;
+		do RFile := scan( S,TcxBrk,B ) until B=0;
+		print( "Output file (Cromix): ");
+		OFile := inchwl;
+		if !SKIP! = #esc then begin
+		    print( #bs, RFile, crlf );
+		    OFile := OFile & RFile;
+		end;
+		SendFile( IFile, OFile );
+	    end;
+	    ["Q"][0] ;
+	    [else] print( "?unrecognized command: """,Cmd,""""& crlf )
+	end;
+    end until CMD="Q";
+
+end	"MAIN";
+end
+$
