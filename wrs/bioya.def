@@ -1,0 +1,270 @@
+;	S P E C I A L   D E V I C E   A S S I G N M E N T S
+
+define	DBIT (s,v) <		;; define bits
+	s	equ v
+	s"m	equ 1 shl v >
+
+ifn DEBUG <			;; port address macro
+define	PORT (p) <$80+$"p>
+>
+ife DEBUG <
+define	PORT (p) <$"p>
+>	
+
+;	D T M F   B O A R D
+;
+NDTMF	equ 1			; number of DTMF boards
+DTMF	equ PORT(20) 		; DTMF base port address
+; receiver data/status port bit assignments
+  dtDATm equ	$0F		; data mask (strip status bits)
+  dbit	dtEST,	4		; early strobe
+  dbit	dtSTD,	7		; strobe data
+; transmitter port and bit assignments
+ dtmfDR equ	0		; touch tone data register
+  dtR1m	equ	$0E		; row tone definitions
+  dtR2m	equ	$0D
+  dtR3m	equ	$0B
+  dtR4m	equ	$07
+  dtC1m	equ	$E0		; column tone definitions
+  dtC2m	equ	$D0
+  dtC3m	equ	$B0
+  dtC4m	equ	$70
+ dtmfCR equ	1		; rate/level control register
+  dtRMm equ	$3F		; rate multiplier mask
+  dbit	dtOLS,	6		; output level select
+  dbit	dtRME,	7		; rate multiplier enable
+
+;	S P E E C H   B O A R D
+;
+NVSP	equ 1			; number of VSP boards
+VSP	equ PORT(28)		; VSP base port address
+ VSPD	equ 0			; data port (RW)
+  vpcRED equ $10		; read byte command
+  vpcRBR equ $30		; read and branch command
+  vpcLDA equ $40		; load address command
+  vpcSPK equ $50		; speak internal command
+  vpcSPX equ $60		; speak external command
+  vpcRES equ $FF		; reset command
+  vpsTS equ $01			; talk status bit from VSP
+  vpsBL equ $02			; buffer low bit from VSP
+  vpsBE equ $04			; buffer empty bit from VSP
+  vpsMSK equ vpsTS+vpsBL+vpsBE	; mask of defined bits
+ VSPC	equ 1			; voice synthesis status port (RO)
+  vssINT equ $01		; bit 0 is INT from VSP
+  vssWS equ $02			; bit 1 is WS to VSP
+  vssRDY equ $04		; bit 2 is READY from VSP
+  vssRS equ $08			; bit 3 is RS to VSP
+  vssMSK equ vssINT+vssWS+vssRDY+vssRS; mask of defined bits
+
+;	S I O	B O A R D
+;
+NSIO	equ 1			; number of SIO boards
+SIO	equ PORT(30) 		; SIO base port address
+ sioDR	equ	0		; offset for data register
+  sioDATm equ	$7F		; data mask (strip parity)
+ sioSR	equ	1		; offset for status register
+  dbit	sioTBE, 0		; transmit buffer empty flag
+  dbit	sioRDA, 1		; receive data available flag
+ sioMR	equ	2		; mode register for S2661
+ sioCR	equ	3		; offset for control register
+KA	equ SIO+4		; keep alive control port
+ kaMAGIC equ	$9C		; magic word to send to keep alive
+
+;	C T C
+;
+NCTC	equ 1			; number of CTC devices (must be 1)
+CTC	equ $7C 		; CTC base port address (even in DEBUG)
+ dbit	ctCTL,	0		; this is a control byte
+ dbit	ctRESET,1		; software reset channel
+ dbit	ctLTC,	2		; load time constant next byte
+ dbit	ctWAIT, 3		; wait for trigger (timer mode only)
+ dbit	ctRISE, 4		; rising edge trigger (not falling)
+ dbit	ct256,	5		; prescale by 256 (not 16)
+ dbit	ctCNT,	6		; counter mode (not timer mode)
+ dbit	ctINTE, 7		; interrupt enable
+
+;	 I N P U T   P O R T   A S S I G N M E N T S
+;
+; NIB = number of input boards
+; IB = port address of first input board
+; iXXXXXXp = port address of switch XXXXXX
+; iXXXXXXb = bit number of switch XXXXXX
+; iXXXXXXm = bit mask for switch XXXXXX
+
+define	idef (ww,bb,ss) <
+    i"ss"p equ IB + ww
+    i"ss"b equ bb
+    i"ss"m equ 1 shl bb >
+
+; specify number of input boards
+NIB	equ 1
+
+; specify address of first input board
+IB	equ PORT(40)
+
+; name bits for input ports:
+;	IPDEF relative-port-no , bit-no , symbol-name ; description
+; high priority
+idef	0,0,RING;		; phone patch ring indicator (normal = 0)
+idef	0,1,HWRS;		; reset switch or super keep alive (normal = 0)
+idef	0,2,DIAL;		; white courtesy telephone dial (normal = 0)
+idef	0,3,DTD;		; dial tone detector (dial tone detected = 0)
+; alarms
+iALARMp equ IB+3
+idef	3,0,SMOKE;		; ion chamber
+idef	3,1,FIRE;		; fire sensor
+idef	3,2,TEMP2;		; overtemp switch
+idef	3,3,TEMP3;		; overtemp switch
+idef	3,4,TEMP4;		; overtemp switch
+idef	3,5,FEED;		; coax feed line alarm
+idef	3,6,DOOR6;		; door open
+idef	3,7,DOOR7;		; door open
+
+;	 O U T P U T   P O R T	 A S S I G N M E N T S
+;
+; NOB = number of output boards
+; OB = port address of first output board
+; oXXXXXX  = ctl bit def: port * 256 + bitn * 2 for switch XXXXXX
+; oXXXXXXp = port address of switch XXXXXX
+; oXXXXXXb = bit number [0:47] of switch XXXXXX
+
+define	odef (ww,bb,ss) <
+    o"ss   equ (OB+ww)*256 + (bb)*2
+    o"ss"p equ OB + ww
+    o"ss"b equ bb >
+
+NOB	equ 2			; number of output boards
+OB	equ PORT(50)		; port address of first board
+
+; name bits for output ports:
+;	ODEF relative-port-no , bit-no , symbol-name ; description
+
+; board 0 defs
+odef	0,0,FANS;		; rack fans
+odef	0,1,BLOWER;		; bldg blower
+odef	0,2,TOWER;		; tower lights
+odef	0,3,INLIT;		; indoor bldg light
+odef	0,4,OUTLIT;		; outdoor bldg light
+odef	0,5,SOCKET;		; utility AC socket
+odef	0,45,FEEP;		; white courtesy telephone feeper
+odef	0,46,TELX;		; telephone (obsolete SCR trigger)
+odef	0,47,TELR;		; telephone line sieze relay
+maxXON	equ 6			; highest bit settable by direct command
+
+; board 1 defs
+odef	1,0,2MLOOS;		; 2 meter rx loose squelch
+odef	1,1,2MCGD;		; 2 meter rx CG monitor
+odef	1,2,2MCGE;		; 2 meter tx CG encoder
+odef	1,3,2MANT;		; 2 meter antenna switch
+odef	1,4,2MF1;		; 2 meter frequency 1 select
+odef	1,5,2MF2;		; 2 meter frequency 2 select
+odef	1,6,2MF3;		; 2 meter frequency 3 select
+odef	1,7,2MF4;		; 2 meter frequency 4 select
+odef	1,8,6MLOOS;		; 6 meter rx loose squelch
+odef	1,9,6MCGD;		; 6 meter rx CG monitor
+odef	1,10,6MCGE;		; 6 meter tx CG encoder
+odef	1,11,6MANT;		; 6 meter antenna switch
+odef	1,12,6MF1;		; 6 meter frequency 1 select
+odef	1,13,6MF2;		; 6 meter frequency 2 select
+odef	1,14,6MF3;		; 6 meter frequency 3 select
+odef	1,15,6MF4;		; 6 meter frequency 4 select
+odef	1,16,44LOOS;		; 440 Mhz rx loose squelch
+odef	1,17,44CGD;		; 440 Mhz rx CG monitor
+odef	1,18,44CGE;		; 440 Mhz tx CG encoder
+odef	1,19,44ANT;		; 440 Mhz antenna switch
+odef	1,20,44F1;		; 440 Mhz frequency 1 select
+odef	1,21,44F2;		; 440 Mhz frequency 2 select
+odef	1,22,44F3;		; 440 Mhz frequency 3 select
+odef	1,23,44F4;		; 440 Mhz frequency 4 select
+odef	1,24,NPLOOS;		; normal primary rx loose squelch
+odef	1,25,NPCGD;		; normal primary rx CG monitor
+odef	1,26,NPCGE;		; normal primary tx CG encoder
+odef	1,27,NPPOW;		; normal primary high/low power
+odef	1,28,NPHANG;		; normal primary tx hang time off
+odef	1,29,SPLOOS;		; 420 Mhz supervisory rx loose squelch
+odef	1,30,SPCGD;		; 420 Mhz supervisory rx CG monitor
+odef	1,31,SPCGE;		; 420 Mhz supervisory tx CG encoder
+odef	1,32,SPANT;		; 420 Mhz supervisory antenna switch
+odef	1,33,SPHANG;		; 420 Mhz supervisory tx hang time off
+odef	1,34,LNLOOS;		; 420 Mhz link north rx loose squelch
+odef	1,35,LNCGD;		; 420 Mhz link north rx CG monitor
+odef	1,36,LNCGE;		; 420 Mhz link north tx CG encoder
+odef	1,37,LNANT;		; 420 Mhz link north antenna switch
+odef	1,38,LNHANG;		; 420 Mhz link north tx hang time off
+odef	1,39,LSLOOS;		; 420 Mhz link south rx loose squelch
+odef	1,40,LSCGD;		; 420 Mhz link south rx CG monitor
+odef	1,41,LSCGE;		; 420 Mhz link south tx CG encoder
+odef	1,42,LSANT;		; 420 Mhz link south antenna switch
+odef	1,43,LSHANG;		; 420 Mhz link south tx hang time off
+odef	1,44,INTF1;		; intercom 1 select
+odef	1,45,INTF2;		; intercom 2 select
+odef	1,46,INTF3;		; intercom 3 select
+odef	1,47,INTF4;		; intercom 4 select
+
+odef	1,48,LAMP0;		; some boards have an LED here
+odef	1,49,LAMP1;
+odef	1,50,LAMP2;
+odef	1,51,LAMP3;
+odef	1,52,LAMP4;
+odef	1,53,LAMP5;
+odef	1,54,LAMP6;
+odef	1,55,LAMP7;
+
+;	 A U D I O   C H A N N E L   A S S I G N M E N T S
+;
+; NAB = number of audio boards (must be 1)
+; abNC = number of channels per board
+; AB = port address of first audio board
+; aiXXXXXX = channel number of input channel for XXXXXX
+; aiXXXXXXm = channel mask for input channel for XXXXXX
+; aoXXXXXX = channel number of output channel for XXXXXX
+; aoXXXXXXm = channel mask for output channel for XXXXXX
+
+define	aidef (cc,ss) <
+    ai"ss"m equ (1 shl cc)
+    ai"ss equ cc >
+define	aodef (cc,ss) <
+    ao"ss"m equ (1 shl cc)
+    ao"ss equ cc >
+
+NAB	equ 1			; number of audio boards
+abNC	equ 16			; number of channels per board
+AB	equ PORT(00)		; base port address of first board
+
+; name channels for audio board:
+;	AIDEF input-channel-no , symbol-name ; description
+;	AODEF output-channel-no , symbol-name ; description
+aidef	$0,SPRX;		; 420 Mhz supervisory receiver
+aodef	$0,SPTX;		; 420 Mhz supervisory transmitter
+aidef	$1,NPRX;		; normal primary receiver
+aodef	$1,NPTX;		; normal primary transmitter
+abNPC	equ 2			; number of primary channels
+aidef	$2,LNRX;		; link north receiver
+aodef	$2,LNTX;		; link north transmitter
+aidef	$3,LSRX;		; link south receiver
+aodef	$3,LSTX;		; link south transmitter
+abNCC	equ 4			; number of control channels
+aidef	$4,44RX;		; 440 Mhz receiver
+aodef	$4,44TX;		; 440 Mhz transmitter
+aidef	$5,2MRX;		; 2 meter receiver
+aodef	$5,2MTX;		; 2 meter transmitter
+aidef	$6,6MRX;		; 6 meter receiver
+aodef	$6,6MTX;		; 6 meter transmitter
+aidef	$7,TELRX;		; phone patch in
+aodef	$7,TELTX;		; phone patch out
+aidef	$8,INTRX;		; intercom listen
+aodef	$8,INTTX;		; intercom talk
+aidef	$9,WCTRX;		; white courtesy telephone
+aodef	$9,WCTTX;		; white courtesy telephone
+abNSC	equ 10			; number of standard channels
+aidef	$B,MODEM;		; MC14412 internal modem
+aodef	$B,MODEM;		; MC14412 internal modem
+;idef	$C,VSP;			; no voice input
+aodef	$C,VSP;			; TMS 5220 voice synthesis processor
+aidef	$D,DTMF;		; MT8860 DTMF receiver
+aodef	$D,DTMF;		; S2859 DTMF transmitter
+aidef	$E,TEST1;		; phono test input 1
+aodef	$E,TEST1;		; phono test output 1
+aidef	$F,TEST2;		; phono test input 2
+aodef	$F,TEST2;		; phono test output 2
+ 
