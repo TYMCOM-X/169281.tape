@@ -1,0 +1,57 @@
+begin	require "(SAILIB)SAIL.DEF" source!file;
+
+define LOCNPA = 408;
+integer array LOCMAP[0:999];
+define ALTNPA = 415;
+integer array ALTMAP[0:999];
+
+procedure PrintBitMap (integer array MAP);
+begin
+    integer J,L;
+    string ACCUM;
+    ACCUM_ #ht&"db ";
+    for J _ 0 step 8 until 999 do begin
+	integer K;
+	L_ 0;
+	for K _ J step 1 until J+7 do 
+	    L _ L + MAP[k] lsh (K mod 8);
+	ACCUM_ ACCUM& cvs(L);
+	if length(ACCUM) < 60
+	    then ACCUM_ ACCUM& ","
+	    else begin
+		print( ACCUM,crlf );
+		ACCUM_ #ht&"db ";
+	    end;
+    end;
+    if length(ACCUM) > 4 then print( ACCUM[1 to inf-1],crlf );
+end;
+
+integer C,B,E;
+integer I,J,K;
+setbreak(1,#lf,#cr,"SINK");
+open(1,"DSK",0,4,0,80,B,E);
+lookup(1,"BIOTRT.DAT",E);
+while not E do begin
+    string S;
+    S _ input(1,1);
+    if cvd(S[1 to 3])=LOCNPA then LOCMAP[cvd(S[5 to 7])] _ 1;
+    if cvd(S[1 to 3])=ALTNPA then ALTMAP[cvd(S[5 to 7])] _ 1;
+end;
+release(1);
+setprint("BIOTRT.MIC","F");
+
+print ("include	BIOYA.COM",crlf,
+       crlf,
+       "	org TRT1",crlf,
+       "	dw ",LOCNPA,crlf,
+       "	db '",LOCNPA,"',0",crlf );
+PrintBitMap( LOCMAP );
+print (crlf,
+       "	org TRT2",crlf,
+       "	dw ",ALTNPA,crlf,
+       "	db '",ALTNPA,"',0",crlf );
+PrintBitMap( ALTMAP );
+print (crlf,
+       "	end",crlf );
+
+end $
