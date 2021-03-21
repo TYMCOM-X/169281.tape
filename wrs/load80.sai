@@ -1,0 +1,461 @@
+begin
+    require "SAIL.DEF" source!file;
+    require "TMPCOR" source!file;
+    require '12 version;
+    external boolean !SKIP!;
+    integer array Core [0:'177777];
+    integer AdrBreak, AdrLow, AdrStart, Brk, Eof, FileType, Dsk;
+    external boolean RPGSW;
+    string TmpCor,SaveSpec,Switch;
+    define MaxCnt = 251;	! biggest block to send;
+		! note MaxCnt+4 can't exceed 8 bits;
+!	mlook
+
+	Returns an integer describing the type of the file found.
+	Otherwise, just like lookup.  Takes switches and stuff.
+;
+
+integer DOT,ZER;
+simple procedure DOTini;
+begin
+    setbreak(DOT_getbreak,"."," ","RINK");
+    setbreak(ZER_getbreak,null,null,"Z");
+end;
+require DOTini initialization;
+
+Define
+    Intel = 1,
+    Bin = 2,
+    Text = 3;
+
+integer procedure Mlook(integer Chan;
+		reference string File;
+		reference integer Eof);
+begin "Mlook"
+    string Ext;
+    File _ scan( Ext_File, dot, Brk );
+    Ext _ ".REL.TXT.HEX.BIN";	! BIN must be last;
+    open(Chan, "DSK", '1,4,0, 256,Brk,Eof);
+    while length(Ext) do begin
+	if equ(Ext[1 to 4],".BIN") then begin "openBin"
+	    release(Chan);
+	    open(Chan, "DSK", '14,4,0, 0,0,Eof);
+	end "openBin";
+	lookup(Chan, File & Ext[1 for 4], Eof);
+	if not Eof then done;
+	Ext _ Ext [5 to inf];
+    end;
+    if Eof then begin
+	release(Chan);
+	return(0);
+    end;
+    Ext _ Ext[1 for 4];
+    if equ(Ext,".REL") then begin "REL file"
+	integer I;
+	I _ cvasc(input(Chan,ZER));
+	if (I lsh -29) < '40 then begin "binary"
+	    integer array X[0:5];
+	    release(Chan);
+	    X[0] _ cvsix("SYS"); 
+	    X[1] _ cvsix("LOADER");
+	    X[2]_X[3]_X[4]_X[5]_0;
+	    call(hl(1)+hr(location(X[0])),"RUN");
+	    usererr(0,1,"?can't run SYS:LOADER");
+	end "binary";
+	lookup(Chan, File&Ext, Eof);
+	if Eof then usererr(Eof,2,"?file vanished: "& File&Ext);
+    end "REL file";
+    if RPGSW then Del!Tmp("LOA");
+    File _ File & Ext;
+    case Ext[2 to 2] of begin
+	["REL"]["HEX"] return(Intel);
+	["BIN"] return(Bin);
+	["TXT"] return(Text);
+	else return(Intel) 
+    end;
+end "Mlook";
+!	cvHex
+
+	Returns the integer representation of the hexadecimal
+	string passed.  Illegal characters (such as blank)
+	cause garbage.
+;
+simple integer procedure cvHex(string S); 
+begin "cvHex"
+    own integer H,C;
+    H _ 0;
+    while length(S) do
+	H _ H lsh 4 +
+	    (if (C_lop(S)) geq "a" then C-("a"-10)
+	    else (if C geq "A" then C-("A"-10)
+	    else C-"0"));
+    return (H);
+    end "cvHex";
+
+simple string procedure cvHs(integer I);
+    return(
+	"0123456789ABCDEF"[(I lsh -12)land '17 +1 for 1] &
+	"0123456789ABCDEF"[(I lsh -8)land '17 +1 for 1] &
+	"0123456789ABCDEF"[(I lsh -4)land '17 +1 for 1] &
+	"0123456789ABCDEF"[I land '17 +1 for 1]);
+!	NextFile
+
+	Returns TRUE if there is another file to be loaded.
+	Accumulates the values of switches as they are encountered.
+	If RPGSW is on, it reads from TmpCor (a string).  Else
+	it prompts with a "*" and reads from tty.
+;
+
+integer Reloc;		! loading relocation for .REL files;
+integer Symbols;	! loading address for symbol table (or -1);
+integer Phase;		! load whole image at this physical address;
+integer	Org;		! load program at this virtual address;
+boolean	Execute;	! execute flag;
+
+integer Comma,Slash,Paren;
+simple procedure CSPini;
+begin
+    setBreak (Comma_getbreak, '54, " ", "SINK");
+    setBreak (Slash_getbreak, "/", " ", "SINK");
+    setBreak (Paren_getbreak, '50, null, "SINK");
+end;
+require CSPini initialization;
+
+boolean procedure NextFile (reference string File);
+begin "NextFile"
+    integer I,Brk;
+    string FileSpec;
+    Org _ -1;			! per file;
+    if RPGSW
+      then begin "RPG"
+	integer S; string XX;
+	if length(TmpCor)=0 then return(false);
+	FileSpec _ scan (TmpCor, Comma, Brk);
+	Switch _ null;
+	while FileSpec = "/" do begin "hack"
+	    lop(FileSpec);	! eat the /;
+	    Switch _ Switch & lop(FileSpec);
+	end "hack";
+	FileSpec _ scan (XX_FileSpec, Paren, Brk);
+	Switch _ Switch & XX;
+	I _ 0;
+	while length(Switch) do case S_lop(Switch) of begin "case"
+	    ["E"] begin Execute _ not I; I _ 0 end;
+	    ["D"]["T"]
+	    ["S"] begin Symbols _ (if I then I else '40000); I _ 0 end;
+	    ["R"] begin Reloc _ I; I _ 0 end;
+	    ["P"] begin Phase _ (if I then I else '10000); I _ 0 end;
+	    ["O"] begin Org _ I; I _ 0 end;
+	    [")"] TmpCor _ Switch & "," & TmpCor;
+	    ["0"]["1"]["2"]["3"]["4"]["5"]["6"]["7"]
+		I _ I * 8 + S - "0";
+	    ["-"] I _ -1;
+	    ["?"] begin
+		print("
+Loader switches are:
+  %E		execute program after loading
+  %####O	program origin (octal) for .BIN files
+  %P		load at $1000 for PROM burning
+  %####P	physical load address (octal) for PROM burning
+  %S		load symbols at $4000
+  %####S	load symbols at specified (octal) location
+  %####R	program relocation (octal) for .REL files
+");		call(0,"EXIT");
+	    end;
+	    else 
+	end "case";
+      end "RPG"
+      else begin "TTY"
+	if length(SaveSpec)=0 then begin "GetLine"
+	    print("*");
+	    while (SaveSpec_inchwl)="?" do print("
+Enter files to load seperated by "","" or <cr>.
+Enter blank line to send downline.  Switches are:
+  /E		execute program after loading
+  /O:###	program origin (hex) for .BIN files
+  /P:###	physical load address (hex) for PROM burning
+  /R:###	program relocation (hex) for .REL files
+  /S:###	symbol table address (hex) for .REL files
+*");
+	    if length(SaveSpec)=0 then return(false);
+    	end "GetLine";
+	FileSpec _ scan (SaveSpec, Comma, Brk);
+    end "TTY";
+    File _ scan (FileSpec, Slash, Brk);
+    while Brk do begin "Switch"
+	Switch _ scan (FileSpec, Slash, Brk);
+	case Switch of begin
+	  ["E"] Execute _ true;
+	  ["O"] Org _ cvHex (Switch[3 to inf]);
+	  ["P"] Phase _ cvHex (Switch[3 to inf]);
+	  ["R"] Reloc _ cvHex (Switch[3 to inf]);
+	  ["S"] Symbols _ cvHex (Switch[3 to inf]);
+	  else 
+	end;
+    end "Switch";
+    return (true);
+end "NextFile";
+!	imageIn		imageOut
+
+	Perform the expected functions in image mode one character
+	at a time with the command port
+;
+simple integer procedure imageIn;
+    return(auxclv(-1, 0, 0));
+
+boolean BIO;
+integer BIOPTR;
+integer array BIOBUF[0:'100];
+simple procedure BIOINI;
+begin
+    arrclr(BIOBUF);
+    BIOPTR_ point(8,BIOBUF[0],31);
+    BIO_ false;
+end;
+require BIOINI initialization;
+
+simple procedure imageOut(integer C);
+if BIO 
+    then begin 
+	BIOBUF[0]_ BIOBUF[0] +1;
+	idpb(C,BIOPTR);
+    end
+    else auxclv(-1, C, 3);
+
+simple procedure stringOut(string S);
+while length(S)
+    do imageOut( lop(S) );
+
+simple procedure SendBlock;
+if BIO then begin
+    auxclr(-1,BIOBUF[0],'37);		! block output;
+    BIOINI; BIO_ true;
+end;
+
+!	readBlock
+
+	Takes a line from a binary file in MICRO-SYMBOL format.
+	The ":" must be stripped from the line as well as the
+	<crlf>.  readBlock returns (true) if the block was
+	succesfully sent (or was ignored) and returns false if
+	a checksum error was detected.
+;
+boolean procedure readBlock(string B; reference integer Reloc);
+begin "readBlock"
+    integer array Block[1:length(B)%2];
+    own integer I,Cksum,Adr,Reloc1;
+    Reloc1 _ Reloc;
+    if length(B) < 4 then usererr(0,1,"?block too short..."&crlf&B);
+    for I _ 2 step 2 until length(B)
+    	do Block[I%2] _ cvHex( B[I-1 to I] );
+    Adr _ Block[2] lsh 8 + Block[3];
+    case Block[4] of begin	! block type;
+	[0]; 				! absolute data;
+	[1] begin
+	    if Symbols > 0 then begin	! ref'd symbol;
+		string S;
+		AdrLow _ AdrLow min Symbols;
+		Core[symbols] _ '400 lor Block[3];
+		Core[symbols_symbols+1] _ '400 lor Block[2];
+		S _ B[9 to inf];
+		while length(S) do
+		    Core[symbols_symbols+1] _ '400 lor lop(S);
+		Core[symbols_symbols+1] _ '400;
+		Symbols _ Symbols +1;
+		AdrBreak _ AdrBreak max Symbols;
+	    end;
+	    return(true);
+	end;
+	[2] return(true);		! unref'd symbol block (ignore);
+	[3] return(true);		! unknown - ignore it;
+	else usererr(0,1,"?block type: "&cvs(Block[4])&crlf&B)
+    end;
+!   if <relocate> then begin
+!	Adr _ Adr + Reloc1;			! Reloc if necessary;
+!	Reloc _ Reloc max Adr;			! bump rel counter;
+!   end;
+    if Block[1]=0 then begin "startAddress"
+	if Block[5] then AdrStart _ Adr;
+	return(true);
+    end;
+    Cksum _ 0;
+    for I _ 1 upto Block[1]+5 do
+	Cksum _ Cksum + Block[I];
+    if Cksum land '377 then return(false);
+    for I _ 0 upto Block[1]-1 do
+	Core[Adr+I] _ '400 lor Block[5+I];
+    AdrLow _ AdrLow min Adr;
+    AdrBreak _ AdrBreak max Adr+Block[1];
+    return(true);
+end "readBlock";
+
+integer Colon!Dollar;
+simple procedure CDini;
+begin
+    setBreak(Colon!Dollar_getbreak, ":;$", crlf, "SINK");
+end;
+require CDini initialization;
+
+procedure ReadIntel;
+begin
+    input(Dsk, Colon!Dollar);
+    while not Eof do case Brk of begin
+	[":"] readBlock (input (Dsk, Colon!Dollar),Reloc);
+	["$"] done;
+	else print(crlf, "?illegal record: ", crlf,
+	    Brk&null, input(Dsk,Colon!Dollar), crlf) 
+    end;
+end;
+
+procedure ReadBin;
+begin
+    integer A,I; boolean RF;
+    A _ Org;
+    if RF _ (A = -1) then A _ Reloc;
+    AdrLow _ AdrLow min A;
+    while not Eof do begin
+	I _ wordin(Dsk);
+	if Eof then done;
+	Core[A] _ I + '400;
+	A _ A +1;
+    end;
+    AdrBreak _ AdrBreak max A;
+    if RF then Reloc _ A;	! update reloc counter;
+end;
+
+procedure ReadText;
+begin
+    integer A; boolean RF; string S;
+    A _ Org;
+    if RF _ (A = -1) then A _ Reloc;
+    AdrLow _ AdrLow min A;
+    while not Eof do begin
+	S _ input(Dsk,0);
+	while length(S) do begin
+	    Core[A] _ lop(S) + '400;
+	    A _ A +1;
+	end;
+    end;
+    AdrBreak _ AdrBreak max A;
+    if RF then Reloc _ A;	! update reloc counter;
+end;
+
+!	main
+;
+begin "main"
+    integer Adr,Cnt,Cksum,I,ResendCnt,ResendFlag;
+    string File;
+
+    ttyup(true);
+    AdrBreak _ 0;  AdrLow _ AdrStart _ '200000;
+    arrclr(Core);
+    if RPGSW then begin
+	TmpCor _ Read!Tmp("LOA",Eof);
+	if Eof then usererr(0,1,"?TMPCOR:LOA not found");
+    end;
+    Execute _ false;		! set to no execute;
+    Symbols _ -1;		! do not load symbols;
+    Reloc _ '10000;		! relocation defaults to 1000h;
+    Phase _ -1;			! set to not specified;
+  
+    while true do begin "load"
+	if not NextFile (File) then done;
+	if not File then continue;
+	if not (FileType _ mlook(Dsk_getchan, File, Eof)) then begin
+	    if RPGSW then print(crlf);
+	    print("?file DSK:", File, " not found", crlf);
+	    if RPGSW then call(0,"EXIT");
+	    continue "load";
+	end;
+	if RPGSW then print("Load80: ", File);
+	case FileType of begin
+	    [intel] ReadIntel;
+	    [text] ReadText;
+	    [bin] ReadBin;
+	    else usererr(FileType,2,"?illegal file type: ")
+	end;
+	release(Dsk);
+	if RPGSW then print(crlf);
+    end "load";
+    if Symbols > 0 then begin
+	Core[symbols] _ '400;
+	Core[symbols_symbols+1] _ '400;
+	Core[symbols_symbols+1] _ '400;
+	symbols_symbols+1;
+	AdrBreak _ AdrBreak max Symbols;
+    end;
+
+    print("Load80: ",cvHs(AdrLow), ":", cvHs(AdrBreak), 
+    	(if AdrStart geq '200000
+	    then null
+	    else ", "&cvHs(AdrStart)&"(start)"),
+	(if Phase=-1
+	    then null
+	    else ", "&cvHs(Phase)&"(phase)"), crlf );
+    auxclv(-1,0,'34);			! enter block mode;
+    BIO_ !SKIP!;			! did it work?;
+    if BIO 
+	then calli(xwd('40,0),'72)	! wait for non-block output;
+	else print( crlf, "%block IO not available", crlf);
+    ResendCnt _ 0;
+    Adr _ AdrLow;
+    while Adr < AdrBreak do begin "send"
+	integer A;
+	if Core[Adr] = 0 then begin 
+	    Adr _ Adr +1;
+	    continue "send" end;
+	Cnt _ MaxCnt min AdrBreak-Adr;
+	A _ if Phase=-1 then Adr else Adr-AdrLow+Phase;
+	Cksum _ 0;
+	for I _ Adr upto Adr+Cnt-1 do
+	    Cksum _ Cksum + Core[I];
+	Cksum _ Cksum + A + (A lsh -8) + Cnt;
+	ResendFlag _ false;
+	do begin "try"
+	    do if etx = I_ auxclv(-1,0,1) then done
+	    until not !SKIP!;		! clear input buffer;
+	    if ResendFlag then begin "resend"
+		ResendCnt _ ResendCnt + 1;
+		imageOut(bel);
+	    end "resend";
+	    ResendFlag _ true;
+	    imageOut(0); imageOut(1); imageOut(2); ! header sequence;
+	    imageOut (A);		! low address;
+	    imageOut (A lsh -8);	! high address;
+	    imageOut (Cnt);		! count;
+	    for I _ Adr upto Adr+Cnt-1 do
+	        imageOut (Core[I]);	! data bytes;
+	    imageOut(-Cksum);		! ckecksum;
+	    SendBlock;
+	    I_ imageIn;
+	end "try" until I=ack or I=etx;
+	if I=etx then begin "abort"
+	    print("?transmission aborted", crlf,
+		"Resend count = ", ResendCnt);
+	    calli(xwd('40,0),'72);	! wait for all chars;
+	    clrbuf;			! clear input buffer;
+	    auxclv(-1,0,'42);		! leave block IO;
+	    call(0,"EXIT");		! go away;
+	end "abort";
+	Adr _ Adr + Cnt;
+    end "send";
+    if ResendCnt then begin stringOut (
+	"Resend count = "& cvs(ResendCnt) ); SendBlock end;
+    if (AdrStart < '200000) then begin
+	integer A;
+	A _ if Phase=-1 then AdrStart else AdrStart-AdrLow+Phase;
+	imageOut(0);imageOut(1);imageOut(2); 	! start xmit block;
+	imageOut (A);				! low address;
+	imageOut (A lsh -8);			! high address;
+	imageOut (0);				! count;
+	imageOut (execute land 1);		! (cksum) flag byte;
+			! cksum=0 for LOAD, 1 for EXECUTE;
+	SendBlock;
+    end;
+
+    auxclv(-1,0,'42);				! leave block IO;
+    call(0,"EXIT");
+
+end "main"
+end $
+ 
